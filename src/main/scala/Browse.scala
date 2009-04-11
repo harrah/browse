@@ -34,11 +34,13 @@ abstract class Browse extends Plugin
 		val jsFile = new File(outputDirectory, JSRelativePath)
 		writeDefaultCSS(cssFile)
 		writeJS(jsFile)
+		var outputFiles = List[File]()
 		for(unit <- currentRun.units)
 		{
 			val sourceFile = unit.source.file.file
 			val relativeSourcePath = getRelativeSourcePath(sourceFile)
 			val outputFile = new File(outputDirectory, relativeSourcePath + ".html")
+			outputFiles ::= outputFile
 			val relativizedCSSPath = FileUtil.relativePath(outputFile, cssFile)
 			val relativizedJSPath = FileUtil.relativePath(outputFile, jsFile)
 
@@ -50,6 +52,8 @@ abstract class Browse extends Plugin
 			val styler = new BasicStyler(tokens, relativeSourcePath, relativizedCSSPath, relativizedJSPath)
 			Annotate(sourceFile, outputFile, tokens, styler)
 		}
+		val indexFile = new File(outputDirectory, IndexRelativePath)
+		writeIndex(indexFile, outputFiles)
 	}
 	/** Tokenizes the given source.  The tokens are put into an ordered set by the start position of the token.
 	* Symbols will be mapped back to these tokens by the offset of the symbol.*/
@@ -316,6 +320,8 @@ abstract class Browse extends Plugin
 
 object Browse
 {
+	/** The location to store the index relative to the output directory.*/
+	val IndexRelativePath = "index.html"
 	/** The location to store the style sheet relative to the output directory.*/
 	val CSSRelativePath = "style.css"
 	/** The location to store the script relative to the output directory.*/
@@ -329,4 +335,30 @@ object Browse
 	def writeDefaultCSS(to: File) { FileUtil.writeResource(DefaultCSS, to) }
 	/** Copies the default script available as a resource on the classpath to the file 'to'.*/
 	def writeJS(to: File) { FileUtil.writeResource(LinkedJS, to) }
+	
+	def writeIndex(to: File, files: Iterable[File])
+	{
+		FileUtil.withWriter(to) { out =>
+			out.write("<html><body>")
+			files.foreach(writeEntry(to, out))
+			out.write("</body></html>")
+		}
+	}
+	import java.io.Writer
+	private def writeEntry(index: File, out: Writer)(file: File)
+	{
+		for(path <- FileUtil.relativize(index.getParentFile, file))
+		{
+			out.write("<li><a href=\"")
+			out.write(path)
+			out.write("\">")
+			val label =
+				if(path.endsWith(".html"))
+					path.substring(0, path.length - ".html".length)
+				else
+					path
+			out.write(label)
+			out.write("</a></li>")
+		}
+	}
 }
