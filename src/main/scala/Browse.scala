@@ -1,8 +1,8 @@
-/* sbt -- Simple Build Tool
+/* browse -- Scala Source Browser
  * Copyright 2009 Mark Harrah
  */
 
-package sbt
+package browse
 
 import scala.tools.nsc.{ast, plugins, symtab, util, Global}
 import ast.parser.Tokens

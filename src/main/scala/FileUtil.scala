@@ -1,7 +1,8 @@
-/* sbt -- Simple Build Tool
+/* browse -- Scala Source Browser
  * Copyright 2009 Mark Harrah
  */
-package sbt
+
+package browse
 
 import java.io.{FileOutputStream, InputStream, OutputStream}
 import java.io.{BufferedReader, BufferedWriter, File, FileReader, FileWriter}

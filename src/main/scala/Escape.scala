@@ -1,8 +1,8 @@
-/* sbt -- Simple Build Tool
+/* browse -- Scala Source Browser
  * Copyright 2009 Mark Harrah
  */
 
-package sbt
+package browse
 
 /** Escapes a raw string for use in HTML.*/
 object Escape

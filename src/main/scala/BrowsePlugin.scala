@@ -1,8 +1,8 @@
-/* sbt -- Simple Build Tool
+/* browse -- Scala Source Browser
  * Copyright 2009 Mark Harrah
  */
 
-package sbt
+package browse
 
 import scala.tools.nsc.{plugins, Global, Phase}
 import plugins.PluginComponent
@@ -11,7 +11,7 @@ import java.io.File
 
 object BrowsePlugin
 {
-	val PluginName = "sbt-browse"
+	val PluginName = "browse"
 	/** This is the name of the option that specifies the base directory against which sources
 	* should be relativized.*/
 	val BaseDirectoryOptionName = "base-directory:"

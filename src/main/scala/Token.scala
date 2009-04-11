@@ -1,7 +1,8 @@
-/* sbt -- Simple Build Tool
+/* browse -- Scala Source Browser
  * Copyright 2009 Mark Harrah
  */
-package sbt
+
+package browse
 
 /** Represents a link to a definition.  The path is the path to the file and target is
 * the symbol ID targeted.  The '#' is not included.  To get the constructed path,

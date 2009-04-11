@@ -4,4 +4,30 @@ Browsable Scala source code in HTML with:
 - references/definition highlighted on mouseover
 - links to definition
 
-Still in development.  All bugs are features and all features are by accident.
+Still in development.  Bugs are features and features are accidental.
+
+To build with sbt (http://code.google.com/p/simple-build-tool/wiki/Setup):
+
+$ sbt
+> package
+
+This produces a compiler plugin in target/.
+
+Usage
+
+Add the following options to your compile command for your project:
+  -Xplugin:<path-to-browse>/browse-0.1.jar
+  -P:browse:base-directory:<src-dir>
+
+If you are using sbt, substitute the location of the browse jar in the following:
+
+  val browseJarPath =  "<path-to-browse>/browse-0.1.jar"
+  override def compileOptions =
+    CompileOption("-Xplugin:" + browseJarPath) ::
+    CompileOption("-P:browse:base-directory:" + mainScalaSourcePath.asFile.getAbsolutePath) ::
+    super.compileOptions.toList
+
+You will get a directory 'browse' that mirrors the directory structure of your sources relative
+to the specified base directory with one HTML file for each source file.  You can make simple
+changes to the syntax highlighting in the style.css file in the root output directory.  The linked.js
+file implements the highlighting of refererences.
