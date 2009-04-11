@@ -1,0 +1,82 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>BrowsePlugin.scala</title>
+        <script type="text/javascript" src="linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* browse -- Scala Source Browser
+ * Copyright 2009 Mark Harrah
+ */</span>
+
+<span class="keyword">package</span> browse
+
+<span class="keyword">import</span> scala.tools.nsc.{plugins, Global, Phase}
+<span class="keyword">import</span> plugins.PluginComponent
+<span class="keyword">import</span> scala.collection.jcl.{TreeMap, TreeSet}
+<span class="keyword">import</span> java.io.File
+
+<span class="keyword">object</span> <a title="object browse.BrowsePlugin" id="6207">BrowsePlugin</a>
+{
+	<span class="keyword">val</span> <span id="21300"><a title="java.lang.String" id="21299">PluginName</a></span> = <span title="java.lang.String(&quot;browse&quot;)" class="string">&quot;browse&quot;</span>
+	<span class="comment">/** This is the name of the option that specifies the base directory against which sources
+	* should be relativized.*/</span>
+	<span class="keyword">val</span> <span id="21302"><a title="java.lang.String" id="21301">BaseDirectoryOptionName</a></span> = <span title="java.lang.String(&quot;base-directory:&quot;)" class="string">&quot;base-directory:&quot;</span>
+}
+<span class="comment">/* The standard plugin setup.  The main implementation is in Browse.  The entry point is Browse.generateOutput */</span>
+<span class="keyword">class</span> <a title="class BrowsePlugin extends browse.Browse with ScalaObject" id="6209">BrowsePlugin</a>(<span class="keyword">val</span> <span id="21306"><span id="21305"><a title="scala.tools.nsc.Global" id="21742">global</a></span></span>: <a title="scala.tools.nsc.Global" id="6639">Global</a>) <span class="keyword">extends</span> <a href="Browse.scala.html#6168" title="browse.Browse">Browse</a>
+{
+	<span class="keyword">import</span> global._
+	<span class="keyword">import</span> BrowsePlugin._
+	
+	<span class="keyword">val</span> <span id="21311"><a title="java.lang.String" id="21310">name</a></span> = <a href="#21299" title="=&gt; java.lang.String">PluginName</a>
+	<span class="keyword">val</span> <span id="21313"><a title="java.lang.String" id="21312">description</a></span> = <span title="java.lang.String(&quot;A plugin to produce a browsable representation of the input sources.&quot;)" class="string">&quot;A plugin to produce a browsable representation of the input sources.&quot;</span>
+	<span class="keyword">val</span> <span id="21315"><a title="List[scala.tools.nsc.plugins.PluginComponent]" id="21314">components</a></span> = <span id="11146"><a title="(scala.tools.nsc.plugins.PluginComponent*)List[scala.tools.nsc.plugins.PluginComponent]" id="488">List</a></span>[<a title="scala.tools.nsc.plugins.PluginComponent" id="8442">PluginComponent</a>](<a href="#21327" title="object BrowsePlugin.this.Component">Component</a>)
+	
+	<span class="comment">/** The directory to which the annotated sources will be written. */</span>
+	<span class="keyword">val</span> <span id="21317"><a title="java.io.File" id="21316">outputDirectory</a></span> = (<a title="(java.lang.String,java.lang.String)java.io.File" id="11662" class="keyword">new</a> <a title="java.io.File" id="3612">File</a>(<a href="#21305" title="=&gt; scala.tools.nsc.Settings" id="10783">settings</a>.<a title="=&gt; scala.tools.nsc.Settings#StringSetting" id="21508">outdir</a>.<a title="=&gt; String" id="21489">value</a>, <span title="java.lang.String(&quot;../browse&quot;)" class="string">&quot;../browse&quot;</span>)).<a title="()java.io.File" id="11671">getAbsoluteFile</a>
+	<a href="#21316" title="=&gt; java.io.File">outputDirectory</a>.<a title="()Boolean" id="11693">mkdirs</a>()
+
+	<span class="comment">/** The directory against which the input source paths will be relativized.*/</span>
+	<span class="keyword">var</span> <span id="21320"><span id="21318"><span id="21319"><a title="Option[java.io.File]" id="21741">baseDirectory</a></span></span></span>: <a title="Option[java.io.File]" id="889">Option</a>[File] = <a title="object None" id="497">None</a>
+
+	<span class="keyword">override</span> <span class="keyword">def</span> <a title="(List[String],(String) =&gt; Unit)Unit" id="21321">processOptions</a>(<a title="List[String]" id="21743">options</a>: <a title="List[String]" id="487">List</a>[String], <a title="(String) =&gt; Unit" id="21744">error</a>: String =&gt; Unit)
+	{
+		<span class="keyword">for</span>(<span id="11184"><a title="((String) =&gt; Unit)Unit" id="21746">option</a></span> &lt;- <a href="#21743" title="List[String]">options</a>)
+		{
+			<span title="Unit" class="keyword">if</span>(<a href="#21746" title="String">option</a>.<a title="(java.lang.String)Boolean" id="5775">startsWith</a>(<a href="#21301" title="=&gt; java.lang.String">BaseDirectoryOptionName</a>))
+				<a href="#21319" title="(Option[java.io.File])Unit">baseDirectory</a> = <span id="19626"><a title="(java.io.File)Some[java.io.File]" id="278">Some</a></span>(<span title="java.io.File" class="keyword">new</span> <a title="java.io.File" id="3612">File</a>(<a href="#21746" title="String">option</a>.<a title="(Int)java.lang.String" id="5788">substring</a>(<a href="#21301" title="=&gt; java.lang.String">BaseDirectoryOptionName</a>.<a title="()Int" id="5755">length</a>)))
+			<span class="keyword">else</span>
+				<a href="#21744" title="(String)Unit" id="11566">error</a>(<span title="java.lang.String(&quot;Option for source browser plugin not understood: &quot;)" class="string">&quot;Option for source browser plugin not understood: &quot;</span> <a title="(Any)java.lang.String" id="5736">+</a> <a href="#21746" title="String">option</a>)
+		}
+	}
+	<span class="keyword">override</span> <span class="keyword">val</span> <span id="21323"><a title="Option[String]" id="21322">optionsHelp</a></span>: <a title="Option[String]" id="889">Option</a>[String] =
+	{
+		<span class="keyword">val</span> <a title="java.lang.String" id="21752">prefix</a> = <span title="java.lang.String(&quot;  -P:&quot;)" class="string">&quot;  -P:&quot;</span> <a title="(Any)java.lang.String" id="5736">+</a> <a href="#21310" title="=&gt; java.lang.String">name</a> <a title="(Any)java.lang.String" id="5736">+</a> <span title="java.lang.String(&quot;:&quot;)" class="string">&quot;:&quot;</span>
+		<span id="19626"><a title="(java.lang.String)Some[java.lang.String]" id="278">Some</a></span>(<a href="#21752" title="java.lang.String">prefix</a> <a title="(Any)java.lang.String" id="5736">+</a> <a href="#21301" title="=&gt; java.lang.String">BaseDirectoryOptionName</a> <a title="(Any)java.lang.String" id="5736">+</a> <span title="java.lang.String(&quot;&lt;name&gt;            Set the base source directory .\012&quot;)" class="string">&quot;&lt;name&gt;            Set the base source directory .\n&quot;</span>)
+	}
+
+	<span class="comment">/* For source compatibility between 2.7.x and 2.8.x */</span>
+	<span class="keyword">private</span> <span class="keyword">object</span> <a title="object BrowsePlugin.this.runsBefore" id="21324">runsBefore</a> { <span class="keyword">def</span> <a title="(String)String" id="21755">::</a> (<a title="String" id="21757">s</a>: <a title="String" id="1801">String</a>) = <a href="#21757" title="String">s</a> }
+	<span class="keyword">private</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class CompatiblePluginComponent extends scala.tools.nsc.plugins.PluginComponent with ScalaObject" id="21326">CompatiblePluginComponent</a>(<span id="21335"><a title="String" id="21762">afterPhase</a></span>: <a title="String" id="1801">String</a>) <span class="keyword">extends</span> <a title="scala.tools.nsc.plugins.PluginComponent" id="8442">PluginComponent</a>
+	{
+		<span class="keyword">val</span> <span id="21338"><a title="String" id="21337">runsAfter</a></span> = <a href="#21335" title="String">afterPhase</a> <a href="#21755" title="(String)String">::</a> <a href="#21324" title="object BrowsePlugin.this.runsBefore">runsBefore</a>
+	}
+	<span class="keyword">private</span> <span class="keyword">object</span> <a title="object BrowsePlugin.this.Component" id="21327">Component</a> <span class="keyword">extends</span> <a href="#21326" title="BrowsePlugin.this.CompatiblePluginComponent">CompatiblePluginComponent</a>(<span title="java.lang.String(&quot;typer&quot;)" class="string">&quot;typer&quot;</span>)
+	{
+		<span class="keyword">val</span> <span id="21341"><a title="scala.tools.nsc.Global" id="21340">global</a></span> = <a href="#6209" title="BrowsePlugin.this.type">BrowsePlugin</a>.<span class="keyword">this</span>.<a href="#21305" title="=&gt; scala.tools.nsc.Global">global</a>
+		<span class="keyword">val</span> <span id="21343"><a title="java.lang.String" id="21342">phaseName</a></span> = <a href="#6209" title="BrowsePlugin.this.type">BrowsePlugin</a>.<span class="keyword">this</span>.<a href="#21310" title="=&gt; java.lang.String">name</a>
+		<span class="keyword">def</span> <a title="(scala.tools.nsc.Phase)BrowsePlugin.this.BrowsePhase" id="21344">newPhase</a>(<a title="scala.tools.nsc.Phase" id="21764">prev</a>: <a title="scala.tools.nsc.Phase" id="6273">Phase</a>) = <span title="BrowsePlugin.this.BrowsePhase" class="keyword">new</span> <a href="#21329" title="BrowsePlugin.this.BrowsePhase">BrowsePhase</a>(<a href="#21764" title="scala.tools.nsc.Phase">prev</a>)
+	}
+
+	<span class="keyword">private</span> <span class="keyword">class</span> <a title="class BrowsePhase extends scala.tools.nsc.Phase with ScalaObject" id="21329">BrowsePhase</a>(<span id="21791"><a title="scala.tools.nsc.Phase" id="21795">prev</a></span>: <a title="scala.tools.nsc.Phase" id="6273">Phase</a>) <span class="keyword">extends</span> <a title="scala.tools.nsc.Phase" id="6273">Phase</a>(<a href="#21795" title="scala.tools.nsc.Phase">prev</a>)
+	{
+		<span class="keyword">def</span> <a title="=&gt; java.lang.String" id="21793">name</a> = <a href="#6209" title="BrowsePlugin.this.type">BrowsePlugin</a>.<span class="keyword">this</span>.<a href="#21310" title="=&gt; java.lang.String">name</a>
+		<span class="keyword">def</span> <a title="=&gt; Unit" id="21794">run</a> = <a href="Browse.scala.html#10768" title="()Unit">generateOutput</a>()
+	}
+}
+        </pre>
+    </body>
+</html>

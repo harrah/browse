@@ -1,0 +1,325 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>sbt/Path.scala</title>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* sbt -- Simple Build Tool
+ * Copyright 2008, 2009 Mark Harrah
+ */</span>
+<span class="keyword">package</span> sbt
+
+<span class="keyword">import</span> Path._
+<span class="keyword">import</span> FileUtilities.wrapNull
+<span class="keyword">import</span> java.io.File
+<span class="keyword">import</span> scala.collection.mutable.{Set, HashSet}
+
+<span class="comment">/** A Path represents a file in a project.
+* @see sbt.PathFinder*/</span>
+<span class="keyword">sealed</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class Path extends sbt.PathFinder with NotNull with ScalaObject" id="6697">Path</a> <span class="keyword">extends</span> <a href="#6703" title="sbt.PathFinder">PathFinder</a> <span class="keyword">with</span> <a title="NotNull" id="187">NotNull</a>
+{
+	<span class="comment">/** Creates a base directory for this path.  This is used by copy and zip functions
+	* to determine the relative path that should be used in the destination.  For example,
+	* if the following path is specified to be copied to directory 'd',
+	* 
+	* &lt;code&gt;((a / b) ##) / x / y&lt;/code&gt;
+	*
+	* the copied path would be 
+	*
+	* &lt;code&gt;d / x / y&lt;/code&gt;
+	*
+	* The &lt;code&gt;relativePath&lt;/code&gt; method is used to return the relative path to the base directory. */</span>
+	<span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; sbt.Path" id="9521">##</a> : <a href="#6697" title="sbt.Path">Path</a> = <span title="sbt.BaseDirectory" class="keyword">new</span> <a href="#6698" title="sbt.BaseDirectory">BaseDirectory</a>(<a href="#6697" title="sbt.Path" class="keyword">this</a>)
+	<span class="keyword">private</span>[sbt] <span class="keyword">def</span> <a title="(scala.collection.mutable.Set[sbt.Path])Unit" id="9522">addTo</a>(<a title="scala.collection.mutable.Set[sbt.Path]" id="62371">pathSet</a>: <a title="scala.collection.mutable.Set[sbt.Path]" id="8158">Set</a>[Path])
+	{
+		<span title="Unit" class="keyword">if</span>(<a href="#9529" title="=&gt; java.io.File">asFile</a>.<a title="()Boolean" id="9559">exists</a>)
+			<a href="#62371" title="scala.collection.mutable.Set[sbt.Path]">pathSet</a> <a title="(sbt.Path)Unit" id="21512">+=</a> <a href="#6697" title="sbt.Path" class="keyword">this</a>
+	}
+	<span class="keyword">override</span> <span class="keyword">def</span> <a title="(String)sbt.Path" id="9523">/</a> (<a title="String" id="21822">component</a>: <a title="String" id="1751">String</a>): <a href="#6697" title="sbt.Path">Path</a> = <span title="sbt.Path" class="keyword">if</span>(<a href="#21822" title="String">component</a> <a title="(AnyRef)Boolean" id="3399">==</a> <span title="java.lang.String(&quot;.&quot;)" class="string">&quot;.&quot;</span>) <a href="#6697" title="sbt.Path" class="keyword">this</a> <span class="keyword">else</span> <span title="sbt.RelativePath" class="keyword">new</span> <a href="#6700" title="sbt.RelativePath">RelativePath</a>(<a href="#6697" title="sbt.Path" class="keyword">this</a>, <a href="#21822" title="String">component</a>)
+	<span class="comment">/** True if and only if the file represented by this path exists.*/</span>
+	<span class="keyword">def</span> <a title="=&gt; Boolean" id="9524">exists</a> = <a href="#9529" title="=&gt; java.io.File">asFile</a>.<a title="()Boolean" id="9559">exists</a>
+	<span class="comment">/** True if and only if the file represented by this path is a directory.*/</span>
+	<span class="keyword">def</span> <a title="=&gt; Boolean" id="9525">isDirectory</a> = <a href="#9529" title="=&gt; java.io.File">asFile</a>.<a title="()Boolean" id="9560">isDirectory</a>
+	<span class="comment">/** The last modified time of the file represented by this path.*/</span>
+	<span class="keyword">def</span> <a title="=&gt; Long" id="9526">lastModified</a> = <a href="#9529" title="=&gt; java.io.File">asFile</a>.<a title="()Long" id="9563">lastModified</a>
+	<span class="comment">/* True if and only if file that this path represents exists and the file represented by the path 'p'
+	* does not exist or was modified before the file for this path.*/</span>
+	<span class="keyword">def</span> <a title="(sbt.Path)Boolean" id="9527">newerThan</a>(<a title="sbt.Path" id="62378">p</a>: <a href="#6697" title="sbt.Path">Path</a>): <a title="Boolean" id="2060">Boolean</a> = <a href="#9524" title="=&gt; Boolean">exists</a> <a title="(Boolean)Boolean" id="2641">&amp;&amp;</a> (<a title="=&gt; Boolean" id="2637">!</a><a href="#62378" title="sbt.Path">p</a>.<a href="#9524" title="=&gt; Boolean">exists</a> <a title="(Boolean)Boolean" id="2640">||</a> <a href="#9526" title="=&gt; Long">lastModified</a> <a title="(Long)Boolean" id="3158">&gt;</a> <a href="#62378" title="sbt.Path">p</a>.<a href="#9526" title="=&gt; Long">lastModified</a>)
+	<span class="comment">/* True if and only if file that this path represents does not exist or the file represented by the path 'p'
+	* exists and was modified after the file for this path.*/</span>
+	<span class="keyword">def</span> <a title="(sbt.Path)Boolean" id="9528">olderThan</a>(<a title="sbt.Path" id="62380">p</a>: <a href="#6697" title="sbt.Path">Path</a>): <a title="Boolean" id="2060">Boolean</a> = <a href="#62380" title="sbt.Path">p</a> <a href="#9527" title="(sbt.Path)Boolean">newerThan</a> <a href="#6697" title="sbt.Path" class="keyword">this</a>
+	<span class="comment">/** The file represented by this path.*/</span>
+	<span class="keyword">def</span> <a title="=&gt; java.io.File" id="9529">asFile</a>: <a title="java.io.File" id="3559">File</a>
+	<span class="comment">/** The file represented by this path converted to a &lt;code&gt;URL&lt;/code&gt;.*/</span>
+	<span class="keyword">def</span> <a title="=&gt; java.net.URL" id="9530">asURL</a> = <a href="#9529" title="=&gt; java.io.File">asFile</a>.<a title="()java.net.URI" id="9556">toURI</a>.<a title="()java.net.URL" id="21245">toURL</a>
+	<span class="comment">/** The string representation of this path relative to the base directory.  The project directory is the
+	* default base directory if one is not specified explicitly using the &lt;code&gt;##&lt;/code&gt; operator.*/</span>
+	<span class="keyword">def</span> <a title="=&gt; String" id="9531">relativePath</a>: <a title="String" id="1751">String</a>
+	<span class="keyword">def</span> <a title="=&gt; String" id="9532">absolutePath</a>: <a title="String" id="1751">String</a> = <a href="#9529" title="=&gt; java.io.File">asFile</a>.<a title="()java.lang.String" id="9551">getAbsolutePath</a>
+	<span class="keyword">private</span>[sbt] <span class="keyword">def</span> <a title="(String)String" id="9533">prependTo</a>(<a title="String" id="62382">s</a>: <a title="String" id="1751">String</a>): <a title="String" id="1751">String</a>
+	
+	<span class="comment">/** Equality of Paths is defined in terms of the underlying &lt;code&gt;File&lt;/code&gt;.*/</span>
+	<span class="keyword">override</span> <span class="keyword">final</span> <span class="keyword">def</span> <a title="(Any)Boolean" id="9534">equals</a>(<a title="Any" id="62383">other</a>: <a title="Any" id="30">Any</a>) =
+		<a href="#62383" title="Any">other</a> <span title="Boolean" class="keyword">match</span>
+		{
+			<span title="Boolean" class="keyword">case</span> <a title="sbt.Path" id="62385">op</a>: <a href="#6697" title="sbt.Path">Path</a> =&gt; <a href="#9529" title="=&gt; java.io.File">asFile</a> <a title="(AnyRef)Boolean" id="3399">==</a> <a href="#62385" title="sbt.Path">op</a>.<a href="#9529" title="=&gt; java.io.File">asFile</a>
+			<span title="Boolean(false)" class="keyword">case</span> _ =&gt; <span title="Boolean(false)" class="keyword">false</span>
+		}
+	<span class="comment">/** The hash code of a Path is that of the underlying &lt;code&gt;File&lt;/code&gt;.*/</span>
+	<span class="keyword">override</span> <span class="keyword">final</span> <span class="keyword">def</span> <a title="()Int" id="9535">hashCode</a> = <a href="#9529" title="=&gt; java.io.File">asFile</a>.<a title="()Int" id="9583">hashCode</a>
+}
+<span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">class</span> <a title="class BaseDirectory extends sbt.Path with ScalaObject" id="6698">BaseDirectory</a>(<span class="keyword">private</span>[sbt] <span class="keyword">val</span> <span id="62364"><span id="62363"><a title="sbt.Path" id="62370">path</a></span></span>: <a href="#6697" title="sbt.Path">Path</a>) <span class="keyword">extends</span> <a href="#6697" title="sbt.Path">Path</a>
+{
+	<span class="keyword">override</span> <span class="keyword">def</span> <a title="()java.lang.String" id="62366">toString</a> = <a href="#62363" title="=&gt; sbt.Path">path</a>.<a title="()java.lang.String" id="5666">toString</a>
+	<span class="keyword">def</span> <a title="=&gt; java.io.File" id="62367">asFile</a> = <a href="#62363" title="=&gt; sbt.Path">path</a>.<a href="#9529" title="=&gt; java.io.File">asFile</a>
+	<span class="keyword">def</span> <a title="=&gt; java.lang.String" id="62368">relativePath</a> = <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>
+	<span class="keyword">private</span>[sbt] <span class="keyword">def</span> <a title="(String)java.lang.String" id="62369">prependTo</a>(<a title="String" id="62399">s</a>: <a title="String" id="1751">String</a>) = <span title="java.lang.String(&quot;.&quot;)" class="string">&quot;.&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#9497" title="=&gt; Char">sep</a> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#62399" title="String">s</a>
+}
+<span class="keyword">private</span>[sbt] <span class="keyword">final</span> <span class="keyword">class</span> <a title="class ProjectDirectory extends sbt.Path with ScalaObject" id="6699">ProjectDirectory</a>(<span class="keyword">val</span> <span id="27937"><span id="27936"><a title="java.io.File" id="27942">asFile</a></span></span>: <a title="java.io.File" id="3559">File</a>) <span class="keyword">extends</span> <a href="#6697" title="sbt.Path">Path</a>
+{
+	<span class="keyword">override</span> <span class="keyword">def</span> <a title="()java.lang.String" id="27939">toString</a> = <span title="java.lang.String(&quot;.&quot;)" class="string">&quot;.&quot;</span>
+	<span class="keyword">def</span> <a title="=&gt; java.lang.String" id="27940">relativePath</a> = <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>
+	<span class="keyword">private</span>[sbt] <span class="keyword">def</span> <a title="(String)java.lang.String" id="27941">prependTo</a>(<a title="String" id="62407">s</a>: <a title="String" id="1751">String</a>) = <span title="java.lang.String(&quot;.&quot;)" class="string">&quot;.&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#9497" title="=&gt; Char">sep</a> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#62407" title="String">s</a>
+}
+<span class="keyword">private</span>[sbt] <span class="keyword">final</span> <span class="keyword">class</span> <a title="class RelativePath extends sbt.Path with ScalaObject" id="6700">RelativePath</a>(<span class="keyword">val</span> <span id="50660"><span id="50659"><a title="sbt.Path" id="62374">parentPath</a></span></span>: <a href="#6697" title="sbt.Path">Path</a>, <span class="keyword">val</span> <span id="50662"><span id="50661"><a title="String" id="62375">component</a></span></span>: <a title="String" id="1751">String</a>) <span class="keyword">extends</span> <a href="#6697" title="sbt.Path">Path</a>
+{
+	<a href="#9499" title="(String)String">checkComponent</a>(<a href="#50661" title="=&gt; String">component</a>)
+	<span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="50664">toString</a> = <a href="#50659" title="=&gt; sbt.Path">parentPath</a> <a href="#9533" title="(String)String">prependTo</a> <a href="#50661" title="=&gt; String">component</a>
+	<span class="keyword">lazy</span> <span class="keyword">val</span> <a title="java.io.File" id="50666">asFile</a> = <a title="(java.io.File,java.lang.String)java.io.File" id="9544" class="keyword">new</a> <a title="java.io.File" id="3559">File</a>(<a href="#50659" title="=&gt; sbt.Path">parentPath</a>.<a href="#9529" title="=&gt; java.io.File">asFile</a>, <a href="#50661" title="=&gt; String">component</a>)
+	<span class="keyword">private</span>[sbt] <span class="keyword">def</span> <a title="(String)String" id="50667">prependTo</a>(<a title="String" id="62430">s</a>: <a title="String" id="1751">String</a>) =  <a href="#50659" title="=&gt; sbt.Path">parentPath</a> <a href="#9533" title="(String)String">prependTo</a> (<a href="#50661" title="=&gt; String">component</a> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#9497" title="=&gt; Char">sep</a> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#62430" title="String">s</a>)
+	<span class="keyword">lazy</span> <span class="keyword">val</span> <a title="String" id="50669">relativePath</a> =
+	{
+		<span class="keyword">val</span> <a title="String" id="62432">parentRelative</a> = <a href="#50659" title="=&gt; sbt.Path">parentPath</a>.<a href="#9531" title="=&gt; String">relativePath</a>
+		<span title="String" class="keyword">if</span>(<span id="6012"><a href="#62432" title="implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString" id="770">parentRelative</a></span>.<a title="=&gt; Boolean" id="7108">isEmpty</a>)
+			<a href="#50661" title="=&gt; String">component</a>
+		<span class="keyword">else</span>
+			<a href="#62432" title="String">parentRelative</a> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#9497" title="=&gt; Char">sep</a> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#50661" title="=&gt; String">component</a>
+	}
+}
+<span class="keyword">object</span> <a title="object sbt.Path" id="6701">Path</a>
+{
+	<span class="keyword">import</span> java.io.File
+	<span class="keyword">import</span> File.pathSeparator
+	
+	<span class="comment">/** Constructs a String representation of &lt;code&gt;Path&lt;/code&gt;s.  The absolute path String of each &lt;code&gt;Path&lt;/code&gt; is
+	* separated by the platform's path separator.*/</span>
+	<span class="keyword">def</span> <a title="(Iterable[sbt.Path])String" id="9492">makeString</a>(<a title="Iterable[sbt.Path]" id="33347">paths</a>: <a title="Iterable[sbt.Path]" id="358">Iterable</a>[Path]): <a title="String" id="1751">String</a> = <a href="#33347" title="Iterable[sbt.Path]">paths</a>.<a title="((sbt.Path) =&gt; String)Iterable[String]" id="7246">map</a>(<a href="#62443" title="sbt.Path">_</a>.<a href="#9532" title="=&gt; String">absolutePath</a>).<a title="(String)String" id="7283">mkString</a>(<span id="9539"><a title="java.lang.String" id="3560">pathSeparator</a></span>)
+	
+	<span class="comment">/** Constructs a String representation of &lt;code&gt;Path&lt;/code&gt;s.  The relative path String of each &lt;code&gt;Path&lt;/code&gt; is
+	* separated by the platform's path separator.*/</span>
+	<span class="keyword">def</span> <a title="(Iterable[sbt.Path])String" id="9493">makeRelativeString</a>(<a title="Iterable[sbt.Path]" id="22003">paths</a>: <a title="Iterable[sbt.Path]" id="358">Iterable</a>[Path]): <a title="String" id="1751">String</a> = <a href="#22003" title="Iterable[sbt.Path]">paths</a>.<a title="((sbt.Path) =&gt; String)Iterable[String]" id="7246">map</a>(<a href="#62447" title="sbt.Path">_</a>.<a href="#9531" title="=&gt; String">relativePath</a>).<a title="(String)String" id="7283">mkString</a>(<span id="9539"><a title="java.lang.String" id="3560">pathSeparator</a></span>)
+	
+	<span class="keyword">def</span> <a title="(sbt.Path,String)Iterable[sbt.Path]" id="9494">splitString</a>(<a title="sbt.Path" id="23766">projectPath</a>: <a href="#6697" title="sbt.Path">Path</a>, <a title="String" id="23767">value</a>: <a title="String" id="1751">String</a>): <a title="Iterable[sbt.Path]" id="358">Iterable</a>[Path] =
+	{
+		<span class="keyword">for</span>(<span id="6989"><span id="6986"><span id="62451"><a title="((java.lang.String) =&gt; sbt.Path)Array[sbt.Path]" id="62456">pathString</a></span></span></span> &lt;- <a href="FileUtilities.scala.html#6351" title="object sbt.FileUtilities">FileUtilities</a>.<a href="FileUtilities.scala.html#9394" title="(String)Array[java.lang.String]">pathSplit</a>(<a href="#23767" title="String">value</a>) <span class="keyword">if</span> <a href="#62451" title="java.lang.String">pathString</a>.<a title="()Int" id="5702">length</a> <a title="(Int)Boolean" id="3035">&gt;</a> <span title="Int(0)" class="int">0</span>) <span class="keyword">yield</span>
+			<a href="#6701" title="object sbt.Path">Path</a>.<a href="#9500" title="(sbt.Path,String)sbt.Path">fromString</a>(<a href="#23766" title="sbt.Path">projectPath</a>, <a href="#62456" title="java.lang.String">pathString</a>)
+	}
+	
+	<span class="comment">/** A &lt;code&gt;PathFinder&lt;/code&gt; that always produces the empty set of &lt;code&gt;Path&lt;/code&gt;s.*/</span>
+	<span class="keyword">def</span> <a title="=&gt; sbt.PathFinder" id="9495">emptyPathFinder</a> =
+		<a title="template $anon extends sbt.PathFinder" id="30824" class="keyword">new</a> <a href="#6703" title="sbt.PathFinder">PathFinder</a>
+		{
+			<span class="keyword">private</span>[sbt] <span class="keyword">def</span> <a title="(scala.collection.mutable.Set[sbt.Path])Unit" id="30826">addTo</a>(<a title="scala.collection.mutable.Set[sbt.Path]" id="30828">pathSet</a>: <a title="scala.collection.mutable.Set[sbt.Path]" id="8158">Set</a>[Path]) <span title="Unit">{</span>}
+		}
+	<span class="comment">/** A &lt;code&gt;PathFinder&lt;/code&gt; that selects the paths provided by the &lt;code&gt;paths&lt;/code&gt; argument, which is
+	* reevaluated on each call to the &lt;code&gt;PathFinder&lt;/code&gt;'s &lt;code&gt;get&lt;/code&gt; method.  */</span>
+	<span class="keyword">def</span> <a title="(=&gt; Iterable[sbt.Path])sbt.PathFinder" id="9496">lazyPathFinder</a>(<a title="=&gt; Iterable[sbt.Path]" id="22665">paths</a>: =&gt; Iterable[Path]): <a href="#6703" title="sbt.PathFinder">PathFinder</a> =
+		<a title="template $anon extends sbt.PathFinder" id="62457" class="keyword">new</a> <a href="#6703" title="sbt.PathFinder">PathFinder</a>
+		{
+			<span class="keyword">private</span>[sbt] <span class="keyword">def</span> <a title="(scala.collection.mutable.Set[sbt.Path])Unit" id="62459">addTo</a>(<a title="scala.collection.mutable.Set[sbt.Path]" id="62461">pathSet</a>: <a title="scala.collection.mutable.Set[sbt.Path]" id="8158">Set</a>[Path]) = <a href="#62461" title="scala.collection.mutable.Set[sbt.Path]">pathSet</a> <a title="(Iterable[sbt.Path])Unit" id="21514">++=</a> <a href="#22665" title="=&gt; Iterable[sbt.Path]">paths</a>
+		}
+		
+	<span class="comment">/** The separator character of the platform.*/</span>
+	<span class="keyword">val</span> <span id="9498"><a title="Char" id="9497">sep</a></span> = java.io.<a title="object java.io.File" id="3560">File</a>.<a title="Char" id="9536">separatorChar</a>
+	
+	<span class="comment">/** Checks the string to verify that it is a legal path component.  The string must be non-empty,
+	* not a slash, and not '.' or '..'.*/</span>
+	<span class="keyword">def</span> <a title="(String)String" id="9499">checkComponent</a>(<a title="String" id="62412">c</a>: <a title="String" id="1751">String</a>): <a title="String" id="1751">String</a> =
+	{
+		<span id="5881"><a title="(Boolean,Any)Unit" id="770">require</a></span>(<a href="#62412" title="String">c</a>.<a title="()Int" id="5702">length</a> <a title="(Int)Boolean" id="3035">&gt;</a> <span title="Int(0)" class="int">0</span>, <span title="java.lang.String(&quot;Path component must not be empty&quot;)" class="string">&quot;Path component must not be empty&quot;</span>)
+		<span id="5881"><a title="(Boolean,Any)Unit" id="770">require</a></span>(<a href="#62412" title="String">c</a>.<a title="(Int)Int" id="5725">indexOf</a>(<span title="Int(47)" class="char">'/'</span>) <a title="(Int)Boolean" id="3031">==</a> -<span title="Int(-1)" class="int">1</span>, <span title="java.lang.String(&quot;Path component '&quot;)" class="string">&quot;Path component '&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#62412" title="String">c</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;' must not have forward slashes in it&quot;)" class="string">&quot;' must not have forward slashes in it&quot;</span>)
+		<span id="5881"><a title="(Boolean,Any)Unit" id="770">require</a></span>(<a href="#62412" title="String">c</a>.<a title="(Int)Int" id="5725">indexOf</a>(<span title="Int(92)" class="char">'\\'</span>) <a title="(Int)Boolean" id="3031">==</a> -<span title="Int(-1)" class="int">1</span>, <span title="java.lang.String(&quot;Path component '&quot;)" class="string">&quot;Path component '&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#62412" title="String">c</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;' must not have backslashes in it&quot;)" class="string">&quot;' must not have backslashes in it&quot;</span>)
+		<span id="5881"><a title="(Boolean,Any)Unit" id="770">require</a></span>(<a href="#62412" title="String">c</a> <a title="(AnyRef)Boolean" id="5674">!=</a> <span title="java.lang.String(&quot;..&quot;)" class="string">&quot;..&quot;</span>, <span title="java.lang.String(&quot;Path component cannot be '..'&quot;)" class="string">&quot;Path component cannot be '..'&quot;</span>)
+		<span id="5881"><a title="(Boolean,Any)Unit" id="770">require</a></span>(<a href="#62412" title="String">c</a> <a title="(AnyRef)Boolean" id="5674">!=</a> <span title="java.lang.String(&quot;.&quot;)" class="string">&quot;.&quot;</span>, <span title="java.lang.String(&quot;Path component cannot be '.'&quot;)" class="string">&quot;Path component cannot be '.'&quot;</span>)
+		<a href="#62412" title="String">c</a>
+	}
+	<span class="comment">/** Converts a path string relative to the given base path to a &lt;code&gt;Path&lt;/code&gt;. */</span>
+	<span class="keyword">def</span> <a title="(sbt.Path,String)sbt.Path" id="9500">fromString</a>(<a title="sbt.Path" id="24097">basePath</a>: <a href="#6697" title="sbt.Path">Path</a>, <a title="String" id="24098">value</a>: <a title="String" id="1751">String</a>): <a href="#6697" title="sbt.Path">Path</a> =
+	{
+		<span title="sbt.Path" class="keyword">if</span>(<span id="6012"><a href="#24098" title="implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString" id="770">value</a></span>.<a title="=&gt; Boolean" id="7108">isEmpty</a>)
+			<a href="#24097" title="sbt.Path">basePath</a>
+		<span class="keyword">else</span>
+		{
+			<span class="keyword">val</span> <a title="Array[java.lang.String]" id="62526">components</a> = <a href="#24098" title="String">value</a>.<a title="(java.lang.String)Array[java.lang.String]" id="5746">split</a>(<span title="java.lang.String(&quot;[/\\]&quot;)" class="string">&quot;&quot;&quot;[/\\]&quot;&quot;&quot;</span>)
+			(<a href="#24097" title="sbt.Path">basePath</a> <a href="#62528" title="(sbt.Path)((sbt.Path, java.lang.String) =&gt; sbt.Path)sbt.Path" id="7267">/:</a> <a href="#62526" title="Array[java.lang.String]">components</a>)( (<a title="sbt.Path" id="62531">path</a>, <a title="java.lang.String" id="62532">component</a>) =&gt; <a href="#62531" title="sbt.Path">path</a> <a href="#9523" title="(String)sbt.Path">/</a> <a href="#62532" title="java.lang.String">component</a> )
+		}
+	}
+	<span class="keyword">def</span> <a title="(sbt.Path)Option[sbt.Path]" id="9501">baseAncestor</a>(<a title="sbt.Path" id="62533">path</a>: <a href="#6697" title="sbt.Path">Path</a>): <a title="Option[sbt.Path]" id="871">Option</a>[Path] =
+		<a href="#62533" title="sbt.Path">path</a> <span title="Option[sbt.Path]" class="keyword">match</span>
+		{
+			<span title="None.type" class="keyword">case</span> <a title="sbt.ProjectDirectory" id="62534">pd</a>: <a href="#6699" title="sbt.ProjectDirectory">ProjectDirectory</a> =&gt; <a title="object None" id="488">None</a>
+			<span title="Option[sbt.Path]" class="keyword">case</span> <a title="sbt.RelativePath" id="62535">rp</a>: <a href="#6700" title="sbt.RelativePath">RelativePath</a> =&gt; <a href="#9501" title="(sbt.Path)Option[sbt.Path]">baseAncestor</a>(<a href="#62535" title="sbt.RelativePath">rp</a>.<a href="#50659" title="=&gt; sbt.Path">parentPath</a>)
+			<span title="Some[sbt.Path]" class="keyword">case</span> <a title="sbt.BaseDirectory" id="62536">b</a>: <a href="#6698" title="sbt.BaseDirectory">BaseDirectory</a> =&gt; <span id="10256"><a title="(sbt.Path)Some[sbt.Path]" id="275">Some</a></span>(<a href="#62536" title="sbt.BaseDirectory">b</a>.<a href="#62363" title="=&gt; sbt.Path">path</a>)
+		}
+	
+	<span class="keyword">def</span> <a title="(sbt.Path,sbt.Path)Option[sbt.Path]" id="9502">relativize</a>(<a title="sbt.Path" id="22682">basePath</a>: <a href="#6697" title="sbt.Path">Path</a>, <a title="sbt.Path" id="22683">path</a>: <a href="#6697" title="sbt.Path">Path</a>): <a title="Option[sbt.Path]" id="871">Option</a>[Path] = <a href="#9503" title="(sbt.Path,java.io.File)Option[sbt.Path]">relativize</a>(<a href="#22682" title="sbt.Path">basePath</a>, <a href="#22683" title="sbt.Path">path</a>.<a href="#9529" title="=&gt; java.io.File">asFile</a>)
+	<span class="keyword">def</span> <a title="(sbt.Path,java.io.File)Option[sbt.Path]" id="9503">relativize</a>(<a title="sbt.Path" id="22680">basePath</a>: <a href="#6697" title="sbt.Path">Path</a>, <a title="java.io.File" id="22681">file</a>: <a title="java.io.File" id="3559">File</a>): <a title="Option[sbt.Path]" id="871">Option</a>[Path] =
+		<a href="#9506" title="(sbt.Path)Option[String]">basePathString</a>(<a href="#22680" title="sbt.Path">basePath</a>) <a title="((String) =&gt; Option[sbt.Path])Option[sbt.Path]" id="10159">flatMap</a> { <a title="String" id="62548">baseString</a> =&gt; <a href="#9504" title="(sbt.Path,String,java.io.File)Option[sbt.Path]">relativize</a>(<a href="#22680" title="sbt.Path">basePath</a>, <a href="#62548" title="String">baseString</a>, <a href="#22681" title="java.io.File">file</a>) }
+	<span class="keyword">def</span> <a title="(sbt.Path,String,java.io.File)Option[sbt.Path]" id="9504">relativize</a>(<a title="sbt.Path" id="22677">basePath</a>: <a href="#6697" title="sbt.Path">Path</a>, <a title="String" id="22678">basePathString</a>: <a title="String" id="1751">String</a>, <a title="java.io.File" id="22679">file</a>: <a title="java.io.File" id="3559">File</a>): <a title="Option[sbt.Path]" id="871">Option</a>[Path] =
+	{
+		<span class="keyword">val</span> <a title="java.lang.String" id="62550">pathString</a> = <a href="#22679" title="java.io.File">file</a>.<a title="()java.lang.String" id="9553">getCanonicalPath</a>
+		<span title="Option[sbt.Path]" class="keyword">if</span>(<a href="#62550" title="java.lang.String">pathString</a>.<a title="(java.lang.String)Boolean" id="5722">startsWith</a>(<a href="#22678" title="String">basePathString</a>))
+			<span id="10256"><a title="(sbt.Path)Some[sbt.Path]" id="275">Some</a></span>(<a href="#9500" title="(sbt.Path,String)sbt.Path">fromString</a>(<a href="#22677" title="sbt.Path">basePath</a>, <a href="#62550" title="java.lang.String">pathString</a>.<a title="(Int)java.lang.String" id="5735">substring</a>(<a href="#22678" title="String">basePathString</a>.<a title="()Int" id="5702">length</a>)))
+		<span class="keyword">else</span>
+			<a title="object None" id="488">None</a>
+	}
+	<span class="keyword">private</span>[sbt] <span class="keyword">def</span> <a title="(java.io.File,java.io.File)Option[String]" id="9505">relativize</a>(<a title="java.io.File" id="22675">baseFile</a>: <a title="java.io.File" id="3559">File</a>, <a title="java.io.File" id="22676">file</a>: <a title="java.io.File" id="3559">File</a>): <a title="Option[String]" id="871">Option</a>[String] =
+	{
+		<span class="keyword">val</span> <a title="java.lang.String" id="62554">pathString</a> = <a href="#22676" title="java.io.File">file</a>.<a title="()java.lang.String" id="9553">getCanonicalPath</a>
+		<a href="#9507" title="(java.io.File)Option[String]">baseFileString</a>(<a href="#22675" title="java.io.File">baseFile</a>) <a title="((String) =&gt; Option[String])Option[String]" id="10159">flatMap</a>
+		{
+			<a title="String" id="62558">baseString</a> =&gt;
+			{
+				<span title="Option[String]" class="keyword">if</span>(<a href="#62554" title="java.lang.String">pathString</a>.<a title="(java.lang.String)Boolean" id="5722">startsWith</a>(<a href="#62558" title="String">baseString</a>))
+					<span id="10256"><a title="(java.lang.String)Some[java.lang.String]" id="275">Some</a></span>(<a href="#62554" title="java.lang.String">pathString</a>.<a title="(Int)java.lang.String" id="5735">substring</a>(<a href="#62558" title="String">baseString</a>.<a title="()Int" id="5702">length</a>))
+				<span class="keyword">else</span>
+					<a title="object None" id="488">None</a>
+			}
+		}
+	}
+	<span class="keyword">private</span>[sbt] <span class="keyword">def</span> <a title="(sbt.Path)Option[String]" id="9506">basePathString</a>(<a title="sbt.Path" id="56203">basePath</a>: <a href="#6697" title="sbt.Path">Path</a>): <a title="Option[String]" id="871">Option</a>[String] = <a href="#9507" title="(java.io.File)Option[String]">baseFileString</a>(<a href="#56203" title="sbt.Path">basePath</a>.<a href="#9529" title="=&gt; java.io.File">asFile</a>)
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(java.io.File)Option[String]" id="9507">baseFileString</a>(<a title="java.io.File" id="62555">baseFile</a>: <a title="java.io.File" id="3559">File</a>): <a title="Option[String]" id="871">Option</a>[String] =
+	{
+		<span title="Option[String]" class="keyword">if</span>(<a href="#62555" title="java.io.File">baseFile</a>.<a title="()Boolean" id="9560">isDirectory</a>)
+		{
+			<span class="keyword">val</span> <a title="java.lang.String" id="62562">cp</a> = <a href="#62555" title="java.io.File">baseFile</a>.<a title="()java.lang.String" id="9553">getCanonicalPath</a>
+			<span id="5876"><a title="(Boolean)Unit" id="770">assert</a></span>(<a href="#62562" title="java.lang.String">cp</a>.<a title="()Int" id="5702">length</a> <a title="(Int)Boolean" id="3035">&gt;</a> <span title="Int(0)" class="int">0</span>)
+			<span title="Option[String]" class="keyword">if</span>(<a href="#62562" title="java.lang.String">cp</a>.<a title="(Int)Char" id="5703">charAt</a>(<a href="#62562" title="java.lang.String">cp</a>.<a title="()Int" id="5702">length</a> <a title="(Int)Int" id="3038">-</a> <span title="Int(1)" class="int">1</span>) <a title="(Char)Boolean" id="2908">==</a> <a title="object java.io.File" id="3560">File</a>.<a title="Char" id="9536">separatorChar</a>)
+				<span id="10256"><a title="(java.lang.String)Some[java.lang.String]" id="275">Some</a></span>(<a href="#62562" title="java.lang.String">cp</a>)
+			<span class="keyword">else</span>
+				<span id="10256"><a title="(java.lang.String)Some[java.lang.String]" id="275">Some</a></span>(<a href="#62562" title="java.lang.String">cp</a> <a title="(Any)java.lang.String" id="5683">+</a> <a title="object java.io.File" id="3560">File</a>.<a title="Char" id="9536">separatorChar</a>)
+		}
+		<span class="keyword">else</span>
+			<a title="object None" id="488">None</a>
+	}
+	<span class="keyword">def</span> <a title="(java.io.File)sbt.Path" id="9508">fromFile</a>(<a title="java.io.File" id="62583">file</a>: <a title="java.io.File" id="3559">File</a>): <a href="#6697" title="sbt.Path">Path</a> = <span title="sbt.ProjectDirectory" class="keyword">new</span> <a href="#6699" title="sbt.ProjectDirectory">ProjectDirectory</a>(<a href="#62583" title="java.io.File">file</a>)
+}
+
+<span class="comment">/** A path finder constructs a set of paths.  The set is evaluated by a call to the &lt;code&gt;get&lt;/code&gt;
+* method.  The set will be different for different calls to &lt;code&gt;get&lt;/code&gt; if the underlying filesystem
+* has changed.*/</span>
+<span class="keyword">sealed</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class PathFinder extends java.lang.Object with NotNull with ScalaObject" id="6703">PathFinder</a> <span class="keyword">extends</span> <a title="NotNull" id="187">NotNull</a>
+{
+	<span class="comment">/** The union of the paths found by this &lt;code&gt;PathFinder&lt;/code&gt; with the paths found by 'paths'.*/</span>
+	<span class="keyword">def</span> <a title="(sbt.PathFinder)sbt.PathFinder" id="9510">+++</a>(<a title="sbt.PathFinder" id="27373">paths</a>: <a href="#6703" title="sbt.PathFinder">PathFinder</a>): <a href="#6703" title="sbt.PathFinder">PathFinder</a> = <span title="sbt.Paths" class="keyword">new</span> <a href="#6708" title="sbt.Paths">Paths</a>(<a href="#6703" title="sbt.PathFinder" class="keyword">this</a>, <a href="#27373" title="sbt.PathFinder">paths</a>)
+	<span class="comment">/** Excludes all paths from &lt;code&gt;excludePaths&lt;/code&gt; from the paths selected by this &lt;code&gt;PathFinder&lt;/code&gt;.*/</span>
+	<span class="keyword">def</span> <a title="(sbt.PathFinder)sbt.PathFinder" id="9511">---</a>(<a title="sbt.PathFinder" id="62593">excludePaths</a>: <a href="#6703" title="sbt.PathFinder">PathFinder</a>): <a href="#6703" title="sbt.PathFinder">PathFinder</a> = <span title="sbt.ExcludePaths" class="keyword">new</span> <a href="#6709" title="sbt.ExcludePaths">ExcludePaths</a>(<a href="#6703" title="sbt.PathFinder" class="keyword">this</a>, <a href="#62593" title="sbt.PathFinder">excludePaths</a>)
+	<span class="comment">/** Constructs a new finder that selects all paths with a name that matches &lt;code&gt;filter&lt;/code&gt; and are
+	* descendents of paths selected by this finder.*/</span>
+	<span class="keyword">def</span> <a title="(sbt.FileFilter)sbt.PathFinder" id="9512">**</a>(<a title="sbt.FileFilter" id="33380">filter</a>: <a href="NameFilter.scala.html#6524" title="sbt.FileFilter">FileFilter</a>): <a href="#6703" title="sbt.PathFinder">PathFinder</a> = <span title="sbt.DescendentOrSelfPathFinder" class="keyword">new</span> <a href="#6706" title="sbt.DescendentOrSelfPathFinder">DescendentOrSelfPathFinder</a>(<a href="#6703" title="sbt.PathFinder" class="keyword">this</a>, <a href="#33380" title="sbt.FileFilter">filter</a>)
+	<span class="comment">/** Constructs a new finder that selects all paths with a name that matches &lt;code&gt;filter&lt;/code&gt; and are
+	* immediate children of paths selected by this finder.*/</span>
+	<span class="keyword">def</span> <a title="(sbt.FileFilter)sbt.PathFinder" id="9513">*</a>(<a title="sbt.FileFilter" id="62618">filter</a>: <a href="NameFilter.scala.html#6524" title="sbt.FileFilter">FileFilter</a>): <a href="#6703" title="sbt.PathFinder">PathFinder</a> = <span title="sbt.ChildPathFinder" class="keyword">new</span> <a href="#6707" title="sbt.ChildPathFinder">ChildPathFinder</a>(<a href="#6703" title="sbt.PathFinder" class="keyword">this</a>, <a href="#62618" title="sbt.FileFilter">filter</a>)
+	<span class="comment">/** Constructs a new finder that selects all paths with name &lt;code&gt;literal&lt;/code&gt; that are immediate children
+	* of paths selected by this finder.*/</span>
+	<span class="keyword">def</span> <a title="(String)sbt.PathFinder" id="9514">/</a> (<a title="String" id="21823">literal</a>: <a title="String" id="1751">String</a>): <a href="#6703" title="sbt.PathFinder">PathFinder</a> = <span title="sbt.ChildPathFinder" class="keyword">new</span> <a href="#6707" title="sbt.ChildPathFinder">ChildPathFinder</a>(<a href="#6703" title="sbt.PathFinder" class="keyword">this</a>, <span title="sbt.ExactFilter" class="keyword">new</span> <a href="NameFilter.scala.html#6533" title="sbt.ExactFilter">ExactFilter</a>(<a href="#21823" title="String">literal</a>))
+	<span class="comment">/** Constructs a new finder that selects all paths with name &lt;code&gt;literal&lt;/code&gt; that are immediate children
+	* of paths selected by this finder.*/</span>
+	<span class="keyword">final</span> <span class="keyword">def</span> <a title="(String)sbt.PathFinder" id="9515">\</a> (<a title="String" id="62629">literal</a>: <a title="String" id="1751">String</a>): <a href="#6703" title="sbt.PathFinder">PathFinder</a> = <a href="#6703" title="PathFinder.this.type" class="keyword">this</a> <a href="#9514" title="(String)sbt.PathFinder">/</a> <a href="#62629" title="String">literal</a>
+
+	<span class="comment">/** Makes the paths selected by this finder into base directories.
+	* @see Path.##
+	*/</span>
+	<span class="keyword">def</span> <a title="=&gt; sbt.PathFinder" id="9516">##</a> : <a href="#6703" title="sbt.PathFinder">PathFinder</a> = <span title="sbt.BasePathFinder" class="keyword">new</span> <a href="#6704" title="sbt.BasePathFinder">BasePathFinder</a>(<a href="#6703" title="sbt.PathFinder" class="keyword">this</a>)
+
+	<span class="comment">/** Selects all descendent paths with a name that matches &lt;code&gt;include&lt;/code&gt; and do not have an intermediate
+	* path with a name that matches &lt;code&gt;intermediateExclude&lt;/code&gt;.  Typical usage is:
+	*
+	* &lt;code&gt;descendentsExcept(&quot;*.jar&quot;, &quot;.svn&quot;)&lt;/code&gt;*/</span>
+	<span class="keyword">def</span> <a title="(sbt.FileFilter,sbt.FileFilter)sbt.PathFinder" id="9517">descendentsExcept</a>(<a title="sbt.FileFilter" id="27497">include</a>: <a href="NameFilter.scala.html#6524" title="sbt.FileFilter">FileFilter</a>, <a title="sbt.FileFilter" id="27498">intermediateExclude</a>: <a href="NameFilter.scala.html#6524" title="sbt.FileFilter">FileFilter</a>): <a href="#6703" title="sbt.PathFinder">PathFinder</a> =
+		(<a href="#6703" title="PathFinder.this.type" class="keyword">this</a> <a href="#9512" title="(sbt.FileFilter)sbt.PathFinder">**</a> <a href="#27497" title="sbt.FileFilter">include</a>) <a href="#9511" title="(sbt.PathFinder)sbt.PathFinder">---</a> (<a href="#6703" title="PathFinder.this.type" class="keyword">this</a> <a href="#9512" title="(sbt.FileFilter)sbt.PathFinder">**</a> <a href="#27498" title="sbt.FileFilter">intermediateExclude</a> <a href="#9512" title="(sbt.FileFilter)sbt.PathFinder">**</a> <a href="#27497" title="sbt.FileFilter">include</a>)
+	
+	<span class="comment">/** Evaluates this finder.  The set returned by this method will reflect the underlying filesystem at the
+	* time of calling.  If the filesystem changes, two calls to this method might be different.*/</span>
+	<span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; scala.collection.Set[sbt.Path]" id="9518">get</a>: scala.collection.<a title="scala.collection.Set[sbt.Path]" id="7387">Set</a>[Path] =
+	{
+		<span class="keyword">val</span> <a title="scala.collection.mutable.HashSet[sbt.Path]" id="62635">pathSet</a> = <span title="scala.collection.mutable.HashSet[sbt.Path]" class="keyword">new</span> <a title="scala.collection.mutable.HashSet[sbt.Path]" id="7909">HashSet</a>[Path]
+		<a href="#9519" title="(scala.collection.mutable.Set[sbt.Path])Unit">addTo</a>(<a href="#62635" title="scala.collection.mutable.HashSet[sbt.Path]">pathSet</a>)
+		<a href="#62635" title="scala.collection.mutable.HashSet[sbt.Path]">pathSet</a>.<a title="=&gt; scala.collection.Set[sbt.Path]" id="21535">readOnly</a>
+	}
+	<span class="keyword">private</span>[sbt] <span class="keyword">def</span> <a title="(scala.collection.mutable.Set[sbt.Path])Unit" id="9519">addTo</a>(<a title="scala.collection.mutable.Set[sbt.Path]" id="62462">pathSet</a>: <a title="scala.collection.mutable.Set[sbt.Path]" id="8158">Set</a>[Path])
+}
+<span class="keyword">private</span> <span class="keyword">class</span> <a title="class BasePathFinder extends sbt.PathFinder with ScalaObject" id="6704">BasePathFinder</a>(<span id="62631"><a title="sbt.PathFinder" id="62634">base</a></span>: <a href="#6703" title="sbt.PathFinder">PathFinder</a>) <span class="keyword">extends</span> <a href="#6703" title="sbt.PathFinder">PathFinder</a>
+{
+	<span class="keyword">private</span>[sbt] <span class="keyword">def</span> <a title="(scala.collection.mutable.Set[sbt.Path])Unit" id="62633">addTo</a>(<a title="scala.collection.mutable.Set[sbt.Path]" id="62638">pathSet</a>: <a title="scala.collection.mutable.Set[sbt.Path]" id="8158">Set</a>[Path])
+	{
+		<span class="keyword">for</span>(<span id="7256"><a title="((sbt.Path) =&gt; Unit)Unit" id="62640">path</a></span> &lt;- <a href="#62631" title="sbt.PathFinder">base</a>.<a href="#9518" title="=&gt; scala.collection.Set[sbt.Path]">get</a>)
+			<a href="#62638" title="scala.collection.mutable.Set[sbt.Path]">pathSet</a> <a title="(sbt.Path)Unit" id="21512">+=</a> (<a href="#62640" title="sbt.Path">path</a> <a href="#9521" title="=&gt; sbt.Path">##</a>)
+	}
+}
+<span class="keyword">private</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class FilterPath extends sbt.PathFinder with sbt.FileFilter with ScalaObject" id="6705">FilterPath</a> <span class="keyword">extends</span> <a href="#6703" title="sbt.PathFinder">PathFinder</a> <span class="keyword">with</span> <a href="NameFilter.scala.html#6524" title="sbt.FileFilter">FileFilter</a>
+{
+	<span class="keyword">def</span> <a title="=&gt; sbt.PathFinder" id="62603">parent</a>: <a href="#6703" title="sbt.PathFinder">PathFinder</a>
+	<span class="keyword">def</span> <a title="=&gt; sbt.FileFilter" id="62604">filter</a>: <a href="NameFilter.scala.html#6524" title="sbt.FileFilter">FileFilter</a>
+	<span class="keyword">final</span> <span class="keyword">def</span> <a title="(java.io.File)Boolean" id="62605">accept</a>(<a title="java.io.File" id="62645">file</a>: <a title="java.io.File" id="3559">File</a>) = <a href="#62604" title="=&gt; sbt.FileFilter">filter</a>.<a title="(java.io.File)Boolean" id="27500">accept</a>(<a href="#62645" title="java.io.File">file</a>)
+	
+	<span class="keyword">protected</span> <span class="keyword">def</span> <a title="(sbt.Path,scala.collection.mutable.Set[sbt.Path])Unit" id="62606">handlePath</a>(<a title="sbt.Path" id="62647">path</a>: <a href="#6697" title="sbt.Path">Path</a>, <a title="scala.collection.mutable.Set[sbt.Path]" id="62648">pathSet</a>: <a title="scala.collection.mutable.Set[sbt.Path]" id="8158">Set</a>[Path])
+	{
+		<span class="keyword">for</span>(<span id="7256"><a title="((java.io.File) =&gt; Unit)Unit" id="62652">matchedFile</a></span> &lt;- <a href="FileUtilities.scala.html#9481" title="(Array[java.io.File])Array[java.io.File]">wrapNull</a>(<a href="#62647" title="sbt.Path">path</a>.<a href="#9529" title="=&gt; java.io.File">asFile</a>.<a title="(java.io.FileFilter)Array[java.io.File]" id="9572">listFiles</a>(<a href="#6705" title="sbt.FilterPath" class="keyword">this</a>)))
+			<a href="#62648" title="scala.collection.mutable.Set[sbt.Path]">pathSet</a> <a title="(sbt.Path)Unit" id="21512">+=</a> <a href="#62647" title="sbt.Path">path</a> <a href="#9523" title="(String)sbt.Path">/</a> <a href="#62652" title="java.io.File">matchedFile</a>.<a title="()java.lang.String" id="9546">getName</a>
+	}
+}
+<span class="keyword">private</span> <span class="keyword">class</span> <a title="class DescendentOrSelfPathFinder extends sbt.FilterPath with ScalaObject" id="6706">DescendentOrSelfPathFinder</a>(<span class="keyword">val</span> <span id="62610"><span id="62609"><a title="sbt.PathFinder" id="62616">parent</a></span></span>: <a href="#6703" title="sbt.PathFinder">PathFinder</a>, <span class="keyword">val</span> <span id="62612"><span id="62611"><a title="sbt.FileFilter" id="62617">filter</a></span></span>: <a href="NameFilter.scala.html#6524" title="sbt.FileFilter">FileFilter</a>) <span class="keyword">extends</span> <a href="#6705" title="sbt.FilterPath">FilterPath</a>
+{
+	<span class="keyword">private</span>[sbt] <span class="keyword">def</span> <a title="(scala.collection.mutable.Set[sbt.Path])Unit" id="62614">addTo</a>(<a title="scala.collection.mutable.Set[sbt.Path]" id="62657">pathSet</a>: <a title="scala.collection.mutable.Set[sbt.Path]" id="8158">Set</a>[Path])
+	{
+		<span class="keyword">for</span>(<span id="7256"><a title="((sbt.Path) =&gt; Unit)Unit" id="62659">path</a></span> &lt;- <a href="#62609" title="=&gt; sbt.PathFinder">parent</a>.<a href="#9518" title="=&gt; scala.collection.Set[sbt.Path]">get</a>)
+		{
+			<span title="Unit" class="keyword">if</span>(<a href="#62605" title="(java.io.File)Boolean">accept</a>(<a href="#62659" title="sbt.Path">path</a>.<a href="#9529" title="=&gt; java.io.File">asFile</a>))
+				<a href="#62657" title="scala.collection.mutable.Set[sbt.Path]">pathSet</a> <a title="(sbt.Path)Unit" id="21512">+=</a> <a href="#62659" title="sbt.Path">path</a>
+			<a href="#62615" title="(sbt.Path,scala.collection.mutable.Set[sbt.Path])Unit">handlePathDescendent</a>(<a href="#62659" title="sbt.Path">path</a>, <a href="#62657" title="scala.collection.mutable.Set[sbt.Path]">pathSet</a>)
+		}
+	}
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Path,scala.collection.mutable.Set[sbt.Path])Unit" id="62615">handlePathDescendent</a>(<a title="sbt.Path" id="62661">path</a>: <a href="#6697" title="sbt.Path">Path</a>, <a title="scala.collection.mutable.Set[sbt.Path]" id="62662">pathSet</a>: <a title="scala.collection.mutable.Set[sbt.Path]" id="8158">Set</a>[Path])
+	{
+		<a href="#62606" title="(sbt.Path,scala.collection.mutable.Set[sbt.Path])Unit">handlePath</a>(<a href="#62661" title="sbt.Path">path</a>, <a href="#62662" title="scala.collection.mutable.Set[sbt.Path]">pathSet</a>)
+		<span class="keyword">for</span>(<span id="7256"><a title="((java.io.File) =&gt; Unit)Unit" id="62666">childDirectory</a></span> &lt;- <a href="FileUtilities.scala.html#9481" title="(Array[java.io.File])Array[java.io.File]">wrapNull</a>(<a href="#62661" title="sbt.Path">path</a>.<a href="#9529" title="=&gt; java.io.File">asFile</a>.<a title="(java.io.FileFilter)Array[java.io.File]" id="9572">listFiles</a>(<a href="NameFilter.scala.html#6530" title="object sbt.DirectoryFilter">DirectoryFilter</a>)))
+			<a href="#62615" title="(sbt.Path,scala.collection.mutable.Set[sbt.Path])Unit">handlePathDescendent</a>(<a href="#62661" title="sbt.Path">path</a> <a href="#9523" title="(String)sbt.Path">/</a> <a href="#62666" title="java.io.File">childDirectory</a>.<a title="()java.lang.String" id="9546">getName</a>, <a href="#62662" title="scala.collection.mutable.Set[sbt.Path]">pathSet</a>)
+	}
+}
+<span class="keyword">private</span> <span class="keyword">class</span> <a title="class ChildPathFinder extends sbt.FilterPath with ScalaObject" id="6707">ChildPathFinder</a>(<span class="keyword">val</span> <span id="62622"><span id="62621"><a title="sbt.PathFinder" id="62627">parent</a></span></span>: <a href="#6703" title="sbt.PathFinder">PathFinder</a>, <span class="keyword">val</span> <span id="62624"><span id="62623"><a title="sbt.FileFilter" id="62628">filter</a></span></span>: <a href="NameFilter.scala.html#6524" title="sbt.FileFilter">FileFilter</a>) <span class="keyword">extends</span> <a href="#6705" title="sbt.FilterPath">FilterPath</a>
+{
+	<span class="keyword">private</span>[sbt] <span class="keyword">def</span> <a title="(scala.collection.mutable.Set[sbt.Path])Unit" id="62626">addTo</a>(<a title="scala.collection.mutable.Set[sbt.Path]" id="62670">pathSet</a>: <a title="scala.collection.mutable.Set[sbt.Path]" id="8158">Set</a>[Path])
+	{
+		<span class="keyword">for</span>(<span id="7256"><a title="((sbt.Path) =&gt; Unit)Unit" id="62672">path</a></span> &lt;- <a href="#62621" title="=&gt; sbt.PathFinder">parent</a>.<a href="#9518" title="=&gt; scala.collection.Set[sbt.Path]">get</a>)
+			<a href="#62606" title="(sbt.Path,scala.collection.mutable.Set[sbt.Path])Unit">handlePath</a>(<a href="#62672" title="sbt.Path">path</a>, <a href="#62670" title="scala.collection.mutable.Set[sbt.Path]">pathSet</a>)
+	}
+}
+<span class="keyword">private</span> <span class="keyword">class</span> <a title="class Paths extends sbt.PathFinder with ScalaObject" id="6708">Paths</a>(<span id="62587"><a title="sbt.PathFinder" id="62591">a</a></span>: <a href="#6703" title="sbt.PathFinder">PathFinder</a>, <span id="62588"><a title="sbt.PathFinder" id="62592">b</a></span>: <a href="#6703" title="sbt.PathFinder">PathFinder</a>) <span class="keyword">extends</span> <a href="#6703" title="sbt.PathFinder">PathFinder</a>
+{
+	<span class="keyword">private</span>[sbt] <span class="keyword">def</span> <a title="(scala.collection.mutable.Set[sbt.Path])Unit" id="62590">addTo</a>(<a title="scala.collection.mutable.Set[sbt.Path]" id="62676">pathSet</a>: <a title="scala.collection.mutable.Set[sbt.Path]" id="8158">Set</a>[Path])
+	{
+		<a href="#62587" title="sbt.PathFinder">a</a>.<a href="#9519" title="(scala.collection.mutable.Set[sbt.Path])Unit">addTo</a>(<a href="#62676" title="scala.collection.mutable.Set[sbt.Path]">pathSet</a>)
+		<a href="#62588" title="sbt.PathFinder">b</a>.<a href="#9519" title="(scala.collection.mutable.Set[sbt.Path])Unit">addTo</a>(<a href="#62676" title="scala.collection.mutable.Set[sbt.Path]">pathSet</a>)
+	}
+}
+<span class="keyword">private</span> <span class="keyword">class</span> <a title="class ExcludePaths extends sbt.PathFinder with ScalaObject" id="6709">ExcludePaths</a>(<span id="62596"><a title="sbt.PathFinder" id="62600">include</a></span>: <a href="#6703" title="sbt.PathFinder">PathFinder</a>, <span id="62597"><a title="sbt.PathFinder" id="62601">exclude</a></span>: <a href="#6703" title="sbt.PathFinder">PathFinder</a>) <span class="keyword">extends</span> <a href="#6703" title="sbt.PathFinder">PathFinder</a>
+{
+	<span class="keyword">private</span>[sbt] <span class="keyword">def</span> <a title="(scala.collection.mutable.Set[sbt.Path])Unit" id="62599">addTo</a>(<a title="scala.collection.mutable.Set[sbt.Path]" id="62680">pathSet</a>: <a title="scala.collection.mutable.Set[sbt.Path]" id="8158">Set</a>[Path])
+	{
+		<span class="keyword">val</span> <a title="scala.collection.mutable.HashSet[sbt.Path]" id="62681">includeSet</a> = <span title="scala.collection.mutable.HashSet[sbt.Path]" class="keyword">new</span> <a title="scala.collection.mutable.HashSet[sbt.Path]" id="7909">HashSet</a>[Path]
+		<a href="#62596" title="sbt.PathFinder">include</a>.<a href="#9519" title="(scala.collection.mutable.Set[sbt.Path])Unit">addTo</a>(<a href="#62681" title="scala.collection.mutable.HashSet[sbt.Path]">includeSet</a>)
+		
+		<span class="keyword">val</span> <a title="scala.collection.mutable.HashSet[sbt.Path]" id="62682">excludeSet</a> = <span title="scala.collection.mutable.HashSet[sbt.Path]" class="keyword">new</span> <a title="scala.collection.mutable.HashSet[sbt.Path]" id="7909">HashSet</a>[Path]
+		<a href="#62597" title="sbt.PathFinder">exclude</a>.<a href="#9519" title="(scala.collection.mutable.Set[sbt.Path])Unit">addTo</a>(<a href="#62682" title="scala.collection.mutable.HashSet[sbt.Path]">excludeSet</a>)
+		
+		<a href="#62681" title="scala.collection.mutable.HashSet[sbt.Path]">includeSet</a> <a title="(Iterable[sbt.Path])Unit" id="21523">--=</a> <a href="#62682" title="scala.collection.mutable.HashSet[sbt.Path]">excludeSet</a>
+		<a href="#62680" title="scala.collection.mutable.Set[sbt.Path]">pathSet</a> <a title="(Iterable[sbt.Path])Unit" id="21514">++=</a> <a href="#62681" title="scala.collection.mutable.HashSet[sbt.Path]">includeSet</a>
+	}
+}
+        </pre>
+    </body>
+</html>

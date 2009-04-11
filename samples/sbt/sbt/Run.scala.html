@@ -1,0 +1,101 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>sbt/Run.scala</title>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* sbt -- Simple Build Tool
+ * Copyright 2008, 2009 Mark Harrah
+ */</span>
+<span class="keyword">package</span> sbt
+
+<span class="keyword">import</span> scala.tools.nsc.{interpreter, util, GenericRunnerCommand, InterpreterLoop, ObjectRunner, Settings}
+<span class="keyword">import</span> util.ClassPath
+<span class="keyword">import</span> java.net.URL
+
+<span class="comment">/** This module is an interface to starting the scala interpreter or runner.*/</span>
+<span class="keyword">object</span> <a title="object sbt.Run" id="6332">Run</a>
+{
+	<span class="comment">/** Starts an interactive scala interpreter session with the given classpath.*/</span>
+	<span class="keyword">def</span> <a title="(Iterable[sbt.Path],sbt.Logger)Option[String]" id="42918">console</a>(<a title="Iterable[sbt.Path]" id="42924">classpath</a>: <a title="Iterable[sbt.Path]" id="358">Iterable</a>[Path], <a title="sbt.Logger" id="42925">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>) =
+		<a href="#42922" title="(sbt.Logger)((scala.tools.nsc.Settings) =&gt; Option[String])Option[String]">createSettings</a>(<a href="#42925" title="sbt.Logger">log</a>)
+		{
+			(<a title="scala.tools.nsc.Settings" id="42987">settings</a>: <a title="scala.tools.nsc.Settings" id="11009">Settings</a>) =&gt;
+			{
+				<a href="#42987" title="scala.tools.nsc.Settings">settings</a>.<a title="=&gt; settings.StringSetting" id="11664">classpath</a>.<a title="(String)Unit" id="11680">value</a> = <a href="Path.scala.html#6701" title="object sbt.Path">Path</a>.<a href="Path.scala.html#9492" title="(Iterable[sbt.Path])String">makeString</a>(<a href="#42924" title="Iterable[sbt.Path]">classpath</a>)
+				<a href="#42925" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8352" title="(=&gt; String)Unit">info</a>(<span title="java.lang.String(&quot;Starting scala interpreter...&quot;)" class="string">&quot;Starting scala interpreter...&quot;</span>)
+				<a href="#42925" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8351" title="(=&gt; String)Unit">debug</a>(<span title="java.lang.String(&quot;  Classpath: &quot;)" class="string">&quot;  Classpath: &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#42987" title="scala.tools.nsc.Settings">settings</a>.<a title="=&gt; settings.StringSetting" id="11664">classpath</a>.<a title="=&gt; String" id="11679">value</a>)
+				<a href="#42925" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8352" title="(=&gt; String)Unit">info</a>(<span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+				<a href="Control.scala.html#6605" title="object sbt.Control">Control</a>.<a href="Control.scala.html#10189" title="(=&gt; String,sbt.Logger)(=&gt; Option[String])Option[String]">trapUnit</a>(<span title="java.lang.String(&quot;Error during session: &quot;)" class="string">&quot;Error during session: &quot;</span>, <a href="#42925" title="sbt.Logger">log</a>)
+				{
+					<span class="keyword">val</span> <a title="scala.tools.nsc.InterpreterLoop" id="42988">loop</a> = <a title="()scala.tools.nsc.InterpreterLoop" id="42993" class="keyword">new</a> <a title="scala.tools.nsc.InterpreterLoop" id="10595">InterpreterLoop</a>
+					<a href="#42919" title="(=&gt; Unit,sbt.Logger)Option[String]">executeTrapExit</a>(<a href="#42988" title="scala.tools.nsc.InterpreterLoop">loop</a>.<a title="(scala.tools.nsc.Settings)Unit" id="43024">main</a>(<a href="#42987" title="scala.tools.nsc.Settings">settings</a>), <a href="#42925" title="sbt.Logger">log</a>)
+				}
+			}
+		}
+	<span class="comment">/** Executes the given function, trapping calls to System.exit. */</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(=&gt; Unit,sbt.Logger)Option[String]" id="42919">executeTrapExit</a>(<a title="=&gt; Unit" id="43027">f</a>: =&gt; Unit, <a title="sbt.Logger" id="43028">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>): <a title="Option[String]" id="871">Option</a>[String] =
+	{
+		<a href="TrapExit.scala.html#43031" title="(=&gt; Unit,sbt.Logger)Either[Int,Unit]">TrapExit</a>(<a href="#43027" title="=&gt; Unit">f</a>, <a href="#43028" title="sbt.Logger">log</a>) <span title="Option[String]" class="keyword">match</span>
+		{
+			<span title="Option[String]" class="keyword">case</span> <a id="1">Left</a>(<a title="Int" id="43046">exitCode</a>) =&gt;
+			{
+				<span title="Option[String]" class="keyword">if</span>(<a href="#43046" title="Int">exitCode</a> <a title="(Int)Boolean" id="3031">==</a> <span title="Int(0)" class="int">0</span>)
+				{
+					<a href="#43028" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8351" title="(=&gt; String)Unit">debug</a>(<span title="java.lang.String(&quot;Exited with code 0&quot;)" class="string">&quot;Exited with code 0&quot;</span>)
+					<a title="object None" id="488">None</a>
+				}
+				<span class="keyword">else</span>
+					<span id="10256"><a title="(java.lang.String)Some[java.lang.String]" id="275">Some</a></span>(<span title="java.lang.String(&quot;Nonzero exit code: &quot;)" class="string">&quot;Nonzero exit code: &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#43046" title="Int">exitCode</a>)
+			}
+			<span title="None.type" class="keyword">case</span> _ =&gt; <a title="object None" id="488">None</a>
+		}
+	}
+	<span class="comment">/** Runs the class 'mainClass' using the given classpath and options using the scala runner.*/</span>
+	<span class="keyword">def</span> <a title="(String,Iterable[sbt.Path],Seq[String],sbt.Logger)Option[String]" id="42920">run</a>(<a title="String" id="43049">mainClass</a>: <a title="String" id="1751">String</a>, <a title="Iterable[sbt.Path]" id="43050">classpath</a>: <a title="Iterable[sbt.Path]" id="358">Iterable</a>[Path], <a title="Seq[String]" id="43051">options</a>: <a title="Seq[String]" id="715">Seq</a>[String], <a title="sbt.Logger" id="43052">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>) =
+	{
+		<a href="#42922" title="(sbt.Logger)((scala.tools.nsc.Settings) =&gt; Option[String])Option[String]">createSettings</a>(<a href="#43052" title="sbt.Logger">log</a>)
+		{
+			(<a title="scala.tools.nsc.Settings" id="43055">settings</a>: <a title="scala.tools.nsc.Settings" id="11009">Settings</a>) =&gt;
+			{
+				<a href="Control.scala.html#6605" title="object sbt.Control">Control</a>.<a href="Control.scala.html#10189" title="(=&gt; String,sbt.Logger)(=&gt; Option[String])Option[String]">trapUnit</a>(<span title="java.lang.String(&quot;Error during run: &quot;)" class="string">&quot;Error during run: &quot;</span>, <a href="#43052" title="sbt.Logger">log</a>)
+				{
+					<span class="keyword">val</span> <a title="List[java.net.URL]" id="43056">classpathURLs</a> = <a href="#43050" title="Iterable[sbt.Path]">classpath</a>.<a title="((sbt.Path) =&gt; java.net.URL)Iterable[java.net.URL]" id="7246">map</a>(<a href="#43061" title="sbt.Path">_</a>.<a href="Path.scala.html#9530" title="=&gt; java.net.URL">asURL</a>).<a title="=&gt; List[java.net.URL]" id="7279">toList</a>
+					<span class="keyword">val</span> <a title="Array[java.lang.String]" id="43057">bootClasspath</a> = <a href="FileUtilities.scala.html#6351" title="object sbt.FileUtilities">FileUtilities</a>.<a href="FileUtilities.scala.html#9394" title="(String)Array[java.lang.String]">pathSplit</a>(<a href="#43055" title="scala.tools.nsc.Settings">settings</a>.<a title="=&gt; settings.StringSetting" id="11694">bootclasspath</a>.<a title="=&gt; String" id="11679">value</a>)
+					<span class="keyword">val</span> <a title="Array[java.net.URL]" id="43058">extraURLs</a> =
+						<span class="keyword">for</span>(<span id="6989"><span id="6986"><span id="43063"><a title="((java.lang.String) =&gt; java.net.URL)Array[java.net.URL]" id="43068">pathString</a></span></span></span> &lt;- <a href="#43057" title="Array[java.lang.String]">bootClasspath</a> <span class="keyword">if</span> <a href="#43063" title="java.lang.String">pathString</a>.<a title="()Int" id="5702">length</a> <a title="(Int)Boolean" id="3035">&gt;</a> <span title="Int(0)" class="int">0</span>) <span class="keyword">yield</span>
+							(<span title="java.io.File" class="keyword">new</span> java.io.<a title="java.io.File" id="3559">File</a>(<a href="#43068" title="java.lang.String">pathString</a>)).<a title="()java.net.URI" id="9556">toURI</a>.<a title="()java.net.URL" id="21245">toURL</a>
+					<a href="#43052" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8352" title="(=&gt; String)Unit">info</a>(<span title="java.lang.String(&quot;Running &quot;)" class="string">&quot;Running &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#43049" title="String">mainClass</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; ...&quot;)" class="string">&quot; ...&quot;</span>)
+					<a href="#43052" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8351" title="(=&gt; String)Unit">debug</a>(<span title="java.lang.String(&quot;  Classpath:&quot;)" class="string">&quot;  Classpath:&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> (<a href="#43056" title="List[java.net.URL]">classpathURLs</a> <a title="(Iterable[java.net.URL])List[java.net.URL]" id="6814">++</a> <a href="#43058" title="Array[java.net.URL]">extraURLs</a>).<a title="(String,String,String)String" id="7282">mkString</a>(<span title="java.lang.String(&quot;\012\011&quot;)" class="string">&quot;\n\t&quot;</span>, <span title="java.lang.String(&quot;\012\011&quot;)" class="string">&quot;\n\t&quot;</span>,<span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>))
+					<a href="#42919" title="(=&gt; Unit,sbt.Logger)Option[String]">executeTrapExit</a>( <a title="object scala.tools.nsc.ObjectRunner" id="11148">ObjectRunner</a>.<a title="(List[java.net.URL],String,Seq[String])Unit" id="43089">run</a>(<a href="#43056" title="List[java.net.URL]">classpathURLs</a> <a title="(Iterable[java.net.URL])List[java.net.URL]" id="6814">++</a> <a href="#43058" title="Array[java.net.URL]">extraURLs</a>, <a href="#43049" title="String">mainClass</a>, <a href="#43051" title="Seq[String]">options</a>.<a title="=&gt; List[String]" id="7279">toList</a>), <a href="#43052" title="sbt.Logger">log</a> )
+				}
+			}
+		}
+	}
+	<span class="comment">/** If mainClassOption is None, then the interactive scala interpreter is started with the given classpath.
+	* Otherwise, the class wrapped by Some is run using the scala runner with the given classpath and
+	* options. */</span>
+	<span class="keyword">def</span> <a title="(Option[String],Iterable[sbt.Path],Seq[String],sbt.Logger)Option[String]" id="42921">apply</a>(<a title="Option[String]" id="43096">mainClassOption</a>: <a title="Option[String]" id="871">Option</a>[String], <a title="Iterable[sbt.Path]" id="43097">classpath</a>: <a title="Iterable[sbt.Path]" id="358">Iterable</a>[Path], <a title="Seq[String]" id="43098">options</a>: <a title="Seq[String]" id="715">Seq</a>[String], <a title="sbt.Logger" id="43099">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>) =
+	{
+		<a href="#43096" title="Option[String]">mainClassOption</a> <span title="Option[String]" class="keyword">match</span>
+		{
+			<span title="Option[String]" class="keyword">case</span> <a id="1">Some</a>(<a title="String" id="43101">mainClass</a>) =&gt; <a href="#42920" title="(String,Iterable[sbt.Path],Seq[String],sbt.Logger)Option[String]">run</a>(<a href="#43101" title="String">mainClass</a>, <a href="#43097" title="Iterable[sbt.Path]">classpath</a>, <a href="#43098" title="Seq[String]">options</a>, <a href="#43099" title="sbt.Logger">log</a>)
+			<span title="Option[String]" class="keyword">case</span> <a title="object None" id="488">None</a> =&gt; <a href="#42918" title="(Iterable[sbt.Path],sbt.Logger)Option[String]">console</a>(<a href="#43097" title="Iterable[sbt.Path]">classpath</a>, <a href="#43099" title="sbt.Logger">log</a>)
+		}
+	}
+	<span class="comment">/** Create a settings object and execute the provided function if the settings are created ok.*/</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Logger)((scala.tools.nsc.Settings) =&gt; Option[String])Option[String]" id="42922">createSettings</a>(<a title="sbt.Logger" id="42927">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>)(<a title="(scala.tools.nsc.Settings) =&gt; Option[String]" id="42928">f</a>: Settings =&gt; Option[String]) =
+	{
+		<span class="keyword">val</span> <a title="scala.tools.nsc.GenericRunnerCommand" id="42930">command</a> = <a title="(List[String],(String) =&gt; Unit)scala.tools.nsc.GenericRunnerCommand" id="42936" class="keyword">new</a> <a title="scala.tools.nsc.GenericRunnerCommand" id="11132">GenericRunnerCommand</a>(<a title="object Nil" id="299">Nil</a>, <a title="String" id="42961">message</a> =&gt; <a href="#42927" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8354" title="(=&gt; String)Unit">error</a>(<a href="#42961" title="String">message</a>))
+		<span title="Option[String]" class="keyword">if</span>(<a href="#42930" title="scala.tools.nsc.GenericRunnerCommand">command</a>.<a title="=&gt; Boolean" id="11966">ok</a>)
+			<a href="#42928" title="(scala.tools.nsc.Settings)Option[String]" id="7221">f</a>(<a href="#42930" title="scala.tools.nsc.GenericRunnerCommand">command</a>.<a title="=&gt; scala.tools.nsc.GenericRunnerSettings" id="42932">settings</a>)
+		<span class="keyword">else</span>
+			<span id="10256"><a title="(java.lang.String)Some[java.lang.String]" id="275">Some</a></span>(<a href="#42930" title="scala.tools.nsc.GenericRunnerCommand">command</a>.<a title="=&gt; java.lang.String" id="42947">usageMsg</a>)
+	}
+}
+        </pre>
+    </body>
+</html>

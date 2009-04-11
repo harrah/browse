@@ -1,0 +1,55 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>sbt/ExitHook.scala</title>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* sbt -- Simple Build Tool
+ * Copyright 2009  Mark Harrah
+ */</span>
+<span class="keyword">package</span> sbt
+
+<span class="comment">/** Defines a function to call as sbt exits.*/</span>
+<span class="keyword">trait</span> <a title="trait ExitHook extends java.lang.Object with NotNull" id="6595">ExitHook</a> <span class="keyword">extends</span> <a title="NotNull" id="187">NotNull</a>
+{
+	<span class="comment">/** Provides a name for this hook to be used to provide feedback to the user. */</span>
+	<span class="keyword">def</span> <a title="=&gt; String" id="55353">name</a>: <a title="String" id="1751">String</a>
+	<span class="comment">/** Subclasses should implement this method, which is called when this hook is executed. */</span>
+	<span class="keyword">def</span> <a title="()Unit" id="55354">runBeforeExiting</a>(): <a title="Unit" id="2059">Unit</a>
+}
+
+<span class="keyword">object</span> <a title="object sbt.ExitHooks" id="6596">ExitHooks</a>
+{
+	<span class="comment">/** This is a list of hooks to call when sbt is finished executing.*/</span>
+	<span class="keyword">private</span> <span class="keyword">val</span> <span id="52690"><a title="scala.collection.mutable.HashSet[sbt.ExitHook]" id="52689">exitHooks</a></span> = <span title="scala.collection.mutable.HashSet[sbt.ExitHook]" class="keyword">new</span> scala.collection.mutable.<a title="scala.collection.mutable.HashSet[sbt.ExitHook]" id="7909">HashSet</a>[ExitHook]
+	<span class="comment">/** Adds a hook to call before sbt exits. */</span>
+	<span class="keyword">private</span>[sbt] <span class="keyword">def</span> <a title="(sbt.ExitHook)Unit" id="52691">register</a>(<a title="sbt.ExitHook" id="55358">hook</a>: <a href="#6595" title="sbt.ExitHook">ExitHook</a>) { <a href="#52689" title="=&gt; scala.collection.mutable.HashSet[sbt.ExitHook]">exitHooks</a> <a title="(sbt.ExitHook)Unit" id="21760">+=</a> <a href="#55358" title="sbt.ExitHook">hook</a> }
+	<span class="comment">/** Removes a hook. */</span>
+	<span class="keyword">private</span>[sbt] <span class="keyword">def</span> <a title="(sbt.ExitHook)Unit" id="52692">unregister</a>(<a title="sbt.ExitHook" id="55360">hook</a>: <a href="#6595" title="sbt.ExitHook">ExitHook</a>) { <a href="#52689" title="=&gt; scala.collection.mutable.HashSet[sbt.ExitHook]">exitHooks</a> <a title="(sbt.ExitHook)Unit" id="21761">-=</a> <a href="#55360" title="sbt.ExitHook">hook</a> }
+	<span class="comment">/** Calls each registered exit hook, trapping any exceptions so that each hook is given a chance to run. */</span>
+	<span class="keyword">private</span>[sbt] <span class="keyword">def</span> <a title="(sbt.Logger)Unit" id="52693">runExitHooks</a>(<a title="sbt.Logger" id="52694">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>)
+	{
+		<span class="keyword">for</span>(<span id="6839"><a title="((sbt.ExitHook) =&gt; Unit)Unit" id="55364">hook</a></span> &lt;- <a href="#52689" title="=&gt; scala.collection.mutable.HashSet[sbt.ExitHook]">exitHooks</a>.<a title="=&gt; List[sbt.ExitHook]" id="7279">toList</a>)
+		{
+			<span class="keyword">try</span>
+			{
+				<a href="#52694" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8351" title="(=&gt; String)Unit">debug</a>(<span title="java.lang.String(&quot;Running exit hook '&quot;)" class="string">&quot;Running exit hook '&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#55364" title="sbt.ExitHook">hook</a>.<a href="#55353" title="=&gt; String">name</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;'...&quot;)" class="string">&quot;'...&quot;</span>)
+				<a href="#55364" title="sbt.ExitHook">hook</a>.<a href="#55354" title="()Unit">runBeforeExiting</a>()
+			}
+			<span class="keyword">catch</span>
+			{
+				<span title="Unit" class="keyword">case</span> <a title="java.lang.Throwable" id="55365">e</a> =&gt;
+				{
+					<a href="#52694" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8350" title="(=&gt; Throwable)Unit">trace</a>(<a href="#55365" title="java.lang.Throwable">e</a>);
+					<a href="#52694" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8354" title="(=&gt; String)Unit">error</a>(<span title="java.lang.String(&quot;Error running exit hook '&quot;)" class="string">&quot;Error running exit hook '&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#55364" title="sbt.ExitHook">hook</a>.<a href="#55353" title="=&gt; String">name</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;': &quot;)" class="string">&quot;': &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#55365" title="java.lang.Throwable">e</a>.<a title="()java.lang.String" id="9277">toString</a>)
+				}
+			}
+		}
+	}
+}
+        </pre>
+    </body>
+</html>

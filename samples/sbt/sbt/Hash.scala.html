@@ -1,0 +1,91 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>sbt/Hash.scala</title>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* sbt -- Simple Build Tool
+ * Copyright 2009 Mark Harrah
+ */</span>
+<span class="keyword">package</span> sbt
+
+<span class="keyword">import</span> java.io.{ByteArrayInputStream, File, InputStream}
+
+<span class="keyword">object</span> <a title="object sbt.Hash" id="6338">Hash</a>
+{
+	<span class="keyword">private</span> <span class="keyword">val</span> <span id="22696"><a title="Int" id="22695">BufferSize</a></span> = <span title="Int(8192)" class="int">8192</span>
+	<span class="keyword">def</span> <a title="(Array[Byte])String" id="22697">toHex</a>(<a title="Array[Byte]" id="22763">bytes</a>: <a title="Array[Byte]" id="1003">Array</a>[Byte]): <a title="String" id="1751">String</a> =
+	{
+		<span class="keyword">val</span> <a title="StringBuilder" id="43106">buffer</a> = <a title="(Int)StringBuilder" id="9299" class="keyword">new</a> <a title="StringBuilder" id="1339">StringBuilder</a>(<a href="#22763" title="Array[Byte]">bytes</a>.<a title="=&gt; Int" id="6981">length</a> <a title="(Int)Int" id="3039">*</a> <span title="Int(2)" class="int">2</span>)
+		<span class="keyword">for</span>(<span id="43126"><a title="((Int) =&gt; Unit)Unit" id="43146">i</a></span> &lt;- <span id="6006"><a title="implicit scala.Predef.intWrapper : (Int)scala.runtime.RichInt" id="770" class="int">0</a></span> <a title="(Int)Range" id="20655">until</a> <a href="#22763" title="Array[Byte]">bytes</a>.<a title="=&gt; Int" id="6981">length</a>)
+		{
+			<span class="keyword">val</span> <a title="Byte" id="43147">b</a> = <a href="#22763" title="(Int)Byte" id="6982">bytes</a>(<a href="#43146" title="Int">i</a>)
+			<span class="keyword">val</span> <a title="Int" id="43148">bi</a>: <a title="Int" id="2296">Int</a> = <span title="Int" class="keyword">if</span>(<a href="#43147" title="Byte">b</a> <a title="(Int)Boolean" id="2706">&lt;</a> <span title="Int(0)" class="int">0</span>) <a href="#43147" title="Byte">b</a> <a title="(Int)Int" id="2710">+</a> <span title="Int(256)" class="int">256</span> <span class="keyword">else</span> <span id="6072"><a href="#43147" title="implicit scala.Predef.byte2int : (Byte)Int" id="770">b</a></span>
+			<a href="#43106" title="StringBuilder">buffer</a> <a title="(Char)StringBuilder" id="9324">append</a> <a href="#22703" title="(Byte)Char">toHex</a>((<a href="#43148" title="Int">bi</a> <a title="(Int)Int" id="2982">&gt;&gt;&gt;</a> <span title="Int(4)" class="int">4</span>).<a title="Byte" id="3393">asInstanceOf</a>[<a title="Byte" id="2281">Byte</a>])
+			<a href="#43106" title="StringBuilder">buffer</a> <a title="(Char)StringBuilder" id="9324">append</a> <a href="#22703" title="(Byte)Char">toHex</a>((<a href="#43148" title="Int">bi</a> <a title="(Int)Int" id="3043">&amp;</a> <span title="Int(15)" class="int">0x0F</span>).<a title="Byte" id="3393">asInstanceOf</a>[<a title="Byte" id="2281">Byte</a>])
+		}
+		<a href="#43106" title="StringBuilder">buffer</a>.<a title="()String" id="9350">toString</a>
+	}
+	<span class="keyword">def</span> <a title="(String)Array[Byte]" id="22698">fromHex</a>(<a title="String" id="22706">hex</a>: <a title="String" id="1751">String</a>): <a title="Array[Byte]" id="1003">Array</a>[Byte] =
+	{
+		<span id="5881"><a title="(Boolean,Any)Unit" id="770">require</a></span>((<a href="#22706" title="String">hex</a>.<a title="()Int" id="5702">length</a> <a title="(Int)Int" id="3043">&amp;</a> <span title="Int(1)" class="int">1</span>) <a title="(Int)Boolean" id="3031">==</a> <span title="Int(0)" class="int">0</span>, <span title="java.lang.String(&quot;Hex string must have length 2n.&quot;)" class="string">&quot;Hex string must have length 2n.&quot;</span>)
+		<span class="keyword">val</span> <a title="Array[Byte]" id="43180">array</a> = <span title="Array[Byte]" class="keyword">new</span> <a title="Array[Byte]" id="1003">Array</a>[Byte](<a href="#22706" title="String">hex</a>.<a title="()Int" id="5702">length</a> <a title="(Int)Int" id="2984">&gt;&gt;</a> <span title="Int(1)" class="int">1</span>)
+		<span class="keyword">for</span>(<span id="43126"><a title="((Int) =&gt; Unit)Unit" id="43202">i</a></span> &lt;- <span id="6006"><a title="implicit scala.Predef.intWrapper : (Int)scala.runtime.RichInt" id="770" class="int">0</a></span> <a title="(Int)Range" id="20655">until</a> <a href="#22706" title="String">hex</a>.<a title="()Int" id="5702">length</a> <a title="(Int)Range" id="43125">by</a> <span title="Int(2)" class="int">2</span>)
+		{
+			<span class="keyword">val</span> <a title="Char" id="43203">c1</a> = <a href="#22706" title="String">hex</a>.<a title="(Int)Char" id="5703">charAt</a>(<a href="#43202" title="Int">i</a>)
+			<span class="keyword">val</span> <a title="Char" id="43204">c2</a> = <a href="#22706" title="String">hex</a>.<a title="(Int)Char" id="5703">charAt</a>(<a href="#43202" title="Int">i</a><a title="(Int)Int" id="3037">+</a><span title="Int(1)" class="int">1</span>)
+			<a href="#43180" title="Array[Byte]">array</a>(<a href="#43202" title="Int">i</a> <a title="(Int)Int" id="2984">&gt;&gt;</a> <span title="Int(1)" class="int">1</span>) = ((<a href="#22704" title="(Char)Int">fromHex</a>(<a href="#43203" title="Char">c1</a>) <a title="(Int)Int" id="2980">&lt;&lt;</a> <span title="Int(4)" class="int">4</span>) <a title="(Int)Int" id="3042">|</a> <a href="#22704" title="(Char)Int">fromHex</a>(<a href="#43204" title="Char">c2</a>)).<a title="Byte" id="3393">asInstanceOf</a>[<a title="Byte" id="2281">Byte</a>]
+		}
+		<a href="#43180" title="Array[Byte]">array</a>
+	}
+	<span class="comment">/** Calculates the SHA-1 hash of the given String.*/</span>
+	<span class="keyword">def</span> <a title="(String,sbt.Logger)Either[String,Array[Byte]]" id="22699">apply</a>(<a title="String" id="33305">s</a>: <a title="String" id="1751">String</a>, <a title="sbt.Logger" id="33306">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>): <a title="Either[String,Array[Byte]]" id="322">Either</a>[String, Array[Byte]] = <a href="#22702" title="(java.io.InputStream,sbt.Logger)Either[String,Array[Byte]]">apply</a>(<span title="java.io.ByteArrayInputStream" class="keyword">new</span> <a title="java.io.ByteArrayInputStream" id="3448">ByteArrayInputStream</a>(<a href="#33305" title="String">s</a>.<a title="(java.lang.String)Array[Byte]" id="5711">getBytes</a>(<span title="java.lang.String(&quot;UTF-8&quot;)" class="string">&quot;UTF-8&quot;</span>)), <a href="#33306" title="sbt.Logger">log</a>)
+	<span class="comment">/** Calculates the SHA-1 hash of the given file.*/</span>
+	<span class="keyword">def</span> <a title="(sbt.Path,sbt.Logger)Either[String,Array[Byte]]" id="22700">apply</a>(<a title="sbt.Path" id="33303">path</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>, <a title="sbt.Logger" id="33304">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>): <a title="Either[String,Array[Byte]]" id="322">Either</a>[String, Array[Byte]] = <a href="#22701" title="(java.io.File,sbt.Logger)Either[String,Array[Byte]]">apply</a>(<a href="#33303" title="sbt.Path">path</a>.<a href="Path.scala.html#9529" title="=&gt; java.io.File">asFile</a>, <a href="#33304" title="sbt.Logger">log</a>)
+	<span class="comment">/** Calculates the SHA-1 hash of the given file.*/</span>
+	<span class="keyword">def</span> <a title="(java.io.File,sbt.Logger)Either[String,Array[Byte]]" id="22701">apply</a>(<a title="java.io.File" id="33301">file</a>: <a title="java.io.File" id="3559">File</a>, <a title="sbt.Logger" id="33302">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>): <a title="Either[String,Array[Byte]]" id="322">Either</a>[String, Array[Byte]] =
+		<a href="FileUtilities.scala.html#6351" title="object sbt.FileUtilities">FileUtilities</a>.<a href="FileUtilities.scala.html#9469" title="(java.io.File,sbt.Logger)((java.io.InputStream) =&gt; Either[String,Array[Byte]])Either[String,Array[Byte]]">readStreamValue</a>(<a href="#33301" title="java.io.File">file</a>, <a href="#33302" title="sbt.Logger">log</a>) { <a title="java.io.InputStream" id="43246">stream</a> =&gt; <a href="#22702" title="(java.io.InputStream,sbt.Logger)Either[String,Array[Byte]]">apply</a>(<a href="#43246" title="java.io.InputStream">stream</a>, <a href="#33302" title="sbt.Logger">log</a>) }
+	<span class="comment">/** Calculates the SHA-1 hash of the given stream, closing it when finished.*/</span>
+	<span class="keyword">def</span> <a title="(java.io.InputStream,sbt.Logger)Either[String,Array[Byte]]" id="22702">apply</a>(<a title="java.io.InputStream" id="33299">stream</a>: <a title="java.io.InputStream" id="3634">InputStream</a>, <a title="sbt.Logger" id="33300">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>): <a title="Either[String,Array[Byte]]" id="322">Either</a>[String, Array[Byte]] =
+	{
+		<span class="keyword">import</span> java.security.{MessageDigest, DigestInputStream}
+		<span class="keyword">val</span> <a title="java.security.MessageDigest" id="43249">digest</a> = <a title="object java.security.MessageDigest" id="4550">MessageDigest</a>.<a title="(java.lang.String)java.security.MessageDigest" id="43254">getInstance</a>(<span title="java.lang.String(&quot;SHA&quot;)" class="string">&quot;SHA&quot;</span>)
+		<a href="Control.scala.html#6605" title="object sbt.Control">Control</a>.<a href="Control.scala.html#10186" title="(=&gt; String,sbt.Logger)(=&gt; Either[String,Array[Byte]])(=&gt; Unit)Either[String,Array[Byte]]">trapAndFinally</a>(<span title="java.lang.String(&quot;Error computing digest: &quot;)" class="string">&quot;Error computing digest: &quot;</span>, <a href="#33300" title="sbt.Logger">log</a>)
+		{
+			<span class="keyword">val</span> <a title="java.security.DigestInputStream" id="43325">dis</a> = <span title="java.security.DigestInputStream" class="keyword">new</span> <a title="java.security.DigestInputStream" id="4840">DigestInputStream</a>(<a href="#33299" title="java.io.InputStream">stream</a>, <a href="#43249" title="java.security.MessageDigest">digest</a>)
+			<span class="keyword">val</span> <a title="Array[Byte]" id="43326">buffer</a> = <span title="Array[Byte]" class="keyword">new</span> <a title="Array[Byte]" id="1003">Array</a>[Byte](<a href="#22695" title="=&gt; Int">BufferSize</a>)
+			<a href="#43327" title="Unit" class="keyword">while</a>(<a href="#43325" title="java.security.DigestInputStream">dis</a>.<a title="(Array[Byte])Int" id="43339">read</a>(<a href="#43326" title="Array[Byte]">buffer</a>) <a title="(Int)Boolean" id="3036">&gt;=</a> <span title="Int(0)" class="int">0</span>) <span title="Unit">{</span>}
+			<a href="#43325" title="java.security.DigestInputStream">dis</a>.<a title="()Unit" id="43343">close</a>()
+			<span id="29414"><a title="(Array[Byte])Right[Nothing,Array[Byte]]" id="476">Right</a></span>(<a href="#43249" title="java.security.MessageDigest">digest</a>.<a title="()Array[Byte]" id="43262">digest</a>)
+		}
+		{ <a href="#33299" title="java.io.InputStream">stream</a>.<a title="()Unit" id="22803">close</a>() }
+	}
+
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(Byte)Char" id="22703">toHex</a>(<a title="Byte" id="43174">b</a>: <a title="Byte" id="2281">Byte</a>): <a title="Char" id="2291">Char</a> =
+	{
+		<span id="5881"><a title="(Boolean,Any)Unit" id="770">require</a></span>(<a href="#43174" title="Byte">b</a> <a title="(Int)Boolean" id="2709">&gt;=</a> <span title="Int(0)" class="int">0</span> <a title="(Boolean)Boolean" id="2641">&amp;&amp;</a> <a href="#43174" title="Byte">b</a> <a title="(Int)Boolean" id="2707">&lt;=</a> <span title="Int(15)" class="int">15</span>, <span title="java.lang.String(&quot;Byte &quot;)" class="string">&quot;Byte &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#43174" title="Byte">b</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; was not between 0 and 15&quot;)" class="string">&quot; was not between 0 and 15&quot;</span>)
+		<span title="Char" class="keyword">if</span>(<a href="#43174" title="Byte">b</a> <a title="(Int)Boolean" id="2706">&lt;</a> <span title="Int(10)" class="int">10</span>)
+			(<span title="Char('0')" class="char">'0'</span>.<a title="Int" id="3393">asInstanceOf</a>[<a title="Int" id="2296">Int</a>] <a title="(Byte)Int" id="2995">+</a> <a href="#43174" title="Byte">b</a>).<a title="Char" id="3393">asInstanceOf</a>[<a title="Char" id="2291">Char</a>]
+		<span class="keyword">else</span>
+			(<span title="Char('a')" class="char">'a'</span>.<a title="Int" id="3393">asInstanceOf</a>[<a title="Int" id="2296">Int</a>] <a title="(Int)Int" id="3037">+</a> (<a href="#43174" title="Byte">b</a><a title="(Int)Int" id="2711">-</a><span title="Int(10)" class="int">10</span>)).<a title="Char" id="3393">asInstanceOf</a>[<a title="Char" id="2291">Char</a>]
+	}
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(Char)Int" id="22704">fromHex</a>(<a title="Char" id="43225">c</a>: <a title="Char" id="2291">Char</a>): <a title="Int" id="2296">Int</a> =
+	{
+		<span class="keyword">val</span> <a title="Int" id="43375">b</a> =
+			<span title="Int" class="keyword">if</span>(<a href="#43225" title="Char">c</a> <a title="(Char)Boolean" id="2913">&gt;=</a> <span title="Char('0')" class="char">'0'</span> <a title="(Boolean)Boolean" id="2641">&amp;&amp;</a> <a href="#43225" title="Char">c</a> <a title="(Char)Boolean" id="2911">&lt;=</a> <span title="Char('9')" class="char">'9'</span>)
+				(<a href="#43225" title="Char">c</a> <a title="(Char)Int" id="2915">-</a> <span title="Char('0')" class="char">'0'</span>)
+			<span class="keyword">else</span> <span title="Int" class="keyword">if</span>(<a href="#43225" title="Char">c</a> <a title="(Char)Boolean" id="2913">&gt;=</a> <span title="Char('a')" class="char">'a'</span> <a title="(Boolean)Boolean" id="2641">&amp;&amp;</a> <a href="#43225" title="Char">c</a> <a title="(Char)Boolean" id="2911">&lt;=</a> <span title="Char('f')" class="char">'f'</span>)
+				(<a href="#43225" title="Char">c</a> <a title="(Char)Int" id="2915">-</a> <span title="Char('a')" class="char">'a'</span>) <a title="(Int)Int" id="3037">+</a> <span title="Int(10)" class="int">10</span>
+			<span class="keyword">else</span> <span title="Int" class="keyword">if</span>(<a href="#43225" title="Char">c</a> <a title="(Char)Boolean" id="2913">&gt;=</a> <span title="Char('A')" class="char">'A'</span> <a title="(Boolean)Boolean" id="2641">&amp;&amp;</a> <a href="#43225" title="Char">c</a> <a title="(Char)Boolean" id="2911">&lt;=</a> <span title="Char('F')" class="char">'F'</span>)
+				(<a href="#43225" title="Char">c</a> <a title="(Char)Int" id="2915">-</a> <span title="Char('A')" class="char">'A'</span>) <a title="(Int)Int" id="3037">+</a> <span title="Int(10)" class="int">10</span>
+			<span class="keyword">else</span>
+				<span title="Nothing" class="keyword">throw</span> <a title="(java.lang.String)java.lang.RuntimeException" id="27654" class="keyword">new</a> <span id="5849"><a title="java.lang.RuntimeException" id="770">RuntimeException</a></span>(<span title="java.lang.String(&quot;Invalid hex character: '&quot;)" class="string">&quot;Invalid hex character: '&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#43225" title="Char">c</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;'.&quot;)" class="string">&quot;'.&quot;</span>)
+		<a href="#43375" title="Int">b</a>
+	}
+}
+        </pre>
+    </body>
+</html>

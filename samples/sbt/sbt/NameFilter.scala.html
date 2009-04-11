@@ -1,0 +1,80 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>sbt/NameFilter.scala</title>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* sbt -- Simple Build Tool
+ * Copyright 2008, 2009  Mark Harrah
+ */</span>
+<span class="keyword">package</span> sbt
+
+<span class="keyword">import</span> java.io.File
+<span class="keyword">import</span> java.util.regex.Pattern
+
+<span class="keyword">trait</span> <a title="trait FileFilter extends java.lang.Object with java.io.FileFilter with NotNull with ScalaObject" id="6524">FileFilter</a> <span class="keyword">extends</span> java.io.<a title="java.io.FileFilter" id="3454">FileFilter</a> <span class="keyword">with</span> <a title="NotNull" id="187">NotNull</a>
+{
+	<span class="keyword">def</span> <a title="(sbt.FileFilter)sbt.FileFilter" id="27502">||</a> (<a title="sbt.FileFilter" id="47033">filter</a>: <a href="#6524" title="sbt.FileFilter">FileFilter</a>): <a href="#6524" title="sbt.FileFilter">FileFilter</a> = <span title="sbt.SimpleFileFilter" class="keyword">new</span> <a href="#6532" title="sbt.SimpleFileFilter">SimpleFileFilter</a>( <a title="java.io.File" id="53508">file</a> =&gt; <a href="#6524" title="(java.io.File)Boolean" id="27500">accept</a>(<a href="#53508" title="java.io.File">file</a>) <a title="(Boolean)Boolean" id="2640">||</a> <a href="#47033" title="sbt.FileFilter">filter</a>.<a title="(java.io.File)Boolean" id="27500">accept</a>(<a href="#53508" title="java.io.File">file</a>) )
+	<span class="keyword">def</span> <a title="(sbt.FileFilter)sbt.FileFilter" id="27503">&amp;&amp;</a> (<a title="sbt.FileFilter" id="53509">filter</a>: <a href="#6524" title="sbt.FileFilter">FileFilter</a>): <a href="#6524" title="sbt.FileFilter">FileFilter</a> = <span title="sbt.SimpleFileFilter" class="keyword">new</span> <a href="#6532" title="sbt.SimpleFileFilter">SimpleFileFilter</a>( <a title="java.io.File" id="53511">file</a> =&gt; <a href="#6524" title="(java.io.File)Boolean" id="27500">accept</a>(<a href="#53511" title="java.io.File">file</a>) <a title="(Boolean)Boolean" id="2641">&amp;&amp;</a> <a href="#53509" title="sbt.FileFilter">filter</a>.<a title="(java.io.File)Boolean" id="27500">accept</a>(<a href="#53511" title="java.io.File">file</a>) )
+	<span class="keyword">def</span> <a title="(sbt.FileFilter)sbt.FileFilter" id="27504">--</a> (<a title="sbt.FileFilter" id="53512">filter</a>: <a href="#6524" title="sbt.FileFilter">FileFilter</a>): <a href="#6524" title="sbt.FileFilter">FileFilter</a> = <span title="sbt.SimpleFileFilter" class="keyword">new</span> <a href="#6532" title="sbt.SimpleFileFilter">SimpleFileFilter</a>( <a title="java.io.File" id="53514">file</a> =&gt; <a href="#6524" title="(java.io.File)Boolean" id="27500">accept</a>(<a href="#53514" title="java.io.File">file</a>) <a title="(Boolean)Boolean" id="2641">&amp;&amp;</a> <a title="=&gt; Boolean" id="2637">!</a><a href="#53512" title="sbt.FileFilter">filter</a>.<a title="(java.io.File)Boolean" id="27500">accept</a>(<a href="#53514" title="java.io.File">file</a>) )
+	<span class="keyword">def</span> <a title="=&gt; sbt.FileFilter" id="27505">unary_--</a> : <a href="#6524" title="sbt.FileFilter">FileFilter</a> = <span title="sbt.SimpleFileFilter" class="keyword">new</span> <a href="#6532" title="sbt.SimpleFileFilter">SimpleFileFilter</a>( <a title="java.io.File" id="53517">file</a> =&gt; <a title="=&gt; Boolean" id="2637">!</a><a href="#6524" title="(java.io.File)Boolean" id="27500">accept</a>(<a href="#53517" title="java.io.File">file</a>) )
+}
+<span class="keyword">trait</span> <a title="trait NameFilter extends java.lang.Object with sbt.FileFilter with NotNull with ScalaObject" id="6525">NameFilter</a> <span class="keyword">extends</span> <a href="#6524" title="sbt.FileFilter">FileFilter</a> <span class="keyword">with</span> <a title="NotNull" id="187">NotNull</a>
+{
+	<span class="keyword">def</span> <a title="(String)Boolean" id="27508">accept</a>(<a title="String" id="43845">name</a>: <a title="String" id="1751">String</a>): <a title="Boolean" id="2060">Boolean</a>
+	<span class="keyword">final</span> <span class="keyword">def</span> <a title="(java.io.File)Boolean" id="27509">accept</a>(<a title="java.io.File" id="43846">file</a>: <a title="java.io.File" id="3559">File</a>): <a title="Boolean" id="2060">Boolean</a> = <a href="#27508" title="(String)Boolean">accept</a>(<a href="#43846" title="java.io.File">file</a>.<a title="()java.lang.String" id="9546">getName</a>)
+	<span class="keyword">def</span> <a title="(sbt.NameFilter)sbt.NameFilter" id="27510">|</a> (<a title="sbt.NameFilter" id="53521">filter</a>: <a href="#6525" title="sbt.NameFilter">NameFilter</a>): <a href="#6525" title="sbt.NameFilter">NameFilter</a> = <span title="sbt.SimpleFilter" class="keyword">new</span> <a href="#6534" title="sbt.SimpleFilter">SimpleFilter</a>( <a title="String" id="53529">name</a> =&gt; <a href="#27508" title="(String)Boolean">accept</a>(<a href="#53529" title="String">name</a>) <a title="(Boolean)Boolean" id="2640">||</a> <a href="#53521" title="sbt.NameFilter">filter</a>.<a href="#27508" title="(String)Boolean">accept</a>(<a href="#53529" title="String">name</a>) )
+	<span class="keyword">def</span> <a title="(sbt.NameFilter)sbt.NameFilter" id="27511">&amp;</a> (<a title="sbt.NameFilter" id="53532">filter</a>: <a href="#6525" title="sbt.NameFilter">NameFilter</a>): <a href="#6525" title="sbt.NameFilter">NameFilter</a> = <span title="sbt.SimpleFilter" class="keyword">new</span> <a href="#6534" title="sbt.SimpleFilter">SimpleFilter</a>( <a title="String" id="53534">name</a> =&gt; <a href="#27508" title="(String)Boolean">accept</a>(<a href="#53534" title="String">name</a>) <a title="(Boolean)Boolean" id="2641">&amp;&amp;</a> <a href="#53532" title="sbt.NameFilter">filter</a>.<a href="#27508" title="(String)Boolean">accept</a>(<a href="#53534" title="String">name</a>) )
+	<span class="keyword">def</span> <a title="(sbt.NameFilter)sbt.NameFilter" id="27512">-</a> (<a title="sbt.NameFilter" id="53537">filter</a>: <a href="#6525" title="sbt.NameFilter">NameFilter</a>): <a href="#6525" title="sbt.NameFilter">NameFilter</a> = <span title="sbt.SimpleFilter" class="keyword">new</span> <a href="#6534" title="sbt.SimpleFilter">SimpleFilter</a>( <a title="String" id="53539">name</a> =&gt; <a href="#27508" title="(String)Boolean">accept</a>(<a href="#53539" title="String">name</a>) <a title="(Boolean)Boolean" id="2641">&amp;&amp;</a> <a title="=&gt; Boolean" id="2637">!</a><a href="#53537" title="sbt.NameFilter">filter</a>.<a href="#27508" title="(String)Boolean">accept</a>(<a href="#53539" title="String">name</a>) )
+	<span class="keyword">def</span> <a title="=&gt; sbt.NameFilter" id="27513">unary_-</a> : <a href="#6525" title="sbt.NameFilter">NameFilter</a> = <span title="sbt.SimpleFilter" class="keyword">new</span> <a href="#6534" title="sbt.SimpleFilter">SimpleFilter</a>( <a title="String" id="53544">name</a> =&gt; <a title="=&gt; Boolean" id="2637">!</a><a href="#27508" title="(String)Boolean">accept</a>(<a href="#53544" title="String">name</a>) )
+}
+<span class="keyword">object</span> <a title="object sbt.HiddenFileFilter" id="6526">HiddenFileFilter</a> <span class="keyword">extends</span> <a href="#6524" title="sbt.FileFilter">FileFilter</a> {
+	<span class="keyword">def</span> <a title="(java.io.File)Boolean" id="47036">accept</a>(<a title="java.io.File" id="53547">file</a>: <a title="java.io.File" id="3559">File</a>) = <a href="#53547" title="java.io.File">file</a>.<a title="()Boolean" id="9562">isHidden</a>
+}
+<span class="keyword">object</span> <a title="object sbt.ExistsFileFilter" id="6528">ExistsFileFilter</a> <span class="keyword">extends</span> <a href="#6524" title="sbt.FileFilter">FileFilter</a> {
+	<span class="keyword">def</span> <a title="(java.io.File)Boolean" id="53550">accept</a>(<a title="java.io.File" id="53552">file</a>: <a title="java.io.File" id="3559">File</a>) = <a href="#53552" title="java.io.File">file</a>.<a title="()Boolean" id="9559">exists</a>
+}
+<span class="keyword">object</span> <a title="object sbt.DirectoryFilter" id="6530">DirectoryFilter</a> <span class="keyword">extends</span> <a href="#6524" title="sbt.FileFilter">FileFilter</a> {
+	<span class="keyword">def</span> <a title="(java.io.File)Boolean" id="45178">accept</a>(<a title="java.io.File" id="53555">file</a>: <a title="java.io.File" id="3559">File</a>) = <a href="#53555" title="java.io.File">file</a>.<a title="()Boolean" id="9560">isDirectory</a>
+}
+<span class="keyword">class</span> <a title="class SimpleFileFilter extends java.lang.Object with sbt.FileFilter with ScalaObject" id="6532">SimpleFileFilter</a>(<span class="keyword">val</span> <span id="45167"><span id="45166"><a title="(java.io.File) =&gt; Boolean" id="45170">acceptFunction</a></span></span>: File =&gt; Boolean) <span class="keyword">extends</span> <a href="#6524" title="sbt.FileFilter">FileFilter</a>
+{
+	<span class="keyword">def</span> <a title="(java.io.File)Boolean" id="45169">accept</a>(<a title="java.io.File" id="53559">file</a>: <a title="java.io.File" id="3559">File</a>) = <a href="#45166" title="(java.io.File)Boolean" id="7221">acceptFunction</a>(<a href="#53559" title="java.io.File">file</a>)
+}
+<span class="keyword">class</span> <a title="class ExactFilter extends java.lang.Object with sbt.NameFilter with ScalaObject" id="6533">ExactFilter</a>(<span class="keyword">val</span> <span id="53563"><span id="53562"><a title="String" id="53568">matchName</a></span></span>: <a title="String" id="1751">String</a>) <span class="keyword">extends</span> <a href="#6525" title="sbt.NameFilter">NameFilter</a>
+{
+	<span class="keyword">def</span> <a title="(String)Boolean" id="53565">accept</a>(<a title="String" id="53569">name</a>: <a title="String" id="1751">String</a>) = <a href="#53562" title="=&gt; String">matchName</a> <a title="(AnyRef)Boolean" id="3399">==</a> <a href="#53569" title="String">name</a>
+}
+<span class="keyword">class</span> <a title="class SimpleFilter extends java.lang.Object with sbt.NameFilter with ScalaObject" id="6534">SimpleFilter</a>(<span class="keyword">val</span> <span id="53524"><span id="53523"><a title="(String) =&gt; Boolean" id="53527">acceptFunction</a></span></span>: String =&gt; Boolean) <span class="keyword">extends</span> <a href="#6525" title="sbt.NameFilter">NameFilter</a>
+{
+	<span class="keyword">def</span> <a title="(String)Boolean" id="53526">accept</a>(<a title="String" id="53575">name</a>: <a title="String" id="1751">String</a>) = <a href="#53523" title="(String)Boolean" id="7221">acceptFunction</a>(<a href="#53575" title="String">name</a>)
+}
+<span class="keyword">class</span> <a title="class PatternFilter extends java.lang.Object with sbt.NameFilter with ScalaObject" id="6535">PatternFilter</a>(<span class="keyword">val</span> <span id="53580"><span id="53579"><a title="java.util.regex.Pattern" id="53585">pattern</a></span></span>: <a title="java.util.regex.Pattern" id="8634">Pattern</a>) <span class="keyword">extends</span> <a href="#6525" title="sbt.NameFilter">NameFilter</a>
+{
+	<span class="keyword">def</span> <a title="(String)Boolean" id="53582">accept</a>(<a title="String" id="53586">name</a>: <a title="String" id="1751">String</a>) = <a href="#53579" title="=&gt; java.util.regex.Pattern">pattern</a>.<a title="(java.lang.CharSequence)java.util.regex.Matcher" id="24058">matcher</a>(<a href="#53586" title="String">name</a>).<a title="()Boolean" id="53433">matches</a>
+}
+<span class="keyword">object</span> <a title="object sbt.AllPassFilter" id="6536">AllPassFilter</a> <span class="keyword">extends</span> <a href="#6525" title="sbt.NameFilter">NameFilter</a>
+{
+	<span class="keyword">def</span> <a title="(String)Boolean" id="43775">accept</a>(<a title="String" id="53590">name</a>: <a title="String" id="1751">String</a>) = <span title="Boolean(true)" class="keyword">true</span>
+}
+
+<span class="keyword">object</span> <a title="object sbt.GlobFilter" id="6538">GlobFilter</a>
+{
+	<span class="keyword">def</span> <a title="(String)sbt.NameFilter" id="33382">apply</a>(<a title="String" id="33384">expression</a>: <a title="String" id="1751">String</a>): <a href="#6525" title="sbt.NameFilter">NameFilter</a> =
+	{
+		<span id="5881"><a title="(Boolean,Any)Unit" id="770">require</a></span>(<a title="=&gt; Boolean" id="2637">!</a><span id="6012"><a href="#33384" title="implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString" id="770">expression</a></span>.<a title="((Char) =&gt; Boolean)Boolean" id="7258">exists</a>(java.lang.<a title="object java.lang.Character" id="1836">Character</a>.<a href="#53608" title="(Char)Boolean" id="25224">isISOControl</a>), <span title="java.lang.String(&quot;Control characters not allowed in filter expression.&quot;)" class="string">&quot;Control characters not allowed in filter expression.&quot;</span>)
+		<span title="sbt.NameFilter" class="keyword">if</span>(<a href="#33384" title="String">expression</a> <a title="(AnyRef)Boolean" id="3399">==</a> <span title="java.lang.String(&quot;*&quot;)" class="string">&quot;*&quot;</span>)
+			<a href="#6536" title="object sbt.AllPassFilter">AllPassFilter</a>
+		<span class="keyword">else</span> <span title="sbt.NameFilter" class="keyword">if</span>(<a href="#33384" title="String">expression</a>.<a title="(Int)Int" id="5725">indexOf</a>(<span title="Int(42)" class="char">'*'</span>) <a title="(Int)Boolean" id="3033">&lt;</a> <span title="Int(0)" class="int">0</span>) <span class="comment">// includes case where expression is empty</span>
+			<span title="sbt.ExactFilter" class="keyword">new</span> <a href="#6533" title="sbt.ExactFilter">ExactFilter</a>(<a href="#33384" title="String">expression</a>)
+		<span class="keyword">else</span>
+			<span title="sbt.PatternFilter" class="keyword">new</span> <a href="#6535" title="sbt.PatternFilter">PatternFilter</a>(<a title="object java.util.regex.Pattern" id="8635">Pattern</a>.<a title="(java.lang.String)java.util.regex.Pattern" id="24054">compile</a>(<a href="#33384" title="String">expression</a>.<a title="(java.lang.String,Int)Array[java.lang.String]" id="5745">split</a>(<span title="java.lang.String(&quot;\*&quot;)" class="string">&quot;\\*&quot;</span>, -<span title="Int(-1)" class="int">1</span>).<a title="((java.lang.String) =&gt; java.lang.String)Array[java.lang.String]" id="6989">map</a>(<a href="#33383" title="(String)java.lang.String">quote</a>).<a title="(String)String" id="7283">mkString</a>(<span title="java.lang.String(&quot;.*&quot;)" class="string">&quot;.*&quot;</span>)))
+	}
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(String)java.lang.String" id="33383">quote</a>(<a title="String" id="53628">s</a>: <a title="String" id="1751">String</a>) = <span title="java.lang.String" class="keyword">if</span>(<span id="6012"><a href="#53628" title="implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString" id="770">s</a></span>.<a title="=&gt; Boolean" id="7108">isEmpty</a>) <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span> <span class="keyword">else</span> <a title="object java.util.regex.Pattern" id="8635">Pattern</a>.<a title="(java.lang.String)java.lang.String" id="24063">quote</a>(<a href="#53628" title="String">s</a>.<a title="(java.lang.String,java.lang.String)java.lang.String" id="5743">replaceAll</a>(<span title="java.lang.String(&quot;\012&quot;)" class="string">&quot;\n&quot;</span>, <span title="java.lang.String(&quot;\n&quot;)" class="string">&quot;&quot;&quot;\n&quot;&quot;&quot;</span>))
+}
+        </pre>
+    </body>
+</html>

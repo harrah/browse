@@ -1,0 +1,220 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>sbt/Analyzer.scala</title>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* sbt -- Simple Build Tool
+ * Copyright 2008, 2009 Mark Harrah
+ */</span>
+<span class="keyword">package</span> sbt
+
+<span class="keyword">import</span> scala.tools.nsc.{io, plugins, symtab, Global, Phase}
+<span class="keyword">import</span> io.{AbstractFile, PlainFile, ZipArchive}
+<span class="keyword">import</span> plugins.{Plugin, PluginComponent}
+<span class="keyword">import</span> symtab.Flags
+<span class="keyword">import</span> scala.collection.mutable.{HashMap, HashSet, Map, Set}
+
+<span class="keyword">import</span> java.io.File
+
+<span class="keyword">object</span> <a title="object sbt.Analyzer" id="6650">Analyzer</a>
+{
+	<span class="keyword">val</span> <span id="56044"><a title="java.lang.String" id="56043">PluginName</a></span> = <span title="java.lang.String(&quot;sbt-analyzer&quot;)" class="string">&quot;sbt-analyzer&quot;</span>
+	<span class="keyword">val</span> <span id="56046"><a title="java.lang.String" id="56045">CallbackIDOptionName</a></span> = <span title="java.lang.String(&quot;callback:&quot;)" class="string">&quot;callback:&quot;</span>
+}
+<span class="keyword">class</span> <a title="class Analyzer extends scala.tools.nsc.plugins.Plugin with ScalaObject" id="6652">Analyzer</a>(<span class="keyword">val</span> <span id="56066"><span id="56065"><a title="scala.tools.nsc.Global" id="56128">global</a></span></span>: <a title="scala.tools.nsc.Global" id="10685">Global</a>) <span class="keyword">extends</span> <a title="scala.tools.nsc.plugins.Plugin" id="13512">Plugin</a>
+{
+	<span class="keyword">import</span> global._
+	<span class="keyword">import</span> Analyzer._
+	
+	<span class="keyword">val</span> <span id="56071"><a title="java.lang.String" id="56070">name</a></span> = <a href="#56043" title="=&gt; java.lang.String">PluginName</a>
+	<span class="keyword">val</span> <span id="56073"><a title="java.lang.String" id="56072">description</a></span> = <span title="java.lang.String(&quot;A plugin to find all concrete instances of a given class and extract dependency information.&quot;)" class="string">&quot;A plugin to find all concrete instances of a given class and extract dependency information.&quot;</span>
+	<span class="keyword">val</span> <span id="56075"><a title="List[scala.tools.nsc.plugins.PluginComponent]" id="56074">components</a></span> = <span id="6801"><a title="(scala.tools.nsc.plugins.PluginComponent*)List[scala.tools.nsc.plugins.PluginComponent]" id="482">List</a></span>[<a title="scala.tools.nsc.plugins.PluginComponent" id="13554">PluginComponent</a>](<a href="#56085" title="object Analyzer.this.Component">Component</a>)
+	
+	<span class="keyword">private</span> <span class="keyword">var</span> <span id="56078"><span id="56076"><span id="56077"><a title="Option[sbt.AnalysisCallback]" id="56127">callbackOption</a></span></span></span>: <a title="Option[sbt.AnalysisCallback]" id="871">Option</a>[AnalysisCallback] = <a title="object None" id="488">None</a>
+	
+	<span class="keyword">override</span> <span class="keyword">def</span> <a title="(List[String],(String) =&gt; Unit)Unit" id="56079">processOptions</a>(<a title="List[String]" id="56129">options</a>: <a title="List[String]" id="481">List</a>[String], <a title="(String) =&gt; Unit" id="56130">error</a>: String =&gt; Unit)
+	{
+		<span class="keyword">for</span>(<span id="6839"><a title="((String) =&gt; Unit)Unit" id="56132">option</a></span> &lt;- <a href="#56129" title="List[String]">options</a>)
+		{
+			<span title="Unit" class="keyword">if</span>(<a href="#56132" title="String">option</a>.<a title="(java.lang.String)Boolean" id="5722">startsWith</a>(<a href="#56045" title="=&gt; java.lang.String">CallbackIDOptionName</a>))
+				<a href="#56077" title="(Option[sbt.AnalysisCallback])Unit">callbackOption</a> = <a href="AnalysisCallback.scala.html#32756" title="(Int)Option[sbt.AnalysisCallback]">AnalysisCallback</a>(<a href="#56132" title="String">option</a>.<span id="6012"><span id="770"><a title="implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString" id="5735">substring</a></span></span>(<a href="#56045" title="=&gt; java.lang.String">CallbackIDOptionName</a>.<a title="()Int" id="5702">length</a>).<a title="=&gt; Int" id="8771">toInt</a>)
+			<span class="keyword">else</span>
+				<a href="#56130" title="(String)Unit" id="7221">error</a>(<span title="java.lang.String(&quot;Option not understood: &quot;)" class="string">&quot;Option not understood: &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#56132" title="String">option</a>)
+		}
+		<span title="Unit" class="keyword">if</span>(<a href="#56076" title="=&gt; Option[sbt.AnalysisCallback]">callbackOption</a>.<a title="=&gt; Boolean" id="10150">isEmpty</a>)
+			<a href="#56130" title="(String)Unit" id="7221">error</a>(<span title="java.lang.String(&quot;Callback ID not specified.&quot;)" class="string">&quot;Callback ID not specified.&quot;</span>)
+	}
+
+	<span class="keyword">override</span> <span class="keyword">val</span> <span id="56081"><a title="Option[String]" id="56080">optionsHelp</a></span>: <a title="Option[String]" id="871">Option</a>[String] =
+	{
+		<span class="keyword">val</span> <a title="java.lang.String" id="56140">prefix</a> = <span title="java.lang.String(&quot;  -P:&quot;)" class="string">&quot;  -P:&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#56070" title="=&gt; java.lang.String">name</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;:&quot;)" class="string">&quot;:&quot;</span>
+		<span id="10256"><a title="(java.lang.String)Some[java.lang.String]" id="275">Some</a></span>(<a href="#56140" title="java.lang.String">prefix</a> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#56045" title="=&gt; java.lang.String">CallbackIDOptionName</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;&lt;callback-id&gt;            Set the callback id.\012&quot;)" class="string">&quot;&lt;callback-id&gt;            Set the callback id.\n&quot;</span>)
+	}
+
+	<span class="comment">/* ================================================== */</span>
+	<span class="comment">// These two templates abuse scope for source compatibility between Scala 2.7.x and 2.8.x so that a single</span>
+	<span class="comment">// sbt codebase compiles with both series of versions.</span>
+	<span class="comment">// In 2.8.x, PluginComponent.runsAfter has type List[String] and the method runsBefore is defined on</span>
+	<span class="comment">//   PluginComponent with default value Nil.</span>
+	<span class="comment">// In 2.7.x, runsBefore does not exist on PluginComponent and PluginComponent.runsAfter has type String.</span>
+	<span class="comment">//</span>
+	<span class="comment">// Therefore, in 2.8.x, object runsBefore is shadowed by PluginComponent.runsBefore (which is Nil) and so</span>
+	<span class="comment">//   afterPhase :: runsBefore</span>
+	<span class="comment">// is equivalent to List[String](afterPhase)</span>
+	<span class="comment">// In 2.7.x, object runsBefore is not shadowed and so runsAfter has type String.</span>
+	<span class="keyword">private</span> <span class="keyword">object</span> <a title="object Analyzer.this.runsBefore" id="56082">runsBefore</a> { <span class="keyword">def</span> <a title="(String)String" id="56143">::</a> (<a title="String" id="56145">s</a>: <a title="String" id="1751">String</a>) = <a href="#56145" title="String">s</a> }
+	<span class="keyword">private</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class CompatiblePluginComponent extends scala.tools.nsc.plugins.PluginComponent with ScalaObject" id="56084">CompatiblePluginComponent</a>(<span id="56117"><a title="String" id="56150">afterPhase</a></span>: <a title="String" id="1751">String</a>) <span class="keyword">extends</span> <a title="scala.tools.nsc.plugins.PluginComponent" id="13554">PluginComponent</a>
+	{
+		<span class="keyword">override</span> <span class="keyword">val</span> <span id="56120"><a title="String" id="56119">runsAfter</a></span> = <a href="#56117" title="String">afterPhase</a> <a href="#56143" title="(String)String">::</a> <a href="#56082" title="object Analyzer.this.runsBefore">runsBefore</a>
+	}
+	<span class="comment">/* ================================================== */</span>
+	
+	<span class="keyword">private</span> <span class="keyword">object</span> <a title="object Analyzer.this.Component" id="56085">Component</a> <span class="keyword">extends</span> <a href="#56084" title="Analyzer.this.CompatiblePluginComponent">CompatiblePluginComponent</a>(<span title="java.lang.String(&quot;jvm&quot;)" class="string">&quot;jvm&quot;</span>)
+	{
+		<span class="keyword">val</span> <span id="56123"><a title="scala.tools.nsc.Global" id="56122">global</a></span> = <a href="#6652" title="Analyzer.this.type">Analyzer</a>.<span class="keyword">this</span>.<a href="#56065" title="=&gt; scala.tools.nsc.Global">global</a>
+		<span class="keyword">val</span> <span id="56125"><a title="java.lang.String" id="56124">phaseName</a></span> = <a href="#6652" title="Analyzer.this.type">Analyzer</a>.<span class="keyword">this</span>.<a href="#56070" title="=&gt; java.lang.String">name</a>
+		<span class="keyword">def</span> <a title="(scala.tools.nsc.Phase)Analyzer.this.AnalyzerPhase" id="56126">newPhase</a>(<a title="scala.tools.nsc.Phase" id="56152">prev</a>: <a title="scala.tools.nsc.Phase" id="10328">Phase</a>) = <span title="Analyzer.this.AnalyzerPhase" class="keyword">new</span> <a href="#56087" title="Analyzer.this.AnalyzerPhase">AnalyzerPhase</a>(<a href="#56152" title="scala.tools.nsc.Phase">prev</a>)
+	}
+
+	<span class="keyword">private</span> <span class="keyword">class</span> <a title="class AnalyzerPhase extends scala.tools.nsc.Phase with ScalaObject" id="56087">AnalyzerPhase</a>(<span id="56178"><a title="scala.tools.nsc.Phase" id="56182">prev</a></span>: <a title="scala.tools.nsc.Phase" id="10328">Phase</a>) <span class="keyword">extends</span> <a title="scala.tools.nsc.Phase" id="10328">Phase</a>(<a href="#56182" title="scala.tools.nsc.Phase">prev</a>)
+	{
+		<span class="keyword">def</span> <a title="=&gt; java.lang.String" id="56180">name</a> = <a href="#6652" title="Analyzer.this.type">Analyzer</a>.<span class="keyword">this</span>.<a href="#56070" title="=&gt; java.lang.String">name</a>
+		<span class="keyword">def</span> <a title="=&gt; Unit" id="56181">run</a>
+		{
+			<span class="keyword">val</span> <a title="sbt.AnalysisCallback" id="56188">callback</a> = <a href="#56076" title="=&gt; Option[sbt.AnalysisCallback]">callbackOption</a>.<a title="=&gt; sbt.AnalysisCallback" id="10152">get</a>
+			<span class="keyword">val</span> <a title="sbt.Path" id="56189">projectPath</a> = <a href="#56188" title="sbt.AnalysisCallback">callback</a>.<a href="AnalysisCallback.scala.html#32762" title="=&gt; sbt.Path">basePath</a>
+			<span class="keyword">val</span> <a title="String" id="56190">projectPathString</a> = <a href="Path.scala.html#6701" title="object sbt.Path">Path</a>.<a href="Path.scala.html#9506" title="(sbt.Path)Option[String]">basePathString</a>(<a href="#56189" title="sbt.Path">projectPath</a>).<a title="(=&gt; String)String" id="10155">getOrElse</a>({<a href="#56065" title="(String)Unit" id="13666">error</a>(<span title="java.lang.String(&quot;Could not determine base path for &quot;)" class="string">&quot;Could not determine base path for &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#56189" title="sbt.Path">projectPath</a>); <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>})
+			<span class="keyword">def</span> <a title="(java.io.File)Option[sbt.Path]" id="56191">relativize</a>(<a title="java.io.File" id="56206">file</a>: <a title="java.io.File" id="3559">File</a>) = <a href="Path.scala.html#6701" title="object sbt.Path">Path</a>.<a href="Path.scala.html#9504" title="(sbt.Path,String,java.io.File)Option[sbt.Path]">relativize</a>(<a href="#56189" title="sbt.Path">projectPath</a>, <a href="#56190" title="String">projectPathString</a>, <a href="#56206" title="java.io.File">file</a>)
+			
+			<span class="keyword">val</span> <a title="java.io.File" id="56192">outputDir</a> = <span title="java.io.File" class="keyword">new</span> <a title="java.io.File" id="3559">File</a>(<a href="#56065" title="=&gt; scala.tools.nsc.Global">global</a>.<a title="=&gt; scala.tools.nsc.Settings" id="13593">settings</a>.<a title="=&gt; scala.tools.nsc.Settings#StringSetting" id="11698">outdir</a>.<a title="=&gt; String" id="11679">value</a>)
+			<span class="keyword">val</span> <a title="Option[sbt.Path]" id="56193">outputPathOption</a> = <a href="#56191" title="(java.io.File)Option[sbt.Path]">relativize</a>(<a href="#56192" title="java.io.File">outputDir</a>)
+			<span title="Unit" class="keyword">if</span>(<a href="#56193" title="Option[sbt.Path]">outputPathOption</a>.<a title="=&gt; Boolean" id="10150">isEmpty</a>)
+				<a href="#56065" title="(String)Unit" id="13666">error</a>(<span title="java.lang.String(&quot;Output directory &quot;)" class="string">&quot;Output directory &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#56192" title="java.io.File">outputDir</a>.<a title="()java.lang.String" id="9551">getAbsolutePath</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; must be in the project directory.&quot;)" class="string">&quot; must be in the project directory.&quot;</span>)
+			<span class="keyword">val</span> <a title="sbt.Path" id="56194">outputPath</a> = <a href="#56193" title="Option[sbt.Path]">outputPathOption</a>.<a title="=&gt; sbt.Path" id="10152">get</a>
+			
+			<span class="keyword">val</span> <a title="Iterable[Analyzer.this.global.Name]" id="56195">superclassNames</a> = <a href="#56188" title="sbt.AnalysisCallback">callback</a>.<a href="AnalysisCallback.scala.html#32761" title="=&gt; Iterable[String]">superclassNames</a>.<a title="((String) =&gt; Analyzer.this.global.Name)Iterable[Analyzer.this.global.Name]" id="7246">map</a>(<a href="#56065" title="(String)Analyzer.this.global.Name" id="14845">newTermName</a>)
+			<span class="keyword">val</span> <a title="Iterable[Option[Analyzer.this.global.Symbol]]" id="56196">superclassesAll</a> =
+				<span class="keyword">for</span>(<span id="7246"><a title="((Analyzer.this.global.Name) =&gt; Option[Analyzer.this.global.Symbol])Iterable[Option[Analyzer.this.global.Symbol]]" id="56224">name</a></span> &lt;- <a href="#56195" title="Iterable[Analyzer.this.global.Name]">superclassNames</a>) <span class="keyword">yield</span>
+				{
+					<span class="keyword">try</span> { <span id="10256"><a title="(Analyzer.this.global.Symbol)Some[Analyzer.this.global.Symbol]" id="275">Some</a></span>(<a href="#56065" title="=&gt; scala.tools.nsc.Global">global</a>.<a title="object Analyzer.this.global.definitions" id="16662">definitions</a>.<a title="(Analyzer.this.global.Name)Analyzer.this.global.Symbol" id="16990">getClass</a>(<a href="#56224" title="Analyzer.this.global.Name">name</a>)) }
+					<span class="keyword">catch</span> { <span title="None.type" class="keyword">case</span> <a title="scala.tools.nsc.FatalError" id="56227">fe</a>: scala.tools.nsc.<a title="scala.tools.nsc.FatalError" id="10325">FatalError</a> =&gt; <a href="#56188" title="sbt.AnalysisCallback">callback</a>.<a href="AnalysisCallback.scala.html#32763" title="(String)Unit">superclassNotFound</a>(<a href="#56224" title="Analyzer.this.global.Name">name</a>.<a title="()String" id="14814">toString</a>); <a title="object None" id="488">None</a> }
+				}
+			<span class="keyword">val</span> <a title="Iterable[Analyzer.this.global.Symbol]" id="56197">superclasses</a> = <a href="#56196" title="Iterable[Option[Analyzer.this.global.Symbol]]">superclassesAll</a>.<a title="((Option[Analyzer.this.global.Symbol]) =&gt; Boolean)Iterable[Option[Analyzer.this.global.Symbol]]" id="7250">filter</a>(<a href="#56259" title="Option[Analyzer.this.global.Symbol]">_</a>.<a title="=&gt; Boolean" id="10151">isDefined</a>).<a title="((Option[Analyzer.this.global.Symbol]) =&gt; Analyzer.this.global.Symbol)Iterable[Analyzer.this.global.Symbol]" id="7246">map</a>(<a href="#56262" title="Option[Analyzer.this.global.Symbol]">_</a>.<a title="=&gt; Analyzer.this.global.Symbol" id="10152">get</a>)
+			
+			<span class="keyword">for</span>(<span id="20249"><a title="((Analyzer.this.global.CompilationUnit) =&gt; Unit)Unit" id="56269">unit</a></span> &lt;- <a href="#56065" title="=&gt; Analyzer.this.global.Run" id="13935">currentRun</a>.<a title="=&gt; Iterator[Analyzer.this.global.CompilationUnit]" id="13922">units</a>)
+			{
+				<span class="comment">// build dependencies structure</span>
+				<span class="keyword">val</span> <a title="java.io.File" id="56270">sourceFile</a> = <a href="#56269" title="Analyzer.this.global.CompilationUnit">unit</a>.<a title="=&gt; scala.tools.nsc.util.SourceFile" id="19106">source</a>.<a title="=&gt; scala.tools.nsc.io.AbstractFile" id="20924">file</a>.<a title="=&gt; java.io.File" id="21014">file</a>
+				<span class="keyword">val</span> <a title="Option[sbt.Path]" id="56271">sourcePathOption</a> = <a href="#56191" title="(java.io.File)Option[sbt.Path]">relativize</a>(<a href="#56270" title="java.io.File">sourceFile</a>)
+				<span title="Unit" class="keyword">if</span>(<a href="#56271" title="Option[sbt.Path]">sourcePathOption</a>.<a title="=&gt; Boolean" id="10150">isEmpty</a>)
+					<a href="#56065" title="(String)Unit" id="13666">error</a>(<span title="java.lang.String(&quot;Source file &quot;)" class="string">&quot;Source file &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#56270" title="java.io.File">sourceFile</a>.<a title="()java.lang.String" id="9551">getAbsolutePath</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; must be in the project directory.&quot;)" class="string">&quot; must be in the project directory.&quot;</span>)
+				<span class="keyword">val</span> <a title="sbt.Path" id="56272">sourcePath</a> = <a href="#56271" title="Option[sbt.Path]">sourcePathOption</a>.<a title="=&gt; sbt.Path" id="10152">get</a>
+				<a href="#56188" title="sbt.AnalysisCallback">callback</a>.<a href="AnalysisCallback.scala.html#32764" title="(sbt.Path)Unit">beginSource</a>(<a href="#56272" title="sbt.Path">sourcePath</a>)
+				<span class="keyword">for</span>(<span id="7256"><a title="((Analyzer.this.global.Symbol) =&gt; Unit)Unit" id="56279">on</a></span> &lt;- <a href="#56269" title="Analyzer.this.global.CompilationUnit">unit</a>.<a title="=&gt; scala.collection.mutable.HashSet[Analyzer.this.global.Symbol]" id="19115">depends</a>)
+				{
+					<span class="keyword">val</span> <a title="scala.tools.nsc.io.AbstractFile" id="56280">onSource</a> = <a href="#56279" title="Analyzer.this.global.Symbol">on</a>.<a title="=&gt; scala.tools.nsc.io.AbstractFile" id="15229">sourceFile</a>
+					<span title="Unit" class="keyword">if</span>(<a href="#56280" title="scala.tools.nsc.io.AbstractFile">onSource</a> <a title="(AnyRef)Boolean" id="3399">==</a> <span title="Null(null)" class="keyword">null</span>)
+					{
+						<a href="#56088" title="(Analyzer.this.global.Symbol)Option[scala.tools.nsc.io.AbstractFile]">classFile</a>(<a href="#56279" title="Analyzer.this.global.Symbol">on</a>) <span title="Unit" class="keyword">match</span>
+						{
+							<span title="Unit" class="keyword">case</span> <a id="1">Some</a>(<a title="scala.tools.nsc.io.AbstractFile" id="56291">f</a>) =&gt;
+							{
+								<a href="#56291" title="scala.tools.nsc.io.AbstractFile">f</a> <span title="Unit" class="keyword">match</span>
+								{
+									<span title="Unit" class="keyword">case</span> <a title="scala.tools.nsc.io.ZipArchive#Entry" id="56292">ze</a>: ZipArchive#<a title="scala.tools.nsc.io.ZipArchive#Entry" id="56304">Entry</a> =&gt; <a href="#56188" title="sbt.AnalysisCallback">callback</a>.<a href="AnalysisCallback.scala.html#32767" title="(java.io.File,sbt.Path)Unit">jarDependency</a>(<span title="java.io.File" class="keyword">new</span> <a title="java.io.File" id="3559">File</a>(<a href="#56292" title="scala.tools.nsc.io.ZipArchive#Entry">ze</a>.<a title="=&gt; java.util.zip.ZipFile" id="56311">getArchive</a>.<a title="()java.lang.String" id="44987">getName</a>), <a href="#56272" title="sbt.Path">sourcePath</a>)
+									<span title="Unit" class="keyword">case</span> <a title="scala.tools.nsc.io.PlainFile" id="56390">pf</a>: <a title="scala.tools.nsc.io.PlainFile" id="20951">PlainFile</a> =&gt;
+									{
+										 <span class="comment">// ignore dependencies in the output directory: these are handled by source dependencies</span>
+										<span title="Unit" class="keyword">if</span>(<a href="Path.scala.html#6701" title="object sbt.Path">Path</a>.<a href="Path.scala.html#9503" title="(sbt.Path,java.io.File)Option[sbt.Path]">relativize</a>(<a href="#56194" title="sbt.Path">outputPath</a>, <a href="#56390" title="scala.tools.nsc.io.PlainFile">pf</a>.<a title="=&gt; java.io.File" id="56349">file</a>).<a title="=&gt; Boolean" id="10150">isEmpty</a>)
+											<a href="#56188" title="sbt.AnalysisCallback">callback</a>.<a href="AnalysisCallback.scala.html#32768" title="(java.io.File,sbt.Path)Unit">classDependency</a>(<a href="#56390" title="scala.tools.nsc.io.PlainFile">pf</a>.<a title="=&gt; java.io.File" id="56349">file</a>, <a href="#56272" title="sbt.Path">sourcePath</a>)
+									}
+									<span title="Unit" class="keyword">case</span> _ =&gt; <span title="Unit">(</span>)
+								}
+							}
+							<span title="Unit" class="keyword">case</span> <a title="object None" id="488">None</a> =&gt; <span title="Unit">(</span>)
+						}
+					}
+					<span class="keyword">else</span>
+					{
+						<span class="keyword">for</span>(<span id="10162"><a title="((sbt.Path) =&gt; Unit)Unit" id="56394">depPath</a></span> &lt;- <a href="#56191" title="(java.io.File)Option[sbt.Path]">relativize</a>(<a href="#56280" title="scala.tools.nsc.io.AbstractFile">onSource</a>.<a title="=&gt; java.io.File" id="21014">file</a>))
+							<a href="#56188" title="sbt.AnalysisCallback">callback</a>.<a href="AnalysisCallback.scala.html#32766" title="(sbt.Path,sbt.Path)Unit">sourceDependency</a>(<a href="#56394" title="sbt.Path">depPath</a>, <a href="#56272" title="sbt.Path">sourcePath</a>)
+					}
+				}
+				
+				<span class="comment">// find subclasses</span>
+				<span class="keyword">for</span>(<span id="6839"><span id="17993"><span id="56397"><a href="#56396" title="((Analyzer.this.global.Tree) =&gt; Unit)Unit" id="56404">clazz</a></span></span></span> @ <a id="1">ClassDef</a>(<span id="56399"><a title="Analyzer.this.global.Modifiers" id="56406">mods</a></span>, <span id="56400"><a title="Analyzer.this.global.Name" id="56407">n</a></span>, _, _) &lt;- <a href="#56269" title="Analyzer.this.global.CompilationUnit">unit</a>.<a title="=&gt; Analyzer.this.global.Tree" id="19112">body</a>)
+				{
+					<span class="keyword">val</span> <a title="Analyzer.this.global.Symbol" id="56408">sym</a> = <a href="#56404" title="Analyzer.this.global.ClassDef">clazz</a>.<a title="=&gt; Analyzer.this.global.Symbol" id="18033">symbol</a>
+					<span title="Unit" class="keyword">if</span>(<a href="#56406" title="Analyzer.this.global.Modifiers">mods</a>.<a title="=&gt; Boolean" id="18077">isPublic</a> <a title="(Boolean)Boolean" id="2641">&amp;&amp;</a> <a title="=&gt; Boolean" id="2637">!</a><a href="#56406" title="Analyzer.this.global.Modifiers">mods</a>.<a title="=&gt; Boolean" id="18070">isAbstract</a> <a title="(Boolean)Boolean" id="2641">&amp;&amp;</a> <a title="=&gt; Boolean" id="2637">!</a><a href="#56406" title="Analyzer.this.global.Modifiers">mods</a>.<a title="=&gt; Boolean" id="18075">isTrait</a> <a title="(Boolean)Boolean" id="2641">&amp;&amp;</a>
+						 <a title="=&gt; Boolean" id="2637">!</a><a href="#56408" title="Analyzer.this.global.Symbol">sym</a>.<a title="=&gt; Boolean" id="15103">isImplClass</a> <a title="(Boolean)Boolean" id="2641">&amp;&amp;</a> <a href="#56408" title="Analyzer.this.global.Symbol">sym</a>.<a title="=&gt; Boolean" id="15108">isStatic</a> <a title="(Boolean)Boolean" id="2641">&amp;&amp;</a> <a title="=&gt; Boolean" id="2637">!</a><a href="#56408" title="Analyzer.this.global.Symbol">sym</a>.<a title="=&gt; Boolean" id="15115">isNestedClass</a>)
+					{
+						<span class="keyword">val</span> <a title="Boolean" id="56409">isModule</a> = <a href="#56408" title="Analyzer.this.global.Symbol">sym</a>.<a title="=&gt; Boolean" id="15081">isModuleClass</a>
+						<span class="keyword">for</span>(<span id="7256"><a title="((Analyzer.this.global.Symbol) =&gt; Unit)Unit" id="56413">superclass</a></span> &lt;- <a href="#56197" title="Iterable[Analyzer.this.global.Symbol]">superclasses</a>.<a title="((Analyzer.this.global.Symbol) =&gt; Boolean)Iterable[Analyzer.this.global.Symbol]" id="7250">filter</a>(<a href="#56408" title="Analyzer.this.global.Symbol">sym</a>.<a href="#56411" title="(Analyzer.this.global.Symbol)Boolean" id="15178">isSubClass</a>))
+							<a href="#56188" title="sbt.AnalysisCallback">callback</a>.<a href="AnalysisCallback.scala.html#32765" title="(sbt.Path,String,String,Boolean)Unit">foundSubclass</a>(<a href="#56272" title="sbt.Path">sourcePath</a>, <a href="#56408" title="Analyzer.this.global.Symbol">sym</a>.<a title="=&gt; String" id="15240">fullNameString</a>, <a href="#56413" title="Analyzer.this.global.Symbol">superclass</a>.<a title="=&gt; String" id="15240">fullNameString</a>, <a href="#56409" title="Boolean">isModule</a>)
+					}
+				}
+				
+				<span class="comment">// build list of generated classes</span>
+				<span class="keyword">for</span>(<span id="7256"><a title="((Analyzer.this.global.icodes.IClass) =&gt; Unit)Unit" id="57478">iclass</a></span> &lt;- <a href="#56269" title="Analyzer.this.global.CompilationUnit">unit</a>.<a title="=&gt; scala.collection.mutable.HashSet[Analyzer.this.global.icodes.IClass]" id="19125">icode</a>)
+				{
+					<span class="keyword">val</span> <a title="Analyzer.this.global.icodes.global.Symbol" id="57479">sym</a> = <a href="#57478" title="Analyzer.this.global.icodes.IClass">iclass</a>.<a title="=&gt; Analyzer.this.global.icodes.global.Symbol" id="57454">symbol</a>
+					<span class="keyword">def</span> <a title="(Boolean)Unit" id="57480">addGenerated</a>(<a title="Boolean" id="58967">separatorRequired</a>: <a title="Boolean" id="2060">Boolean</a>)
+					{
+						<span class="keyword">val</span> <a title="sbt.Path" id="58968">classPath</a> = <a href="#56090" title="(sbt.Path,Analyzer.this.global.Symbol,Boolean)sbt.Path">pathOfClass</a>(<a href="#56194" title="sbt.Path">outputPath</a>, <a href="#57479" title="Analyzer.this.global.icodes.global.Symbol">sym</a>, <a href="#58967" title="Boolean">separatorRequired</a>)
+						<span title="Unit" class="keyword">if</span>(<a href="#58968" title="sbt.Path">classPath</a>.<a href="Path.scala.html#9529" title="=&gt; java.io.File">asFile</a>.<a title="()Boolean" id="9559">exists</a>)
+							<a href="#56188" title="sbt.AnalysisCallback">callback</a>.<a href="AnalysisCallback.scala.html#32769" title="(sbt.Path,sbt.Path)Unit">generatedClass</a>(<a href="#56272" title="sbt.Path">sourcePath</a>, <a href="#58968" title="sbt.Path">classPath</a>)
+					}
+					<span title="Unit" class="keyword">if</span>(<a href="#57479" title="Analyzer.this.global.icodes.global.Symbol">sym</a>.<a title="=&gt; Boolean" id="15081">isModuleClass</a> <a title="(Boolean)Boolean" id="2641">&amp;&amp;</a> <a title="=&gt; Boolean" id="2637">!</a><a href="#57479" title="Analyzer.this.global.icodes.global.Symbol">sym</a>.<a title="=&gt; Boolean" id="15103">isImplClass</a>)
+					{
+						<span title="Unit" class="keyword">if</span>(<a href="#56089" title="(Analyzer.this.global.Symbol)Boolean">isTopLevelModule</a>(<a href="#57479" title="Analyzer.this.global.icodes.global.Symbol">sym</a>) <a title="(Boolean)Boolean" id="2641">&amp;&amp;</a> <a href="#57479" title="Analyzer.this.global.icodes.global.Symbol">sym</a>.<a title="=&gt; Analyzer.this.global.icodes.global.Symbol" id="15205">linkedClassOfModule</a> <a title="(AnyRef)Boolean" id="3399">==</a> <a href="#56065" title="object Analyzer.this.global.NoSymbol" id="15281">NoSymbol</a>)
+							<a href="#57480" title="(Boolean)Unit">addGenerated</a>(<span title="Boolean(false)" class="keyword">false</span>)
+						<a href="#57480" title="(Boolean)Unit">addGenerated</a>(<span title="Boolean(true)" class="keyword">true</span>)
+					}
+					<span class="keyword">else</span>
+						<a href="#57480" title="(Boolean)Unit">addGenerated</a>(<span title="Boolean(false)" class="keyword">false</span>)
+				}
+				<a href="#56188" title="sbt.AnalysisCallback">callback</a>.<a href="AnalysisCallback.scala.html#32770" title="(sbt.Path)Unit">endSource</a>(<a href="#56272" title="sbt.Path">sourcePath</a>)
+			}
+		}
+	}
+	
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(Analyzer.this.global.Symbol)Option[scala.tools.nsc.io.AbstractFile]" id="56088">classFile</a>(<a title="Analyzer.this.global.Symbol" id="56282">sym</a>: <a title="Analyzer.this.global.Symbol" id="14885">Symbol</a>): <a title="Option[scala.tools.nsc.io.AbstractFile]" id="871">Option</a>[AbstractFile] =
+	{
+		<span class="keyword">import</span> scala.tools.nsc.symtab.Flags
+		<span class="keyword">val</span> <a title="java.lang.String" id="58981">name</a> = <a href="#56282" title="Analyzer.this.global.Symbol">sym</a>.<a title="(Char)String" id="15239">fullNameString</a>(java.io.<a title="object java.io.File" id="3560">File</a>.<a title="Char" id="9536">separatorChar</a>) <a title="(Any)java.lang.String" id="5683">+</a> (<span title="Any" class="keyword">if</span> (<a href="#56282" title="Analyzer.this.global.Symbol">sym</a>.<a title="(Long)Boolean" id="15136">hasFlag</a>(Flags.<span title="Long(1024L)">MODULE</span>)) <span title="java.lang.String(&quot;$&quot;)" class="string">&quot;$&quot;</span> <span class="keyword">else</span> <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+		<span class="keyword">val</span> <a title="Analyzer.this.global.classPath0.Context" id="58982">entry</a> = <a href="#56065" title="=&gt; Analyzer.this.global.classPath0.Build" id="13690">classPath</a>.<a title="=&gt; Analyzer.this.global.classPath0.Context" id="59273">root</a>.<a title="(String,Boolean)Analyzer.this.global.classPath0.Context" id="59258">find</a>(<a href="#58981" title="java.lang.String">name</a>, <span title="Boolean(false)" class="keyword">false</span>)
+		<span title="Option[scala.tools.nsc.io.AbstractFile]" class="keyword">if</span> (<a href="#58982" title="Analyzer.this.global.classPath0.Context">entry</a> <a title="(AnyRef)Boolean" id="5676">ne</a> <span title="Null(null)" class="keyword">null</span>)
+			<span id="10256"><a title="(scala.tools.nsc.io.AbstractFile)Some[scala.tools.nsc.io.AbstractFile]" id="275">Some</a></span>(<a href="#58982" title="Analyzer.this.global.classPath0.Context">entry</a>.<a title="=&gt; scala.tools.nsc.io.AbstractFile" id="59266">classFile</a>)
+		<span class="keyword">else</span>
+			<a title="object None" id="488">None</a>
+	}
+	
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(Analyzer.this.global.Symbol)Boolean" id="56089">isTopLevelModule</a>(<a title="Analyzer.this.global.Symbol" id="58977">sym</a>: <a title="Analyzer.this.global.Symbol" id="14885">Symbol</a>): <a title="Boolean" id="2060">Boolean</a> =
+		<a href="#56065" title="(scala.tools.nsc.Phase)(=&gt; Boolean)Boolean" id="14772">atPhase</a> (<a href="#56065" title="=&gt; Analyzer.this.global.Run" id="13935">currentRun</a>.<a title="=&gt; scala.tools.nsc.Phase" id="13899">picklerPhase</a>.<a title="=&gt; scala.tools.nsc.Phase" id="56169">next</a>) {
+			<a href="#58977" title="Analyzer.this.global.Symbol">sym</a>.<a title="=&gt; Boolean" id="15081">isModuleClass</a> <a title="(Boolean)Boolean" id="2641">&amp;&amp;</a> <a title="=&gt; Boolean" id="2637">!</a><a href="#58977" title="Analyzer.this.global.Symbol">sym</a>.<a title="=&gt; Boolean" id="15103">isImplClass</a> <a title="(Boolean)Boolean" id="2641">&amp;&amp;</a> <a title="=&gt; Boolean" id="2637">!</a><a href="#58977" title="Analyzer.this.global.Symbol">sym</a>.<a title="=&gt; Boolean" id="15115">isNestedClass</a>
+		}
+	
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Path,Analyzer.this.global.Symbol,Boolean)sbt.Path" id="56090">pathOfClass</a>(<a title="sbt.Path" id="58974">outputPath</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>, <a title="Analyzer.this.global.Symbol" id="58975">s</a>: <a title="Analyzer.this.global.Symbol" id="14885">Symbol</a>, <a title="Boolean" id="58976">separatorRequired</a>: <a title="Boolean" id="2060">Boolean</a>): <a href="Path.scala.html#6697" title="sbt.Path">Path</a> =
+		<a href="#56091" title="(sbt.Path,Analyzer.this.global.Symbol,Boolean,String)sbt.Path">pathOfClass</a>(<a href="#58974" title="sbt.Path">outputPath</a>, <a href="#58975" title="Analyzer.this.global.Symbol">s</a>, <a href="#58976" title="Boolean">separatorRequired</a>, <span title="java.lang.String(&quot;.class&quot;)" class="string">&quot;.class&quot;</span>)
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Path,Analyzer.this.global.Symbol,Boolean,String)sbt.Path" id="56091">pathOfClass</a>(<a title="sbt.Path" id="58970">outputPath</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>, <a title="Analyzer.this.global.Symbol" id="58971">s</a>: <a title="Analyzer.this.global.Symbol" id="14885">Symbol</a>, <a title="Boolean" id="58972">separatorRequired</a>: <a title="Boolean" id="2060">Boolean</a>, <a title="String" id="58973">postfix</a>: <a title="String" id="1751">String</a>): <a href="Path.scala.html#6697" title="sbt.Path">Path</a> =
+	{
+		<span title="sbt.Path" class="keyword">if</span>(<a href="#58971" title="Analyzer.this.global.Symbol">s</a>.<a title="=&gt; Analyzer.this.global.Symbol" id="15124">owner</a>.<a title="=&gt; Boolean" id="15082">isPackageClass</a> <a title="(Boolean)Boolean" id="2641">&amp;&amp;</a> <a href="#58971" title="Analyzer.this.global.Symbol">s</a>.<a title="=&gt; Boolean" id="15082">isPackageClass</a>)
+			<a href="#56092" title="(sbt.Path,Analyzer.this.global.Symbol)sbt.Path">packagePath</a>(<a href="#58970" title="sbt.Path">outputPath</a>, <a href="#58971" title="Analyzer.this.global.Symbol">s</a>) <a href="Path.scala.html#9523" title="(String)sbt.Path">/</a> <a href="#58973" title="String">postfix</a>
+		<span class="keyword">else</span>
+			<a href="#56091" title="(sbt.Path,Analyzer.this.global.Symbol,Boolean,String)sbt.Path">pathOfClass</a>(<a href="#58970" title="sbt.Path">outputPath</a>, <a href="#58971" title="Analyzer.this.global.Symbol">s</a>.<a title="=&gt; Analyzer.this.global.Symbol" id="15124">owner</a>.<a title="=&gt; Analyzer.this.global.Symbol" id="15185">enclClass</a>, <span title="Boolean(true)" class="keyword">true</span>, <a href="#58971" title="Analyzer.this.global.Symbol">s</a>.<span id="6014"><span id="770"><a title="implicit scala.Predef.any2stringadd : (Any)scala.runtime.StringAdd" id="15235">simpleName</a></span></span> <a title="(String)java.lang.String" id="9286">+</a> (<span title="String" class="keyword">if</span>(<a href="#58972" title="Boolean">separatorRequired</a>) <span title="java.lang.String(&quot;$&quot;)" class="string">&quot;$&quot;</span> <span class="keyword">else</span> <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>) <a title="(Any)java.lang.String" id="5683">+</a> <a href="#58973" title="String">postfix</a>)
+	}
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Path,Analyzer.this.global.Symbol)sbt.Path" id="56092">packagePath</a>(<a title="sbt.Path" id="59290">outputPath</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>, <a title="Analyzer.this.global.Symbol" id="59291">s</a>: <a title="Analyzer.this.global.Symbol" id="14885">Symbol</a>): <a href="Path.scala.html#6697" title="sbt.Path">Path</a> =
+	{
+		<span title="sbt.Path" class="keyword">if</span>(<a href="#59291" title="Analyzer.this.global.Symbol">s</a>.<a title="=&gt; Boolean" id="15086">isEmptyPackageClass</a> <a title="(Boolean)Boolean" id="2640">||</a> <a href="#59291" title="Analyzer.this.global.Symbol">s</a>.<a title="=&gt; Boolean" id="15083">isRoot</a>)
+			<a href="#59290" title="sbt.Path">outputPath</a>
+		<span class="keyword">else</span>
+			<a href="#56092" title="(sbt.Path,Analyzer.this.global.Symbol)sbt.Path">packagePath</a>(<a href="#59290" title="sbt.Path">outputPath</a>, <a href="#59291" title="Analyzer.this.global.Symbol">s</a>.<a title="=&gt; Analyzer.this.global.Symbol" id="15124">owner</a>.<a title="=&gt; Analyzer.this.global.Symbol" id="15185">enclClass</a>) <a href="Path.scala.html#9523" title="(String)sbt.Path">/</a> <a href="#59291" title="Analyzer.this.global.Symbol">s</a>.<a title="=&gt; Analyzer.this.global.Name" id="15235">simpleName</a>.<a title="()String" id="14814">toString</a>
+	}
+}
+        </pre>
+    </body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>sbt/ReflectUtilities.scala</title>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* sbt -- Simple Build Tool
+ * Copyright 2008 David MacIver, Mark Harrah
+ */</span>
+<span class="keyword">package</span> sbt;
+
+<span class="keyword">import</span> scala.collection._
+
+<span class="keyword">object</span> <a title="object sbt.ReflectUtilities" id="6780">ReflectUtilities</a>
+{
+	<span class="keyword">def</span> <a title="(String,Char)String" id="31297">transformCamelCase</a>(<a title="String" id="31317">name</a>: <a title="String" id="1751">String</a>, <a title="Char" id="31318">separator</a>: <a title="Char" id="2291">Char</a>) =
+	{
+		<span class="keyword">val</span> <a title="StringBuilder" id="31320">buffer</a> = <a title="()StringBuilder" id="9298" class="keyword">new</a> <a title="StringBuilder" id="1339">StringBuilder</a>
+		<span class="keyword">for</span>(<span id="7256"><a title="((Char) =&gt; Unit)Unit" id="31403">char</a></span> &lt;- <span id="6012"><a href="#31317" title="implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString" id="770">name</a></span>)
+		{
+			<span class="keyword">import</span> java.lang.Character._
+			<span title="Unit" class="keyword">if</span>(<span id="25185"><a title="(Char)Boolean" id="1836">isUpperCase</a></span>(<a href="#31403" title="Char">char</a>))
+			{
+				<span id="6013"><a href="#31320" title="implicit scala.Predef.stringBuilderWrapper : (StringBuilder)scala.runtime.RichStringBuilder" id="770">buffer</a></span> <a title="(Char)Unit" id="27554">+=</a> <a href="#31318" title="Char">separator</a>
+				<span id="6013"><a href="#31320" title="implicit scala.Predef.stringBuilderWrapper : (StringBuilder)scala.runtime.RichStringBuilder" id="770">buffer</a></span> <a title="(Char)Unit" id="27554">+=</a> <span id="25209"><a title="(Char)Char" id="1836">toLowerCase</a></span>(<a href="#31403" title="Char">char</a>)
+			}
+			<span class="keyword">else</span>
+				<span id="6013"><a href="#31320" title="implicit scala.Predef.stringBuilderWrapper : (StringBuilder)scala.runtime.RichStringBuilder" id="770">buffer</a></span> <a title="(Char)Unit" id="27554">+=</a> <a href="#31403" title="Char">char</a>
+		}
+		<a href="#31320" title="StringBuilder">buffer</a>.<a title="()String" id="9350">toString</a>
+	}
+
+	<span class="keyword">def</span> <a title="(Class[_])List[Class[_]]" id="31298">ancestry</a>(<a title="Class[_]" id="64850">clazz</a> : <a title="Class[_]" id="1562">Class</a>[_]) : <a title="List[Class[_]]" id="481">List</a>[Class[_]] = 
+		<span title="List[Class[_]]" class="keyword">if</span> (<a href="#64850" title="Class[_]">clazz</a> <a title="(AnyRef)Boolean" id="3399">==</a> <span title="java.lang.Class[AnyRef]">classOf</span>[AnyRef] <a title="(Boolean)Boolean" id="2640">||</a> <a title="=&gt; Boolean" id="2637">!</a><span title="java.lang.Class[AnyRef]">classOf</span>[AnyRef].<a title="(java.lang.Class[_])Boolean" id="3831">isAssignableFrom</a>(<a href="#64850" title="Class[_]">clazz</a>)) <span id="6801"><a title="(Class[_$1]*)List[Class[_$1]]" id="482">List</a></span>(<a href="#64850" title="Class[_]">clazz</a>)
+		<span class="keyword">else</span> <a href="#64850" title="Class[_]">clazz</a> <a href="#64862" title="(Class[_])List[Class[_]]" id="6808">::</a> <a href="#31298" title="(Class[_])List[Class[_]]">ancestry</a>(<a href="#64850" title="Class[_]">clazz</a>.<a title="(()java.lang.Class[_ &gt;: _$1]) forSome { type _$1 }" id="3843">getSuperclass</a>);
+
+	<span class="keyword">def</span> <a title="(Class[_])scala.collection.mutable.OpenHashMap[java.lang.String,java.lang.reflect.Field]" id="31299">fields</a>(<a title="Class[_]" id="64876">clazz</a> : <a title="Class[_]" id="1562">Class</a>[_]) = 
+		mutable.<span id="31236"><a title="((java.lang.String, java.lang.reflect.Field)*)scala.collection.mutable.OpenHashMap[java.lang.String,java.lang.reflect.Field]" id="8030">OpenHashMap</a></span>(<a href="#31298" title="(Class[_])List[Class[_]]">ancestry</a>(<a href="#64876" title="Class[_]">clazz</a>).
+			<a title="((Class[_]) =&gt; Iterable[java.lang.reflect.Field])List[java.lang.reflect.Field]" id="6856">flatMap</a>(<a href="#64886" title="Class[_]">_</a>.<a title="()Array[java.lang.reflect.Field]" id="4239">getDeclaredFields</a>).
+			<a title="((java.lang.reflect.Field) =&gt; (java.lang.String, java.lang.reflect.Field))List[(java.lang.String, java.lang.reflect.Field)]" id="6835">map</a>(<a title="java.lang.reflect.Field" id="64890">f</a> =&gt; <span id="9252"><a title="(java.lang.String,java.lang.reflect.Field)(java.lang.String, java.lang.reflect.Field)" id="1283">(</a></span><a href="#64890" title="java.lang.reflect.Field">f</a>.<a title="()java.lang.String" id="38281">getName</a>, <a href="#64890" title="java.lang.reflect.Field">f</a>)):_*)
+	
+	<span class="keyword">def</span> <a title="[T](AnyRef,Class[T])scala.collection.Map[String,T]" id="31300">allValsC</a>[<a title="&gt;: Nothing &lt;: Any" id="31302">T</a>](<a title="AnyRef" id="64099">self</a>: <a title="AnyRef" id="1907">AnyRef</a>, <a title="Class[T]" id="64100">clazz</a>: <a title="Class[T]" id="1562">Class</a>[T]): <a title="scala.collection.Map[String,T]" id="7363">Map</a>[String, T] =
+	{
+		<span class="keyword">val</span> <a title="scala.collection.mutable.OpenHashMap[String,T]" id="64894">mappings</a> = <a title="()scala.collection.mutable.OpenHashMap[String,T]" id="31241" class="keyword">new</a> mutable.<a title="scala.collection.mutable.OpenHashMap[String,T]" id="8029">OpenHashMap</a>[String, T]
+		<span class="keyword">val</span> <a title="scala.collection.mutable.OpenHashMap[java.lang.String,java.lang.reflect.Field]" id="64895">correspondingFields</a> = <a href="#31299" title="(Class[_])scala.collection.mutable.OpenHashMap[java.lang.String,java.lang.reflect.Field]">fields</a>(<a href="#64099" title="AnyRef">self</a>.<a title="()java.lang.Class[_ &lt;: java.lang.Object]" id="3401">getClass</a>)
+		<span class="keyword">for</span>(<span id="7256"><a title="((java.lang.reflect.Method) =&gt; Unit)Unit" id="64945">method</a></span> &lt;- <a href="#64099" title="AnyRef">self</a>.<a title="()java.lang.Class[_ &lt;: java.lang.Object]" id="3401">getClass</a>.<a title="()Array[java.lang.reflect.Method]" id="4227">getMethods</a>)
+		{
+			<span title="Unit" class="keyword">if</span>(<a href="#64945" title="java.lang.reflect.Method">method</a>.<a title="()Array[java.lang.Class[_]]" id="64920">getParameterTypes</a>.<a title="=&gt; Int" id="6981">length</a> <a title="(Int)Boolean" id="3031">==</a> <span title="Int(0)" class="int">0</span> <a title="(Boolean)Boolean" id="2641">&amp;&amp;</a> <a href="#64100" title="Class[T]">clazz</a>.<a title="(java.lang.Class[_])Boolean" id="3831">isAssignableFrom</a>(<a href="#64945" title="java.lang.reflect.Method">method</a>.<a title="()java.lang.Class[_]" id="64916">getReturnType</a>))
+			{
+				<span class="keyword">for</span>(<span id="10162"><span id="10161"><span id="64951"><a title="((java.lang.reflect.Field) =&gt; Unit)Unit" id="64957">field</a></span></span></span> &lt;- <a href="#64895" title="scala.collection.mutable.OpenHashMap[java.lang.String,java.lang.reflect.Field]">correspondingFields</a>.<a title="(java.lang.String)Option[java.lang.reflect.Field]" id="31277">get</a>(<a href="#64945" title="java.lang.reflect.Method">method</a>.<a title="()java.lang.String" id="64911">getName</a>) <span class="keyword">if</span> <a href="#64951" title="java.lang.reflect.Field">field</a>.<a title="()java.lang.Class[_]" id="38286">getType</a> <a title="(AnyRef)Boolean" id="3399">==</a> <a href="#64945" title="java.lang.reflect.Method">method</a>.<a title="()java.lang.Class[_]" id="64916">getReturnType</a>)
+					<a href="#64894" title="scala.collection.mutable.OpenHashMap[String,T]">mappings</a>(<a href="#64945" title="java.lang.reflect.Method">method</a>.<a title="()java.lang.String" id="64911">getName</a>) = <a href="#64945" title="java.lang.reflect.Method">method</a>.<a title="(Any,java.lang.Object*)java.lang.Object" id="64931">invoke</a>(<a href="#64099" title="AnyRef">self</a>).<a title="T" id="3393">asInstanceOf</a>[<a href="#31302" title="T">T</a>]
+			}
+		}
+		<a href="#64894" title="scala.collection.mutable.OpenHashMap[String,T]">mappings</a>
+	}
+	<span class="keyword">def</span> <a title="[T](AnyRef)(implicit scala.reflect.Manifest[T])scala.collection.Map[String,T]" id="31303">allVals</a>[<a title="&gt;: Nothing &lt;: Any" id="31305">T</a>](<a title="AnyRef" id="31306">self</a>: <a title="AnyRef" id="1907">AnyRef</a>)(<span class="keyword">implicit</span> <a title="scala.reflect.Manifest[T]" id="31307">mt</a>: scala.reflect.<a title="scala.reflect.Manifest[T]" id="2601">Manifest</a>[T]): <a title="scala.collection.Map[String,T]" id="7363">Map</a>[String, T] =
+		<a href="#31300" title="(AnyRef,Class[U])scala.collection.Map[String,U]">allValsC</a>(<a href="#31306" title="AnyRef">self</a>, <a href="#31307" title="scala.reflect.Manifest[T]">mt</a>.<a title="=&gt; Class[_]" id="27789">erasure</a>).<a title="scala.collection.Map[String,T]" id="3393">asInstanceOf</a>[<a title="scala.collection.Map[String,T]" id="7363">Map</a>[String,T]]
+}
+
+        </pre>
+    </body>
+</html>

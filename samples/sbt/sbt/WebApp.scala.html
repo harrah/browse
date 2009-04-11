@@ -1,0 +1,254 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>sbt/WebApp.scala</title>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* sbt -- Simple Build Tool
+ * Copyright 2008 Mark Harrah
+ */</span>
+<span class="keyword">package</span> sbt
+
+<span class="keyword">import</span> java.io.File
+<span class="keyword">import</span> java.net.{URL, URLClassLoader}
+<span class="keyword">import</span> scala.xml.NodeSeq
+
+<span class="keyword">object</span> <a title="object sbt.JettyRun" id="6683">JettyRun</a> <span class="keyword">extends</span> <a href="ExitHook.scala.html#6595" title="sbt.ExitHook">ExitHook</a>
+{
+	<a href="ExitHook.scala.html#6596" title="object sbt.ExitHooks">ExitHooks</a>.<a href="ExitHook.scala.html#52691" title="(sbt.ExitHook)Unit">register</a>(<span class="keyword">this</span>)
+	
+	<span class="keyword">def</span> <a title="=&gt; java.lang.String" id="59789">name</a> = <span title="java.lang.String(&quot;jetty-shutdown&quot;)" class="string">&quot;jetty-shutdown&quot;</span>
+	<span class="keyword">def</span> <a title="()Unit" id="59790">runBeforeExiting</a>() { <a href="#59795" title="()Unit">stop</a>() }
+	<span class="keyword">private</span> <span class="keyword">var</span> <span id="59793"><span id="59791"><span id="59792"><a title="Option[sbt.Stoppable]" id="59804">running</a></span></span></span>: <a title="Option[sbt.Stoppable]" id="871">Option</a>[Stoppable] = <a title="object None" id="488">None</a>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Stoppable)Unit" id="59794">started</a>(<a title="sbt.Stoppable" id="59808">s</a>: <a href="#6685" title="sbt.Stoppable">Stoppable</a>) { <a href="#59792" title="(Option[sbt.Stoppable])Unit">running</a> = <span id="10256"><a title="(sbt.Stoppable)Some[sbt.Stoppable]" id="275">Some</a></span>(<a href="#59808" title="sbt.Stoppable">s</a>) }
+	<span class="keyword">def</span> <a title="()Unit" id="59795">stop</a>()
+	{
+		<a title="(Unit)Unit" id="5677">synchronized</a>
+		{
+			<a href="#59791" title="=&gt; Option[sbt.Stoppable]">running</a>.<a title="((sbt.Stoppable) =&gt; Unit)Unit" id="10162">foreach</a>(<a href="#59812" title="sbt.Stoppable">_</a>.<a href="#59807" title="()Unit">stop</a>())
+			<a href="#59792" title="(Option[sbt.Stoppable])Unit">running</a> = <a title="object None" id="488">None</a>
+		}
+	}
+	<span class="keyword">def</span> <a title="(Iterable[sbt.Path],String,sbt.Path,String,scala.xml.NodeSeq,Seq[java.io.File],sbt.Logger)Option[String]" id="59796">apply</a>(<a title="Iterable[sbt.Path]" id="59813">classpath</a>: <a title="Iterable[sbt.Path]" id="358">Iterable</a>[Path], <a title="String" id="59814">classpathName</a>: <a title="String" id="1751">String</a>, <a title="sbt.Path" id="59815">war</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>, <a title="String" id="59816">defaultContextPath</a>: <a title="String" id="1751">String</a>, <a title="scala.xml.NodeSeq" id="59817">jettyConfigurationXML</a>: <a title="scala.xml.NodeSeq" id="24291">NodeSeq</a>,
+		<a title="Seq[java.io.File]" id="59818">jettyConfigurationFiles</a>: <a title="Seq[java.io.File]" id="715">Seq</a>[File], <a title="sbt.Logger" id="59819">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>): <a title="Option[String]" id="871">Option</a>[String] =
+			<a href="#59799" title="(String,sbt.JettyRunConfiguration,sbt.Logger)Option[String]">run</a>(<a href="#59814" title="String">classpathName</a>, <span title="sbt.JettyRunConfiguration" class="keyword">new</span> <a href="#6687" title="sbt.JettyRunConfiguration">JettyRunConfiguration</a>(<a href="#59815" title="sbt.Path">war</a>, <a href="#59816" title="String">defaultContextPath</a>, <a href="#59817" title="scala.xml.NodeSeq">jettyConfigurationXML</a>,
+				<a href="#59818" title="Seq[java.io.File]">jettyConfigurationFiles</a>, <a title="object Nil" id="299">Nil</a>, <span title="Int(0)" class="int">0</span>, <a href="#59798" title="(Iterable[sbt.Path])Seq[java.net.URL]">toURLs</a>(<a href="#59813" title="Iterable[sbt.Path]">classpath</a>)), <a href="#59819" title="sbt.Logger">log</a>)
+	<span class="keyword">def</span> <a title="(Iterable[sbt.Path],String,sbt.Path,String,Seq[java.io.File],Int,sbt.Logger)Option[String]" id="59797">apply</a>(<a title="Iterable[sbt.Path]" id="59857">classpath</a>: <a title="Iterable[sbt.Path]" id="358">Iterable</a>[Path], <a title="String" id="59858">classpathName</a>: <a title="String" id="1751">String</a>, <a title="sbt.Path" id="59859">war</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>, <a title="String" id="59860">defaultContextPath</a>: <a title="String" id="1751">String</a>, <a title="Seq[java.io.File]" id="59861">scanDirectories</a>: <a title="Seq[java.io.File]" id="715">Seq</a>[File],
+		<a title="Int" id="59862">scanPeriod</a>: <a title="Int" id="2296">Int</a>, <a title="sbt.Logger" id="59863">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>): <a title="Option[String]" id="871">Option</a>[String] =
+			<a href="#59799" title="(String,sbt.JettyRunConfiguration,sbt.Logger)Option[String]">run</a>(<a href="#59858" title="String">classpathName</a>, <span title="sbt.JettyRunConfiguration" class="keyword">new</span> <a href="#6687" title="sbt.JettyRunConfiguration">JettyRunConfiguration</a>(<a href="#59859" title="sbt.Path">war</a>, <a href="#59860" title="String">defaultContextPath</a>, <a title="object scala.xml.NodeSeq" id="24292">NodeSeq</a>.<a title="=&gt; &lt;refinement&gt; extends scala.xml.NodeSeq" id="29820">Empty</a>, <a title="object Nil" id="299">Nil</a>, <a href="#59861" title="Seq[java.io.File]">scanDirectories</a>, <a href="#59862" title="Int">scanPeriod</a>, <a href="#59798" title="(Iterable[sbt.Path])Seq[java.net.URL]">toURLs</a>(<a href="#59857" title="Iterable[sbt.Path]">classpath</a>)), <a href="#59863" title="sbt.Logger">log</a>)
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(Iterable[sbt.Path])Seq[java.net.URL]" id="59798">toURLs</a>(<a title="Iterable[sbt.Path]" id="59852">paths</a>: <a title="Iterable[sbt.Path]" id="358">Iterable</a>[Path]) = <a href="#59852" title="Iterable[sbt.Path]">paths</a>.<a title="((sbt.Path) =&gt; java.net.URL)Iterable[java.net.URL]" id="7246">map</a>(<a href="#59856" title="sbt.Path">_</a>.<a href="Path.scala.html#9530" title="=&gt; java.net.URL">asURL</a>).<a title="=&gt; Seq[java.net.URL]" id="7280">toSeq</a>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(String,sbt.JettyRunConfiguration,sbt.Logger)Option[String]" id="59799">run</a>(<a title="String" id="59820">classpathName</a>: <a title="String" id="1751">String</a>, <a title="sbt.JettyRunConfiguration" id="59821">configuration</a>: <a href="#6687" title="sbt.JettyRunConfiguration">JettyRunConfiguration</a>, <a title="sbt.Logger" id="59822">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>): <a title="Option[String]" id="871">Option</a>[String] =
+		<a title="(Option[String])Option[String]" id="5677">synchronized</a>
+		{
+			<span class="keyword">import</span> configuration._
+			<span class="keyword">def</span> <a title="()sbt.Stoppable" id="59866">runJetty</a>() =
+			{
+				<span class="keyword">val</span> <a title="java.lang.ClassLoader" id="59867">baseLoader</a> = <span class="keyword">this</span>.<a title="()java.lang.Class[_ &lt;: java.lang.Object]" id="3401">getClass</a>.<a title="()java.lang.ClassLoader" id="3839">getClassLoader</a>
+				<span class="keyword">val</span> <a title="java.lang.ClassLoader" id="59868">loader</a>: <a title="java.lang.ClassLoader" id="1616">ClassLoader</a> = <a href="ClasspathUtilities.scala.html#45403" title="(Array[java.net.URL],java.lang.ClassLoader,Iterable[String])sbt.FilteredLoader" class="keyword">new</a> <a href="ClasspathUtilities.scala.html#6372" title="sbt.FilteredLoader">FilteredLoader</a>(<a href="#59842" title="=&gt; Seq[java.net.URL]">classpathURLs</a>.<a title="Array[java.net.URL]" id="7138">toArray</a>, <a href="#59867" title="java.lang.ClassLoader">baseLoader</a>, <span title="java.lang.String(&quot;org.mortbay.&quot;)" class="string">&quot;org.mortbay.&quot;</span> <a href="#59877" title="(java.lang.String)List[java.lang.String]" id="6808">::</a> <span title="java.lang.String(&quot;javax.servlet.&quot;)" class="string">&quot;javax.servlet.&quot;</span> <a href="#59878" title="(java.lang.String)List[java.lang.String]" id="6808">::</a> <a title="object Nil" id="299">Nil</a>)
+				<span class="keyword">val</span> <a title="sbt.LazyFrameworkLoader" id="59869">lazyLoader</a> = <span title="sbt.LazyFrameworkLoader" class="keyword">new</span> <a href="ClasspathUtilities.scala.html#6374" title="sbt.LazyFrameworkLoader">LazyFrameworkLoader</a>(<a href="#59800" title="=&gt; java.lang.String">implClassName</a>, <span id="7003"><a title="(java.net.URL*)Array[java.net.URL]" id="1004">Array</a></span>(<a href="FileUtilities.scala.html#6351" title="object sbt.FileUtilities">FileUtilities</a>.<a href="FileUtilities.scala.html#9485" title="=&gt; java.io.File">sbtJar</a>.<a title="()java.net.URI" id="9556">toURI</a>.<a title="()java.net.URL" id="21245">toURL</a>), <a href="#59868" title="java.lang.ClassLoader">loader</a>, <a href="#59867" title="java.lang.ClassLoader">baseLoader</a>)
+				<span class="keyword">val</span> <a title="sbt.JettyRun" id="59870">runner</a> = <a href="ModuleUtilities.scala.html#6507" title="object sbt.ModuleUtilities">ModuleUtilities</a>.<a href="ModuleUtilities.scala.html#38258" title="(String,java.lang.ClassLoader)java.lang.Object">getObject</a>(<a href="#59800" title="=&gt; java.lang.String">implClassName</a>, <a href="#59869" title="sbt.LazyFrameworkLoader">lazyLoader</a>).<a title="sbt.JettyRun" id="3393">asInstanceOf</a>[<a href="#6686" title="sbt.JettyRun">JettyRun</a>]
+				<a href="#60068" title="(sbt.JettyRunConfiguration,sbt.Logger)sbt.Stoppable">runner</a>(<a href="#59821" title="sbt.JettyRunConfiguration">configuration</a>, <a href="#59822" title="sbt.Logger">log</a>)
+			}
+			
+			<span title="Option[String]" class="keyword">if</span>(<a href="#59791" title="=&gt; Option[sbt.Stoppable]">running</a>.<a title="=&gt; Boolean" id="10151">isDefined</a>)
+				<span id="10256"><a title="(java.lang.String)Some[java.lang.String]" id="275">Some</a></span>(<span title="java.lang.String(&quot;Jetty is already running.&quot;)" class="string">&quot;Jetty is already running.&quot;</span>)
+			<span class="keyword">else</span>
+			{
+				<span class="keyword">try</span>
+				{
+					<a href="#59794" title="(sbt.Stoppable)Unit">started</a>(<a href="#59866" title="()sbt.Stoppable">runJetty</a>())
+					<a title="object None" id="488">None</a>
+				}
+				<span class="keyword">catch</span>
+				{
+					<span title="Some[java.lang.String]" class="keyword">case</span> <a title="java.lang.NoClassDefFoundError" id="60072">e</a>: <a title="java.lang.NoClassDefFoundError" id="1823">NoClassDefFoundError</a> =&gt; <a href="#59802" title="(Throwable,String,sbt.Logger)Some[java.lang.String]">runError</a>(<a href="#60072" title="java.lang.NoClassDefFoundError">e</a>, <span title="java.lang.String(&quot;Jetty and its dependencies must be on the &quot;)" class="string">&quot;Jetty and its dependencies must be on the &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#59820" title="String">classpathName</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; classpath: &quot;)" class="string">&quot; classpath: &quot;</span>, <a href="#59822" title="sbt.Logger">log</a>)
+					<span title="Some[java.lang.String]" class="keyword">case</span> <a title="java.lang.Throwable" id="60078">e</a> =&gt; <a href="#59802" title="(Throwable,String,sbt.Logger)Some[java.lang.String]">runError</a>(<a href="#60078" title="java.lang.Throwable">e</a>, <span title="java.lang.String(&quot;Error running Jetty: &quot;)" class="string">&quot;Error running Jetty: &quot;</span>, <a href="#59822" title="sbt.Logger">log</a>)
+				}
+			}
+		}
+	<span class="keyword">private</span> <span class="keyword">val</span> <span id="59801"><a title="java.lang.String" id="59800">implClassName</a></span> = <span title="java.lang.String(&quot;sbt.LazyJettyRun&quot;)" class="string">&quot;sbt.LazyJettyRun&quot;</span>
+	
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(Throwable,String,sbt.Logger)Some[java.lang.String]" id="59802">runError</a>(<a title="Throwable" id="60073">e</a>: <a title="Throwable" id="2033">Throwable</a>, <a title="String" id="60074">messageBase</a>: <a title="String" id="1751">String</a>, <a title="sbt.Logger" id="60075">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>) =
+	{
+		<a href="#60075" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8350" title="(=&gt; Throwable)Unit">trace</a>(<a href="#60073" title="Throwable">e</a>)
+		<span id="10256"><a title="(java.lang.String)Some[java.lang.String]" id="275">Some</a></span>(<a href="#60074" title="String">messageBase</a> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#60073" title="Throwable">e</a>.<a title="()java.lang.String" id="9277">toString</a>)
+	}
+}
+
+<span class="keyword">private</span> <span class="keyword">trait</span> <span id="6685"><a title="trait Stoppable extends java.lang.Object" id="2055">Stoppable</a></span>
+{
+	<span class="keyword">def</span> <a title="()Unit" id="59807">stop</a>(): <a title="Unit" id="2059">Unit</a>
+}
+<span class="keyword">private</span> <span class="keyword">trait</span> <span id="6686"><a title="trait JettyRun extends java.lang.Object" id="2055">JettyRun</a></span>
+{
+	<span class="keyword">def</span> <a title="(sbt.JettyRunConfiguration,sbt.Logger)sbt.Stoppable" id="60068">apply</a>(<a title="sbt.JettyRunConfiguration" id="60069">configuration</a>: <a href="#6687" title="sbt.JettyRunConfiguration">JettyRunConfiguration</a>, <a title="sbt.Logger" id="60070">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>): <a href="#6685" title="sbt.Stoppable">Stoppable</a>
+}
+<span class="keyword">private</span> <span class="keyword">class</span> <a title="class JettyRunConfiguration extends java.lang.Object with NotNull with ScalaObject" id="6687">JettyRunConfiguration</a>(<span class="keyword">val</span> <span id="59831"><span id="59830"><a title="sbt.Path" id="59845">war</a></span></span>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>, <span class="keyword">val</span> <span id="59833"><span id="59832"><a title="String" id="59846">defaultContextPath</a></span></span>: <a title="String" id="1751">String</a>, <span class="keyword">val</span> <span id="59835"><span id="59834"><a title="scala.xml.NodeSeq" id="59847">jettyConfigurationXML</a></span></span>: <a title="scala.xml.NodeSeq" id="24291">NodeSeq</a>, <span class="keyword">val</span> <span id="59837"><span id="59836"><a title="Seq[java.io.File]" id="59848">jettyConfigurationFiles</a></span></span>: <a title="Seq[java.io.File]" id="715">Seq</a>[File],
+		<span class="keyword">val</span> <span id="59839"><span id="59838"><a title="Seq[java.io.File]" id="59849">scanDirectories</a></span></span>: <a title="Seq[java.io.File]" id="715">Seq</a>[File], <span class="keyword">val</span> <span id="59841"><span id="59840"><a title="Int" id="59850">scanInterval</a></span></span>: <a title="Int" id="2296">Int</a>, <span class="keyword">val</span> <span id="59843"><span id="59842"><a title="Seq[java.net.URL]" id="59851">classpathURLs</a></span></span>: <a title="Seq[java.net.URL]" id="715">Seq</a>[URL]) <span class="keyword">extends</span> <a title="NotNull" id="187">NotNull</a>
+
+<span class="comment">/* This class starts Jetty.
+* NOTE: DO NOT actively use this class.  You will see NoClassDefFoundErrors if you fail
+*  to do so.Only use its name in JettyRun for reflective loading.  This allows using
+*  the Jetty libraries provided on the project classpath instead of requiring them to be
+*  available on sbt's classpath at startup.
+*/</span>
+<span class="keyword">private</span> <span class="keyword">object</span> <a title="object sbt.LazyJettyRun" id="6688">LazyJettyRun</a> <span class="keyword">extends</span> <a href="#6686" title="sbt.JettyRun">JettyRun</a>
+{
+	<span class="keyword">import</span> org.mortbay.jetty.{Handler, Server}
+	<span class="keyword">import</span> org.mortbay.jetty.nio.SelectChannelConnector
+	<span class="keyword">import</span> org.mortbay.jetty.webapp.WebAppContext
+	<span class="keyword">import</span> org.mortbay.log.Log
+	<span class="keyword">import</span> org.mortbay.util.Scanner
+	<span class="keyword">import</span> org.mortbay.xml.XmlConfiguration
+	
+	<span class="keyword">import</span> java.lang.ref.{Reference, WeakReference}
+	
+	<span class="keyword">def</span> <a title="(sbt.JettyRunConfiguration,sbt.Logger)sbt.Stoppable" id="60097">apply</a>(<a title="sbt.JettyRunConfiguration" id="60513">configuration</a>: <a href="#6687" title="sbt.JettyRunConfiguration">JettyRunConfiguration</a>, <a title="sbt.Logger" id="60514">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>): <a href="#6685" title="sbt.Stoppable">Stoppable</a> =
+	{
+		<span class="keyword">import</span> configuration._
+		<span class="keyword">val</span> <a title="org.mortbay.log.Logger" id="60516">oldLog</a> = <a title="object org.mortbay.log.Log" id="60368">Log</a>.<a title="()org.mortbay.log.Logger" id="60531">getLog</a>
+		<a title="object org.mortbay.log.Log" id="60368">Log</a>.<a title="(org.mortbay.log.Logger)Unit" id="60530">setLog</a>(<span title="sbt.LazyJettyRun.JettyLogger" class="keyword">new</span> <a href="#60102" title="sbt.LazyJettyRun.JettyLogger">JettyLogger</a>(<a href="#60514" title="sbt.Logger">log</a>))
+		<span class="keyword">val</span> <a title="org.mortbay.jetty.Server" id="60517">server</a> = <span title="org.mortbay.jetty.Server" class="keyword">new</span> <a title="org.mortbay.jetty.Server" id="60290">Server</a>
+		<span class="keyword">val</span> <a title="Boolean" id="60518">useDefaults</a> = <a href="#59834" title="=&gt; scala.xml.NodeSeq">jettyConfigurationXML</a>.<a title="=&gt; Boolean" id="7108">isEmpty</a> <a title="(Boolean)Boolean" id="2641">&amp;&amp;</a> <a href="#59836" title="=&gt; Seq[java.io.File]">jettyConfigurationFiles</a>.<a title="=&gt; Boolean" id="7108">isEmpty</a>
+		
+		<span class="keyword">val</span> <a title="Option[java.lang.Object with org.mortbay.util.Scanner.BulkListener]" id="60519">listener</a> =
+			<span title="Option[java.lang.Object with org.mortbay.util.Scanner.BulkListener{ ... }]" class="keyword">if</span>(<a href="#60518" title="Boolean">useDefaults</a>)
+			{
+				<a href="#60098" title="(org.mortbay.jetty.Server)Unit">configureDefaultConnector</a>(<a href="#60517" title="org.mortbay.jetty.Server">server</a>)
+				<span class="keyword">def</span> <a title="=&gt; java.net.URLClassLoader" id="61067">createLoader</a> = <span title="java.net.URLClassLoader" class="keyword">new</span> <a title="java.net.URLClassLoader" id="4302">URLClassLoader</a>(<a href="#59842" title="=&gt; Seq[java.net.URL]">classpathURLs</a>.<a title="Array[java.net.URL]" id="7138">toArray</a>, <span class="keyword">this</span>.<a title="()java.lang.Class[_ &lt;: java.lang.Object]" id="3401">getClass</a>.<a title="()java.lang.ClassLoader" id="3839">getClassLoader</a>)
+				<span class="keyword">val</span> <a title="org.mortbay.jetty.webapp.WebAppContext" id="61068">webapp</a> = <a title="(java.lang.String,java.lang.String)org.mortbay.jetty.webapp.WebAppContext" id="61221" class="keyword">new</a> <a title="org.mortbay.jetty.webapp.WebAppContext" id="60352">WebAppContext</a>(<a href="#59830" title="=&gt; sbt.Path">war</a>.<a href="Path.scala.html#9529" title="=&gt; java.io.File">asFile</a>.<a title="()java.lang.String" id="9553">getCanonicalPath</a>, <a href="#59832" title="=&gt; String">defaultContextPath</a>)
+				<a href="#61068" title="org.mortbay.jetty.webapp.WebAppContext">webapp</a>.<a title="(java.lang.ClassLoader)Unit" id="61234">setClassLoader</a>(<a href="#61067" title="=&gt; java.net.URLClassLoader">createLoader</a>)
+				<a href="#60517" title="org.mortbay.jetty.Server">server</a>.<a title="(org.mortbay.jetty.Handler)Unit" id="60847">setHandler</a>(<a href="#61068" title="org.mortbay.jetty.webapp.WebAppContext">webapp</a>)
+				
+				<span id="10256"><a title="(java.lang.Object with org.mortbay.util.Scanner.BulkListener{ ... })Some[java.lang.Object with org.mortbay.util.Scanner.BulkListener{ ... }]" id="275">Some</a></span>(<a title="template $anon extends java.lang.Object with org.mortbay.util.Scanner.BulkListener" id="61601" class="keyword">new</a> Scanner.<a title="org.mortbay.util.Scanner.BulkListener" id="61608">BulkListener</a> {
+					<span class="keyword">def</span> <a title="(java.util.List[_])Unit" id="61642">filesChanged</a>(<a title="java.util.List[_]" id="61645">files</a>: <a title="java.util.List[_]" id="5291">java</a>.util.List[_]) {
+						<a href="#60100" title="(org.mortbay.jetty.Server,=&gt; Unit,sbt.Logger)Unit">reload</a>(<a href="#60517" title="org.mortbay.jetty.Server">server</a>, <a href="#61068" title="org.mortbay.jetty.webapp.WebAppContext">webapp</a>.<a title="(java.lang.ClassLoader)Unit" id="61234">setClassLoader</a>(<a href="#61067" title="=&gt; java.net.URLClassLoader">createLoader</a>), <a href="#60514" title="sbt.Logger">log</a>)
+					}
+				})
+			}
+			<span class="keyword">else</span>
+			{
+				<span class="keyword">for</span>(<span id="7256"><a title="((scala.xml.Node) =&gt; Unit)Unit" id="61653">x</a></span> &lt;- <a href="#59834" title="=&gt; scala.xml.NodeSeq">jettyConfigurationXML</a>)
+					(<a title="(java.lang.String)org.mortbay.xml.XmlConfiguration" id="61683" class="keyword">new</a> <a title="org.mortbay.xml.XmlConfiguration" id="60495">XmlConfiguration</a>(<a href="#61653" title="scala.xml.Node">x</a>.<a title="()String" id="30356">toString</a>)).<a title="(Any)Unit" id="61697">configure</a>(<a href="#60517" title="org.mortbay.jetty.Server">server</a>)
+				<span class="keyword">for</span>(<span id="7256"><a title="((java.io.File) =&gt; Unit)Unit" id="61707">file</a></span> &lt;- <a href="#59836" title="=&gt; Seq[java.io.File]">jettyConfigurationFiles</a>)
+					(<span title="org.mortbay.xml.XmlConfiguration" class="keyword">new</span> <a title="org.mortbay.xml.XmlConfiguration" id="60495">XmlConfiguration</a>(<a href="#61707" title="java.io.File">file</a>.<a title="()java.net.URI" id="9556">toURI</a>.<a title="()java.net.URL" id="21245">toURL</a>)).<a title="(Any)Unit" id="61697">configure</a>(<a href="#60517" title="org.mortbay.jetty.Server">server</a>)
+				<a title="object None" id="488">None</a>
+			}
+		
+		<span class="keyword">def</span> <a title="()Option[java.lang.ref.WeakReference[org.mortbay.util.Scanner]]" id="60520">configureScanner</a>() =
+		{
+			<span title="Option[java.lang.ref.WeakReference[org.mortbay.util.Scanner]]" class="keyword">if</span>(<a href="#60519" title="Option[java.lang.Object with org.mortbay.util.Scanner.BulkListener]">listener</a>.<a title="=&gt; Boolean" id="10150">isEmpty</a> <a title="(Boolean)Boolean" id="2640">||</a> <a href="#59838" title="=&gt; Seq[java.io.File]">scanDirectories</a>.<a title="=&gt; Boolean" id="7108">isEmpty</a>)
+				<a title="object None" id="488">None</a>
+			<span class="keyword">else</span>
+			{
+				<a href="#60514" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8351" title="(=&gt; String)Unit">debug</a>(<span title="java.lang.String(&quot;Scanning for changes to: &quot;)" class="string">&quot;Scanning for changes to: &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#59838" title="=&gt; Seq[java.io.File]">scanDirectories</a>.<a title="(String)String" id="7283">mkString</a>(<span title="java.lang.String(&quot;, &quot;)" class="string">&quot;, &quot;</span>))
+				<span class="keyword">val</span> <a title="org.mortbay.util.Scanner" id="61733">scanner</a> = <span title="org.mortbay.util.Scanner" class="keyword">new</span> <a title="org.mortbay.util.Scanner" id="60379">Scanner</a>
+				<span class="keyword">import</span> scala.collection.jcl.Conversions._
+				<span class="keyword">val</span> <a title="java.util.ArrayList[java.io.File]" id="61735">list</a> = <a title="()java.util.ArrayList[java.io.File]" id="23435" class="keyword">new</a> java.util.<a title="java.util.ArrayList[java.io.File]" id="5234">ArrayList</a>[File]
+				<a href="#59838" title="=&gt; Seq[java.io.File]">scanDirectories</a>.<a title="((java.io.File) =&gt; Unit)Unit" id="7256">foreach</a>(<a title="java.io.File" id="61805">x</a> =&gt; <a href="#61735" title="java.util.ArrayList[java.io.File]">list</a>.<a title="(java.io.File)Boolean" id="23452">add</a>(<a href="#61805" title="java.io.File">x</a>))
+				<a href="#61733" title="org.mortbay.util.Scanner">scanner</a>.<a title="(java.util.List[_])Unit" id="61617">setScanDirs</a>(<a href="#61735" title="java.util.ArrayList[java.io.File]">list</a>)
+				<a href="#61733" title="org.mortbay.util.Scanner">scanner</a>.<a title="(Boolean)Unit" id="61620">setRecursive</a>(<span title="Boolean(true)" class="keyword">true</span>)
+				<a href="#61733" title="org.mortbay.util.Scanner">scanner</a>.<a title="(Int)Unit" id="61613">setScanInterval</a>(<a href="#59840" title="=&gt; Int">scanInterval</a>)
+				<a href="#61733" title="org.mortbay.util.Scanner">scanner</a>.<a title="(Boolean)Unit" id="61624">setReportExistingFilesOnStartup</a>(<span title="Boolean(false)" class="keyword">false</span>)
+				<a href="#61733" title="org.mortbay.util.Scanner">scanner</a>.<a title="(org.mortbay.util.Scanner.Listener)Unit" id="61625">addListener</a>(<a href="#60519" title="Option[java.lang.Object with org.mortbay.util.Scanner.BulkListener]">listener</a>.<a title="=&gt; &lt;refinement&gt; extends java.lang.Object with org.mortbay.util.Scanner.BulkListener" id="10152">get</a>)
+				<a href="#61733" title="org.mortbay.util.Scanner">scanner</a>.<a title="()Unit" id="61627">start</a>()
+				<span id="10256"><a title="(java.lang.ref.WeakReference[org.mortbay.util.Scanner])Some[java.lang.ref.WeakReference[org.mortbay.util.Scanner]]" id="275">Some</a></span>(<span title="java.lang.ref.WeakReference[org.mortbay.util.Scanner]" class="keyword">new</span> <a title="java.lang.ref.WeakReference[org.mortbay.util.Scanner]" id="48750">WeakReference</a>(<a href="#61733" title="org.mortbay.util.Scanner">scanner</a>))
+			}
+		}
+		
+		<span class="keyword">try</span>
+		{
+			<a href="#60517" title="org.mortbay.jetty.Server">server</a>.<a title="()Unit" id="61029">start</a>()
+			<span title="sbt.LazyJettyRun.StopServer" class="keyword">new</span> <a href="#60099" title="sbt.LazyJettyRun.StopServer">StopServer</a>(<span title="java.lang.ref.WeakReference[org.mortbay.jetty.Server]" class="keyword">new</span> <a title="java.lang.ref.WeakReference[org.mortbay.jetty.Server]" id="48750">WeakReference</a>(<a href="#60517" title="org.mortbay.jetty.Server">server</a>), <a href="#60520" title="()Option[java.lang.ref.WeakReference[org.mortbay.util.Scanner]]">configureScanner</a>(), <a href="#60516" title="org.mortbay.log.Logger">oldLog</a>)
+		}
+		<span class="keyword">catch</span> { <span title="Nothing" class="keyword">case</span> <a title="java.lang.Throwable" id="61904">e</a> =&gt; <a href="#60517" title="org.mortbay.jetty.Server">server</a>.<a title="()Unit" id="61030">stop</a>(); <span title="Nothing" class="keyword">throw</span> <a href="#61904" title="java.lang.Throwable">e</a> }
+	}
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(org.mortbay.jetty.Server)Unit" id="60098">configureDefaultConnector</a>(<a title="org.mortbay.jetty.Server" id="61069">server</a>: <a title="org.mortbay.jetty.Server" id="60290">Server</a>)
+	{
+		<span class="keyword">val</span> <a title="org.mortbay.jetty.nio.SelectChannelConnector" id="61905">defaultConnector</a> = <span title="org.mortbay.jetty.nio.SelectChannelConnector" class="keyword">new</span> <a title="org.mortbay.jetty.nio.SelectChannelConnector" id="60322">SelectChannelConnector</a>
+		<a href="#61905" title="org.mortbay.jetty.nio.SelectChannelConnector">defaultConnector</a>.<a title="(Int)Unit" id="62137">setPort</a>(<span title="Int(8080)" class="int">8080</span>)
+		<a href="#61905" title="org.mortbay.jetty.nio.SelectChannelConnector">defaultConnector</a>.<a title="(Int)Unit" id="62041">setMaxIdleTime</a>(<span title="Int(30000)" class="int">30000</span>)
+		<a href="#61069" title="org.mortbay.jetty.Server">server</a>.<a title="(org.mortbay.jetty.Connector)Unit" id="60668">addConnector</a>(<a href="#61905" title="org.mortbay.jetty.nio.SelectChannelConnector">defaultConnector</a>)
+	}
+	<span class="keyword">private</span> <span class="keyword">class</span> <a title="class StopServer extends java.lang.Object with sbt.Stoppable with ScalaObject" id="60099">StopServer</a>(<span id="61893"><a title="java.lang.ref.Reference[org.mortbay.jetty.Server]" id="61898">serverReference</a></span>: <a title="java.lang.ref.Reference[org.mortbay.jetty.Server]" id="48756">Reference</a>[Server], <span id="61894"><a title="Option[java.lang.ref.Reference[org.mortbay.util.Scanner]]" id="61899">scannerReferenceOpt</a></span>: <a title="Option[java.lang.ref.Reference[org.mortbay.util.Scanner]]" id="871">Option</a>[Reference[Scanner]], <span id="61895"><a title="org.mortbay.log.Logger" id="61900">oldLog</a></span>: org.mortbay.log.<a title="org.mortbay.log.Logger" id="60364">Logger</a>) <span class="keyword">extends</span> <a href="#6685" title="sbt.Stoppable">Stoppable</a>
+	{
+		<span class="keyword">def</span> <a title="()Unit" id="61897">stop</a>()
+		{
+			<span class="keyword">val</span> <a title="org.mortbay.jetty.Server" id="62275">server</a> = <a href="#61893" title="java.lang.ref.Reference[org.mortbay.jetty.Server]">serverReference</a>.<a title="()org.mortbay.jetty.Server" id="61840">get</a>
+			<span title="Unit" class="keyword">if</span>(<a href="#62275" title="org.mortbay.jetty.Server">server</a> <a title="(AnyRef)Boolean" id="5674">!=</a> <span title="Null(null)" class="keyword">null</span>)
+				<a href="#62275" title="org.mortbay.jetty.Server">server</a>.<a title="()Unit" id="61030">stop</a>()
+			<span class="keyword">for</span>(<span id="10162"><a title="((java.lang.ref.Reference[org.mortbay.util.Scanner]) =&gt; Unit)Unit" id="62278">scannerReference</a></span> &lt;- <a href="#61894" title="Option[java.lang.ref.Reference[org.mortbay.util.Scanner]]">scannerReferenceOpt</a>)
+			{
+				<span class="keyword">val</span> <a title="org.mortbay.util.Scanner" id="62279">scanner</a> = <a href="#62278" title="java.lang.ref.Reference[org.mortbay.util.Scanner]">scannerReference</a>.<a title="()org.mortbay.util.Scanner" id="61840">get</a>
+				<span title="Unit" class="keyword">if</span>(<a href="#62279" title="org.mortbay.util.Scanner">scanner</a> <a title="(AnyRef)Boolean" id="5674">!=</a> <span title="Null(null)" class="keyword">null</span>)
+					<a href="#62279" title="org.mortbay.util.Scanner">scanner</a>.<a title="()Unit" id="61631">stop</a>()
+			}
+			<a title="object org.mortbay.log.Log" id="60368">Log</a>.<a title="(org.mortbay.log.Logger)Unit" id="60530">setLog</a>(<a href="#61895" title="org.mortbay.log.Logger">oldLog</a>)
+		}
+	}
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(org.mortbay.jetty.Server,=&gt; Unit,sbt.Logger)Unit" id="60100">reload</a>(<a title="org.mortbay.jetty.Server" id="61649">server</a>: <a title="org.mortbay.jetty.Server" id="60290">Server</a>, <a title="=&gt; Unit" id="61650">reconfigure</a>: =&gt; Unit, <a title="sbt.Logger" id="61651">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>)
+	{
+		<a href="#6683" title="object sbt.JettyRun">JettyRun</a>.<a title="(Unit)Unit" id="5677">synchronized</a>
+		{
+			<a href="#61651" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8352" title="(=&gt; String)Unit">info</a>(<span title="java.lang.String(&quot;Reloading web application...&quot;)" class="string">&quot;Reloading web application...&quot;</span>)
+			<span class="keyword">val</span> <a title="List[org.mortbay.jetty.Handler]" id="62282">handlers</a> = <a href="#60101" title="(Array[org.mortbay.jetty.Handler],org.mortbay.jetty.Handler)List[org.mortbay.jetty.Handler]">wrapNull</a>(<a href="#61649" title="org.mortbay.jetty.Server">server</a>.<a title="()Array[org.mortbay.jetty.Handler]" id="60832">getHandlers</a>, <a href="#61649" title="org.mortbay.jetty.Server">server</a>.<a title="()org.mortbay.jetty.Handler" id="60846">getHandler</a>)
+			<a href="#61651" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8351" title="(=&gt; String)Unit">debug</a>(<span title="java.lang.String(&quot;Stopping handlers: &quot;)" class="string">&quot;Stopping handlers: &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#62282" title="List[org.mortbay.jetty.Handler]">handlers</a>.<a title="(String)String" id="7283">mkString</a>(<span title="java.lang.String(&quot;, &quot;)" class="string">&quot;, &quot;</span>))
+			<a href="#62282" title="List[org.mortbay.jetty.Handler]">handlers</a>.<a title="((org.mortbay.jetty.Handler) =&gt; Unit)Unit" id="6839">foreach</a>(<a href="#62300" title="org.mortbay.jetty.Handler">_</a>.<a title="()Unit" id="61014">stop</a>)
+			<a href="#61651" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8351" title="(=&gt; String)Unit">debug</a>(<span title="java.lang.String(&quot;Reconfiguring...&quot;)" class="string">&quot;Reconfiguring...&quot;</span>)
+			<a href="#61650" title="=&gt; Unit">reconfigure</a>
+			<a href="#61651" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8351" title="(=&gt; String)Unit">debug</a>(<span title="java.lang.String(&quot;Restarting handlers: &quot;)" class="string">&quot;Restarting handlers: &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#62282" title="List[org.mortbay.jetty.Handler]">handlers</a>.<a title="(String)String" id="7283">mkString</a>(<span title="java.lang.String(&quot;, &quot;)" class="string">&quot;, &quot;</span>))
+			<a href="#62282" title="List[org.mortbay.jetty.Handler]">handlers</a>.<a title="((org.mortbay.jetty.Handler) =&gt; Unit)Unit" id="6839">foreach</a>(<a href="#62303" title="org.mortbay.jetty.Handler">_</a>.<a title="()Unit" id="61013">start</a>)
+			<a href="#61651" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8352" title="(=&gt; String)Unit">info</a>(<span title="java.lang.String(&quot;Reload complete.&quot;)" class="string">&quot;Reload complete.&quot;</span>)
+		}
+	}
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(Array[org.mortbay.jetty.Handler],org.mortbay.jetty.Handler)List[org.mortbay.jetty.Handler]" id="60101">wrapNull</a>(<a title="Array[org.mortbay.jetty.Handler]" id="62283">a</a>: <a title="Array[org.mortbay.jetty.Handler]" id="1003">Array</a>[Handler], <a title="org.mortbay.jetty.Handler" id="62284">b</a>: <a title="org.mortbay.jetty.Handler" id="60248">Handler</a>) =
+		<span id="9252"><a title="(Array[org.mortbay.jetty.Handler],org.mortbay.jetty.Handler)(Array[org.mortbay.jetty.Handler], org.mortbay.jetty.Handler)" id="1283">(</a></span><a href="#62283" title="Array[org.mortbay.jetty.Handler]">a</a>, <a href="#62284" title="org.mortbay.jetty.Handler">b</a>) <span title="List[org.mortbay.jetty.Handler]" class="keyword">match</span>
+		{
+			<span title="Nil.type" class="keyword">case</span> <a id="1">(</a><span title="Null(null)" class="keyword">null</span>, <span title="Null(null)" class="keyword">null</span>) =&gt; <a title="object Nil" id="299">Nil</a>
+			<span title="List[org.mortbay.jetty.Handler]" class="keyword">case</span> <a id="1">(</a><span title="Null(null)" class="keyword">null</span>, <a title="org.mortbay.jetty.Handler" id="62288">notB</a>) =&gt; <a href="#62288" title="org.mortbay.jetty.Handler">notB</a> <a href="#62289" title="(org.mortbay.jetty.Handler)List[org.mortbay.jetty.Handler]" id="6808">::</a> <a title="object Nil" id="299">Nil</a>
+			<span title="List[org.mortbay.jetty.Handler]" class="keyword">case</span> <a id="1">(</a><a title="Array[org.mortbay.jetty.Handler]" id="62292">notA</a>, <span title="Null(null)" class="keyword">null</span>) =&gt; <a href="#62292" title="Array[org.mortbay.jetty.Handler]">notA</a>.<a title="=&gt; List[org.mortbay.jetty.Handler]" id="7279">toList</a>
+			<span title="List[org.mortbay.jetty.Handler]" class="keyword">case</span> <a id="1">(</a><a title="Array[org.mortbay.jetty.Handler]" id="62293">notA</a>, <a title="org.mortbay.jetty.Handler" id="62294">notB</a>) =&gt; <a href="#62294" title="org.mortbay.jetty.Handler">notB</a> <a href="#62295" title="(org.mortbay.jetty.Handler)List[org.mortbay.jetty.Handler]" id="6808">::</a> <a href="#62293" title="Array[org.mortbay.jetty.Handler]">notA</a>.<a title="=&gt; List[org.mortbay.jetty.Handler]" id="7279">toList</a>
+		}
+	<span class="keyword">private</span> <span class="keyword">class</span> <a title="class JettyLogger extends java.lang.Object with org.mortbay.log.Logger with ScalaObject" id="60102">JettyLogger</a>(<span id="60559"><a title="sbt.Logger" id="60570">delegate</a></span>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>) <span class="keyword">extends</span> org.mortbay.log.<a title="org.mortbay.log.Logger" id="60364">Logger</a>
+	{
+		<span class="keyword">def</span> <a title="()Boolean" id="60561">isDebugEnabled</a> = <a href="#60559" title="sbt.Logger">delegate</a>.<a href="Logger.scala.html#8349" title="(sbt.Level.Value)Boolean">atLevel</a>(<a href="Logger.scala.html#6675" title="object sbt.Level">Level</a>.<a href="Logger.scala.html#20852" title="=&gt; sbt.Level.Value">Debug</a>)
+		<span class="keyword">def</span> <a title="(Boolean)Unit" id="60562">setDebugEnabled</a>(<a title="Boolean" id="62308">enabled</a>: <a title="Boolean" id="2060">Boolean</a>) = <a href="#60559" title="sbt.Logger">delegate</a>.<a href="Logger.scala.html#8346" title="(sbt.Level.Value)Unit">setLevel</a>(<span title="sbt.Level.Value" class="keyword">if</span>(<a href="#62308" title="Boolean">enabled</a>) <a href="Logger.scala.html#6675" title="object sbt.Level">Level</a>.<a href="Logger.scala.html#20852" title="=&gt; sbt.Level.Value">Debug</a> <span class="keyword">else</span> <a href="Logger.scala.html#6675" title="object sbt.Level">Level</a>.<a href="Logger.scala.html#20854" title="=&gt; sbt.Level.Value">Info</a>)
+	
+		<span class="keyword">def</span> <a title="(String)sbt.LazyJettyRun.JettyLogger" id="60563">getLogger</a>(<a title="String" id="62310">name</a>: <a title="String" id="1751">String</a>) = <a href="#60102" title="sbt.LazyJettyRun.JettyLogger" class="keyword">this</a>
+		<span class="keyword">def</span> <a title="(String,AnyRef,AnyRef)Unit" id="60564">info</a>(<a title="String" id="62312">msg</a>: <a title="String" id="1751">String</a>, <a title="AnyRef" id="62313">arg0</a>: <a title="AnyRef" id="1907">AnyRef</a>, <a title="AnyRef" id="62314">arg1</a>: <a title="AnyRef" id="1907">AnyRef</a>) { <a href="#60559" title="sbt.Logger">delegate</a>.<a href="Logger.scala.html#8352" title="(=&gt; String)Unit">info</a>(<a href="#60569" title="(String,AnyRef,AnyRef)java.lang.String">format</a>(<a href="#62312" title="String">msg</a>, <a href="#62313" title="AnyRef">arg0</a>, <a href="#62314" title="AnyRef">arg1</a>)) }
+		<span class="keyword">def</span> <a title="(String,AnyRef,AnyRef)Unit" id="60565">debug</a>(<a title="String" id="62348">msg</a>: <a title="String" id="1751">String</a>, <a title="AnyRef" id="62349">arg0</a>: <a title="AnyRef" id="1907">AnyRef</a>, <a title="AnyRef" id="62350">arg1</a>: <a title="AnyRef" id="1907">AnyRef</a>) { <a href="#60559" title="sbt.Logger">delegate</a>.<a href="Logger.scala.html#8351" title="(=&gt; String)Unit">debug</a>(<a href="#60569" title="(String,AnyRef,AnyRef)java.lang.String">format</a>(<a href="#62348" title="String">msg</a>, <a href="#62349" title="AnyRef">arg0</a>, <a href="#62350" title="AnyRef">arg1</a>)) }
+		<span class="keyword">def</span> <a title="(String,AnyRef,AnyRef)Unit" id="60566">warn</a>(<a title="String" id="62351">msg</a>: <a title="String" id="1751">String</a>, <a title="AnyRef" id="62352">arg0</a>: <a title="AnyRef" id="1907">AnyRef</a>, <a title="AnyRef" id="62353">arg1</a>: <a title="AnyRef" id="1907">AnyRef</a>) { <a href="#60559" title="sbt.Logger">delegate</a>.<a href="Logger.scala.html#8353" title="(=&gt; String)Unit">warn</a>(<a href="#60569" title="(String,AnyRef,AnyRef)java.lang.String">format</a>(<a href="#62351" title="String">msg</a>, <a href="#62352" title="AnyRef">arg0</a>, <a href="#62353" title="AnyRef">arg1</a>)) }
+		<span class="keyword">def</span> <a title="(String,Throwable)Unit" id="60567">warn</a>(<a title="String" id="62354">msg</a>: <a title="String" id="1751">String</a>, <a title="Throwable" id="62355">th</a>: <a title="Throwable" id="2033">Throwable</a>)
+		{
+			<a href="#60559" title="sbt.Logger">delegate</a>.<a href="Logger.scala.html#8353" title="(=&gt; String)Unit">warn</a>(<a href="#62354" title="String">msg</a>)
+			<a href="#60559" title="sbt.Logger">delegate</a>.<a href="Logger.scala.html#8350" title="(=&gt; Throwable)Unit">trace</a>(<a href="#62355" title="Throwable">th</a>)
+		}
+		<span class="keyword">def</span> <a title="(String,Throwable)Unit" id="60568">debug</a>(<a title="String" id="62356">msg</a>: <a title="String" id="1751">String</a>, <a title="Throwable" id="62357">th</a>: <a title="Throwable" id="2033">Throwable</a>)
+		{
+			<a href="#60559" title="sbt.Logger">delegate</a>.<a href="Logger.scala.html#8351" title="(=&gt; String)Unit">debug</a>(<a href="#62356" title="String">msg</a>)
+			<a href="#60559" title="sbt.Logger">delegate</a>.<a href="Logger.scala.html#8350" title="(=&gt; Throwable)Unit">trace</a>(<a href="#62357" title="Throwable">th</a>)
+		}
+		<span class="keyword">private</span> <span class="keyword">def</span> <a title="(String,AnyRef,AnyRef)java.lang.String" id="60569">format</a>(<a title="String" id="62315">msg</a>: <a title="String" id="1751">String</a>, <a title="AnyRef" id="62316">arg0</a>: <a title="AnyRef" id="1907">AnyRef</a>, <a title="AnyRef" id="62317">arg1</a>: <a title="AnyRef" id="1907">AnyRef</a>) =
+		{
+			<span class="keyword">def</span> <a title="(AnyRef)java.lang.String" id="62319">toString</a>(<a title="AnyRef" id="62321">arg</a>: <a title="AnyRef" id="1907">AnyRef</a>) = <span title="java.lang.String" class="keyword">if</span>(<a href="#62321" title="AnyRef">arg</a> <a title="(AnyRef)Boolean" id="3399">==</a> <span title="Null(null)" class="keyword">null</span>) <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span> <span class="keyword">else</span> <a href="#62321" title="AnyRef">arg</a>.<a title="()java.lang.String" id="5666">toString</a>
+			<span class="keyword">val</span> <a title="Array[java.lang.String]" id="62320">pieces</a> = <a href="#62315" title="String">msg</a>.<a title="(java.lang.String,Int)Array[java.lang.String]" id="5745">split</a>(<span title="java.lang.String(&quot;\{\}&quot;)" class="string">&quot;&quot;&quot;\{\}&quot;&quot;&quot;</span>, <span title="Int(3)" class="int">3</span>)
+			<span title="java.lang.String" class="keyword">if</span>(<a href="#62320" title="Array[java.lang.String]">pieces</a>.<a title="=&gt; Int" id="6981">length</a> <a title="(Int)Boolean" id="3031">==</a> <span title="Int(1)" class="int">1</span>)
+				<a href="#62320" title="(Int)java.lang.String" id="6982">pieces</a>(<span title="Int(0)" class="int">0</span>)
+			<span class="keyword">else</span>
+			{
+				<span class="keyword">val</span> <a title="java.lang.String" id="62336">base</a> = <a href="#62320" title="(Int)java.lang.String" id="6982">pieces</a>(<span title="Int(0)" class="int">0</span>) <a title="(Any)java.lang.String" id="5683">+</a> <a href="#62319" title="(AnyRef)java.lang.String">toString</a>(<a href="#62316" title="AnyRef">arg0</a>) <a title="(Any)java.lang.String" id="5683">+</a> <a href="#62320" title="(Int)java.lang.String" id="6982">pieces</a>(<span title="Int(1)" class="int">1</span>)
+				<span title="java.lang.String" class="keyword">if</span>(<a href="#62320" title="Array[java.lang.String]">pieces</a>.<a title="=&gt; Int" id="6981">length</a> <a title="(Int)Boolean" id="3031">==</a> <span title="Int(2)" class="int">2</span>)
+					<a href="#62336" title="java.lang.String">base</a>
+				<span class="keyword">else</span>
+					<a href="#62336" title="java.lang.String">base</a> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#62319" title="(AnyRef)java.lang.String">toString</a>(<a href="#62317" title="AnyRef">arg1</a>) <a title="(Any)java.lang.String" id="5683">+</a> <a href="#62320" title="(Int)java.lang.String" id="6982">pieces</a>(<span title="Int(2)" class="int">2</span>)
+			}
+		}
+	}
+}
+
+        </pre>
+    </body>
+</html>

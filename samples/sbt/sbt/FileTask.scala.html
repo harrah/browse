@@ -1,0 +1,120 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>sbt/FileTask.scala</title>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* sbt -- Simple Build Tool
+ * Copyright 2009 Mark Harrah
+ */</span>
+<span class="keyword">package</span> sbt
+
+<span class="keyword">import</span> scala.collection.{mutable, Map, Set}
+
+<span class="keyword">sealed</span> <span class="keyword">trait</span> <a title="trait ProductsSources extends java.lang.Object with NotNull" id="6636">ProductsSources</a> <span class="keyword">extends</span> <a title="NotNull" id="187">NotNull</a>
+{
+	<span class="keyword">def</span> <a title="=&gt; Iterable[sbt.Path]" id="55890">products</a>: <a title="Iterable[sbt.Path]" id="358">Iterable</a>[Path]
+	<span class="keyword">def</span> <a title="=&gt; Iterable[sbt.Path]" id="55891">sources</a>: <a title="Iterable[sbt.Path]" id="358">Iterable</a>[Path]
+}
+<span class="keyword">sealed</span> <span class="keyword">trait</span> <a title="trait ProductsWrapper extends java.lang.Object with NotNull with ScalaObject" id="6637">ProductsWrapper</a> <span class="keyword">extends</span> <a title="NotNull" id="187">NotNull</a>
+{
+	<span class="keyword">def</span> <a title="(=&gt; Iterable[sbt.Path])sbt.ProductsSources" id="32622">from</a>(<a title="=&gt; Iterable[sbt.Path]" id="50686">sources</a>: =&gt; Iterable[Path]): <a href="#6636" title="sbt.ProductsSources">ProductsSources</a> = <a href="#32623" title="(sbt.PathFinder)sbt.ProductsSources">from</a>(<a href="Path.scala.html#6701" title="object sbt.Path">Path</a>.<a href="Path.scala.html#9496" title="(=&gt; Iterable[sbt.Path])sbt.PathFinder">lazyPathFinder</a>(<a href="#50686" title="=&gt; Iterable[sbt.Path]">sources</a>))
+	<span class="keyword">def</span> <a title="(sbt.PathFinder)sbt.ProductsSources" id="32623">from</a>(<a title="sbt.PathFinder" id="50690">sources</a>: <a href="Path.scala.html#6703" title="sbt.PathFinder">PathFinder</a>): <a href="#6636" title="sbt.ProductsSources">ProductsSources</a>
+}
+<span class="comment">/** Provides methods to define tasks with basic conditional execution based on the sources
+* and products of the task. */</span>
+<span class="keyword">trait</span> <a title="trait FileTasks extends java.lang.Object with sbt.Project with ScalaObject" id="6638">FileTasks</a> <span class="keyword">extends</span> <a href="Project.scala.html#6395" title="sbt.Project">Project</a>
+{
+	<span class="keyword">implicit</span> <span class="keyword">def</span> <a title="implicit sbt.FileTasks.wrapProduct : (=&gt; sbt.Path)sbt.ProductsWrapper" id="32053">wrapProduct</a>(<a title="=&gt; sbt.Path" id="32618">product</a>: =&gt; Path): <a href="#6637" title="sbt.ProductsWrapper">ProductsWrapper</a> = <a href="#6639" title="object sbt.FileTasks">FileTasks</a>.<a href="#50598" title="implicit sbt.FileTasks.wrapProduct : (=&gt; sbt.Path)sbt.ProductsWrapper">wrapProduct</a>(<a href="#32618" title="=&gt; sbt.Path">product</a>)
+	<span class="keyword">implicit</span> <span class="keyword">def</span> <a title="implicit sbt.FileTasks.wrapProducts : (=&gt; Iterable[sbt.Path])sbt.ProductsWrapper" id="32054">wrapProducts</a>(<a title="=&gt; Iterable[sbt.Path]" id="32617">productsList</a>: =&gt; Iterable[Path]): <a href="#6637" title="sbt.ProductsWrapper">ProductsWrapper</a> = <a href="#6639" title="object sbt.FileTasks">FileTasks</a>.<a href="#50599" title="implicit sbt.FileTasks.wrapProducts : (=&gt; Iterable[sbt.Path])sbt.ProductsWrapper">wrapProducts</a>(<a href="#32617" title="=&gt; Iterable[sbt.Path]">productsList</a>)
+	<span class="comment">/** Runs 'action' if the given products are out of date with respect to the given sources. */</span>
+	<span class="keyword">def</span> <a title="(String,sbt.ProductsSources)(=&gt; Option[String])FileTasks.this.Task" id="32055">fileTask</a>(<a title="String" id="55899">label</a>: <a title="String" id="1751">String</a>, <a title="sbt.ProductsSources" id="55900">files</a>: <a href="#6636" title="sbt.ProductsSources">ProductsSources</a>)(<a title="=&gt; Option[String]" id="55901">action</a>: =&gt; Option[String]): <a href="TaskManager.scala.html#26166" title="FileTasks.this.Task">Task</a> =
+		<a href="TaskManager.scala.html#26162" title="(=&gt; Option[String])FileTasks.this.Task">task</a> { <a href="#6639" title="object sbt.FileTasks">FileTasks</a>.<a href="#50600" title="(String,sbt.ProductsSources,sbt.Logger)(=&gt; Option[String])Option[String]">runOption</a>(<a href="#55899" title="String">label</a>, <a href="#55900" title="sbt.ProductsSources">files</a>, <a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>)(<a href="#55901" title="=&gt; Option[String]">action</a>) }
+	<span class="comment">/** Runs 'action' if any of the given products do not exist. */</span>
+	<span class="keyword">def</span> <a title="(String,=&gt; Iterable[sbt.Path])(=&gt; Option[String])FileTasks.this.Task" id="32056">fileTask</a>(<a title="String" id="55911">label</a>: <a title="String" id="1751">String</a>, <a title="=&gt; Iterable[sbt.Path]" id="55912">products</a>: =&gt; Iterable[Path])(<a title="=&gt; Option[String]" id="55913">action</a>: =&gt; Option[String]): <a href="TaskManager.scala.html#26166" title="FileTasks.this.Task">Task</a> =
+		<a href="TaskManager.scala.html#26162" title="(=&gt; Option[String])FileTasks.this.Task">task</a> { <a href="#6639" title="object sbt.FileTasks">FileTasks</a>.<a href="#50604" title="(String,Iterable[sbt.Path],sbt.Logger)(=&gt; Option[String])(=&gt; Option[String])Option[String]">existenceCheck</a>[<a title="Option[String]" id="871">Option</a>[String]](<a href="#55911" title="String">label</a>, <a href="#55912" title="=&gt; Iterable[sbt.Path]">products</a>, <a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>)(<a href="#55913" title="=&gt; Option[String]">action</a>)(<a title="object None" id="488">None</a>) }
+		
+	<span class="comment">/** Creates a new task that performs 'action' only when the given products are out of date with respect to the given sources.. */</span>
+	<span class="keyword">def</span> <a title="(sbt.ProductsSources)(=&gt; Option[String])FileTasks.this.Task" id="32057">fileTask</a>(<a title="sbt.ProductsSources" id="55933">files</a>: <a href="#6636" title="sbt.ProductsSources">ProductsSources</a>)(<a title="=&gt; Option[String]" id="55934">action</a>: =&gt; Option[String]): <a href="TaskManager.scala.html#26166" title="FileTasks.this.Task">Task</a> = <a href="#32055" title="(String,sbt.ProductsSources)(=&gt; Option[String])FileTasks.this.Task">fileTask</a>(<span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>, <a href="#55933" title="sbt.ProductsSources">files</a>)(<a href="#55934" title="=&gt; Option[String]">action</a>)
+	<span class="comment">/** Creates a new task that performs 'action' only when at least one of the given products does not exist.. */</span>
+	<span class="keyword">def</span> <a title="(=&gt; Iterable[sbt.Path])(=&gt; Option[String])FileTasks.this.Task" id="32058">fileTask</a>(<a title="=&gt; Iterable[sbt.Path]" id="55936">products</a>: =&gt; Iterable[Path])(<a title="=&gt; Option[String]" id="55937">action</a>: =&gt; Option[String]): <a href="TaskManager.scala.html#26166" title="FileTasks.this.Task">Task</a> = <a href="#32056" title="(String,=&gt; Iterable[sbt.Path])(=&gt; Option[String])FileTasks.this.Task">fileTask</a>(<span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>, <a href="#55936" title="=&gt; Iterable[sbt.Path]">products</a>)(<a href="#55937" title="=&gt; Option[String]">action</a>)
+	
+}
+<span class="keyword">object</span> <a title="object sbt.FileTasks" id="6639">FileTasks</a>
+{
+	<span class="keyword">implicit</span> <span class="keyword">def</span> <a title="implicit sbt.FileTasks.wrapProduct : (=&gt; sbt.Path)sbt.ProductsWrapper" id="50598">wrapProduct</a>(<a title="=&gt; sbt.Path" id="50678">product</a>: =&gt; Path): <a href="#6637" title="sbt.ProductsWrapper">ProductsWrapper</a> = <a href="#50599" title="implicit sbt.FileTasks.wrapProducts : (=&gt; Iterable[sbt.Path])sbt.ProductsWrapper">wrapProducts</a>(<a href="#50678" title="=&gt; sbt.Path">product</a> <a href="#55966" title="(sbt.Path)List[sbt.Path]" id="6808">::</a> <a title="object Nil" id="299">Nil</a>)
+	<span class="keyword">implicit</span> <span class="keyword">def</span> <a title="implicit sbt.FileTasks.wrapProducts : (=&gt; Iterable[sbt.Path])sbt.ProductsWrapper" id="50599">wrapProducts</a>(<a title="=&gt; Iterable[sbt.Path]" id="50679">productsList</a>: =&gt; Iterable[Path]): <a href="#6637" title="sbt.ProductsWrapper">ProductsWrapper</a> =
+		<a title="template $anon extends java.lang.Object with sbt.ProductsWrapper" id="55969" class="keyword">new</a> <a href="#6637" title="sbt.ProductsWrapper">ProductsWrapper</a>
+		{
+			<span class="keyword">def</span> <a title="(sbt.PathFinder)java.lang.Object with sbt.ProductsSources{def sources: scala.collection.Set[sbt.Path]}" id="55971">from</a>(<a title="sbt.PathFinder" id="55974">sourceFinder</a>: <a href="Path.scala.html#6703" title="sbt.PathFinder">PathFinder</a>) =
+				<a title="template $anon extends java.lang.Object with sbt.ProductsSources" id="55977" class="keyword">new</a> <a href="#6636" title="sbt.ProductsSources">ProductsSources</a>
+				{
+					<span class="keyword">def</span> <a title="=&gt; Iterable[sbt.Path]" id="55979">products</a> = <a href="#50679" title="=&gt; Iterable[sbt.Path]">productsList</a>
+					<span class="keyword">def</span> <a title="=&gt; scala.collection.Set[sbt.Path]" id="55980">sources</a> = <a href="#55974" title="sbt.PathFinder">sourceFinder</a>.<a href="Path.scala.html#9518" title="=&gt; scala.collection.Set[sbt.Path]">get</a>
+				}
+		}
+	<span class="comment">/** Runs 'ifOutofdate' if the given products are out of date with respect to the given sources.*/</span>
+	<span class="keyword">def</span> <a title="(String,sbt.ProductsSources,sbt.Logger)(=&gt; Option[String])Option[String]" id="50600">runOption</a>(<a title="String" id="50671">label</a>: <a title="String" id="1751">String</a>, <a title="sbt.ProductsSources" id="50672">files</a>: <a href="#6636" title="sbt.ProductsSources">ProductsSources</a>, <a title="sbt.Logger" id="50673">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>)(<a title="=&gt; Option[String]" id="50674">ifOutofdate</a>: =&gt; Option[String]): <a title="Option[String]" id="871">Option</a>[String] =
+	{
+		<span class="keyword">val</span> <a title="Option[String]" id="55994">result</a> = <a href="#50601" title="(String,sbt.ProductsSources,sbt.Logger)(=&gt; Option[String])(=&gt; Option[String])Option[String]">apply</a>[<a title="Option[String]" id="871">Option</a>[String]](<a href="#50671" title="String">label</a>, <a href="#50672" title="sbt.ProductsSources">files</a>, <a href="#50673" title="sbt.Logger">log</a>)(<a href="#50674" title="=&gt; Option[String]">ifOutofdate</a>)(<a title="object None" id="488">None</a>)
+		<span title="Unit" class="keyword">if</span>(<a href="#55994" title="Option[String]">result</a>.<a title="=&gt; Boolean" id="10151">isDefined</a>)
+			<a href="FileUtilities.scala.html#6351" title="object sbt.FileUtilities">FileUtilities</a>.<a href="FileUtilities.scala.html#9439" title="(Iterable[sbt.Path],Boolean,sbt.Logger)Option[String]">clean</a>(<a href="#50672" title="sbt.ProductsSources">files</a>.<a href="#55890" title="=&gt; Iterable[sbt.Path]">products</a>, <span title="Boolean(true)" class="keyword">true</span>, <a href="#50673" title="sbt.Logger">log</a>)
+		<a href="#55994" title="Option[String]">result</a>
+	}
+	<span class="comment">/** Returns 'ifOutofdate' if the given products are out of date with respect to the given sources.  Otherwise, returns ifUptodate. */</span>
+	<span class="keyword">def</span> <a title="[T](String,sbt.ProductsSources,sbt.Logger)(=&gt; T)(=&gt; T)T" id="50601">apply</a>[<a title="&gt;: Nothing &lt;: Any" id="50603">T</a>](<a title="String" id="55995">label</a>: <a title="String" id="1751">String</a>, <a title="sbt.ProductsSources" id="55996">files</a>: <a href="#6636" title="sbt.ProductsSources">ProductsSources</a>, <a title="sbt.Logger" id="55997">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>)(<a title="=&gt; T" id="55998">ifOutofdate</a>: =&gt; T)(<a title="=&gt; T" id="55999">ifUptodate</a>: =&gt; T): <a href="#50603" title="T">T</a> =
+	{
+		<span class="keyword">val</span> <a title="Iterable[sbt.Path]" id="56001">products</a> = <a href="#55996" title="sbt.ProductsSources">files</a>.<a href="#55890" title="=&gt; Iterable[sbt.Path]">products</a>
+		<a href="#50604" title="(String,Iterable[sbt.Path],sbt.Logger)(=&gt; T)(=&gt; T)T">existenceCheck</a>[<a href="#50603" title="T">T</a>](<a href="#55995" title="String">label</a>, <a href="#56001" title="Iterable[sbt.Path]">products</a>, <a href="#55997" title="sbt.Logger">log</a>)(<a href="#55998" title="=&gt; T">ifOutofdate</a>)
+		{
+			<span class="keyword">val</span> <a title="Iterable[sbt.Path]" id="56002">sources</a> = <a href="#55996" title="sbt.ProductsSources">files</a>.<a href="#55891" title="=&gt; Iterable[sbt.Path]">sources</a>
+			<span title="T" class="keyword">if</span>(<a href="#56002" title="Iterable[sbt.Path]">sources</a>.<a title="=&gt; Boolean" id="7290">isEmpty</a>)
+			{
+				<a href="#55997" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8351" title="(=&gt; String)Unit">debug</a>(<span title="java.lang.String(&quot;Running &quot;)" class="string">&quot;Running &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#55995" title="String">label</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; task because no sources exist.&quot;)" class="string">&quot; task because no sources exist.&quot;</span>)
+				<a href="#55998" title="=&gt; T">ifOutofdate</a>
+			}
+			<span class="keyword">else</span>
+			{
+				<span class="keyword">val</span> <a title="Long" id="56003">oldestProductModifiedTime</a> = <a href="#50610" title="(Iterable[sbt.Path])Iterable[Long]">mapLastModified</a>(<a href="#56001" title="Iterable[sbt.Path]">products</a>).<a title="((Long, Long) =&gt; Long)Long" id="7271">reduceLeft</a>(<span id="6008"><a href="#56009" title="implicit scala.Predef.longWrapper : (Long)scala.runtime.RichLong" id="770">_</a></span> <a title="(Long)Long" id="20828">min</a> <a href="#56010" title="Long">_</a>)
+				<span class="keyword">val</span> <a title="Long" id="56004">newestSourceModifiedTime</a> = <a href="#50610" title="(Iterable[sbt.Path])Iterable[Long]">mapLastModified</a>(<a href="#56002" title="Iterable[sbt.Path]">sources</a>).<a title="((Long, Long) =&gt; Long)Long" id="7271">reduceLeft</a>(<span id="6008"><a href="#56019" title="implicit scala.Predef.longWrapper : (Long)scala.runtime.RichLong" id="770">_</a></span> <a title="(Long)Long" id="20829">max</a> <a href="#56020" title="Long">_</a>)
+				<span title="T" class="keyword">if</span>(<a href="#56003" title="Long">oldestProductModifiedTime</a> <a title="(Long)Boolean" id="3156">&lt;</a> <a href="#56004" title="Long">newestSourceModifiedTime</a>)
+				{
+					<span title="Unit" class="keyword">if</span>(<a href="#55997" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8349" title="(sbt.Level.Value)Boolean">atLevel</a>(<a href="Logger.scala.html#6675" title="object sbt.Level">Level</a>.<a href="Logger.scala.html#20852" title="=&gt; sbt.Level.Value">Debug</a>))
+					{
+						<a href="#55997" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8351" title="(=&gt; String)Unit">debug</a>(<span title="java.lang.String(&quot;Running &quot;)" class="string">&quot;Running &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#55995" title="String">label</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; task because the following sources are newer than at least one product: &quot;)" class="string">&quot; task because the following sources are newer than at least one product: &quot;</span>)
+						<a href="#50607" title="(Iterable[sbt.Path],sbt.Logger)Unit">logDebugIndented</a>(<a href="#56002" title="Iterable[sbt.Path]">sources</a>.<a title="((sbt.Path) =&gt; Boolean)Iterable[sbt.Path]" id="7250">filter</a>(<a href="#56028" title="sbt.Path">_</a>.<a href="Path.scala.html#9526" title="=&gt; Long">lastModified</a> <a title="(Long)Boolean" id="3158">&gt;</a> <a href="#56003" title="Long">oldestProductModifiedTime</a>), <a href="#55997" title="sbt.Logger">log</a>)
+						<a href="#55997" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8351" title="(=&gt; String)Unit">debug</a>(<span title="java.lang.String(&quot; The following products are older than at least one source: &quot;)" class="string">&quot; The following products are older than at least one source: &quot;</span>)
+						<a href="#50607" title="(Iterable[sbt.Path],sbt.Logger)Unit">logDebugIndented</a>(<a href="#56001" title="Iterable[sbt.Path]">products</a>.<a title="((sbt.Path) =&gt; Boolean)Iterable[sbt.Path]" id="7250">filter</a>(<a href="#56032" title="sbt.Path">_</a>.<a href="Path.scala.html#9526" title="=&gt; Long">lastModified</a> <a title="(Long)Boolean" id="3156">&lt;</a> <a href="#56004" title="Long">newestSourceModifiedTime</a>), <a href="#55997" title="sbt.Logger">log</a>)
+					}
+					<a href="#55998" title="=&gt; T">ifOutofdate</a>
+				}
+				<span class="keyword">else</span>
+					<a href="#55999" title="=&gt; T">ifUptodate</a>
+			}
+		}
+	}
+	<span class="comment">/** Checks that all 'products' exist.  If they do, 'ifAllExists' is returned, otherwise 'products' is returned.*/</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="[T](String,Iterable[sbt.Path],sbt.Logger)(=&gt; T)(=&gt; T)T" id="50604">existenceCheck</a>[<a title="&gt;: Nothing &lt;: Any" id="50606">T</a>](<a title="String" id="55921">label</a>: <a title="String" id="1751">String</a>, <a title="Iterable[sbt.Path]" id="55922">products</a>: <a title="Iterable[sbt.Path]" id="358">Iterable</a>[Path], <a title="sbt.Logger" id="55923">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>)(<a title="=&gt; T" id="55924">action</a>: =&gt; T)(<a title="=&gt; T" id="55925">ifAllExist</a>: =&gt; T) =
+	{
+		<span class="keyword">val</span> <a title="Iterable[sbt.Path]" id="55927">nonexisting</a> = <a href="#55922" title="Iterable[sbt.Path]">products</a>.<a title="((sbt.Path) =&gt; Boolean)Iterable[sbt.Path]" id="7250">filter</a>(<a title="=&gt; Boolean" id="2637">!</a><a href="#55929" title="sbt.Path">_</a>.<a href="Path.scala.html#9524" title="=&gt; Boolean">exists</a>)
+		<span title="T" class="keyword">if</span>(<a href="#55927" title="Iterable[sbt.Path]">nonexisting</a>.<a title="=&gt; Boolean" id="7290">isEmpty</a>)
+			<a href="#55925" title="=&gt; T">ifAllExist</a>
+		<span class="keyword">else</span>
+		{
+			<span title="Unit" class="keyword">if</span>(<a href="#55923" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8349" title="(sbt.Level.Value)Boolean">atLevel</a>(<a href="Logger.scala.html#6675" title="object sbt.Level">Level</a>.<a href="Logger.scala.html#20852" title="=&gt; sbt.Level.Value">Debug</a>))
+			{
+				<a href="#55923" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8351" title="(=&gt; String)Unit">debug</a>(<span title="java.lang.String(&quot;Running &quot;)" class="string">&quot;Running &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#55921" title="String">label</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; task because at least one product does not exist:&quot;)" class="string">&quot; task because at least one product does not exist:&quot;</span>)
+				<a href="#50607" title="(Iterable[sbt.Path],sbt.Logger)Unit">logDebugIndented</a>(<a href="#55927" title="Iterable[sbt.Path]">nonexisting</a>, <a href="#55923" title="sbt.Logger">log</a>)
+			}
+			<a href="#55924" title="=&gt; T">action</a>
+		}
+	}
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="[T](Iterable[T],sbt.Logger)Unit" id="50607">logDebugIndented</a>[<a title="&gt;: Nothing &lt;: Any" id="50609">T</a>](<a title="Iterable[T]" id="55930">it</a>: <a title="Iterable[T]" id="358">Iterable</a>[T], <a title="sbt.Logger" id="55931">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>) { <a href="#55930" title="Iterable[T]">it</a>.<a title="((T) =&gt; Unit)Unit" id="7256">foreach</a>(<a title="T" id="56035">x</a> =&gt; <a href="#55931" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8351" title="(=&gt; String)Unit">debug</a>(<span title="java.lang.String(&quot;\011&quot;)" class="string">&quot;\t&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#56035" title="T">x</a>)) }
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(Iterable[sbt.Path])Iterable[Long]" id="50610">mapLastModified</a>(<a title="Iterable[sbt.Path]" id="56005">paths</a>: <a title="Iterable[sbt.Path]" id="358">Iterable</a>[Path]): <a title="Iterable[Long]" id="358">Iterable</a>[Long] = <a href="#56005" title="Iterable[sbt.Path]">paths</a>.<a title="((sbt.Path) =&gt; Long)Iterable[Long]" id="7246">map</a>(<a href="#56038" title="sbt.Path">_</a>.<a href="Path.scala.html#9526" title="=&gt; Long">lastModified</a>)
+}
+        </pre>
+    </body>
+</html>

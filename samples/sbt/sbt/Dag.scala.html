@@ -1,0 +1,43 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>sbt/Dag.scala</title>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* sbt -- Simple Build Tool
+ * Copyright 2008 David MacIver
+ */</span>
+<span class="keyword">package</span> sbt;
+
+<span class="keyword">import</span> scala.collection._;
+
+<span class="keyword">trait</span> <a title="trait Dag[Node &lt;: sbt.Dag[Node]] extends java.lang.Object with ScalaObject" id="6226">Dag</a>[<a title="&gt;: Nothing &lt;: sbt.Dag[Node]" id="6227">Node</a> &lt;: Dag[Node]]{
+	self : Node =&gt;
+
+	<span class="keyword">def</span> <a title="=&gt; Iterable[Node]" id="26239">dependencies</a> : <a title="Iterable[Node]" id="358">Iterable</a>[Node]
+
+	<span class="keyword">def</span> <a title="=&gt; List[Node]" id="26240">topologicalSort</a> = {
+		<span class="keyword">val</span> <a title="scala.collection.mutable.HashSet[Node]" id="27228">discovered</a> = <span title="scala.collection.mutable.HashSet[Node]" class="keyword">new</span> mutable.<a title="scala.collection.mutable.HashSet[Node]" id="7909">HashSet</a>[Node];
+		<span class="keyword">val</span> <a title="scala.collection.jcl.LinkedHashSet[Node]" id="27229">finished</a> = <a title="()scala.collection.jcl.LinkedHashSet[Node]" id="27112" class="keyword">new</a> jcl.<a title="scala.collection.jcl.LinkedHashSet[Node]" id="7777">LinkedHashSet</a>[Node];
+
+		<span class="keyword">def</span> <a title="(Node)Unit" id="27230">visit</a>(<a title="Node" id="27235">dag</a> : <a href="#6227" title="Node">Node</a>){
+			<span title="Unit" class="keyword">if</span> (<a title="=&gt; Boolean" id="2637">!</a><a href="#27228" title="(Node)Boolean" id="21329">discovered</a>(<a href="#27235" title="Node">dag</a>)) {
+				<a href="#27228" title="scala.collection.mutable.HashSet[Node]">discovered</a>(<a href="#27235" title="Node">dag</a>) = <span title="Boolean(true)" class="keyword">true</span>; 
+				<a href="#27235" title="Node">dag</a>.<a href="#26239" title="=&gt; Iterable[Node]">dependencies</a>.<a title="((Node) =&gt; Unit)Unit" id="7256">foreach</a>(<a href="#27230" title="(Node)Unit">visit</a>);
+				<a href="#27229" title="scala.collection.jcl.LinkedHashSet[Node]">finished</a>(<a href="#27235" title="Node">dag</a>) = <span title="Boolean(true)" class="keyword">true</span>; 
+			}
+		}
+
+		<a href="#27230" title="(Node)Unit">visit</a>(<a href="#6226" title="Node">self</a>);
+	
+		<a href="#27229" title="scala.collection.jcl.LinkedHashSet[Node]">finished</a>.<a title="=&gt; List[Node]" id="7279">toList</a>;
+	}
+}
+
+
+        </pre>
+    </body>
+</html>

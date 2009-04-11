@@ -1,0 +1,97 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>sbt/BuilderProject.scala</title>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* sbt -- Simple Build Tool
+ * Copyright 2008 Mark Harrah, David MacIver
+ */</span>
+<span class="keyword">package</span> sbt
+
+<span class="comment">/** The project definition used to build project definitions. */</span>
+<span class="keyword">final</span> <span class="keyword">class</span> <a title="class BuilderProject extends java.lang.Object with sbt.ScalaProject with ScalaObject" id="6601">BuilderProject</a>(<span class="keyword">val</span> <span id="47177"><span id="47176"><a title="sbt.ProjectInfo" id="47200">info</a></span></span>: <a href="ProjectInfo.scala.html#6494" title="sbt.ProjectInfo">ProjectInfo</a>, <span class="keyword">override</span> <span class="keyword">protected</span> <span class="keyword">val</span> <span id="47179"><span id="47178"><a title="sbt.Logger" id="47201">logImpl</a></span></span>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>) <span class="keyword">extends</span> <a href="ScalaProject.scala.html#6772" title="sbt.ScalaProject">ScalaProject</a>
+{	
+	<span class="keyword">import</span> BasicProjectPaths._
+	
+	<span class="keyword">def</span> <a title="=&gt; sbt.Path" id="47182">compilePath</a> = <a href="Project.scala.html#26213" title="=&gt; sbt.Path">outputPath</a> <a href="Path.scala.html#9523" title="(String)sbt.Path">/</a> <a href="DefaultProject.scala.html#32643" title="=&gt; java.lang.String">DefaultMainCompileDirectoryName</a>
+	<span class="keyword">def</span> <a title="=&gt; sbt.Path" id="47183">sourcePath</a> = <a href="Project.scala.html#26197" title="implicit sbt.Project.path : (String)sbt.Path">path</a>(<a href="DefaultProject.scala.html#32641" title="=&gt; java.lang.String">DefaultSourceDirectoryName</a>)
+	<span class="keyword">def</span> <a title="=&gt; sbt.Path" id="47184">mainResourcesPath</a> = <a href="Project.scala.html#26197" title="implicit sbt.Project.path : (String)sbt.Path">path</a>(<a href="DefaultProject.scala.html#32661" title="=&gt; java.lang.String">DefaultResourcesDirectoryName</a>)
+	<span class="keyword">def</span> <a title="=&gt; sbt.Path" id="47185">dependencyPath</a> = <a href="Project.scala.html#26197" title="implicit sbt.Project.path : (String)sbt.Path">path</a>(<a href="DefaultProject.scala.html#32667" title="=&gt; java.lang.String">DefaultDependencyDirectoryName</a>)
+	
+	<span class="keyword">def</span> <a title="=&gt; sbt.PathFinder" id="47186">libraries</a> = <a href="Project.scala.html#26230" title="(sbt.PathFinder,sbt.FileFilter)sbt.PathFinder">descendents</a>(<a href="#47185" title="=&gt; sbt.Path">dependencyPath</a>, <a href="Project.scala.html#26198" title="implicit sbt.Project.filter : (String)sbt.NameFilter" class="string">&quot;*.jar&quot;</a>)
+	
+	<span class="keyword">def</span> <a title="=&gt; List[BuilderProject.this.CompileOption]" id="47187">compileOptions</a> = <a href="ScalaProject.scala.html#31995" title="=&gt; BuilderProject.this.CompileOption">Deprecation</a> <a href="#47243" title="(BuilderProject.this.CompileOption)List[BuilderProject.this.CompileOption]" id="6808">::</a> <a href="ScalaProject.scala.html#32004" title="=&gt; BuilderProject.this.CompileOption">Unchecked</a> <a href="#47248" title="(BuilderProject.this.CompileOption)List[BuilderProject.this.CompileOption]" id="6808">::</a> <a title="object Nil" id="299">Nil</a>
+	<span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; scala.collection.immutable.Map[String,Nothing]" id="47188">tasks</a> = <span id="5869"><a title="=&gt; collection.immutable.Map.type" id="770">Map</a></span>.<a title="scala.collection.immutable.Map[String,Nothing]" id="39582">empty</a>
+	<span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; scala.collection.immutable.Map[String,Nothing]" id="47189">methods</a> = <span id="5869"><a title="=&gt; collection.immutable.Map.type" id="770">Map</a></span>.<a title="scala.collection.immutable.Map[String,Nothing]" id="39582">empty</a>
+	<span class="keyword">def</span> <a title="=&gt; object Nil" id="47190">dependencies</a> = <a title="object Nil" id="299">Nil</a>
+	
+	<span class="keyword">def</span> <a title="=&gt; sbt.PathFinder" id="47191">projectClasspath</a> = <a href="#47182" title="=&gt; sbt.Path">compilePath</a> <a href="Path.scala.html#9510" title="(sbt.PathFinder)sbt.PathFinder">+++</a> <a href="#47186" title="=&gt; sbt.PathFinder">libraries</a> <a href="Path.scala.html#9510" title="(sbt.PathFinder)sbt.PathFinder">+++</a>
+		<a href="Path.scala.html#6701" title="object sbt.Path">Path</a>.<a href="Path.scala.html#9496" title="(=&gt; Iterable[sbt.Path])sbt.PathFinder">lazyPathFinder</a> { <span title="sbt.ProjectDirectory" class="keyword">new</span> <a href="Path.scala.html#6699" title="sbt.ProjectDirectory">ProjectDirectory</a>(<a href="FileUtilities.scala.html#6351" title="object sbt.FileUtilities">FileUtilities</a>.<a href="FileUtilities.scala.html#9485" title="=&gt; java.io.File">sbtJar</a>) <a href="#47237" title="(sbt.ProjectDirectory)List[sbt.ProjectDirectory]" id="6808">::</a> <a title="object Nil" id="299">Nil</a> }
+
+	<span class="keyword">val</span> <span id="47193"><a title="sbt.CompileConditional" id="47192">compileConditional</a></span> =
+		<a title="template $anon extends sbt.CompileConditional" id="47203" class="keyword">new</a> <a href="Conditional.scala.html#6253" title="sbt.CompileConditional">CompileConditional</a>(<a href="#47198" title="=&gt; &lt;refinement&gt; extends sbt.CompileConfiguration">compileConfiguration</a>)
+		{
+			<span class="keyword">override</span> <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(this.ConditionalAnalysis)Option[String]" id="47205">execute</a>(<a title="this.ConditionalAnalysis" id="47278">cAnalysis</a>: <a href="Conditional.scala.html#32302" title="this.ConditionalAnalysis">ConditionalAnalysis</a>): <a title="Option[String]" id="871">Option</a>[String] =
+			{
+				<span title="Option[String]" class="keyword">if</span>(<a href="#47278" title="this.ConditionalAnalysis">cAnalysis</a>.<a href="Conditional.scala.html#32478" title="=&gt; Iterable[sbt.Path]">dirtySources</a>.<a title="=&gt; Boolean" id="7290">isEmpty</a>)
+					<a title="object None" id="488">None</a>
+				<span class="keyword">else</span>
+				{
+					<span class="keyword">val</span> <a title="sbt.Level.Value" id="47279">oldLevel</a> = <a href="Conditional.scala.html#32315" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8345" title="=&gt; sbt.Level.Value">getLevel</a>
+					<a href="Conditional.scala.html#32315" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8346" title="(sbt.Level.Value)Unit">setLevel</a>(<a href="Logger.scala.html#6675" title="object sbt.Level">Level</a>.<a href="Logger.scala.html#20854" title="=&gt; sbt.Level.Value">Info</a>)
+					<a href="Conditional.scala.html#32315" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8352" title="(=&gt; String)Unit">info</a>(<span title="java.lang.String(&quot;Recompiling project definition...&quot;)" class="string">&quot;Recompiling project definition...&quot;</span>)
+					<a href="Conditional.scala.html#32315" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8352" title="(=&gt; String)Unit">info</a>(<span title="java.lang.String(&quot;\011&quot;)" class="string">&quot;\t&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#47278" title="this.ConditionalAnalysis">cAnalysis</a>.<a title="()java.lang.String" id="5666">toString</a>)
+					<a href="Conditional.scala.html#32315" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8346" title="(sbt.Level.Value)Unit">setLevel</a>(<a href="#47279" title="sbt.Level.Value">oldLevel</a>)
+					<span class="keyword">super</span>.<a href="Conditional.scala.html#32334" title="(this.ConditionalAnalysis)Option[String]">execute</a>(<a href="#47278" title="this.ConditionalAnalysis">cAnalysis</a>)
+				}
+			}
+			<span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; sbt.AnalysisCallback" id="47206">analysisCallback</a>: <a href="AnalysisCallback.scala.html#6220" title="sbt.AnalysisCallback">AnalysisCallback</a> =
+				<a title="template $anon extends sbt.BasicAnalysisCallback" id="47280" class="keyword">new</a> <a href="AnalysisCallback.scala.html#6221" title="sbt.BasicAnalysisCallback">BasicAnalysisCallback</a>(<a href="#47176" title="=&gt; sbt.ProjectInfo">info</a>.<a href="ProjectInfo.scala.html#27931" title="=&gt; sbt.ProjectDirectory">projectPath</a>, <span id="6801"><a title="(java.lang.String*)List[java.lang.String]" id="482">List</a></span>(<a href="Project.scala.html#6402" title="object sbt.Project">Project</a>.<a href="Project.scala.html#27199" title="=&gt; java.lang.String">ProjectClassName</a>), <a href="Conditional.scala.html#32286" title="=&gt; this.AnalysisType">analysis</a>)
+				{
+					<span class="keyword">def</span> <a title="(sbt.Path,String,String,Boolean)Unit" id="47282">foundSubclass</a>(<a title="sbt.Path" id="47285">sourcePath</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>, <a title="String" id="47286">subclassName</a>: <a title="String" id="1751">String</a>, <a title="String" id="47287">superclassName</a>: <a title="String" id="1751">String</a>, <a title="Boolean" id="47288">isModule</a>: <a title="Boolean" id="2060">Boolean</a>)
+					{
+						<span title="Unit" class="keyword">if</span>(<a href="#47287" title="String">superclassName</a> <a title="(AnyRef)Boolean" id="3399">==</a> <a href="Project.scala.html#6402" title="object sbt.Project">Project</a>.<a href="Project.scala.html#27199" title="=&gt; java.lang.String">ProjectClassName</a> <a title="(Boolean)Boolean" id="2641">&amp;&amp;</a> <a title="=&gt; Boolean" id="2637">!</a><a href="#47288" title="Boolean">isModule</a>)
+						{
+							<a href="Conditional.scala.html#32315" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8351" title="(=&gt; String)Unit">debug</a>(<span title="java.lang.String(&quot;Found project definition &quot;)" class="string">&quot;Found project definition &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#47286" title="String">subclassName</a>)
+							<a href="AnalysisCallback.scala.html#32823" title="=&gt; sbt.CompileAnalysis">analysis</a>.<a href="Analysis.scala.html#21496" title="(sbt.Path,String)Unit">addProjectDefinition</a>(<a href="#47285" title="sbt.Path">sourcePath</a>, <a href="#47286" title="String">subclassName</a>)
+						}
+					}
+				}
+		}
+	
+	<span class="keyword">lazy</span> <span class="keyword">val</span> <a title="BuilderProject.this.Task" id="47195">compile</a> = <a href="TaskManager.scala.html#26162" title="(=&gt; Option[String])BuilderProject.this.Task">task</a> { <a href="#47192" title="=&gt; sbt.CompileConditional">compileConditional</a>.<a href="Conditional.scala.html#32303" title="=&gt; Option[String]">run</a> }
+	<span class="keyword">lazy</span> <span class="keyword">val</span> <a title="BuilderProject.this.Task" id="47197">clean</a> = <a href="ScalaProject.scala.html#32036" title="(sbt.PathFinder,BuilderProject.this.CleanOption*)BuilderProject.this.Task">cleanTask</a>(<a href="Project.scala.html#26213" title="=&gt; sbt.Path">outputPath</a>, <a href="ScalaProject.scala.html#55396" title="(sbt.TaskAnalysis[_, _, _])BuilderProject.this.ClearAnalysis">ClearAnalysis</a>(<a href="#47192" title="=&gt; sbt.CompileConditional">compileConditional</a>.<a href="Conditional.scala.html#32286" title="=&gt; BuilderProject.this.compileConditional.AnalysisType">analysis</a>))
+	
+	<span class="keyword">def</span> <a title="=&gt; &lt;refinement&gt; extends sbt.CompileConfiguration" id="47198">compileConfiguration</a> =
+		<a title="template $anon extends sbt.CompileConfiguration" id="47210" class="keyword">new</a> <a href="Conditional.scala.html#6251" title="sbt.CompileConfiguration">CompileConfiguration</a>
+		{
+			<span class="keyword">def</span> <a title="=&gt; java.lang.String" id="47212">label</a> = <span title="java.lang.String(&quot;builder&quot;)" class="string">&quot;builder&quot;</span>
+			<span class="keyword">def</span> <a title="=&gt; sbt.PathFinder" id="47213">sources</a> = <a href="#47183" title="=&gt; sbt.Path">sourcePath</a>.<a href="Path.scala.html#9517" title="(sbt.FileFilter,sbt.FileFilter)sbt.PathFinder">descendentsExcept</a>(<a href="Project.scala.html#26198" title="implicit sbt.Project.filter : (String)sbt.NameFilter" class="string">&quot;*.scala&quot;</a>, <a href="Project.scala.html#26229" title="=&gt; sbt.FileFilter">defaultExcludes</a>)
+			<span class="keyword">def</span> <a title="=&gt; sbt.Path" id="47214">outputDirectory</a> = <a href="#47182" title="=&gt; sbt.Path">compilePath</a>
+			<span class="keyword">def</span> <a title="=&gt; sbt.PathFinder" id="47215">classpath</a> = <a href="#47191" title="=&gt; sbt.PathFinder">projectClasspath</a>
+			<span class="keyword">def</span> <a title="=&gt; sbt.Path" id="47216">analysisPath</a> = <a href="Project.scala.html#26213" title="=&gt; sbt.Path">outputPath</a> <a href="Path.scala.html#9523" title="(String)sbt.Path">/</a> <a href="DefaultProject.scala.html#32653" title="=&gt; java.lang.String">DefaultMainAnalysisDirectoryName</a>
+			<span class="keyword">def</span> <a title="=&gt; sbt.ProjectDirectory" id="47217">projectPath</a> = <a href="#47176" title="=&gt; sbt.ProjectInfo">info</a>.<a href="ProjectInfo.scala.html#27931" title="=&gt; sbt.ProjectDirectory">projectPath</a>
+			<span class="keyword">def</span> <a title="=&gt; object Nil" id="47218">testDefinitionClassNames</a> = <a title="object Nil" id="299">Nil</a>
+			<span class="keyword">def</span> <a title="=&gt; sbt.Logger" id="47219">log</a> = <a href="#6601" title="BuilderProject.this.type">BuilderProject</a>.<span class="keyword">this</span>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>
+			<span class="keyword">def</span> <a title="=&gt; List[String]" id="47220">options</a> = <a href="#47187" title="=&gt; List[BuilderProject.this.CompileOption]">compileOptions</a>.<a title="((BuilderProject.this.CompileOption) =&gt; String)List[String]" id="6835">map</a>(<a href="#47256" title="BuilderProject.this.CompileOption">_</a>.<a href="ScalaProject.scala.html#32729" title="=&gt; String">asString</a>)
+		}
+		
+	<span class="keyword">def</span> <a title="=&gt; Either[String,Option[String]]" id="47199">projectDefinition</a>: <a title="Either[String,Option[String]]" id="322">Either</a>[String, Option[String]] =
+	{
+		<a href="#47192" title="=&gt; sbt.CompileConditional">compileConditional</a>.<a href="Conditional.scala.html#32286" title="=&gt; BuilderProject.this.compileConditional.AnalysisType">analysis</a>.<a href="Analysis.scala.html#21493" title="=&gt; Iterable[String]">allProjects</a>.<a title="=&gt; List[String]" id="7279">toList</a> <span title="Either[String,Option[String]]" class="keyword">match</span>
+		{
+			<span title="Right[Nothing,object None]" class="keyword">case</span> <a title="object Nil" id="299">Nil</a> =&gt; 
+				<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8351" title="(=&gt; String)Unit">debug</a>(<span title="java.lang.String(&quot;No project definitions detected using default project.&quot;)" class="string">&quot;No project definitions detected using default project.&quot;</span>)
+				<span id="29414"><a title="(object None)Right[Nothing,object None]" id="476">Right</a></span>(<a title="object None" id="488">None</a>)
+			<span title="Right[Nothing,Some[String]]" class="keyword">case</span> <a title="String" id="55411">singleDefinition</a> <a id="1">::</a> <a title="object Nil" id="299">Nil</a> =&gt; <span id="29414"><a title="(Some[String])Right[Nothing,Some[String]]" id="476">Right</a></span>(<span id="10256"><a title="(String)Some[String]" id="275">Some</a></span>(<a href="#55411" title="String">singleDefinition</a>))
+			<span title="Left[String,Nothing]" class="keyword">case</span> <a title="List[String]" id="55415">multipleDefinitions</a> =&gt;<span id="29944"><a title="(String)Left[String,Nothing]" id="1130">Left</a></span>(<a href="#55415" title="List[String]">multipleDefinitions</a>.<a title="(String,String,String)String" id="7282">mkString</a>(<span title="java.lang.String(&quot;Multiple project definitions detected: \012\011&quot;)" class="string">&quot;Multiple project definitions detected: \n\t&quot;</span>,<span title="java.lang.String(&quot;\012\011&quot;)" class="string">&quot;\n\t&quot;</span>,<span title="java.lang.String(&quot;\012&quot;)" class="string">&quot;\n&quot;</span>))
+		}
+	}
+}
+        </pre>
+    </body>
+</html>

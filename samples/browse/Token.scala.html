@@ -1,0 +1,71 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Token.scala</title>
+        <script type="text/javascript" src="linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* browse -- Scala Source Browser
+ * Copyright 2009 Mark Harrah
+ */</span>
+
+<span class="keyword">package</span> browse
+
+<span class="comment">/** Represents a link to a definition.  The path is the path to the file and target is
+* the symbol ID targeted.  The '#' is not included.  To get the constructed path,
+* call toString. */</span>
+<span class="keyword">private</span> <span class="keyword">class</span> <a title="class Link extends java.lang.Object with NotNull with ScalaObject" id="6179">Link</a>(<span class="keyword">val</span> <span id="20100"><span id="20099"><a title="String" id="20179">path</a></span></span>: <a title="String" id="1801">String</a>, <span class="keyword">val</span> <span id="20102"><span id="20101"><a title="String" id="20180">target</a></span></span>: <a title="String" id="1801">String</a>) <span class="keyword">extends</span> <a title="NotNull" id="181">NotNull</a>
+{
+	<span class="keyword">override</span> <span class="keyword">def</span> <a title="()java.lang.String" id="20104">toString</a> = <a href="#20099" title="=&gt; String">path</a> <a title="(Any)java.lang.String" id="5736">+</a> <span title="java.lang.String(&quot;#&quot;)" class="string">&quot;#&quot;</span> <a title="(Any)java.lang.String" id="5736">+</a> <a href="#20101" title="=&gt; String">target</a>
+}
+<span class="keyword">private</span> <span class="keyword">object</span> <a title="object browse.BlockLink" id="6180">BlockLink</a> <span class="keyword">extends</span> <a href="#6179" title="browse.Link">Link</a>(<span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>, <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+<span class="comment">/** Represents a token at the lexer level with associated type information.
+* 'start' is the offset of the token in the original source file.
+* 'length' is the length of the token in the original source file
+* 'code' is the class of the token (see Tokens in the compiler)*/</span>
+<span class="keyword">private</span> <span class="keyword">case</span> <span class="keyword">class</span> <span id="5728"><span id="20474"><span id="20489"><span id="3444"><span id="20490"><span id="20504"><span id="20499"><span id="3084"><span id="6182"><span id="20473"><span id="20484"><span id="3443"><span id="20506"><span id="20497"><span id="2694"><span id="17142"><span id="6183"><span id="20508"><span id="20491"><span id="278"><span id="20505"><span id="410"><span id="20498"><span id="20487"><span id="20438"><span id="2693"><span id="20486"><span id="20485"><span id="19626"><a title="class Token extends java.lang.Object with NotNull with Ordered[browse.Token] with ScalaObject with Product" id="20503">Token</a></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span>(<span id="18318"><span id="18317"><span id="19373"><a title="Int" id="20546">start</a></span></span></span>: <a title="Int" id="2346">Int</a>, <span id="18320"><span id="18319"><span id="19374"><a title="Int" id="20547">length</a></span></span></span>: <a title="Int" id="2346">Int</a>, <span id="18322"><span id="18321"><span id="19375"><a title="Int" id="20548">code</a></span></span></span>: <a title="Int" id="2346">Int</a>) <span class="keyword">extends</span> <a title="NotNull" id="181">NotNull</a> <span class="keyword">with</span> <a title="Ordered[browse.Token]" id="1402">Ordered</a>[Token]
+{
+	<span id="5933"><a title="(Boolean)Unit" id="779">require</a></span>(<a href="#18317" title="=&gt; Int">start</a> <a title="(Int)Boolean" id="3089">&gt;=</a> <span title="Int(0)" class="int">0</span>)
+	<span id="5933"><a title="(Boolean)Unit" id="779">require</a></span>(<a href="#18319" title="=&gt; Int">length</a> <a title="(Int)Boolean" id="3088">&gt;</a> <span title="Int(0)" class="int">0</span>)
+	<span class="comment">/** Tokens are sorted by their start position, so that they may be searched by offset in
+	* the extraction code and then processed in sequence in the annotation code. */</span>
+	<span class="keyword">def</span> <a title="(browse.Token)Int" id="18324">compare</a>(<a title="browse.Token" id="20404">other</a>: <a href="#6182" title="browse.Token">Token</a>) = <span id="6059"><a href="#18317" title="implicit scala.Predef.intWrapper : (Int)scala.runtime.RichInt" id="779">start</a></span> <a title="(Int)Int" id="20331">compare</a> <a href="#20404" title="browse.Token">other</a>.<a href="#18317" title="=&gt; Int">start</a>
+	
+	<span class="keyword">private</span>[<span class="keyword">this</span>] <span class="keyword">var</span> <a title="Option[browse.TypeAttribute]" id="18325">rawType</a>: <a title="Option[browse.TypeAttribute]" id="889">Option</a>[TypeAttribute] = <a title="object None" id="497">None</a>
+	<span class="keyword">private</span>[<span class="keyword">this</span>] <span class="keyword">var</span> <a title="Option[browse.Link]" id="18326">rawReference</a>: <a title="Option[browse.Link]" id="889">Option</a>[Link] = <a title="object None" id="497">None</a>
+	<span class="keyword">private</span>[<span class="keyword">this</span>] <span class="keyword">var</span> <a title="List[Int]" id="18327">rawDefinitions</a>: <a title="List[Int]" id="487">List</a>[Int] = <a title="object Nil" id="302">Nil</a>
+	<span class="comment">/** Sets the type information for this token. */</span>
+	<span class="keyword">def</span> <a title="(browse.TypeAttribute)Unit" id="18328">tpe_=</a>(<a title="browse.TypeAttribute" id="20076">t</a>: <a href="#6185" title="browse.TypeAttribute">TypeAttribute</a>)
+	{
+		<span title="Unit" class="keyword">if</span>(<a href="#18325" title="Option[browse.TypeAttribute]">rawType</a>.<a title="=&gt; Boolean" id="11712">isEmpty</a>)
+			<a href="#18325" title="Option[browse.TypeAttribute]">rawType</a> = <span id="19626"><a title="(browse.TypeAttribute)Some[browse.TypeAttribute]" id="278">Some</a></span>(<a href="#20076" title="browse.TypeAttribute">t</a>)
+	}
+	<span class="comment">/** Sets the defining location for the symbol for this token. */</span>
+	<span class="keyword">def</span> <a title="(browse.Link)Unit" id="18329">reference_=</a>(<a title="browse.Link" id="20139">l</a>: <a href="#6179" title="browse.Link">Link</a>)
+	{
+		<span title="Unit" class="keyword">if</span>(<a href="#18326" title="Option[browse.Link]">rawReference</a>.<a title="=&gt; Boolean" id="11712">isEmpty</a>)
+			<a href="#18326" title="Option[browse.Link]">rawReference</a> = <span id="19626"><a title="(browse.Link)Some[browse.Link]" id="278">Some</a></span>(<a href="#20139" title="browse.Link">l</a>)
+	}
+	<span class="comment">/** Adds an ID for this token.  An ID is used to mark this token as the source of a symbol. */</span>
+	<span class="keyword">def</span> <a title="(Int)Unit" id="18330">+=</a>(<a title="Int" id="20137">id</a>: <a title="Int" id="2346">Int</a>)
+		{ <a href="#18327" title="List[Int]">rawDefinitions</a> <a title="(Int)List[Int]" id="11153">::=</a> <a href="#20137" title="Int">id</a> }
+	<span class="comment">/** Gets the type information. */</span>
+	<span class="keyword">def</span> <a title="=&gt; Option[browse.TypeAttribute]" id="18331">tpe</a> = <a href="#18325" title="Option[browse.TypeAttribute]">rawType</a>
+	<span class="comment">/** Gets the link to the defining location for this token. */</span>
+	<span class="keyword">def</span> <a title="=&gt; Option[browse.Link]" id="18332">reference</a> = <a href="#18326" title="Option[browse.Link]">rawReference</a>
+	<span class="comment">/** Gets the definition IDs. */</span>
+	<span class="keyword">def</span> <a title="=&gt; List[Int]" id="18333">definitions</a> = <a href="#18327" title="List[Int]">rawDefinitions</a>
+	<span class="comment">/** True if this token has no reference to a definition and has no definitions itself. */</span>
+	<span class="keyword">def</span> <a title="=&gt; Boolean" id="18334">isSimple</a> = <a href="#18332" title="=&gt; Option[browse.Link]">reference</a>.<a title="=&gt; Boolean" id="11712">isEmpty</a> <a title="(Boolean)Boolean" id="2694">&amp;&amp;</a> <a href="#18333" title="=&gt; List[Int]">definitions</a>.<a title="=&gt; Boolean" id="11453">isEmpty</a>
+	<span class="comment">/** True if this token has no reference to a definition, has no definitions itself, and
+	* has no type information. */</span>
+	<span class="keyword">def</span> <a title="=&gt; Boolean" id="18335">isPlain</a> = <a href="#18334" title="=&gt; Boolean">isSimple</a> <a title="(Boolean)Boolean" id="2694">&amp;&amp;</a> <a href="#18331" title="=&gt; Option[browse.TypeAttribute]">tpe</a>.<a title="=&gt; Boolean" id="11712">isEmpty</a>
+}
+<span class="comment">/** Holds type information.  This class will probably change to accomodate tokeninzing types. */</span>
+<span class="keyword">private</span> <span class="keyword">case</span> <span class="keyword">class</span> <span id="5728"><span id="20474"><span id="6185"><span id="3444"><span id="20529"><span id="20528"><span id="20530"><span id="20473"><span id="3443"><span id="20535"><span id="20526"><span id="20093"><span id="20542"><span id="2694"><span id="20541"><span id="20508"><span id="3452"><span id="20525"><span id="20536"><span id="278"><span id="20539"><span id="20527"><span id="1322"><span id="20540"><span id="2693"><span id="6186"><span id="20085"><span id="19626"><a title="class TypeAttribute extends java.lang.Object with NotNull with ScalaObject with Product" id="16287">TypeAttribute</a></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span>(<span id="20089"><span id="20088"><span id="20523"><a title="String" id="20094">name</a></span></span></span>: <a title="String" id="1801">String</a>, <span id="20091"><span id="20090"><span id="20524"><a title="Option[browse.Link]" id="20095">definition</a></span></span></span>: <a title="Option[browse.Link]" id="889">Option</a>[Link]) <span class="keyword">extends</span> <a title="NotNull" id="181">NotNull</a>
+
+        </pre>
+    </body>
+</html>

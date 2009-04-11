@@ -1,0 +1,559 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>sbt/Main.scala</title>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* sbt -- Simple Build Tool
+ * Copyright 2008, 2009  Steven Blundy, Mark Harrah, David MacIver, Mikko Peltonen
+ */</span>
+<span class="keyword">package</span> sbt
+
+<span class="keyword">import</span> scala.collection.immutable.TreeSet
+
+<span class="keyword">private</span> <span class="keyword">trait</span> <a title="trait RunCompleteAction extends java.lang.Object with NotNull" id="6513">RunCompleteAction</a> <span class="keyword">extends</span> <a title="NotNull" id="187">NotNull</a>
+<span class="keyword">private</span> <span class="keyword">class</span> <a title="class Exit extends java.lang.Object with sbt.RunCompleteAction with ScalaObject" id="6514">Exit</a>(<span class="keyword">val</span> <span id="52591"><span id="52590"><a title="Int" id="52595">code</a></span></span>: <a title="Int" id="2296">Int</a>) <span class="keyword">extends</span> <a href="#6513" title="sbt.RunCompleteAction">RunCompleteAction</a>
+<span class="keyword">private</span> <span class="keyword">object</span> <a title="object sbt.Reload" id="6515">Reload</a> <span class="keyword">extends</span> <a href="#6513" title="sbt.RunCompleteAction">RunCompleteAction</a>
+
+<span class="comment">/** This class is the entry point for sbt.  If it is given any arguments, it interprets them
+* as actions, executes the corresponding actions, and exits.  If there were no arguments provided,
+* sbt enters interactive mode.*/</span>
+<span class="keyword">object</span> <a title="object sbt.Main" id="6517">Main</a>
+{
+	<span class="comment">/** The entry point for sbt.  If arguments are specified, they are interpreted as actions, executed,
+	* and then the program terminates.  If no arguments are specified, the program enters interactive
+	* mode. Call run if you need to run sbt in the same JVM.*/</span>
+	<span class="keyword">def</span> <a title="(Array[String])Unit" id="52599">main</a>(<a title="Array[String]" id="52677">args</a>: <a title="Array[String]" id="1003">Array</a>[String])
+	{
+		<span class="keyword">val</span> <a title="Int" id="52678">exitCode</a> = <a href="#52614" title="(Array[String])Int">run</a>(<a href="#52677" title="Array[String]">args</a>)
+		<span title="Unit" class="keyword">if</span>(<a href="#52678" title="Int">exitCode</a> <a title="(Int)Boolean" id="3031">==</a> <a href="#52600" title="=&gt; Int">RebootExitCode</a>)
+		{
+			<span id="5985"><a title="(Any)Unit" id="770">println</a></span>(<span title="java.lang.String(&quot;Rebooting is not supported when the sbt loader is not used.&quot;)" class="string">&quot;Rebooting is not supported when the sbt loader is not used.&quot;</span>)
+			<span id="5985"><a title="(Any)Unit" id="770">println</a></span>(<span title="java.lang.String(&quot;Please manually restart sbt.&quot;)" class="string">&quot;Please manually restart sbt.&quot;</span>)
+		}
+		<a title="object java.lang.System" id="1776">System</a>.<a title="(Int)Unit" id="24465">exit</a>(<a href="#52678" title="Int">exitCode</a>)
+	}
+	<span class="keyword">val</span> <span id="52601"><a title="Int" id="52600">RebootExitCode</a></span> = -<span title="Int(-1)" class="int">1</span>
+	<span class="keyword">val</span> <span id="52603"><a title="Int" id="52602">NormalExitCode</a></span> = <span title="Int(0)" class="int">0</span>
+	<span class="keyword">val</span> <span id="52605"><a title="Int" id="52604">SetupErrorExitCode</a></span> = <span title="Int(1)" class="int">1</span>
+	<span class="keyword">val</span> <span id="52607"><a title="Int" id="52606">SetupDeclinedExitCode</a></span> = <span title="Int(2)" class="int">2</span>
+	<span class="keyword">val</span> <span id="52609"><a title="Int" id="52608">LoadErrorExitCode</a></span> = <span title="Int(3)" class="int">3</span>
+	<span class="keyword">val</span> <span id="52611"><a title="Int" id="52610">UsageErrorExitCode</a></span> = <span title="Int(4)" class="int">4</span>
+	<span class="keyword">val</span> <span id="52613"><a title="Int" id="52612">BuildErrorExitCode</a></span> = <span title="Int(5)" class="int">5</span>
+	<span class="keyword">def</span> <a title="(Array[String])Int" id="52614">run</a>(<a title="Array[String]" id="52679">args</a>: <a title="Array[String]" id="1003">Array</a>[String]): <a title="Int" id="2296">Int</a> =
+	{
+		<span class="keyword">val</span> <a title="Long" id="52683">startTime</a> = <a title="object java.lang.System" id="1776">System</a>.<a title="()Long" id="24451">currentTimeMillis</a>
+		<a href="Project.scala.html#6402" title="object sbt.Project">Project</a>.<a href="Project.scala.html#27202" title="=&gt; sbt.LoadResult">loadProject</a> <span title="Int" class="keyword">match</span>
+		{
+			<span title="Int" class="keyword">case</span> <a title="sbt.LoadSetupError" id="52686">err</a>: <a href="Project.scala.html#6401" title="sbt.LoadSetupError">LoadSetupError</a> =&gt;
+				<span id="5985"><a title="(Any)Unit" id="770">println</a></span>(<span title="java.lang.String(&quot;\012&quot;)" class="string">&quot;\n&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#52686" title="sbt.LoadSetupError">err</a>.<a href="Project.scala.html#47014" title="=&gt; String">message</a>)
+				<a href="ExitHook.scala.html#6596" title="object sbt.ExitHooks">ExitHooks</a>.<a href="ExitHook.scala.html#52693" title="(sbt.Logger)Unit">runExitHooks</a>(<a href="Project.scala.html#6402" title="object sbt.Project">Project</a>.<a href="Project.scala.html#27201" title="=&gt; sbt.ConsoleLogger">bootLogger</a>)
+				<a href="#52604" title="=&gt; Int">SetupErrorExitCode</a>
+			<span title="Int" class="keyword">case</span> <a href="Project.scala.html#6399" title="object sbt.LoadSetupDeclined">LoadSetupDeclined</a> =&gt;
+				<a href="ExitHook.scala.html#6596" title="object sbt.ExitHooks">ExitHooks</a>.<a href="ExitHook.scala.html#52693" title="(sbt.Logger)Unit">runExitHooks</a>(<a href="Project.scala.html#6402" title="object sbt.Project">Project</a>.<a href="Project.scala.html#27201" title="=&gt; sbt.ConsoleLogger">bootLogger</a>)
+				<a href="#52606" title="=&gt; Int">SetupDeclinedExitCode</a>
+			<span title="Int" class="keyword">case</span> <a title="sbt.LoadError" id="52695">err</a>: <a href="Project.scala.html#6398" title="sbt.LoadError">LoadError</a> =&gt;
+			{
+				<span class="keyword">val</span> <a title="sbt.ConsoleLogger" id="52696">log</a> = <a href="Project.scala.html#6402" title="object sbt.Project">Project</a>.<a href="Project.scala.html#27201" title="=&gt; sbt.ConsoleLogger">bootLogger</a>
+				<span id="5985"><a title="(Any)Unit" id="770">println</a></span>(<a href="#52695" title="sbt.LoadError">err</a>.<a href="Project.scala.html#47019" title="=&gt; String">message</a>)
+				<a href="ExitHook.scala.html#6596" title="object sbt.ExitHooks">ExitHooks</a>.<a href="ExitHook.scala.html#52693" title="(sbt.Logger)Unit">runExitHooks</a>(<a href="#52696" title="sbt.ConsoleLogger">log</a>)
+				<span class="comment">// Because this is an error that can probably be corrected, prompt user to try again.</span>
+				<span class="keyword">val</span> <a title="Option[String]" id="52697">line</a> =
+					<span class="keyword">try</span> { <span id="10256"><a title="(String)Some[String]" id="275">Some</a></span>(<span id="5989"><a title="(String,Any*)String" id="770">readLine</a></span>(<span title="java.lang.String(&quot;\012 Hit enter to retry or 'exit' to quit: &quot;)" class="string">&quot;\n Hit enter to retry or 'exit' to quit: &quot;</span>)).<a title="((String) =&gt; Boolean)Option[String]" id="10161">filter</a>(<a href="#52702" title="String">_</a> <a title="(AnyRef)Boolean" id="5674">!=</a> <span title="Null(null)" class="keyword">null</span>) }
+					<span class="keyword">catch</span>
+					{
+						<span title="None.type" class="keyword">case</span> <a title="java.lang.Throwable" id="52704">e</a> =&gt;
+							<a href="#52696" title="sbt.ConsoleLogger">log</a>.<a href="Logger.scala.html#46142" title="(=&gt; Throwable)Unit">trace</a>(<a href="#52704" title="java.lang.Throwable">e</a>)
+							<a href="#52696" title="sbt.ConsoleLogger">log</a>.<a href="Logger.scala.html#8354" title="(=&gt; String)Unit">error</a>(<a href="#52704" title="java.lang.Throwable">e</a>.<a title="()java.lang.String" id="9277">toString</a>)
+							<a title="object None" id="488">None</a>
+					}
+				<a href="#52697" title="Option[String]">line</a> <span title="Int" class="keyword">match</span>
+				{
+					<span title="Int" class="keyword">case</span> <a id="1">Some</a>(<a title="String" id="52712">l</a>) =&gt; <span title="Int" class="keyword">if</span>(<a title="=&gt; Boolean" id="2637">!</a><a href="#52672" title="(String)Boolean">isTerminateAction</a>(<a href="#52712" title="String">l</a>)) <a href="#52614" title="(Array[String])Int">run</a>(<a href="#52679" title="Array[String]">args</a>) <span class="keyword">else</span> <a href="#52602" title="=&gt; Int">NormalExitCode</a>
+					<span title="Int" class="keyword">case</span> <a title="object None" id="488">None</a> =&gt; <a href="#52608" title="=&gt; Int">LoadErrorExitCode</a>
+				}
+			}
+			<span title="Int" class="keyword">case</span> <a title="sbt.LoadSuccess" id="52716">success</a>: <a href="Project.scala.html#6397" title="sbt.LoadSuccess">LoadSuccess</a> =&gt;
+			{
+				<span class="keyword">import</span> success.project
+				<span class="keyword">val</span> <a title="sbt.RunCompleteAction" id="52718">doNext</a>: <a href="#6513" title="sbt.RunCompleteAction">RunCompleteAction</a> =
+					<span class="comment">// in interactive mode, fill all undefined properties</span>
+					<span title="sbt.RunCompleteAction" class="keyword">if</span>(<a href="#52679" title="Array[String]">args</a>.<a title="=&gt; Int" id="6981">length</a> <a title="(Int)Boolean" id="3035">&gt;</a> <span title="Int(0)" class="int">0</span> <a title="(Boolean)Boolean" id="2640">||</a> <a href="#52667" title="(List[sbt.Project])Boolean">fillUndefinedProjectProperties</a>(<a href="Project.scala.html#47024" title="=&gt; sbt.Project">project</a>.<a href="Dag.scala.html#26240" title="=&gt; List[sbt.Project]">topologicalSort</a>.<a title="=&gt; List[sbt.Project]" id="6821">toList</a>.<a title="=&gt; List[sbt.Project]" id="6858">reverse</a>))
+						<a href="#52615" title="(sbt.Project,Array[String],Long)sbt.RunCompleteAction">startProject</a>(<a href="Project.scala.html#47024" title="=&gt; sbt.Project">project</a>, <a href="#52679" title="Array[String]">args</a>, <a href="#52683" title="Long">startTime</a>)
+					<span class="keyword">else</span>
+						<span title="sbt.Exit" class="keyword">new</span> <a href="#6514" title="sbt.Exit">Exit</a>(<a href="#52602" title="=&gt; Int">NormalExitCode</a>)
+				<a href="ExitHook.scala.html#6596" title="object sbt.ExitHooks">ExitHooks</a>.<a href="ExitHook.scala.html#52693" title="(sbt.Logger)Unit">runExitHooks</a>(<a href="Project.scala.html#47024" title="=&gt; sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>)
+				<a href="#52718" title="sbt.RunCompleteAction">doNext</a> <span title="Int" class="keyword">match</span>
+				{
+					<span title="Int" class="keyword">case</span> <a href="#6515" title="object sbt.Reload">Reload</a> =&gt; <a href="#52614" title="(Array[String])Int">run</a>(<a href="#52679" title="Array[String]">args</a>)
+					<span title="Int" class="keyword">case</span> <a title="sbt.Exit" id="52726">x</a>: <a href="#6514" title="sbt.Exit">Exit</a> =&gt; <a href="#52726" title="sbt.Exit">x</a>.<a href="#52590" title="=&gt; Int">code</a>
+				}
+			}
+		}
+	}
+	<span class="comment">/** Returns true if the project should be reloaded, false if sbt should exit.*/</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Project,Array[String],Long)sbt.RunCompleteAction" id="52615">startProject</a>(<a title="sbt.Project" id="52723">project</a>: <a href="Project.scala.html#6395" title="sbt.Project">Project</a>, <a title="Array[String]" id="52724">args</a>: <a title="Array[String]" id="1003">Array</a>[String], <a title="Long" id="52725">startTime</a>: <a title="Long" id="2301">Long</a>): <a href="#6513" title="sbt.RunCompleteAction">RunCompleteAction</a> =
+	{
+		<a href="#52723" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8352" title="(=&gt; String)Unit">info</a>(<span title="java.lang.String(&quot;Building project &quot;)" class="string">&quot;Building project &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#52723" title="sbt.Project">project</a>.<a href="Project.scala.html#26174" title="=&gt; String">name</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; &quot;)" class="string">&quot; &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#52723" title="sbt.Project">project</a>.<a href="Project.scala.html#26175" title="=&gt; sbt.Version">version</a>.<a title="()java.lang.String" id="5666">toString</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; using &quot;)" class="string">&quot; using &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#52723" title="sbt.Project">project</a>.<a title="()java.lang.Class[_ &lt;: java.lang.Object]" id="3401">getClass</a>.<a title="()java.lang.String" id="3838">getName</a>)
+		<span class="keyword">for</span>(<span id="10162"><a title="((String) =&gt; Unit)Unit" id="52730">sbtVersion</a></span> &lt;- <a href="#52723" title="sbt.Project">project</a>.<a href="Project.scala.html#26224" title="=&gt; project.Property[String]">sbtVersion</a>.<a href="Environment.scala.html#27856" title="=&gt; Option[String]">get</a>; <span id="10162"><span id="10161"><span id="52732"><a title="((String) =&gt; Unit)Unit" id="52749">scalaVersion</a></span></span></span> &lt;- <a href="#52723" title="sbt.Project">project</a>.<a href="Project.scala.html#26222" title="=&gt; project.Property[String]">scalaVersion</a>.<a href="Environment.scala.html#27856" title="=&gt; Option[String]">get</a> <span class="keyword">if</span> <a title="=&gt; Boolean" id="2637">!</a><span id="6012"><a href="#52730" title="implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString" id="770">sbtVersion</a></span>.<a title="=&gt; Boolean" id="7108">isEmpty</a>  <a title="(Boolean)Boolean" id="2641">&amp;&amp;</a> <a title="=&gt; Boolean" id="2637">!</a><span id="6012"><a href="#52732" title="implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString" id="770">scalaVersion</a></span>.<a title="=&gt; Boolean" id="7108">isEmpty</a>)
+			<a href="#52723" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8352" title="(=&gt; String)Unit">info</a>(<span title="java.lang.String(&quot;   with sbt &quot;)" class="string">&quot;   with sbt &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#52730" title="String">sbtVersion</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; and Scala &quot;)" class="string">&quot; and Scala &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#52749" title="String">scalaVersion</a>)
+		<span title="sbt.RunCompleteAction" class="keyword">if</span>(<a href="#52724" title="Array[String]">args</a>.<a title="=&gt; Int" id="6981">length</a> <a title="(Int)Boolean" id="3031">==</a> <span title="Int(0)" class="int">0</span>)
+		{
+			<a href="#52723" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8352" title="(=&gt; String)Unit">info</a>(<span title="java.lang.String(&quot;No actions specified, interactive session started. Execute 'help' for more information.&quot;)" class="string">&quot;No actions specified, interactive session started. Execute 'help' for more information.&quot;</span>)
+			<span class="keyword">val</span> <a title="sbt.RunCompleteAction" id="52752">doNext</a> = <a href="#52649" title="(sbt.Project)sbt.RunCompleteAction">interactive</a>(<a href="#52723" title="sbt.Project">project</a>)
+			<a href="#52664" title="(sbt.Project,Long,String)Unit">printTime</a>(<a href="#52723" title="sbt.Project">project</a>, <a href="#52725" title="Long">startTime</a>, <span title="java.lang.String(&quot;session&quot;)" class="string">&quot;session&quot;</span>)
+			<a href="#52752" title="sbt.RunCompleteAction">doNext</a>
+		}
+		<span class="keyword">else</span>
+		{
+			<span class="keyword">val</span> <a title="Int" id="52757">exitCode</a> =
+				<a href="Control.scala.html#6605" title="object sbt.Control">Control</a>.<a href="Control.scala.html#10199" title="(List[String])((String) =&gt; Option[String])Option[String]">lazyFold</a>(<a href="#52724" title="Array[String]">args</a>.<a title="=&gt; List[String]" id="7279">toList</a>)(<a href="#52656" title="(sbt.Project)(String)Option[String]">handleBatchCommand</a>(<a href="#52723" title="sbt.Project">project</a>)) <span title="Int" class="keyword">match</span>
+				{
+					<span title="Int" class="keyword">case</span> <a title="object None" id="488">None</a> =&gt; <a href="#52723" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8355" title="(=&gt; String)Unit">success</a>(<span title="java.lang.String(&quot;Build completed successfully.&quot;)" class="string">&quot;Build completed successfully.&quot;</span>); <a href="#52602" title="=&gt; Int">NormalExitCode</a>
+					<span title="Int" class="keyword">case</span> <a id="1">Some</a>(<a title="String" id="52768">errorMessage</a>) =&gt;
+						<a href="#52723" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8354" title="(=&gt; String)Unit">error</a>(<span title="java.lang.String(&quot;Error during build&quot;)" class="string">&quot;Error during build&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> (<span title="Any" class="keyword">if</span>(<span id="6012"><a href="#52768" title="implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString" id="770">errorMessage</a></span>.<a title="=&gt; Boolean" id="7108">isEmpty</a>) <span title="java.lang.String(&quot;.&quot;)" class="string">&quot;.&quot;</span> <span class="keyword">else</span> <span title="java.lang.String(&quot;: &quot;)" class="string">&quot;: &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#52768" title="String">errorMessage</a>) )
+						<a href="#52612" title="=&gt; Int">BuildErrorExitCode</a>
+				}
+			<a href="#52664" title="(sbt.Project,Long,String)Unit">printTime</a>(<a href="#52723" title="sbt.Project">project</a>, <a href="#52725" title="Long">startTime</a>, <span title="java.lang.String(&quot;build&quot;)" class="string">&quot;build&quot;</span>)
+			<span title="sbt.Exit" class="keyword">new</span> <a href="#6514" title="sbt.Exit">Exit</a>(<a href="#52757" title="Int">exitCode</a>)
+		}
+	}
+	
+	<span class="comment">/** The name of the command that shows the current project and logging level of that project.*/</span>
+	<span class="keyword">val</span> <span id="52617"><a title="java.lang.String" id="52616">ShowCurrent</a></span> = <span title="java.lang.String(&quot;current&quot;)" class="string">&quot;current&quot;</span>
+	<span class="comment">/** The name of the command that shows all available actions.*/</span>
+	<span class="keyword">val</span> <span id="52619"><a title="java.lang.String" id="52618">ShowActions</a></span> = <span title="java.lang.String(&quot;actions&quot;)" class="string">&quot;actions&quot;</span>
+	<span class="comment">/** The name of the command that shows all available methods.*/</span>
+	<span class="keyword">val</span> <span id="52621"><a title="java.lang.String" id="52620">ShowMethods</a></span> = <span title="java.lang.String(&quot;methods&quot;)" class="string">&quot;methods&quot;</span>
+	<span class="comment">/** The name of the command that sets the currently active project.*/</span>
+	<span class="keyword">val</span> <span id="52623"><a title="java.lang.String" id="52622">ProjectAction</a></span> = <span title="java.lang.String(&quot;project&quot;)" class="string">&quot;project&quot;</span>
+	<span class="comment">/** The name of the command that shows all available projects.*/</span>
+	<span class="keyword">val</span> <span id="52625"><a title="java.lang.String" id="52624">ShowProjectsAction</a></span> = <span title="java.lang.String(&quot;projects&quot;)" class="string">&quot;projects&quot;</span>
+	<span class="comment">/** The list of lowercase command names that may be used to terminate the program.*/</span>
+	<span class="keyword">val</span> <span id="52627"><a title="Iterable[String]" id="52626">TerminateActions</a></span>: <a title="Iterable[String]" id="358">Iterable</a>[String] = <span title="java.lang.String(&quot;exit&quot;)" class="string">&quot;exit&quot;</span> <a href="#52776" title="(java.lang.String)List[java.lang.String]" id="6808">::</a> <span title="java.lang.String(&quot;quit&quot;)" class="string">&quot;quit&quot;</span> <a href="#52777" title="(java.lang.String)List[java.lang.String]" id="6808">::</a> <a title="object Nil" id="299">Nil</a>
+	<span class="comment">/** The name of the command that sets the value of the property given as its argument.*/</span>
+	<span class="keyword">val</span> <span id="52629"><a title="java.lang.String" id="52628">SetAction</a></span> = <span title="java.lang.String(&quot;set&quot;)" class="string">&quot;set&quot;</span>
+	<span class="comment">/** The name of the command that gets the value of the property given as its argument.*/</span>
+	<span class="keyword">val</span> <span id="52631"><a title="java.lang.String" id="52630">GetAction</a></span> = <span title="java.lang.String(&quot;get&quot;)" class="string">&quot;get&quot;</span>
+	<span class="comment">/** The name of the command that displays the help message. */</span>
+	<span class="keyword">val</span> <span id="52633"><a title="java.lang.String" id="52632">HelpAction</a></span> = <span title="java.lang.String(&quot;help&quot;)" class="string">&quot;help&quot;</span>
+	<span class="comment">/** The command for rebooting sbt. Requires sbt to have been launched by the loader.*/</span>
+	<span class="keyword">val</span> <span id="52635"><a title="java.lang.String" id="52634">RebootCommand</a></span> = <span title="java.lang.String(&quot;reboot&quot;)" class="string">&quot;reboot&quot;</span>
+	<span class="comment">/** The name of the command that reloads a project.  This is useful for when the project definition has changed. */</span>
+	<span class="keyword">val</span> <span id="52637"><a title="java.lang.String" id="52636">ReloadAction</a></span> = <span title="java.lang.String(&quot;reload&quot;)" class="string">&quot;reload&quot;</span>
+	<span class="comment">/** The name of the command that toggles logging stacktraces. */</span>
+	<span class="keyword">val</span> <span id="52639"><a title="java.lang.String" id="52638">TraceCommand</a></span> = <span title="java.lang.String(&quot;trace&quot;)" class="string">&quot;trace&quot;</span>
+	<span class="comment">/** The name of the command that compiles all sources continuously when they are modified. */</span>
+	<span class="keyword">val</span> <span id="52641"><a title="java.lang.String" id="52640">ContinuousCompileCommand</a></span> = <span title="java.lang.String(&quot;cc&quot;)" class="string">&quot;cc&quot;</span>
+	<span class="comment">/** The prefix used to identify a request to execute the remaining input on source changes.*/</span>
+	<span class="keyword">val</span> <span id="52643"><a title="java.lang.String" id="52642">ContinuousExecutePrefix</a></span> = <span title="java.lang.String(&quot;~&quot;)" class="string">&quot;~&quot;</span>
+	
+	<span class="comment">/** The number of seconds between polling by the continuous compile command.*/</span>
+	<span class="keyword">val</span> <span id="52645"><a title="Int" id="52644">ContinuousCompilePollDelaySeconds</a></span> = <span title="Int(1)" class="int">1</span>
+
+	<span class="comment">/** The list of all available commands at the interactive prompt in addition to the tasks defined
+	* by a project.*/</span>
+	<span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; Iterable[String]" id="52646">interactiveCommands</a>: <a title="Iterable[String]" id="358">Iterable</a>[String] = <a href="#52648" title="=&gt; Iterable[String]">basicCommands</a>.<a title="=&gt; List[String]" id="7279">toList</a> <a title="(Iterable[String])List[String]" id="6814">++</a> <a href="#52647" title="=&gt; Iterable[String]">logLevels</a>.<a title="=&gt; List[String]" id="7279">toList</a>
+	<span class="comment">/** The list of logging levels.*/</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="=&gt; Iterable[String]" id="52647">logLevels</a>: <a title="Iterable[String]" id="358">Iterable</a>[String] = <a title="object scala.collection.immutable.TreeSet" id="25511">TreeSet</a>.<span id="25850"><span id="6012"><a href="#52798" title="(implicit (String) =&gt; Ordered[String])scala.collection.immutable.TreeSet[String]" id="770">empty</a></span></span>[<a title="String" id="1751">String</a>] <a title="(Iterator[String])scala.collection.immutable.Set[String]" id="25915">++</a> <a href="Logger.scala.html#6675" title="object sbt.Level">Level</a>.<a title="=&gt; Iterator[sbt.Level.Value]" id="20369">elements</a>.<a title="((sbt.Level.Value) =&gt; java.lang.String)Iterator[java.lang.String]" id="20216">map</a>(<a href="#52932" title="sbt.Level.Value">_</a>.<a title="()java.lang.String" id="5666">toString</a>)
+	<span class="comment">/** The list of all interactive commands other than logging level.*/</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="=&gt; Iterable[String]" id="52648">basicCommands</a>: <a title="Iterable[String]" id="358">Iterable</a>[String] = <span id="25878"><span id="25511"><span id="6012"><a href="#52942" title="(java.lang.String*)(implicit (java.lang.String) =&gt; Ordered[java.lang.String])scala.collection.immutable.SortedSet[java.lang.String]" id="770">TreeSet</a></span></span></span>(<a href="#52624" title="=&gt; java.lang.String">ShowProjectsAction</a>, <a href="#52618" title="=&gt; java.lang.String">ShowActions</a>, <a href="#52620" title="=&gt; java.lang.String">ShowMethods</a>, <a href="#52616" title="=&gt; java.lang.String">ShowCurrent</a>, <a href="#52632" title="=&gt; java.lang.String">HelpAction</a>,
+		<a href="#52634" title="=&gt; java.lang.String">RebootCommand</a>, <a href="#52636" title="=&gt; java.lang.String">ReloadAction</a>, <a href="#52638" title="=&gt; java.lang.String">TraceCommand</a>, <a href="#52640" title="=&gt; java.lang.String">ContinuousCompileCommand</a>)
+	
+	<span class="comment">/** Enters interactive mode for the given root project.  It uses JLine for tab completion and
+	* history.  It returns normally when the user terminates or reloads the interactive session.  That is,
+	* it does not call System.exit to quit.
+	**/</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Project)sbt.RunCompleteAction" id="52649">interactive</a>(<a title="sbt.Project" id="52753">baseProject</a>: <a href="Project.scala.html#6395" title="sbt.Project">Project</a>): <a href="#6513" title="sbt.RunCompleteAction">RunCompleteAction</a> =
+	{
+		<span class="keyword">val</span> <a title="List[String]" id="52943">projectNames</a> = <a href="#52753" title="sbt.Project">baseProject</a>.<a href="Dag.scala.html#26240" title="=&gt; List[sbt.Project]">topologicalSort</a>.<a title="((sbt.Project) =&gt; String)List[String]" id="6835">map</a>(<a href="#52952" title="sbt.Project">_</a>.<a href="Project.scala.html#26174" title="=&gt; String">name</a>)
+		<span class="keyword">val</span> <a title="List[java.lang.String]" id="52944">prefixes</a> = <span title="java.lang.String(&quot;~&quot;)" class="string">&quot;~&quot;</span> <a href="#52953" title="(java.lang.String)List[java.lang.String]" id="6808">::</a> <a title="object Nil" id="299">Nil</a>
+		<span class="keyword">val</span> <a title="sbt.Completors" id="52945">completors</a> = <span title="sbt.Completors" class="keyword">new</span> <a href="LineReader.scala.html#6160" title="sbt.Completors">Completors</a>(<a href="#52622" title="=&gt; java.lang.String">ProjectAction</a>, <a href="#52943" title="List[String]">projectNames</a>, <a href="#52646" title="=&gt; Iterable[String]">interactiveCommands</a>, <span id="6801"><a title="(java.lang.String*)List[java.lang.String]" id="482">List</a></span>(<a href="#52630" title="=&gt; java.lang.String">GetAction</a>, <a href="#52628" title="=&gt; java.lang.String">SetAction</a>), <a href="#52944" title="List[java.lang.String]">prefixes</a>)
+		<span class="keyword">val</span> <a title="sbt.JLineReader" id="52946">reader</a> = <span title="sbt.JLineReader" class="keyword">new</span> <a href="LineReader.scala.html#6161" title="sbt.JLineReader">JLineReader</a>(<a href="#52753" title="sbt.Project">baseProject</a>.<a href="Project.scala.html#26212" title="=&gt; Some[sbt.Path]">historyPath</a>, <a href="#52945" title="sbt.Completors">completors</a>, <a href="#52753" title="sbt.Project">baseProject</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>)
+		<span class="keyword">def</span> <a title="(sbt.Project)Unit" id="52947">updateTaskCompletions</a>(<a title="sbt.Project" id="52957">project</a>: <a href="Project.scala.html#6395" title="sbt.Project">Project</a>)
+		{
+			<span class="keyword">val</span> <a title="Iterable[(String, List[String])]" id="52958">methodCompletions</a> = <span class="keyword">for</span>( <span id="7246"><a href="#52960" title="(((String, project.MethodTask)) =&gt; (String, List[String]))Iterable[(String, List[String])]" id="7250">(</a></span><span id="52961"><a title="String" id="52966">name</a></span>, <span id="52962"><a title="project.MethodTask" id="52967">method</a></span>) &lt;- <a href="#52957" title="sbt.Project">project</a>.<a href="Project.scala.html#26180" title="=&gt; scala.collection.Map[String,project.MethodTask]">methods</a>) <span class="keyword">yield</span> <span id="9252"><a title="(String,List[String])(String, List[String])" id="1283">(</a></span><a href="#52966" title="String">name</a>, <a href="#52967" title="project.MethodTask">method</a>.<a href="TaskManager.scala.html#28002" title="=&gt; List[String]">completions</a>)
+			<a href="#52946" title="sbt.JLineReader">reader</a>.<a href="LineReader.scala.html#24610" title="(Iterable[String],Iterable[String],Iterable[(String, Iterable[String])])Unit">setVariableCompletions</a>(<a href="#52957" title="sbt.Project">project</a>.<a href="Project.scala.html#26181" title="=&gt; Iterable[String]">taskNames</a>, <a href="#52957" title="sbt.Project">project</a>.<a href="Environment.scala.html#26303" title="=&gt; Iterable[String]">propertyNames</a>, <a href="#52958" title="Iterable[(String, List[String])]">methodCompletions</a>)
+		}
+		<a href="#52947" title="(sbt.Project)Unit">updateTaskCompletions</a>(<a href="#52753" title="sbt.Project">baseProject</a>)
+		
+		<span class="comment">/** Prompts the user for the next command using 'currentProject' as context.
+		* If the command indicates that the user wishes to terminate or reload the session,
+		*   the function returns the appropriate value.
+		* Otherwise, the command is handled and this function is called again
+		*   (tail recursively) to prompt for the next command. */</span>
+		<span class="keyword">def</span> <a title="(sbt.Project)sbt.RunCompleteAction" id="52948">loop</a>(<a title="sbt.Project" id="52971">currentProject</a>: <a href="Project.scala.html#6395" title="sbt.Project">Project</a>): <a href="#6513" title="sbt.RunCompleteAction">RunCompleteAction</a> =
+		{
+			<a href="#52946" title="sbt.JLineReader">reader</a>.<a href="LineReader.scala.html#24611" title="(String)Option[String]">readLine</a>(<span title="java.lang.String(&quot;&gt; &quot;)" class="string">&quot;&gt; &quot;</span>) <span title="sbt.RunCompleteAction" class="keyword">match</span>
+			{
+				<span title="sbt.RunCompleteAction" class="keyword">case</span> <a id="1">Some</a>(<a title="String" id="52972">line</a>) =&gt;
+				{
+					<span class="keyword">val</span> <a title="java.lang.String" id="52973">trimmed</a> = <a href="#52972" title="String">line</a>.<a title="()java.lang.String" id="5751">trim</a>
+					<span title="sbt.RunCompleteAction" class="keyword">if</span>(<span id="6012"><a href="#52973" title="implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString" id="770">trimmed</a></span>.<a title="=&gt; Boolean" id="7108">isEmpty</a>)
+						<a href="#52948" title="(sbt.Project)sbt.RunCompleteAction">loop</a>(<a href="#52971" title="sbt.Project">currentProject</a>)
+					<span class="keyword">else</span> <span title="sbt.RunCompleteAction" class="keyword">if</span>(<a href="#52672" title="(String)Boolean">isTerminateAction</a>(<a href="#52973" title="java.lang.String">trimmed</a>))
+						<span title="sbt.Exit" class="keyword">new</span> <a href="#6514" title="sbt.Exit">Exit</a>(<a href="#52602" title="=&gt; Int">NormalExitCode</a>)
+					<span class="keyword">else</span> <span title="sbt.RunCompleteAction" class="keyword">if</span>(<a href="#52636" title="=&gt; java.lang.String">ReloadAction</a> <a title="(AnyRef)Boolean" id="3399">==</a> <a href="#52973" title="java.lang.String">trimmed</a>)
+						<a href="#6515" title="object sbt.Reload">Reload</a>
+					<span class="keyword">else</span> <span title="sbt.RunCompleteAction" class="keyword">if</span>(<a href="#52634" title="=&gt; java.lang.String">RebootCommand</a> <a title="(AnyRef)Boolean" id="3399">==</a> <a href="#52973" title="java.lang.String">trimmed</a>)
+						<span title="sbt.Exit" class="keyword">new</span> <a href="#6514" title="sbt.Exit">Exit</a>(<a href="#52600" title="=&gt; Int">RebootExitCode</a>)
+					<span class="keyword">else</span> <span title="sbt.RunCompleteAction" class="keyword">if</span>(<a href="#52973" title="java.lang.String">trimmed</a>.<a title="(java.lang.String)Boolean" id="5722">startsWith</a>(<a href="#52622" title="=&gt; java.lang.String">ProjectAction</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; &quot;)" class="string">&quot; &quot;</span>))
+					{
+						<span class="keyword">val</span> <a title="java.lang.String" id="52984">projectName</a> = <a href="#52973" title="java.lang.String">trimmed</a>.<a title="(Int)java.lang.String" id="5735">substring</a>(<a href="#52622" title="=&gt; java.lang.String">ProjectAction</a>.<a title="()Int" id="5702">length</a> <a title="(Int)Int" id="3037">+</a> <span title="Int(1)" class="int">1</span>)
+						<a href="#52753" title="sbt.Project">baseProject</a>.<a href="Dag.scala.html#26240" title="=&gt; List[sbt.Project]">topologicalSort</a>.<a title="((sbt.Project) =&gt; Boolean)Option[sbt.Project]" id="6847">find</a>(<a href="#53006" title="sbt.Project">_</a>.<a href="Project.scala.html#26174" title="=&gt; String">name</a> <a title="(AnyRef)Boolean" id="3399">==</a> <a href="#52984" title="java.lang.String">projectName</a>) <span title="sbt.RunCompleteAction" class="keyword">match</span>
+						{
+							<span title="sbt.RunCompleteAction" class="keyword">case</span> <a id="1">Some</a>(<a title="sbt.Project" id="53009">newProject</a>) =&gt;
+							{
+								<a href="#52655" title="(String,sbt.Project)Unit">printProject</a>(<span title="java.lang.String(&quot;Set current project to &quot;)" class="string">&quot;Set current project to &quot;</span>, <a href="#53009" title="sbt.Project">newProject</a>)
+								<a href="#52947" title="(sbt.Project)Unit">updateTaskCompletions</a>(<a href="#53009" title="sbt.Project">newProject</a>)
+								<a href="#52948" title="(sbt.Project)sbt.RunCompleteAction">loop</a>(<a href="#53009" title="sbt.Project">newProject</a>)
+							}
+							<span title="sbt.RunCompleteAction" class="keyword">case</span> <a title="object None" id="488">None</a> =&gt;
+							{
+								<a href="#52971" title="sbt.Project">currentProject</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8354" title="(=&gt; String)Unit">error</a>(<span title="java.lang.String(&quot;Invalid project name '&quot;)" class="string">&quot;Invalid project name '&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#52984" title="java.lang.String">projectName</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;' (type 'projects' to list available projects).&quot;)" class="string">&quot;' (type 'projects' to list available projects).&quot;</span>)
+								<a href="#52948" title="(sbt.Project)sbt.RunCompleteAction">loop</a>(<a href="#52971" title="sbt.Project">currentProject</a>)
+							}
+						}
+					}
+					<span class="keyword">else</span>
+					{
+						<span title="Unit" class="keyword">if</span>(<a href="#52973" title="java.lang.String">trimmed</a> <a title="(AnyRef)Boolean" id="3399">==</a> <a href="#52632" title="=&gt; java.lang.String">HelpAction</a>)
+							<a href="#52653" title="()Unit">displayInteractiveHelp</a>()
+						<span class="keyword">else</span> <span title="Unit" class="keyword">if</span>(<a href="#52973" title="java.lang.String">trimmed</a> <a title="(AnyRef)Boolean" id="3399">==</a> <a href="#52624" title="=&gt; java.lang.String">ShowProjectsAction</a>)
+							<a href="#52753" title="sbt.Project">baseProject</a>.<a href="Dag.scala.html#26240" title="=&gt; List[sbt.Project]">topologicalSort</a>.<a title="((sbt.Project) =&gt; Unit)Unit" id="6839">foreach</a>(<a href="#52654" title="(sbt.Project)Unit">listProject</a>)
+						<span class="keyword">else</span> <span title="Unit" class="keyword">if</span>(<a href="#52973" title="java.lang.String">trimmed</a>.<a title="(java.lang.String)Boolean" id="5722">startsWith</a>(<a href="#52628" title="=&gt; java.lang.String">SetAction</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; &quot;)" class="string">&quot; &quot;</span>))
+							<a href="#52669" title="(sbt.Project,String)Unit">setProperty</a>(<a href="#52971" title="sbt.Project">currentProject</a>, <a href="#52973" title="java.lang.String">trimmed</a>.<a title="(Int)java.lang.String" id="5735">substring</a>(<a href="#52628" title="=&gt; java.lang.String">SetAction</a>.<a title="()Int" id="5702">length</a> <a title="(Int)Int" id="3037">+</a> <span title="Int(1)" class="int">1</span>))
+						<span class="keyword">else</span> <span title="Unit" class="keyword">if</span>(<a href="#52973" title="java.lang.String">trimmed</a>.<a title="(java.lang.String)Boolean" id="5722">startsWith</a>(<a href="#52630" title="=&gt; java.lang.String">GetAction</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; &quot;)" class="string">&quot; &quot;</span>))
+							<a href="#52668" title="(sbt.Project,String)Unit">getProperty</a>(<a href="#52971" title="sbt.Project">currentProject</a>, <a href="#52973" title="java.lang.String">trimmed</a>.<a title="(Int)java.lang.String" id="5735">substring</a>(<a href="#52630" title="=&gt; java.lang.String">GetAction</a>.<a title="()Int" id="5702">length</a> <a title="(Int)Int" id="3037">+</a> <span title="Int(1)" class="int">1</span>))
+						<span class="keyword">else</span>
+							<a href="#52657" title="(sbt.Project,String)Unit">handleInteractiveCommand</a>(<a href="#52971" title="sbt.Project">currentProject</a>, <a href="#52973" title="java.lang.String">trimmed</a>)
+						<a href="#52948" title="(sbt.Project)sbt.RunCompleteAction">loop</a>(<a href="#52971" title="sbt.Project">currentProject</a>)
+					}
+				}
+				<span title="sbt.Exit" class="keyword">case</span> <a title="object None" id="488">None</a> =&gt; <span title="sbt.Exit" class="keyword">new</span> <a href="#6514" title="sbt.Exit">Exit</a>(<a href="#52602" title="=&gt; Int">NormalExitCode</a>)
+			}
+		}
+		
+		<a href="#52948" title="(sbt.Project)sbt.RunCompleteAction">loop</a>(<a href="#52753" title="sbt.Project">baseProject</a>)
+	}
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(String,String)Unit" id="52650">printCmd</a>(<a title="String" id="53016">name</a>:<a title="String" id="1751">String</a>, <a title="String" id="53017">desc</a>:<a title="String" id="1751">String</a>) = <a title="object Console" id="395">Console</a>.<a title="(Any)Unit" id="52512">println</a>(<span title="java.lang.String(&quot;\011&quot;)" class="string">&quot;\t&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#53016" title="String">name</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;: &quot;)" class="string">&quot;: &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#53017" title="String">desc</a>)
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="()Unit" id="52651">displayBatchHelp</a>() = {
+		<a title="object Console" id="395">Console</a>.<a title="(Any)Unit" id="52512">println</a>(<span title="java.lang.String(&quot;You may execute any project action or method or one of the commands described below.&quot;)" class="string">&quot;You may execute any project action or method or one of the commands described below.&quot;</span>)
+		<a title="object Console" id="395">Console</a>.<a title="(Any)Unit" id="52512">println</a>(<span title="java.lang.String(&quot;Available Commands:&quot;)" class="string">&quot;Available Commands:&quot;</span>)
+		<a href="#52652" title="()Unit">printCommonCommands</a>()
+	}
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="()Unit" id="52652">printCommonCommands</a>()
+	{
+		<a href="#52650" title="(String,String)Unit">printCmd</a>(<span title="java.lang.String(&quot;&lt;action name&gt;&quot;)" class="string">&quot;&lt;action name&gt;&quot;</span>, <span title="java.lang.String(&quot;Executes the project specified action.&quot;)" class="string">&quot;Executes the project specified action.&quot;</span>)
+		<a href="#52650" title="(String,String)Unit">printCmd</a>(<span title="java.lang.String(&quot;&lt;method name&gt; &lt;parameter&gt;*&quot;)" class="string">&quot;&lt;method name&gt; &lt;parameter&gt;*&quot;</span>, <span title="java.lang.String(&quot;Executes the project specified method.&quot;)" class="string">&quot;Executes the project specified method.&quot;</span>)
+		<a href="#52650" title="(String,String)Unit">printCmd</a>(<span title="java.lang.String(&quot;~ &lt;command&gt;&quot;)" class="string">&quot;~ &lt;command&gt;&quot;</span>, <span title="java.lang.String(&quot;Executes the project specified action or method whenever source files change.&quot;)" class="string">&quot;Executes the project specified action or method whenever source files change.&quot;</span>)
+		<a href="#52650" title="(String,String)Unit">printCmd</a>(<a href="#52618" title="=&gt; java.lang.String">ShowActions</a>, <span title="java.lang.String(&quot;Shows all available actions.&quot;)" class="string">&quot;Shows all available actions.&quot;</span>)
+		<a href="#52650" title="(String,String)Unit">printCmd</a>(<a href="#52620" title="=&gt; java.lang.String">ShowMethods</a>, <span title="java.lang.String(&quot;Shows all available methods.&quot;)" class="string">&quot;Shows all available methods.&quot;</span>)
+		<a href="#52650" title="(String,String)Unit">printCmd</a>(<a href="#52634" title="=&gt; java.lang.String">RebootCommand</a>, <span title="java.lang.String(&quot;Changes to scala.version or sbt.version are processed and the project definition is reloaded.&quot;)" class="string">&quot;Changes to scala.version or sbt.version are processed and the project definition is reloaded.&quot;</span>)
+		<a href="#52650" title="(String,String)Unit">printCmd</a>(<a href="#52632" title="=&gt; java.lang.String">HelpAction</a>, <span title="java.lang.String(&quot;Displays this help message.&quot;)" class="string">&quot;Displays this help message.&quot;</span>)
+	}
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="()Unit" id="52653">displayInteractiveHelp</a>() = {
+		<a title="object Console" id="395">Console</a>.<a title="(Any)Unit" id="52512">println</a>(<span class="string">&quot;You may execute any project action or one of the commands described below. Only one action &quot;</span> +
+			<span class="string">&quot;may be executed at a time in interactive mode and is entered by name, as it would be at the command line.&quot;</span> <span title="java.lang.String(&quot;You may execute any project action or one of the commands described below. Only one action may be executed at a time in interactive mode and is entered by name, as it would be at the command line. Also, tab completion is available.&quot;)">+</span>
+			<span class="string">&quot; Also, tab completion is available.&quot;</span>)
+		<a title="object Console" id="395">Console</a>.<a title="(Any)Unit" id="52512">println</a>(<span title="java.lang.String(&quot;Available Commands:&quot;)" class="string">&quot;Available Commands:&quot;</span>)
+
+		<a href="#52652" title="()Unit">printCommonCommands</a>()
+		<a href="#52650" title="(String,String)Unit">printCmd</a>(<a href="#52636" title="=&gt; java.lang.String">ReloadAction</a>, <span title="java.lang.String(&quot;Reloads sbt, recompiling modified project definitions if necessary.&quot;)" class="string">&quot;Reloads sbt, recompiling modified project definitions if necessary.&quot;</span>)
+		<a href="#52650" title="(String,String)Unit">printCmd</a>(<a href="#52616" title="=&gt; java.lang.String">ShowCurrent</a>, <span title="java.lang.String(&quot;Shows the current project and logging level of that project.&quot;)" class="string">&quot;Shows the current project and logging level of that project.&quot;</span>)
+		<a href="#52650" title="(String,String)Unit">printCmd</a>(<a href="Logger.scala.html#6675" title="object sbt.Level">Level</a>.<a title="=&gt; Iterator[sbt.Level.Value]" id="20369">elements</a>.<a title="(String)String" id="20285">mkString</a>(<span title="java.lang.String(&quot;, &quot;)" class="string">&quot;, &quot;</span>), <span title="java.lang.String(&quot;Set logging for the current project to the specified level.&quot;)" class="string">&quot;Set logging for the current project to the specified level.&quot;</span>)
+		<a href="#52650" title="(String,String)Unit">printCmd</a>(<a href="#52638" title="=&gt; java.lang.String">TraceCommand</a>, <span title="java.lang.String(&quot;Toggles whether logging stack traces is enabled.&quot;)" class="string">&quot;Toggles whether logging stack traces is enabled.&quot;</span>)
+		<a href="#52650" title="(String,String)Unit">printCmd</a>(<a href="#52622" title="=&gt; java.lang.String">ProjectAction</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; &lt;project name&gt;&quot;)" class="string">&quot; &lt;project name&gt;&quot;</span>, <span title="java.lang.String(&quot;Sets the currently active project.&quot;)" class="string">&quot;Sets the currently active project.&quot;</span>)
+		<a href="#52650" title="(String,String)Unit">printCmd</a>(<a href="#52624" title="=&gt; java.lang.String">ShowProjectsAction</a>, <span title="java.lang.String(&quot;Shows all available projects.&quot;)" class="string">&quot;Shows all available projects.&quot;</span>)
+		<a href="#52650" title="(String,String)Unit">printCmd</a>(<a href="#52626" title="=&gt; Iterable[String]">TerminateActions</a>.<a title="=&gt; Iterator[String]" id="7240">elements</a>.<a title="(String)String" id="20285">mkString</a>(<span title="java.lang.String(&quot;, &quot;)" class="string">&quot;, &quot;</span>), <span title="java.lang.String(&quot;Terminates the program.&quot;)" class="string">&quot;Terminates the program.&quot;</span>)
+		<a href="#52650" title="(String,String)Unit">printCmd</a>(<a href="#52628" title="=&gt; java.lang.String">SetAction</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; &lt;property&gt; &lt;value&gt;&quot;)" class="string">&quot; &lt;property&gt; &lt;value&gt;&quot;</span>, <span title="java.lang.String(&quot;Sets the value of the property given as its argument.&quot;)" class="string">&quot;Sets the value of the property given as its argument.&quot;</span>)
+		<a href="#52650" title="(String,String)Unit">printCmd</a>(<a href="#52630" title="=&gt; java.lang.String">GetAction</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; &lt;property&gt;&quot;)" class="string">&quot; &lt;property&gt;&quot;</span>, <span title="java.lang.String(&quot;Gets the value of the property given as its argument.&quot;)" class="string">&quot;Gets the value of the property given as its argument.&quot;</span>)
+	}
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Project)Unit" id="52654">listProject</a>(<a title="sbt.Project" id="53024">p</a>: <a href="Project.scala.html#6395" title="sbt.Project">Project</a>) = <a href="#52655" title="(String,sbt.Project)Unit">printProject</a>(<span title="java.lang.String(&quot;\011&quot;)" class="string">&quot;\t&quot;</span>, <a href="#53024" title="sbt.Project">p</a>)
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(String,sbt.Project)Unit" id="52655">printProject</a>(<a title="String" id="53010">prefix</a>: <a title="String" id="1751">String</a>, <a title="sbt.Project" id="53011">p</a>: <a href="Project.scala.html#6395" title="sbt.Project">Project</a>)
+	{
+		<a title="object Console" id="395">Console</a>.<a title="(Any)Unit" id="52512">println</a>(<a href="#53010" title="String">prefix</a> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#53011" title="sbt.Project">p</a>.<a href="Project.scala.html#26174" title="=&gt; String">name</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; &quot;)" class="string">&quot; &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#53011" title="sbt.Project">p</a>.<a href="Project.scala.html#26175" title="=&gt; sbt.Version">version</a>)
+	}
+	
+	<span class="comment">/** Handles the given command string provided by batch mode execution..*/</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Project)(String)Option[String]" id="52656">handleBatchCommand</a>(<a title="sbt.Project" id="52763">project</a>: <a href="Project.scala.html#6395" title="sbt.Project">Project</a>)(<a title="String" id="52764">command</a>: <a title="String" id="1751">String</a>): <a title="Option[String]" id="871">Option</a>[String] =
+	{
+		<a href="#52764" title="String">command</a>.<a title="()java.lang.String" id="5751">trim</a> <span title="Option[String]" class="keyword">match</span>
+		{
+			<span title="None.type" class="keyword">case</span> <a href="#52632" title="=&gt; java.lang.String">HelpAction</a> =&gt; <a href="#52651" title="()Unit">displayBatchHelp</a>(); <a title="object None" id="488">None</a>
+			<span title="None.type" class="keyword">case</span> <a href="#52618" title="=&gt; java.lang.String">ShowActions</a> =&gt; <a title="object Console" id="395">Console</a>.<a title="(Any)Unit" id="52512">println</a>(<a href="#52763" title="sbt.Project">project</a>.<a href="Project.scala.html#26184" title="=&gt; String">taskList</a>); <a title="object None" id="488">None</a>
+			<span title="None.type" class="keyword">case</span> <a href="#52620" title="=&gt; java.lang.String">ShowMethods</a> =&gt; <a title="object Console" id="395">Console</a>.<a title="(Any)Unit" id="52512">println</a>(<a href="#52763" title="sbt.Project">project</a>.<a href="Project.scala.html#26183" title="=&gt; String">methodList</a>); <a title="object None" id="488">None</a>
+			<span title="Option[String]" class="keyword">case</span> <a title="java.lang.String" id="53080">action</a> =&gt; <span title="Option[String]" class="keyword">if</span>(<a href="#52658" title="(sbt.Project,String)Boolean">handleAction</a>(<a href="#52763" title="sbt.Project">project</a>, <a href="#53080" title="java.lang.String">action</a>)) <a title="object None" id="488">None</a> <span class="keyword">else</span> <span id="10256"><a title="(java.lang.String)Some[java.lang.String]" id="275">Some</a></span>(<span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+		}
+	}
+	
+	<span class="comment">/** Handles the given command string provided at the command line.*/</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Project,String)Unit" id="52657">handleInteractiveCommand</a>(<a title="sbt.Project" id="53072">project</a>: <a href="Project.scala.html#6395" title="sbt.Project">Project</a>, <a title="String" id="53073">command</a>: <a title="String" id="1751">String</a>)
+	{
+		<a href="#53073" title="String">command</a> <span title="Unit" class="keyword">match</span>
+		{
+			<span title="Unit" class="keyword">case</span> <a href="#52630" title="=&gt; java.lang.String">GetAction</a> =&gt; <a href="#52674" title="(sbt.Logger)Unit">getArgumentError</a>(<a href="#53072" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>)
+			<span title="Unit" class="keyword">case</span> <a href="#52628" title="=&gt; java.lang.String">SetAction</a> =&gt; <a href="#52673" title="(sbt.Logger)Unit">setArgumentError</a>(<a href="#53072" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>)
+			<span title="Unit" class="keyword">case</span> <a href="#52622" title="=&gt; java.lang.String">ProjectAction</a> =&gt; <a href="#52675" title="(sbt.Logger)Unit">setProjectError</a>(<a href="#53072" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>)
+			<span title="Unit" class="keyword">case</span> <a href="#52616" title="=&gt; java.lang.String">ShowCurrent</a> =&gt;
+			{
+				<a href="#52655" title="(String,sbt.Project)Unit">printProject</a>(<span title="java.lang.String(&quot;Current project is &quot;)" class="string">&quot;Current project is &quot;</span>, <a href="#53072" title="sbt.Project">project</a>)
+				<a title="object Console" id="395">Console</a>.<a title="(Any)Unit" id="52512">println</a>(<span title="java.lang.String(&quot;Current log level is &quot;)" class="string">&quot;Current log level is &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#53072" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8345" title="=&gt; sbt.Level.Value">getLevel</a>)
+				<a href="#52662" title="(sbt.Project)Unit">printTraceEnabled</a>(<a href="#53072" title="sbt.Project">project</a>)
+			}
+			<span title="Unit" class="keyword">case</span> <a href="#52618" title="=&gt; java.lang.String">ShowActions</a> =&gt; <a title="object Console" id="395">Console</a>.<a title="(Any)Unit" id="52512">println</a>(<a href="#53072" title="sbt.Project">project</a>.<a href="Project.scala.html#26184" title="=&gt; String">taskList</a>)
+			<span title="Unit" class="keyword">case</span> <a href="#52620" title="=&gt; java.lang.String">ShowMethods</a> =&gt; <a title="object Console" id="395">Console</a>.<a title="(Any)Unit" id="52512">println</a>(<a href="#53072" title="sbt.Project">project</a>.<a href="Project.scala.html#26183" title="=&gt; String">methodList</a>)
+			<span title="Unit" class="keyword">case</span> <a href="#52638" title="=&gt; java.lang.String">TraceCommand</a> =&gt; <a href="#52661" title="(sbt.Project)Unit">toggleTrace</a>(<a href="#53072" title="sbt.Project">project</a>)
+			<span title="Unit" class="keyword">case</span> <a href="Logger.scala.html#20863" title="(String)Option[sbt.Level.Value]">Level</a>(<a title="sbt.Level.Value" id="53101">level</a>) =&gt; <a href="#52663" title="(sbt.Project,sbt.Level.Value)Unit">setLevel</a>(<a href="#53072" title="sbt.Project">project</a>, <a href="#53101" title="sbt.Level.Value">level</a>)
+			<span title="Unit" class="keyword">case</span> <a href="#52640" title="=&gt; java.lang.String">ContinuousCompileCommand</a> =&gt; <a href="#52670" title="(sbt.Project)Unit">compileContinuously</a>(<a href="#53072" title="sbt.Project">project</a>)
+			<span title="Unit" class="keyword">case</span> <a title="String" id="53108">action</a> <span class="keyword">if</span> <a href="#53108" title="String">action</a>.<a title="(java.lang.String)Boolean" id="5722">startsWith</a>(<a href="#52642" title="=&gt; java.lang.String">ContinuousExecutePrefix</a>) =&gt;
+				<a href="#52671" title="(sbt.Project,String)Unit">executeContinuously</a>(<a href="#53072" title="sbt.Project">project</a>, <a href="#53108" title="String">action</a>.<a title="(Int)java.lang.String" id="5735">substring</a>(<a href="#52642" title="=&gt; java.lang.String">ContinuousExecutePrefix</a>.<a title="()Int" id="5702">length</a>).<a title="()java.lang.String" id="5751">trim</a>)
+			<span title="Unit" class="keyword">case</span> <a title="String" id="53111">action</a> =&gt; <a href="#52658" title="(sbt.Project,String)Boolean">handleAction</a>(<a href="#53072" title="sbt.Project">project</a>, <a href="#53111" title="String">action</a>)
+		}
+	}
+	<span class="comment">// returns true if it succeeded (needed by noninteractive handleCommand)</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Project,String)Boolean" id="52658">handleAction</a>(<a title="sbt.Project" id="53081">project</a>: <a href="Project.scala.html#6395" title="sbt.Project">Project</a>, <a title="String" id="53082">action</a>: <a title="String" id="1751">String</a>): <a title="Boolean" id="2060">Boolean</a> =
+	{
+		<span class="keyword">def</span> <a title="(Option[String])Boolean" id="53112">showResult</a>(<a title="Option[String]" id="53115">result</a>: <a title="Option[String]" id="871">Option</a>[String]): <a title="Boolean" id="2060">Boolean</a> =
+		{
+			<a href="#53115" title="Option[String]">result</a> <span title="Boolean" class="keyword">match</span>
+			{
+				<span title="Boolean" class="keyword">case</span> <a id="1">Some</a>(<a title="String" id="53116">errorMessage</a>) =&gt; <a href="#53081" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8354" title="(=&gt; String)Unit">error</a>(<a href="#53116" title="String">errorMessage</a>); <span title="Boolean(false)" class="keyword">false</span>
+				<span title="Boolean" class="keyword">case</span> <a title="object None" id="488">None</a> =&gt; <a href="#53081" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8355" title="(=&gt; String)Unit">success</a>(<span title="java.lang.String(&quot;Successful.&quot;)" class="string">&quot;Successful.&quot;</span>); <span title="Boolean(true)" class="keyword">true</span>
+			}
+		}
+		<span class="keyword">val</span> <a title="Long" id="53113">startTime</a> = <a title="object java.lang.System" id="1776">System</a>.<a title="()Long" id="24451">currentTimeMillis</a>
+		<span class="keyword">val</span> <a title="Boolean" id="53114">result</a> = <a href="#52660" title="(sbt.Project,String)((String, Array[String]) =&gt; Boolean)((String) =&gt; Boolean)Boolean">withAction</a>(<a href="#53081" title="sbt.Project">project</a>, <a href="#53082" title="String">action</a>)( (<a title="String" id="53122">name</a>, <a title="Array[String]" id="53123">params</a>) =&gt; <a href="#53112" title="(Option[String])Boolean">showResult</a>(<a href="#53081" title="sbt.Project">project</a>.<a href="Project.scala.html#26193" title="(String,Array[String])Option[String]">call</a>(<a href="#53122" title="String">name</a>, <a href="#53123" title="Array[String]">params</a>)))( <a title="String" id="53125">name</a> =&gt; <a href="#53112" title="(Option[String])Boolean">showResult</a>(<a href="#53081" title="sbt.Project">project</a>.<a href="Project.scala.html#26195" title="(String)Option[String]">act</a>(<a href="#53125" title="String">name</a>)))
+		<a href="#52664" title="(sbt.Project,Long,String)Unit">printTime</a>(<a href="#53081" title="sbt.Project">project</a>, <a href="#53113" title="Long">startTime</a>, <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+		<a href="#53114" title="Boolean">result</a>
+	}
+	<span class="comment">// true if the action exists</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Project,String)Boolean" id="52659">checkAction</a>(<a title="sbt.Project" id="53126">project</a>: <a href="Project.scala.html#6395" title="sbt.Project">Project</a>, <a title="String" id="53127">actionString</a>: <a title="String" id="1751">String</a>): <a title="Boolean" id="2060">Boolean</a> =
+		<a href="#52660" title="(sbt.Project,String)((String, Array[String]) =&gt; Boolean)((String) =&gt; Boolean)Boolean">withAction</a>(<a href="#53126" title="sbt.Project">project</a>, <a href="#53127" title="String">actionString</a>)(  (<a title="String" id="53129">n</a>,<a title="Array[String]" id="53130">p</a>) =&gt; <span title="Boolean(true)" class="keyword">true</span>)( <a title="String" id="53132">n</a> =&gt; <span title="Boolean(true)" class="keyword">true</span>)
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Project,String)((String, Array[String]) =&gt; Boolean)((String) =&gt; Boolean)Boolean" id="52660">withAction</a>(<a title="sbt.Project" id="53117">project</a>: <a href="Project.scala.html#6395" title="sbt.Project">Project</a>, <a title="String" id="53118">actionString</a>: <a title="String" id="1751">String</a>)(<a title="(String, Array[String]) =&gt; Boolean" id="53119">ifMethod</a>: (String, Array[String]) =&gt; Boolean)(<a title="(String) =&gt; Boolean" id="53120">ifAction</a>: String =&gt; Boolean): <a title="Boolean" id="2060">Boolean</a> =
+	{
+		<span class="keyword">def</span> <a title="(String,String)Boolean" id="53133">didNotExist</a>(<a title="String" id="53134">taskType</a>: <a title="String" id="1751">String</a>, <a title="String" id="53135">name</a>: <a title="String" id="1751">String</a>) =
+		{
+			<a href="#53117" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8354" title="(=&gt; String)Unit">error</a>(<span title="java.lang.String(&quot;No &quot;)" class="string">&quot;No &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#53134" title="String">taskType</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; named '&quot;)" class="string">&quot; named '&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#53135" title="String">name</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;' exists.&quot;)" class="string">&quot;' exists.&quot;</span>)
+			<a href="#53117" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8352" title="(=&gt; String)Unit">info</a>(<span class="string">&quot;Execute 'help' for a list of commands, &quot;</span> +
+				<span class="string">&quot;'actions' for a list of available project actions, or &quot;</span> <span title="java.lang.String(&quot;Execute 'help' for a list of commands, 'actions' for a list of available project actions, or 'methods' for a list of available project methods.&quot;)">+</span>
+				<span class="string">&quot;'methods' for a list of available project methods.&quot;</span>)
+			<span title="Boolean(false)" class="keyword">false</span>
+		}
+		impl.<a href="impl/CommandParser.scala.html#6201" title="object sbt.impl.CommandParser">CommandParser</a>.<a href="impl/CommandParser.scala.html#31765" title="(String)Either[String,(String, List[String])]">parse</a>(<a href="#53118" title="String">actionString</a>) <span title="Boolean" class="keyword">match</span>
+		{
+			<span title="Boolean" class="keyword">case</span> <a id="1">Left</a>(<a title="String" id="53136">errMsg</a>) =&gt; <a href="#53117" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8354" title="(=&gt; String)Unit">error</a>(<a href="#53136" title="String">errMsg</a>); <span title="Boolean(false)" class="keyword">false</span>
+			<span title="Boolean" class="keyword">case</span> <a id="1">Right</a>(<a id="1">(</a><a title="String" id="53137">name</a>, <a title="List[String]" id="53138">parameters</a>)) =&gt;
+				<span title="Boolean" class="keyword">if</span>(<a href="#53117" title="sbt.Project">project</a>.<a href="Project.scala.html#26180" title="=&gt; scala.collection.Map[String,project.MethodTask]">methods</a>.<a title="(String)Boolean" id="20505">contains</a>(<a href="#53137" title="String">name</a>))
+					<a href="#53119" title="(String,Array[String])Boolean" id="11936">ifMethod</a>(<a href="#53137" title="String">name</a>, <a href="#53138" title="List[String]">parameters</a>.<a title="Array[String]" id="7138">toArray</a>)
+				<span class="keyword">else</span> <span title="Boolean" class="keyword">if</span>(<a title="=&gt; Boolean" id="2637">!</a><a href="#53138" title="List[String]">parameters</a>.<a title="=&gt; Boolean" id="7108">isEmpty</a>)
+					<a href="#53133" title="(String,String)Boolean">didNotExist</a>(<span title="java.lang.String(&quot;method&quot;)" class="string">&quot;method&quot;</span>, <a href="#53137" title="String">name</a>)
+				<span class="keyword">else</span> <span title="Boolean" class="keyword">if</span>(<a href="#53117" title="sbt.Project">project</a>.<a href="Project.scala.html#26187" title="=&gt; scala.collection.Map[String,sbt.Project#Task]">deepTasks</a>.<a title="(String)Boolean" id="20505">contains</a>(<a href="#53137" title="String">name</a>))
+					<a href="#53120" title="(String)Boolean" id="7221">ifAction</a>(<a href="#53137" title="String">name</a>)
+				<span class="keyword">else</span>
+					<a href="#53133" title="(String,String)Boolean">didNotExist</a>(<span title="java.lang.String(&quot;action&quot;)" class="string">&quot;action&quot;</span>, <a href="#53137" title="String">name</a>)
+		}
+	}
+	
+	<span class="comment">/** Toggles whether stack traces are enabled.*/</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Project)Unit" id="52661">toggleTrace</a>(<a title="sbt.Project" id="53091">project</a>: <a href="Project.scala.html#6395" title="sbt.Project">Project</a>)
+	{
+		<span class="keyword">val</span> <a title="Boolean" id="53143">newValue</a> = <a title="=&gt; Boolean" id="2637">!</a><a href="#53091" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8348" title="=&gt; Boolean">traceEnabled</a>
+		<a href="#53091" title="sbt.Project">project</a>.<a href="Dag.scala.html#26240" title="=&gt; List[sbt.Project]">topologicalSort</a>.<a title="((sbt.Project) =&gt; Unit)Unit" id="6839">foreach</a>(<a href="#53147" title="sbt.Project">_</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8347" title="(Boolean)Unit">enableTrace</a>(<a href="#53143" title="Boolean">newValue</a>))
+		<a href="#52662" title="(sbt.Project)Unit">printTraceEnabled</a>(<a href="#53091" title="sbt.Project">project</a>)
+	}
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Project)Unit" id="52662">printTraceEnabled</a>(<a title="sbt.Project" id="53088">project</a>: <a href="Project.scala.html#6395" title="sbt.Project">Project</a>)
+	{
+		<a title="object Console" id="395">Console</a>.<a title="(Any)Unit" id="52512">println</a>(<span title="java.lang.String(&quot;Stack traces are &quot;)" class="string">&quot;Stack traces are &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> (<span title="Any" class="keyword">if</span>(<a href="#53088" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8348" title="=&gt; Boolean">traceEnabled</a>) <span title="java.lang.String(&quot;enabled&quot;)" class="string">&quot;enabled&quot;</span> <span class="keyword">else</span> <span title="java.lang.String(&quot;disabled&quot;)" class="string">&quot;disabled&quot;</span>))
+	}
+	<span class="comment">/** Sets the logging level on the given project.*/</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Project,sbt.Level.Value)Unit" id="52663">setLevel</a>(<a title="sbt.Project" id="53102">project</a>: <a href="Project.scala.html#6395" title="sbt.Project">Project</a>, <a title="sbt.Level.Value" id="53103">level</a>: Level.<a title="sbt.Level.Value" id="20345">Value</a>)
+	{
+		<a href="#53102" title="sbt.Project">project</a>.<a href="Dag.scala.html#26240" title="=&gt; List[sbt.Project]">topologicalSort</a>.<a title="((sbt.Project) =&gt; Unit)Unit" id="6839">foreach</a>(<a href="#53151" title="sbt.Project">_</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8346" title="(sbt.Level.Value)Unit">setLevel</a>(<a href="#53103" title="sbt.Level.Value">level</a>))
+		<a title="object Console" id="395">Console</a>.<a title="(Any)Unit" id="52512">println</a>(<span title="java.lang.String(&quot;Set log level to &quot;)" class="string">&quot;Set log level to &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#53102" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8345" title="=&gt; sbt.Level.Value">getLevel</a>)
+	}
+	<span class="comment">/** Prints the elapsed time to the given project's log using the given
+	* initial time and the label 's'.*/</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Project,Long,String)Unit" id="52664">printTime</a>(<a title="sbt.Project" id="52754">project</a>: <a href="Project.scala.html#6395" title="sbt.Project">Project</a>, <a title="Long" id="52755">startTime</a>: <a title="Long" id="2301">Long</a>, <a title="String" id="52756">s</a>: <a title="String" id="1751">String</a>)
+	{
+		<span class="keyword">val</span> <a title="Long" id="53153">endTime</a> = <a title="object java.lang.System" id="1776">System</a>.<a title="()Long" id="24451">currentTimeMillis</a>()
+		<a href="#52754" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8352" title="(=&gt; String)Unit">info</a>(<span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+		<span class="keyword">val</span> <a title="java.lang.String" id="53154">ss</a> = <span title="java.lang.String" class="keyword">if</span>(<span id="6012"><a href="#52756" title="implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString" id="770">s</a></span>.<a title="=&gt; Boolean" id="7108">isEmpty</a>) <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span> <span class="keyword">else</span> <a href="#52756" title="String">s</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; &quot;)" class="string">&quot; &quot;</span>
+		<a href="#52754" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8352" title="(=&gt; String)Unit">info</a>(<span title="java.lang.String(&quot;Total &quot;)" class="string">&quot;Total &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#53154" title="java.lang.String">ss</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;time: &quot;)" class="string">&quot;time: &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> (<a href="#53153" title="Long">endTime</a> <a title="(Long)Long" id="3161">-</a> <a href="#52755" title="Long">startTime</a> <a title="(Int)Long" id="3146">+</a> <span title="Int(500)" class="int">500</span>) <a title="(Int)Long" id="3149">/</a> <span title="Int(1000)" class="int">1000</span> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; s&quot;)" class="string">&quot; s&quot;</span>)
+	}
+	<span class="comment">/** Provides a partial message describing why the given property is undefined. */</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Project#UserProperty[_])String" id="52665">undefinedMessage</a>(<a title="sbt.Project#UserProperty[_]" id="53165">property</a>: <a href="Environment.scala.html#26276" title="sbt.Project#UserProperty[_]">Project</a>#UserProperty[_]): <a title="String" id="1751">String</a> =
+	{
+		<a href="#53165" title="sbt.Project#UserProperty[_]">property</a>.<a href="Environment.scala.html#53190" title="=&gt; sbt.PropertyResolution[Any]">resolve</a> <span title="String" class="keyword">match</span>
+		{
+			<span title="java.lang.String(&quot; is not defined.&quot;)" class="keyword">case</span> <a title="sbt.UndefinedValue" id="53224">vu</a>: <a href="Environment.scala.html#6759" title="sbt.UndefinedValue">UndefinedValue</a> =&gt; <span title="java.lang.String(&quot; is not defined.&quot;)" class="string">&quot; is not defined.&quot;</span>
+			<span title="java.lang.String" class="keyword">case</span> <a title="sbt.ResolutionException" id="53246">e</a>: <a href="Environment.scala.html#6756" title="sbt.ResolutionException">ResolutionException</a> =&gt; <span title="java.lang.String(&quot; has invalid value: &quot;)" class="string">&quot; has invalid value: &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#53246" title="sbt.ResolutionException">e</a>.<a title="()java.lang.String" id="9277">toString</a>
+			<span title="java.lang.String(&quot;&quot;)" class="keyword">case</span> _ =&gt; <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>
+		}
+	}
+	<span class="comment">/** Prompts the user for the value of undefined properties.  'first' is true if this is the first time
+	* that the current property has been prompted.*/</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Project,List[(String, sbt.Project#Property[_])],Boolean)Boolean" id="52666">fillUndefinedProperties</a>(<a title="sbt.Project" id="53257">project</a>: <a href="Project.scala.html#6395" title="sbt.Project">Project</a>, <a title="List[(String, sbt.Project#Property[_])]" id="53258">properties</a>: <a title="List[(String, sbt.Project#Property[_])]" id="481">List</a>[(String, Project#Property[_])], <a title="Boolean" id="53259">first</a>: <a title="Boolean" id="2060">Boolean</a>): <a title="Boolean" id="2060">Boolean</a> =
+	{
+		<a href="#53258" title="List[(String, sbt.Project#Property[_])]">properties</a> <span title="Boolean" class="keyword">match</span>
+		{
+			<span title="Boolean" class="keyword">case</span> <a id="1">(</a><a title="String" id="53267">name</a>, <a title="sbt.Project#Property[?]" id="53268">variable</a>) <a id="1">::</a> <a title="List[(String, sbt.Project#Property[_])]" id="53270">tail</a> =&gt;
+			{
+				<span class="keyword">val</span> <a title="Option[Boolean]" id="53271">shouldAdvanceOrQuit</a> =
+					<a href="#53268" title="sbt.Project#Property[?]">variable</a> <span title="Option[Boolean]" class="keyword">match</span>
+					{
+						<span title="Option[Boolean]" class="keyword">case</span> <a title="sbt.Project#UserProperty[_]" id="53273">property</a>: Project#<a href="Environment.scala.html#26276" title="sbt.Project#UserProperty[_]">UserProperty</a>[_] =&gt;
+							<span title="Unit" class="keyword">if</span>(<a href="#53259" title="Boolean">first</a>)
+								<a href="#53257" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8354" title="(=&gt; String)Unit">error</a>(<span title="java.lang.String(&quot; Property '&quot;)" class="string">&quot; Property '&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#53267" title="String">name</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;' &quot;)" class="string">&quot;' &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#52665" title="(sbt.Project#UserProperty[_])String">undefinedMessage</a>(<a href="#53273" title="sbt.Project#UserProperty[_]">property</a>))
+							<span class="keyword">val</span> <a title="String" id="53285">newValue</a> = <a title="object Console" id="395">Console</a>.<a title="(String,Any*)String" id="52516">readLine</a>(<span title="java.lang.String(&quot;  Enter new value for &quot;)" class="string">&quot;  Enter new value for &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#53267" title="String">name</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; : &quot;)" class="string">&quot; : &quot;</span>)
+							<a title="object Console" id="395">Console</a>.<a title="()Unit" id="52511">println</a>()
+							<span title="Option[Boolean]" class="keyword">if</span>(<a href="#53285" title="String">newValue</a> <a title="(AnyRef)Boolean" id="3399">==</a> <span title="Null(null)" class="keyword">null</span>)
+								<a title="object None" id="488">None</a>
+							<span class="keyword">else</span>
+							{
+								<span class="keyword">try</span>
+								{
+									<a href="#53273" title="sbt.Project#UserProperty[_]">property</a>.<a href="Environment.scala.html#53201" title="(String)Unit">setStringValue</a>(<a href="#53285" title="String">newValue</a>)
+									<span id="10256"><a title="(Boolean)Some[Boolean]" id="275">Some</a></span>(<span title="Boolean(true)" class="keyword">true</span>)
+								}
+								<span class="keyword">catch</span>
+								{
+									<span title="Some[Boolean]" class="keyword">case</span> <a title="java.lang.Throwable" id="53291">e</a> =&gt;
+										<a href="#53257" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8354" title="(=&gt; String)Unit">error</a>(<span title="java.lang.String(&quot;Invalid value: &quot;)" class="string">&quot;Invalid value: &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#53291" title="java.lang.Throwable">e</a>.<a title="()java.lang.String" id="9273">getMessage</a>)
+										<span id="10256"><a title="(Boolean)Some[Boolean]" id="275">Some</a></span>(<span title="Boolean(false)" class="keyword">false</span>)
+								}
+							}
+						<span title="Some[Boolean]" class="keyword">case</span> _ =&gt; <span id="10256"><a title="(Boolean)Some[Boolean]" id="275">Some</a></span>(<span title="Boolean(true)" class="keyword">true</span>)
+					}
+				<a href="#53271" title="Option[Boolean]">shouldAdvanceOrQuit</a> <span title="Boolean" class="keyword">match</span>
+				{
+					<span title="Boolean" class="keyword">case</span> <a id="1">Some</a>(<a title="Boolean" id="53316">shouldAdvance</a>) =&gt; <a href="#52666" title="(sbt.Project,List[(String, sbt.Project#Property[_])],Boolean)Boolean">fillUndefinedProperties</a>(<a href="#53257" title="sbt.Project">project</a>, <span title="List[(String, sbt.Project#Property[_])]" class="keyword">if</span>(<a href="#53316" title="Boolean">shouldAdvance</a>) <a href="#53270" title="List[(String, sbt.Project#Property[_])]">tail</a> <span class="keyword">else</span> <a href="#53258" title="List[(String, sbt.Project#Property[_])]">properties</a>, <a href="#53316" title="Boolean">shouldAdvance</a>)
+					<span title="Boolean(false)" class="keyword">case</span> <a title="object None" id="488">None</a> =&gt; <span title="Boolean(false)" class="keyword">false</span>
+				}
+			}
+			<span title="Boolean(true)" class="keyword">case</span> <a title="object Nil" id="299">Nil</a> =&gt; <span title="Boolean(true)" class="keyword">true</span>
+		}
+	}
+	<span class="comment">/** Iterates over the undefined properties in the given projects, prompting the user for the value of each undefined
+	* property.*/</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(List[sbt.Project])Boolean" id="52667">fillUndefinedProjectProperties</a>(<a title="List[sbt.Project]" id="52720">projects</a>: <a title="List[sbt.Project]" id="481">List</a>[Project]): <a title="Boolean" id="2060">Boolean</a> =
+	{
+		<a href="#52720" title="List[sbt.Project]">projects</a> <span title="Boolean" class="keyword">match</span>
+		{
+			<span title="Boolean" class="keyword">case</span> <a title="sbt.Project" id="53317">project</a> <a id="1">::</a> <a title="List[sbt.Project]" id="53318">remaining</a> =&gt;
+			{
+				<span class="keyword">val</span> <a title="List[(String, project.Property[_])]" id="53319">uninitialized</a> = <a href="#53317" title="sbt.Project">project</a>.<a href="Environment.scala.html#26307" title="=&gt; Iterable[(String, project.Property[_])]">uninitializedProperties</a>.<a title="=&gt; List[(String, project.Property[_])]" id="7279">toList</a>
+				<span title="Boolean" class="keyword">if</span>(<a href="#53319" title="List[(String, project.Property[_])]">uninitialized</a>.<a title="=&gt; Boolean" id="7108">isEmpty</a>)
+					<a href="#52667" title="(List[sbt.Project])Boolean">fillUndefinedProjectProperties</a>(<a href="#53318" title="List[sbt.Project]">remaining</a>)
+				<span class="keyword">else</span>
+				{
+					<a href="#53317" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8354" title="(=&gt; String)Unit">error</a>(<span title="java.lang.String(&quot;Project in &quot;)" class="string">&quot;Project in &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#53317" title="sbt.Project">project</a>.<a href="Project.scala.html#26173" title="=&gt; sbt.ProjectInfo">info</a>.<a href="ProjectInfo.scala.html#27924" title="=&gt; java.io.File">projectDirectory</a>.<a title="()java.lang.String" id="9551">getAbsolutePath</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; has undefined properties.&quot;)" class="string">&quot; has undefined properties.&quot;</span>)
+					<span class="keyword">val</span> <a title="Boolean" id="53324">result</a> = <a href="#52666" title="(sbt.Project,List[(String, sbt.Project#Property[_])],Boolean)Boolean">fillUndefinedProperties</a>(<a href="#53317" title="sbt.Project">project</a>, <a href="#53319" title="List[(String, project.Property[_])]">uninitialized</a>, <span title="Boolean(true)" class="keyword">true</span>) <a title="(Boolean)Boolean" id="2641">&amp;&amp;</a> <a href="#52667" title="(List[sbt.Project])Boolean">fillUndefinedProjectProperties</a>(<a href="#53318" title="List[sbt.Project]">remaining</a>)
+					<a href="#53317" title="sbt.Project">project</a>.<a href="Environment.scala.html#26306" title="()Option[String]">saveEnvironment</a>()
+					<a href="#53324" title="Boolean">result</a>
+				}
+			}
+			<span title="Boolean(true)" class="keyword">case</span> <a title="object Nil" id="299">Nil</a> =&gt; <span title="Boolean(true)" class="keyword">true</span>
+		}
+	}
+	<span class="comment">/** Prints the value of the property with the given name in the given project. */</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Project,String)Unit" id="52668">getProperty</a>(<a title="sbt.Project" id="53051">project</a>: <a href="Project.scala.html#6395" title="sbt.Project">Project</a>, <a title="String" id="53052">propertyName</a>: <a title="String" id="1751">String</a>)
+	{
+		<span title="Unit" class="keyword">if</span>(<span id="6012"><a href="#53052" title="implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString" id="770">propertyName</a></span>.<a title="=&gt; Boolean" id="7108">isEmpty</a>)
+			<a href="#53051" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8354" title="(=&gt; String)Unit">error</a>(<span title="java.lang.String(&quot;No property name specified.&quot;)" class="string">&quot;No property name specified.&quot;</span>)
+		<span class="keyword">else</span>
+		{
+			<a href="#53051" title="sbt.Project">project</a>.<a href="Environment.scala.html#26304" title="(String)Option[project.UserProperty[_]]">getPropertyNamed</a>(<a href="#53052" title="String">propertyName</a>) <span title="Unit" class="keyword">match</span>
+			{
+				<span title="Unit" class="keyword">case</span> <a id="1">Some</a>(<a title="project.UserProperty[?]" id="53337">property</a>) =&gt;
+				{
+					<a href="#53337" title="project.UserProperty[?]">property</a>.<a href="Environment.scala.html#53190" title="=&gt; sbt.PropertyResolution[?]">resolve</a> <span title="Unit" class="keyword">match</span>
+					{
+						<span title="Unit" class="keyword">case</span> <a title="sbt.UndefinedValue" id="53339">u</a>: <a href="Environment.scala.html#6759" title="sbt.UndefinedValue">UndefinedValue</a> =&gt; <a href="#53051" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8354" title="(=&gt; String)Unit">error</a>(<span title="java.lang.String(&quot;Value of property '&quot;)" class="string">&quot;Value of property '&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#53052" title="String">propertyName</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;' is undefined.&quot;)" class="string">&quot;' is undefined.&quot;</span>)
+						<span title="Unit" class="keyword">case</span> <a id="1">ResolutionException</a>(<a title="String" id="53350">m</a>, <a title="Option[Throwable]" id="53351">e</a>) =&gt; <a href="#53051" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8354" title="(=&gt; String)Unit">error</a>(<a href="#53350" title="String">m</a>)
+						<span title="Unit" class="keyword">case</span> <a id="1">DefinedValue</a>(<a title="Any" id="53389">value</a>, <a title="Boolean" id="53390">isInherited</a>, <a title="Boolean" id="53391">isDefault</a>) =&gt; <a title="object Console" id="395">Console</a>.<a title="(Any)Unit" id="52512">println</a>(<a href="#53389" title="Any">value</a>.<a title="()java.lang.String" id="3390">toString</a>)
+					}
+				}
+				<span title="Unit" class="keyword">case</span> <a title="object None" id="488">None</a> =&gt;
+				{
+					<span class="keyword">val</span> <a title="java.lang.String" id="53393">value</a> = <a title="object java.lang.System" id="1776">System</a>.<a title="(java.lang.String)java.lang.String" id="24457">getProperty</a>(<a href="#53052" title="String">propertyName</a>)
+					<span title="Unit" class="keyword">if</span>(<a href="#53393" title="java.lang.String">value</a> <a title="(AnyRef)Boolean" id="3399">==</a> <span title="Null(null)" class="keyword">null</span>)
+						<a href="#53051" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8354" title="(=&gt; String)Unit">error</a>(<span title="java.lang.String(&quot;No property named '&quot;)" class="string">&quot;No property named '&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#53052" title="String">propertyName</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;' is defined.&quot;)" class="string">&quot;' is defined.&quot;</span>)
+					<span class="keyword">else</span>
+						<a title="object Console" id="395">Console</a>.<a title="(Any)Unit" id="52512">println</a>(<a href="#53393" title="java.lang.String">value</a>)
+				}
+			}
+		}
+	}
+	<span class="comment">/** Separates the space separated property name/value pair and stores the value in the user-defined property
+	* with the given name in the given project.  If no such property exists, the value is stored in a system
+	* property. */</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Project,String)Unit" id="52669">setProperty</a>(<a title="sbt.Project" id="53029">project</a>: <a href="Project.scala.html#6395" title="sbt.Project">Project</a>, <a title="String" id="53030">propertyNameAndValue</a>: <a title="String" id="1751">String</a>)
+	{
+		<span class="keyword">val</span> <a title="java.util.regex.Matcher" id="53397">m</a> = <span id="6012"><a title="implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString" id="770" class="string">&quot;&quot;&quot;(\S+)(\s+\S.*)?&quot;&quot;&quot;</a></span>.<a title="=&gt; scala.util.matching.Regex" id="8767">r</a>.<a title="=&gt; java.util.regex.Pattern" id="32962">pattern</a>.<a title="(java.lang.CharSequence)java.util.regex.Matcher" id="24058">matcher</a>(<a href="#53030" title="String">propertyNameAndValue</a>)
+		<span title="Unit" class="keyword">if</span>(<a href="#53397" title="java.util.regex.Matcher">m</a>.<a title="()Boolean" id="53433">matches</a>())
+		{
+			<span class="keyword">val</span> <a title="java.lang.String" id="53464">name</a> = <a href="#53397" title="java.util.regex.Matcher">m</a>.<a title="(Int)java.lang.String" id="53431">group</a>(<span title="Int(1)" class="int">1</span>)
+			<span class="keyword">val</span> <a title="java.lang.String" id="53465">newValue</a> =
+			{
+				<span class="keyword">val</span> <a title="java.lang.String" id="53467">v</a> = <a href="#53397" title="java.util.regex.Matcher">m</a>.<a title="(Int)java.lang.String" id="53431">group</a>(<span title="Int(2)" class="int">2</span>)
+				<span title="java.lang.String" class="keyword">if</span>(<a href="#53467" title="java.lang.String">v</a> <a title="(AnyRef)Boolean" id="3399">==</a> <span title="Null(null)" class="keyword">null</span>) <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span> <span class="keyword">else</span> <a href="#53467" title="java.lang.String">v</a>.<a title="()java.lang.String" id="5751">trim</a>
+			}
+			<a href="#53029" title="sbt.Project">project</a>.<a href="Environment.scala.html#26304" title="(String)Option[project.UserProperty[_]]">getPropertyNamed</a>(<a href="#53464" title="java.lang.String">name</a>) <span title="Unit" class="keyword">match</span>
+			{
+				<span title="Unit" class="keyword">case</span> <a id="1">Some</a>(<a title="project.UserProperty[?]" id="53470">property</a>) =&gt;
+				{
+					<span class="keyword">val</span> <a title="Unit" id="53472">succeeded</a> =
+						<span class="keyword">try</span>
+						{
+							<a href="#53470" title="project.UserProperty[?]">property</a>.<a href="Environment.scala.html#53201" title="(String)Unit">setStringValue</a>(<a href="#53465" title="java.lang.String">newValue</a>)
+							<span class="keyword">val</span> <a title="Boolean" id="53473">isScalaVersion</a> = <a href="#53470" title="project.UserProperty[?]">property</a> <a title="(AnyRef)Boolean" id="3399">==</a> <a href="#53029" title="sbt.Project">project</a>.<a href="Project.scala.html#26222" title="=&gt; project.Property[String]">scalaVersion</a>
+							<span class="keyword">val</span> <a title="Boolean" id="53474">isSbtVersion</a> = <a href="#53470" title="project.UserProperty[?]">property</a> <a title="(AnyRef)Boolean" id="3399">==</a> <a href="#53029" title="sbt.Project">project</a>.<a href="Project.scala.html#26224" title="=&gt; project.Property[String]">sbtVersion</a>
+							<span title="Unit" class="keyword">if</span>(<a href="#53473" title="Boolean">isScalaVersion</a> <a title="(Boolean)Boolean" id="2640">||</a> <a href="#53474" title="Boolean">isSbtVersion</a>)
+							{
+								<span class="keyword">val</span> <a title="java.lang.String" id="53477">changed</a> = <span title="java.lang.String" class="keyword">if</span>(<a href="#53474" title="Boolean">isSbtVersion</a>) <span title="java.lang.String(&quot;sbt &quot;)" class="string">&quot;sbt &quot;</span> <span class="keyword">else</span> <span title="java.lang.String(&quot;Scala &quot;)" class="string">&quot;Scala &quot;</span>
+								<a title="object Console" id="395">Console</a>.<a title="(Any)Unit" id="52512">println</a>(<span title="java.lang.String(&quot; Build will use &quot;)" class="string">&quot; Build will use &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#53477" title="java.lang.String">changed</a> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#53465" title="java.lang.String">newValue</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; after running 'reboot' command or restarting sbt.&quot;)" class="string">&quot; after running 'reboot' command or restarting sbt.&quot;</span>)
+							}
+							<span class="keyword">else</span>
+								<a title="object Console" id="395">Console</a>.<a title="(Any)Unit" id="52512">println</a>(<span title="java.lang.String(&quot; Set property '&quot;)" class="string">&quot; Set property '&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#53464" title="java.lang.String">name</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;' = '&quot;)" class="string">&quot;' = '&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#53465" title="java.lang.String">newValue</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;'&quot;)" class="string">&quot;'&quot;</span>)
+						}
+						<span class="keyword">catch</span> { <span title="Unit" class="keyword">case</span> <a title="java.lang.Throwable" id="53480">e</a> =&gt; <a href="#53029" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8354" title="(=&gt; String)Unit">error</a>(<span title="java.lang.String(&quot;Error setting property '&quot;)" class="string">&quot;Error setting property '&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#53464" title="java.lang.String">name</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;' in &quot;)" class="string">&quot;' in &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#53029" title="sbt.Project">project</a>.<a href="Environment.scala.html#26272" title="=&gt; java.lang.String">environmentLabel</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;: &quot;)" class="string">&quot;: &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#53480" title="java.lang.Throwable">e</a>.<a title="()java.lang.String" id="9277">toString</a>) }
+					<a href="#53029" title="sbt.Project">project</a>.<a href="Environment.scala.html#26306" title="()Option[String]">saveEnvironment</a>()
+				}
+				<span title="Unit" class="keyword">case</span> <a title="object None" id="488">None</a> =&gt;
+				{
+					<a title="object java.lang.System" id="1776">System</a>.<a title="(java.lang.String,java.lang.String)java.lang.String" id="24459">setProperty</a>(<a href="#53464" title="java.lang.String">name</a>, <a href="#53465" title="java.lang.String">newValue</a>)
+					<a href="#53029" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8352" title="(=&gt; String)Unit">info</a>(<span title="java.lang.String(&quot; Set system property '&quot;)" class="string">&quot; Set system property '&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#53464" title="java.lang.String">name</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;' = '&quot;)" class="string">&quot;' = '&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#53465" title="java.lang.String">newValue</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;'&quot;)" class="string">&quot;'&quot;</span>)
+				}
+			}
+		}
+		<span class="keyword">else</span>
+			<a href="#52673" title="(sbt.Logger)Unit">setArgumentError</a>(<a href="#53029" title="sbt.Project">project</a>.<a href="Project.scala.html#26169" title="=&gt; sbt.Logger">log</a>)
+	}
+
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Project)Unit" id="52670">compileContinuously</a>(<a title="sbt.Project" id="53104">project</a>: <a href="Project.scala.html#6395" title="sbt.Project">Project</a>) = <a href="#52671" title="(sbt.Project,String)Unit">executeContinuously</a>(<a href="#53104" title="sbt.Project">project</a>, <span title="java.lang.String(&quot;test-compile&quot;)" class="string">&quot;test-compile&quot;</span>)
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Project,String)Unit" id="52671">executeContinuously</a>(<a title="sbt.Project" id="53106">project</a>: <a href="Project.scala.html#6395" title="sbt.Project">Project</a>, <a title="String" id="53107">action</a>: <a title="String" id="1751">String</a>)
+	{
+		<span title="Unit" class="keyword">if</span>(<a href="#52659" title="(sbt.Project,String)Boolean">checkAction</a>(<a href="#53106" title="sbt.Project">project</a>, <a href="#53107" title="String">action</a>))
+		{
+			<a href="SourceModificationWatch.scala.html#6577" title="object sbt.SourceModificationWatch">SourceModificationWatch</a>.<a href="SourceModificationWatch.scala.html#53482" title="(sbt.Project,Int)(=&gt; Boolean)(=&gt; Unit)Unit">watchUntil</a>(<a href="#53106" title="sbt.Project">project</a>, <a href="#52644" title="=&gt; Int">ContinuousCompilePollDelaySeconds</a>)(<a title="object java.lang.System" id="1776">System</a>.<a title="java.io.InputStream" id="24442">in</a>.<a title="()Int" id="22802">available</a>() <a title="(Int)Boolean" id="3035">&gt;</a> <span title="Int(0)" class="int">0</span>)
+			{
+				<a href="#52658" title="(sbt.Project,String)Boolean">handleAction</a>(<a href="#53106" title="sbt.Project">project</a>, <a href="#53107" title="String">action</a>)
+				<a title="object Console" id="395">Console</a>.<a title="(Any)Unit" id="52512">println</a>(<span title="java.lang.String(&quot;Waiting for source changes... (press any key to interrupt)&quot;)" class="string">&quot;Waiting for source changes... (press any key to interrupt)&quot;</span>)
+			}
+			<a href="#53489" title="Unit" class="keyword">while</a> (<a title="object java.lang.System" id="1776">System</a>.<a title="java.io.InputStream" id="24442">in</a>.<a title="()Int" id="22802">available</a>() <a title="(Int)Boolean" id="3035">&gt;</a> <span title="Int(0)" class="int">0</span>) <a title="object java.lang.System" id="1776">System</a>.<a title="java.io.InputStream" id="24442">in</a>.<a title="()Int" id="22798">read</a>()
+		}
+	}
+
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(String)Boolean" id="52672">isTerminateAction</a>(<a title="String" id="52713">s</a>: <a title="String" id="1751">String</a>) = <a href="#52626" title="=&gt; Iterable[String]">TerminateActions</a>.<a title="=&gt; Iterator[String]" id="7240">elements</a>.<a title="(Any)Boolean" id="20252">contains</a>(<a href="#52713" title="String">s</a>.<a title="()java.lang.String" id="5748">toLowerCase</a>)
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Logger)Unit" id="52673">setArgumentError</a>(<a title="sbt.Logger" id="53085">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>) { <a href="#53085" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8354" title="(=&gt; String)Unit">error</a>(<span title="java.lang.String(&quot;Invalid arguments for 'set': expected property name and new value.&quot;)" class="string">&quot;Invalid arguments for 'set': expected property name and new value.&quot;</span>) }
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Logger)Unit" id="52674">getArgumentError</a>(<a title="sbt.Logger" id="53084">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>) { <a href="#53084" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8354" title="(=&gt; String)Unit">error</a>(<span title="java.lang.String(&quot;Invalid arguments for 'get': expected property name.&quot;)" class="string">&quot;Invalid arguments for 'get': expected property name.&quot;</span>) }
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Logger)Unit" id="52675">setProjectError</a>(<a title="sbt.Logger" id="53086">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>) { <a href="#53086" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8354" title="(=&gt; String)Unit">error</a>(<span title="java.lang.String(&quot;Invalid arguments for 'project': expected project name.&quot;)" class="string">&quot;Invalid arguments for 'project': expected project name.&quot;</span>) }
+	
+}
+        </pre>
+    </body>
+</html>

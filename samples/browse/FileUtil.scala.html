@@ -1,0 +1,134 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>FileUtil.scala</title>
+        <script type="text/javascript" src="linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* browse -- Scala Source Browser
+ * Copyright 2009 Mark Harrah
+ */</span>
+
+<span class="keyword">package</span> browse
+
+<span class="keyword">import</span> java.io.{FileOutputStream, InputStream, OutputStream}
+<span class="keyword">import</span> java.io.{BufferedReader, BufferedWriter, File, FileReader, FileWriter}
+
+<span class="comment">/** A collection of utilities for I/O*/</span>
+<span class="keyword">object</span> <a title="object browse.FileUtil" id="6223">FileUtil</a>
+{
+	<span class="comment">/** Managed resource operation.*/</span>
+	<span class="keyword">def</span> <a title="(java.io.File)((java.io.BufferedReader) =&gt; Unit)Unit" id="17545">withReader</a>(<a title="java.io.File" id="21806">source</a>: <a title="java.io.File" id="3612">File</a>)(<a title="(java.io.BufferedReader) =&gt; Unit" id="21807">f</a>: BufferedReader =&gt; Unit)
+	{
+		<span class="keyword">val</span> <a title="java.io.BufferedReader" id="22510">input</a> = <a title="(java.io.Reader)java.io.BufferedReader" id="21809" class="keyword">new</a> <a title="java.io.BufferedReader" id="3492">BufferedReader</a>(<a title="(java.io.File)java.io.FileReader" id="22513" class="keyword">new</a> <a title="java.io.FileReader" id="3771">FileReader</a>(<a href="#21806" title="java.io.File">source</a>))
+		<span class="keyword">try</span> { <a href="#21807" title="(java.io.BufferedReader)Unit" id="11566">f</a>(<a href="#22510" title="java.io.BufferedReader">input</a>) }
+		<span class="keyword">finally</span> { <a href="#22510" title="java.io.BufferedReader">input</a>.<a title="()Unit" id="21819">close</a>() }
+	}
+	<span class="comment">/** Managed resource operation.*/</span>
+	<span class="keyword">def</span> <a title="(java.io.File)((java.io.BufferedWriter) =&gt; Unit)Unit" id="17546">withWriter</a>(<a title="java.io.File" id="21823">target</a>: <a title="java.io.File" id="3612">File</a>)(<a title="(java.io.BufferedWriter) =&gt; Unit" id="21824">f</a>: BufferedWriter =&gt; Unit)
+	{
+		<a href="#21823" title="java.io.File">target</a>.<a title="()java.io.File" id="11667">getParentFile</a>.<a title="()Boolean" id="11693">mkdirs</a>()
+		<span class="keyword">import</span> java.io.{BufferedWriter, FileWriter}
+		<span class="keyword">val</span> <a title="java.io.BufferedWriter" id="22589">output</a> = <span title="java.io.BufferedWriter" class="keyword">new</span> <a title="java.io.BufferedWriter" id="3750">BufferedWriter</a>(<a title="(java.io.File)java.io.FileWriter" id="22593" class="keyword">new</a> <a title="java.io.FileWriter" id="3567">FileWriter</a>(<a href="#21823" title="java.io.File">target</a>))
+		<span class="keyword">try</span> { <a href="#21824" title="(java.io.BufferedWriter)Unit" id="11566">f</a>(<a href="#22589" title="java.io.BufferedWriter">output</a>) }
+		<span class="keyword">finally</span> { <a href="#22589" title="java.io.BufferedWriter">output</a>.<a title="()Unit" id="21833">close</a>() }
+	}
+	<span class="comment">/** Get the number of common path components from the root.*/</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="[S](Array[S],Array[S])Int" id="17547">commonPrefix</a>[<a title="&gt;: Nothing &lt;: Any" id="17549">S</a>](<a title="Array[S]" id="22609">a</a>: <a title="Array[S]" id="1024">Array</a>[S], <a title="Array[S]" id="22610">b</a>: <a title="Array[S]" id="1024">Array</a>[S]): <a title="Int" id="2346">Int</a> =
+	{
+		<span class="keyword">def</span> <a title="(Int)Int" id="22611">common</a>(<a title="Int" id="22612">count</a>: <a title="Int" id="2346">Int</a>): <a title="Int" id="2346">Int</a> =
+		{
+			<span title="Int" class="keyword">if</span>(<a href="#22612" title="Int">count</a> <a title="(Int)Boolean" id="3089">&gt;=</a> <a href="#22609" title="Array[S]">a</a>.<a title="=&gt; Int" id="11326">length</a> <a title="(Boolean)Boolean" id="2693">||</a> <a href="#22612" title="Int">count</a> <a title="(Int)Boolean" id="3089">&gt;=</a> <a href="#22610" title="Array[S]">b</a>.<a title="=&gt; Int" id="11326">length</a> <a title="(Boolean)Boolean" id="2693">||</a> <a href="#22609" title="(Int)S" id="11327">a</a>(<a href="#22612" title="Int">count</a>) <a title="(Any)Boolean" id="3440">!=</a> <a href="#22610" title="(Int)S" id="11327">b</a>(<a href="#22612" title="Int">count</a>))
+				<a href="#22612" title="Int">count</a>
+			<span class="keyword">else</span>
+				<a href="#22611" title="(Int)Int">common</a>(<a href="#22612" title="Int">count</a><a title="(Int)Int" id="3090">+</a><span title="Int(1)" class="int">1</span>)
+		}
+		<a href="#22611" title="(Int)Int">common</a>(<span title="Int(0)" class="int">0</span>)
+	}
+	<span class="comment">/** Converts the given file to an array of path component strings. */</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(java.io.File)Array[String]" id="17550">toPathArray</a>(<a title="java.io.File" id="22640">file</a>: <a title="java.io.File" id="3612">File</a>): <a title="Array[String]" id="1024">Array</a>[String] =
+	{
+		<span class="keyword">def</span> <a title="(java.io.File,List[String])List[String]" id="22641">toPathList</a>(<a title="java.io.File" id="22642">f</a>: <a title="java.io.File" id="3612">File</a>, <a title="List[String]" id="22643">current</a>: <a title="List[String]" id="487">List</a>[String]): <a title="List[String]" id="487">List</a>[String] =
+		{
+			<span title="List[String]" class="keyword">if</span>(<a href="#22642" title="java.io.File">f</a> <a title="(AnyRef)Boolean" id="3452">==</a> <span title="Null(null)" class="keyword">null</span>)
+				<a href="#22643" title="List[String]">current</a>
+			<span class="keyword">else</span>
+				<a href="#22641" title="(java.io.File,List[String])List[String]">toPathList</a>(<a href="#22642" title="java.io.File">f</a>.<a title="()java.io.File" id="11667">getParentFile</a>, <a href="#22642" title="java.io.File">f</a>.<a title="()java.lang.String" id="11665">getName</a> <a href="#22645" title="(String)List[String]" id="11153">::</a> <a href="#22643" title="List[String]">current</a>)
+		}
+		<a href="#22641" title="(java.io.File,List[String])List[String]">toPathList</a>(<a href="#22640" title="java.io.File">file</a>.<a title="()java.io.File" id="11673">getCanonicalFile</a>, <a title="object Nil" id="302">Nil</a>).<a title="Array[String]" id="11483">toArray</a>
+	}
+	<span class="comment">/** Creates a relative path from 'fromFile' to 'toFile' (for use in an 'href' attribute).*/</span>
+	<span class="keyword">def</span> <a title="(java.io.File,java.io.File)String" id="17551">relativePath</a>(<a title="java.io.File" id="17557">fromFile</a>: <a title="java.io.File" id="3612">File</a>, <a title="java.io.File" id="17558">toFile</a>: <a title="java.io.File" id="3612">File</a>): <a title="String" id="1801">String</a> =
+	{
+		<span class="keyword">val</span> <a title="Array[String]" id="22653">fromPath</a> = <a href="#17550" title="(java.io.File)Array[String]">toPathArray</a>(<a href="#17557" title="java.io.File">fromFile</a>)
+		<span class="keyword">val</span> <a title="Array[String]" id="22654">toPath</a> = <a href="#17550" title="(java.io.File)Array[String]">toPathArray</a>(<a href="#17558" title="java.io.File">toFile</a>)
+		<span class="keyword">val</span> <a title="Int" id="22655">commonLength</a> = <a href="#17547" title="(Array[String],Array[String])Int">commonPrefix</a>(<a href="#22653" title="Array[String]">fromPath</a>, <a href="#22654" title="Array[String]">toPath</a>)
+		<span class="keyword">val</span> <a title="Array.Projection[String]" id="22656">relativeTo</a> = <a href="#22654" title="Array[String]">toPath</a>.<a title="(Int)Array.Projection[String]" id="11310">drop</a>(<a href="#22655" title="Int">commonLength</a>)
+		<span class="keyword">val</span> <a title="Int" id="22657">parentsToCommon</a> = (<a href="#22653" title="Array[String]">fromPath</a>.<a title="=&gt; Int" id="11326">length</a> <a title="(Int)Int" id="3091">-</a> <a href="#22655" title="Int">commonLength</a> <a title="(Int)Int" id="3091">-</a> <span title="Int(1)" class="int">1</span>)
+		<span id="5933"><a title="(Boolean)Unit" id="779">require</a></span>(<a href="#22657" title="Int">parentsToCommon</a> <a title="(Int)Boolean" id="3089">&gt;=</a> <span title="Int(0)" class="int">0</span>)
+		<span class="keyword">val</span> <a title="String" id="22658">up</a> = <span id="6065"><a title="implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString" id="779" class="string">&quot;../&quot;</a></span> <a title="(Int)String" id="16423">*</a> <a href="#22657" title="Int">parentsToCommon</a>
+		<a href="#22656" title="Array.Projection[String]">relativeTo</a>.<a title="(String,String,String)String" id="11627">mkString</a>(<a href="#22658" title="String">up</a>, <span title="java.lang.String(&quot;/&quot;)" class="string">&quot;/&quot;</span>, <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+	}
+	
+	<span class="comment">/** Copies the 'resource' to be found on the classpath to the file 'to'.*/</span>
+	<span class="keyword">def</span> <a title="(String,java.io.File)Unit" id="17552">writeResource</a>(<a title="String" id="20186">resource</a>: <a title="String" id="1801">String</a>, <a title="java.io.File" id="20187">to</a>: <a title="java.io.File" id="3612">File</a>)
+	{
+		<span class="keyword">val</span> <a title="java.io.InputStream" id="22673">source</a> = <a title="()java.lang.Class[_ &lt;: java.lang.Object]" id="3454">getClass</a>.<a title="(java.lang.String)java.io.InputStream" id="4303">getResourceAsStream</a>(<a href="#20186" title="String">resource</a>)
+		<span class="keyword">try</span> { <a href="#17553" title="(java.io.InputStream,java.io.File)Unit">write</a>(<a href="#22673" title="java.io.InputStream">source</a>, <a href="#20187" title="java.io.File">to</a>) }
+		<span class="keyword">finally</span> { <a href="#22673" title="java.io.InputStream">source</a>.<a title="()Unit" id="22695">close</a>() }
+	}
+	<span class="comment">/** Writes the 'input' stream to the file 'to'.*/</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(java.io.InputStream,java.io.File)Unit" id="17553">write</a>(<a title="java.io.InputStream" id="22699">input</a>: <a title="java.io.InputStream" id="3687">InputStream</a>, <a title="java.io.File" id="22700">to</a>: <a title="java.io.File" id="3612">File</a>)
+	{
+		<span class="keyword">val</span> <a title="java.io.FileOutputStream" id="22701">out</a> = <a title="(java.io.File)java.io.FileOutputStream" id="22704" class="keyword">new</a> <a title="java.io.FileOutputStream" id="3741">FileOutputStream</a>(<a href="#22700" title="java.io.File">to</a>)
+		<span class="keyword">try</span> { <a href="#17554" title="(java.io.InputStream,java.io.OutputStream)Unit">transfer</a>(<a href="#22699" title="java.io.InputStream">input</a>, <a href="#22701" title="java.io.FileOutputStream">out</a>) }
+		<span class="keyword">finally</span> { <a href="#22701" title="java.io.FileOutputStream">out</a>.<a title="()Unit" id="22710">close</a>() }
+	}
+	<span class="comment">/** Copies all bytes from the 'input' stream to the 'output' strem. */</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(java.io.InputStream,java.io.OutputStream)Unit" id="17554">transfer</a>(<a title="java.io.InputStream" id="22848">input</a>: <a title="java.io.InputStream" id="3687">InputStream</a>, <a title="java.io.OutputStream" id="22849">out</a>: <a title="java.io.OutputStream" id="3744">OutputStream</a>)
+	{
+		<span class="keyword">val</span> <a title="Array[Byte]" id="22850">buffer</a> = <span title="Array[Byte]" class="keyword">new</span> <a title="Array[Byte]" id="1024">Array</a>[Byte](<span title="Int(8192)" class="int">8192</span>)
+		<span class="keyword">def</span> <a title="()Unit" id="22851">transfer</a>()
+		{
+			<span class="keyword">val</span> <a title="Int" id="22882">read</a> = <a href="#22848" title="java.io.InputStream">input</a>.<a title="(Array[Byte])Int" id="22691">read</a>(<a href="#22850" title="Array[Byte]">buffer</a>)
+			<span title="Unit" class="keyword">if</span>(<a href="#22882" title="Int">read</a> <a title="(Int)Boolean" id="3089">&gt;=</a> <span title="Int(0)" class="int">0</span>)
+			{
+				<a href="#22849" title="java.io.OutputStream">out</a>.<a title="(Array[Byte],Int,Int)Unit" id="22843">write</a>(<a href="#22850" title="Array[Byte]">buffer</a>, <span title="Int(0)" class="int">0</span>, <a href="#22882" title="Int">read</a>)
+				<a href="#22851" title="()Unit">transfer</a>()
+			}
+		}
+		<a href="#22851" title="()Unit">transfer</a>()
+	}
+	<span class="comment">/** Relativies the path of the given file against the given base file.*/</span>
+	<span class="keyword">def</span> <a title="(java.io.File,java.io.File)Option[String]" id="17555">relativize</a>(<a title="java.io.File" id="20182">baseFile</a>: <a title="java.io.File" id="3612">File</a>, <a title="java.io.File" id="20183">file</a>: <a title="java.io.File" id="3612">File</a>): <a title="Option[String]" id="889">Option</a>[String] =
+	{
+		<span class="keyword">val</span> <a title="java.lang.String" id="22906">pathString</a> = <a href="#20183" title="java.io.File">file</a>.<a title="()java.lang.String" id="11672">getCanonicalPath</a>
+		<a href="#17556" title="(java.io.File)Option[String]">baseFileString</a>(<a href="#20182" title="java.io.File">baseFile</a>) <a title="((String) =&gt; Option[String])Option[String]" id="11721">flatMap</a> { <a title="String" id="22910">baseString</a> =&gt;
+			<span title="Option[String]" class="keyword">if</span>(<a href="#22906" title="java.lang.String">pathString</a>.<a title="(java.lang.String)Boolean" id="5775">startsWith</a>(<a href="#22910" title="String">baseString</a>))
+				<span id="19626"><a title="(java.lang.String)Some[java.lang.String]" id="278">Some</a></span>(<a href="#22906" title="java.lang.String">pathString</a>.<a title="(Int)java.lang.String" id="5788">substring</a>(<a href="#22910" title="String">baseString</a>.<a title="()Int" id="5755">length</a>))
+			<span class="keyword">else</span>
+				<a title="object None" id="497">None</a>
+		}
+	}
+	<span class="comment">// used by relativize</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(java.io.File)Option[String]" id="17556">baseFileString</a>(<a title="java.io.File" id="22907">baseFile</a>: <a title="java.io.File" id="3612">File</a>): <a title="Option[String]" id="889">Option</a>[String] =
+	{
+		<span title="Option[String]" class="keyword">if</span>(<a href="#22907" title="java.io.File">baseFile</a>.<a title="()Boolean" id="11679">isDirectory</a>)
+		{
+			<span class="keyword">val</span> <a title="java.lang.String" id="22914">cp</a> = <a href="#22907" title="java.io.File">baseFile</a>.<a title="()java.lang.String" id="11672">getCanonicalPath</a>
+			<span id="5929"><a title="(Boolean)Unit" id="779">assert</a></span>(<a href="#22914" title="java.lang.String">cp</a>.<a title="()Int" id="5755">length</a> <a title="(Int)Boolean" id="3088">&gt;</a> <span title="Int(0)" class="int">0</span>)
+			<span title="Option[String]" class="keyword">if</span>(<a href="#22914" title="java.lang.String">cp</a>.<a title="(Int)Char" id="5756">charAt</a>(<a href="#22914" title="java.lang.String">cp</a>.<a title="()Int" id="5755">length</a> <a title="(Int)Int" id="3091">-</a> <span title="Int(1)" class="int">1</span>) <a title="(Char)Boolean" id="2961">==</a> <a title="object java.io.File" id="3613">File</a>.<a title="Char" id="11655">separatorChar</a>)
+				<span id="19626"><a title="(java.lang.String)Some[java.lang.String]" id="278">Some</a></span>(<a href="#22914" title="java.lang.String">cp</a>)
+			<span class="keyword">else</span>
+				<span id="19626"><a title="(java.lang.String)Some[java.lang.String]" id="278">Some</a></span>(<a href="#22914" title="java.lang.String">cp</a> <a title="(Any)java.lang.String" id="5736">+</a> <a title="object java.io.File" id="3613">File</a>.<a title="Char" id="11655">separatorChar</a>)
+		}
+		<span class="keyword">else</span>
+			<a title="object None" id="497">None</a>
+	}
+}
+
+        </pre>
+    </body>
+</html>

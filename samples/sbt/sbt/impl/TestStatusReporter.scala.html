@@ -1,0 +1,86 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>sbt/impl/TestStatusReporter.scala</title>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* sbt -- Simple Build Tool
+ * Copyright 2009 Mark Harrah
+ */</span>
+<span class="keyword">package</span> sbt.impl
+
+<span class="keyword">import</span> java.io.File
+<span class="keyword">import</span> scala.collection.mutable.{HashMap, Map}
+
+<span class="comment">/** Only intended to be used once per instance. */</span>
+<span class="keyword">private</span>[sbt] <span class="keyword">class</span> <a title="class TestStatusReporter extends java.lang.Object with sbt.TestsListener with ScalaObject" id="6152">TestStatusReporter</a>(<span id="24112"><a title="sbt.Path" id="24128">path</a></span>: <a href="../Path.scala.html#6697" title="sbt.Path">Path</a>, <span id="24113"><a title="sbt.Logger" id="24129">log</a></span>: <a href="../Logger.scala.html#6667" title="sbt.Logger">Logger</a>) <span class="keyword">extends</span> <a href="../TestFramework.scala.html#6267" title="sbt.TestsListener">TestsListener</a>
+{
+	<span class="keyword">private</span> <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="scala.collection.mutable.Map[String,Long]" id="24116">succeeded</a>: <a title="scala.collection.mutable.Map[String,Long]" id="7894">Map</a>[String, Long] = <a href="#6154" title="object sbt.impl.TestStatus">TestStatus</a>.<a href="#24132" title="(sbt.Path,sbt.Logger)scala.collection.mutable.Map[String,Long]">read</a>(<a href="#24112" title="sbt.Path">path</a>, <a href="#24113" title="sbt.Logger">log</a>)
+
+	<span class="keyword">def</span> <a title="=&gt; Unit" id="24117">doInit</a> <span title="Unit">{</span>}
+	<span class="keyword">def</span> <a title="(String)Unit" id="24118">startGroup</a>(<a title="String" id="24139">name</a>: <a title="String" id="1751">String</a>) { <a href="#24115" title="=&gt; scala.collection.mutable.Map[String,Long]">succeeded</a> <a title="(String)Option[Long]" id="20467">removeKey</a> <a href="#24139" title="String">name</a> }
+	<span class="keyword">def</span> <a title="(sbt.TestEvent)Unit" id="24119">testEvent</a>(<a title="sbt.TestEvent" id="24140">event</a>: <a href="../TestFramework.scala.html#6270" title="sbt.TestEvent">TestEvent</a>) <span title="Unit">{</span>}
+	<span class="keyword">def</span> <a title="(String,Throwable)Unit" id="24120">endGroup</a>(<a title="String" id="24429">name</a>: <a title="String" id="1751">String</a>, <a title="Throwable" id="24430">t</a>: <a title="Throwable" id="2033">Throwable</a>) <span title="Unit">{</span>}
+	<span class="keyword">def</span> <a title="(String,sbt.Result.Value)Unit" id="24121">endGroup</a>(<a title="String" id="24431">name</a>: <a title="String" id="1751">String</a>, <a title="sbt.Result.Value" id="24432">result</a>: Result.<a title="sbt.Result.Value" id="20345">Value</a>)
+	{
+		<span title="Unit" class="keyword">if</span>(<a href="#24432" title="sbt.Result.Value">result</a> <a title="(AnyRef)Boolean" id="3399">==</a> <a href="../TestFramework.scala.html#6260" title="object sbt.Result">Result</a>.<a href="../TestFramework.scala.html#24436" title="=&gt; sbt.Result.Value">Passed</a>)
+			<a href="#24115" title="=&gt; scala.collection.mutable.Map[String,Long]">succeeded</a>(<a href="#24431" title="String">name</a>) = <a title="object java.lang.System" id="1776">System</a>.<a title="()Long" id="24451">currentTimeMillis</a>
+	}
+	<span class="keyword">def</span> <a title="(sbt.Result.Value)Unit" id="24122">doComplete</a>(<a title="sbt.Result.Value" id="24475">finalResult</a>: Result.<a title="sbt.Result.Value" id="20345">Value</a>) { <a href="#24124" title="()Unit">complete</a>() }
+	<span class="keyword">def</span> <a title="(Throwable)Unit" id="24123">doComplete</a>(<a title="Throwable" id="24476">t</a>: <a title="Throwable" id="2033">Throwable</a>) { <a href="#24124" title="()Unit">complete</a>() }
+	
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="()Unit" id="24124">complete</a>()
+	{
+		<a href="#6154" title="object sbt.impl.TestStatus">TestStatus</a>.<a href="#24133" title="(scala.collection.mutable.Map[String,Long],String,sbt.Path,sbt.Logger)Unit">write</a>(<a href="#24115" title="=&gt; scala.collection.mutable.Map[String,Long]">succeeded</a>, <span title="java.lang.String(&quot;Successful Tests&quot;)" class="string">&quot;Successful Tests&quot;</span>, <a href="#24112" title="sbt.Path">path</a>, <a href="#24113" title="sbt.Logger">log</a>)
+	}
+}
+
+<span class="keyword">private</span>[sbt] <span class="keyword">class</span> <a title="class TestQuickFilter extends java.lang.Object with (String) =&gt; Boolean with NotNull with ScalaObject" id="6153">TestQuickFilter</a>(<span id="24485"><a title="sbt.CompileAnalysis" id="24500">testAnalysis</a></span>: <a href="../Analysis.scala.html#6138" title="sbt.CompileAnalysis">CompileAnalysis</a>, <span id="24486"><a title="Boolean" id="24501">failedOnly</a></span>: <a title="Boolean" id="2060">Boolean</a>, <span id="24487"><a title="sbt.Path" id="24502">path</a></span>: <a href="../Path.scala.html#6697" title="sbt.Path">Path</a>, <span id="24488"><a title="sbt.Logger" id="24503">log</a></span>: <a href="../Logger.scala.html#6667" title="sbt.Logger">Logger</a>) <span class="keyword">extends</span> (String =&gt; Boolean) <span class="keyword">with</span> <a title="NotNull" id="187">NotNull</a>
+{
+	<span class="keyword">private</span> <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="scala.collection.mutable.Map[String,Long]" id="24491">exclude</a> = <a href="#6154" title="object sbt.impl.TestStatus">TestStatus</a>.<a href="#24132" title="(sbt.Path,sbt.Logger)scala.collection.mutable.Map[String,Long]">read</a>(<a href="#24487" title="sbt.Path">path</a>, <a href="#24488" title="sbt.Logger">log</a>)
+	<span class="keyword">private</span> <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="scala.collection.mutable.Map[String,sbt.Path]" id="24493">map</a> = <a href="#24485" title="sbt.CompileAnalysis">testAnalysis</a>.<a href="../Analysis.scala.html#21494" title="=&gt; scala.collection.mutable.Map[String,sbt.Path]">testSourceMap</a>
+	<span class="keyword">def</span> <a title="(String)Boolean" id="24494">apply</a>(<a title="String" id="24504">test</a>: <a title="String" id="1751">String</a>) =
+		<a href="#24490" title="=&gt; scala.collection.mutable.Map[String,Long]">exclude</a>.<a title="(String)Option[Long]" id="20500">get</a>(<a href="#24504" title="String">test</a>) <span title="Boolean" class="keyword">match</span>
+		{
+			<span title="Boolean(true)" class="keyword">case</span> <a title="object None" id="488">None</a> =&gt; <span title="Boolean(true)" class="keyword">true</span> <span class="comment">// include because this test has not been run or did not succeed</span>
+			<span title="Boolean" class="keyword">case</span> <a id="1">Some</a>(<a title="Long" id="24506">lastSuccessTime</a>) =&gt; <span class="comment">// succeeded the last time it was run</span>
+				<span title="Boolean" class="keyword">if</span>(<a href="#24486" title="Boolean">failedOnly</a>)
+					<span title="Boolean(false)" class="keyword">false</span> <span class="comment">// don't include because the last time succeeded</span>
+				<span class="keyword">else</span>
+					<a href="#24485" title="sbt.CompileAnalysis">testAnalysis</a>.<a href="../Analysis.scala.html#21461" title="(sbt.Path)Option[scala.collection.mutable.Set[sbt.Path]]">products</a>(<a href="#24492" title="(String)sbt.Path" id="20504">map</a>(<a href="#24504" title="String">test</a>)) <span title="Boolean" class="keyword">match</span>
+					{
+						<span title="Boolean(true)" class="keyword">case</span> <a title="object None" id="488">None</a> =&gt; <span title="Boolean(true)" class="keyword">true</span>
+						<span title="Boolean" class="keyword">case</span> <a id="1">Some</a>(<a title="scala.collection.mutable.Set[sbt.Path]" id="24511">products</a>) =&gt; <a href="#24511" title="scala.collection.mutable.Set[sbt.Path]">products</a>.<a title="((sbt.Path) =&gt; Boolean)Boolean" id="7258">exists</a>(<a href="#24506" title="Long">lastSuccessTime</a> <a title="(Long)Boolean" id="3157">&lt;=</a> <a href="#24513" title="sbt.Path">_</a>.<a href="../Path.scala.html#9526" title="=&gt; Long">lastModified</a>) <span class="comment">// include if the test is newer than the last run</span>
+					}
+		}
+}
+<span class="keyword">private</span> <span class="keyword">object</span> <a title="object sbt.impl.TestStatus" id="6154">TestStatus</a>
+{
+	<span class="keyword">import</span> java.util.Properties
+	<span class="keyword">def</span> <a title="(sbt.Path,sbt.Logger)scala.collection.mutable.Map[String,Long]" id="24132">read</a>(<a title="sbt.Path" id="24135">path</a>: <a href="../Path.scala.html#6697" title="sbt.Path">Path</a>, <a title="sbt.Logger" id="24136">log</a>: <a href="../Logger.scala.html#6667" title="sbt.Logger">Logger</a>): <a title="scala.collection.mutable.Map[String,Long]" id="7894">Map</a>[String, Long] =
+	{
+		<span class="keyword">val</span> <a title="scala.collection.mutable.HashMap[String,Long]" id="24518">map</a> = <span title="scala.collection.mutable.HashMap[String,Long]" class="keyword">new</span> <a title="scala.collection.mutable.HashMap[String,Long]" id="8092">HashMap</a>[String, Long]
+		<span class="keyword">val</span> <a title="java.util.Properties" id="24519">properties</a> = <span title="java.util.Properties" class="keyword">new</span> <a title="java.util.Properties" id="5486">Properties</a>
+		<a href="#24134" title="(Option[String],String,sbt.Logger)Unit">logError</a>(<a href="../Analysis.scala.html#6141" title="object sbt.PropertiesUtilities">PropertiesUtilities</a>.<a href="../Analysis.scala.html#21974" title="(java.util.Properties,sbt.Path,sbt.Logger)Option[String]">load</a>(<a href="#24519" title="java.util.Properties">properties</a>, <a href="#24135" title="sbt.Path">path</a>, <a href="#24136" title="sbt.Logger">log</a>), <span title="java.lang.String(&quot;loading&quot;)" class="string">&quot;loading&quot;</span>, <a href="#24136" title="sbt.Logger">log</a>)
+		<span class="keyword">for</span>(<span id="7256"><a title="((String) =&gt; Unit)Unit" id="24530">test</a></span> &lt;- <a href="../Analysis.scala.html#6141" title="object sbt.PropertiesUtilities">PropertiesUtilities</a>.<a href="../Analysis.scala.html#21975" title="(java.util.Properties)Iterable[String]">propertyNames</a>(<a href="#24519" title="java.util.Properties">properties</a>))
+			<a href="#24518" title="scala.collection.mutable.HashMap[String,Long]">map</a>.<a title="(String,Long)Option[Long]" id="20468">put</a>(<a href="#24530" title="String">test</a>, <a href="#24519" title="java.util.Properties">properties</a>.<span id="6012"><span id="770"><a title="implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString" id="21847">getProperty</a></span></span>(<a href="#24530" title="String">test</a>).<a title="=&gt; Long" id="8772">toLong</a>)
+		<a href="#24518" title="scala.collection.mutable.HashMap[String,Long]">map</a>
+	}
+	<span class="keyword">def</span> <a title="(scala.collection.mutable.Map[String,Long],String,sbt.Path,sbt.Logger)Unit" id="24133">write</a>(<a title="scala.collection.mutable.Map[String,Long]" id="24477">map</a>: <a title="scala.collection.mutable.Map[String,Long]" id="7894">Map</a>[String, Long], <a title="String" id="24478">label</a>: <a title="String" id="1751">String</a>, <a title="sbt.Path" id="24479">path</a>: <a href="../Path.scala.html#6697" title="sbt.Path">Path</a>, <a title="sbt.Logger" id="24480">log</a>: <a href="../Logger.scala.html#6667" title="sbt.Logger">Logger</a>)
+	{
+		<span class="keyword">val</span> <a title="java.util.Properties" id="24536">properties</a> = <span title="java.util.Properties" class="keyword">new</span> <a title="java.util.Properties" id="5486">Properties</a>
+		<span class="keyword">for</span>( <span id="7256"><a href="#24543" title="(((String, Long)) =&gt; Unit)Unit" id="7250">(</a></span><span id="24544"><a title="String" id="24548">test</a></span>, <span id="24545"><a title="Long" id="24549">lastSuccessTime</a></span>) &lt;- <a href="#24477" title="scala.collection.mutable.Map[String,Long]">map</a>)
+			<a href="#24536" title="java.util.Properties">properties</a>.<a title="(java.lang.String,java.lang.String)java.lang.Object" id="21840">setProperty</a>(<a href="#24548" title="String">test</a>, <a href="#24549" title="Long">lastSuccessTime</a>.<a title="()java.lang.String" id="3390">toString</a>)
+		<a href="#24134" title="(Option[String],String,sbt.Logger)Unit">logError</a>(<a href="../Analysis.scala.html#6141" title="object sbt.PropertiesUtilities">PropertiesUtilities</a>.<a href="../Analysis.scala.html#21973" title="(java.util.Properties,String,sbt.Path,sbt.Logger)Option[String]">write</a>(<a href="#24536" title="java.util.Properties">properties</a>, <a href="#24478" title="String">label</a>, <a href="#24479" title="sbt.Path">path</a>, <a href="#24480" title="sbt.Logger">log</a>), <span title="java.lang.String(&quot;writing&quot;)" class="string">&quot;writing&quot;</span>, <a href="#24480" title="sbt.Logger">log</a>)
+	}
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(Option[String],String,sbt.Logger)Unit" id="24134">logError</a>(<a title="Option[String]" id="24526">result</a>: <a title="Option[String]" id="871">Option</a>[String], <a title="String" id="24527">action</a>: <a title="String" id="1751">String</a>, <a title="sbt.Logger" id="24528">log</a>: <a href="../Logger.scala.html#6667" title="sbt.Logger">Logger</a>)
+	{
+		<a href="#24526" title="Option[String]">result</a>.<a title="((String) =&gt; Unit)Unit" id="10162">foreach</a>(<a title="String" id="24551">msg</a> =&gt; <a href="#24528" title="sbt.Logger">log</a>.<a href="../Logger.scala.html#8354" title="(=&gt; String)Unit">error</a>(<span title="java.lang.String(&quot;Error &quot;)" class="string">&quot;Error &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#24527" title="String">action</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; test status: &quot;)" class="string">&quot; test status: &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#24551" title="String">msg</a>))
+	}
+}
+        </pre>
+    </body>
+</html>

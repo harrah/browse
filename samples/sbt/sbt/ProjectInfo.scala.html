@@ -1,0 +1,112 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>sbt/ProjectInfo.scala</title>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* sbt -- Simple Build Tool
+ * Copyright 2008 Mark Harrah
+ */</span>
+<span class="keyword">package</span> sbt
+
+<span class="keyword">import</span> java.io.File
+<span class="keyword">import</span> FileUtilities._
+
+<span class="keyword">final</span> <span class="keyword">case</span> <span class="keyword">class</span> <span id="2640"><span id="46974"><span id="52398"><span id="3391"><span id="52418"><span id="10256"><span id="9216"><span id="27624"><span id="52399"><span id="6494"><span id="27623"><span id="52415"><span id="52417"><span id="52410"><span id="2641"><span id="52416"><span id="52409"><span id="52403"><span id="5675"><span id="275"><span id="52400"><span id="46975"><span id="3399"><span id="3390"><span id="52401"><span id="52402"><span id="404"><span id="27651"><a title="class ProjectInfo extends java.lang.Object with NotNull with ScalaObject with Product" id="52411">ProjectInfo</a></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span>(<span id="27925"><span id="27924"><span id="52395"><a title="java.io.File" id="46976">projectDirectory</a></span></span></span>: <a title="java.io.File" id="3559">File</a>, <span id="27927"><span id="27926"><span id="52396"><a title="Iterable[sbt.Project]" id="46977">dependencies</a></span></span></span>: <a title="Iterable[sbt.Project]" id="358">Iterable</a>[Project], <span id="27929"><span id="27928"><span id="52397"><a title="Option[sbt.Project]" id="46978">parent</a></span></span></span>: <a title="Option[sbt.Project]" id="871">Option</a>[Project]) <span class="keyword">extends</span> <a title="NotNull" id="187">NotNull</a>
+{
+	<span class="keyword">val</span> <span id="27932"><a title="sbt.ProjectDirectory" id="27931">projectPath</a></span> = <span title="sbt.ProjectDirectory" class="keyword">new</span> <a href="Path.scala.html#6699" title="sbt.ProjectDirectory">ProjectDirectory</a>(<a href="#27924" title="=&gt; java.io.File">projectDirectory</a>)
+	<span class="keyword">val</span> <span id="27934"><a title="sbt.Path" id="27933">builderPath</a></span> = <a href="#27931" title="=&gt; sbt.ProjectDirectory">projectPath</a> <a href="Path.scala.html#9523" title="(String)sbt.Path">/</a> <a href="#6495" title="object sbt.ProjectInfo">ProjectInfo</a>.<a href="#46964" title="=&gt; java.lang.String">MetadataDirectoryName</a>
+}
+
+<span class="keyword">private</span>[sbt] <span class="keyword">sealed</span> <span class="keyword">trait</span> <a title="trait SetupResult extends java.lang.Object with NotNull" id="6497">SetupResult</a> <span class="keyword">extends</span> <a title="NotNull" id="187">NotNull</a>
+<span class="keyword">private</span>[sbt] <span class="keyword">final</span> <span class="keyword">object</span> <a title="object sbt.SetupDeclined" id="6498">SetupDeclined</a> <span class="keyword">extends</span> <a href="#6497" title="sbt.SetupResult">SetupResult</a>
+<span class="keyword">private</span>[sbt] <span class="keyword">final</span> <span class="keyword">class</span> <a title="class SetupError extends java.lang.Object with sbt.SetupResult with ScalaObject" id="6500">SetupError</a>(<span class="keyword">val</span> <span id="47086"><span id="47085"><a title="String" id="52424">message</a></span></span>: <a title="String" id="1751">String</a>) <span class="keyword">extends</span> <a href="#6497" title="sbt.SetupResult">SetupResult</a>
+<span class="keyword">private</span>[sbt] <span class="keyword">final</span> <span class="keyword">object</span> <a title="object sbt.AlreadySetup" id="6501">AlreadySetup</a> <span class="keyword">extends</span> <a href="#6497" title="sbt.SetupResult">SetupResult</a>
+<span class="keyword">private</span>[sbt] <span class="keyword">final</span> <span class="keyword">class</span> <a title="class SetupInfo extends java.lang.Object with sbt.SetupResult with ScalaObject" id="6503">SetupInfo</a>(<span class="keyword">val</span> <span id="46986"><span id="46985"><a title="String" id="46994">name</a></span></span>: <a title="String" id="1751">String</a>, <span class="keyword">val</span> <span id="46988"><span id="46987"><a title="Option[sbt.Version]" id="46995">version</a></span></span>: <a title="Option[sbt.Version]" id="871">Option</a>[Version], <span class="keyword">val</span> <span id="46990"><span id="46989"><a title="Option[String]" id="46996">organization</a></span></span>: <a title="Option[String]" id="871">Option</a>[String], <span class="keyword">val</span> <span id="46992"><span id="46991"><a title="Boolean" id="46997">initializeDirectories</a></span></span>: <a title="Boolean" id="2060">Boolean</a>) <span class="keyword">extends</span> <a href="#6497" title="sbt.SetupResult">SetupResult</a>
+
+<span class="keyword">object</span> <a title="object sbt.ProjectInfo" id="6495">ProjectInfo</a>
+{
+	<span class="keyword">val</span> <span id="46965"><a title="java.lang.String" id="46964">MetadataDirectoryName</a></span> = <span title="java.lang.String(&quot;project&quot;)" class="string">&quot;project&quot;</span>
+	<span class="keyword">private</span> <span class="keyword">val</span> <span id="46967"><a title="java.lang.String" id="46966">DefaultOrganization</a></span> = <span title="java.lang.String(&quot;empty&quot;)" class="string">&quot;empty&quot;</span>
+	
+	<span class="keyword">def</span> <a title="(sbt.ProjectInfo,sbt.Logger)sbt.SetupResult" id="46968">setup</a>(<a title="sbt.ProjectInfo" id="47081">info</a>: <a href="#6494" title="sbt.ProjectInfo">ProjectInfo</a>, <a title="sbt.Logger" id="47082">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>): <a href="#6497" title="sbt.SetupResult">SetupResult</a> =
+	{
+		<span class="keyword">val</span> <a title="java.io.File" id="52432">builderDirectory</a> = <a href="#47081" title="sbt.ProjectInfo">info</a>.<a href="#27933" title="=&gt; sbt.Path">builderPath</a>.<a href="Path.scala.html#9529" title="=&gt; java.io.File">asFile</a>
+		<span title="sbt.SetupResult" class="keyword">if</span>(<a href="#52432" title="java.io.File">builderDirectory</a>.<a title="()Boolean" id="9559">exists</a>)
+		{
+			<span title="sbt.SetupResult" class="keyword">if</span>(<a href="#52432" title="java.io.File">builderDirectory</a>.<a title="()Boolean" id="9560">isDirectory</a>)
+				<a href="#6501" title="object sbt.AlreadySetup">AlreadySetup</a>
+			<span class="keyword">else</span>
+				<span title="sbt.SetupError" class="keyword">new</span> <a href="#6500" title="sbt.SetupError">SetupError</a>(<span title="java.lang.String(&quot;'&quot;)" class="string">&quot;'&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#52432" title="java.io.File">builderDirectory</a>.<a title="()java.lang.String" id="9551">getAbsolutePath</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;' is not a directory.&quot;)" class="string">&quot;' is not a directory.&quot;</span>)
+		}
+		<span class="keyword">else</span>
+			<a href="#46969" title="(java.io.File,sbt.Logger)sbt.SetupResult">setupProject</a>(<a href="#47081" title="sbt.ProjectInfo">info</a>.<a href="#27924" title="=&gt; java.io.File">projectDirectory</a>, <a href="#47082" title="sbt.Logger">log</a>)
+	}
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(java.io.File,sbt.Logger)sbt.SetupResult" id="46969">setupProject</a>(<a title="java.io.File" id="52433">projectDirectory</a>: <a title="java.io.File" id="3559">File</a>, <a title="sbt.Logger" id="52434">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>): <a href="#6497" title="sbt.SetupResult">SetupResult</a> =
+	{
+		<span title="sbt.SetupResult" class="keyword">if</span>(<a href="#46971" title="(String,Boolean)Boolean">confirmPrompt</a>(<span title="java.lang.String(&quot;No project found. Create new project?&quot;)" class="string">&quot;No project found. Create new project?&quot;</span>, <span title="Boolean(false)" class="keyword">false</span>))
+		{
+			<span class="keyword">val</span> <a title="java.lang.String" id="52540">name</a> = <a href="#46973" title="(String)java.lang.String">trim</a>(<a title="object Console" id="395">Console</a>.<a title="(String,Any*)String" id="52516">readLine</a>(<span title="java.lang.String(&quot;Project Name: &quot;)" class="string">&quot;Project Name: &quot;</span>))
+			<span title="sbt.SetupResult" class="keyword">if</span>(<span id="6012"><a href="#52540" title="implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString" id="770">name</a></span>.<a title="=&gt; Boolean" id="7108">isEmpty</a>)
+				<span title="sbt.SetupError" class="keyword">new</span> <a href="#6500" title="sbt.SetupError">SetupError</a>(<span title="java.lang.String(&quot;Project not created: no name specified.&quot;)" class="string">&quot;Project not created: no name specified.&quot;</span>)
+			<span class="keyword">else</span>
+			{
+				<span class="keyword">val</span> <a title="java.lang.String" id="52550">organization</a> =
+				{
+					<span class="keyword">val</span> <a title="java.lang.String" id="52551">org</a> = <a href="#46973" title="(String)java.lang.String">trim</a>(<a title="object Console" id="395">Console</a>.<a title="(String,Any*)String" id="52516">readLine</a>(<span title="java.lang.String(&quot;Organization [&quot;)" class="string">&quot;Organization [&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#46966" title="=&gt; java.lang.String">DefaultOrganization</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;]: &quot;)" class="string">&quot;]: &quot;</span>))
+					<span title="java.lang.String" class="keyword">if</span>(<span id="6012"><a href="#52551" title="implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString" id="770">org</a></span>.<a title="=&gt; Boolean" id="7108">isEmpty</a>)
+						<a href="#46966" title="=&gt; java.lang.String">DefaultOrganization</a>
+					<span class="keyword">else</span>
+						<a href="#52551" title="java.lang.String">org</a>
+				}
+				<a href="#46972" title="(java.io.File,sbt.Logger)Option[sbt.Version]">readVersion</a>(<a href="#52433" title="java.io.File">projectDirectory</a>, <a href="#52434" title="sbt.Logger">log</a>) <span title="sbt.SetupResult" class="keyword">match</span>
+				{
+					<span title="sbt.SetupError" class="keyword">case</span> <a title="object None" id="488">None</a> =&gt; <span title="sbt.SetupError" class="keyword">new</span> <a href="#6500" title="sbt.SetupError">SetupError</a>(<span title="java.lang.String(&quot;Project not created: no version specified.&quot;)" class="string">&quot;Project not created: no version specified.&quot;</span>)
+					<span title="sbt.SetupResult" class="keyword">case</span> <a id="1">Some</a>(<a title="sbt.Version" id="52562">version</a>) =&gt;
+						<span title="sbt.SetupResult" class="keyword">if</span>(<a href="#46970" title="(String,sbt.Version,String)Boolean">verifyCreateProject</a>(<a href="#52540" title="java.lang.String">name</a>, <a href="#52562" title="sbt.Version">version</a>, <a href="#52550" title="java.lang.String">organization</a>))
+							<span title="sbt.SetupInfo" class="keyword">new</span> <a href="#6503" title="sbt.SetupInfo">SetupInfo</a>(<a href="#52540" title="java.lang.String">name</a>, <span id="10256"><a title="(sbt.Version)Some[sbt.Version]" id="275">Some</a></span>(<a href="#52562" title="sbt.Version">version</a>), <span id="10256"><a title="(java.lang.String)Some[java.lang.String]" id="275">Some</a></span>(<a href="#52550" title="java.lang.String">organization</a>), <span title="Boolean(true)" class="keyword">true</span>)
+						<span class="keyword">else</span>
+							<a href="#6498" title="object sbt.SetupDeclined">SetupDeclined</a>
+				}
+			}
+		}
+		<span class="keyword">else</span>
+			<a href="#6498" title="object sbt.SetupDeclined">SetupDeclined</a>
+	}
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(String,sbt.Version,String)Boolean" id="46970">verifyCreateProject</a>(<a title="String" id="52563">name</a>: <a title="String" id="1751">String</a>, <a title="sbt.Version" id="52564">version</a>: <a href="Version.scala.html#6713" title="sbt.Version">Version</a>, <a title="String" id="52565">organization</a>: <a title="String" id="1751">String</a>): <a title="Boolean" id="2060">Boolean</a> =
+		<a href="#46971" title="(String,Boolean)Boolean">confirmPrompt</a>(<span title="java.lang.String(&quot;Create new project &quot;)" class="string">&quot;Create new project &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#52563" title="String">name</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; &quot;)" class="string">&quot; &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#52564" title="sbt.Version">version</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; with organization &quot;)" class="string">&quot; with organization &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#52565" title="String">organization</a> <a title="(Any)java.lang.String" id="5683">+</a><span title="java.lang.String(&quot; ?&quot;)" class="string">&quot; ?&quot;</span>, <span title="Boolean(true)" class="keyword">true</span>)
+	
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(String,Boolean)Boolean" id="46971">confirmPrompt</a>(<a title="String" id="52435">question</a>: <a title="String" id="1751">String</a>, <a title="Boolean" id="52436">defaultYes</a>: <a title="Boolean" id="2060">Boolean</a>) =
+	{
+		<span class="keyword">val</span> <a title="java.lang.String" id="52438">choices</a> = <span title="java.lang.String" class="keyword">if</span>(<a href="#52436" title="Boolean">defaultYes</a>) <span title="java.lang.String(&quot; (Y/n) &quot;)" class="string">&quot; (Y/n) &quot;</span> <span class="keyword">else</span> <span title="java.lang.String(&quot; (y/N) &quot;)" class="string">&quot; (y/N) &quot;</span>
+		<span class="keyword">val</span> <a title="java.lang.String" id="52439">answer</a> = <a href="#46973" title="(String)java.lang.String">trim</a>(<a title="object Console" id="395">Console</a>.<a title="(String,Any*)String" id="52516">readLine</a>(<a href="#52435" title="String">question</a> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#52438" title="java.lang.String">choices</a>))
+		<span class="keyword">val</span> <a title="List[java.lang.String]" id="52440">yes</a> = <span title="java.lang.String(&quot;y&quot;)" class="string">&quot;y&quot;</span> <a href="#52532" title="(java.lang.String)List[java.lang.String]" id="6808">::</a> <span title="java.lang.String(&quot;yes&quot;)" class="string">&quot;yes&quot;</span> <a href="#52533" title="(java.lang.String)List[java.lang.String]" id="6808">::</a> (<span title="List[java.lang.String]" class="keyword">if</span>(<a href="#52436" title="Boolean">defaultYes</a>) <span id="6801"><a title="(java.lang.String*)List[java.lang.String]" id="482">List</a></span>(<span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>) <span class="keyword">else</span> <a title="object Nil" id="299">Nil</a>)
+		<a href="#52440" title="List[java.lang.String]">yes</a>.<a title="(Any)Boolean" id="7136">contains</a>(<a href="#52439" title="java.lang.String">answer</a>.<a title="()java.lang.String" id="5748">toLowerCase</a>)
+	}
+	
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(java.io.File,sbt.Logger)Option[sbt.Version]" id="46972">readVersion</a>(<a title="java.io.File" id="52560">projectDirectory</a>: <a title="java.io.File" id="3559">File</a>, <a title="sbt.Logger" id="52561">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>): <a title="Option[sbt.Version]" id="871">Option</a>[Version] =
+	{
+		<span class="keyword">val</span> <a title="java.lang.String" id="52568">version</a> = <a href="#46973" title="(String)java.lang.String">trim</a>(<a title="object Console" id="395">Console</a>.<a title="(String,Any*)String" id="52516">readLine</a>(<span title="java.lang.String(&quot;Version: &quot;)" class="string">&quot;Version: &quot;</span>))
+		<span title="Option[sbt.Version]" class="keyword">if</span>(<span id="6012"><a href="#52568" title="implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString" id="770">version</a></span>.<a title="=&gt; Boolean" id="7108">isEmpty</a>)
+			<a title="object None" id="488">None</a>
+		<span class="keyword">else</span>
+		{
+			<a href="Version.scala.html#6720" title="object sbt.Version">Version</a>.<a href="Version.scala.html#46074" title="(String)Either[String,sbt.Version]">fromString</a>(<a href="#52568" title="java.lang.String">version</a>) <span title="Option[sbt.Version]" class="keyword">match</span>
+			{
+				<span title="Option[sbt.Version]" class="keyword">case</span> <a id="1">Left</a>(<a title="String" id="52578">errorMessage</a>) =&gt;
+				{
+					<a href="#52561" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8354" title="(=&gt; String)Unit">error</a>(<span title="java.lang.String(&quot;Invalid version: &quot;)" class="string">&quot;Invalid version: &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#52578" title="String">errorMessage</a>)
+					<a href="#46972" title="(java.io.File,sbt.Logger)Option[sbt.Version]">readVersion</a>(<a href="#52560" title="java.io.File">projectDirectory</a>, <a href="#52561" title="sbt.Logger">log</a>)
+				}
+				<span title="Some[sbt.Version]" class="keyword">case</span> <a id="1">Right</a>(<a title="sbt.Version" id="52579">v</a>) =&gt; <span id="10256"><a title="(sbt.Version)Some[sbt.Version]" id="275">Some</a></span>(<a href="#52579" title="sbt.Version">v</a>)
+			}
+		}
+	}
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(String)java.lang.String" id="46973">trim</a>(<a title="String" id="52441">s</a>: <a title="String" id="1751">String</a>) = <span title="java.lang.String" class="keyword">if</span>(<a href="#52441" title="String">s</a> <a title="(AnyRef)Boolean" id="3399">==</a> <span title="Null(null)" class="keyword">null</span>) <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span> <span class="keyword">else</span> <a href="#52441" title="String">s</a>.<a title="()java.lang.String" id="5751">trim</a>
+}
+        </pre>
+    </body>
+</html>

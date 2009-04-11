@@ -1,0 +1,421 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>sbt/Project.scala</title>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* sbt -- Simple Build Tool
+ * Copyright 2008 Mark Harrah, David MacIver
+ */</span>
+<span class="keyword">package</span> sbt
+
+<span class="keyword">import</span> java.io.File
+<span class="keyword">import</span> scala.collection._
+<span class="keyword">import</span> FileUtilities._
+<span class="keyword">import</span> Project._
+
+<span class="keyword">trait</span> <a title="trait Project extends java.lang.Object with sbt.TaskManager with sbt.Dag[sbt.Project] with sbt.BasicEnvironment with ScalaObject" id="6395">Project</a> <span class="keyword">extends</span> <a href="TaskManager.scala.html#6243" title="sbt.TaskManager">TaskManager</a> <span class="keyword">with</span> <a href="Dag.scala.html#6226" title="sbt.Dag[sbt.Project]">Dag</a>[Project] <span class="keyword">with</span> <a href="Environment.scala.html#6750" title="sbt.BasicEnvironment">BasicEnvironment</a>
+{
+	<span class="comment">/** The logger for this project definition. */</span>
+	<span class="keyword">final</span> <span class="keyword">val</span> <span id="26170"><a title="sbt.Logger" id="26169">log</a></span>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a> = <a href="#26171" title="=&gt; sbt.Logger">logImpl</a>
+	<span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; sbt.Logger" id="26171">logImpl</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a> = <span title="sbt.BufferedLogger" class="keyword">new</span> <a href="Logger.scala.html#6671" title="sbt.BufferedLogger">BufferedLogger</a>(<span title="sbt.ConsoleLogger" class="keyword">new</span> <a href="Logger.scala.html#6674" title="sbt.ConsoleLogger">ConsoleLogger</a>)
+	
+	<span class="keyword">trait</span> <a title="trait ActionOption extends java.lang.Object with NotNull" id="26172">ActionOption</a> <span class="keyword">extends</span> <a title="NotNull" id="187">NotNull</a>
+	
+	<span class="comment">/** Basic project information. */</span>
+	<span class="keyword">def</span> <a title="=&gt; sbt.ProjectInfo" id="26173">info</a>: <a href="ProjectInfo.scala.html#6494" title="sbt.ProjectInfo">ProjectInfo</a>
+	<span class="comment">/** The project name. */</span>
+	<span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; String" id="26174">name</a>: <a title="String" id="1751">String</a> = <a href="#26218" title="=&gt; Project.this.Property[String]">projectName</a>.<a href="Environment.scala.html#27855" title="=&gt; String">value</a>
+	<span class="comment">/** The project version. */</span>
+	<span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; sbt.Version" id="26175">version</a>: <a href="Version.scala.html#6713" title="sbt.Version">Version</a> = <a href="#26216" title="=&gt; Project.this.Property[sbt.Version]">projectVersion</a>.<a href="Environment.scala.html#27855" title="=&gt; sbt.Version">value</a>
+	<span class="comment">/** The project organization. */</span>
+	<span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; String" id="26176">organization</a>: <a title="String" id="1751">String</a> = <a href="#26220" title="=&gt; Project.this.Property[String]">projectOrganization</a>.<a href="Environment.scala.html#27855" title="=&gt; String">value</a>
+	
+	<span class="keyword">final</span> <span class="keyword">type</span> <a title="sbt.Project" id="26177">ManagerType</a> = <a href="#6395" title="sbt.Project">Project</a>
+	<span class="keyword">final</span> <span class="keyword">type</span> <a title="sbt.Project#Task" id="26178">ManagedTask</a> = Project#<a href="TaskManager.scala.html#26166" title="sbt.Project#Task">Task</a>
+	<span class="comment">/** The tasks declared on this project. */</span>
+	<span class="keyword">def</span> <a title="=&gt; scala.collection.Map[String,Project.this.Task]" id="26179">tasks</a>: <a title="scala.collection.Map[String,Project.this.Task]" id="7363">Map</a>[String, Task]
+	<span class="comment">/** The task methods declared on this project */</span>
+	<span class="keyword">def</span> <a title="=&gt; scala.collection.Map[String,Project.this.MethodTask]" id="26180">methods</a>: <a title="scala.collection.Map[String,Project.this.MethodTask]" id="7363">Map</a>[String, MethodTask]
+	<span class="comment">/** The names of all available tasks that may be called through `act`.  These include
+	* the names of the Tasks in `tasks` and those of all dependencies.*/</span>
+	<span class="keyword">def</span> <a title="=&gt; Iterable[String]" id="26181">taskNames</a>: <a title="Iterable[String]" id="358">Iterable</a>[String] = <a href="#26187" title="=&gt; scala.collection.Map[String,sbt.Project#Task]">deepTasks</a>.<a title="=&gt; Iterator[String]" id="20507">keys</a>.<a title="=&gt; List[String]" id="20282">toList</a>
+	<span class="comment">/** The names of all available method tasks that may be called through `call`.  These
+	* only include the names of the MethodTasks in `methods` and not those of dependencies.*/</span>
+	<span class="keyword">def</span> <a title="=&gt; Iterable[String]" id="26182">methodNames</a>: <a title="Iterable[String]" id="358">Iterable</a>[String] = <a href="#26180" title="=&gt; scala.collection.Map[String,Project.this.MethodTask]">methods</a>.<a title="=&gt; Iterator[String]" id="20507">keys</a>.<a title="=&gt; List[String]" id="20282">toList</a>
+	<span class="comment">/** A description of all available method tasks in this project, but not of dependencies. */</span>
+	<span class="keyword">def</span> <a title="=&gt; String" id="26183">methodList</a>: <a title="String" id="1751">String</a> = <a href="#26185" title="(scala.collection.Map[String,sbt.Described])String">descriptionList</a>(<a href="#26180" title="=&gt; scala.collection.Map[String,Project.this.MethodTask]">methods</a>)
+	<span class="comment">/** A description of all available tasks in this project and all dependencies.  If there
+	* are different tasks with the same name, only one will be included. */</span>
+	<span class="keyword">def</span> <a title="=&gt; String" id="26184">taskList</a>: <a title="String" id="1751">String</a> = <a href="#26185" title="(scala.collection.Map[String,sbt.Described])String">descriptionList</a>(<a href="#26187" title="=&gt; scala.collection.Map[String,sbt.Project#Task]">deepTasks</a>)
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(scala.collection.Map[String,sbt.Described])String" id="26185">descriptionList</a>(<a title="scala.collection.Map[String,sbt.Described]" id="46159">described</a>: <a title="scala.collection.Map[String,sbt.Described]" id="7363">Map</a>[String, Described]): <a title="String" id="1751">String</a> =
+	{
+		<span class="keyword">val</span> <a title="StringBuilder" id="46161">buffer</a> = <a title="()StringBuilder" id="9298" class="keyword">new</a> <a title="StringBuilder" id="1339">StringBuilder</a>
+		<span class="keyword">for</span>(<span id="7256"><a href="#46168" title="(((String, sbt.Described)) =&gt; Unit)Unit" id="7250">(</a></span><span id="46169"><a title="String" id="46173">name</a></span>, <span id="46170"><a title="sbt.Described" id="46174">d</a></span>) &lt;- <a href="#46159" title="scala.collection.Map[String,sbt.Described]">described</a>)
+			<a href="#46161" title="StringBuilder">buffer</a>.<a title="(String)StringBuilder" id="9317">append</a>(<span title="java.lang.String(&quot;\011&quot;)" class="string">&quot;\t&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#46173" title="String">name</a> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#46174" title="sbt.Described">d</a>.<a href="TaskManager.scala.html#27995" title="=&gt; Option[String]">description</a>.<a title="((String) =&gt; java.lang.String)Option[java.lang.String]" id="10157">map</a>(<a title="String" id="46179">x</a> =&gt; <span title="java.lang.String(&quot;: &quot;)" class="string">&quot;: &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#46179" title="String">x</a>).<a title="(=&gt; java.lang.String)java.lang.String" id="10155">getOrElse</a>(<span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>) <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;\012&quot;)" class="string">&quot;\n&quot;</span>)
+		<a href="#46161" title="StringBuilder">buffer</a>.<a title="()String" id="9350">toString</a>
+	}
+	<span class="comment">/** Combines the method task maps of this project and all dependencies.*/</span>
+	<span class="keyword">private</span>[sbt] <span class="keyword">def</span> <a title="=&gt; scala.collection.Map[String,sbt.Project#MethodTask]" id="26186">deepMethods</a>: <a title="scala.collection.Map[String,sbt.Project#MethodTask]" id="7363">Map</a>[String, Project#MethodTask] = <a href="#26188" title="((sbt.Project) =&gt; scala.collection.Map[String,sbt.Project#MethodTask])scala.collection.Map[String,sbt.Project#MethodTask]">deep</a>(<a href="#46194" title="sbt.Project">_</a>.<a href="#26180" title="=&gt; scala.collection.Map[String,x$2.MethodTask]">methods</a>)
+	<span class="comment">/** Combines the task maps of this project and all dependencies.*/</span>
+	<span class="keyword">private</span>[sbt] <span class="keyword">def</span> <a title="=&gt; scala.collection.Map[String,sbt.Project#Task]" id="26187">deepTasks</a>: <a title="scala.collection.Map[String,sbt.Project#Task]" id="7363">Map</a>[String, Project#Task] = <a href="#26188" title="((sbt.Project) =&gt; scala.collection.Map[String,sbt.Project#Task])scala.collection.Map[String,sbt.Project#Task]">deep</a>(<a href="#46206" title="sbt.Project">_</a>.<a href="#26179" title="=&gt; scala.collection.Map[String,x$3.Task]">tasks</a>)
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="[T]((sbt.Project) =&gt; scala.collection.Map[String,T])scala.collection.Map[String,T]" id="26188">deep</a>[<a title="&gt;: Nothing &lt;: Any" id="26190">T</a>](<a title="(sbt.Project) =&gt; scala.collection.Map[String,T]" id="46189">p</a>: Project =&gt; Map[String, T]): <a title="scala.collection.Map[String,T]" id="7363">Map</a>[String, T] =
+	{
+		<span class="keyword">val</span> <a title="scala.collection.jcl.TreeMap[String,T]" id="46210">tasks</a> = <span id="6012"><a href="#46431" title="scala.collection.jcl.TreeMap[String,T]" id="770" class="keyword">new</a></span> jcl.<a title="scala.collection.jcl.TreeMap[String,T]" id="7741">TreeMap</a>[String, T]
+		<span class="keyword">for</span>(<span id="6839"><a title="((sbt.Project) =&gt; Unit)Unit" id="46434">dependentProject</a></span> &lt;- <a href="Dag.scala.html#26240" title="=&gt; List[sbt.Project]">topologicalSort</a>)
+			<a href="#46210" title="scala.collection.jcl.TreeMap[String,T]">tasks</a> <a title="(Iterator[(String, T)])Unit" id="20457">++=</a> <a href="#46189" title="(sbt.Project)scala.collection.Map[String,T]" id="7221">p</a>(<a href="#46434" title="sbt.Project">dependentProject</a>).<a title="=&gt; Iterator[(String, T)]" id="7240">elements</a>
+		<a href="#46210" title="scala.collection.jcl.TreeMap[String,T]">tasks</a>
+	}
+	<span class="comment">/** A map of names to projects for all subprojects of this project.  These are typically explicitly
+	* specified for the project and are different from those specified in the project constructor. The
+	* main use within sbt is in ParentProject.*/</span>
+	<span class="keyword">def</span> <a title="=&gt; scala.collection.Map[String,sbt.Project]" id="26191">subProjects</a>: <a title="scala.collection.Map[String,sbt.Project]" id="7363">Map</a>[String, Project] = immutable.<a title="object scala.collection.immutable.Map" id="25337">Map</a>.<a title="scala.collection.immutable.Map[String,Nothing]" id="39582">empty</a>
+	<span class="comment">/** The name of this project and the names of all subprojects/dependencies, transitively.*/</span>
+	<span class="keyword">def</span> <a title="=&gt; Iterable[String]" id="26192">projectNames</a>: <a title="Iterable[String]" id="358">Iterable</a>[String] =
+	{
+		<span class="keyword">val</span> <a title="scala.collection.mutable.HashSet[String]" id="46439">names</a> = <span title="scala.collection.mutable.HashSet[String]" class="keyword">new</span> mutable.<a title="scala.collection.mutable.HashSet[String]" id="7909">HashSet</a>[String]
+		<a href="#46439" title="scala.collection.mutable.HashSet[String]">names</a> <a title="(Iterator[String])Unit" id="21515">++=</a> <a href="#26191" title="=&gt; scala.collection.Map[String,sbt.Project]">subProjects</a>.<a title="=&gt; Iterator[String]" id="20507">keys</a>
+		<span class="keyword">for</span>(<span id="6839"><a title="((sbt.Project) =&gt; Unit)Unit" id="46443">dependentProject</a></span> &lt;- <a href="Dag.scala.html#26240" title="=&gt; List[sbt.Project]">topologicalSort</a>)
+			<a href="#46439" title="scala.collection.mutable.HashSet[String]">names</a> <a title="(Iterator[String])Unit" id="21515">++=</a> <a href="#46443" title="sbt.Project">dependentProject</a>.<a href="#26179" title="=&gt; scala.collection.Map[String,dependentProject.Task]">tasks</a>.<a title="=&gt; Iterator[String]" id="20507">keys</a>
+		<a href="#46439" title="scala.collection.mutable.HashSet[String]">names</a>.<a title="=&gt; List[String]" id="7279">toList</a>
+	}
+	
+	<span class="keyword">def</span> <a title="(String,Array[String])Option[String]" id="26193">call</a>(<a title="String" id="46445">name</a>: <a title="String" id="1751">String</a>, <a title="Array[String]" id="46446">parameters</a>: <a title="Array[String]" id="1003">Array</a>[String]): <a title="Option[String]" id="871">Option</a>[String] =
+	{
+		<a href="#26180" title="=&gt; scala.collection.Map[String,Project.this.MethodTask]">methods</a>.<a title="(String)Option[Project.this.MethodTask]" id="20500">get</a>(<a href="#46445" title="String">name</a>) <span title="Option[String]" class="keyword">match</span>
+		{
+			<span title="Option[String]" class="keyword">case</span> <a id="1">Some</a>(<a title="Project.this.MethodTask" id="46447">method</a>) =&gt;<a href="#26194" title="(sbt.Project#Task,String)Option[String]">run</a>(<a href="TaskManager.scala.html#28006" title="(Array[String])Project.this.ManagedTask">method</a>(<a href="#46446" title="Array[String]">parameters</a>), <a href="#46445" title="String">name</a>)
+			<span title="Some[java.lang.String]" class="keyword">case</span> <a title="object None" id="488">None</a> =&gt; <span id="10256"><a title="(java.lang.String)Some[java.lang.String]" id="275">Some</a></span>(<span title="java.lang.String(&quot;Method '&quot;)" class="string">&quot;Method '&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#46445" title="String">name</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;' does not exist.&quot;)" class="string">&quot;' does not exist.&quot;</span>)
+		}
+	}
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Project#Task,String)Option[String]" id="26194">run</a>(<a title="sbt.Project#Task" id="46448">task</a>: Project#<a href="TaskManager.scala.html#26166" title="sbt.Project#Task">Task</a>, <a title="String" id="46449">taskName</a>: <a title="String" id="1751">String</a>): <a title="Option[String]" id="871">Option</a>[String] =
+		impl.<a href="impl/RunTask.scala.html#46460" title="(sbt.impl.RunTask.Task,String,Boolean)List[sbt.WorkFailure[sbt.impl.RunTask.Task]]">RunTask</a>(<a href="#46448" title="sbt.Project#Task">task</a>, <a href="#46449" title="String">taskName</a>, <a href="#26208" title="=&gt; Boolean">parallelExecution</a>) <span title="Option[String]" class="keyword">match</span>
+		{
+			<span title="None.type" class="keyword">case</span> <a title="object Nil" id="299">Nil</a> =&gt; <a title="object None" id="488">None</a>
+			<span title="Some[String]" class="keyword">case</span> <a title="List[sbt.WorkFailure[sbt.impl.RunTask.Task]]" id="46855">x</a> =&gt; <span id="10256"><a title="(String)Some[String]" id="275">Some</a></span>(<span id="25932"><span id="5871"><a title="(sbt.WorkFailure[sbt.impl.RunTask.Task]*)scala.collection.immutable.Set[sbt.WorkFailure[sbt.impl.RunTask.Task]]" id="770">Set</a></span></span>(<a href="#46855" title="List[sbt.WorkFailure[sbt.impl.RunTask.Task]]">x</a>: _*).<a title="(String)String" id="7283">mkString</a>(<span title="java.lang.String(&quot;\012&quot;)" class="string">&quot;\n&quot;</span>))
+		}
+		
+	<span class="comment">/** Executes the task with the given name.  This involves executing the task for all
+	* project dependencies (transitive) and then for this project.  Not every dependency
+	* must define a task with the given name.  If this project and all dependencies
+	* do not define a task with the given name, an error is generated indicating this.*/</span>
+	<span class="keyword">def</span> <a title="(String)Option[String]" id="26195">act</a>(<a title="String" id="46859">name</a>: <a title="String" id="1751">String</a>): <a title="Option[String]" id="871">Option</a>[String] =
+	{
+		<span class="keyword">val</span> <a title="List[sbt.Project]" id="46860">ordered</a> = <a href="Dag.scala.html#26240" title="=&gt; List[sbt.Project]">topologicalSort</a>
+		<span class="keyword">val</span> <a title="List[sbt.Project#Task]" id="46861">definedTasks</a> = <a href="#46860" title="List[sbt.Project]">ordered</a>.<a title="((sbt.Project) =&gt; Iterable[sbt.Project#Task])List[sbt.Project#Task]" id="6856">flatMap</a>(<a href="#46865" title="sbt.Project">_</a>.<a href="#26179" title="=&gt; scala.collection.Map[String,x$4.Task]">tasks</a>.<a title="(String)Option[x$4.Task]" id="20500">get</a>(<a href="#46859" title="String">name</a>).<a title="=&gt; List[x$4.Task]" id="10166">toList</a>)
+		<span class="keyword">def</span> <a title="(String)Project.this.Task" id="46862">virtualTask</a>(<a title="String" id="46869">name</a>: <a title="String" id="1751">String</a>): <a href="TaskManager.scala.html#26166" title="Project.this.Task">Task</a> = <span title="Project.this.Task" class="keyword">new</span> <a href="TaskManager.scala.html#26166" title="Project.this.Task">Task</a>(<a title="object None" id="488">None</a>, <a href="#46861" title="List[sbt.Project#Task]">definedTasks</a>.<a title="((sbt.Project#Task) =&gt; Boolean)List[sbt.Project#Task]" id="6840">filter</a>(<a title="=&gt; Boolean" id="2637">!</a><a href="#46871" title="sbt.Project#Task">_</a>.<a href="TaskManager.scala.html#28022" title="=&gt; Boolean">interactive</a>), <span title="Boolean(false)" class="keyword">false</span>, <a title="object None" id="488">None</a>)
+
+		<span title="Option[String]" class="keyword">if</span>(<a href="#46861" title="List[sbt.Project#Task]">definedTasks</a>.<a title="=&gt; Boolean" id="7108">isEmpty</a>)
+			<span id="10256"><a title="(java.lang.String)Some[java.lang.String]" id="275">Some</a></span>(<span title="java.lang.String(&quot;Action '&quot;)" class="string">&quot;Action '&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#46859" title="String">name</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;' does not exist.&quot;)" class="string">&quot;' does not exist.&quot;</span>)
+		<span class="keyword">else</span>
+		{
+			<a href="#26179" title="=&gt; scala.collection.Map[String,Project.this.Task]">tasks</a>.<a title="(String)Option[Project.this.Task]" id="20500">get</a>(<a href="#46859" title="String">name</a>) <span title="Option[String]" class="keyword">match</span>
+			{
+				<span title="Option[String]" class="keyword">case</span> <a title="object None" id="488">None</a> =&gt;
+					<span class="keyword">val</span> <a title="Project.this.Task" id="46873">virtual</a> = <a href="#46862" title="(String)Project.this.Task">virtualTask</a>(<a href="#46859" title="String">name</a>)
+					<span title="Option[String]" class="keyword">if</span>(<a href="#46873" title="Project.this.Task">virtual</a>.<a href="TaskManager.scala.html#28020" title="=&gt; List[Project.this.ManagedTask]">dependencies</a>.<a title="=&gt; Int" id="7107">size</a> <a title="(Int)Boolean" id="3031">==</a> <a href="#46861" title="List[sbt.Project#Task]">definedTasks</a>.<a title="=&gt; Int" id="7107">size</a>)
+						<a href="#26194" title="(sbt.Project#Task,String)Option[String]">run</a>(<a href="#46873" title="Project.this.Task">virtual</a>, <a href="#46859" title="String">name</a>)
+					<span class="keyword">else</span>
+					{
+						<span id="10256"><a title="(java.lang.String)Some[java.lang.String]" id="275">Some</a></span>(<span title="java.lang.String(&quot;Cannot run interactive action '&quot;)" class="string">&quot;Cannot run interactive action '&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#46859" title="String">name</a> <a title="(Any)java.lang.String" id="5683">+</a>
+							<span title="java.lang.String(&quot;' defined on multiple subprojects (change to the desired project with 'project &lt;name&gt;').&quot;)" class="string">&quot;' defined on multiple subprojects (change to the desired project with 'project &lt;name&gt;').&quot;</span>)
+					}
+				<span title="Option[String]" class="keyword">case</span> <a id="1">Some</a>(<a title="Project.this.Task" id="46877">task</a>) =&gt; <a href="#26194" title="(sbt.Project#Task,String)Option[String]">run</a>(<a href="#46877" title="Project.this.Task">task</a>, <a href="#46859" title="String">name</a>)
+			}
+		}
+	}
+	
+	<span class="comment">/** Logs the list of projects at the debug level.*/</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(Iterable[sbt.Project])Unit" id="26196">showBuildOrder</a>(<a title="Iterable[sbt.Project]" id="46878">order</a>: <a title="Iterable[sbt.Project]" id="358">Iterable</a>[Project])
+	{
+		<a href="#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8351" title="(=&gt; String)Unit">debug</a>(<span title="java.lang.String(&quot;Project build order:&quot;)" class="string">&quot;Project build order:&quot;</span>)
+		<a href="#46878" title="Iterable[sbt.Project]">order</a>.<a title="((sbt.Project) =&gt; Unit)Unit" id="7256">foreach</a>(<a title="sbt.Project" id="46880">x</a> =&gt; <a href="#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8351" title="(=&gt; String)Unit">debug</a>(<span title="java.lang.String(&quot;    &quot;)" class="string">&quot;    &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#46880" title="sbt.Project">x</a>.<a href="#26174" title="=&gt; String">name</a>) )
+		<a href="#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8351" title="(=&gt; String)Unit">debug</a>(<span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+	}
+	
+	<span class="comment">/** Converts a String to a path relative to the project directory of this project. */</span>
+	<span class="keyword">implicit</span> <span class="keyword">def</span> <a title="implicit sbt.Project.path : (String)sbt.Path" id="26197">path</a>(<a title="String" id="27219">component</a>: <a title="String" id="1751">String</a>): <a href="Path.scala.html#6697" title="sbt.Path">Path</a> = <a href="#26173" title="=&gt; sbt.ProjectInfo">info</a>.<a href="ProjectInfo.scala.html#27931" title="=&gt; sbt.ProjectDirectory">projectPath</a> <a href="Path.scala.html#9523" title="(String)sbt.Path">/</a> <a href="#27219" title="String">component</a>
+	<span class="comment">/** Converts a String to a simple name filter.  * has the special meaning: zero or more of any character */</span>
+	<span class="keyword">implicit</span> <span class="keyword">def</span> <a title="implicit sbt.Project.filter : (String)sbt.NameFilter" id="26198">filter</a>(<a title="String" id="27185">simplePattern</a>: <a title="String" id="1751">String</a>): <a href="NameFilter.scala.html#6525" title="sbt.NameFilter">NameFilter</a> = <a href="NameFilter.scala.html#33382" title="(String)sbt.NameFilter">GlobFilter</a>(<a href="#27185" title="String">simplePattern</a>)
+	
+	<span class="comment">/** Loads the project at the given path and declares the project to have the given
+	* dependencies.  This method will configure the project according to the
+	* project/ directory in the directory denoted by path.*/</span>
+	<span class="keyword">def</span> <a title="(sbt.Path,sbt.Project*)sbt.Project" id="26199">project</a>(<a title="sbt.Path" id="46882">path</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>, <a title="sbt.Project*" id="46883">deps</a>: <a title="sbt.Project*" id="2631">Project</a>*): <a href="#6395" title="sbt.Project">Project</a> = <a href="#26215" title="(sbt.LoadResult,sbt.Path)sbt.Project">getProject</a>(<a href="#6402" title="object sbt.Project">Project</a>.<a href="#27204" title="(sbt.Path,Iterable[sbt.Project],Option[sbt.Project],sbt.Logger)sbt.LoadResult">loadProject</a>(<a href="#46882" title="sbt.Path">path</a>, <a href="#46883" title="sbt.Project*">deps</a>, <span id="10256"><a title="(sbt.Project)Some[sbt.Project]" id="275">Some</a></span>(<a href="#6395" title="sbt.Project" class="keyword">this</a>), <a href="#26169" title="=&gt; sbt.Logger">log</a>), <a href="#46882" title="sbt.Path">path</a>)
+	
+	<span class="comment">/** Loads the project at the given path using the given name and inheriting this project's version.
+	* The builder class is the default builder class, sbt.DefaultProject. The loaded project is declared
+	* to have the given dependencies. Any project/build/ directory for the project is ignored.*/</span>
+	<span class="keyword">def</span> <a title="(sbt.Path,String,sbt.Project*)sbt.Project" id="26200">project</a>(<a title="sbt.Path" id="46906">path</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>, <a title="String" id="46907">name</a>: <a title="String" id="1751">String</a>, <a title="sbt.Project*" id="46908">deps</a>: <a title="sbt.Project*" id="2631">Project</a>*): <a href="#6395" title="sbt.Project">Project</a> = <a href="#26201" title="(sbt.Path,String,Class[?0],sbt.Project*)?0">project</a>(<a href="#46906" title="sbt.Path">path</a>, <a href="#46907" title="String">name</a>, <a href="#6402" title="object sbt.Project">Project</a>.<a href="#27195" title="=&gt; java.lang.Class[_ &lt;: sbt.Project]">DefaultBuilderClass</a>, <a href="#46908" title="sbt.Project*">deps</a>: _*)
+	
+	<span class="comment">/** Loads the project at the given path using the given name and inheriting it's version from this project.
+	* The Project implementation used is given by builderClass.  The dependencies are declared to be
+	* deps. Any project/build/ directory for the project is ignored.*/</span>
+	<span class="keyword">def</span> <a title="[P &lt;: sbt.Project](sbt.Path,String,Class[P],sbt.Project*)P" id="26201">project</a>[<a title="&gt;: Nothing &lt;: sbt.Project" id="26203">P</a> &lt;: Project](<a title="sbt.Path" id="46915">path</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>, <a title="String" id="46916">name</a>: <a title="String" id="1751">String</a>, <a title="Class[P]" id="46917">builderClass</a>: <a title="Class[P]" id="1562">Class</a>[P], <a title="sbt.Project*" id="46918">deps</a>: <a title="sbt.Project*" id="2631">Project</a>*): <a href="#26203" title="P">P</a> =
+	{
+		<span id="5881"><a title="(Boolean,Any)Unit" id="770">require</a></span>(<a href="#46917" title="Class[P]">builderClass</a> <a title="(AnyRef)Boolean" id="5674">!=</a> <a href="#6395" title="Project.this.type" class="keyword">this</a>.<a title="()java.lang.Class[_ &lt;: java.lang.Object]" id="3401">getClass</a>, <span title="java.lang.String(&quot;Cannot recursively construct projects of same type: &quot;)" class="string">&quot;Cannot recursively construct projects of same type: &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#46917" title="Class[P]">builderClass</a>.<a title="()java.lang.String" id="3838">getName</a>)
+		<a href="#26204" title="(sbt.Path,String,(sbt.ProjectInfo) =&gt; P,sbt.Project*)P">project</a>(<a href="#46915" title="sbt.Path">path</a>, <a href="#46916" title="String">name</a>, <a title="sbt.ProjectInfo" id="46955">info</a> =&gt; <a href="#6402" title="object sbt.Project">Project</a>.<a href="#27208" title="(sbt.ProjectInfo,Class[P])P">constructProject</a>(<a href="#46955" title="sbt.ProjectInfo">info</a>, <a href="#46917" title="Class[P]">builderClass</a>), <a href="#46918" title="sbt.Project*">deps</a>: _*)
+	}
+	<span class="comment">/** Loads the project at the given path using the given name and inheriting it's version from this project.
+	* The construct function is used to obtain the Project instance. Any project/build/ directory for the project
+	* is ignored.  The project is declared to have the dependencies given by deps.*/</span>
+	<span class="keyword">def</span> <a title="[P &lt;: sbt.Project](sbt.Path,String,(sbt.ProjectInfo) =&gt; P,sbt.Project*)P" id="26204">project</a>[<a title="&gt;: Nothing &lt;: sbt.Project" id="26206">P</a> &lt;: Project](<a title="sbt.Path" id="46910">path</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>, <a title="String" id="46911">name</a>: <a title="String" id="1751">String</a>, <a title="(sbt.ProjectInfo) =&gt; P" id="46912">construct</a>: ProjectInfo =&gt; P, <a title="sbt.Project*" id="46913">deps</a>: <a title="sbt.Project*" id="2631">Project</a>*): <a href="#26206" title="P">P</a> =
+		<a href="#27211" title="(P,Option[sbt.SetupInfo],sbt.Logger)P">initialize</a>(<a href="#46912" title="(sbt.ProjectInfo)P" id="7221">construct</a>(<a href="ProjectInfo.scala.html#46974" title="(java.io.File,Iterable[sbt.Project],Option[sbt.Project])sbt.ProjectInfo">ProjectInfo</a>(<a href="#46910" title="sbt.Path">path</a>.<a href="Path.scala.html#9529" title="=&gt; java.io.File">asFile</a>, <a href="#46913" title="sbt.Project*">deps</a>, <span id="10256"><a title="(sbt.Project)Some[sbt.Project]" id="275">Some</a></span>(<a href="#6395" title="sbt.Project" class="keyword">this</a>))), <span id="10256"><a title="(sbt.SetupInfo)Some[sbt.SetupInfo]" id="275">Some</a></span>(<span title="sbt.SetupInfo" class="keyword">new</span> <a href="ProjectInfo.scala.html#6503" title="sbt.SetupInfo">SetupInfo</a>(<a href="#46911" title="String">name</a>, <a title="object None" id="488">None</a>, <a title="object None" id="488">None</a>, <span title="Boolean(false)" class="keyword">false</span>)), <a href="#26169" title="=&gt; sbt.Logger">log</a>)
+	
+	<span class="comment">/** Initializes the project directories when a user has requested that sbt create a new project.*/</span>
+	<span class="keyword">def</span> <a title="()Unit" id="26207">initializeDirectories</a>() <span title="Unit">{</span>}
+	<span class="comment">/** True if projects should be run in parallel, false if they should run sequentially.
+	*  This only has an effect for multi-projects.*/</span>
+	<span class="keyword">def</span> <a title="=&gt; Boolean" id="26208">parallelExecution</a> = <span title="Boolean(false)" class="keyword">false</span>
+	
+	<span class="comment">/** True if a project and its dependencies should be checked to ensure that their
+	* output directories are not the same, false if they should not be checked. */</span>
+	<span class="keyword">def</span> <a title="=&gt; Boolean" id="26209">shouldCheckOutputDirectories</a> = <span title="Boolean(true)" class="keyword">true</span>
+	
+	<span class="comment">/** The list of directories to which this project writes.  This is used to verify that multiple
+	* projects have not been defined with the same output directories. */</span>
+	<span class="keyword">def</span> <a title="=&gt; Iterable[sbt.Path]" id="26210">outputDirectories</a>: <a title="Iterable[sbt.Path]" id="358">Iterable</a>[Path] = <a href="#26213" title="=&gt; sbt.Path">outputPath</a> <a href="#47000" title="(sbt.Path)List[sbt.Path]" id="6808">::</a> <a title="object Nil" id="299">Nil</a>
+	
+	<span class="comment">/** The path to the file that provides persistence for properties.*/</span>
+	<span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; sbt.Path" id="26211">envBackingPath</a> = <a href="#26173" title="=&gt; sbt.ProjectInfo">info</a>.<a href="ProjectInfo.scala.html#27933" title="=&gt; sbt.Path">builderPath</a> <a href="Path.scala.html#9523" title="(String)sbt.Path">/</a> <a href="#6402" title="object sbt.Project">Project</a>.<a href="#27191" title="=&gt; java.lang.String">DefaultEnvBackingName</a>
+	<span class="comment">/** The path to the file that provides persistence for history. */</span>
+	<span class="keyword">def</span> <a title="=&gt; Some[sbt.Path]" id="26212">historyPath</a> = <span id="10256"><a title="(sbt.Path)Some[sbt.Path]" id="275">Some</a></span>(<a href="#26213" title="=&gt; sbt.Path">outputPath</a> <a href="Path.scala.html#9523" title="(String)sbt.Path">/</a> <span title="java.lang.String(&quot;.history&quot;)" class="string">&quot;.history&quot;</span>)
+	<span class="keyword">def</span> <a title="=&gt; sbt.Path" id="26213">outputPath</a> = <a href="#26197" title="implicit sbt.Project.path : (String)sbt.Path">path</a>(<a href="#26214" title="=&gt; java.lang.String">outputDirectoryName</a>)
+	<span class="keyword">def</span> <a title="=&gt; java.lang.String" id="26214">outputDirectoryName</a> = <a href="#27189" title="=&gt; java.lang.String">DefaultOutputDirectoryName</a>
+	
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.LoadResult,sbt.Path)sbt.Project" id="26215">getProject</a>(<a title="sbt.LoadResult" id="46884">result</a>: <a href="#6396" title="sbt.LoadResult">LoadResult</a>, <a title="sbt.Path" id="46885">path</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>): <a href="#6395" title="sbt.Project">Project</a> =
+		<a href="#46884" title="sbt.LoadResult">result</a> <span title="sbt.Project" class="keyword">match</span>
+		{
+			<span title="Nothing" class="keyword">case</span> <a href="#6399" title="object sbt.LoadSetupDeclined">LoadSetupDeclined</a> =&gt; <a title="object Predef" id="770">Predef</a>.<a title="(String)Nothing" id="5873">error</a>(<span title="java.lang.String(&quot;No project exists at path &quot;)" class="string">&quot;No project exists at path &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#46885" title="sbt.Path">path</a>)
+			<span title="Nothing" class="keyword">case</span> <a title="sbt.LoadSetupError" id="47012">lse</a>: <a href="#6401" title="sbt.LoadSetupError">LoadSetupError</a> =&gt; <a title="object Predef" id="770">Predef</a>.<a title="(String)Nothing" id="5873">error</a>(<span title="java.lang.String(&quot;Error setting up new project at path &quot;)" class="string">&quot;Error setting up new project at path &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="Path.scala.html#6701" title="object sbt.Path">Path</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; : &quot;)" class="string">&quot; : &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#47012" title="sbt.LoadSetupError">lse</a>.<a href="#47014" title="=&gt; String">message</a>)
+			<span title="Nothing" class="keyword">case</span> <a title="sbt.LoadError" id="47017">err</a>: <a href="#6398" title="sbt.LoadError">LoadError</a> =&gt; <a title="object Predef" id="770">Predef</a>.<a title="(String)Nothing" id="5873">error</a>(<span title="java.lang.String(&quot;Error loading project at path &quot;)" class="string">&quot;Error loading project at path &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#46885" title="sbt.Path">path</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; : &quot;)" class="string">&quot; : &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#47017" title="sbt.LoadError">err</a>.<a href="#47019" title="=&gt; String">message</a>)
+			<span title="sbt.Project" class="keyword">case</span> <a title="sbt.LoadSuccess" id="47022">success</a>: <a href="#6397" title="sbt.LoadSuccess">LoadSuccess</a> =&gt; <a href="#47022" title="sbt.LoadSuccess">success</a>.<a href="#47024" title="=&gt; sbt.Project">project</a>
+		}
+	
+	<span class="comment">/** The property for the project's version. */</span>
+	<span class="keyword">final</span> <span class="keyword">val</span> <span id="26217"><a title="Project.this.Property[sbt.Version]" id="26216">projectVersion</a></span> = <span id="27800"><a href="Environment.scala.html#26286" title="(implicit scala.reflect.Manifest[sbt.Version],sbt.Format[sbt.Version])Project.this.Property[sbt.Version]" id="2602">property</a></span>[<a href="Version.scala.html#6713" title="sbt.Version">Version</a>]
+	<span class="comment">/** The property for the project's name. */</span>
+	<span class="keyword">final</span> <span class="keyword">val</span> <span id="26219"><a title="Project.this.Property[String]" id="26218">projectName</a></span> = <span id="27800"><a href="Environment.scala.html#26259" title="(sbt.Format[String])(implicit scala.reflect.Manifest[String])Project.this.Property[String]" id="2602">propertyLocalF</a></span>[<a title="String" id="1751">String</a>](<a href="Environment.scala.html#26318" title="=&gt; sbt.Format[String]">NonEmptyStringFormat</a>)
+	<span class="comment">/** The property for the project's organization.  Defaults to the parent project's organization or the project name if there is no parent. */</span>
+	<span class="keyword">final</span> <span class="keyword">val</span> <span id="26221"><a title="Project.this.Property[String]" id="26220">projectOrganization</a></span> = <span id="27800"><a href="Environment.scala.html#26295" title="(=&gt; String,Boolean)(implicit scala.reflect.Manifest[String],sbt.Format[String])Project.this.Property[String]" id="2602">propertyOptional</a></span>[<a title="String" id="1751">String</a>](<a href="#26174" title="=&gt; String">name</a>, <span title="Boolean(true)" class="keyword">true</span>)
+	<span class="keyword">final</span> <span class="keyword">val</span> <span id="26223"><a title="Project.this.Property[String]" id="26222">scalaVersion</a></span> = <span id="27800"><a href="Environment.scala.html#26292" title="(=&gt; String)(implicit scala.reflect.Manifest[String],sbt.Format[String])Project.this.Property[String]" id="2602">propertyOptional</a></span>[<a title="String" id="1751">String</a>](<span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+	<span class="keyword">final</span> <span class="keyword">val</span> <span id="26225"><a title="Project.this.Property[String]" id="26224">sbtVersion</a></span> = <span id="27800"><a href="Environment.scala.html#26292" title="(=&gt; String)(implicit scala.reflect.Manifest[String],sbt.Format[String])Project.this.Property[String]" id="2602">propertyOptional</a></span>[<a title="String" id="1751">String</a>](<span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+	<span class="keyword">final</span> <span class="keyword">val</span> <span id="26227"><a title="Project.this.Property[Boolean]" id="26226">projectInitialize</a></span> = <span id="27800"><a href="Environment.scala.html#26292" title="(=&gt; Boolean)(implicit scala.reflect.Manifest[Boolean],sbt.Format[Boolean])Project.this.Property[Boolean]" id="2602">propertyOptional</a></span>[<a title="Boolean" id="2060">Boolean</a>](<span title="Boolean(false)" class="keyword">false</span>)
+	
+	<span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Option[sbt.Project]" id="26228">parentEnvironment</a> = <a href="#26173" title="=&gt; sbt.ProjectInfo">info</a>.<a href="ProjectInfo.scala.html#27928" title="=&gt; Option[sbt.Project]">parent</a>
+	
+	<span class="comment">// .* included because svn doesn't mark .svn hidden</span>
+	<span class="keyword">def</span> <a title="=&gt; sbt.FileFilter" id="26229">defaultExcludes</a>: <a href="NameFilter.scala.html#6524" title="sbt.FileFilter">FileFilter</a> = <a href="#26198" title="implicit sbt.Project.filter : (String)sbt.NameFilter" class="string">&quot;.*&quot;</a> <a href="NameFilter.scala.html#27502" title="(sbt.FileFilter)sbt.FileFilter">||</a> <a href="NameFilter.scala.html#6526" title="object sbt.HiddenFileFilter">HiddenFileFilter</a>
+	<span class="comment">/** Short for parent.descendentsExcept(include, defaultExcludes)*/</span>
+	<span class="keyword">def</span> <a title="(sbt.PathFinder,sbt.FileFilter)sbt.PathFinder" id="26230">descendents</a>(<a title="sbt.PathFinder" id="27494">parent</a>: <a href="Path.scala.html#6703" title="sbt.PathFinder">PathFinder</a>, <a title="sbt.FileFilter" id="27495">include</a>: <a href="NameFilter.scala.html#6524" title="sbt.FileFilter">FileFilter</a>) = <a href="#27494" title="sbt.PathFinder">parent</a>.<a href="Path.scala.html#9517" title="(sbt.FileFilter,sbt.FileFilter)sbt.PathFinder">descendentsExcept</a>(<a href="#27495" title="sbt.FileFilter">include</a>, <a href="#26229" title="=&gt; sbt.FileFilter">defaultExcludes</a>)
+	<span class="keyword">override</span> <span class="keyword">def</span> <a title="()java.lang.String" id="26231">toString</a> = <span title="java.lang.String(&quot;Project &quot;)" class="string">&quot;Project &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#26218" title="=&gt; Project.this.Property[String]">projectName</a>.<a href="Environment.scala.html#27856" title="=&gt; Option[String]">get</a>.<a title="(=&gt; String)String" id="10155">getOrElse</a>(<span title="java.lang.String(&quot;at &quot;)" class="string">&quot;at &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="Environment.scala.html#26272" title="=&gt; java.lang.String">environmentLabel</a>)
+	
+	<span class="keyword">def</span> <a title="=&gt; java.lang.String" id="26232">normalizedName</a> = <a href="#26174" title="=&gt; String">name</a>.<a title="()java.lang.String" id="5748">toLowerCase</a>.<a title="(java.lang.String,java.lang.String)java.lang.String" id="5743">replaceAll</a>(<span title="java.lang.String(&quot;\s+&quot;)" class="string">&quot;&quot;&quot;\s+&quot;&quot;&quot;</span>, <span title="java.lang.String(&quot;-&quot;)" class="string">&quot;-&quot;</span>)
+}
+<span class="keyword">private</span>[sbt] <span class="keyword">sealed</span> <span class="keyword">trait</span> <a title="trait LoadResult extends java.lang.Object with NotNull" id="6396">LoadResult</a> <span class="keyword">extends</span> <a title="NotNull" id="187">NotNull</a>
+<span class="keyword">private</span>[sbt] <span class="keyword">final</span> <span class="keyword">class</span> <a title="class LoadSuccess extends java.lang.Object with sbt.LoadResult with ScalaObject" id="6397">LoadSuccess</a>(<span class="keyword">val</span> <span id="47025"><span id="47024"><a title="sbt.Project" id="47047">project</a></span></span>: <a href="#6395" title="sbt.Project">Project</a>) <span class="keyword">extends</span> <a href="#6396" title="sbt.LoadResult">LoadResult</a>
+<span class="keyword">private</span>[sbt] <span class="keyword">final</span> <span class="keyword">class</span> <a title="class LoadError extends java.lang.Object with sbt.LoadResult with ScalaObject" id="6398">LoadError</a>(<span class="keyword">val</span> <span id="47020"><span id="47019"><a title="String" id="47050">message</a></span></span>: <a title="String" id="1751">String</a>) <span class="keyword">extends</span> <a href="#6396" title="sbt.LoadResult">LoadResult</a>
+<span class="keyword">private</span>[sbt] <span class="keyword">final</span> <span class="keyword">object</span> <a title="object sbt.LoadSetupDeclined" id="6399">LoadSetupDeclined</a> <span class="keyword">extends</span> <a href="#6396" title="sbt.LoadResult">LoadResult</a>
+<span class="keyword">private</span>[sbt] <span class="keyword">final</span> <span class="keyword">class</span> <a title="class LoadSetupError extends java.lang.Object with sbt.LoadResult with ScalaObject" id="6401">LoadSetupError</a>(<span class="keyword">val</span> <span id="47015"><span id="47014"><a title="String" id="47054">message</a></span></span>: <a title="String" id="1751">String</a>) <span class="keyword">extends</span> <a href="#6396" title="sbt.LoadResult">LoadResult</a>
+
+<span class="keyword">object</span> <a title="object sbt.Project" id="6402">Project</a>
+{
+	<span class="keyword">val</span> <span id="27188"><a title="java.lang.String" id="27187">BootDirectoryName</a></span> = <span title="java.lang.String(&quot;boot&quot;)" class="string">&quot;boot&quot;</span>
+	<span class="keyword">val</span> <span id="27190"><a title="java.lang.String" id="27189">DefaultOutputDirectoryName</a></span> = <span title="java.lang.String(&quot;target&quot;)" class="string">&quot;target&quot;</span>
+	<span class="keyword">val</span> <span id="27192"><a title="java.lang.String" id="27191">DefaultEnvBackingName</a></span> = <span title="java.lang.String(&quot;build.properties&quot;)" class="string">&quot;build.properties&quot;</span>
+	<span class="keyword">val</span> <span id="27194"><a title="java.lang.String" id="27193">DefaultBuilderClassName</a></span> = <span title="java.lang.String(&quot;sbt.DefaultProject&quot;)" class="string">&quot;sbt.DefaultProject&quot;</span>
+	<span class="keyword">val</span> <span id="27196"><a title="java.lang.Class[_ &lt;: sbt.Project]" id="27195">DefaultBuilderClass</a></span> = <a title="object java.lang.Class" id="1563">Class</a>.<a title="(java.lang.String)java.lang.Class[_]" id="3823">forName</a>(<a href="#27193" title="=&gt; java.lang.String">DefaultBuilderClassName</a>).<a title="(java.lang.Class[sbt.Project])java.lang.Class[_ &lt;: sbt.Project]" id="5619">asSubclass</a>(<span title="java.lang.Class[sbt.Project]">classOf</span>[Project])
+	
+	<span class="comment">/** The name of the directory for project definitions.*/</span>
+	<span class="keyword">val</span> <span id="27198"><a title="java.lang.String" id="27197">BuilderProjectDirectoryName</a></span> = <span title="java.lang.String(&quot;build&quot;)" class="string">&quot;build&quot;</span>
+	<span class="comment">/** The name of the class that all projects must inherit from.*/</span>
+	<span class="keyword">val</span> <span id="27200"><a title="java.lang.String" id="27199">ProjectClassName</a></span> = <span title="java.lang.Class[sbt.Project]">classOf</span>[Project].<a title="()java.lang.String" id="3838">getName</a>
+	
+	<span class="comment">/** The logger that should be used before the root project definition is loaded.*/</span>
+	<span class="keyword">private</span>[sbt] <span class="keyword">def</span> <a title="=&gt; sbt.ConsoleLogger" id="27201">bootLogger</a> =
+	{
+		<span class="keyword">val</span> <a title="sbt.ConsoleLogger" id="47059">log</a> = <span title="sbt.ConsoleLogger" class="keyword">new</span> <a href="Logger.scala.html#6674" title="sbt.ConsoleLogger">ConsoleLogger</a>
+		<a href="#47059" title="sbt.ConsoleLogger">log</a>.<a href="Logger.scala.html#46132" title="(sbt.Level.Value)Unit">setLevel</a>(<a href="Logger.scala.html#6675" title="object sbt.Level">Level</a>.<a href="Logger.scala.html#20852" title="=&gt; sbt.Level.Value">Debug</a>)
+		<a href="#47059" title="sbt.ConsoleLogger">log</a>.<a href="Logger.scala.html#46133" title="(Boolean)Unit">enableTrace</a>(<span title="Boolean(true)" class="keyword">true</span>)
+		<a href="#47059" title="sbt.ConsoleLogger">log</a>
+	}
+	
+	<span class="comment">/** Loads the project in the current working directory.*/</span>
+	<span class="keyword">private</span>[sbt] <span class="keyword">def</span> <a title="=&gt; sbt.LoadResult" id="27202">loadProject</a>: <a href="#6396" title="sbt.LoadResult">LoadResult</a> = <a href="#27203" title="(sbt.Logger)sbt.LoadResult">loadProject</a>(<a href="#27201" title="=&gt; sbt.ConsoleLogger">bootLogger</a>)
+	<span class="comment">/** Loads the project in the current working directory.*/</span>
+	<span class="keyword">private</span>[sbt] <span class="keyword">def</span> <a title="(sbt.Logger)sbt.LoadResult" id="27203">loadProject</a>(<a title="sbt.Logger" id="46898">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>): <a href="#6396" title="sbt.LoadResult">LoadResult</a> = <a href="#27216" title="(sbt.LoadResult)sbt.LoadResult">checkOutputDirectories</a>(<a href="#27205" title="(java.io.File,Iterable[sbt.Project],Option[sbt.Project],sbt.Logger)sbt.LoadResult">loadProject</a>(<span title="java.io.File" class="keyword">new</span> <a title="java.io.File" id="3559">File</a>(<span title="java.lang.String(&quot;.&quot;)" class="string">&quot;.&quot;</span>), <a title="object Nil" id="299">Nil</a>, <a title="object None" id="488">None</a>, <a href="#46898" title="sbt.Logger">log</a>))
+	<span class="comment">/** Loads the project in the directory given by 'path' and with the given dependencies.*/</span>
+	<span class="keyword">private</span>[sbt] <span class="keyword">def</span> <a title="(sbt.Path,Iterable[sbt.Project],Option[sbt.Project],sbt.Logger)sbt.LoadResult" id="27204">loadProject</a>(<a title="sbt.Path" id="46894">path</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>, <a title="Iterable[sbt.Project]" id="46895">deps</a>: <a title="Iterable[sbt.Project]" id="358">Iterable</a>[Project], <a title="Option[sbt.Project]" id="46896">parent</a>: <a title="Option[sbt.Project]" id="871">Option</a>[Project], <a title="sbt.Logger" id="46897">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>): <a href="#6396" title="sbt.LoadResult">LoadResult</a> =
+		<a href="#27205" title="(java.io.File,Iterable[sbt.Project],Option[sbt.Project],sbt.Logger)sbt.LoadResult">loadProject</a>(<a href="#46894" title="sbt.Path">path</a>.<a href="Path.scala.html#9529" title="=&gt; java.io.File">asFile</a>, <a href="#46895" title="Iterable[sbt.Project]">deps</a>, <a href="#46896" title="Option[sbt.Project]">parent</a>, <a href="#46897" title="sbt.Logger">log</a>)
+	<span class="comment">/** Loads the project in the directory given by 'projectDirectory' and with the given dependencies.*/</span>
+	<span class="keyword">private</span>[sbt] <span class="keyword">def</span> <a title="(java.io.File,Iterable[sbt.Project],Option[sbt.Project],sbt.Logger)sbt.LoadResult" id="27205">loadProject</a>(<a title="java.io.File" id="46890">projectDirectory</a>: <a title="java.io.File" id="3559">File</a>, <a title="Iterable[sbt.Project]" id="46891">deps</a>: <a title="Iterable[sbt.Project]" id="358">Iterable</a>[Project], <a title="Option[sbt.Project]" id="46892">parent</a>: <a title="Option[sbt.Project]" id="871">Option</a>[Project], <a title="sbt.Logger" id="46893">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>): <a href="#6396" title="sbt.LoadResult">LoadResult</a> =
+	{
+		<span class="keyword">val</span> <a title="sbt.ProjectInfo" id="47080">info</a> = <a href="ProjectInfo.scala.html#46974" title="(java.io.File,Iterable[sbt.Project],Option[sbt.Project])sbt.ProjectInfo">ProjectInfo</a>(<a href="#46890" title="java.io.File">projectDirectory</a>, <a href="#46891" title="Iterable[sbt.Project]">deps</a>, <a href="#46892" title="Option[sbt.Project]">parent</a>)
+		<a href="ProjectInfo.scala.html#6495" title="object sbt.ProjectInfo">ProjectInfo</a>.<a href="ProjectInfo.scala.html#46968" title="(sbt.ProjectInfo,sbt.Logger)sbt.SetupResult">setup</a>(<a href="#47080" title="sbt.ProjectInfo">info</a>, <a href="#46893" title="sbt.Logger">log</a>) <span title="sbt.LoadResult" class="keyword">match</span>
+		{
+			<span title="sbt.LoadSetupError" class="keyword">case</span> <a title="sbt.SetupError" id="47083">err</a>: <a href="ProjectInfo.scala.html#6500" title="sbt.SetupError">SetupError</a> =&gt; <span title="sbt.LoadSetupError" class="keyword">new</span> <a href="#6401" title="sbt.LoadSetupError">LoadSetupError</a>(<a href="#47083" title="sbt.SetupError">err</a>.<a href="ProjectInfo.scala.html#47085" title="=&gt; String">message</a>)
+			<span title="sbt.LoadSetupDeclined.type" class="keyword">case</span> <a href="ProjectInfo.scala.html#6498" title="object sbt.SetupDeclined">SetupDeclined</a> =&gt; <a href="#6399" title="object sbt.LoadSetupDeclined">LoadSetupDeclined</a>
+			<span title="sbt.LoadResult" class="keyword">case</span> <a href="ProjectInfo.scala.html#6501" title="object sbt.AlreadySetup">AlreadySetup</a> =&gt; <a href="#27206" title="(sbt.ProjectInfo,Option[sbt.SetupInfo],sbt.Logger)sbt.LoadResult">loadProject</a>(<a href="#47080" title="sbt.ProjectInfo">info</a>, <a title="object None" id="488">None</a>, <a href="#46893" title="sbt.Logger">log</a>)
+			<span title="sbt.LoadResult" class="keyword">case</span> <a title="sbt.SetupInfo" id="47095">setup</a>: <a href="ProjectInfo.scala.html#6503" title="sbt.SetupInfo">SetupInfo</a> =&gt; <a href="#27206" title="(sbt.ProjectInfo,Option[sbt.SetupInfo],sbt.Logger)sbt.LoadResult">loadProject</a>(<a href="#47080" title="sbt.ProjectInfo">info</a>, <span id="10256"><a title="(sbt.SetupInfo)Some[sbt.SetupInfo]" id="275">Some</a></span>(<a href="#47095" title="sbt.SetupInfo">setup</a>), <a href="#46893" title="sbt.Logger">log</a>)
+		}
+	}
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.ProjectInfo,Option[sbt.SetupInfo],sbt.Logger)sbt.LoadResult" id="27206">loadProject</a>(<a title="sbt.ProjectInfo" id="46887">info</a>: <a href="ProjectInfo.scala.html#6494" title="sbt.ProjectInfo">ProjectInfo</a>, <a title="Option[sbt.SetupInfo]" id="46888">setupInfo</a>: <a title="Option[sbt.SetupInfo]" id="871">Option</a>[SetupInfo], <a title="sbt.Logger" id="46889">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>): <a href="#6396" title="sbt.LoadResult">LoadResult</a> =
+	{
+		<span class="keyword">try</span>
+		{
+			<span class="keyword">val</span> <a title="sbt.Level.Value" id="47102">oldLevel</a> = <a href="#46889" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8345" title="=&gt; sbt.Level.Value">getLevel</a>
+			<a href="#46889" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8346" title="(sbt.Level.Value)Unit">setLevel</a>(<a href="Logger.scala.html#6675" title="object sbt.Level">Level</a>.<a href="Logger.scala.html#20856" title="=&gt; sbt.Level.Value">Warn</a>)
+			<span class="keyword">val</span> <a title="&lt;refinement&gt; extends Either[String,sbt.Project] with Product" id="47103">result</a> =
+				<span class="keyword">for</span>(<span id="22109"><a title="((Class[_ &lt;: sbt.Project]) =&gt; sbt.Project)Either[String,sbt.Project] with Product" id="47114">builderClass</a></span> &lt;- <a href="#27214" title="(sbt.ProjectInfo,sbt.Logger)Either[String,Class[_ &lt;: sbt.Project]]">getProjectDefinition</a>(<a href="#46887" title="sbt.ProjectInfo">info</a>, <a href="#46889" title="sbt.Logger">log</a>).<a title="=&gt; Either.RightProjection[String,Class[_ &lt;: sbt.Project]]" id="22142">right</a>) <span class="keyword">yield</span>
+					<a href="#27211" title="(P,Option[sbt.SetupInfo],sbt.Logger)P">initialize</a>(<a href="#27208" title="(sbt.ProjectInfo,Class[P])P">constructProject</a>(<a href="#46887" title="sbt.ProjectInfo">info</a>, <a href="#47114" title="Class[_ &lt;: sbt.Project]">builderClass</a>), <a href="#46888" title="Option[sbt.SetupInfo]">setupInfo</a>, <a href="#46889" title="sbt.Logger">log</a>)
+			<a href="#46889" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8346" title="(sbt.Level.Value)Unit">setLevel</a>(<a href="#47102" title="sbt.Level.Value">oldLevel</a>)
+			<a href="#47103" title="&lt;refinement&gt; extends Either[String,sbt.Project] with Product">result</a>.<a title="((String) =&gt; sbt.LoadResult with ScalaObject,(sbt.Project) =&gt; sbt.LoadResult with ScalaObject)sbt.LoadResult with ScalaObject" id="22143">fold</a>(<span title="sbt.LoadError" class="keyword">new</span> <a href="#6398" title="sbt.LoadError">LoadError</a>(<a href="#47123" title="String">_</a>), <span title="sbt.LoadSuccess" class="keyword">new</span> <a href="#6397" title="sbt.LoadSuccess">LoadSuccess</a>(<a href="#47125" title="sbt.Project">_</a>))
+		}
+		<span class="keyword">catch</span>
+		{
+			<span title="sbt.LoadError" class="keyword">case</span> <a title="java.lang.reflect.InvocationTargetException" id="47138">ite</a>: java.lang.reflect.<a title="java.lang.reflect.InvocationTargetException" id="3796">InvocationTargetException</a> =&gt;
+			{
+				<span class="keyword">val</span> <a title="java.lang.Throwable" id="47144">cause</a> =
+					<span title="java.lang.Throwable" class="keyword">if</span>(<a href="#47138" title="java.lang.reflect.InvocationTargetException">ite</a>.<a title="()java.lang.Throwable" id="47143">getCause</a> <a title="(AnyRef)Boolean" id="3399">==</a> <span title="Null(null)" class="keyword">null</span>) <a href="#47138" title="java.lang.reflect.InvocationTargetException">ite</a>
+					<span class="keyword">else</span> <a href="#47138" title="java.lang.reflect.InvocationTargetException">ite</a>.<a title="()java.lang.Throwable" id="47143">getCause</a>
+				<a href="#27207" title="(Throwable,sbt.Logger)sbt.LoadError">errorLoadingProject</a>(<a href="#47144" title="java.lang.Throwable">cause</a>, <a href="#46889" title="sbt.Logger">log</a>)
+			}
+			<span title="sbt.LoadError" class="keyword">case</span> <a title="java.lang.NoSuchMethodException" id="47150">nme</a>: <a title="java.lang.NoSuchMethodException" id="1979">NoSuchMethodException</a> =&gt; <span title="sbt.LoadError" class="keyword">new</span> <a href="#6398" title="sbt.LoadError">LoadError</a>(<span title="java.lang.String(&quot;Constructor with one argument of type sbt.ProjectInfo required for project definition.&quot;)" class="string">&quot;Constructor with one argument of type sbt.ProjectInfo required for project definition.&quot;</span>)
+			<span title="sbt.LoadError" class="keyword">case</span> <a title="Exception" id="47153">e</a>: <a title="Exception" id="2021">Exception</a> =&gt; <a href="#27207" title="(Throwable,sbt.Logger)sbt.LoadError">errorLoadingProject</a>(<a href="#47153" title="Exception">e</a>, <a href="#46889" title="sbt.Logger">log</a>)
+		}
+	}
+	<span class="comment">/** Logs the stack trace and returns an error message in Left.*/</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(Throwable,sbt.Logger)sbt.LoadError" id="27207">errorLoadingProject</a>(<a title="Throwable" id="47147">e</a>: <a title="Throwable" id="2033">Throwable</a>, <a title="sbt.Logger" id="47148">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>) =
+	{
+		<a href="#47148" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8350" title="(=&gt; Throwable)Unit">trace</a>(<a href="#47147" title="Throwable">e</a>)
+		<span title="sbt.LoadError" class="keyword">new</span> <a href="#6398" title="sbt.LoadError">LoadError</a>(<span title="java.lang.String(&quot;Error loading project: &quot;)" class="string">&quot;Error loading project: &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#47147" title="Throwable">e</a>.<a title="()java.lang.String" id="9277">toString</a>)
+	}
+	<span class="comment">/** Loads the project for the given `info` and represented by an instance of 'builderClass'.*/</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="[P &lt;: sbt.Project](sbt.ProjectInfo,Class[P])P" id="27208">constructProject</a>[<a title="&gt;: Nothing &lt;: sbt.Project" id="27210">P</a> &lt;: Project](<a title="sbt.ProjectInfo" id="46956">info</a>: <a href="ProjectInfo.scala.html#6494" title="sbt.ProjectInfo">ProjectInfo</a>, <a title="Class[P]" id="46957">builderClass</a>: <a title="Class[P]" id="1562">Class</a>[P]): <a href="#27210" title="P">P</a> =
+		<a href="#46957" title="Class[P]">builderClass</a>.<a title="(java.lang.Class[_]*)java.lang.reflect.Constructor[P]" id="4235">getConstructor</a>(<span title="java.lang.Class[sbt.ProjectInfo]">classOf</span>[ProjectInfo]).<a title="(java.lang.Object*)P" id="3885">newInstance</a>(<a href="#46956" title="sbt.ProjectInfo">info</a>)
+	<span class="comment">/** Checks the project's dependencies, initializes its environment, and possibly its directories.*/</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="[P &lt;: sbt.Project](P,Option[sbt.SetupInfo],sbt.Logger)P" id="27211">initialize</a>[<a title="&gt;: Nothing &lt;: sbt.Project" id="27213">P</a> &lt;: Project](<a title="P" id="46959">p</a>: <a href="#27213" title="P">P</a>, <a title="Option[sbt.SetupInfo]" id="46960">setupInfo</a>: <a title="Option[sbt.SetupInfo]" id="871">Option</a>[SetupInfo], <a title="sbt.Logger" id="46961">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>): <a href="#27213" title="P">P</a> =
+	{
+		<a href="#46959" title="P">p</a>.<a href="Environment.scala.html#26302" title="()Unit">initializeEnvironment</a>()
+		<a href="#46960" title="Option[sbt.SetupInfo]">setupInfo</a> <span title="Unit" class="keyword">match</span>
+		{
+			<span title="Unit" class="keyword">case</span> <a id="1">Some</a>(<a title="sbt.SetupInfo" id="47155">setup</a>) =&gt;
+			{
+				<a href="#46959" title="P">p</a>.<a href="#26218" title="=&gt; p.Property[String]">projectName</a>() = <a href="#47155" title="sbt.SetupInfo">setup</a>.<a href="ProjectInfo.scala.html#46985" title="=&gt; String">name</a>
+				<span class="keyword">for</span>(<span id="10162"><a title="((sbt.Version) =&gt; Unit)Unit" id="47158">v</a></span> &lt;- <a href="#47155" title="sbt.SetupInfo">setup</a>.<a href="ProjectInfo.scala.html#46987" title="=&gt; Option[sbt.Version]">version</a>)
+					<a href="#46959" title="P">p</a>.<a href="#26216" title="=&gt; p.Property[sbt.Version]">projectVersion</a>() = <a href="#47158" title="sbt.Version">v</a>
+				<span class="keyword">for</span>(<span id="10162"><a title="((String) =&gt; Unit)Unit" id="47160">org</a></span> &lt;- <a href="#47155" title="sbt.SetupInfo">setup</a>.<a href="ProjectInfo.scala.html#46989" title="=&gt; Option[String]">organization</a>)
+					<a href="#46959" title="P">p</a>.<a href="#26220" title="=&gt; p.Property[String]">projectOrganization</a>() = <a href="#47160" title="String">org</a>
+				<span title="Unit" class="keyword">if</span>(<a title="=&gt; Boolean" id="2637">!</a><a href="#47155" title="sbt.SetupInfo">setup</a>.<a href="ProjectInfo.scala.html#46991" title="=&gt; Boolean">initializeDirectories</a>)
+					<a href="#46959" title="P">p</a>.<a href="Environment.scala.html#26274" title="(Boolean)Unit">setEnvironmentModified</a>(<span title="Boolean(false)" class="keyword">false</span>)
+				<span class="keyword">for</span>(<span id="10162"><a title="((String) =&gt; Unit)Unit" id="47163">errorMessage</a></span> &lt;- <a href="#46959" title="P">p</a>.<a href="Environment.scala.html#26306" title="()Option[String]">saveEnvironment</a>())
+					<a href="#46961" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8354" title="(=&gt; String)Unit">error</a>(<a href="#47163" title="String">errorMessage</a>)
+				<span title="Unit" class="keyword">if</span>(<a href="#47155" title="sbt.SetupInfo">setup</a>.<a href="ProjectInfo.scala.html#46991" title="=&gt; Boolean">initializeDirectories</a>)
+					<a href="#46959" title="P">p</a>.<a href="#26207" title="()Unit">initializeDirectories</a>()
+			}
+			<span title="Unit" class="keyword">case</span> <a title="object None" id="488">None</a> =&gt;
+				<span title="Unit" class="keyword">if</span>(<a href="#46959" title="P">p</a>.<a href="#26226" title="=&gt; p.Property[Boolean]">projectInitialize</a>.<a href="Environment.scala.html#27855" title="=&gt; Boolean">value</a>)
+				{
+					<a href="#46959" title="P">p</a>.<a href="#26207" title="()Unit">initializeDirectories</a>()
+					<a href="#46959" title="P">p</a>.<a href="#26226" title="=&gt; p.Property[Boolean]">projectInitialize</a>() = <span title="Boolean(false)" class="keyword">false</span>
+					<span class="keyword">for</span>(<span id="10162"><a title="((String) =&gt; Unit)Unit" id="47165">errorMessage</a></span> &lt;- <a href="#46959" title="P">p</a>.<a href="Environment.scala.html#26306" title="()Option[String]">saveEnvironment</a>())
+						<a href="#46961" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8354" title="(=&gt; String)Unit">error</a>(<a href="#47165" title="String">errorMessage</a>)
+				}
+		}
+		<span class="keyword">val</span> <a title="String" id="47154">useName</a> = <a href="#46959" title="P">p</a>.<a href="#26218" title="=&gt; p.Property[String]">projectName</a>.<a href="Environment.scala.html#27856" title="=&gt; Option[String]">get</a>.<a title="(=&gt; String)String" id="10155">getOrElse</a>(<span title="java.lang.String(&quot;at &quot;)" class="string">&quot;at &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#46959" title="P">p</a>.<a href="#26173" title="=&gt; sbt.ProjectInfo">info</a>.<a href="ProjectInfo.scala.html#27924" title="=&gt; java.io.File">projectDirectory</a>.<a title="()java.lang.String" id="9553">getCanonicalPath</a>)
+		<a href="#27215" title="(String,Iterable[sbt.Project],sbt.Logger)Unit">checkDependencies</a>(<a href="#47154" title="String">useName</a>, <a href="#46959" title="P">p</a>.<a href="#26173" title="=&gt; sbt.ProjectInfo">info</a>.<a href="ProjectInfo.scala.html#27926" title="=&gt; Iterable[sbt.Project]">dependencies</a>, <a href="#46961" title="sbt.Logger">log</a>)
+		<a href="#46959" title="P">p</a>
+	}
+	<span class="comment">/** Compiles the project definition classes and returns the project definition class name
+	* and the class loader that should be used to load the definition. */</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.ProjectInfo,sbt.Logger)Either[String,Class[_ &lt;: sbt.Project]]" id="27214">getProjectDefinition</a>(<a title="sbt.ProjectInfo" id="47104">info</a>: <a href="ProjectInfo.scala.html#6494" title="sbt.ProjectInfo">ProjectInfo</a>, <a title="sbt.Logger" id="47105">buildLog</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>): <a title="Either[String,Class[_ &lt;: sbt.Project]]" id="322">Either</a>[String, Class[P] <span class="keyword">forSome</span> { <span class="keyword">type</span> P &lt;: Project }] =
+	{
+		<span class="keyword">val</span> <a title="sbt.Path" id="47172">builderProjectPath</a> = <a href="#47104" title="sbt.ProjectInfo">info</a>.<a href="ProjectInfo.scala.html#27933" title="=&gt; sbt.Path">builderPath</a> <a href="Path.scala.html#9523" title="(String)sbt.Path">/</a> <a href="#27197" title="=&gt; java.lang.String">BuilderProjectDirectoryName</a>
+		<span title="Either[String,Class[_ &lt;: sbt.Project]]" class="keyword">if</span>(<a href="#47172" title="sbt.Path">builderProjectPath</a>.<a href="Path.scala.html#9529" title="=&gt; java.io.File">asFile</a>.<a title="()Boolean" id="9560">isDirectory</a>)
+		{
+			<span class="keyword">val</span> <a title="sbt.BuilderProject" id="47173">builderProject</a> = <span title="sbt.BuilderProject" class="keyword">new</span> <a href="BuilderProject.scala.html#6601" title="sbt.BuilderProject">BuilderProject</a>(<a href="ProjectInfo.scala.html#46974" title="(java.io.File,Iterable[sbt.Project],Option[sbt.Project])sbt.ProjectInfo">ProjectInfo</a>(<a href="#47172" title="sbt.Path">builderProjectPath</a>.<a href="Path.scala.html#9529" title="=&gt; java.io.File">asFile</a>, <a title="object Nil" id="299">Nil</a>, <a title="object None" id="488">None</a>), <a href="#47105" title="sbt.Logger">buildLog</a>)
+			<a href="#47173" title="sbt.BuilderProject">builderProject</a>.<a href="BuilderProject.scala.html#47194" title="=&gt; builderProject.Task">compile</a>.<a href="TaskManager.scala.html#28032" title="=&gt; Option[String]">run</a>.<a title="(=&gt; Unit)Either[String,Unit] with Product" id="10169">toLeft</a>(<span title="Unit">(</span>)).<a title="=&gt; Either.RightProjection[String,Unit]" id="22142">right</a>.<a title="((Unit) =&gt; Either[String,java.lang.Class[_ &gt;: ?0 with ?0 &lt;: sbt.Project]])Either[String,java.lang.Class[_ &gt;: ?0 with ?0 &lt;: sbt.Project]]" id="22106">flatMap</a> { <a title="Unit" id="47306">ignore</a> =&gt;
+				<a href="#47173" title="sbt.BuilderProject">builderProject</a>.<a href="BuilderProject.scala.html#47199" title="=&gt; Either[String,Option[String]]">projectDefinition</a>.<a title="=&gt; Either.RightProjection[String,Option[String]]" id="22142">right</a>.<a title="((Option[String]) =&gt; java.lang.Class[_ &gt;: ?0 with ?0 &lt;: sbt.Project])Either[String,java.lang.Class[_ &gt;: ?0 with ?0 &lt;: sbt.Project]] with Product" id="22109">map</a> <a href="#47313" title="java.lang.Class[_26]">{</a>
+					<span title="java.lang.Class[?0]" class="keyword">case</span> <a id="1">Some</a>(<a title="String" id="47314">definition</a>) =&gt;
+					{
+						<span class="keyword">val</span> <a title="Array[java.net.URL]" id="47315">compileClassPath</a> = <a href="#47173" title="sbt.BuilderProject">builderProject</a>.<a href="BuilderProject.scala.html#47191" title="=&gt; sbt.PathFinder">projectClasspath</a>.<a href="Path.scala.html#9518" title="=&gt; scala.collection.Set[sbt.Path]">get</a>.<a title="((sbt.Path) =&gt; java.net.URL)Iterable[java.net.URL]" id="7246">map</a>(<a href="#47321" title="sbt.Path">_</a>.<a href="Path.scala.html#9530" title="=&gt; java.net.URL">asURL</a>).<a title="=&gt; Seq[java.net.URL]" id="7280">toSeq</a>.<a title="Array[java.net.URL]" id="7138">toArray</a>
+						<span class="keyword">import</span> java.net.URLClassLoader
+						<span class="keyword">val</span> <a title="java.net.URLClassLoader" id="47317">loader</a> = <span title="java.net.URLClassLoader" class="keyword">new</span> <a title="java.net.URLClassLoader" id="4302">URLClassLoader</a>(<a href="#47315" title="Array[java.net.URL]">compileClassPath</a>, <a title="()java.lang.Class[_ &lt;: java.lang.Object]" id="3401">getClass</a>.<a title="()java.lang.ClassLoader" id="3839">getClassLoader</a>)
+						<span class="keyword">val</span> <a title="java.lang.Class[_]" id="47318">builderClass</a> = <a title="object java.lang.Class" id="1563">Class</a>.<a title="(java.lang.String,Boolean,java.lang.ClassLoader)java.lang.Class[_]" id="3826">forName</a>(<a href="#47314" title="String">definition</a>, <span title="Boolean(false)" class="keyword">false</span>, <a href="#47317" title="java.net.URLClassLoader">loader</a>)
+						<span id="5881"><a title="(Boolean,Any)Unit" id="770">require</a></span>(<span title="java.lang.Class[sbt.Project]">classOf</span>[Project].<a title="(java.lang.Class[_])Boolean" id="3831">isAssignableFrom</a>(<a href="#47318" title="java.lang.Class[_]">builderClass</a>), <span title="java.lang.String(&quot;Builder class '&quot;)" class="string">&quot;Builder class '&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#47318" title="java.lang.Class[_]">builderClass</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot;' does not extend Project.&quot;)" class="string">&quot;' does not extend Project.&quot;</span>)
+						<a href="#47318" title="java.lang.Class[_]">builderClass</a>.<a title="(java.lang.Class[sbt.Project])java.lang.Class[_ &lt;: sbt.Project]" id="5619">asSubclass</a>(<span title="java.lang.Class[sbt.Project]">classOf</span>[Project])
+					}
+					<span title="java.lang.Class[?0]" class="keyword">case</span> <a title="object None" id="488">None</a> =&gt; <a href="#27195" title="=&gt; java.lang.Class[_ &lt;: sbt.Project]">DefaultBuilderClass</a>
+				}
+			}
+		}
+		<span class="keyword">else</span>
+			<span id="29414"><a title="(java.lang.Class[?0])Right[Nothing,java.lang.Class[?0]]" id="476">Right</a></span>(<a href="#27195" title="=&gt; java.lang.Class[_ &lt;: sbt.Project]">DefaultBuilderClass</a>)
+	}
+	<span class="comment">/** Verifies that the given list of project dependencies contains no nulls.  The
+	* String argument should be the project name with the dependencies.*/</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(String,Iterable[sbt.Project],sbt.Logger)Unit" id="27215">checkDependencies</a>(<a title="String" id="47168">forProject</a>: <a title="String" id="1751">String</a>, <a title="Iterable[sbt.Project]" id="47169">deps</a>: <a title="Iterable[sbt.Project]" id="358">Iterable</a>[Project], <a title="sbt.Logger" id="47170">log</a>: <a href="Logger.scala.html#6667" title="sbt.Logger">Logger</a>)
+	{
+		<span class="keyword">for</span>(<span id="10162"><a title="((sbt.Project) =&gt; Unit)Unit" id="47507">nullDep</a></span> &lt;- <a href="#47169" title="Iterable[sbt.Project]">deps</a>.<a title="((sbt.Project) =&gt; Boolean)Option[sbt.Project]" id="7259">find</a>(<a href="#47504" title="sbt.Project">_</a> <a title="(AnyRef)Boolean" id="3399">==</a> <span title="Null(null)" class="keyword">null</span>))
+		{
+			<a href="#47170" title="sbt.Logger">log</a>.<a href="Logger.scala.html#8354" title="(=&gt; String)Unit">error</a>(<span title="java.lang.String(&quot;Project &quot;)" class="string">&quot;Project &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#47168" title="String">forProject</a> <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; had a null dependency.  This is probably an initialization problem and might be due to a circular dependency.&quot;)" class="string">&quot; had a null dependency.  This is probably an initialization problem and might be due to a circular dependency.&quot;</span>)
+			<span title="Nothing" class="keyword">throw</span> <a title="(java.lang.String)java.lang.RuntimeException" id="27654" class="keyword">new</a> <span id="5849"><a title="java.lang.RuntimeException" id="770">RuntimeException</a></span>(<span title="java.lang.String(&quot;Null dependency in project &quot;)" class="string">&quot;Null dependency in project &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#47168" title="String">forProject</a>)
+		}
+	}
+	<span class="comment">/** Verifies that output directories of the given project and all of its dependencies are
+	* all different.  No verification is done if the project overrides
+	* 'shouldCheckOutputDirectories' to be false. The 'Project.outputDirectories' method is
+	* used to determine a project's output directories. */</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.LoadResult)sbt.LoadResult" id="27216">checkOutputDirectories</a>(<a title="sbt.LoadResult" id="47065">result</a>: <a href="#6396" title="sbt.LoadResult">LoadResult</a>): <a href="#6396" title="sbt.LoadResult">LoadResult</a> =
+		<a href="#47065" title="sbt.LoadResult">result</a> <span title="sbt.LoadResult" class="keyword">match</span>
+		{
+			<span title="sbt.LoadResult" class="keyword">case</span> <a title="sbt.LoadSuccess" id="47510">success</a>: <a href="#6397" title="sbt.LoadSuccess">LoadSuccess</a> =&gt;
+				<span title="sbt.LoadResult" class="keyword">if</span>(<a href="#47510" title="sbt.LoadSuccess">success</a>.<a href="#47024" title="=&gt; sbt.Project">project</a>.<a href="#26209" title="=&gt; Boolean">shouldCheckOutputDirectories</a>)
+					<a href="#27217" title="(sbt.Project)sbt.LoadResult">checkOutputDirectoriesImpl</a>(<a href="#47510" title="sbt.LoadSuccess">success</a>.<a href="#47024" title="=&gt; sbt.Project">project</a>)
+				<span class="keyword">else</span>
+					<a href="#47510" title="sbt.LoadSuccess">success</a>
+			<span title="sbt.LoadResult" class="keyword">case</span> <a title="sbt.LoadResult" id="47512">x</a> =&gt; <a href="#47512" title="sbt.LoadResult">x</a>
+		}
+	<span class="comment">/** Verifies that output directories of the given project and all of its dependencies are
+	* all different.  The 'Project.outputDirectories' method is used to determine a project's
+	* output directories. */</span>
+	<span class="keyword">private</span> <span class="keyword">def</span> <a title="(sbt.Project)sbt.LoadResult" id="27217">checkOutputDirectoriesImpl</a>(<a title="sbt.Project" id="47511">project</a>: <a href="#6395" title="sbt.Project">Project</a>): <a href="#6396" title="sbt.LoadResult">LoadResult</a> =
+	{
+		<span class="keyword">val</span> <a title="List[sbt.Project]" id="47513">projects</a> = <a href="#47511" title="sbt.Project">project</a>.<a href="Dag.scala.html#26240" title="=&gt; List[sbt.Project]">topologicalSort</a>
+		<span class="keyword">import</span> scala.collection.mutable.{HashMap, HashSet, Set}
+		<span class="keyword">val</span> <a title="scala.collection.mutable.HashMap[sbt.Path,scala.collection.mutable.Set[sbt.Project]]" id="47515">outputDirectories</a> = <span title="scala.collection.mutable.HashMap[sbt.Path,scala.collection.mutable.Set[sbt.Project]]" class="keyword">new</span> <a title="scala.collection.mutable.HashMap[sbt.Path,scala.collection.mutable.Set[sbt.Project]]" id="8092">HashMap</a>[Path, Set[Project]]
+		<span class="keyword">for</span>(<span id="6839"><a title="((sbt.Project) =&gt; Unit)Unit" id="47518">p</a></span> &lt;- <a href="#47513" title="List[sbt.Project]">projects</a>; <span id="7256"><a title="((sbt.Path) =&gt; Unit)Unit" id="47520">path</a></span> &lt;- <a href="#47518" title="sbt.Project">p</a>.<a href="#26210" title="=&gt; Iterable[sbt.Path]">outputDirectories</a>)
+			<a href="#47515" title="scala.collection.mutable.HashMap[sbt.Path,scala.collection.mutable.Set[sbt.Project]]">outputDirectories</a>.<a title="(sbt.Path,=&gt; scala.collection.mutable.Set[sbt.Project])scala.collection.mutable.Set[sbt.Project]" id="20473">getOrElseUpdate</a>(<a href="#47520" title="sbt.Path">path</a>, <span title="scala.collection.mutable.HashSet[sbt.Project]" class="keyword">new</span> <a title="scala.collection.mutable.HashSet[sbt.Project]" id="7909">HashSet</a>[Project]) <a title="(sbt.Project)Unit" id="21512">+=</a> <a href="#47518" title="sbt.Project">p</a>
+		<span class="keyword">val</span> <a title="Iterable[(sbt.Path, scala.collection.mutable.Set[sbt.Project])]" id="47516">shared</a> = <a href="#47515" title="scala.collection.mutable.HashMap[sbt.Path,scala.collection.mutable.Set[sbt.Project]]">outputDirectories</a>.<a title="(((sbt.Path, scala.collection.mutable.Set[sbt.Project])) =&gt; Boolean)Iterable[(sbt.Path, scala.collection.mutable.Set[sbt.Project])]" id="7250">filter</a>(<a href="#47523" title="(sbt.Path, scala.collection.mutable.Set[sbt.Project])">_</a>.<a title="=&gt; scala.collection.mutable.Set[sbt.Project]" id="9242">_2</a>.<a title="=&gt; Int" id="21327">size</a> <a title="(Int)Boolean" id="3035">&gt;</a> <span title="Int(1)" class="int">1</span>)
+		<span title="sbt.LoadResult" class="keyword">if</span>(<a href="#47516" title="Iterable[(sbt.Path, scala.collection.mutable.Set[sbt.Project])]">shared</a>.<a title="=&gt; Boolean" id="7290">isEmpty</a>)
+			<span title="sbt.LoadSuccess" class="keyword">new</span> <a href="#6397" title="sbt.LoadSuccess">LoadSuccess</a>(<a href="#47511" title="sbt.Project">project</a>)
+		<span class="keyword">else</span>
+		{
+			<span class="keyword">val</span> <a title="String" id="47525">sharedString</a> =
+			{
+				<span class="keyword">val</span> <a title="Iterable[java.lang.String]" id="47526">s</a> =
+					<span class="keyword">for</span>(<span id="7246"><a href="#47528" title="(((sbt.Path, scala.collection.mutable.Set[sbt.Project])) =&gt; java.lang.String)Iterable[java.lang.String]" id="7250">(</a></span><span id="47529"><a title="sbt.Path" id="47534">path</a></span>, <span id="47530"><a title="scala.collection.mutable.Set[sbt.Project]" id="47535">projectsSharingPath</a></span>) &lt;- <a href="#47516" title="Iterable[(sbt.Path, scala.collection.mutable.Set[sbt.Project])]">shared</a>) <span class="keyword">yield</span>
+						<a href="#47535" title="scala.collection.mutable.Set[sbt.Project]">projectsSharingPath</a>.<a title="((sbt.Project) =&gt; String)Iterable[String]" id="7246">map</a>(<a href="#47538" title="sbt.Project">_</a>.<a href="#26174" title="=&gt; String">name</a>).<a title="(String)String" id="7283">mkString</a>(<span title="java.lang.String(&quot;, &quot;)" class="string">&quot;, &quot;</span>) <a title="(Any)java.lang.String" id="5683">+</a> <span title="java.lang.String(&quot; share &quot;)" class="string">&quot; share &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#47534" title="sbt.Path">path</a>
+				<a href="#47526" title="Iterable[java.lang.String]">s</a>.<a title="(String)String" id="7283">mkString</a>(<span title="java.lang.String(&quot;\012\011&quot;)" class="string">&quot;\n\t&quot;</span>)
+			}
+			<span title="sbt.LoadError" class="keyword">new</span> <a href="#6398" title="sbt.LoadError">LoadError</a>(<span title="java.lang.String(&quot;The same directory is used for output for multiple projects:\012\011&quot;)" class="string">&quot;The same directory is used for output for multiple projects:\n\t&quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#47525" title="String">sharedString</a> <a title="(Any)java.lang.String" id="5683">+</a>
+			<span title="java.lang.String(&quot;\012  (If this is intentional, use 'override def shouldCheckOutputDirectories = false' in your project definition.)&quot;)" class="string">&quot;\n  (If this is intentional, use 'override def shouldCheckOutputDirectories = false' in your project definition.)&quot;</span>)
+		}
+	}
+	
+	<span class="comment">/** Writes the project name and a separator to the project's log at the info level.*/</span>
+	<span class="keyword">def</span> <a title="(sbt.Project)Unit" id="27218">showProjectHeader</a>(<a title="sbt.Project" id="47541">project</a>: <a href="#6395" title="sbt.Project">Project</a>)
+	{
+		<span class="keyword">val</span> <a title="java.lang.String" id="47542">projectHeader</a> = <span title="java.lang.String(&quot;Project &quot;)" class="string">&quot;Project &quot;</span> <a title="(Any)java.lang.String" id="5683">+</a> <a href="#47541" title="sbt.Project">project</a>.<a href="#26174" title="=&gt; String">name</a>
+		<a href="#47541" title="sbt.Project">project</a>.<a href="#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8352" title="(=&gt; String)Unit">info</a>(<span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+		<a href="#47541" title="sbt.Project">project</a>.<a href="#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8352" title="(=&gt; String)Unit">info</a>(<a href="#47542" title="java.lang.String">projectHeader</a>)
+		<a href="#47541" title="sbt.Project">project</a>.<a href="#26169" title="=&gt; sbt.Logger">log</a>.<a href="Logger.scala.html#8352" title="(=&gt; String)Unit">info</a>(<span id="6012"><a title="implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString" id="770" class="string">&quot;=&quot;</a></span> <a title="(Int)String" id="8493">*</a> <a href="#47542" title="java.lang.String">projectHeader</a>.<a title="()Int" id="5702">length</a>)
+	}
+}
+
+        </pre>
+    </body>
+</html>

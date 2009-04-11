@@ -1,0 +1,95 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>sbt/AnalysisCallback.scala</title>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* sbt -- Simple Build Tool
+ * Copyright 2008, 2009  Mark Harrah
+ */</span>
+<span class="keyword">package</span> sbt
+
+<span class="keyword">import</span> java.io.File
+
+<span class="keyword">object</span> <a title="object sbt.AnalysisCallback" id="6218">AnalysisCallback</a>
+{
+	<span class="keyword">private</span> <span class="keyword">val</span> <span id="32751"><a title="scala.collection.mutable.HashMap[Int,sbt.AnalysisCallback]" id="32750">map</a></span> = <span title="scala.collection.mutable.HashMap[Int,sbt.AnalysisCallback]" class="keyword">new</span> scala.collection.mutable.<a title="scala.collection.mutable.HashMap[Int,sbt.AnalysisCallback]" id="8092">HashMap</a>[Int, AnalysisCallback]
+	<span class="keyword">private</span> <span class="keyword">var</span> <span id="32754"><span id="32752"><span id="32753"><a title="Int" id="32759">nextID</a></span></span></span>: <a title="Int" id="2296">Int</a> = <span title="Int(0)" class="int">0</span>
+	<span class="keyword">def</span> <a title="(sbt.AnalysisCallback)Int" id="32755">register</a>(<a title="sbt.AnalysisCallback" id="32760">callback</a>: <a href="#6220" title="sbt.AnalysisCallback">AnalysisCallback</a>): <a title="Int" id="2296">Int</a> =
+	{
+		<span class="keyword">val</span> <a title="Int" id="32771">id</a> = <a href="#32752" title="=&gt; Int">nextID</a>
+		<a href="#32753" title="(Int)Unit">nextID</a> <a title="(Int)Int" id="3037">+=</a> <span title="Int(1)" class="int">1</span>
+		<a href="#32750" title="=&gt; scala.collection.mutable.HashMap[Int,sbt.AnalysisCallback]">map</a>(<a href="#32771" title="Int">id</a>) = <a href="#32760" title="sbt.AnalysisCallback">callback</a>
+		<a href="#32771" title="Int">id</a>
+	}
+	<span class="keyword">def</span> <a title="(Int)Option[sbt.AnalysisCallback]" id="32756">apply</a>(<a title="Int" id="32795">id</a>: <a title="Int" id="2296">Int</a>): <a title="Option[sbt.AnalysisCallback]" id="871">Option</a>[AnalysisCallback] = <a href="#32750" title="=&gt; scala.collection.mutable.HashMap[Int,sbt.AnalysisCallback]">map</a>.<a title="(Int)Option[sbt.AnalysisCallback]" id="20560">get</a>(<a href="#32795" title="Int">id</a>)
+	<span class="keyword">def</span> <a title="(Int)Unit" id="32757">unregister</a>(<a title="Int" id="32796">id</a>: <a title="Int" id="2296">Int</a>)
+	{
+		<a href="#32750" title="=&gt; scala.collection.mutable.HashMap[Int,sbt.AnalysisCallback]">map</a> <a title="(Int)Unit" id="20319">-=</a> <a href="#32796" title="Int">id</a>
+	}
+}
+
+<span class="keyword">trait</span> <a title="trait AnalysisCallback extends java.lang.Object with NotNull" id="6220">AnalysisCallback</a> <span class="keyword">extends</span> <a title="NotNull" id="187">NotNull</a>
+{
+	<span class="comment">/** The names of classes that the analyzer should find subclasses of.*/</span>
+	<span class="keyword">def</span> <a title="=&gt; Iterable[String]" id="32761">superclassNames</a>: <a title="Iterable[String]" id="358">Iterable</a>[String]
+	<span class="comment">/** The base path for the project.*/</span>
+	<span class="keyword">def</span> <a title="=&gt; sbt.Path" id="32762">basePath</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>
+	<span class="comment">/** Called when the the given superclass could not be found on the classpath by the compiler.*/</span>
+	<span class="keyword">def</span> <a title="(String)Unit" id="32763">superclassNotFound</a>(<a title="String" id="32801">superclassName</a>: <a title="String" id="1751">String</a>): <a title="Unit" id="2059">Unit</a>
+	<span class="comment">/** Called before the source at the given location is processed. */</span>
+	<span class="keyword">def</span> <a title="(sbt.Path)Unit" id="32764">beginSource</a>(<a title="sbt.Path" id="32802">sourcePath</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>): <a title="Unit" id="2059">Unit</a>
+	<span class="comment">/** Called when the a subclass of one of the classes given in &lt;code&gt;superclassNames&lt;/code&gt; is
+	* discovered.*/</span>
+	<span class="keyword">def</span> <a title="(sbt.Path,String,String,Boolean)Unit" id="32765">foundSubclass</a>(<a title="sbt.Path" id="32803">sourcePath</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>, <a title="String" id="32804">subclassName</a>: <a title="String" id="1751">String</a>, <a title="String" id="32805">superclassName</a>: <a title="String" id="1751">String</a>, <a title="Boolean" id="32806">isModule</a>: <a title="Boolean" id="2060">Boolean</a>): <a title="Unit" id="2059">Unit</a>
+	<span class="comment">/** Called to indicate that the source file &lt;code&gt;sourcePath&lt;/code&gt; depends on the source file
+	* &lt;code&gt;dependsOnPath&lt;/code&gt;.*/</span>
+	<span class="keyword">def</span> <a title="(sbt.Path,sbt.Path)Unit" id="32766">sourceDependency</a>(<a title="sbt.Path" id="32807">dependsOnPath</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>, <a title="sbt.Path" id="32808">sourcePath</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>): <a title="Unit" id="2059">Unit</a>
+	<span class="comment">/** Called to indicate that the source file &lt;code&gt;sourcePath&lt;/code&gt; depends on the jar
+	* &lt;code&gt;jarPath&lt;/code&gt;.*/</span>
+	<span class="keyword">def</span> <a title="(java.io.File,sbt.Path)Unit" id="32767">jarDependency</a>(<a title="java.io.File" id="32809">jarPath</a>: <a title="java.io.File" id="3559">File</a>, <a title="sbt.Path" id="32810">sourcePath</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>): <a title="Unit" id="2059">Unit</a>
+	<span class="comment">/** Called to indicate that the source file &lt;code&gt;sourcePath&lt;/code&gt; depends on the class file
+	* &lt;code&gt;classFile&lt;/code&gt;.*/</span>
+	<span class="keyword">def</span> <a title="(java.io.File,sbt.Path)Unit" id="32768">classDependency</a>(<a title="java.io.File" id="32811">classFile</a>: <a title="java.io.File" id="3559">File</a>, <a title="sbt.Path" id="32812">sourcePath</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>): <a title="Unit" id="2059">Unit</a>
+	<span class="comment">/** Called to indicate that the source file &lt;code&gt;sourcePath&lt;/code&gt; produces a class file at
+	* &lt;code&gt;modulePath&lt;/code&gt;.*/</span>
+	<span class="keyword">def</span> <a title="(sbt.Path,sbt.Path)Unit" id="32769">generatedClass</a>(<a title="sbt.Path" id="32813">sourcePath</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>, <a title="sbt.Path" id="32814">modulePath</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>): <a title="Unit" id="2059">Unit</a>
+	<span class="comment">/** Called after the source at the given location has been processed. */</span>
+	<span class="keyword">def</span> <a title="(sbt.Path)Unit" id="32770">endSource</a>(<a title="sbt.Path" id="32815">sourcePath</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>): <a title="Unit" id="2059">Unit</a>
+}
+<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class BasicAnalysisCallback extends java.lang.Object with sbt.AnalysisCallback with ScalaObject" id="6221">BasicAnalysisCallback</a>(<span class="keyword">val</span> <span id="32820"><span id="32819"><a title="sbt.Path" id="32837">basePath</a></span></span>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>, <span class="keyword">val</span> <span id="32822"><span id="32821"><a title="Iterable[String]" id="32838">superclassNames</a></span></span>: <a title="Iterable[String]" id="358">Iterable</a>[String],
+	<span class="keyword">protected</span> <span class="keyword">val</span> <span id="32824"><span id="32823"><a title="sbt.CompileAnalysis" id="32839">analysis</a></span></span>: <a href="Analysis.scala.html#6138" title="sbt.CompileAnalysis">CompileAnalysis</a>) <span class="keyword">extends</span> <a href="#6220" title="sbt.AnalysisCallback">AnalysisCallback</a>
+{
+	<span class="keyword">def</span> <a title="(String)Unit" id="32826">superclassNotFound</a>(<a title="String" id="32840">superclassName</a>: <a title="String" id="1751">String</a>) <span title="Unit">{</span>}
+	
+	<span class="keyword">def</span> <a title="(sbt.Path)Unit" id="32827">beginSource</a>(<a title="sbt.Path" id="32841">sourcePath</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>)
+	{
+		<a href="#32823" title="=&gt; sbt.CompileAnalysis">analysis</a>.<a href="Analysis.scala.html#21470" title="(sbt.Path)Unit">addSource</a>(<a href="#32841" title="sbt.Path">sourcePath</a>)
+	}
+	<span class="keyword">def</span> <a title="(sbt.Path,sbt.Path)Unit" id="32828">sourceDependency</a>(<a title="sbt.Path" id="32842">dependsOnPath</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>, <a title="sbt.Path" id="32843">sourcePath</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>)
+	{
+		<a href="#32823" title="=&gt; sbt.CompileAnalysis">analysis</a>.<a href="Analysis.scala.html#21467" title="(sbt.Path,sbt.Path)Unit">addSourceDependency</a>(<a href="#32842" title="sbt.Path">dependsOnPath</a>, <a href="#32843" title="sbt.Path">sourcePath</a>)
+	}
+	<span class="keyword">def</span> <a title="(java.io.File,sbt.Path)Unit" id="32829">jarDependency</a>(<a title="java.io.File" id="32844">jarFile</a>: <a title="java.io.File" id="3559">File</a>, <a title="sbt.Path" id="32845">sourcePath</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>)
+	{
+		<a href="#32823" title="=&gt; sbt.CompileAnalysis">analysis</a>.<a href="Analysis.scala.html#21468" title="(java.io.File,sbt.Path)Unit">addExternalDependency</a>(<a href="#32844" title="java.io.File">jarFile</a>, <a href="#32845" title="sbt.Path">sourcePath</a>)
+	}
+	<span class="keyword">def</span> <a title="(java.io.File,sbt.Path)Unit" id="32830">classDependency</a>(<a title="java.io.File" id="32846">classFile</a>: <a title="java.io.File" id="3559">File</a>, <a title="sbt.Path" id="32847">sourcePath</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>)
+	{
+		<a href="#32823" title="=&gt; sbt.CompileAnalysis">analysis</a>.<a href="Analysis.scala.html#21468" title="(java.io.File,sbt.Path)Unit">addExternalDependency</a>(<a href="#32846" title="java.io.File">classFile</a>, <a href="#32847" title="sbt.Path">sourcePath</a>)
+	}
+	<span class="keyword">def</span> <a title="(sbt.Path,sbt.Path)Unit" id="32831">generatedClass</a>(<a title="sbt.Path" id="32848">sourcePath</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>, <a title="sbt.Path" id="32849">modulePath</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>)
+	{
+		<a href="#32823" title="=&gt; sbt.CompileAnalysis">analysis</a>.<a href="Analysis.scala.html#21469" title="(sbt.Path,sbt.Path)Unit">addProduct</a>(<a href="#32848" title="sbt.Path">sourcePath</a>, <a href="#32849" title="sbt.Path">modulePath</a>)
+	}
+	<span class="keyword">def</span> <a title="(sbt.Path)Unit" id="32832">endSource</a>(<a title="sbt.Path" id="32850">sourcePath</a>: <a href="Path.scala.html#6697" title="sbt.Path">Path</a>)
+	{
+		<a href="#32823" title="=&gt; sbt.CompileAnalysis">analysis</a>.<a href="Analysis.scala.html#21454" title="(sbt.Path)Unit">removeSelfDependency</a>(<a href="#32850" title="sbt.Path">sourcePath</a>)
+	}
+}
+        </pre>
+    </body>
+</html>
