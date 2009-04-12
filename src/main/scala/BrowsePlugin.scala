@@ -1,8 +1,8 @@
-/* browse -- Scala Source Browser
+/* sxr -- Scala X-Ray
  * Copyright 2009 Mark Harrah
  */
 
-package browse
+package sxr
 
 import scala.tools.nsc.{plugins, Global, Phase}
 import plugins.PluginComponent
@@ -11,7 +11,7 @@ import java.io.File
 
 object BrowsePlugin
 {
-	val PluginName = "browse"
+	val PluginName = "sxr"
 	/** This is the name of the option that specifies the base directory against which sources
 	* should be relativized.*/
 	val BaseDirectoryOptionName = "base-directory:"

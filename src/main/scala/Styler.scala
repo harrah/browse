@@ -1,8 +1,8 @@
-/* browse -- Scala Source Browser
+/* sxr -- Scala X-Ray
  * Copyright 2009 Mark Harrah
  */
 
-package browse
+package sxr
 
 import scala.collection.jcl.TreeSet
 import scala.tools.nsc.ast.parser.Tokens
@@ -63,7 +63,7 @@ private class BasicStyler(tokens: TreeSet[Token], title: String, baseStyle: Stri
 			}
 		val definitionsList = definitions.toList
 		val attributes = reference.map("href=\"" + _ + "\"").toList :::
-			token.tpe.map(t => "title=\"" + Escape(t.name) + "\"").toList :::
+			//token.tpe.map(t => "title=\"" + Escape(t.name) + "\"").toList :::
 			definitionsList.firstOption.map("id=\"" + _ + "\"").toList :::
 			( styleClasses match
 			{
@@ -72,17 +72,17 @@ private class BasicStyler(tokens: TreeSet[Token], title: String, baseStyle: Stri
 			})
 		val extraIDs = if(definitionsList.isEmpty) Nil else definitionsList.tail.map(id => Annotation("<span id=\"" + id + "\">","</span>"))
 		val main = Annotation("<" + tagName + " " + attributes.mkString(" ") + ">", "</" + tagName + ">")
-		(main :: extraIDs).reverse // ensure that the a is always the most nested
-		//addType(token, (main :: extraIDs).reverse)
+		//(main :: extraIDs).reverse // ensure that the a is always the most nested
+		addType(token, (main :: extraIDs).reverse)
 	}
-/*	private def addType(token: Token, baseAnnotations: List[Annotation]) =
+	private def addType(token: Token, baseAnnotations: List[Annotation]) =
 	{
 		val typeSpan = token.tpe.map(t => "<span class=\"type\">" + Escape(t.name) + "</span>").getOrElse("")
 		if(typeSpan.isEmpty)
 			baseAnnotations
 		else
 			Annotation("""<span class="typed">""" + typeSpan, "</span>") :: baseAnnotations
-	}*/
+	}
 	private def classes(code: Int) =
 	{
 		import Tokens._

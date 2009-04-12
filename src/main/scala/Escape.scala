@@ -1,8 +1,8 @@
-/* browse -- Scala Source Browser
+/* sxr -- Scala X-Ray
  * Copyright 2009 Mark Harrah
  */
 
-package browse
+package sxr
 
 /** Escapes a raw string for use in HTML.*/
 object Escape

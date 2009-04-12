@@ -1,8 +1,8 @@
-/* browse -- Scala Source Browser
+/* sxr -- Scala X-Ray
  * Copyright 2009 Mark Harrah
  */
 
-package browse
+package sxr
 
 import java.io.{FileOutputStream, InputStream, OutputStream}
 import java.io.{BufferedReader, BufferedWriter, File, FileReader, FileWriter}

@@ -1,8 +1,8 @@
-/* browse -- Scala Source Browser
+/* sxr -- Scala X-Ray
  * Copyright 2009 Mark Harrah
  */
 
-package browse
+package sxr
 
 /** Represents a link to a definition.  The path is the path to the file and target is
 * the symbol ID targeted.  The '#' is not included.  To get the constructed path,

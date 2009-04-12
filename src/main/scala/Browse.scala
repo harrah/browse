@@ -1,8 +1,8 @@
-/* browse -- Scala Source Browser
+/* sxr -- Scala X-Ray
  * Copyright 2009 Mark Harrah
  */
 
-package browse
+package sxr
 
 import scala.tools.nsc.{ast, plugins, symtab, util, Global}
 import ast.parser.Tokens
