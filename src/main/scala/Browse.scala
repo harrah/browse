@@ -202,31 +202,38 @@ abstract class Browse extends Plugin
 						case s: Select => s.qualifier.tpe.memberType(s.symbol)
 						case _ => ts.owner.thisType.memberType(ts)
 					}
-				val asString =
-					sType match
-					{
-						case mt: MethodType if ts.hasFlag(Flags.IMPLICIT)=> "implicit " + fullName(sym) + " : " + typeString(sType)
-						case _ => typeString(sType)
-					}
-				//println("Term symbol " + sym.id + ": " + asString)
-				token.tpe = TypeAttribute(asString, linkTo(sourceFile, sType.typeSymbol))
+				if(sType != null)
+				{
+					val asString =
+						sType match
+						{
+							case mt: MethodType if ts.hasFlag(Flags.IMPLICIT)=> "implicit " + fullName(sym) + " : " + typeString(sType)
+							case _ => typeString(sType)
+						}
+					//println("Term symbol " + sym.id + ": " + asString)
+					token.tpe = TypeAttribute(asString, linkTo(sourceFile, sType.typeSymbol))
+				}
 			case ts: TypeSymbol =>
 				val treeType = t.tpe
 				val sType =
 					if(treeType == NoType) ts.info
 					else treeType
 				//println("Type symbol " + sym.id + ": " + typeString(sType))
-				token.tpe = TypeAttribute(typeString(sType), linkTo(sourceFile, sType.typeSymbol))
+				if(sType != null)
+					token.tpe = TypeAttribute(typeString(sType), linkTo(sourceFile, sType.typeSymbol))
 			case _ => ()
 		}
-		if(t.isDef)
-			token += sym.id
-		else
+		if(sym != null)
 		{
-			linkTo(sourceFile, sym) match
+			if(t.isDef)
+				token += sym.id
+			else
 			{
-				case Some(x) => token.reference = x
-				case None => token += sym.id
+				linkTo(sourceFile, sym) match
+				{
+					case Some(x) => token.reference = x
+					case None => token += sym.id
+				}
 			}
 		}
 	}
@@ -260,7 +267,11 @@ abstract class Browse extends Plugin
 						case _ => typeParameters + typeString(resultType)
 					}
 				}
-			case _ => t.toString
+			case _ =>
+				if(t == null)
+					""
+				else
+					t.toString
 		}
 	}
 	/** Converts the given compound type to a string.  'mainPostfix' is copied after the main type symbol
@@ -287,7 +298,7 @@ abstract class Browse extends Plugin
 	/** Generates a link usable in the file 'from' to the symbol 'to', which might be in some other file. */
 	private def linkTo(from: File, sym: Symbol): Option[Link] =
 	{
-		if(sym == NoSymbol)
+		if(sym == null || sym == NoSymbol)
 			None
 		else
 		{
@@ -338,27 +349,28 @@ object Browse
 	
 	def writeIndex(to: File, files: Iterable[File])
 	{
+		val relativizeAgainst = to.getParentFile
+		val rawRelativePaths = files.flatMap(file => FileUtil.relativize(relativizeAgainst, file).toList)
+		val sortedRelativePaths = new TreeSet[String]
+		sortedRelativePaths ++= rawRelativePaths
 		FileUtil.withWriter(to) { out =>
 			out.write("<html><body>")
-			files.foreach(writeEntry(to, out))
+			sortedRelativePaths.foreach(writeEntry(to, out))
 			out.write("</body></html>")
 		}
 	}
 	import java.io.Writer
-	private def writeEntry(index: File, out: Writer)(file: File)
+	private def writeEntry(index: File, out: Writer)(path: String)
 	{
-		for(path <- FileUtil.relativize(index.getParentFile, file))
-		{
-			out.write("<li><a href=\"")
-			out.write(path)
-			out.write("\">")
-			val label =
-				if(path.endsWith(".html"))
-					path.substring(0, path.length - ".html".length)
-				else
-					path
-			out.write(label)
-			out.write("</a></li>")
-		}
+		out.write("<li><a href=\"")
+		out.write(path)
+		out.write("\">")
+		val label =
+			if(path.endsWith(".html"))
+				path.substring(0, path.length - ".html".length)
+			else
+				path
+		out.write(label)
+		out.write("</a></li>")
 	}
 }
