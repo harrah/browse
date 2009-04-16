@@ -1,0 +1,96 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/tools/nsc/io/PlainFile.scala</title>
+        <script type="text/javascript" src="../../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* NSC -- new Scala compiler
+ * Copyright 2005-2009 LAMP/EPFL
+ * @author  Martin Odersky
+ */</span>
+<span class="comment">// $Id: PlainFile.scala 16884 2009-01-09 16:52:09Z cunei $</span>
+
+
+<span class="keyword">package</span> scala.tools.nsc.io
+
+<span class="keyword">import</span> java.io.{File, FileInputStream, FileOutputStream, IOException}
+
+<span class="keyword">object</span> <span class="typed"><span class="type">object scala.tools.nsc.io.PlainFile</span><a id="12721">PlainFile</a></span> {
+  <span class="comment">/**
+   * If the specified File exists, returns an abstract file backed
+   * by it. Otherwise, returns null.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(java.io.File)scala.tools.nsc.io.AbstractFile</span><a id="48657">fromFile</a></span>(<span class="typed"><span class="type">java.io.File</span><a id="48659">file</a></span>: <span class="typed"><span class="type">java.io.File</span><a id="3669">File</a></span>): <span class="typed"><span class="type">scala.tools.nsc.io.AbstractFile</span><a href="AbstractFile.scala.html#12693">AbstractFile</a></span> =
+    <span class="typed"><span class="type">scala.tools.nsc.io.AbstractFile</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">java.io.File</span><a href="#48659">file</a></span>.<span class="typed"><span class="type">()Boolean</span><a id="40697">exists</a></span>()) <span class="typed"><span class="type">scala.tools.nsc.io.PlainFile</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.tools.nsc.io.PlainFile</span><a href="#12720">PlainFile</a></span>(<span class="typed"><span class="type">java.io.File</span><a href="#48659">file</a></span>) <span class="keyword">else</span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>
+
+}
+
+<span class="comment">/** This class implements an abstract file backed by a File. 
+ */</span>
+<span class="keyword">class</span> <span class="typed"><span class="type">class PlainFile extends scala.tools.nsc.io.AbstractFile with ScalaObject</span><a id="12720">PlainFile</a></span>(<span class="keyword">val</span> <span class="typed"><span class="type">java.io.File</span><span id="40805"><span id="40804"><a id="40998">file</a></span></span></span>: <span class="typed"><span class="type">java.io.File</span><a id="3669">File</a></span>) <span class="keyword">extends</span> <span class="typed"><span class="type">scala.tools.nsc.io.AbstractFile</span><a href="AbstractFile.scala.html#12693">AbstractFile</a></span> {
+  <span class="keyword">private</span> <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.String</span><span id="40808"><a id="40807">fpath</a></span></span> = <span class="keyword">try</span> { <span class="typed"><span class="type">=&gt; java.io.File</span><a href="#40804">file</a></span>.<span class="typed"><span class="type">()java.lang.String</span><a id="40691">getCanonicalPath</a></span> }
+                      <span class="keyword">catch</span> { <span class="typed"><span class="type">java.lang.String</span><span class="keyword">case</span></span> _: <span class="typed"><span class="type">java.io.IOException</span><a id="3519">IOException</a></span> =&gt; <span class="typed"><span class="type">=&gt; java.io.File</span><a href="#40804">file</a></span>.<span class="typed"><span class="type">()java.lang.String</span><a id="40689">getAbsolutePath</a></span> }
+
+  <span class="typed"><span class="type">(Boolean)Unit</span><span id="6003"><a id="821">assert</a></span></span>(<span class="typed"><span class="type">=&gt; java.io.File</span><a href="#40804">file</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5795">ne</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>)
+  <span class="typed"><span class="type">(Boolean,=&gt; Any)Unit</span><span id="6004"><a id="821">assert</a></span></span>(<span class="typed"><span class="type">=&gt; java.io.File</span><a href="#40804">file</a></span>.<span class="typed"><span class="type">()Boolean</span><a id="40697">exists</a></span>(), <span class="typed"><span class="type">java.lang.String(&quot;non-existent file: &quot;)</span><span class="string">&quot;non-existent file: &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">=&gt; java.io.File</span><a href="#40804">file</a></span>)
+
+  <span class="comment">/** Returns the name of this abstract file. */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; java.lang.String</span><a id="40809">name</a></span> = <span class="typed"><span class="type">=&gt; java.io.File</span><a href="#40804">file</a></span>.<span class="typed"><span class="type">()java.lang.String</span><a id="40684">getName</a></span>()
+
+  <span class="comment">/** Returns the path of this abstract file. */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; java.lang.String</span><a id="40810">path</a></span> = <span class="typed"><span class="type">=&gt; java.io.File</span><a href="#40804">file</a></span>.<span class="typed"><span class="type">()java.lang.String</span><a id="40687">getPath</a></span>()
+  
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; scala.tools.nsc.io.AbstractFile</span><a id="40811">container</a></span> : <span class="typed"><span class="type">scala.tools.nsc.io.AbstractFile</span><a href="AbstractFile.scala.html#12693">AbstractFile</a></span> = <span class="typed"><span class="type">scala.tools.nsc.io.PlainFile</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.tools.nsc.io.PlainFile</span><a href="#12720">PlainFile</a></span>(<span class="typed"><span class="type">=&gt; java.io.File</span><a href="#40804">file</a></span>.<span class="typed"><span class="type">()java.io.File</span><a id="40686">getParentFile</a></span>)
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; java.io.FileInputStream</span><a id="40812">input</a></span> = <span class="typed"><span class="type">(java.io.File)java.io.FileInputStream</span><a id="48679" class="keyword">new</a></span> <span class="typed"><span class="type">java.io.FileInputStream</span><a id="3810">FileInputStream</a></span>(<span class="typed"><span class="type">=&gt; java.io.File</span><a href="#40804">file</a></span>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; java.io.FileOutputStream</span><a id="40813">output</a></span> = <span class="typed"><span class="type">(java.io.File)java.io.FileOutputStream</span><a id="48703" class="keyword">new</a></span> <span class="typed"><span class="type">java.io.FileOutputStream</span><a id="3798">FileOutputStream</a></span>(<span class="typed"><span class="type">=&gt; java.io.File</span><a href="#40804">file</a></span>)
+  
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Some[Int]</span><a id="40814">sizeOption</a></span> = <span class="typed"><span class="type">(Int)Some[Int]</span><span id="29737"><a id="308">Some</a></span></span>(<span class="typed"><span class="type">=&gt; java.io.File</span><a href="#40804">file</a></span>.<span class="typed"><span class="type">()Long</span><a id="40702">length</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a id="3194">toInt</a></span>)
+  
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()Int</span><a id="40815">hashCode</a></span>(): <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span> = <span class="typed"><span class="type">=&gt; java.lang.String</span><a href="#40807">fpath</a></span>.<span class="typed"><span class="type">()Int</span><a id="5843">hashCode</a></span>
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Any)Boolean</span><a id="40816">equals</a></span>(<span class="typed"><span class="type">Any</span><a id="48719">that</a></span>: <span class="typed"><span class="type">Any</span><a id="51">Any</a></span>): <span class="typed"><span class="type">Boolean</span><a id="2170">Boolean</a></span> =
+    <span class="typed"><span class="type">Any</span><a href="#48719">that</a></span>.<span class="typed"><span class="type">Boolean</span><a id="3501">isInstanceOf</a></span>[<span class="typed"><span class="type">scala.tools.nsc.io.PlainFile</span><a href="#12720">PlainFile</a></span>] <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2751">&amp;&amp;</a></span>
+      <span class="typed"><span class="type">=&gt; java.lang.String</span><a href="#40807">fpath</a></span>.<span class="typed"><span class="type">(Any)Boolean</span><a id="5832">equals</a></span>(<span class="typed"><span class="type">Any</span><a href="#48719">that</a></span>.<span class="typed"><span class="type">scala.tools.nsc.io.PlainFile</span><a id="3503">asInstanceOf</a></span>[<span class="typed"><span class="type">scala.tools.nsc.io.PlainFile</span><a href="#12720">PlainFile</a></span>].<span class="typed"><span class="type">=&gt; java.lang.String</span><a href="#40807">fpath</a></span>)
+
+  <span class="comment">/** Is this abstract file a directory? */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="40817">isDirectory</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2170">Boolean</a></span> = <span class="typed"><span class="type">=&gt; java.io.File</span><a href="#40804">file</a></span>.<span class="typed"><span class="type">()Boolean</span><a id="40698">isDirectory</a></span>()
+
+  <span class="comment">/** Returns the time that this abstract file was last modified. */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Long</span><a id="40818">lastModified</a></span>: <span class="typed"><span class="type">Long</span><a id="2399">Long</a></span> = <span class="typed"><span class="type">=&gt; java.io.File</span><a href="#40804">file</a></span>.<span class="typed"><span class="type">()Long</span><a id="40701">lastModified</a></span>()
+
+  <span class="comment">/** Returns all abstract subfiles of this abstract directory. */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Iterator[scala.tools.nsc.io.AbstractFile]</span><a id="40819">elements</a></span>: <span class="typed"><span class="type">Iterator[scala.tools.nsc.io.AbstractFile]</span><a id="1339">Iterator</a></span>[AbstractFile] = {
+    <span class="typed"><span class="type">(Boolean,=&gt; Any)Unit</span><span id="6004"><a id="821">assert</a></span></span>(<span class="typed"><span class="type">=&gt; Boolean</span><a href="#40817">isDirectory</a></span>, <span class="typed"><span class="type">java.lang.String(&quot;not a directory '&quot;)</span><span class="string">&quot;not a directory '&quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">scala.tools.nsc.io.PlainFile</span><a href="#12720" class="keyword">this</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot;'&quot;)</span><span class="string">&quot;'&quot;</span></span>)
+    <span class="keyword">val</span> <span class="typed"><span class="type">Array[String]</span><a id="48721">names</a></span>: <span class="typed"><span class="type">Array[String]</span><a id="1072">Array</a></span>[String] = <span class="typed"><span class="type">=&gt; java.io.File</span><a href="#40804">file</a></span>.<span class="typed"><span class="type">()Array[java.lang.String]</span><a id="40706">list</a></span>()
+    <span class="typed"><span class="type">Iterator[scala.tools.nsc.io.AbstractFile]</span><span class="keyword">if</span></span> ((<span class="typed"><span class="type">Array[String]</span><a href="#48721">names</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5794">eq</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2750">||</a></span> <span class="typed"><span class="type">Array[String]</span><a href="#48721">names</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a id="21508">length</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">==</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) <span class="typed"><span class="type">object Iterator</span><a id="1340">Iterator</a></span>.<span class="typed"><span class="type">=&gt; &lt;refinement&gt; extends java.lang.Object with Iterator[Nothing]</span><a id="32160">empty</a></span>
+    <span class="keyword">else</span> <span class="typed"><span class="type">Array[String]</span><a href="#48721">names</a></span>.<span class="typed"><span class="type">=&gt; Iterator[String]</span><a id="21511">elements</a></span>.<span class="typed"><span class="type">((String) =&gt; java.io.File)Iterator[java.io.File]</span><a id="32169">map</a></span> { <span class="typed"><span class="type">String</span><a id="48735">name</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span> =&gt; <span class="typed"><span class="type">(java.io.File,java.lang.String)java.io.File</span><a id="40682" class="keyword">new</a></span> <span class="typed"><span class="type">java.io.File</span><a id="3669">File</a></span>(<span class="typed"><span class="type">=&gt; java.io.File</span><a href="#40804">file</a></span>, <span class="typed"><span class="type">String</span><a href="#48735">name</a></span>) }
+      .<span class="typed"><span class="type">((java.io.File) =&gt; Boolean)Iterator[java.io.File]</span><a id="32193">filter</a></span>(<span class="typed"><span class="type">java.io.File</span><a href="#48751">_</a></span>.<span class="typed"><span class="type">()Boolean</span><a id="40697">exists</a></span>).<span class="typed"><span class="type">((java.io.File) =&gt; scala.tools.nsc.io.PlainFile)Iterator[scala.tools.nsc.io.PlainFile]</span><a id="32169">map</a></span>(<span class="typed"><span class="type">java.io.File</span><a id="48754">file</a></span> =&gt; <span class="typed"><span class="type">scala.tools.nsc.io.PlainFile</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.tools.nsc.io.PlainFile</span><a href="#12720">PlainFile</a></span>(<span class="typed"><span class="type">java.io.File</span><a href="#48754">file</a></span>))
+  }
+
+  <span class="comment">/**
+   * Returns the abstract file in this abstract directory with the
+   * specified name. If there is no such file, returns null. The
+   * argument &quot;directory&quot; tells whether to look for a directory or
+   * or a regular file.
+   *
+   * @param name      ...
+   * @param directory ...
+   * @return          ...
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(String,Boolean)scala.tools.nsc.io.AbstractFile</span><a id="40820">lookupName</a></span>(<span class="typed"><span class="type">String</span><a id="48755">name</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>, <span class="typed"><span class="type">Boolean</span><a id="48756">directory</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2170">Boolean</a></span>): <span class="typed"><span class="type">scala.tools.nsc.io.AbstractFile</span><a href="AbstractFile.scala.html#12693">AbstractFile</a></span> = {
+    <span class="comment">//assert(isDirectory, &quot;not a directory '&quot; + this + &quot;'&quot;)</span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">java.io.File</span><a id="48757">child</a></span> = <span class="typed"><span class="type">(java.io.File,java.lang.String)java.io.File</span><a id="40682" class="keyword">new</a></span> <span class="typed"><span class="type">java.io.File</span><a id="3669">File</a></span>(<span class="typed"><span class="type">=&gt; java.io.File</span><a href="#40804">file</a></span>, <span class="typed"><span class="type">String</span><a href="#48755">name</a></span>)
+    <span class="typed"><span class="type">scala.tools.nsc.io.AbstractFile</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2747">!</a></span><span class="typed"><span class="type">java.io.File</span><a href="#48757">child</a></span>.<span class="typed"><span class="type">()Boolean</span><a id="40697">exists</a></span>() <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2750">||</a></span> (<span class="typed"><span class="type">Boolean</span><a href="#48756">directory</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">!=</a></span> <span class="typed"><span class="type">java.io.File</span><a href="#48757">child</a></span>.<span class="typed"><span class="type">()Boolean</span><a id="40698">isDirectory</a></span>) <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2750">||</a></span>
+        <span class="typed"><span class="type">Boolean</span><a href="#48756">directory</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">==</a></span> <span class="typed"><span class="type">java.io.File</span><a href="#48757">child</a></span>.<span class="typed"><span class="type">()Boolean</span><a id="40699">isFile</a></span>()) <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>
+    <span class="keyword">else</span> <span class="typed"><span class="type">scala.tools.nsc.io.PlainFile</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.tools.nsc.io.PlainFile</span><a href="#12720">PlainFile</a></span>(<span class="typed"><span class="type">java.io.File</span><a href="#48757">child</a></span>)
+  }
+
+}
+
+        </pre>
+    </body>
+</html>

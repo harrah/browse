@@ -1,0 +1,105 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/tools/nsc/symtab/classfile/AbstractFileReader.scala</title>
+        <script type="text/javascript" src="../../../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* NSC -- new Scala compiler
+ * Copyright 2005-2009 LAMP/EPFL
+ * @author  Martin Odersky
+ */</span>
+<span class="comment">// $Id: AbstractFileReader.scala 17274 2009-03-10 11:39:04Z michelou $</span>
+
+
+<span class="keyword">package</span> scala.tools.nsc.symtab.classfile
+
+<span class="keyword">import</span> java.lang.Float.intBitsToFloat
+<span class="keyword">import</span> java.lang.Double.longBitsToDouble
+
+<span class="keyword">import</span> scala.tools.nsc.io.AbstractFile
+
+<span class="comment">/** 
+ * This class reads files byte per byte. Only used by ClassFileParser
+ *
+ * @author Philippe Altherr
+ * @version 1.0, 23/03/2004
+ */</span>
+<span class="keyword">class</span> <span class="typed"><span class="type">class AbstractFileReader extends java.lang.Object with ScalaObject</span><a id="16260">AbstractFileReader</a></span>(<span class="keyword">val</span> <span class="typed"><span class="type">scala.tools.nsc.io.AbstractFile</span><span id="36454"><span id="36453"><a id="36483">file</a></span></span></span>: <span class="typed"><span class="type">scala.tools.nsc.io.AbstractFile</span><a href="../../io/AbstractFile.scala.html#12693">AbstractFile</a></span>) {
+
+  <span class="comment">/** the buffer containing the file
+   */</span>
+  <span class="keyword">val</span> <span class="typed"><span class="type">Array[Byte]</span><span id="36457"><a id="36456">buf</a></span></span>: <span class="typed"><span class="type">Array[Byte]</span><a id="1072">Array</a></span>[Byte] = <span class="typed"><span class="type">=&gt; scala.tools.nsc.io.AbstractFile</span><a href="#36453">file</a></span>.<span class="typed"><span class="type">=&gt; Array[Byte]</span><a href="../../io/AbstractFile.scala.html#25449">toByteArray</a></span>
+
+  <span class="comment">/** the current input pointer
+   */</span>
+  <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><span id="36460"><span id="36458"><span id="36459"><a id="75922">bp</a></span></span></span></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span> = <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>
+
+  <span class="comment">/** return byte at offset 'pos'
+   */</span>
+  @<span class="typed"><span class="type">throws</span><a id="256">throws</a></span>(<span class="typed"><span class="type">java.lang.Class[IndexOutOfBoundsException]</span><span >classOf</span></span>[IndexOutOfBoundsException])
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Byte</span><a id="36461">byteAt</a></span>(<span class="typed"><span class="type">Int</span><a id="75924">pos</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>): <span class="typed"><span class="type">Byte</span><a id="2379">Byte</a></span> = <span class="typed"><span class="type">(Int)Byte</span><a href="#36456" id="21509">buf</a></span>(<span class="typed"><span class="type">Int</span><a href="#75924">pos</a></span>)
+
+  <span class="comment">/** read a byte
+   */</span>
+  @<span class="typed"><span class="type">throws</span><a id="256">throws</a></span>(<span class="typed"><span class="type">java.lang.Class[IndexOutOfBoundsException]</span><span >classOf</span></span>[IndexOutOfBoundsException])
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Byte</span><a id="36462">nextByte</a></span>: <span class="typed"><span class="type">Byte</span><a id="2379">Byte</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">Byte</span><a id="75928">b</a></span> = <span class="typed"><span class="type">(Int)Byte</span><a href="#36456" id="21509">buf</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="#36458">bp</a></span>)
+    <span class="typed"><span class="type">(Int)Unit</span><a href="#36459">bp</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3147">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+    <span class="typed"><span class="type">Byte</span><a href="#75928">b</a></span>
+  }
+
+  <span class="comment">/** read some bytes
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Array[Byte]</span><a id="36463">nextBytes</a></span>(<span class="typed"><span class="type">Int</span><a id="75955">len</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>): <span class="typed"><span class="type">Array[Byte]</span><a id="1072">Array</a></span>[Byte] = {
+    <span class="typed"><span class="type">(Int)Unit</span><a href="#36459">bp</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3147">+=</a></span> <span class="typed"><span class="type">Int</span><a href="#75955">len</a></span>
+    <span class="typed"><span class="type">=&gt; Array[Byte]</span><a href="#36456">buf</a></span>.<span class="typed"><span class="type">(Int,Int)Array[Byte]</span><a id="21512">subArray</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="#36458">bp</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3148">-</a></span> <span class="typed"><span class="type">Int</span><a href="#75955">len</a></span>, <span class="typed"><span class="type">=&gt; Int</span><a href="#36458">bp</a></span>)
+  }
+
+  <span class="comment">/** read a character
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Char</span><a id="36464">nextChar</a></span>: <span class="typed"><span class="type">Char</span><a id="2389">Char</a></span> =
+    (((<span class="typed"><span class="type">=&gt; Byte</span><a href="#36462">nextByte</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="2826">&amp;</a></span> <span class="typed"><span class="type">Int(255)</span><span class="int">0xff</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3090">&lt;&lt;</a></span> <span class="typed"><span class="type">Int(8)</span><span class="int">8</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3147">+</a></span> (<span class="typed"><span class="type">=&gt; Byte</span><a href="#36462">nextByte</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="2826">&amp;</a></span> <span class="typed"><span class="type">Int(255)</span><span class="int">0xff</span></span>)).<span class="typed"><span class="type">=&gt; Char</span><a id="3084">toChar</a></span>
+
+  <span class="comment">/** read an integer
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Int</span><a id="36465">nextInt</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span> =
+    ((<span class="typed"><span class="type">=&gt; Byte</span><a href="#36462">nextByte</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="2826">&amp;</a></span> <span class="typed"><span class="type">Int(255)</span><span class="int">0xff</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3090">&lt;&lt;</a></span> <span class="typed"><span class="type">Int(24)</span><span class="int">24</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3147">+</a></span> ((<span class="typed"><span class="type">=&gt; Byte</span><a href="#36462">nextByte</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="2826">&amp;</a></span> <span class="typed"><span class="type">Int(255)</span><span class="int">0xff</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3090">&lt;&lt;</a></span> <span class="typed"><span class="type">Int(16)</span><span class="int">16</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3147">+</a></span>
+    ((<span class="typed"><span class="type">=&gt; Byte</span><a href="#36462">nextByte</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="2826">&amp;</a></span> <span class="typed"><span class="type">Int(255)</span><span class="int">0xff</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3090">&lt;&lt;</a></span>  <span class="typed"><span class="type">Int(8)</span><span class="int">8</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3147">+</a></span>  (<span class="typed"><span class="type">=&gt; Byte</span><a href="#36462">nextByte</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="2826">&amp;</a></span> <span class="typed"><span class="type">Int(255)</span><span class="int">0xff</span></span>)
+
+
+  <span class="comment">/** extract a character at position bp from buf
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Char</span><a id="36466">getChar</a></span>(<span class="typed"><span class="type">Int</span><a id="53729">mybp</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>): <span class="typed"><span class="type">Char</span><a id="2389">Char</a></span> =
+    (((<span class="typed"><span class="type">(Int)Byte</span><a href="#36456" id="21509">buf</a></span>(<span class="typed"><span class="type">Int</span><a href="#53729">mybp</a></span>) <span class="typed"><span class="type">(Int)Int</span><a id="2826">&amp;</a></span> <span class="typed"><span class="type">Int(255)</span><span class="int">0xff</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3090">&lt;&lt;</a></span> <span class="typed"><span class="type">Int(8)</span><span class="int">8</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3147">+</a></span> (<span class="typed"><span class="type">(Int)Byte</span><a href="#36456" id="21509">buf</a></span>(<span class="typed"><span class="type">Int</span><a href="#53729">mybp</a></span><span class="typed"><span class="type">(Int)Int</span><a id="3147">+</a></span><span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="2826">&amp;</a></span> <span class="typed"><span class="type">Int(255)</span><span class="int">0xff</span></span>)).<span class="typed"><span class="type">=&gt; Char</span><a id="3084">toChar</a></span>
+
+  <span class="comment">/** extract an integer at position bp from buf
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Int</span><a id="36467">getInt</a></span>(<span class="typed"><span class="type">Int</span><a id="54179">mybp</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>): <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span> =
+    ((<span class="typed"><span class="type">(Int)Byte</span><a href="#36456" id="21509">buf</a></span>(<span class="typed"><span class="type">Int</span><a href="#54179">mybp</a></span>  ) <span class="typed"><span class="type">(Int)Int</span><a id="2826">&amp;</a></span> <span class="typed"><span class="type">Int(255)</span><span class="int">0xff</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3090">&lt;&lt;</a></span> <span class="typed"><span class="type">Int(24)</span><span class="int">24</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3147">+</a></span> ((<span class="typed"><span class="type">(Int)Byte</span><a href="#36456" id="21509">buf</a></span>(<span class="typed"><span class="type">Int</span><a href="#54179">mybp</a></span><span class="typed"><span class="type">(Int)Int</span><a id="3147">+</a></span><span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="2826">&amp;</a></span> <span class="typed"><span class="type">Int(255)</span><span class="int">0xff</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3090">&lt;&lt;</a></span> <span class="typed"><span class="type">Int(16)</span><span class="int">16</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3147">+</a></span>
+    ((<span class="typed"><span class="type">(Int)Byte</span><a href="#36456" id="21509">buf</a></span>(<span class="typed"><span class="type">Int</span><a href="#54179">mybp</a></span><span class="typed"><span class="type">(Int)Int</span><a id="3147">+</a></span><span class="typed"><span class="type">Int(2)</span><span class="int">2</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="2826">&amp;</a></span> <span class="typed"><span class="type">Int(255)</span><span class="int">0xff</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3090">&lt;&lt;</a></span> <span class="typed"><span class="type">Int(8)</span><span class="int">8</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3147">+</a></span> (<span class="typed"><span class="type">(Int)Byte</span><a href="#36456" id="21509">buf</a></span>(<span class="typed"><span class="type">Int</span><a href="#54179">mybp</a></span><span class="typed"><span class="type">(Int)Int</span><a id="3147">+</a></span><span class="typed"><span class="type">Int(3)</span><span class="int">3</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="2826">&amp;</a></span> <span class="typed"><span class="type">Int(255)</span><span class="int">0xff</span></span>)
+
+  <span class="comment">/** extract a long integer at position bp from buf
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Long</span><a id="36468">getLong</a></span>(<span class="typed"><span class="type">Int</span><a id="54217">mybp</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>): <span class="typed"><span class="type">Long</span><a id="2399">Long</a></span> =
+    (<span class="typed"><span class="type">(Int)Int</span><a href="#36467">getInt</a></span>(<span class="typed"><span class="type">Int</span><a href="#54217">mybp</a></span>).<span class="typed"><span class="type">=&gt; Long</span><a id="3086">toLong</a></span> <span class="typed"><span class="type">(Int)Long</span><a id="3199">&lt;&lt;</a></span> <span class="typed"><span class="type">Int(32)</span><span class="int">32</span></span>) <span class="typed"><span class="type">(Long)Long</span><a id="3270">+</a></span> (<span class="typed"><span class="type">(Int)Int</span><a href="#36467">getInt</a></span>(<span class="typed"><span class="type">Int</span><a href="#54217">mybp</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3147">+</a></span> <span class="typed"><span class="type">Int(4)</span><span class="int">4</span></span>) <span class="typed"><span class="type">(Long)Long</span><a id="3167">&amp;</a></span> <span class="typed"><span class="type">Long(4294967295L)</span><span class="long">0xffffffffL</span></span>)
+
+  <span class="comment">/** extract a float at position bp from buf
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Float</span><a id="36469">getFloat</a></span>(<span class="typed"><span class="type">Int</span><a id="54198">mybp</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>): <span class="typed"><span class="type">Float</span><a id="2404">Float</a></span> = <span class="typed"><span class="type">(Int)Float</span><span id="23795"><a id="2126">intBitsToFloat</a></span></span>(<span class="typed"><span class="type">(Int)Int</span><a href="#36467">getInt</a></span>(<span class="typed"><span class="type">Int</span><a href="#54198">mybp</a></span>))
+
+  <span class="comment">/** extract a double at position bp from buf
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Double</span><a id="36470">getDouble</a></span>(<span class="typed"><span class="type">Int</span><a id="54236">mybp</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>): <span class="typed"><span class="type">Double</span><a id="2409">Double</a></span> = <span class="typed"><span class="type">(Long)Double</span><span id="23173"><a id="2135">longBitsToDouble</a></span></span>(<span class="typed"><span class="type">(Int)Long</span><a href="#36468">getLong</a></span>(<span class="typed"><span class="type">Int</span><a href="#54236">mybp</a></span>))
+
+  <span class="comment">/** skip next 'n' bytes
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Unit</span><a id="36471">skip</a></span>(<span class="typed"><span class="type">Int</span><a id="53656">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>) { <span class="typed"><span class="type">(Int)Unit</span><a href="#36459">bp</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3147">+=</a></span> <span class="typed"><span class="type">Int</span><a href="#53656">n</a></span> }
+
+}
+
+        </pre>
+    </body>
+</html>

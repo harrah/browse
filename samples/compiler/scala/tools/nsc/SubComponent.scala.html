@@ -1,0 +1,80 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/tools/nsc/SubComponent.scala</title>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* NSC -- new Scala compiler
+ * Copyright 2005-2009 LAMP/EPFL
+ * @author Martin Odersky
+ */</span>
+<span class="comment">// $Id: SubComponent.scala 17039 2009-02-05 14:07:53Z nielsen $</span>
+
+<span class="keyword">package</span> scala.tools.nsc
+
+<span class="comment">/** An nsc sub-component.
+ *
+ *  @author Martin Odersky
+ */</span>
+<span class="keyword">abstract</span> <span class="keyword">class</span> <span class="typed"><span class="type">class SubComponent extends java.lang.Object with ScalaObject</span><a id="6300">SubComponent</a></span> {
+
+  <span class="comment">/** The global environment; overridden by instantiation in Global. */</span>
+  <span class="keyword">val</span> <span class="typed"><span class="type">=&gt; scala.tools.nsc.Global</span><a id="29449">global</a></span>: <span class="typed"><span class="type">scala.tools.nsc.Global</span><a href="Global.scala.html#6489">Global</a></span>
+
+  <span class="comment">/** The name of the phase */</span>
+  <span class="keyword">val</span> <span class="typed"><span class="type">=&gt; String</span><a id="29450">phaseName</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>
+
+  <span class="comment">/** List of phase names, this phase should run after  */</span>
+  <span class="keyword">val</span> <span class="typed"><span class="type">=&gt; List[String]</span><a id="29451">runsAfter</a></span>: <span class="typed"><span class="type">List[String]</span><a id="526">List</a></span>[String]
+
+  <span class="comment">/** List of phase names, this phase should run before  */</span>
+  <span class="keyword">val</span> <span class="typed"><span class="type">List[String]</span><span id="29453"><a id="29452">runsBefore</a></span></span>: <span class="typed"><span class="type">List[String]</span><a id="526">List</a></span>[String] = <span class="typed"><span class="type">object Nil</span><a id="335">Nil</a></span>
+
+  <span class="comment">/** Phase name this phase will attach itself to, not allowing any phase to come between it
+   * and the phase name declared  */</span>
+  <span class="keyword">val</span> <span class="typed"><span class="type">=&gt; Option[String]</span><a id="29454">runsRightAfter</a></span>: <span class="typed"><span class="type">Option[String]</span><a id="934">Option</a></span>[String]
+
+  <span class="comment">/** Internal flag to tell external from internal phases */</span>
+  <span class="keyword">val</span> <span class="typed"><span class="type">Boolean</span><span id="29456"><a id="29455">internal</a></span></span>: <span class="typed"><span class="type">Boolean</span><a id="2170">Boolean</a></span> = <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+
+  <span class="comment">/** SubComponent are added to a HashSet and two phases are the same if they have the same name  */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()Int</span><a id="29457">hashCode</a></span>() = <span class="typed"><span class="type">=&gt; String</span><a href="#29450">phaseName</a></span>.<span class="typed"><span class="type">()Int</span><a id="5843">hashCode</a></span>()
+
+  <span class="comment">/** New flags defined by the phase which are not valid before */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Long</span><a id="29458">phaseNewFlags</a></span>: <span class="typed"><span class="type">Long</span><a id="2399">Long</a></span> = <span class="typed"><span class="type">Long(0L)</span><span class="int">0</span></span>
+
+  <span class="comment">/** New flags defined by the phase which are not valid until immediately after it */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Long</span><a id="29459">phaseNextFlags</a></span>: <span class="typed"><span class="type">Long</span><a id="2399">Long</a></span> = <span class="typed"><span class="type">Long(0L)</span><span class="int">0</span></span>
+
+  <span class="comment">/** The phase factory */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(scala.tools.nsc.Phase)scala.tools.nsc.Phase</span><a id="29460">newPhase</a></span>(<span class="typed"><span class="type">scala.tools.nsc.Phase</span><a id="32611">prev</a></span>: <span class="typed"><span class="type">scala.tools.nsc.Phase</span><a href="Phase.scala.html#6873">Phase</a></span>): <span class="typed"><span class="type">scala.tools.nsc.Phase</span><a href="Phase.scala.html#6873">Phase</a></span>
+
+  <span class="keyword">private</span> <span class="keyword">var</span> <span class="typed"><span class="type">scala.tools.nsc.Phase</span><span id="29463"><span id="29461"><span id="29462"><a id="38180">ownPhaseCache</a></span></span></span></span>: <span class="typed"><span class="type">scala.tools.nsc.Phase</span><a href="Phase.scala.html#6873">Phase</a></span> = _
+  <span class="keyword">private</span> <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><span id="29466"><span id="29464"><span id="29465"><a id="38181">ownPhaseRunId</a></span></span></span></span> = global.<span class="typed"><span class="type">Int(0)</span><span >NoRunId</span></span>
+
+  <span class="comment">/** The phase corresponding to this subcomponent in the current compiler run */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; scala.tools.nsc.Phase</span><a id="29467">ownPhase</a></span>: <span class="typed"><span class="type">scala.tools.nsc.Phase</span><a href="Phase.scala.html#6873">Phase</a></span> = {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Int</span><a href="#29464">ownPhaseRunId</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3142">!=</a></span> <span class="typed"><span class="type">=&gt; scala.tools.nsc.Global</span><a href="#29449">global</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="Global.scala.html#21309">currentRunId</a></span>) {
+      <span class="typed"><span class="type">(scala.tools.nsc.Phase)Unit</span><a href="#29462">ownPhaseCache</a></span> = <span class="typed"><span class="type">=&gt; scala.tools.nsc.Global</span><a href="#29449">global</a></span>.<span class="typed"><span class="type">=&gt; SubComponent.this.global.Run</span><a href="Global.scala.html#21305">currentRun</a></span>.<span class="typed"><span class="type">(String)scala.tools.nsc.Phase</span><a href="Global.scala.html#36555">phaseNamed</a></span>(<span class="typed"><span class="type">=&gt; String</span><a href="#29450">phaseName</a></span>)
+      <span class="typed"><span class="type">(Int)Unit</span><a href="#29465">ownPhaseRunId</a></span> = <span class="typed"><span class="type">=&gt; scala.tools.nsc.Global</span><a href="#29449">global</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="Global.scala.html#21309">currentRunId</a></span>
+    }
+    <span class="typed"><span class="type">=&gt; scala.tools.nsc.Phase</span><a href="#29461">ownPhaseCache</a></span>
+  }
+
+  <span class="comment">/** The phase defined by this subcomponent. Can be called only after phase is installed by newPhase. */</span>
+  <span class="comment">//  lazy val ownPhase: Phase = global.currentRun.phaseNamed(phaseName)</span>
+
+  <span class="comment">/** A standard phase template */</span>
+  <span class="keyword">abstract</span> <span class="keyword">class</span> <span class="typed"><span class="type">class StdPhase extends SubComponent.this.global.GlobalPhase with ScalaObject</span><a id="29468">StdPhase</a></span>(<span class="typed"><span class="type">scala.tools.nsc.Phase</span><span id="38193"><a id="38200">prev</a></span></span>: <span class="typed"><span class="type">scala.tools.nsc.Phase</span><a href="Phase.scala.html#6873">Phase</a></span>) <span class="keyword">extends</span> <span class="typed"><span class="type">=&gt; scala.tools.nsc.Global</span><a href="#29449">global</a></span>.<span class="typed"><span class="type">SubComponent.this.global.GlobalPhase</span><a href="Global.scala.html#21236">GlobalPhase</a></span>(<span class="typed"><span class="type">scala.tools.nsc.Phase</span><a href="#38200">prev</a></span>) {
+    <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; String</span><a id="38195">name</a></span> = <span class="typed"><span class="type">=&gt; String</span><a href="#29450">phaseName</a></span>
+    <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Long</span><a id="38196">newFlags</a></span> = <span class="typed"><span class="type">=&gt; Long</span><a href="#29458">phaseNewFlags</a></span>
+    <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Long</span><a id="38197">nextFlags</a></span> = <span class="typed"><span class="type">=&gt; Long</span><a href="#29459">phaseNextFlags</a></span>
+  }
+}
+
+        </pre>
+    </body>
+</html>

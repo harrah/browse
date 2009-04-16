@@ -1,0 +1,47 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/tools/nsc/interpreter/AbstractFileClassLoader.scala</title>
+        <script type="text/javascript" src="../../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* NSC -- new Scala compiler
+ * Copyright 2005-2009 LAMP/EPFL
+ */</span>
+<span class="comment">// $Id: $</span>
+
+<span class="keyword">package</span> scala.tools.nsc.interpreter
+
+<span class="keyword">import</span> scala.tools.nsc.io.AbstractFile
+
+<span class="comment">/**
+ * A class loader that loads files from a {@link scala.tools.nsc.io.AbstractFile}.
+ * 
+ * @author Lex Spoon
+ */</span>
+<span class="keyword">class</span> <span class="typed"><span class="type">class AbstractFileClassLoader extends java.lang.ClassLoader with ScalaObject</span><a id="17672">AbstractFileClassLoader</a></span>(<span class="typed"><span class="type">scala.tools.nsc.io.AbstractFile</span><span id="121460"><a id="121467">root</a></span></span>: <span class="typed"><span class="type">scala.tools.nsc.io.AbstractFile</span><a href="../io/AbstractFile.scala.html#12693">AbstractFile</a></span>, <span class="typed"><span class="type">java.lang.ClassLoader</span><span id="121461"><a id="121468">parent</a></span></span>: <span class="typed"><span class="type">java.lang.ClassLoader</span><a id="1726">ClassLoader</a></span>)
+<span class="keyword">extends</span> <span class="typed"><span class="type">java.lang.ClassLoader</span><a id="1726">ClassLoader</a></span>(<span class="typed"><span class="type">java.lang.ClassLoader</span><a href="#121468">parent</a></span>)
+{
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(String)Class[_]</span><a id="121463">findClass</a></span>(<span class="typed"><span class="type">String</span><a id="121471">name</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>): <span class="typed"><span class="type">Class[_]</span><a id="1672">Class</a></span>[_] = {
+    <span class="keyword">var</span> <span class="typed"><span class="type">scala.tools.nsc.io.AbstractFile</span><a id="121476">file</a></span>: <span class="typed"><span class="type">scala.tools.nsc.io.AbstractFile</span><a href="../io/AbstractFile.scala.html#12693">AbstractFile</a></span> = <span class="typed"><span class="type">scala.tools.nsc.io.AbstractFile</span><a href="#121460">root</a></span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">List[java.lang.String]</span><a id="121477">pathParts</a></span> = <span class="typed"><span class="type">String</span><a href="#121471">name</a></span>.<span class="typed"><span class="type">(java.lang.String)Array[java.lang.String]</span><a id="5865">split</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;[./]&quot;)</span><span class="string">&quot;[./]&quot;</span></span>).<span class="typed"><span class="type">=&gt; List[java.lang.String]</span><a id="21815">toList</a></span>
+    <span class="keyword">for</span> (<span class="typed"><span class="type">((java.lang.String) =&gt; Unit)Unit</span><span id="21366"><a id="121482">dirPart</a></span></span> &lt;- <span class="typed"><span class="type">List[java.lang.String]</span><a href="#121477">pathParts</a></span>.<span class="typed"><span class="type">=&gt; List[java.lang.String]</span><a id="21349">init</a></span>) {
+      <span class="typed"><span class="type">scala.tools.nsc.io.AbstractFile</span><a href="#121476">file</a></span> = <span class="typed"><span class="type">scala.tools.nsc.io.AbstractFile</span><a href="#121476">file</a></span>.<span class="typed"><span class="type">(String,Boolean)scala.tools.nsc.io.AbstractFile</span><a href="../io/AbstractFile.scala.html#25451">lookupName</a></span>(<span class="typed"><span class="type">java.lang.String</span><a href="#121482">dirPart</a></span>, <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>)
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">scala.tools.nsc.io.AbstractFile</span><a href="#121476">file</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="3509">==</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) {
+        <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.lang.ClassNotFoundException</span><a id="58155" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.ClassNotFoundException</span><a id="1729">ClassNotFoundException</a></span>(<span class="typed"><span class="type">String</span><a href="#121471">name</a></span>)
+      }
+    }
+    <span class="typed"><span class="type">scala.tools.nsc.io.AbstractFile</span><a href="#121476">file</a></span> = <span class="typed"><span class="type">scala.tools.nsc.io.AbstractFile</span><a href="#121476">file</a></span>.<span class="typed"><span class="type">(String,Boolean)scala.tools.nsc.io.AbstractFile</span><a href="../io/AbstractFile.scala.html#25451">lookupName</a></span>(<span class="typed"><span class="type">List[java.lang.String]</span><a href="#121477">pathParts</a></span>.<span class="typed"><span class="type">=&gt; java.lang.String</span><a id="21350">last</a></span><span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span><span class="typed"><span class="type">java.lang.String(&quot;.class&quot;)</span><span class="string">&quot;.class&quot;</span></span>, <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>)
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">scala.tools.nsc.io.AbstractFile</span><a href="#121476">file</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="3509">==</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) {
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.lang.ClassNotFoundException</span><a id="58155" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.ClassNotFoundException</span><a id="1729">ClassNotFoundException</a></span>(<span class="typed"><span class="type">String</span><a href="#121471">name</a></span>)
+    }
+    <span class="keyword">val</span> <span class="typed"><span class="type">Array[Byte]</span><a id="121478">bytes</a></span> = <span class="typed"><span class="type">scala.tools.nsc.io.AbstractFile</span><a href="#121476">file</a></span>.<span class="typed"><span class="type">=&gt; Array[Byte]</span><a href="../io/AbstractFile.scala.html#25449">toByteArray</a></span>
+    <span class="typed"><span class="type">(java.lang.String,Array[Byte],Int,Int)java.lang.Class[_]</span><a href="#17672" id="56821">defineClass</a></span>(<span class="typed"><span class="type">String</span><a href="#121471">name</a></span>, <span class="typed"><span class="type">Array[Byte]</span><a href="#121478">bytes</a></span>, <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>, <span class="typed"><span class="type">Array[Byte]</span><a href="#121478">bytes</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a id="21508">length</a></span>)
+  }
+}
+
+        </pre>
+    </body>
+</html>

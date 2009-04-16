@@ -1,0 +1,66 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/tools/util/SocketConnection.scala</title>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: SocketConnection.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+<span class="keyword">package</span> scala.tools.util
+
+<span class="keyword">import</span> java.io.{PrintWriter, InputStreamReader, BufferedReader}
+<span class="keyword">import</span> java.io.IOException
+<span class="keyword">import</span> java.net.{Socket, InetAddress}
+<span class="keyword">import</span> java.net.UnknownHostException
+
+<span class="comment">/** This class implements the connection to the server.
+ *
+ *  @author Martin Odersky
+ *  @version 1.0
+ */</span>
+<span class="keyword">class</span> <span class="typed"><span class="type">class SocketConnection extends java.lang.Object with ScalaObject</span><a id="13963">SocketConnection</a></span>(<span class="typed"><span class="type">String</span><span id="161450"><a id="161475">hostname</a></span></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>, <span class="typed"><span class="type">Int</span><span id="161451"><a id="161476">port</a></span></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>) {
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)scala.tools.util.SocketConnection</span><a id="161453" class="keyword">this</a></span>(<span class="typed"><span class="type">Int</span><a id="161479">port</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>) = <span class="typed"><span class="type">SocketConnection.this.type</span><a href="#13963" class="keyword">this</a></span>(<span class="typed"><span class="type">object java.net.InetAddress</span><a id="4647">InetAddress</a></span>.<span class="typed"><span class="type">()java.net.InetAddress</span><a id="47327">getLocalHost</a></span>().<span class="typed"><span class="type">()java.lang.String</span><a id="47314">getHostName</a></span>(), <span class="typed"><span class="type">Int</span><a href="#161479">port</a></span>)
+
+  <span class="keyword">private</span> <span class="keyword">var</span> <span class="typed"><span class="type">java.net.Socket</span><span id="161456"><span id="161454"><span id="161455"><a id="161471">socket</a></span></span></span></span>: <span class="typed"><span class="type">java.net.Socket</span><a id="4403">Socket</a></span> = _
+  <span class="keyword">var</span> <span class="typed"><span class="type">java.io.PrintWriter</span><span id="161459"><span id="161457"><span id="161458"><a id="161472">out</a></span></span></span></span>: <span class="typed"><span class="type">java.io.PrintWriter</span><a id="3759">PrintWriter</a></span> = _
+  <span class="keyword">var</span> <span class="typed"><span class="type">java.io.BufferedReader</span><span id="161462"><span id="161460"><span id="161461"><a id="161473">in</a></span></span></span></span>: <span class="typed"><span class="type">java.io.BufferedReader</span><a id="3549">BufferedReader</a></span> = _
+  <span class="keyword">var</span> <span class="typed"><span class="type">String</span><span id="161465"><span id="161463"><span id="161464"><a id="161474">errorMessage</a></span></span></span></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span> = _
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">()Boolean</span><a id="161466">open</a></span>(): <span class="typed"><span class="type">Boolean</span><a id="2170">Boolean</a></span> = {
+    <span class="keyword">try</span> {
+      <span class="typed"><span class="type">(java.net.Socket)Unit</span><a href="#161455">socket</a></span> = <span class="typed"><span class="type">(java.lang.String,Int)java.net.Socket</span><a id="47484" class="keyword">new</a></span> <span class="typed"><span class="type">java.net.Socket</span><a id="4403">Socket</a></span>(<span class="typed"><span class="type">String</span><a href="#161450">hostname</a></span>, <span class="typed"><span class="type">Int</span><a href="#161451">port</a></span>)
+      <span class="typed"><span class="type">(java.io.PrintWriter)Unit</span><a href="#161458">out</a></span> = <span class="typed"><span class="type">(java.io.OutputStream,Boolean)java.io.PrintWriter</span><a id="28680" class="keyword">new</a></span> <span class="typed"><span class="type">java.io.PrintWriter</span><a id="3759">PrintWriter</a></span>(<span class="typed"><span class="type">=&gt; java.net.Socket</span><a href="#161454">socket</a></span>.<span class="typed"><span class="type">()java.io.OutputStream</span><a id="47508">getOutputStream</a></span>(), <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>)
+      <span class="typed"><span class="type">(java.io.BufferedReader)Unit</span><a href="#161461">in</a></span> = <span class="typed"><span class="type">(java.io.Reader)java.io.BufferedReader</span><a id="46775" class="keyword">new</a></span> <span class="typed"><span class="type">java.io.BufferedReader</span><a id="3549">BufferedReader</a></span>(<span class="typed"><span class="type">java.io.InputStreamReader</span><span class="keyword">new</span></span> <span class="typed"><span class="type">java.io.InputStreamReader</span><a id="3741">InputStreamReader</a></span>(<span class="typed"><span class="type">=&gt; java.net.Socket</span><a href="#161454">socket</a></span>.<span class="typed"><span class="type">()java.io.InputStream</span><a id="47507">getInputStream</a></span>()))
+      <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+    } <span class="keyword">catch</span> {
+      <span class="typed"><span class="type">Boolean</span><span class="keyword">case</span></span> <span class="typed"><span class="type">java.net.UnknownHostException</span><a id="161524">e</a></span>: <span class="typed"><span class="type">java.net.UnknownHostException</span><a id="4382">UnknownHostException</a></span> =&gt;
+        <span class="typed"><span class="type">(String)Unit</span><a href="#161464">errorMessage</a></span> = <span class="typed"><span class="type">java.lang.String(&quot;Don't know about host: &quot;)</span><span class="string">&quot;Don't know about host: &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">String</span><a href="#161450">hostname</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot;.&quot;)</span><span class="string">&quot;.&quot;</span></span>
+        <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+      <span class="typed"><span class="type">Boolean</span><span class="keyword">case</span></span> <span class="typed"><span class="type">java.io.IOException</span><a id="161527">e</a></span>: <span class="typed"><span class="type">java.io.IOException</span><a id="3519">IOException</a></span> =&gt;
+        <span class="typed"><span class="type">(String)Unit</span><a href="#161464">errorMessage</a></span> = <span class="typed"><span class="type">java.lang.String(&quot;Couldn't get I/O for the connection to: &quot;)</span><span class="string">&quot;Couldn't get I/O for the connection to: &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">String</span><a href="#161450">hostname</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot;.&quot;)</span><span class="string">&quot;.&quot;</span></span>
+        <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+    }
+  }
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="161467">close</a></span>() {
+    <span class="typed"><span class="type">=&gt; java.io.BufferedReader</span><a href="#161460">in</a></span>.<span class="typed"><span class="type">()Unit</span><a id="46785">close</a></span>()
+    <span class="typed"><span class="type">=&gt; java.io.PrintWriter</span><a href="#161457">out</a></span>.<span class="typed"><span class="type">()Unit</span><a id="28686">close</a></span>()
+    <span class="typed"><span class="type">=&gt; java.net.Socket</span><a href="#161454">socket</a></span>.<span class="typed"><span class="type">()Unit</span><a id="47528">close</a></span>()
+  }
+}
+
+        </pre>
+    </body>
+</html>

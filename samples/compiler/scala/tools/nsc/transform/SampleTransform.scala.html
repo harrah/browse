@@ -1,0 +1,61 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/tools/nsc/transform/SampleTransform.scala</title>
+        <script type="text/javascript" src="../../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* NSC -- new Scala compiler
+ * Copyright 2005-2009 LAMP/EPFL
+ * @author Martin Odersky
+ */</span>
+<span class="comment">// $Id: SampleTransform.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+<span class="keyword">package</span> scala.tools.nsc.transform
+
+<span class="comment">/** A sample transform.
+ */</span>
+<span class="keyword">abstract</span> <span class="keyword">class</span> <span class="typed"><span class="type">class SampleTransform extends scala.tools.nsc.SubComponent with scala.tools.nsc.transform.Transform with ScalaObject</span><a id="13369">SampleTransform</a></span> <span class="keyword">extends</span> <span class="typed"><span class="type">scala.tools.nsc.transform.Transform</span><a href="Transform.scala.html#13183">Transform</a></span> {
+  <span class="comment">// inherits abstract value `global' and class `Phase' from Transform</span>
+
+  <span class="keyword">import</span> global._                  <span class="comment">// the global environment</span>
+  <span class="keyword">import</span> definitions._             <span class="comment">// standard classes and methods</span>
+  <span class="keyword">import</span> typer.{typed, atOwner}    <span class="comment">// methods to type trees</span>
+  <span class="keyword">import</span> posAssigner.atPos         <span class="comment">// for filling in tree positions </span>
+
+  <span class="comment">/** the following two members override abstract members in Transform */</span>
+  <span class="keyword">val</span> <span class="typed"><span class="type">String</span><span id="83659"><a id="83658">phaseName</a></span></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span> = <span class="typed"><span class="type">java.lang.String(&quot;sample-phase&quot;)</span><span class="string">&quot;sample-phase&quot;</span></span>
+
+  <span class="keyword">protected</span> <span class="keyword">def</span> <span class="typed"><span class="type">(SampleTransform.this.global.CompilationUnit)SampleTransform.this.global.Transformer</span><a id="83660">newTransformer</a></span>(<span class="typed"><span class="type">SampleTransform.this.global.CompilationUnit</span><a id="134071">unit</a></span>: <span class="typed"><span class="type">SampleTransform.this.global.CompilationUnit</span><a href="../CompilationUnits.scala.html#22571">CompilationUnit</a></span>): <span class="typed"><span class="type">SampleTransform.this.global.Transformer</span><a href="../ast/Trees.scala.html#22548">Transformer</a></span> =
+    <span class="typed"><span class="type">SampleTransform.this.SampleTransformer</span><span class="keyword">new</span></span> <span class="typed"><span class="type">SampleTransform.this.SampleTransformer</span><a href="#83661">SampleTransformer</a></span>(<span class="typed"><span class="type">SampleTransform.this.global.CompilationUnit</span><a href="#134071">unit</a></span>)
+
+  <span class="keyword">class</span> <span class="typed"><span class="type">class SampleTransformer extends SampleTransform.this.global.Transformer with ScalaObject</span><a id="83661">SampleTransformer</a></span>(<span class="typed"><span class="type">SampleTransform.this.global.CompilationUnit</span><span id="134073"><a id="134076">unit</a></span></span>: <span class="typed"><span class="type">SampleTransform.this.global.CompilationUnit</span><a href="../CompilationUnits.scala.html#22571">CompilationUnit</a></span>) <span class="keyword">extends</span> <span class="typed"><span class="type">SampleTransform.this.global.Transformer</span><a href="../ast/Trees.scala.html#22548">Transformer</a></span> {
+
+    <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(SampleTransform.this.global.Tree)SampleTransform.this.global.Tree</span><a id="134075">transform</a></span>(<span class="typed"><span class="type">SampleTransform.this.global.Tree</span><a id="134079">tree</a></span>: <span class="typed"><span class="type">SampleTransform.this.global.Tree</span><a href="../ast/Trees.scala.html#22371">Tree</a></span>): <span class="typed"><span class="type">SampleTransform.this.global.Tree</span><a href="../ast/Trees.scala.html#22371">Tree</a></span> = {
+      <span class="keyword">val</span> <span class="typed"><span class="type">SampleTransform.this.global.Tree</span><a id="134080">tree1</a></span> = <span class="keyword">super</span>.<span class="typed"><span class="type">(SampleTransform.this.global.Tree)SampleTransform.this.global.Tree</span><a href="../ast/Trees.scala.html#43096">transform</a></span>(<span class="typed"><span class="type">SampleTransform.this.global.Tree</span><a href="#134079">tree</a></span>);      <span class="comment">// transformers always maintain `currentOwner'.</span>
+      <span class="typed"><span class="type">SampleTransform.this.global.Tree</span><a href="#134080">tree1</a></span> <span class="typed"><span class="type">SampleTransform.this.global.Tree</span><span class="keyword">match</span></span> {
+        <span class="typed"><span class="type">SampleTransform.this.global.Tree</span><span class="keyword">case</span></span> <a id="1">Block</a>(<span class="typed"><span class="type">(List[SampleTransform.this.global.Tree])Some[List[SampleTransform.this.global.Tree]]</span><span id="21410"><a href="#134082" id="527">List</a></span></span>(), <span class="typed"><span class="type">SampleTransform.this.global.Tree</span><a id="134085">expr</a></span>) =&gt;           <span class="comment">// a simple optimization</span>
+          <span class="typed"><span class="type">SampleTransform.this.global.Tree</span><a href="#134085">expr</a></span>
+        <span class="typed"><span class="type">SampleTransform.this.global.Block</span><span class="keyword">case</span></span> <a id="1">Block</a>(<span class="typed"><span class="type">List[SampleTransform.this.global.Tree]</span><a id="134086">defs</a></span>, <span class="typed"><span class="type">SampleTransform.this.global.Super</span><a id="134087">sup</a></span> @ <a id="1">Super</a>(<span class="typed"><span class="type">SampleTransform.this.global.Name</span><a id="134089">qual</a></span>, <span class="typed"><span class="type">SampleTransform.this.global.Name</span><a id="134090">mix</a></span>)) =&gt; <span class="comment">// A hypthothetic transformation, which replaces</span>
+                                                    <span class="comment">// {super} by {super.sample}</span>
+          <span class="typed"><span class="type">=&gt; SampleTransform.this.global.TreeCopier</span><a href="../ast/Trees.scala.html#43088">copy</a></span>.<span class="typed"><span class="type">(SampleTransform.this.global.Tree,List[SampleTransform.this.global.Tree],SampleTransform.this.global.Tree)SampleTransform.this.global.Block</span><a href="../ast/Trees.scala.html#43167">Block</a></span>(                           <span class="comment">// `copy' is the usual lazy tree copier</span>
+            <span class="typed"><span class="type">SampleTransform.this.global.Tree</span><a href="#134080">tree1</a></span>, <span class="typed"><span class="type">List[SampleTransform.this.global.Tree]</span><a href="#134086">defs</a></span>,
+            <span class="typed"><span class="type">(SampleTransform.this.global.analyzer.global.Tree)SampleTransform.this.global.analyzer.global.Tree</span><a href="../typechecker/Typers.scala.html#31830">typed</a></span>(                              <span class="comment">// `typed' assigns types to its tree argument</span>
+              <span class="typed"><span class="type">(scala.tools.nsc.util.Position)(SampleTransform.this.global.Select)SampleTransform.this.global.Select</span><a href="../ast/Trees.scala.html#28572">atPos</a></span>(<span class="typed"><span class="type">SampleTransform.this.global.Tree</span><a href="#134080">tree1</a></span>.<span class="typed"><span class="type">=&gt; scala.tools.nsc.util.Position</span><a href="../ast/Trees.scala.html#25352">pos</a></span>)(                 <span class="comment">// `atPos' fills in position of its tree argument</span>
+                <span class="typed"><span class="type">(SampleTransform.this.global.Tree,SampleTransform.this.global.Symbol)SampleTransform.this.global.Select</span><a href="../ast/Trees.scala.html#22509">Select</a></span>(                         <span class="comment">// The `Select' factory method is defined in class `Trees'</span>
+                  <span class="typed"><span class="type">SampleTransform.this.global.Super</span><a href="#134087">sup</a></span>,
+                  <span class="typed"><span class="type">=&gt; SampleTransform.this.global.Symbol</span><a href="../ast/Trees.scala.html#43090">currentOwner</a></span>.<span class="typed"><span class="type">(scala.tools.nsc.util.Position,SampleTransform.this.global.Name)SampleTransform.this.global.TermSymbol</span><a href="../symtab/Symbols.scala.html#25098">newValue</a></span>(        <span class="comment">// creates a new term symbol owned by `currentowner'</span>
+                    <span class="typed"><span class="type">SampleTransform.this.global.Tree</span><a href="#134080">tree1</a></span>.<span class="typed"><span class="type">=&gt; scala.tools.nsc.util.Position</span><a href="../ast/Trees.scala.html#25352">pos</a></span>,
+                    <span class="typed"><span class="type">(String)SampleTransform.this.global.Name</span><a href="../symtab/Names.scala.html#21096">newTermName</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;sample&quot;)</span><span class="string">&quot;sample&quot;</span></span>))))))  <span class="comment">// The standard term name creator</span>
+        <span class="typed"><span class="type">SampleTransform.this.global.Tree</span><span class="keyword">case</span></span> _ =&gt;
+          <span class="typed"><span class="type">SampleTransform.this.global.Tree</span><a href="#134080">tree1</a></span>
+      }
+    }
+  }
+}
+
+        </pre>
+    </body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/tools/ant/sabbus/Compiler.scala</title>
+        <script type="text/javascript" src="../../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala Ant Tasks                      **
+**    / __/ __// _ | / /  / _ |    (c) 2005-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: Compiler.scala 17235 2009-03-03 18:43:32Z michelou $</span>
+
+<span class="keyword">package</span> scala.tools.ant.sabbus
+
+<span class="keyword">import</span> java.io.File
+<span class="keyword">import</span> java.net.URL
+<span class="keyword">import</span> java.lang.reflect.InvocationTargetException
+
+<span class="keyword">class</span> <span class="typed"><span class="type">class Compiler extends java.lang.Object with ScalaObject</span><a id="18467">Compiler</a></span>(<span class="typed"><span class="type">Array[java.net.URL]</span><span id="130775"><a id="150976">classpath</a></span></span>: <span class="typed"><span class="type">Array[java.net.URL]</span><a id="1072">Array</a></span>[URL], <span class="keyword">val</span> <span class="typed"><span class="type">scala.tools.ant.sabbus.Settings</span><span id="130777"><span id="130776"><a id="150977">settings</a></span></span></span>: <span class="typed"><span class="type">scala.tools.ant.sabbus.Settings</span><a href="Settings.scala.html#18479">Settings</a></span>) {
+  
+  <span class="keyword">private</span> <span class="keyword">lazy</span> <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.ClassLoader</span><a id="130780">classLoader</a></span>: <span class="typed"><span class="type">java.lang.ClassLoader</span><a id="1726">ClassLoader</a></span> =
+    <span class="typed"><span class="type">java.net.URLClassLoader</span><span class="keyword">new</span></span> java.net.<span class="typed"><span class="type">java.net.URLClassLoader</span><a id="4412">URLClassLoader</a></span>(<span class="typed"><span class="type">Array[java.net.URL]</span><a href="#130775">classpath</a></span>, <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>)
+  
+  <span class="keyword">private</span> <span class="keyword">lazy</span> <span class="keyword">val</span> <span class="typed"><span class="type">String</span><a id="130782">foreignCompilerName</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span> =
+    <span class="typed"><span class="type">java.lang.String(&quot;scala.tools.ant.sabbus.ForeignCompiler&quot;)</span><span class="string">&quot;scala.tools.ant.sabbus.ForeignCompiler&quot;</span></span>
+  <span class="keyword">private</span> <span class="keyword">lazy</span> <span class="keyword">val</span> <span class="typed"><span class="type">AnyRef</span><a id="130784">foreignCompiler</a></span>: <span class="typed"><span class="type">AnyRef</span><a id="2017">AnyRef</a></span> =
+    <span class="typed"><span class="type">=&gt; java.lang.ClassLoader</span><a href="#130779">classLoader</a></span>.<span class="typed"><span class="type">(java.lang.String)java.lang.Class[_]</span><a id="56809">loadClass</a></span>(<span class="typed"><span class="type">=&gt; String</span><a href="#130781">foreignCompilerName</a></span>).<span class="typed"><span class="type">()?0</span><a id="3938">newInstance</a></span>.<span class="typed"><span class="type">AnyRef</span><a id="3503">asInstanceOf</a></span>[<span class="typed"><span class="type">AnyRef</span><a id="2017">AnyRef</a></span>]
+  
+  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Array[String]</span><a id="130785">settingsArray</a></span>: <span class="typed"><span class="type">Array[String]</span><a id="1072">Array</a></span>[String] = <span class="typed"><span class="type">=&gt; scala.tools.ant.sabbus.Settings</span><a href="#130776">settings</a></span>.<span class="typed"><span class="type">=&gt; List[String]</span><a href="Settings.scala.html#130845">toArgs</a></span>.<span class="typed"><span class="type">Array[String]</span><a id="21675">toArray</a></span>
+  
+  <span class="typed"><span class="type">(String,Array[Class[_]],Array[AnyRef])java.lang.Object</span><a href="#130786">foreignInvoke</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;args_$eq&quot;)</span><span class="string">&quot;args_$eq&quot;</span></span>, <span class="typed"><span class="type">(Class[_]*)Array[Class[_]]</span><span id="21530"><a id="1073">Array</a></span></span>(<span class="typed"><span class="type">java.lang.Class[Array[String]]</span><span >classOf</span></span>[Array[String]]), <span class="typed"><span class="type">(AnyRef*)Array[AnyRef]</span><span id="21530"><a id="1073">Array</a></span></span>(<span class="typed"><span class="type">=&gt; Array[String]</span><a href="#130785">settingsArray</a></span>))
+  
+  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">(String,Array[Class[_]],Array[AnyRef])java.lang.Object</span><a id="130786">foreignInvoke</a></span>(<span class="typed"><span class="type">String</span><a id="151002">method</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>, <span class="typed"><span class="type">Array[Class[_]]</span><a id="151003">types</a></span>: <span class="typed"><span class="type">Array[Class[_]]</span><a id="1072">Array</a></span>[Class[T] <span class="keyword">forSome</span> { <span class="keyword">type</span> T }] , <span class="typed"><span class="type">Array[AnyRef]</span><a id="151004">args</a></span>: <span class="typed"><span class="type">Array[AnyRef]</span><a id="1072">Array</a></span>[AnyRef]) =
+    <span class="keyword">try</span> {
+      <span class="typed"><span class="type">=&gt; AnyRef</span><a href="#130783">foreignCompiler</a></span>.<span class="typed"><span class="type">()java.lang.Class[_ &lt;: java.lang.Object]</span><a id="3511">getClass</a></span>.<span class="typed"><span class="type">(java.lang.String,java.lang.Class[_]*)java.lang.reflect.Method</span><a id="4342">getMethod</a></span>(<span class="typed"><span class="type">String</span><a href="#151002">method</a></span>, <span class="typed"><span class="type">Array[Class[_]]</span><a href="#151003">types</a></span> : _*).<span class="typed"><span class="type">(Any,java.lang.Object*)java.lang.Object</span><a id="128492">invoke</a></span>(<span class="typed"><span class="type">=&gt; AnyRef</span><a href="#130783">foreignCompiler</a></span>, <span class="typed"><span class="type">Array[AnyRef]</span><a href="#151004">args</a></span> : _*)
+    }
+    <span class="keyword">catch</span> {
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">case</span></span> <span class="typed"><span class="type">java.lang.reflect.InvocationTargetException</span><a id="151010">e</a></span>: <span class="typed"><span class="type">java.lang.reflect.InvocationTargetException</span><a id="3906">InvocationTargetException</a></span> =&gt; <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">java.lang.reflect.InvocationTargetException</span><a href="#151010">e</a></span>.<span class="typed"><span class="type">()java.lang.Throwable</span><a id="58169">getCause</a></span>
+    }
+  
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Array[java.io.File])(Int, Int)</span><a id="130787">compile</a></span>(<span class="typed"><span class="type">Array[java.io.File]</span><a id="130898">files</a></span>: <span class="typed"><span class="type">Array[java.io.File]</span><a id="1072">Array</a></span>[File]): <span class="typed"><span class="type">(Int, Int)</span><a id="1378">(</a></span>Int, Int) = <span class="comment">//(errors, warnings)</span>
+    <span class="keyword">try</span> {
+      <span class="typed"><span class="type">(String,Array[Class[_]],Array[AnyRef])java.lang.Object</span><a href="#130786">foreignInvoke</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;args_$eq&quot;)</span><span class="string">&quot;args_$eq&quot;</span></span>, <span class="typed"><span class="type">(Class[_]*)Array[Class[_]]</span><span id="21530"><a id="1073">Array</a></span></span>(<span class="typed"><span class="type">java.lang.Class[Array[String]]</span><span >classOf</span></span>[Array[String]]), <span class="typed"><span class="type">(AnyRef*)Array[AnyRef]</span><span id="21530"><a id="1073">Array</a></span></span>(<span class="typed"><span class="type">=&gt; Array[String]</span><a href="#130785">settingsArray</a></span>))
+      <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="151368">result</a></span> =
+        <span class="typed"><span class="type">(String,Array[Class[_]],Array[AnyRef])java.lang.Object</span><a href="#130786">foreignInvoke</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;compile&quot;)</span><span class="string">&quot;compile&quot;</span></span>, <span class="typed"><span class="type">(Class[_]*)Array[Class[_]]</span><span id="21530"><a id="1073">Array</a></span></span>(<span class="typed"><span class="type">java.lang.Class[Array[java.io.File]]</span><span >classOf</span></span>[Array[File]]), <span class="typed"><span class="type">(AnyRef*)Array[AnyRef]</span><span id="21530"><a id="1073">Array</a></span></span>(<span class="typed"><span class="type">Array[java.io.File]</span><a href="#130898">files</a></span>)).<span class="typed"><span class="type">Int</span><a id="3503">asInstanceOf</a></span>[<span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>]
+      <span class="typed"><span class="type">(Int,Int)(Int, Int)</span><span id="23625"><a id="1379">(</a></span></span><span class="typed"><span class="type">Int</span><a href="#151368">result</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3094">&gt;&gt;</a></span> <span class="typed"><span class="type">Int(16)</span><span class="int">16</span></span>, <span class="typed"><span class="type">Int</span><a href="#151368">result</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3153">&amp;</a></span> <span class="typed"><span class="type">Int(255)</span><span class="int">0x00FF</span></span>)
+    }
+    <span class="keyword">catch</span> {
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Exception</span><a id="152090">ex</a></span>: <span class="typed"><span class="type">Exception</span><a id="2131">Exception</a></span> =&gt;
+        <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(String,Exception)scala.tools.ant.sabbus.CompilationFailure</span><a href="CompilationFailure.scala.html#130909">CompilationFailure</a></span>(<span class="typed"><span class="type">Exception</span><a href="#152090">ex</a></span>.<span class="typed"><span class="type">()java.lang.String</span><a id="23646">getMessage</a></span>, <span class="typed"><span class="type">Exception</span><a href="#152090">ex</a></span>)
+    }
+  
+}
+
+        </pre>
+    </body>
+</html>

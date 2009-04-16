@@ -1,0 +1,58 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/tools/nsc/Phase.scala</title>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* NSC -- new Scala compiler
+ * Copyright 2005-2009 LAMP/EPFL
+ * @author  Martin Odersky
+ */</span>
+<span class="comment">// $Id: Phase.scala 17260 2009-03-09 14:52:18Z odersky $</span>
+
+<span class="keyword">package</span> scala.tools.nsc
+
+<span class="keyword">import</span> symtab.Flags
+
+<span class="keyword">abstract</span> <span class="keyword">class</span> <span class="typed"><span class="type">class Phase extends java.lang.Object with ScalaObject</span><a id="6873">Phase</a></span>(<span class="keyword">val</span> <span class="typed"><span class="type">scala.tools.nsc.Phase</span><span id="27773"><span id="27772"><a id="82469">prev</a></span></span></span>: <span class="typed"><span class="type">scala.tools.nsc.Phase</span><a href="#6873">Phase</a></span>) {
+
+  <span class="keyword">type</span> <span class="typed"><span class="type">Int</span><a id="27775">Id</a></span> = <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>
+
+  <span class="keyword">val</span> <span class="typed"><span class="type">Phase.this.Id</span><span id="27777"><a id="27776">id</a></span></span>: <span class="typed"><span class="type">Phase.this.Id</span><a id="2394">Id</a></span> = <span class="typed"><span class="type">Phase.this.Id</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; scala.tools.nsc.Phase</span><a href="#27772">prev</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5794">eq</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span> <span class="keyword">else</span> <span class="typed"><span class="type">=&gt; scala.tools.nsc.Phase</span><a href="#27772">prev</a></span>.<span class="typed"><span class="type">=&gt; Phase.this.prev.Id</span><a href="#27776">id</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3147">+</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+
+  <span class="comment">/** New flags visible after this phase has completed */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Long</span><a id="27778">nextFlags</a></span>: <span class="typed"><span class="type">Long</span><a id="2399">Long</a></span> = <span class="typed"><span class="type">Long(0L)</span><span class="long">0l</span></span>
+
+  <span class="comment">/** New flags visible once this phase has started */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Long</span><a id="27779">newFlags</a></span>: <span class="typed"><span class="type">Long</span><a id="2399">Long</a></span> = <span class="typed"><span class="type">Long(0L)</span><span class="long">0l</span></span>
+
+  <span class="keyword">private</span> <span class="keyword">var</span> <span class="typed"><span class="type">Long</span><span id="27782"><span id="27780"><span id="27781"><a id="161400">fmask</a></span></span></span></span>: <span class="typed"><span class="type">Long</span><a id="2399">Long</a></span> =
+    <span class="typed"><span class="type">Long</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; scala.tools.nsc.Phase</span><a href="#27772">prev</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5794">eq</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) Flags.<span class="typed"><span class="type">Long(562949953421311L)</span><span >InitialFlags</span></span> <span class="keyword">else</span> <span class="typed"><span class="type">=&gt; scala.tools.nsc.Phase</span><a href="#27772">prev</a></span>.<span class="typed"><span class="type">=&gt; Long</span><a href="#27783">flagMask</a></span> <span class="typed"><span class="type">(Long)Long</span><a id="3275">|</a></span> <span class="typed"><span class="type">=&gt; scala.tools.nsc.Phase</span><a href="#27772">prev</a></span>.<span class="typed"><span class="type">=&gt; Long</span><a href="#27778">nextFlags</a></span> <span class="typed"><span class="type">(Long)Long</span><a id="3275">|</a></span> <span class="typed"><span class="type">=&gt; Long</span><a href="#27779">newFlags</a></span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Long</span><a id="27783">flagMask</a></span>: <span class="typed"><span class="type">Long</span><a id="2399">Long</a></span> = <span class="typed"><span class="type">=&gt; Long</span><a href="#27780">fmask</a></span>
+
+  <span class="keyword">private</span> <span class="keyword">var</span> <span class="typed"><span class="type">scala.tools.nsc.Phase</span><span id="27786"><span id="27784"><span id="27785"><a id="161401">nx</a></span></span></span></span>: <span class="typed"><span class="type">scala.tools.nsc.Phase</span><a href="#6873">Phase</a></span> = <span class="typed"><span class="type">scala.tools.nsc.Phase</span><a href="#6873" class="keyword">this</a></span>
+  <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; scala.tools.nsc.Phase</span><a href="#27772">prev</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5795">ne</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) <span class="typed"><span class="type">=&gt; scala.tools.nsc.Phase</span><a href="#27772">prev</a></span>.<span class="typed"><span class="type">(scala.tools.nsc.Phase)Unit</span><a href="#27785">nx</a></span> = <span class="typed"><span class="type">scala.tools.nsc.Phase</span><a href="#6873" class="keyword">this</a></span>
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; scala.tools.nsc.Phase</span><a id="27787">next</a></span>: <span class="typed"><span class="type">scala.tools.nsc.Phase</span><a href="#6873">Phase</a></span> = <span class="typed"><span class="type">=&gt; scala.tools.nsc.Phase</span><a href="#27784">nx</a></span>
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; String</span><a id="27788">name</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; String</span><a id="27789">description</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span> = <span class="typed"><span class="type">=&gt; String</span><a href="#27788">name</a></span>
+  <span class="comment">// Will running with -Ycheck:name work? </span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="27790">checkable</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2170">Boolean</a></span> = <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="27791">devirtualized</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2170">Boolean</a></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="27792">erasedTypes</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2170">Boolean</a></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="27793">flatClasses</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2170">Boolean</a></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="27794">keepsTypeParams</a></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Unit</span><a id="27795">run</a></span>: <span class="typed"><span class="type">Unit</span><a id="2169">Unit</a></span>
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()String</span><a id="27796">toString</a></span>() = <span class="typed"><span class="type">=&gt; String</span><a href="#27788">name</a></span>
+}
+
+
+
+        </pre>
+    </body>
+</html>

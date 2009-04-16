@@ -1,0 +1,67 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/tools/util/AbstractTimer.scala</title>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: AbstractTimer.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+<span class="keyword">package</span> scala.tools.util
+
+<span class="keyword">import</span> compat.Platform.currentTime
+<span class="keyword">import</span> scala.collection.mutable.Stack
+
+<span class="comment">/**
+ * This abstract class implements the collection of timings. How the
+ * collected timings are issued has to be implemented in subclasses.
+ *
+ * @author Philippe Altherr
+ * @version 1.0
+ */</span>
+<span class="keyword">abstract</span> <span class="keyword">class</span> <span class="typed"><span class="type">class AbstractTimer extends java.lang.Object with ScalaObject</span><a id="13972">AbstractTimer</a></span> {
+
+  <span class="comment">//########################################################################</span>
+  <span class="comment">// Private Fields</span>
+
+  <span class="comment">/** A stack for maintaining start times */</span>
+  <span class="keyword">private</span> <span class="keyword">val</span> <span class="typed"><span class="type">scala.collection.mutable.Stack[Long]</span><span id="113651"><a id="113650">starts</a></span></span> = <span class="typed"><span class="type">scala.collection.mutable.Stack[Long]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.Stack[Long]</span><a id="20063">Stack</a></span>[Long]()
+
+  <span class="comment">//########################################################################</span>
+  <span class="comment">// Public Methods</span>
+
+  <span class="comment">/** Issues a timing information (duration in milliseconds). */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(String,Long)Unit</span><a id="113652">issue</a></span>(<span class="typed"><span class="type">String</span><a id="113657">message</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>, <span class="typed"><span class="type">Long</span><a id="113658">duration</a></span>: <span class="typed"><span class="type">Long</span><a id="2399">Long</a></span>): <span class="typed"><span class="type">Unit</span><a id="2169">Unit</a></span>
+
+  <span class="comment">/** Starts a new timer. */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="113653">start</a></span>() {
+    <span class="typed"><span class="type">=&gt; scala.collection.mutable.Stack[Long]</span><a href="#113650">starts</a></span> <span class="typed"><span class="type">(Long)Unit</span><a id="108635">+=</a></span> <span class="typed"><span class="type">=&gt; Long</span><span id="21062"><a id="21046">currentTime</a></span></span>
+  }
+
+  <span class="comment">/** Ends the current timer. */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(String)Unit</span><a id="113654">stop</a></span>(<span class="typed"><span class="type">String</span><a id="113659">message</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>) {
+    <span class="keyword">val</span> <span class="typed"><span class="type">Long</span><a id="113660">stop</a></span> = <span class="typed"><span class="type">=&gt; Long</span><span id="21062"><a id="21046">currentTime</a></span></span>
+    <span class="typed"><span class="type">(String,Long)Unit</span><a href="#113652">issue</a></span>(<span class="typed"><span class="type">String</span><a href="#113659">message</a></span>, <span class="typed"><span class="type">Long</span><a href="#113660">stop</a></span> <span class="typed"><span class="type">(Long)Long</span><a id="3271">-</a></span> <span class="typed"><span class="type">=&gt; scala.collection.mutable.Stack[Long]</span><a href="#113650">starts</a></span>.<span class="typed"><span class="type">()Long</span><a id="108640">pop</a></span>)
+  }
+
+  <span class="comment">/** Drops the current timer. */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="113655">drop</a></span>() {
+    <span class="typed"><span class="type">=&gt; scala.collection.mutable.Stack[Long]</span><a href="#113650">starts</a></span>.<span class="typed"><span class="type">()Long</span><a id="108640">pop</a></span>
+  }
+
+    <span class="comment">//########################################################################</span>
+}
+
+        </pre>
+    </body>
+</html>

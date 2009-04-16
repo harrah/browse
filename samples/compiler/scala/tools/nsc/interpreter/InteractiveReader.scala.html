@@ -1,0 +1,60 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/tools/nsc/interpreter/InteractiveReader.scala</title>
+        <script type="text/javascript" src="../../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/* NSC -- new Scala compiler
+ * Copyright 2005-2009 LAMP/EPFL
+ * @author Stepan Koltsov
+ */</span>
+<span class="comment">// $Id: InteractiveReader.scala 17313 2009-03-16 13:03:02Z extempore $</span>
+
+<span class="keyword">package</span> scala.tools.nsc.interpreter
+
+<span class="comment">/** Reads lines from an input stream */</span>
+<span class="keyword">trait</span> <span class="typed"><span class="type">trait InteractiveReader extends java.lang.Object with ScalaObject</span><a id="17669">InteractiveReader</a></span> {
+  <span class="keyword">import</span> InteractiveReader._
+  <span class="keyword">import</span> java.io.IOException
+  
+  <span class="keyword">protected</span> <span class="keyword">def</span> <span class="typed"><span class="type">(String)String</span><a id="75134">readOneLine</a></span>(<span class="typed"><span class="type">String</span><a id="75909">prompt</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>): <span class="typed"><span class="type">String</span><a id="1861">String</a></span>
+  <span class="keyword">val</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="75135">interactive</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2170">Boolean</a></span>
+  
+  <span class="keyword">def</span> <span class="typed"><span class="type">(String)String</span><a id="75136">readLine</a></span>(<span class="typed"><span class="type">String</span><a id="125638">prompt</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>): <span class="typed"><span class="type">String</span><a id="1861">String</a></span> = 
+    <span class="keyword">try</span> {
+      <span class="typed"><span class="type">(String)String</span><a href="#75134">readOneLine</a></span>(<span class="typed"><span class="type">String</span><a href="#125638">prompt</a></span>)
+    }
+    <span class="keyword">catch</span> {
+      <span class="typed"><span class="type">String</span><span class="keyword">case</span></span> <span class="typed"><span class="type">java.io.IOException</span><a id="142045">e</a></span>: <span class="typed"><span class="type">java.io.IOException</span><a id="3519">IOException</a></span> <span class="keyword">if</span> <span class="typed"><span class="type">(Exception)Boolean</span><a href="#75137">restartSystemCall</a></span>(<span class="typed"><span class="type">java.io.IOException</span><a href="#142045">e</a></span>) =&gt; <span class="typed"><span class="type">(String)String</span><a href="#75136">readLine</a></span>(<span class="typed"><span class="type">String</span><a href="#125638">prompt</a></span>)
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">case</span></span> <span class="typed"><span class="type">java.lang.Throwable</span><a id="142047">e</a></span> =&gt; <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">java.lang.Throwable</span><a href="#142047">e</a></span>
+    }
+    
+  <span class="comment">// hack necessary for OSX jvm suspension because read calls are not restarted after SIGTSTP</span>
+  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Exception)Boolean</span><a id="75137">restartSystemCall</a></span>(<span class="typed"><span class="type">Exception</span><a id="142046">e</a></span>: <span class="typed"><span class="type">Exception</span><a id="2131">Exception</a></span>): <span class="typed"><span class="type">Boolean</span><a id="2170">Boolean</a></span> =
+    <span class="typed"><span class="type">object scala.tools.nsc.Properties</span><a href="../Properties.scala.html#7366">Properties</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a id="46637">isMac</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2751">&amp;&amp;</a></span> (<span class="typed"><span class="type">Exception</span><a href="#142046">e</a></span>.<span class="typed"><span class="type">()java.lang.String</span><a id="23646">getMessage</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="3509">==</a></span> <span class="typed"><span class="type">=&gt; java.lang.String</span><a href="#75911">msgEINTR</a></span>)
+}
+
+
+<span class="keyword">object</span> <span class="typed"><span class="type">object scala.tools.nsc.interpreter.InteractiveReader</span><a id="17670">InteractiveReader</a></span> {
+  <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.String</span><span id="75912"><a id="75911">msgEINTR</a></span></span> = <span class="typed"><span class="type">java.lang.String(&quot;Interrupted system call&quot;)</span><span class="string">&quot;Interrupted system call&quot;</span></span>
+  
+  <span class="keyword">def</span> <span class="typed"><span class="type">()scala.tools.nsc.interpreter.InteractiveReader</span><a id="75913">createDefault</a></span>(): <span class="typed"><span class="type">scala.tools.nsc.interpreter.InteractiveReader</span><a href="#17669">InteractiveReader</a></span> = <span class="typed"><span class="type">(scala.tools.nsc.Interpreter)scala.tools.nsc.interpreter.InteractiveReader</span><a href="#75914">createDefault</a></span>(<span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>)
+  
+  <span class="comment">/** Create an interactive reader.  Uses &lt;code&gt;JLineReader&lt;/code&gt; if the
+   *  library is available, but otherwise uses a &lt;code&gt;SimpleReader&lt;/code&gt;. 
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(scala.tools.nsc.Interpreter)scala.tools.nsc.interpreter.InteractiveReader</span><a id="75914">createDefault</a></span>(<span class="typed"><span class="type">scala.tools.nsc.Interpreter</span><a id="125777">interpreter</a></span>: <span class="typed"><span class="type">scala.tools.nsc.Interpreter</span><a href="../Interpreter.scala.html#6405">Interpreter</a></span>): <span class="typed"><span class="type">scala.tools.nsc.interpreter.InteractiveReader</span><a href="#17669">InteractiveReader</a></span> =
+    <span class="keyword">try</span> {
+      <span class="typed"><span class="type">scala.tools.nsc.interpreter.JLineReader</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.tools.nsc.interpreter.JLineReader</span><a href="JLineReader.scala.html#17666">JLineReader</a></span>(<span class="typed"><span class="type">scala.tools.nsc.Interpreter</span><a href="#125777">interpreter</a></span>)
+    } <span class="keyword">catch</span> {
+      <span class="typed"><span class="type">scala.tools.nsc.interpreter.SimpleReader</span><span class="keyword">case</span></span> _: <span class="typed"><span class="type">Exception</span><a id="2131">Exception</a></span> | _: <span class="typed"><span class="type">java.lang.NoClassDefFoundError</span><a id="1933">NoClassDefFoundError</a></span> =&gt; <span class="typed"><span class="type">()scala.tools.nsc.interpreter.SimpleReader</span><a href="SimpleReader.scala.html#125672" class="keyword">new</a></span> <span class="typed"><span class="type">scala.tools.nsc.interpreter.SimpleReader</span><a href="SimpleReader.scala.html#17678">SimpleReader</a></span>
+    }
+}
+
+
+        </pre>
+    </body>
+</html>

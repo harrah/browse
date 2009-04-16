@@ -1,0 +1,63 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/tools/ant/sabbus/ForeignCompiler.scala</title>
+        <script type="text/javascript" src="../../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala Ant Tasks                      **
+**    / __/ __// _ | / /  / _ |    (c) 2005-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: ForeignCompiler.scala 17235 2009-03-03 18:43:32Z michelou $</span>
+
+<span class="keyword">package</span> scala.tools.ant.sabbus
+
+<span class="keyword">import</span> java.io.File
+
+<span class="keyword">import</span> scala.tools.nsc._
+<span class="keyword">import</span> scala.tools.nsc.reporters.ConsoleReporter
+
+<span class="keyword">class</span> <span class="typed"><span class="type">class ForeignCompiler extends java.lang.Object with ScalaObject</span><a id="18431">ForeignCompiler</a></span> {
+  
+  <span class="keyword">private</span> <span class="keyword">var</span> <span class="typed"><span class="type">Array[String]</span><span id="107896"><span id="107894"><span id="107895"><a id="107908">argsBuffer</a></span></span></span></span>: <span class="typed"><span class="type">Array[String]</span><a id="1072">Array</a></span>[String] = <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Array[String]</span><a id="107897">args</a></span>: <span class="typed"><span class="type">Array[String]</span><a id="1072">Array</a></span>[String] = <span class="typed"><span class="type">=&gt; Array[String]</span><a href="#107894">argsBuffer</a></span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Array[String])Unit</span><a id="107898">args_=</a></span>(<span class="typed"><span class="type">Array[String]</span><a id="107910">a</a></span>: <span class="typed"><span class="type">Array[String]</span><a id="1072">Array</a></span>[String]) {
+    <span class="typed"><span class="type">(Array[String])Unit</span><a href="#107895">argsBuffer</a></span> = <span class="typed"><span class="type">Array[String]</span><a href="#107910">a</a></span>
+    <span class="typed"><span class="type">=&gt; scala.tools.nsc.Global</span><a href="#107904">nsc</a></span>
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">val</span> <span class="typed"><span class="type">(String) =&gt; Nothing</span><span id="107900"><a id="107899">error</a></span></span>: (String =&gt; Nothing) = { <span class="typed"><span class="type">String</span><a id="107912">msg</a></span> =&gt; <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.lang.Exception</span><a id="29864" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.Exception</span><span id="5974"><a id="821">Exception</a></span></span>(<span class="typed"><span class="type">String</span><a href="#107912">msg</a></span>) }
+  
+  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; scala.tools.nsc.Settings</span><a id="107901">settings</a></span> = <span class="typed"><span class="type">scala.tools.nsc.Settings</span><span class="keyword">new</span></span> scala.tools.nsc.<span class="typed"><span class="type">scala.tools.nsc.Settings</span><a href="../../nsc/Settings.scala.html#6744">Settings</a></span>(<span class="typed"><span class="type">=&gt; (String) =&gt; Nothing</span><a href="#107899">error</a></span>)
+  
+  <span class="keyword">private</span> <span class="keyword">lazy</span> <span class="keyword">val</span> <span class="typed"><span class="type">scala.tools.nsc.reporters.ConsoleReporter</span><a id="107903">reporter</a></span> = <span class="typed"><span class="type">(scala.tools.nsc.Settings)scala.tools.nsc.reporters.ConsoleReporter</span><a href="../../nsc/reporters/ConsoleReporter.scala.html#46758" class="keyword">new</a></span> <span class="typed"><span class="type">scala.tools.nsc.reporters.ConsoleReporter</span><a href="../../nsc/reporters/ConsoleReporter.scala.html#15935">ConsoleReporter</a></span>(<span class="typed"><span class="type">=&gt; scala.tools.nsc.Settings</span><a href="#107901">settings</a></span>)
+  
+  <span class="keyword">private</span> <span class="keyword">lazy</span> <span class="keyword">val</span> <span class="typed"><span class="type">scala.tools.nsc.Global</span><a id="107905">nsc</a></span>: <span class="typed"><span class="type">scala.tools.nsc.Global</span><a href="../../nsc/Global.scala.html#6489">Global</a></span> = {
+    <span class="keyword">try</span> {
+      <span class="keyword">val</span> <span class="typed"><span class="type">scala.tools.nsc.CompilerCommand</span><a id="107919">command</a></span> = <span class="typed"><span class="type">(List[String],scala.tools.nsc.Settings,(String) =&gt; Unit,Boolean)scala.tools.nsc.CompilerCommand</span><a href="../../nsc/CompilerCommand.scala.html#53165" class="keyword">new</a></span> <span class="typed"><span class="type">scala.tools.nsc.CompilerCommand</span><a href="../../nsc/CompilerCommand.scala.html#6909">CompilerCommand</a></span>(<span class="typed"><span class="type">=&gt; Array[String]</span><a href="#107897">args</a></span>.<span class="typed"><span class="type">=&gt; List[String]</span><a id="21815">toList</a></span>, <span class="typed"><span class="type">=&gt; scala.tools.nsc.Settings</span><a href="#107901">settings</a></span>, <span class="typed"><span class="type">=&gt; (String) =&gt; Nothing</span><a href="#107899">error</a></span>, <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>)
+      <span class="typed"><span class="type">scala.tools.nsc.Global</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.tools.nsc.Global</span><a href="../../nsc/Global.scala.html#6489">Global</a></span>(<span class="typed"><span class="type">scala.tools.nsc.CompilerCommand</span><a href="#107919">command</a></span>.<span class="typed"><span class="type">=&gt; scala.tools.nsc.Settings</span><a href="../../nsc/CompilerCommand.scala.html#53159">settings</a></span>, <span class="typed"><span class="type">=&gt; scala.tools.nsc.reporters.ConsoleReporter</span><a href="#107902">reporter</a></span>)
+    }
+    <span class="keyword">catch</span> {
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">case</span></span> <span class="typed"><span class="type">scala.tools.nsc.FatalError</span><a id="107933">ex</a></span> @ <a id="1">FatalError</a>(<span class="typed"><span class="type">String</span><a id="107934">msg</a></span>) =&gt;
+        <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String,java.lang.Throwable)java.lang.Exception</span><a id="29865" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.Exception</span><span id="5974"><a id="821">Exception</a></span></span>(<span class="typed"><span class="type">String</span><a href="#107934">msg</a></span>, <span class="typed"><span class="type">scala.tools.nsc.FatalError</span><a href="#107933">ex</a></span>)
+    }
+  }
+  
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Array[java.io.File])Int</span><a id="107906">compile</a></span>(<span class="typed"><span class="type">Array[java.io.File]</span><a id="107946">files</a></span>: <span class="typed"><span class="type">Array[java.io.File]</span><a id="1072">Array</a></span>[File]): <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">scala.tools.nsc.CompilerCommand</span><a id="107947">command</a></span> = <span class="typed"><span class="type">(List[String],scala.tools.nsc.Settings,(String) =&gt; Unit,Boolean)scala.tools.nsc.CompilerCommand</span><a href="../../nsc/CompilerCommand.scala.html#53165" class="keyword">new</a></span> <span class="typed"><span class="type">scala.tools.nsc.CompilerCommand</span><a href="../../nsc/CompilerCommand.scala.html#6909">CompilerCommand</a></span>(<span class="typed"><span class="type">Array[java.io.File]</span><a href="#107946">files</a></span>.<span class="typed"><span class="type">=&gt; List[java.io.File]</span><a id="21815">toList</a></span>.<span class="typed"><span class="type">((java.io.File) =&gt; java.lang.String)List[java.lang.String]</span><a id="21362">map</a></span>(<span class="typed"><span class="type">java.io.File</span><a href="#107952">_</a></span>.<span class="typed"><span class="type">()java.lang.String</span><a id="40722">toString</a></span>), <span class="typed"><span class="type">=&gt; scala.tools.nsc.Settings</span><a href="#107901">settings</a></span>, <span class="typed"><span class="type">=&gt; (String) =&gt; Nothing</span><a href="#107899">error</a></span>, <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>)
+    (<span class="typed"><span class="type">ForeignCompiler.this.nsc.Run</span><span class="keyword">new</span></span> <span class="typed"><span class="type">=&gt; scala.tools.nsc.Global</span><a href="#107904">nsc</a></span>.<span class="typed"><span class="type">ForeignCompiler.this.nsc.Run</span><a href="../../nsc/Global.scala.html#21313">Run</a></span>) <span class="typed"><span class="type">(List[String])Unit</span><a href="../../nsc/Global.scala.html#36590">compile</a></span> <span class="typed"><span class="type">scala.tools.nsc.CompilerCommand</span><a href="#107947">command</a></span>.<span class="typed"><span class="type">=&gt; List[String]</span><a href="../../nsc/CompilerCommand.scala.html#53171">files</a></span>
+    <span class="typed"><span class="type">=&gt; scala.tools.nsc.reporters.ConsoleReporter</span><a href="#107902">reporter</a></span>.<span class="typed"><span class="type">=&gt; ForeignCompiler.this.reporter.Severity</span><a href="../../nsc/reporters/Reporter.scala.html#34454">ERROR</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="../../nsc/reporters/Reporter.scala.html#47093">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3090">&lt;&lt;</a></span> <span class="typed"><span class="type">Int(16)</span><span class="int">16</span></span> <span class="typed"><span class="type">(Int)Int</span><a id="3152">|</a></span> <span class="typed"><span class="type">=&gt; scala.tools.nsc.reporters.ConsoleReporter</span><a href="#107902">reporter</a></span>.<span class="typed"><span class="type">=&gt; ForeignCompiler.this.reporter.Severity</span><a href="../../nsc/reporters/Reporter.scala.html#34452">WARNING</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="../../nsc/reporters/Reporter.scala.html#47093">count</a></span>
+  }
+  
+}
+
+        </pre>
+    </body>
+</html>
