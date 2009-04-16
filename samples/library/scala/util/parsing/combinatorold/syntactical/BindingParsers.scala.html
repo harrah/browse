@@ -1,0 +1,156 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/util/parsing/combinatorold/syntactical/BindingParsers.scala</title>
+        <script type="text/javascript" src="../../../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2006-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: BindingParsers.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+
+<span class="keyword">package</span> scala.util.parsing.combinatorold.syntactical
+
+<span class="keyword">import</span> scala.util.parsing.ast._
+
+<span class="comment">//DISCLAIMER: this code is highly experimental!</span>
+  
+<span class="comment">/** &lt;p&gt;
+ *    This component augments the generic parsers with support for variable binding.
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    Use &lt;code&gt;bind&lt;/code&gt; to decorate a parser that parses a binder (e.g.,
+ *    the name of a local variable or an argument name in a list of formal
+ *    arguments): besides the parser, it requires a fresh &lt;code&gt;Binder&lt;/code&gt;
+ *    object, which serves as a container for one or more binders with the same
+ *    scope. The result of the parser is added to the binder's elements. Note
+ *    that semantic equality (&lt;code&gt;equals&lt;/code&gt;) is used to link a binder to
+ *    its bound occurrences (along with its scope, of course).
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    For example, here's how you'd write a parser (&lt;code&gt;p&lt;/code&gt;) for a let
+ *    construct (assuming &lt;code&gt;b: Binder[Name]&lt;/code&gt;):
+ *  &lt;/p&gt;&lt;pre&gt;
+ *   &quot;val&quot; ~! bind(name, b) ~ &quot;:&quot; ~ typeP ~ &quot;=&quot; ~ term ~ &quot;in&quot; ~ in(term, b),&lt;/pre&gt;
+ *  &lt;p&gt;
+ *    This can be read as ``The parser that matches &lt;code&gt;val&lt;/code&gt; (and then
+ *    does not back-track anymore), a name -- which represents a binder we'll
+ *    call &lt;code&gt;b&lt;/code&gt; -- a colon, a type, an equals sign, a term, the
+ *    keyword &lt;code&gt;in&lt;/code&gt; and finally a term where `b' is in scope.''
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    The result of this parser is a nested tuple of depth 3, containing a
+ *    Type, a &lt;code&gt;Term&lt;/code&gt; and an &lt;code&gt;UnderBinder[Name, Term]&lt;/code&gt;.
+ *    Note that the binder itself is discarded (the &lt;code&gt;UnderBinder&lt;/code&gt;
+ *    keeps track of it).
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    &lt;code&gt;newScope&lt;/code&gt; makes an empty scope so that you can use
+ *    &lt;code&gt;into&lt;/code&gt; to pass it to a function that makes a parser
+ *    whose bound variables end up in this scope:
+ *    In our example, it would be used like this (with &lt;code&gt;b&lt;/code&gt; free
+ *    in &lt;code&gt;p&lt;/code&gt;):
+ *  &lt;/p&gt;&lt;pre&gt;
+ *    newScope[Name] into { b =&gt; p }&lt;/pre&gt;
+ *  &lt;p&gt;
+ *    Finally, &lt;code&gt;bound(p)&lt;/code&gt; constructs a parser that checks that the
+ *    result of &lt;code&gt;p&lt;/code&gt; is bound by some binder &lt;code&gt;b&lt;/code&gt; (i.e.,
+ *    &lt;code&gt;b&lt;/code&gt; has an element which &lt;code&gt;equals&lt;/code&gt; the result of
+ *    &lt;code&gt;p&lt;/code&gt;) in the current scope (as delineated by 
+ *    &lt;code&gt;in(scopeP, b)&lt;/code&gt;, where &lt;code&gt;p&lt;/code&gt; is called during
+ *    `scopeP'). If scoping is indeed respected, &lt;code&gt;bound(p)&lt;/code&gt; 
+ *    wraps the result of &lt;code&gt;p&lt;/code&gt; in a &lt;code&gt;BoundElement&lt;/code&gt;.
+ *  &lt;/p&gt;
+ *
+ * @author Adriaan Moors
+ */</span>
+<span class="keyword">trait</span> <span class="typed"><span class="type">trait BindingParsers extends java.lang.Object with scala.util.parsing.combinatorold.Parsers with scala.util.parsing.ast.Binders with ScalaObject</span><a id="15704">BindingParsers</a></span> <span class="keyword">extends</span> <span class="typed"><span class="type">scala.util.parsing.combinatorold.Parsers</span><a href="../Parsers.scala.html#11859">Parsers</a></span> <span class="keyword">with</span> <span class="typed"><span class="type">scala.util.parsing.ast.Binders</span><a href="../../ast/Binders.scala.html#13729">Binders</a></span> {
+  <span class="comment">/** A shortcut for `success(new Scope[t])'
+   * 
+   * Typically used in combination with the `into' combiner as follows:
+   * &lt;pre&gt;newScope[Name] into { b =&gt; 
+   *    &quot;val&quot; ~! bind(name, b) ~ &quot;:&quot; ~ typeP ~ &quot;=&quot; ~ term ~ &quot;in&quot; ~ in(term, b)}&lt;/pre&gt;
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">&lt;refinement&gt;[T &lt;: BindingParsers.this.NameElement] extends BindingParsers.this.Parser[BindingParsers.this.Scope[T]]</span><a id="115583">newScope</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: BindingParsers.this.NameElement</span><a id="115585">T</a></span> &lt;: NameElement] = <span class="typed"><span class="type">(BindingParsers.this.Scope[T])BindingParsers.this.Parser[BindingParsers.this.Scope[T]]{def apply(BindingParsers.this.Input): BindingParsers.this.Success[BindingParsers.this.Scope[T]]}</span><a href="../Parsers.scala.html#29497">success</a></span>(<span class="typed"><span class="type">BindingParsers.this.Scope[T]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">BindingParsers.this.Scope[T]</span><a href="../../ast/Binders.scala.html#69010">Scope</a></span>[T])
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">[T &lt;: BindingParsers.this.NameElement](BindingParsers.this.Scope[T])BindingParsers.this.Parser[BindingParsers.this.Scope[T]]{def apply(BindingParsers.this.Input): BindingParsers.this.Success[BindingParsers.this.Scope[T]]}</span><a id="115586">nested</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: BindingParsers.this.NameElement</span><a id="115588">T</a></span> &lt;: NameElement](<span class="typed"><span class="type">BindingParsers.this.Scope[T]</span><a id="115668">s</a></span>: <span class="typed"><span class="type">BindingParsers.this.Scope[T]</span><a href="../../ast/Binders.scala.html#69010">Scope</a></span>[T]) = <span class="typed"><span class="type">(BindingParsers.this.Scope[T])BindingParsers.this.Parser[BindingParsers.this.Scope[T]]{def apply(BindingParsers.this.Input): BindingParsers.this.Success[BindingParsers.this.Scope[T]]}</span><a href="../Parsers.scala.html#29497">success</a></span>(<span class="typed"><span class="type">BindingParsers.this.Scope[T]</span><a href="#115668">s</a></span>.<span class="typed"><span class="type">=&gt; BindingParsers.this.Scope[T]</span><a href="../../ast/Binders.scala.html#69074">nested</a></span>)
+
+  <span class="comment">// TODO: make `bind' and `in' methods of Scope?</span>
+  
+  <span class="comment">/** Generate a UnitParser that parses a binder
+   *
+   * The result of `binderParser' (a binder) will be added to the binder container `binder',
+   * so that `b' can later be used to refer to the binder parsed by `binderParser' (e.g., in the 
+   *  `in' combinator)
+   *
+   * @param binderParser a parser that parses a binder (e.g., a variable name)
+   * @param scope        a scope that will contain the parsed binder
+   * @return a parser with the same behaviour as `binderParser', except that its result will be 
+   *          added to `scope' and not returned.
+   */</span> 
+  <span class="keyword">def</span> <span class="typed"><span class="type">[bt &lt;: BindingParsers.this.NameElement](BindingParsers.this.Parser[bt],BindingParsers.this.Scope[bt])BindingParsers.this.UnitParser</span><a id="115589">bind</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: BindingParsers.this.NameElement</span><a id="115591">bt</a></span> &lt;: NameElement](<span class="typed"><span class="type">BindingParsers.this.Parser[bt]</span><a id="115722">binderParser</a></span>: <span class="typed"><span class="type">BindingParsers.this.Parser[bt]</span><a href="../Parsers.scala.html#29467">Parser</a></span>[bt], <span class="typed"><span class="type">BindingParsers.this.Scope[bt]</span><a id="115723">scope</a></span>: <span class="typed"><span class="type">BindingParsers.this.Scope[bt]</span><a href="../../ast/Binders.scala.html#69010">Scope</a></span>[bt]) = <span class="typed"><span class="type">template $anon extends BindingParsers.this.UnitParser</span><a id="115725" class="keyword">new</a></span> <span class="typed"><span class="type">BindingParsers.this.UnitParser</span><a href="../Parsers.scala.html#29469">UnitParser</a></span> {
+    <span class="keyword">def</span> <span class="typed"><span class="type">(BindingParsers.this.Input)BindingParsers.this.ParseResult[Unit]</span><a id="115727">apply</a></span>(<span class="typed"><span class="type">BindingParsers.this.Input</span><a id="115729">in</a></span>: <span class="typed"><span class="type">BindingParsers.this.Input</span><a href="../../input/Reader.scala.html#10014">Input</a></span>): <span class="typed"><span class="type">BindingParsers.this.ParseResult[Unit]</span><a href="../Parsers.scala.html#29454">ParseResult</a></span>[Unit] = { 
+      <span class="typed"><span class="type">(BindingParsers.this.Input)BindingParsers.this.ParseResult[bt]</span><a href="../Parsers.scala.html#29587">binderParser</a></span>(<span class="typed"><span class="type">BindingParsers.this.Input</span><a href="#115729">in</a></span>).<span class="typed"><span class="type">((bt) =&gt; Unit)BindingParsers.this.ParseResult[Unit]</span><a href="../Parsers.scala.html#29661">map</a></span>(<span class="typed"><span class="type">bt</span><a id="115735">x</a></span> =&gt; <span class="typed"><span class="type">BindingParsers.this.Scope[bt]</span><a href="#115723">scope</a></span>.<span class="typed"><span class="type">(bt)Unit</span><a href="../../ast/Binders.scala.html#69067">addBinder</a></span>(<span class="typed"><span class="type">bt</span><a href="#115735">x</a></span>))
+    }
+  }
+   
+  <span class="comment">/** &lt;p&gt;
+   *    Parse something that is in the scope of the given binders.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    During the execution of &lt;code&gt;scopeParser&lt;/code&gt;, the binders in
+   *    &lt;code&gt;binder&lt;/code&gt; are active: see &lt;code&gt;bound&lt;/code&gt; for more
+   *    information. The result of the decorated parser is wrapped in an
+   *    &lt;code&gt;UnderBinder&lt;/code&gt;.
+   *  &lt;/p&gt;
+   *
+   * @param scopeParser the parser that parses something that is in the scope of `binder'
+   * @param binder      a container of binders, typically populated by `bind'
+   * @return a parser that has the same behaviour as `scopeParser', but whose result is wrapped 
+   *          in an `UnderBinder'
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[scopeT, bt &lt;: BindingParsers.this.NameElement](BindingParsers.this.Parser[scopeT],BindingParsers.this.Scope[bt])(implicit (scopeT) =&gt; BindingParsers.this.Mappable[scopeT])BindingParsers.this.Parser[BindingParsers.this.UnderBinder[bt,scopeT]]</span><span id="115592"><a id="115743">in</a></span></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="115595">scopeT</a></span> &lt;% Mappable[scopeT], <span class="typed"><span class="type">&gt;: Nothing &lt;: BindingParsers.this.NameElement</span><a id="115596">bt</a></span> &lt;: NameElement ](<span class="typed"><span class="type">BindingParsers.this.Parser[scopeT]</span><a id="115741">scopeParser</a></span>: <span class="typed"><span class="type">BindingParsers.this.Parser[scopeT]</span><a href="../Parsers.scala.html#29467">Parser</a></span>[scopeT], <span class="typed"><span class="type">BindingParsers.this.Scope[bt]</span><a id="115742">scope</a></span>: <span class="typed"><span class="type">BindingParsers.this.Scope[bt]</span><a href="../../ast/Binders.scala.html#69010">Scope</a></span>[bt]) = <span class="typed"><span class="type">template $anon extends BindingParsers.this.Parser[BindingParsers.this.UnderBinder[bt,scopeT]]</span><a id="115745" class="keyword">new</a></span> <span class="typed"><span class="type">BindingParsers.this.Parser[BindingParsers.this.UnderBinder[bt,scopeT]]</span><a href="../Parsers.scala.html#29467">Parser</a></span>[UnderBinder[bt, scopeT]] {
+    <span class="keyword">def</span> <span class="typed"><span class="type">(BindingParsers.this.Input)BindingParsers.this.ParseResult[BindingParsers.this.UnderBinder[bt,scopeT]]</span><a id="115747">apply</a></span>(<span class="typed"><span class="type">BindingParsers.this.Input</span><a id="115749">in</a></span>: <span class="typed"><span class="type">BindingParsers.this.Input</span><a href="../../input/Reader.scala.html#10014">Input</a></span>): <span class="typed"><span class="type">BindingParsers.this.ParseResult[BindingParsers.this.UnderBinder[bt,scopeT]]</span><a href="../Parsers.scala.html#29454">ParseResult</a></span>[UnderBinder[bt, scopeT]] = <span class="typed"><span class="type">(BindingParsers.this.Scope[bt])(=&gt; BindingParsers.this.ParseResult[BindingParsers.this.UnderBinder[bt,scopeT]])BindingParsers.this.ParseResult[BindingParsers.this.UnderBinder[bt,scopeT]]</span><a href="#115603">inScope</a></span>(<span class="typed"><span class="type">BindingParsers.this.Scope[bt]</span><a href="#115742">scope</a></span>){
+      <span class="typed"><span class="type">(BindingParsers.this.Input)BindingParsers.this.ParseResult[scopeT]</span><a href="../Parsers.scala.html#29587">scopeParser</a></span>(<span class="typed"><span class="type">BindingParsers.this.Input</span><a href="#115749">in</a></span>).<span class="typed"><span class="type">((scopeT) =&gt; BindingParsers.this.UnderBinder[bt,scopeT])BindingParsers.this.ParseResult[BindingParsers.this.UnderBinder[bt,scopeT]]</span><a href="../Parsers.scala.html#29661">map</a></span>(<span class="typed"><span class="type">scopeT</span><a id="115759">x</a></span> =&gt; <span class="typed"><span class="type">(BindingParsers.this.Scope[bt],scopeT)(implicit (scopeT) =&gt; BindingParsers.this.Mappable[scopeT])BindingParsers.this.UnderBinder[bt,scopeT]</span><a href="../../ast/Binders.scala.html#69300">UnderBinder</a></span>(<span class="typed"><span class="type">BindingParsers.this.Scope[bt]</span><a href="#115742">scope</a></span>, <span class="typed"><span class="type">scopeT</span><a href="#115759">x</a></span>))
+    }
+  }
+   
+  <span class="comment">/** A parser that checks that there are no unbound variables.
+   *
+   * `bound(p)' succeeds if the element parsed by p is bound by an active binder (see `in')
+   * 
+   * @param boundElementParser a parser that parses an element that must be bound
+   * @return a parser that succeeds if the element parsed by `boundElementParser' was bound,
+   *          wrapping its result in a `BoundElement'
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[bt &lt;: BindingParsers.this.NameElement](BindingParsers.this.Parser[bt])BindingParsers.this.Parser[BindingParsers.this.BoundElement[BindingParsers.this.NameElement]]</span><a id="115597">bound</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: BindingParsers.this.NameElement</span><a id="115599">bt</a></span> &lt;: NameElement](<span class="typed"><span class="type">BindingParsers.this.Parser[bt]</span><a id="115777">boundElementParser</a></span>: <span class="typed"><span class="type">BindingParsers.this.Parser[bt]</span><a href="../Parsers.scala.html#29467">Parser</a></span>[bt]) = 
+    <span class="typed"><span class="type">BindingParsers.this.Parser[bt]</span><a href="#115777">boundElementParser</a></span> <span class="typed"><span class="type">(PartialFunction[bt,BindingParsers.this.BoundElement[BindingParsers.this.NameElement]],(bt) =&gt; String)BindingParsers.this.Parser[BindingParsers.this.BoundElement[BindingParsers.this.NameElement]]</span><a href="../Parsers.scala.html#29609">^?</a></span> (<span class="typed"><span class="type">BindingParsers.this.BoundElement[BindingParsers.this.NameElement]</span><a href="#115788">{</a></span><span class="typed"><span class="type">BindingParsers.this.BoundElement[BindingParsers.this.NameElement]</span><span class="keyword">case</span></span> <span class="typed"><span class="type">BindingParsers.this.NameElement</span><a id="115789">x</a></span>: <span class="typed"><span class="type">BindingParsers.this.NameElement</span><a href="../../ast/AbstractSyntax.scala.html#59136">NameElement</a></span> <span class="keyword">if</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">(BindingParsers.this.NameElement)Option[BindingParsers.this.Scope[BindingParsers.this.NameElement]]</span><a href="#115608">findScope</a></span>(<span class="typed"><span class="type">BindingParsers.this.NameElement</span><a href="#115789">x</a></span>).<span class="typed"><span class="type">=&gt; Boolean</span><a href="../../../../Option.scala.html#18268">isEmpty</a></span> =&gt; <span class="typed"><span class="type">(BindingParsers.this.NameElement,BindingParsers.this.Scope[BindingParsers.this.NameElement])BindingParsers.this.BoundElement[BindingParsers.this.NameElement]</span><a href="../../ast/Binders.scala.html#69276">BoundElement</a></span>(<span class="typed"><span class="type">BindingParsers.this.NameElement</span><a href="#115789">x</a></span>, <span class="typed"><span class="type">(BindingParsers.this.NameElement)Option[BindingParsers.this.Scope[BindingParsers.this.NameElement]]</span><a href="#115608">findScope</a></span>(<span class="typed"><span class="type">BindingParsers.this.NameElement</span><a href="#115789">x</a></span>).<span class="typed"><span class="type">=&gt; BindingParsers.this.Scope[BindingParsers.this.NameElement]</span><a href="../../../../Option.scala.html#18270">get</a></span>)}, (<span class="typed"><span class="type">bt</span><a id="115798">x</a></span>: <span class="typed"><span class="type">bt</span><a href="#115599">bt</a></span>) =&gt; <span class="typed"><span class="type">java.lang.String(&quot;Unbound variable `&quot;)</span><span class="string">&quot;&quot;&quot;Unbound variable `&quot;&quot;&quot;</span></span><span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span><span class="typed"><span class="type">bt</span><a href="#115798">x</a></span><span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span><span class="typed"><span class="type">java.lang.String(&quot;'&quot;)</span><span class="string">&quot;&quot;&quot;'&quot;&quot;&quot;</span></span>)
+   
+
+  <span class="keyword">private</span> <span class="keyword">var</span> <span class="typed"><span class="type">BindingParsers.this.BinderEnv</span><span id="115602"><span id="115600"><span id="115601"><a id="115612">binderEnv</a></span></span></span></span>: <span class="typed"><span class="type">BindingParsers.this.BinderEnv</span><a href="../../ast/Binders.scala.html#69046">BinderEnv</a></span> = <span class="typed"><span class="type">object BindingParsers.this.EmptyBinderEnv</span><a href="../../ast/Binders.scala.html#69047">EmptyBinderEnv</a></span> 
+  <span class="keyword">protected</span> <span class="keyword">def</span> <span class="typed"><span class="type">[bt &lt;: BindingParsers.this.NameElement, res](BindingParsers.this.Scope[bt])(=&gt; res)res</span><a id="115603">inScope</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: BindingParsers.this.NameElement</span><a id="115606">bt</a></span> &lt;: NameElement, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="115607">res</a></span>](<span class="typed"><span class="type">BindingParsers.this.Scope[bt]</span><a id="115750">scope</a></span>: <span class="typed"><span class="type">BindingParsers.this.Scope[bt]</span><a href="../../ast/Binders.scala.html#69010">Scope</a></span>[bt])(<span class="typed"><span class="type">=&gt; res</span><a id="115751">block</a></span>: =&gt; res) :<span class="typed"><span class="type">res</span><a href="#115607">res</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">BindingParsers.this.BinderEnv</span><a id="115799">oldEnv</a></span> = <span class="typed"><span class="type">=&gt; BindingParsers.this.BinderEnv</span><a href="#115600">binderEnv</a></span> <span class="comment">// save old environment</span>
+    
+    <span class="comment">// bring binders in the scope in scope</span>
+    <span class="keyword">for</span>(<span class="keyword">val</span> <span class="typed"><span class="type">((bt) =&gt; Unit)Unit</span><a href="../../../../Iterable.scala.html#17328" id="115801">b</a></span> &lt;- <span class="typed"><span class="type">BindingParsers.this.Scope[bt]</span><a href="#115750">scope</a></span>) <span class="typed"><span class="type">(BindingParsers.this.BinderEnv)Unit</span><a href="#115601">binderEnv</a></span> = <span class="typed"><span class="type">=&gt; BindingParsers.this.BinderEnv</span><a href="#115600">binderEnv</a></span>.<span class="typed"><span class="type">(bt,BindingParsers.this.Scope[bt])BindingParsers.this.BinderEnv</span><a href="../../ast/Binders.scala.html#69435">extend</a></span>(<span class="typed"><span class="type">bt</span><a href="#115801">b</a></span>, <span class="typed"><span class="type">BindingParsers.this.Scope[bt]</span><a href="#115750">scope</a></span>)
+    
+    <span class="comment">// return the result of running block (in which these binders are in scope)</span>
+    <span class="comment">// before returning, the binderEnv is restored to its old value</span>
+    <span class="typed"><span class="type">(res)BindingParsers.this.ReturnAndDo[res]</span><a href="../../ast/Binders.scala.html#69051">return_</a></span>{<span class="typed"><span class="type">BindingParsers.this.Scope[bt]</span><a href="#115750">scope</a></span>.<span class="typed"><span class="type">=&gt; Unit</span><a href="../../ast/Binders.scala.html#69075">onEnter</a></span>; <span class="typed"><span class="type">=&gt; res</span><a href="#115751">block</a></span>} <span class="typed"><span class="type">(=&gt; Unit)res</span><a href="../../ast/Binders.scala.html#69118">andDo</a></span> {<span class="typed"><span class="type">BindingParsers.this.Scope[bt]</span><a href="#115750">scope</a></span>.<span class="typed"><span class="type">=&gt; Unit</span><a href="../../ast/Binders.scala.html#69076">onLeft</a></span>; <span class="typed"><span class="type">(BindingParsers.this.BinderEnv)Unit</span><a href="#115601">binderEnv</a></span> = <span class="typed"><span class="type">BindingParsers.this.BinderEnv</span><a href="#115799">oldEnv</a></span>}
+  }
+
+  <span class="keyword">protected</span> <span class="keyword">def</span> <span class="typed"><span class="type">[bt &lt;: BindingParsers.this.NameElement](bt)Option[BindingParsers.this.Scope[bt]]</span><a id="115608">findScope</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: BindingParsers.this.NameElement</span><a id="115610">bt</a></span> &lt;: NameElement](<span class="typed"><span class="type">bt</span><a id="115790">x</a></span>: <span class="typed"><span class="type">bt</span><a href="#115610">bt</a></span>): <span class="typed"><span class="type">Option[BindingParsers.this.Scope[bt]]</span><a href="../../../../Option.scala.html#932">Option</a></span>[Scope[bt]] = <span class="typed"><span class="type">(bt)Option[BindingParsers.this.Scope[bt]]</span><a href="../../ast/Binders.scala.html#69432">binderEnv</a></span>(<span class="typed"><span class="type">bt</span><a href="#115790">x</a></span>)
+}
+
+        </pre>
+    </body>
+</html>

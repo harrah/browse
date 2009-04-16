@@ -1,0 +1,102 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/xml/Document.scala</title>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: Document.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+
+<span class="keyword">package</span> scala.xml
+
+<span class="comment">/** A document information item (according to InfoSet spec). The comments
+ *  are copied from the Infoset spec, only augmented with some information
+ *  on the Scala types for definitions that might have no value.
+ *  also plays the role of an &lt;code&gt;XMLEvent&lt;/code&gt; for pull parsing
+ *
+ *  @author  Burak Emir
+ *  @version 1.0, 26/04/2005
+ */</span>
+<span class="keyword">class</span> <span class="typed"><span class="type">class Document extends scala.xml.NodeSeq with scala.xml.pull.XMLEvent with ScalaObject</span><a id="7204">Document</a></span> <span class="keyword">extends</span> <span class="typed"><span class="type">scala.xml.NodeSeq</span><a href="NodeSeq.scala.html#7291">NodeSeq</a></span> <span class="keyword">with</span> pull.<span class="typed"><span class="type">scala.xml.pull.XMLEvent</span><a href="pull/XMLEvent.scala.html#12661">XMLEvent</a></span> {
+
+  <span class="comment">/** An ordered list of child information items, in document
+   *  order. The list contains exactly one element information item. The
+   *  list also contains one processing instruction information item for
+   *  each processing instruction outside the document element, and one
+   *  comment information item for each comment outside the document
+   *  element. Processing instructions and comments within the DTD are
+   *  excluded. If there is a document type declaration, the list also
+   *  contains a document type declaration information item.  
+   */</span> 
+  <span class="keyword">var</span> <span class="typed"><span class="type">Seq[scala.xml.Node]</span><span id="45050"><span id="45048"><span id="45049"><a id="82764">children</a></span></span></span></span>: <span class="typed"><span class="type">Seq[scala.xml.Node]</span><a href="../Seq.scala.html#761">Seq</a></span>[Node] = _
+
+  <span class="comment">/** The element information item corresponding to the document element. */</span>
+  <span class="keyword">var</span> <span class="typed"><span class="type">scala.xml.Node</span><span id="45053"><span id="45051"><span id="45052"><a id="82765">docElem</a></span></span></span></span>: <span class="typed"><span class="type">scala.xml.Node</span><a href="Node.scala.html#7174">Node</a></span> = _
+
+  <span class="comment">/** The dtd that comes with the document, if any */</span>
+  <span class="keyword">var</span> <span class="typed"><span class="type">scala.xml.dtd.DTD</span><span id="45056"><span id="45054"><span id="45055"><a id="82766">dtd</a></span></span></span></span>: scala.xml.dtd.<span class="typed"><span class="type">scala.xml.dtd.DTD</span><a href="dtd/DTD.scala.html#9818">DTD</a></span> = _
+
+  <span class="comment">/** An unordered set of notation information items, one for each notation 
+   *  declared in the DTD. If any notation is multiply declared, this property 
+   *  has no value.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Seq[scala.xml.dtd.NotationDecl]</span><a id="45057">notations</a></span>: <span class="typed"><span class="type">Seq[scala.xml.dtd.NotationDecl]</span><a href="../Seq.scala.html#761">Seq</a></span>[scala.xml.dtd.NotationDecl] = 
+    <span class="typed"><span class="type">=&gt; scala.xml.dtd.DTD</span><a href="#45054">dtd</a></span>.<span class="typed"><span class="type">=&gt; Seq[scala.xml.dtd.NotationDecl]</span><a href="dtd/DTD.scala.html#58277">notations</a></span>
+
+  <span class="comment">/** An unordered set of unparsed entity information items, one for each 
+   *  unparsed entity declared in the DTD.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Seq[scala.xml.dtd.EntityDecl]</span><a id="45058">unparsedEntities</a></span>: <span class="typed"><span class="type">Seq[scala.xml.dtd.EntityDecl]</span><a href="../Seq.scala.html#761">Seq</a></span>[scala.xml.dtd.EntityDecl] = 
+    <span class="typed"><span class="type">=&gt; scala.xml.dtd.DTD</span><a href="#45054">dtd</a></span>.<span class="typed"><span class="type">=&gt; Seq[scala.xml.dtd.EntityDecl]</span><a href="dtd/DTD.scala.html#58278">unparsedEntities</a></span>
+
+  <span class="comment">/** The base URI of the document entity. */</span>
+  <span class="keyword">var</span> <span class="typed"><span class="type">String</span><span id="45061"><span id="45059"><span id="45060"><a id="82767">baseURI</a></span></span></span></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span> = _
+
+  <span class="comment">/** The name of the character encoding scheme in which the document entity 
+   *  is expressed.
+   */</span>
+  <span class="keyword">var</span> <span class="typed"><span class="type">Option[String]</span><span id="45064"><span id="45062"><span id="45063"><a id="82768">encoding</a></span></span></span></span>: <span class="typed"><span class="type">Option[String]</span><a href="../Option.scala.html#932">Option</a></span>[String] = _
+
+  <span class="comment">/** An indication of the standalone status of the document, either
+   *  true or false. This property is derived from the optional standalone
+   *  document declaration in the XML declaration at the beginning of the
+   *  document entity, and has no value (&lt;code&gt;None&lt;/code&gt;) if there is no
+   *  standalone document declaration. 
+   */</span>
+  <span class="keyword">var</span> <span class="typed"><span class="type">Option[Boolean]</span><span id="45067"><span id="45065"><span id="45066"><a id="82769">standAlone</a></span></span></span></span>: <span class="typed"><span class="type">Option[Boolean]</span><a href="../Option.scala.html#932">Option</a></span>[Boolean] = _
+
+  <span class="comment">/** A string representing the XML version of the document. This
+   *  property is derived from the XML declaration optionally present at
+   *  the beginning of the document entity, and has no value (&lt;code&gt;None&lt;/code&gt;)
+   *  if there is no XML declaration. 
+   */</span> 
+  <span class="keyword">var</span> <span class="typed"><span class="type">Option[String]</span><span id="45070"><span id="45068"><span id="45069"><a id="82770">version</a></span></span></span></span>: <span class="typed"><span class="type">Option[String]</span><a href="../Option.scala.html#932">Option</a></span>[String] = _
+
+  <span class="comment">/** 9. This property is not strictly speaking part of the infoset of
+   *  the document. Rather it is an indication of whether the processor
+   *  has read the complete DTD. Its value is a boolean. If it is false,
+   *  then certain properties (indicated in their descriptions below) may
+   *  be unknown. If it is true, those properties are never unknown.  
+   */</span>
+  <span class="keyword">var</span> <span class="typed"><span class="type">Boolean</span><span id="45073"><span id="45071"><span id="45072"><a id="82771">allDeclarationsProcessed</a></span></span></span></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+
+  <span class="comment">// methods for NodeSeq</span>
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Seq[scala.xml.Node]</span><a id="45074">theSeq</a></span>: <span class="typed"><span class="type">Seq[scala.xml.Node]</span><a href="../Seq.scala.html#761">Seq</a></span>[Node] = <span class="typed"><span class="type">Document.this.type</span><a href="#7204" class="keyword">this</a></span>.<span class="typed"><span class="type">=&gt; scala.xml.Node</span><a href="#45051">docElem</a></span>
+
+}
+
+        </pre>
+    </body>
+</html>

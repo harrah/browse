@@ -1,0 +1,62 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/mutable/LinkedHashSet.scala</title>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2005-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: LinkedHashSet.scala 16884 2009-01-09 16:52:09Z cunei $</span>
+
+<span class="keyword">package</span> scala.collection.mutable
+
+
+<span class="keyword">object</span> <span class="typed"><span class="type">object scala.collection.mutable.LinkedHashSet</span><a id="11462">LinkedHashSet</a></span> {
+  <span class="comment">/** The empty map of this type */</span>  
+  <span class="keyword">def</span> <span class="typed"><span class="type">[A]scala.collection.mutable.LinkedHashSet[A]</span><a id="105079">empty</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="105081">A</a></span>] = <span class="typed"><span class="type">scala.collection.mutable.LinkedHashSet[A]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.LinkedHashSet[A]</span><a href="#11461">LinkedHashSet</a></span>[A]
+
+  <span class="comment">/** The canonical factory for this type
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[A](A*)scala.collection.mutable.Set[A]</span><a id="105082">apply</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="105084">A</a></span>](<span class="typed"><span class="type">A*</span><a id="105100">elems</a></span>: <span class="typed"><span class="type">A*</span><a id="2739">A</a></span>*) = <span class="typed"><span class="type">scala.collection.mutable.LinkedHashSet[A]</span><a href="#105079">empty</a></span>[<span class="typed"><span class="type">A</span><a href="#105084">A</a></span>] <span class="typed"><span class="type">(Iterable[A])scala.collection.mutable.Set[A]</span><a href="Set.scala.html#34731">++</a></span> <span class="typed"><span class="type">A*</span><a href="#105100">elems</a></span>
+}
+
+@<span class="typed"><span class="type">serializable</span><a href="../../serializable.scala.html#647">serializable</a></span>
+<span class="keyword">class</span> <span class="typed"><span class="type">class LinkedHashSet[A] extends java.lang.Object with scala.collection.mutable.Set[A] with scala.collection.mutable.FlatHashTable[A] with ScalaObject</span><a id="11461">LinkedHashSet</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="16091">A</a></span>] <span class="keyword">extends</span> <span class="typed"><span class="type">scala.collection.mutable.Set[A]</span><a href="Set.scala.html#11392">Set</a></span>[A] <span class="keyword">with</span> <span class="typed"><span class="type">scala.collection.mutable.FlatHashTable[A]</span><a href="FlatHashTable.scala.html#11431">FlatHashTable</a></span>[A] {
+  <span class="keyword">private</span> <span class="keyword">var</span> <span class="typed"><span class="type">List[A]</span><span id="105091"><span id="105089"><span id="105090"><a id="105115">ordered</a></span></span></span></span> = <span class="typed"><span class="type">object Nil</span><a href="../../List.scala.html#333">List</a></span>[A]()
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A)Boolean</span><a id="105092">contains</a></span>(<span class="typed"><span class="type">A</span><a id="105116">elem</a></span>: <span class="typed"><span class="type">A</span><a href="#16091">A</a></span>): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = <span class="typed"><span class="type">(A)Boolean</span><a href="FlatHashTable.scala.html#38169">containsEntry</a></span>(<span class="typed"><span class="type">A</span><a href="#105116">elem</a></span>)
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A)Unit</span><a id="105093">+=</a></span>(<span class="typed"><span class="type">A</span><a id="105117">elem</a></span>: <span class="typed"><span class="type">A</span><a href="#16091">A</a></span>) { <span class="typed"><span class="type">(A)Boolean</span><a href="#105094">add</a></span>(<span class="typed"><span class="type">A</span><a href="#105117">elem</a></span>) }
+  
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A)Boolean</span><a id="105094">add</a></span>(<span class="typed"><span class="type">A</span><a id="105118">elem</a></span>: <span class="typed"><span class="type">A</span><a href="#16091">A</a></span>): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = {
+    <span class="typed"><span class="type">Boolean</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">(A)Boolean</span><a href="FlatHashTable.scala.html#38170">addEntry</a></span>(<span class="typed"><span class="type">A</span><a href="#105118">elem</a></span>)) {
+      <span class="typed"><span class="type">(List[A])Unit</span><a href="#105090">ordered</a></span> = <span class="typed"><span class="type">A</span><a href="#105118">elem</a></span> <span class="typed"><span class="type">(A)List[A]</span><a href="../../List.scala.html#20872">::</a></span> <span class="typed"><span class="type">=&gt; List[A]</span><a href="#105089">ordered</a></span>
+      <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+    } <span class="keyword">else</span> <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+  }
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A)Unit</span><a id="105095">-=</a></span>(<span class="typed"><span class="type">A</span><a id="105122">elem</a></span>: <span class="typed"><span class="type">A</span><a href="#16091">A</a></span>) { <span class="typed"><span class="type">(A)Boolean</span><a href="#105096">remove</a></span>(<span class="typed"><span class="type">A</span><a href="#105122">elem</a></span>) }
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A)Boolean</span><a id="105096">remove</a></span>(<span class="typed"><span class="type">A</span><a id="105123">elem</a></span>: <span class="typed"><span class="type">A</span><a href="#16091">A</a></span>) : <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = <span class="typed"><span class="type">(A)Option[A]</span><a href="FlatHashTable.scala.html#38171">removeEntry</a></span>(<span class="typed"><span class="type">A</span><a href="#105123">elem</a></span>) <span class="typed"><span class="type">Boolean</span><span class="keyword">match</span></span> {
+    <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">case</span></span> <span class="typed"><span class="type">object None</span><a href="../../Option.scala.html#534">None</a></span> =&gt; <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+    <span class="typed"><span class="type">Boolean</span><span class="keyword">case</span></span> <a id="1">Some</a>(<span class="typed"><span class="type">A</span><a id="105124">elem</a></span>) =&gt; <span class="typed"><span class="type">(List[A])Unit</span><a href="#105090">ordered</a></span> = <span class="typed"><span class="type">=&gt; List[A]</span><a href="#105089">ordered</a></span>.<span class="typed"><span class="type">((A) =&gt; Boolean)List[A]</span><a href="../../List.scala.html#20911">filter</a></span>(<span class="typed"><span class="type">A</span><a href="#105127">_</a></span> <span class="typed"><span class="type">(Any)Boolean</span><a id="3495">!=</a></span> <span class="typed"><span class="type">A</span><a href="#105124">elem</a></span>); <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+  }
+  
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="105097">clear</a></span>() {
+    <span class="typed"><span class="type">(List[A])Unit</span><a href="#105090">ordered</a></span> = <span class="typed"><span class="type">object Nil</span><a href="../../List.scala.html#333">Nil</a></span>
+    <span class="keyword">super</span>.<span class="typed"><span class="type">()Unit</span><a href="FlatHashTable.scala.html#38179">clear</a></span>()
+  }
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()scala.collection.mutable.Set[A]</span><a id="105098">clone</a></span>(): <span class="typed"><span class="type">scala.collection.mutable.Set[A]</span><a href="Set.scala.html#11392">Set</a></span>[A] = <span class="typed"><span class="type">scala.collection.mutable.LinkedHashSet[A]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.LinkedHashSet[A]</span><a href="#11461">LinkedHashSet</a></span>[A] <span class="typed"><span class="type">(Iterable[A])scala.collection.mutable.Set[A]</span><a href="Set.scala.html#34731">++</a></span> <span class="typed"><span class="type">scala.collection.mutable.LinkedHashSet[A]</span><a href="#11461" class="keyword">this</a></span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Iterator[A]</span><a id="105099">elements</a></span> = <span class="typed"><span class="type">=&gt; List[A]</span><a href="#105089">ordered</a></span>.<span class="typed"><span class="type">=&gt; List[A]</span><a href="../../List.scala.html#20934">reverse</a></span>.<span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="../../List.scala.html#20889">elements</a></span>
+}
+
+        </pre>
+    </body>
+</html>

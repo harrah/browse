@@ -1,0 +1,75 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/PartialOrdering.scala</title>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |                                         **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: PartialOrdering.scala 16884 2009-01-09 16:52:09Z cunei $</span>
+
+<span class="keyword">package</span> scala
+
+<span class="comment">/** A trait for representing partial orderings.  It is important to 
+ * distinguish between a type that has a partial order and a representation 
+ * of partial ordering on some type.  This trait is for representing the latter.  
+ * 
+ * A &lt;a href=&quot;http://en.wikipedia.org/wiki/Partial_order&quot;&gt;partial ordering&lt;/a&gt; 
+ * is a binary relation on a type &lt;code&gt;T&lt;/code&gt; that is also an equivalence 
+ * relation on values of type &lt;code&gt;T&lt;/code&gt;.  This relation is exposed as
+ * the &lt;code&gt;lteq&lt;/code&gt; method of the &lt;code&gt;PartialOrdering&lt;/code&gt; trait.  
+ * This relation must be:
+ * &lt;ul&gt;
+ * &lt;li&gt;reflexive: &lt;code&gt;lteq(x, x) == true&lt;/code&gt;, for any &lt;code&gt;x&lt;/code&gt; of 
+ * type &lt;code&gt;T&lt;/code&gt;.&lt;/li&gt;
+ * &lt;li&gt;anti-symmetric: &lt;code&gt;lteq(x, y) == true&lt;/code&gt; and &lt;code&gt;lteq(y, x) == true&lt;/code&gt;
+ * then &lt;code&gt;equiv(x, y)&lt;/code&gt;, for any &lt;code&gt;x&lt;/code&gt; and &lt;code&gt;y&lt;/code&gt; of 
+ * type &lt;code&gt;T&lt;/code&gt;.&lt;/li&gt;
+ * &lt;li&gt;transitive: if &lt;code&gt;lteq(x, y) == true&lt;/code&gt; and &lt;code&gt;lteq(y, z) == true&lt;/code&gt; 
+ * then &lt;code&gt;lteq(x, z) == true&lt;/code&gt;,  for any &lt;code&gt;x&lt;/code&gt;, &lt;code&gt;y&lt;/code&gt;,
+ * and &lt;code&gt;z&lt;/code&gt; of type &lt;code&gt;T&lt;/code&gt;.&lt;/li&gt;
+ * &lt;/ul&gt;
+ *
+ *  @author  Geoffrey Washburn
+ *  @version 1.0, 2008-04-0-3
+ */</span>
+
+<span class="keyword">trait</span> <span class="typed"><span class="type">trait PartialOrdering[T] extends java.lang.Object with Equiv[T] with ScalaObject</span><a id="521">PartialOrdering</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="12693">T</a></span>] <span class="keyword">extends</span> <span class="typed"><span class="type">Equiv[T]</span><a href="Equiv.scala.html#1526">Equiv</a></span>[T] {
+  <span class="comment">/** Returns &lt;code&gt;true&lt;/code&gt; iff &lt;code&gt;x&lt;/code&gt; comes before 
+   *  &lt;code&gt;y&lt;/code&gt; in the ordering.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(T,T)Boolean</span><a id="35151">lteq</a></span>(<span class="typed"><span class="type">T</span><a id="44282">x</a></span>: <span class="typed"><span class="type">T</span><a href="#12693">T</a></span>, <span class="typed"><span class="type">T</span><a id="44283">y</a></span>: <span class="typed"><span class="type">T</span><a href="#12693">T</a></span>): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span>
+
+  <span class="comment">/** Returns &lt;code&gt;true&lt;/code&gt; iff &lt;code&gt;y&lt;/code&gt; comes before
+   *  &lt;code&gt;x&lt;/code&gt; in the ordering. 
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(T,T)Boolean</span><a id="35152">gteq</a></span>(<span class="typed"><span class="type">T</span><a id="44284">x</a></span>: <span class="typed"><span class="type">T</span><a href="#12693">T</a></span>, <span class="typed"><span class="type">T</span><a id="44285">y</a></span>: <span class="typed"><span class="type">T</span><a href="#12693">T</a></span>): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = <span class="typed"><span class="type">(T,T)Boolean</span><a href="#35151">lteq</a></span>(<span class="typed"><span class="type">T</span><a href="#44285">y</a></span>, <span class="typed"><span class="type">T</span><a href="#44284">x</a></span>)
+
+  <span class="comment">/** Returns &lt;code&gt;true&lt;/code&gt; iff &lt;code&gt;x&lt;/code&gt; comes before 
+   *  &lt;code&gt;y&lt;/code&gt; in the ordering and is not the same as &lt;code&gt;y&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(T,T)Boolean</span><a id="35153">lt</a></span>(<span class="typed"><span class="type">T</span><a id="44286">x</a></span>: <span class="typed"><span class="type">T</span><a href="#12693">T</a></span>, <span class="typed"><span class="type">T</span><a id="44287">y</a></span>: <span class="typed"><span class="type">T</span><a href="#12693">T</a></span>): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = <span class="typed"><span class="type">(T,T)Boolean</span><a href="#35151">lteq</a></span>(<span class="typed"><span class="type">T</span><a href="#44286">x</a></span>, <span class="typed"><span class="type">T</span><a href="#44287">y</a></span>) <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">(T,T)Boolean</span><a href="#35155">equiv</a></span>(<span class="typed"><span class="type">T</span><a href="#44286">x</a></span>, <span class="typed"><span class="type">T</span><a href="#44287">y</a></span>)
+
+  <span class="comment">/** Returns &lt;code&gt;true&lt;/code&gt; iff &lt;code&gt;y&lt;/code&gt; comes before 
+   *  &lt;code&gt;x&lt;/code&gt; in the ordering and is not the same as &lt;code&gt;x&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(T,T)Boolean</span><a id="35154">gt</a></span>(<span class="typed"><span class="type">T</span><a id="44292">x</a></span>: <span class="typed"><span class="type">T</span><a href="#12693">T</a></span>, <span class="typed"><span class="type">T</span><a id="44293">y</a></span>: <span class="typed"><span class="type">T</span><a href="#12693">T</a></span>): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = <span class="typed"><span class="type">(T,T)Boolean</span><a href="#35152">gteq</a></span>(<span class="typed"><span class="type">T</span><a href="#44292">x</a></span>, <span class="typed"><span class="type">T</span><a href="#44293">y</a></span>) <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">(T,T)Boolean</span><a href="#35155">equiv</a></span>(<span class="typed"><span class="type">T</span><a href="#44292">x</a></span>, <span class="typed"><span class="type">T</span><a href="#44293">y</a></span>)
+
+  <span class="comment">/** Returns &lt;code&gt;true&lt;/code&gt; iff &lt;code&gt;x&lt;/code&gt; is equivalent to
+   *  &lt;code&gt;y&lt;/code&gt; in the ordering. 
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(T,T)Boolean</span><a id="35155">equiv</a></span>(<span class="typed"><span class="type">T</span><a id="44288">x</a></span>: <span class="typed"><span class="type">T</span><a href="#12693">T</a></span>, <span class="typed"><span class="type">T</span><a id="44289">y</a></span>: <span class="typed"><span class="type">T</span><a href="#12693">T</a></span>): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = <span class="typed"><span class="type">(T,T)Boolean</span><a href="#35151">lteq</a></span>(<span class="typed"><span class="type">T</span><a href="#44288">x</a></span>,<span class="typed"><span class="type">T</span><a href="#44289">y</a></span>) <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">(T,T)Boolean</span><a href="#35151">lteq</a></span>(<span class="typed"><span class="type">T</span><a href="#44289">y</a></span>,<span class="typed"><span class="type">T</span><a href="#44288">x</a></span>)
+}
+
+        </pre>
+    </body>
+</html>

@@ -1,0 +1,751 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/runtime/BoxesRunTime.java</title>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2006-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: BoxesRunTime.java 17461 2009-04-08 13:45:47Z extempore $</span>
+
+
+<span class="keyword">package</span> scala.runtime;
+
+<span class="comment">/** An object (static class) that defines methods used for creating,
+  * reverting, and calculating with, boxed values. There are four classes
+  * of methods in this object:
+  *   - High-performance value boxing methods that feed from a pre-
+  *     computed map of instances for the most common instanciations.
+  *   - Convenience unboxing methods returning default value on null.
+  *   - The generalised comparison method to be used when an object may
+  *     be a boxed value.
+  *   - Standard value operators for boxed number and quasi-number values.
+  *
+  * @author  Gilles Dubochet
+  * @author  Martin Odersky
+  * @contributor Stepan Koltsov
+  * @version 2.0 */</span>
+public <span class="keyword">class</span> <span class="typed"><span class="type">object scala.runtime.BoxesRunTime</span><span id="2272"><a id="2271">BoxesRunTime</a></span></span> {
+
+    <span class="keyword">private</span> static <span class="keyword">final</span> int <span class="typed"><span class="type">Int</span><a id="136105">CHAR</a></span> = <span class="int">0</span>, BYTE = <span class="int">1</span>, SHORT = <span class="int">2</span>, INT = <span class="int">3</span>, LONG = <span class="int">4</span>, FLOAT = <span class="int">5</span>, DOUBLE = <span class="int">6</span>, OTHER = <span class="int">7</span>;
+    
+    <span class="keyword">private</span> static int <span class="typed"><span class="type">(Any)Int</span><a id="136113">typeCode</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136161">a</a></span>) {
+        <span class="keyword">if</span> (a instanceof Integer) <span class="keyword">return</span> INT;
+        <span class="keyword">if</span> (a instanceof Character) <span class="keyword">return</span> CHAR;
+        <span class="keyword">if</span> (a instanceof Long) <span class="keyword">return</span> LONG;
+        <span class="keyword">if</span> (a instanceof Double) <span class="keyword">return</span> DOUBLE;
+        <span class="keyword">if</span> (a instanceof Float) <span class="keyword">return</span> FLOAT;
+        <span class="keyword">if</span> (a instanceof Byte) <span class="keyword">return</span> BYTE;
+        <span class="keyword">if</span> (a instanceof Short) <span class="keyword">return</span> SHORT;
+        <span class="keyword">return</span> OTHER;
+    }
+        
+<span class="comment">/* BOXING ... BOXING ... BOXING ... BOXING ... BOXING ... BOXING ... BOXING ... BOXING */</span>
+
+    public static <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="136114">boxToBoolean</a></span>(boolean <span class="typed"><span class="type">Boolean</span><a id="136162">b</a></span>) {
+        <span class="keyword">return</span> Boolean.valueOf(b);
+    }
+    
+    public static Character <span class="typed"><span class="type">(Char)java.lang.Character</span><a id="136115">boxToCharacter</a></span>(char <span class="typed"><span class="type">Char</span><a id="136163">c</a></span>) {
+        <span class="keyword">return</span> Character.valueOf(c); 
+    }
+    
+    public static <span class="typed"><span class="type">Byte</span><a id="2377">Byte</a></span> <span class="typed"><span class="type">(Byte)Byte</span><a id="136116">boxToByte</a></span>(byte <span class="typed"><span class="type">Byte</span><a id="136164">b</a></span>) {
+        <span class="keyword">return</span> Byte.valueOf(b);
+    }
+    
+    public static <span class="typed"><span class="type">Short</span><a id="2382">Short</a></span> <span class="typed"><span class="type">(Short)Short</span><a id="136117">boxToShort</a></span>(short <span class="typed"><span class="type">Short</span><a id="136165">s</a></span>) {
+        <span class="keyword">return</span> Short.valueOf(s);
+    }
+    
+    public static Integer <span class="typed"><span class="type">(Int)java.lang.Integer</span><a id="136118">boxToInteger</a></span>(int <span class="typed"><span class="type">Int</span><a id="136166">i</a></span>) {
+        <span class="keyword">return</span> Integer.valueOf(i);
+    }
+    
+    public static <span class="typed"><span class="type">Long</span><a id="2397">Long</a></span> <span class="typed"><span class="type">(Long)Long</span><a id="136119">boxToLong</a></span>(long <span class="typed"><span class="type">Long</span><a id="136167">l</a></span>) {
+        <span class="keyword">return</span> Long.valueOf(l);
+    }
+    
+    public static <span class="typed"><span class="type">Float</span><a id="2402">Float</a></span> <span class="typed"><span class="type">(Float)Float</span><a id="136120">boxToFloat</a></span>(float <span class="typed"><span class="type">Float</span><a id="136168">f</a></span>) {
+        <span class="keyword">return</span> Float.valueOf(f);
+    }
+    
+    public static <span class="typed"><span class="type">Double</span><a id="2407">Double</a></span> <span class="typed"><span class="type">(Double)Double</span><a id="136121">boxToDouble</a></span>(double <span class="typed"><span class="type">Double</span><a id="136169">d</a></span>) {
+        <span class="keyword">return</span> Double.valueOf(d);
+    }
+        
+<span class="comment">/* UNBOXING ... UNBOXING ... UNBOXING ... UNBOXING ... UNBOXING ... UNBOXING ... UNBOXING */</span>
+    
+    public static boolean <span class="typed"><span class="type">(Any)Boolean</span><a id="136122">unboxToBoolean</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136170">b</a></span>) {
+        <span class="keyword">return</span> b == <span class="keyword">null</span> ? <span class="keyword">false</span> : ((Boolean)b).booleanValue();
+    }
+    
+    public static char <span class="typed"><span class="type">(Any)Char</span><a id="136123">unboxToChar</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136171">c</a></span>) {
+        <span class="keyword">return</span> c == <span class="keyword">null</span> ? <span class="int">0</span> : ((Character)c).charValue();
+    }
+    
+    public static byte <span class="typed"><span class="type">(Any)Byte</span><a id="136124">unboxToByte</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136172">b</a></span>) {
+        <span class="keyword">return</span> b == <span class="keyword">null</span> ? <span class="int">0</span> : ((Byte)b).byteValue();
+    }
+    
+    public static short <span class="typed"><span class="type">(Any)Short</span><a id="136125">unboxToShort</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136173">s</a></span>) {
+        <span class="keyword">return</span> s == <span class="keyword">null</span> ? <span class="int">0</span> : ((Short)s).shortValue();
+    }
+
+    public static int <span class="typed"><span class="type">(Any)Int</span><a id="136126">unboxToInt</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136174">i</a></span>) {
+        <span class="keyword">return</span> i == <span class="keyword">null</span> ? <span class="int">0</span> : ((Integer)i).intValue();
+    }
+    
+    public static long <span class="typed"><span class="type">(Any)Long</span><a id="136127">unboxToLong</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136175">l</a></span>) {
+        <span class="keyword">return</span> l == <span class="keyword">null</span> ? <span class="int">0</span> : ((Long)l).longValue();
+    }
+    
+    public static float <span class="typed"><span class="type">(Any)Float</span><a id="136128">unboxToFloat</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136176">f</a></span>) {
+        <span class="keyword">return</span> f == <span class="keyword">null</span> ? <span class="float">0.0f</span> : ((Float)f).floatValue();
+    }
+    
+    public static double <span class="typed"><span class="type">(Any)Double</span><a id="136129">unboxToDouble</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136177">d</a></span>) {
+        <span class="keyword">return</span> d == <span class="keyword">null</span> ? <span class="double">0.0d</span> : ((Double)d).doubleValue();
+    }
+        
+<span class="comment">/* COMPARISON ... COMPARISON ... COMPARISON ... COMPARISON ... COMPARISON ... COMPARISON */</span>
+
+    <span class="comment">/** A rich implementation of the &lt;code&gt;equals&lt;/code&gt; method that overrides the
+      * default equals because Java's boxed primitives are utterly broken. This equals
+      * is inserted instead of a normal equals by the Scala compiler (in the
+      * ICode phase, method &lt;code&gt;genEqEqPrimitive&lt;/code&gt;) only when either
+      * side of the comparison is a subclass of &lt;code&gt;AnyVal&lt;/code&gt;, of
+      * &lt;code&gt;java.lang.Number&lt;/code&gt;, of &lt;code&gt;java.lang.Character&lt;/code&gt; or
+      * is exactly &lt;code&gt;Any&lt;/code&gt; or &lt;code&gt;AnyRef&lt;/code&gt;. */</span>
+    public static boolean <span class="typed"><span class="type">(Any,Any)Boolean</span><a id="136130">equals</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136178">a</a></span>, Object <span class="typed"><span class="type">java.lang.Object</span><a id="136179">b</a></span>) {
+        <span class="keyword">if</span> (a == <span class="keyword">null</span> || b == <span class="keyword">null</span>)
+            <span class="keyword">return</span> a == b;
+        <span class="keyword">if</span> (a.equals(b))
+            <span class="keyword">return</span> <span class="keyword">true</span>;
+        <span class="keyword">if</span> (a instanceof Number || a instanceof Character || b instanceof Number || b instanceof Character) {
+            int acode = typeCode(a);
+            int bcode = typeCode(b);
+            int maxcode = (acode &lt; bcode) ? bcode : acode;
+            <span class="keyword">if</span> (maxcode &lt;= INT) {
+                int aa = (acode == CHAR) ? ((Character) a).charValue() : ((Number) a).intValue();
+                int bb = (bcode == CHAR) ? ((Character) b).charValue() : ((Number) b).intValue();
+                <span class="keyword">return</span> aa == bb;
+            }
+            <span class="keyword">if</span> (maxcode &lt;= LONG) {
+                long aa = (acode == CHAR) ? ((Character) a).charValue() : ((Number) a).longValue();
+                long bb = (bcode == CHAR) ? ((Character) b).charValue() : ((Number) b).longValue();
+                <span class="keyword">return</span> aa == bb;
+            }
+            <span class="keyword">if</span> (maxcode &lt;= FLOAT) {
+                float aa = (acode == CHAR) ? ((Character) a).charValue() : ((Number) a).floatValue();
+                float bb = (bcode == CHAR) ? ((Character) b).charValue() : ((Number) b).floatValue();
+                <span class="keyword">return</span> aa == bb;
+            }
+            <span class="keyword">if</span> (maxcode &lt;= DOUBLE) {
+                double aa = (acode == CHAR) ? ((Character) a).charValue() : ((Number) a).doubleValue();
+                double bb = (bcode == CHAR) ? ((Character) b).charValue() : ((Number) b).doubleValue();
+                <span class="keyword">return</span> aa == bb;
+            }
+            
+            <span class="keyword">return</span> b.equals(a);
+        }
+        <span class="keyword">return</span> <span class="keyword">false</span>;
+    }
+        
+<span class="comment">/* OPERATORS ... OPERATORS ... OPERATORS ... OPERATORS ... OPERATORS ... OPERATORS ... OPERATORS ... OPERATORS */</span>
+        
+    <span class="comment">/** arg1 + arg2 */</span>
+    public static Object <span class="typed"><span class="type">(Any,Any)java.lang.Object</span><a id="136131">add</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136180">arg1</a></span>, Object <span class="typed"><span class="type">java.lang.Object</span><a id="136181">arg2</a></span>) throws NoSuchMethodException {
+        int code1 = typeCode(arg1);
+        int code2 = typeCode(arg2);
+        int maxcode = (code1 &lt; code2) ? code2 : code1;
+        <span class="keyword">if</span> (maxcode &lt;= INT) {
+            int val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).intValue();
+            int val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).intValue();
+            <span class="keyword">return</span> boxToInteger(val1 + val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= LONG) {
+            long val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).longValue();
+            long val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).longValue();
+            <span class="keyword">return</span> boxToLong(val1 + val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= FLOAT) {
+            float val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).floatValue();
+            float val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).floatValue();
+            <span class="keyword">return</span> boxToFloat(val1 + val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= DOUBLE) {
+            double val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).doubleValue();
+            double val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).doubleValue();
+            <span class="keyword">return</span> boxToDouble(val1 + val2);
+        }
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+
+    <span class="comment">/** arg1 - arg2 */</span>
+    public static Object <span class="typed"><span class="type">(Any,Any)java.lang.Object</span><a id="136132">subtract</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136182">arg1</a></span>, Object <span class="typed"><span class="type">java.lang.Object</span><a id="136183">arg2</a></span>) throws NoSuchMethodException {
+        int code1 = typeCode(arg1);
+        int code2 = typeCode(arg2);
+        int maxcode = (code1 &lt; code2) ? code2 : code1;
+        <span class="keyword">if</span> (maxcode &lt;= INT) {
+            int val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).intValue();
+            int val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).intValue();
+            <span class="keyword">return</span> boxToInteger(val1 - val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= LONG) {
+            long val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).longValue();
+            long val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).longValue();
+            <span class="keyword">return</span> boxToLong(val1 - val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= FLOAT) {
+            float val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).floatValue();
+            float val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).floatValue();
+            <span class="keyword">return</span> boxToFloat(val1 - val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= DOUBLE) {
+            double val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).doubleValue();
+            double val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).doubleValue();
+            <span class="keyword">return</span> boxToDouble(val1 - val2);
+        }
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+
+    <span class="comment">/** arg1 * arg2 */</span>
+    public static Object <span class="typed"><span class="type">(Any,Any)java.lang.Object</span><a id="136133">multiply</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136184">arg1</a></span>, Object <span class="typed"><span class="type">java.lang.Object</span><a id="136185">arg2</a></span>) throws NoSuchMethodException {
+        int code1 = typeCode(arg1);
+        int code2 = typeCode(arg2);
+        int maxcode = (code1 &lt; code2) ? code2 : code1;
+        <span class="keyword">if</span> (maxcode &lt;= INT) {
+            int val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).intValue();
+            int val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).intValue();
+            <span class="keyword">return</span> boxToInteger(val1 * val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= LONG) {
+            long val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).longValue();
+            long val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).longValue();
+            <span class="keyword">return</span> boxToLong(val1 * val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= FLOAT) {
+            float val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).floatValue();
+            float val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).floatValue();
+            <span class="keyword">return</span> boxToFloat(val1 * val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= DOUBLE) {
+            double val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).doubleValue();
+            double val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).doubleValue();
+            <span class="keyword">return</span> boxToDouble(val1 * val2);
+        }
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+
+    <span class="comment">/** arg1 / arg2 */</span>
+    public static Object <span class="typed"><span class="type">(Any,Any)java.lang.Object</span><a id="136134">divide</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136186">arg1</a></span>, Object <span class="typed"><span class="type">java.lang.Object</span><a id="136187">arg2</a></span>) throws NoSuchMethodException {
+        int code1 = typeCode(arg1);
+        int code2 = typeCode(arg2);
+        int maxcode = (code1 &lt; code2) ? code2 : code1;
+        <span class="keyword">if</span> (maxcode &lt;= INT) {
+            int val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).intValue();
+            int val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).intValue();
+            <span class="keyword">return</span> boxToInteger(val1 / val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= LONG) {
+            long val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).longValue();
+            long val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).longValue();
+            <span class="keyword">return</span> boxToLong(val1 / val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= FLOAT) {
+            float val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).floatValue();
+            float val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).floatValue();
+            <span class="keyword">return</span> boxToFloat(val1 / val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= DOUBLE) {
+            double val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).doubleValue();
+            double val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).doubleValue();
+            <span class="keyword">return</span> boxToDouble(val1 / val2);
+        }
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+
+    <span class="comment">/** arg1 % arg2 */</span>
+    public static Object <span class="typed"><span class="type">(Any,Any)java.lang.Object</span><a id="136135">takeModulo</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136188">arg1</a></span>, Object <span class="typed"><span class="type">java.lang.Object</span><a id="136189">arg2</a></span>) throws NoSuchMethodException {
+        int code1 = typeCode(arg1);
+        int code2 = typeCode(arg2);
+        int maxcode = (code1 &lt; code2) ? code2 : code1;
+        <span class="keyword">if</span> (maxcode &lt;= INT) {
+            int val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).intValue();
+            int val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).intValue();
+            <span class="keyword">return</span> boxToInteger(val1 % val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= LONG) {
+            long val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).longValue();
+            long val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).longValue();
+            <span class="keyword">return</span> boxToLong(val1 % val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= FLOAT) {
+            float val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).floatValue();
+            float val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).floatValue();
+            <span class="keyword">return</span> boxToFloat(val1 % val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= DOUBLE) {
+            double val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).doubleValue();
+            double val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).doubleValue();
+            <span class="keyword">return</span> boxToDouble(val1 % val2);
+        }
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+
+    <span class="comment">/** arg1 &gt;&gt; arg2 */</span>
+    public static Object <span class="typed"><span class="type">(Any,Any)java.lang.Object</span><a id="136136">shiftSignedRight</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136190">arg1</a></span>, Object <span class="typed"><span class="type">java.lang.Object</span><a id="136191">arg2</a></span>) throws NoSuchMethodException {
+        int code1 = typeCode(arg1);
+        int code2 = typeCode(arg2);
+        <span class="keyword">if</span> (code1 &lt;= INT) {
+            int val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).intValue();
+            <span class="keyword">if</span> (code2 &lt;= INT) {
+                int val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).intValue();
+                <span class="keyword">return</span> boxToInteger(val1 &gt;&gt; val2);
+            }
+            <span class="keyword">if</span> (code2 &lt;= LONG) {
+                long val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).longValue();
+                <span class="keyword">return</span> boxToInteger(val1 &gt;&gt; val2);
+            }
+        }
+        <span class="keyword">if</span> (code1 &lt;= LONG) {
+            long val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).longValue();
+            <span class="keyword">if</span> (code2 &lt;= INT) {
+                int val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).intValue();
+                <span class="keyword">return</span> boxToLong(val1 &gt;&gt; val2);
+            }
+            <span class="keyword">if</span> (code2 &lt;= LONG) {
+                long val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).longValue();
+                <span class="keyword">return</span> boxToLong(val1 &gt;&gt; val2);
+            }
+        }
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+
+    <span class="comment">/** arg1 &lt;&lt; arg2 */</span>
+    public static Object <span class="typed"><span class="type">(Any,Any)java.lang.Object</span><a id="136137">shiftSignedLeft</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136192">arg1</a></span>, Object <span class="typed"><span class="type">java.lang.Object</span><a id="136193">arg2</a></span>) throws NoSuchMethodException {
+        int code1 = typeCode(arg1);
+        int code2 = typeCode(arg2);
+        <span class="keyword">if</span> (code1 &lt;= INT) {
+            int val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).intValue();
+            <span class="keyword">if</span> (code2 &lt;= INT) {
+                int val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).intValue();
+                <span class="keyword">return</span> boxToInteger(val1 &lt;&lt; val2);
+            }
+            <span class="keyword">if</span> (code2 &lt;= LONG) {
+                long val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).longValue();
+                <span class="keyword">return</span> boxToInteger(val1 &lt;&lt; val2);
+            }
+        }
+        <span class="keyword">if</span> (code1 &lt;= LONG) {
+            long val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).longValue();
+            <span class="keyword">if</span> (code2 &lt;= INT) {
+                int val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).intValue();
+                <span class="keyword">return</span> boxToLong(val1 &lt;&lt; val2);
+            }
+            <span class="keyword">if</span> (code2 &lt;= LONG) {
+                long val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).longValue();
+                <span class="keyword">return</span> boxToLong(val1 &lt;&lt; val2);
+            }
+        }
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+
+    <span class="comment">/** arg1 &gt;&gt;&gt; arg2 */</span>
+    public static Object <span class="typed"><span class="type">(Any,Any)java.lang.Object</span><a id="136138">shiftLogicalRight</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136194">arg1</a></span>, Object <span class="typed"><span class="type">java.lang.Object</span><a id="136195">arg2</a></span>) throws NoSuchMethodException {
+        int code1 = typeCode(arg1);
+        int code2 = typeCode(arg2);
+        <span class="keyword">if</span> (code1 &lt;= INT) {
+            int val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).intValue();
+            <span class="keyword">if</span> (code2 &lt;= INT) {
+                int val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).intValue();
+                <span class="keyword">return</span> boxToInteger(val1 &gt;&gt;&gt; val2);
+            }
+            <span class="keyword">if</span> (code2 &lt;= LONG) {
+                long val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).longValue();
+                <span class="keyword">return</span> boxToInteger(val1 &gt;&gt;&gt; val2);
+            }
+        }
+        <span class="keyword">if</span> (code1 &lt;= LONG) {
+            long val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).longValue();
+            <span class="keyword">if</span> (code2 &lt;= INT) {
+                int val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).intValue();
+                <span class="keyword">return</span> boxToLong(val1 &gt;&gt;&gt; val2);
+            }
+            <span class="keyword">if</span> (code2 &lt;= LONG) {
+                long val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).longValue();
+                <span class="keyword">return</span> boxToLong(val1 &gt;&gt;&gt; val2);
+            }
+        }
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+        
+    <span class="comment">/** -arg */</span>
+    public static Object <span class="typed"><span class="type">(Any)java.lang.Object</span><a id="136139">negate</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136196">arg</a></span>) throws NoSuchMethodException {
+        int code = typeCode(arg);
+        <span class="keyword">if</span> (code &lt;= INT) {
+            int <span class="keyword">val</span> = (code == CHAR) ? ((Character) arg).charValue() : ((Number) arg).intValue();
+            <span class="keyword">return</span> boxToInteger(-<span class="keyword">val</span>);
+        }
+        <span class="keyword">if</span> (code &lt;= LONG) {
+            long <span class="keyword">val</span> = (code == CHAR) ? ((Character) arg).charValue() : ((Number) arg).longValue();
+            <span class="keyword">return</span> boxToLong(-<span class="keyword">val</span>);
+        }
+        <span class="keyword">if</span> (code &lt;= FLOAT) {
+            float <span class="keyword">val</span> = (code == CHAR) ? ((Character) arg).charValue() : ((Number) arg).floatValue();
+            <span class="keyword">return</span> boxToFloat(-<span class="keyword">val</span>);
+        }
+        <span class="keyword">if</span> (code &lt;= DOUBLE) {
+            double <span class="keyword">val</span> = (code == CHAR) ? ((Character) arg).charValue() : ((Number) arg).doubleValue();
+            <span class="keyword">return</span> boxToDouble(-<span class="keyword">val</span>);
+        }
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+        
+    <span class="comment">/** +arg */</span>
+    public static Object <span class="typed"><span class="type">(Any)java.lang.Object</span><a id="136140">positive</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136197">arg</a></span>) throws NoSuchMethodException {
+        int code = typeCode(arg);
+        <span class="keyword">if</span> (code &lt;= INT) {
+            int <span class="keyword">val</span> = (code == CHAR) ? ((Character) arg).charValue() : ((Number) arg).intValue();
+            <span class="keyword">return</span> boxToInteger(+<span class="keyword">val</span>);
+        }
+        <span class="keyword">if</span> (code &lt;= LONG) {
+            long <span class="keyword">val</span> = (code == CHAR) ? ((Character) arg).charValue() : ((Number) arg).longValue();
+            <span class="keyword">return</span> boxToLong(+<span class="keyword">val</span>);
+        }
+        <span class="keyword">if</span> (code &lt;= FLOAT) {
+            float <span class="keyword">val</span> = (code == CHAR) ? ((Character) arg).charValue() : ((Number) arg).floatValue();
+            <span class="keyword">return</span> boxToFloat(+<span class="keyword">val</span>);
+        }
+        <span class="keyword">if</span> (code &lt;= DOUBLE) {
+            double <span class="keyword">val</span> = (code == CHAR) ? ((Character) arg).charValue() : ((Number) arg).doubleValue();
+            <span class="keyword">return</span> boxToDouble(+<span class="keyword">val</span>);
+        }
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+
+    <span class="comment">/** arg1 &amp; arg2 */</span>
+    public static Object <span class="typed"><span class="type">(Any,Any)java.lang.Object</span><a id="136141">takeAnd</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136198">arg1</a></span>, Object <span class="typed"><span class="type">java.lang.Object</span><a id="136199">arg2</a></span>) throws NoSuchMethodException {
+        <span class="keyword">if</span> ((arg1 instanceof Boolean) || (arg2 instanceof Boolean)) {
+            <span class="keyword">if</span> (!((arg1 instanceof Boolean) &amp;&amp; (arg2 instanceof Boolean))) {
+                <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+            }
+            <span class="keyword">return</span> boxToBoolean(((Boolean) arg1).booleanValue() &amp; ((Boolean) arg2).booleanValue());
+        }
+        int code1 = typeCode(arg1);
+        int code2 = typeCode(arg2);
+        int maxcode = (code1 &lt; code2) ? code2 : code1;
+        <span class="keyword">if</span> (maxcode &lt;= INT) {
+            int val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).intValue();
+            int val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).intValue();
+            <span class="keyword">return</span> boxToInteger(val1 &amp; val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= LONG) {
+            long val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).longValue();
+            long val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).longValue();
+            <span class="keyword">return</span> boxToLong(val1 &amp; val2);
+        }
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+
+    <span class="comment">/** arg1 | arg2 */</span>
+    public static Object <span class="typed"><span class="type">(Any,Any)java.lang.Object</span><a id="136142">takeOr</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136200">arg1</a></span>, Object <span class="typed"><span class="type">java.lang.Object</span><a id="136201">arg2</a></span>) throws NoSuchMethodException {
+        <span class="keyword">if</span> ((arg1 instanceof Boolean) || (arg2 instanceof Boolean)) {
+            <span class="keyword">if</span> (!((arg1 instanceof Boolean) &amp;&amp; (arg2 instanceof Boolean))) {
+                <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+            }
+            <span class="keyword">return</span> boxToBoolean(((Boolean) arg1).booleanValue() | ((Boolean) arg2).booleanValue());
+        }
+        int code1 = typeCode(arg1);
+        int code2 = typeCode(arg2);
+        int maxcode = (code1 &lt; code2) ? code2 : code1;
+        <span class="keyword">if</span> (maxcode &lt;= INT) {
+            int val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).intValue();
+            int val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).intValue();
+            <span class="keyword">return</span> boxToInteger(val1 | val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= LONG) {
+            long val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).longValue();
+            long val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).longValue();
+            <span class="keyword">return</span> boxToLong(val1 | val2);
+        }
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+
+    <span class="comment">/** arg1 ^ arg2 */</span>
+    public static Object <span class="typed"><span class="type">(Any,Any)java.lang.Object</span><a id="136143">takeXor</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136202">arg1</a></span>, Object <span class="typed"><span class="type">java.lang.Object</span><a id="136203">arg2</a></span>) throws NoSuchMethodException {
+        <span class="keyword">if</span> ((arg1 instanceof Boolean) || (arg2 instanceof Boolean)) {
+            <span class="keyword">if</span> (!((arg1 instanceof Boolean) &amp;&amp; (arg2 instanceof Boolean))) {
+                <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+            }
+            <span class="keyword">return</span> boxToBoolean(((Boolean) arg1).booleanValue() ^ ((Boolean) arg2).booleanValue());
+        }
+        int code1 = typeCode(arg1);
+        int code2 = typeCode(arg2);
+        int maxcode = (code1 &lt; code2) ? code2 : code1;
+        <span class="keyword">if</span> (maxcode &lt;= INT) {
+            int val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).intValue();
+            int val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).intValue();
+            <span class="keyword">return</span> boxToInteger(val1 ^ val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= LONG) {
+            long val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).longValue();
+            long val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).longValue();
+            <span class="keyword">return</span> boxToLong(val1 ^ val2);
+        }
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+
+    <span class="comment">/** arg1 &amp;&amp; arg2 */</span>
+    public static Object <span class="typed"><span class="type">(Any,Any)java.lang.Object</span><a id="136144">takeConditionalAnd</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136204">arg1</a></span>, Object <span class="typed"><span class="type">java.lang.Object</span><a id="136205">arg2</a></span>) throws NoSuchMethodException {
+        <span class="keyword">if</span> ((arg1 instanceof Boolean) &amp;&amp; (arg2 instanceof Boolean)) {
+            <span class="keyword">return</span> boxToBoolean(((Boolean) arg1).booleanValue() &amp;&amp; ((Boolean) arg2).booleanValue());
+        }
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+
+    <span class="comment">/** arg1 || arg2 */</span>
+    public static Object <span class="typed"><span class="type">(Any,Any)java.lang.Object</span><a id="136145">takeConditionalOr</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136206">arg1</a></span>, Object <span class="typed"><span class="type">java.lang.Object</span><a id="136207">arg2</a></span>) throws NoSuchMethodException {
+        <span class="keyword">if</span> ((arg1 instanceof Boolean) &amp;&amp; (arg2 instanceof Boolean)) {
+            <span class="keyword">return</span> boxToBoolean(((Boolean) arg1).booleanValue() || ((Boolean) arg2).booleanValue());
+        }
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+        
+    <span class="comment">/** ~arg */</span>
+    public static Object <span class="typed"><span class="type">(Any)java.lang.Object</span><a id="136146">complement</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136208">arg</a></span>) throws NoSuchMethodException {
+        int code = typeCode(arg);
+        <span class="keyword">if</span> (code &lt;= INT) {
+            int <span class="keyword">val</span> = (code == CHAR) ? ((Character) arg).charValue() : ((Number) arg).intValue();
+            <span class="keyword">return</span> boxToInteger(~<span class="keyword">val</span>);
+        }
+        <span class="keyword">if</span> (code &lt;= LONG) {
+            long <span class="keyword">val</span> = (code == CHAR) ? ((Character) arg).charValue() : ((Number) arg).longValue();
+            <span class="keyword">return</span> boxToLong(~<span class="keyword">val</span>);
+        }
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+        
+    <span class="comment">/** !arg */</span>
+    public static Object <span class="typed"><span class="type">(Any)java.lang.Object</span><a id="136147">takeNot</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136209">arg</a></span>) throws NoSuchMethodException {
+        <span class="keyword">if</span> (arg instanceof Boolean) {
+          <span class="keyword">return</span> boxToBoolean(!((Boolean) arg).booleanValue());
+        }
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+    
+    public static Object <span class="typed"><span class="type">(Any,Any)java.lang.Object</span><a id="136148">testEqual</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136210">arg1</a></span>, Object <span class="typed"><span class="type">java.lang.Object</span><a id="136211">arg2</a></span>) throws NoSuchMethodException {
+        <span class="keyword">return</span> boxToBoolean(arg1 == arg2);
+    }
+    
+    public static Object <span class="typed"><span class="type">(Any,Any)java.lang.Object</span><a id="136149">testNotEqual</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136212">arg1</a></span>, Object <span class="typed"><span class="type">java.lang.Object</span><a id="136213">arg2</a></span>) throws NoSuchMethodException {
+        <span class="keyword">return</span> boxToBoolean(arg1 != arg2);
+    }
+    
+    public static Object <span class="typed"><span class="type">(Any,Any)java.lang.Object</span><a id="136150">testLessThan</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136214">arg1</a></span>, Object <span class="typed"><span class="type">java.lang.Object</span><a id="136215">arg2</a></span>) throws NoSuchMethodException {
+        int code1 = typeCode(arg1);
+        int code2 = typeCode(arg2);
+        int maxcode = (code1 &lt; code2) ? code2 : code1;
+        <span class="keyword">if</span> (maxcode &lt;= INT) {
+            int val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).intValue();
+            int val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).intValue();
+            <span class="keyword">return</span> boxToBoolean(val1 &lt; val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= LONG) {
+            long val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).longValue();
+            long val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).longValue();
+            <span class="keyword">return</span> boxToBoolean(val1 &lt; val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= FLOAT) {
+            float val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).floatValue();
+            float val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).floatValue();
+            <span class="keyword">return</span> boxToBoolean(val1 &lt; val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= DOUBLE) {
+            double val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).doubleValue();
+            double val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).doubleValue();
+            <span class="keyword">return</span> boxToBoolean(val1 &lt; val2);
+        }
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+    
+    public static Object <span class="typed"><span class="type">(Any,Any)java.lang.Object</span><a id="136151">testLessOrEqualThan</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136216">arg1</a></span>, Object <span class="typed"><span class="type">java.lang.Object</span><a id="136217">arg2</a></span>) throws NoSuchMethodException {
+        int code1 = typeCode(arg1);
+        int code2 = typeCode(arg2);
+        int maxcode = (code1 &lt; code2) ? code2 : code1;
+        <span class="keyword">if</span> (maxcode &lt;= INT) {
+            int val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).intValue();
+            int val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).intValue();
+            <span class="keyword">return</span> boxToBoolean(val1 &lt;= val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= LONG) {
+            long val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).longValue();
+            long val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).longValue();
+            <span class="keyword">return</span> boxToBoolean(val1 &lt;= val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= FLOAT) {
+            float val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).floatValue();
+            float val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).floatValue();
+            <span class="keyword">return</span> boxToBoolean(val1 &lt;= val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= DOUBLE) {
+            double val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).doubleValue();
+            double val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).doubleValue();
+            <span class="keyword">return</span> boxToBoolean(val1 &lt;= val2);
+        }
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+    
+    public static Object <span class="typed"><span class="type">(Any,Any)java.lang.Object</span><a id="136152">testGreaterOrEqualThan</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136218">arg1</a></span>, Object <span class="typed"><span class="type">java.lang.Object</span><a id="136219">arg2</a></span>) throws NoSuchMethodException {
+        int code1 = typeCode(arg1);
+        int code2 = typeCode(arg2);
+        int maxcode = (code1 &lt; code2) ? code2 : code1;
+        <span class="keyword">if</span> (maxcode &lt;= INT) {
+            int val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).intValue();
+            int val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).intValue();
+            <span class="keyword">return</span> boxToBoolean(val1 &gt;= val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= LONG) {
+            long val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).longValue();
+            long val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).longValue();
+            <span class="keyword">return</span> boxToBoolean(val1 &gt;= val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= FLOAT) {
+            float val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).floatValue();
+            float val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).floatValue();
+            <span class="keyword">return</span> boxToBoolean(val1 &gt;= val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= DOUBLE) {
+            double val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).doubleValue();
+            double val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).doubleValue();
+            <span class="keyword">return</span> boxToBoolean(val1 &gt;= val2);
+        }
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+    
+    public static Object <span class="typed"><span class="type">(Any,Any)java.lang.Object</span><a id="136153">testGreaterThan</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136220">arg1</a></span>, Object <span class="typed"><span class="type">java.lang.Object</span><a id="136221">arg2</a></span>) throws NoSuchMethodException {
+        int code1 = typeCode(arg1);
+        int code2 = typeCode(arg2);
+        int maxcode = (code1 &lt; code2) ? code2 : code1;
+        <span class="keyword">if</span> (maxcode &lt;= INT) {
+            int val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).intValue();
+            int val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).intValue();
+            <span class="keyword">return</span> boxToBoolean(val1 &gt; val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= LONG) {
+            long val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).longValue();
+            long val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).longValue();
+            <span class="keyword">return</span> boxToBoolean(val1 &gt; val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= FLOAT) {
+            float val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).floatValue();
+            float val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).floatValue();
+            <span class="keyword">return</span> boxToBoolean(val1 &gt; val2);
+        }
+        <span class="keyword">if</span> (maxcode &lt;= DOUBLE) {
+            double val1 = (code1 == CHAR) ? ((Character) arg1).charValue() : ((Number) arg1).doubleValue();
+            double val2 = (code2 == CHAR) ? ((Character) arg2).charValue() : ((Number) arg2).doubleValue();
+            <span class="keyword">return</span> boxToBoolean(val1 &gt; val2);
+        }
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+        
+    <span class="comment">/** arg.toChar */</span>
+    public static Character <span class="typed"><span class="type">(Any)java.lang.Character</span><a id="136154">toCharacter</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136222">arg</a></span>) throws NoSuchMethodException {
+        <span class="keyword">if</span> (arg instanceof Character) <span class="keyword">return</span> (Character)arg;
+        <span class="keyword">if</span> (arg instanceof Byte) <span class="keyword">return</span> boxToCharacter((char)unboxToByte(arg));
+        <span class="keyword">if</span> (arg instanceof Short) <span class="keyword">return</span> boxToCharacter((char)unboxToShort(arg));
+        <span class="keyword">if</span> (arg instanceof Integer) <span class="keyword">return</span> boxToCharacter((char)unboxToInt(arg));
+        <span class="keyword">if</span> (arg instanceof Long) <span class="keyword">return</span> boxToCharacter((char)unboxToLong(arg));
+        <span class="keyword">if</span> (arg instanceof Float) <span class="keyword">return</span> boxToCharacter((char)unboxToFloat(arg));
+        <span class="keyword">if</span> (arg instanceof Double) <span class="keyword">return</span> boxToCharacter((char)unboxToDouble(arg));
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+
+    <span class="comment">/** arg.toByte */</span>
+    public static <span class="typed"><span class="type">Byte</span><a id="2377">Byte</a></span> <span class="typed"><span class="type">(Any)Byte</span><a id="136155">toByte</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136223">arg</a></span>) throws NoSuchMethodException {
+        <span class="keyword">if</span> (arg instanceof Character) <span class="keyword">return</span> boxToByte((byte)unboxToChar(arg));
+        <span class="keyword">if</span> (arg instanceof Byte) <span class="keyword">return</span> (Byte)arg;
+        <span class="keyword">if</span> (arg instanceof Short) <span class="keyword">return</span> boxToByte((byte)unboxToShort(arg));
+        <span class="keyword">if</span> (arg instanceof Integer) <span class="keyword">return</span> boxToByte((byte)unboxToInt(arg));
+        <span class="keyword">if</span> (arg instanceof Long) <span class="keyword">return</span> boxToByte((byte)unboxToLong(arg));
+        <span class="keyword">if</span> (arg instanceof Float) <span class="keyword">return</span> boxToByte((byte)unboxToFloat(arg));
+        <span class="keyword">if</span> (arg instanceof Double) <span class="keyword">return</span> boxToByte((byte)unboxToDouble(arg));
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+
+    <span class="comment">/** arg.toShort */</span>
+    public static <span class="typed"><span class="type">Short</span><a id="2382">Short</a></span> <span class="typed"><span class="type">(Any)Short</span><a id="136156">toShort</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136224">arg</a></span>) throws NoSuchMethodException {
+        <span class="keyword">if</span> (arg instanceof Character) <span class="keyword">return</span> boxToShort((short)unboxToChar(arg));
+        <span class="keyword">if</span> (arg instanceof Byte) <span class="keyword">return</span> boxToShort((short)unboxToByte(arg));
+        <span class="keyword">if</span> (arg instanceof Short) <span class="keyword">return</span> (Short)arg;
+        <span class="keyword">if</span> (arg instanceof Integer) <span class="keyword">return</span> boxToShort((short)unboxToInt(arg));
+        <span class="keyword">if</span> (arg instanceof Long) <span class="keyword">return</span> boxToShort((short)unboxToLong(arg));
+        <span class="keyword">if</span> (arg instanceof Float) <span class="keyword">return</span> boxToShort((short)unboxToFloat(arg));
+        <span class="keyword">if</span> (arg instanceof Double) <span class="keyword">return</span> boxToShort((short)unboxToDouble(arg));
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+
+    <span class="comment">/** arg.toInt */</span>
+    public static Integer <span class="typed"><span class="type">(Any)java.lang.Integer</span><a id="136157">toInteger</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136225">arg</a></span>) throws NoSuchMethodException {
+        <span class="keyword">if</span> (arg instanceof Character) <span class="keyword">return</span> boxToInteger((int)unboxToChar(arg));
+        <span class="keyword">if</span> (arg instanceof Byte) <span class="keyword">return</span> boxToInteger((int)unboxToByte(arg));
+        <span class="keyword">if</span> (arg instanceof Short) <span class="keyword">return</span> boxToInteger((int)unboxToShort(arg));
+        <span class="keyword">if</span> (arg instanceof Integer) <span class="keyword">return</span> (Integer)arg;
+        <span class="keyword">if</span> (arg instanceof Long) <span class="keyword">return</span> boxToInteger((int)unboxToLong(arg));
+        <span class="keyword">if</span> (arg instanceof Float) <span class="keyword">return</span> boxToInteger((int)unboxToFloat(arg));
+        <span class="keyword">if</span> (arg instanceof Double) <span class="keyword">return</span> boxToInteger((int)unboxToDouble(arg));
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+
+    <span class="comment">/** arg.toLong */</span>
+    public static <span class="typed"><span class="type">Long</span><a id="2397">Long</a></span> <span class="typed"><span class="type">(Any)Long</span><a id="136158">toLong</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136226">arg</a></span>) throws NoSuchMethodException {
+        <span class="keyword">if</span> (arg instanceof Character) <span class="keyword">return</span> boxToLong((long)unboxToChar(arg));
+        <span class="keyword">if</span> (arg instanceof Byte) <span class="keyword">return</span> boxToLong((long)unboxToByte(arg));
+        <span class="keyword">if</span> (arg instanceof Short) <span class="keyword">return</span> boxToLong((long)unboxToShort(arg));
+        <span class="keyword">if</span> (arg instanceof Integer) <span class="keyword">return</span> boxToLong((long)unboxToInt(arg));
+        <span class="keyword">if</span> (arg instanceof Long) <span class="keyword">return</span> (Long)arg;
+        <span class="keyword">if</span> (arg instanceof Float) <span class="keyword">return</span> boxToLong((long)unboxToFloat(arg));
+        <span class="keyword">if</span> (arg instanceof Double) <span class="keyword">return</span> boxToLong((long)unboxToDouble(arg));
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+
+    <span class="comment">/** arg.toFloat */</span>
+    public static <span class="typed"><span class="type">Float</span><a id="2402">Float</a></span> <span class="typed"><span class="type">(Any)Float</span><a id="136159">toFloat</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136227">arg</a></span>) throws NoSuchMethodException {
+        <span class="keyword">if</span> (arg instanceof Character) <span class="keyword">return</span> boxToFloat((float)unboxToChar(arg));
+        <span class="keyword">if</span> (arg instanceof Byte) <span class="keyword">return</span> boxToFloat((float)unboxToByte(arg));
+        <span class="keyword">if</span> (arg instanceof Short) <span class="keyword">return</span> boxToFloat((float)unboxToShort(arg));
+        <span class="keyword">if</span> (arg instanceof Integer) <span class="keyword">return</span> boxToFloat((float)unboxToInt(arg));
+        <span class="keyword">if</span> (arg instanceof Long) <span class="keyword">return</span> boxToFloat((float)unboxToLong(arg));
+        <span class="keyword">if</span> (arg instanceof Float) <span class="keyword">return</span> (Float)arg;
+        <span class="keyword">if</span> (arg instanceof Double) <span class="keyword">return</span> boxToFloat((float)unboxToDouble(arg));
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+
+    <span class="comment">/** arg.toDouble */</span>
+    public static <span class="typed"><span class="type">Double</span><a id="2407">Double</a></span> <span class="typed"><span class="type">(Any)Double</span><a id="136160">toDouble</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136228">arg</a></span>) throws NoSuchMethodException {
+        <span class="keyword">if</span> (arg instanceof Character) <span class="keyword">return</span> boxToDouble((double)unboxToChar(arg));
+        <span class="keyword">if</span> (arg instanceof Byte) <span class="keyword">return</span> boxToDouble((double)unboxToByte(arg));
+        <span class="keyword">if</span> (arg instanceof Short) <span class="keyword">return</span> boxToDouble((double)unboxToShort(arg));
+        <span class="keyword">if</span> (arg instanceof Integer) <span class="keyword">return</span> boxToDouble((double)unboxToInt(arg));
+        <span class="keyword">if</span> (arg instanceof Long) <span class="keyword">return</span> boxToDouble((double)unboxToLong(arg));
+        <span class="keyword">if</span> (arg instanceof Float) <span class="keyword">return</span> boxToDouble((double)unboxToFloat(arg));
+        <span class="keyword">if</span> (arg instanceof Double) <span class="keyword">return</span> (Double)arg;
+        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodException();
+    }
+    
+}
+
+        </pre>
+    </body>
+</html>

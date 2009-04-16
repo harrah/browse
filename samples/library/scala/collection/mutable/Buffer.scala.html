@@ -1,0 +1,299 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/mutable/Buffer.scala</title>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: Buffer.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+
+<span class="keyword">package</span> scala.collection.mutable
+
+
+<span class="keyword">import</span> Predef._
+
+<span class="comment">/** Buffers are used to create sequences of elements incrementally by
+ *  appending, prepending, or inserting new elements. It is also
+ *  possible to access and modify elements in a random access fashion
+ *  via the index of the element in the current sequence.
+ *
+ *  @author  Matthias Zenger
+ *  @version 1.1, 02/03/2004
+ */</span>
+@<span class="typed"><span class="type">cloneable</span><a href="../../cloneable.scala.html#629">cloneable</a></span>
+<span class="keyword">trait</span> <span class="typed"><span class="type">trait Buffer[A] extends java.lang.Object with Seq[A] with scala.collection.mutable.Scriptable[scala.collection.mutable.Message[(scala.collection.mutable.Location, A)]] with scala.collection.mutable.CloneableCollection with ScalaObject</span><a id="11206">Buffer</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="15752">A</a></span>] <span class="keyword">extends</span> <span class="typed"><span class="type">java.lang.Object</span><a id="2163">AnyRef</a></span>
+      <span class="keyword">with</span> <span class="typed"><span class="type">Seq[A]</span><a href="../../Seq.scala.html#761">Seq</a></span>[A]
+      <span class="keyword">with</span> <span class="typed"><span class="type">scala.collection.mutable.Scriptable[scala.collection.mutable.Message[(scala.collection.mutable.Location, A)]]</span><a href="Scriptable.scala.html#11155">Scriptable</a></span>[Message[(Location, A)]]
+      <span class="keyword">with</span> <span class="typed"><span class="type">scala.collection.mutable.CloneableCollection</span><a href="CloneableCollection.scala.html#11278">CloneableCollection</a></span>
+{
+
+  <span class="comment">/** Append a single element to this buffer.
+   *
+   *  @param elem  the element to append.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A)Unit</span><a id="19227">+=</a></span>(<span class="typed"><span class="type">A</span><a id="29048">elem</a></span>: <span class="typed"><span class="type">A</span><a href="#15752">A</a></span>): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span>
+
+  <span class="comment">/** Append a two or more elements to this buffer.
+   *
+   *  enable this for 2.8.0!
+   *
+   *  @param elem1 the first element to append.
+   *  @param elem2 the second element to append.
+   *  @param elems the remaining elements to append.
+  def +=(elem1: A, elem2: A, elems: A*): Unit = {
+    this += elem1 
+    this += elem2
+    this ++= elems
+  }
+   */</span>
+
+  <span class="comment">/** Append a single element to this buffer and return
+   *  the identity of the buffer.
+   *
+   *  @param elem  the element to append.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A)scala.collection.mutable.Buffer[A]</span><a id="19228">+</a></span>(<span class="typed"><span class="type">A</span><a id="22650">elem</a></span>: <span class="typed"><span class="type">A</span><a href="#15752">A</a></span>): <span class="typed"><span class="type">scala.collection.mutable.Buffer[A]</span><a href="#11206">Buffer</a></span>[A] = { <span class="typed"><span class="type">Buffer.this.type</span><a href="#11206" class="keyword">this</a></span> <span class="typed"><span class="type">(A)Unit</span><a href="#19227">+=</a></span> <span class="typed"><span class="type">A</span><a href="#22650">elem</a></span>; <span class="typed"><span class="type">scala.collection.mutable.Buffer[A]</span><a href="#11206" class="keyword">this</a></span> }
+
+  <span class="comment">/** Append two or more elements to this buffer and return
+   *  the identity of the buffer.
+   *
+   *  enable this for 2.8.0!
+   *
+   *  @param elem1 the first element to append.
+   *  @param elem2 the second element to append.
+   *  @param elems the remaining elements to append.
+  def +(elem1: A, elem2: A, elems: A*): Buffer[A] = 
+    this + elem1 + elem2 ++ elems
+   */</span>
+
+  <span class="comment">/** Prepend a single element to this buffer and return
+   *  the identity of the buffer.
+   *
+   *  @param elem  the element to append.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A)scala.collection.mutable.Buffer[A]</span><a id="19229">+:</a></span>(<span class="typed"><span class="type">A</span><a id="29100">elem</a></span>: <span class="typed"><span class="type">A</span><a href="#15752">A</a></span>): <span class="typed"><span class="type">scala.collection.mutable.Buffer[A]</span><a href="#11206">Buffer</a></span>[A]
+
+  <span class="comment">/** Appends a number of elements provided by an iterator
+   *
+   *  @param iter  the iterator.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Iterator[A])Unit</span><a id="19230">++=</a></span>(<span class="typed"><span class="type">Iterator[A]</span><a id="29086">iter</a></span>: <span class="typed"><span class="type">Iterator[A]</span><a href="../../Iterator.scala.html#1337">Iterator</a></span>[A]) { <span class="typed"><span class="type">Iterator[A]</span><a href="#29086">iter</a></span> <span class="typed"><span class="type">((A) =&gt; Unit)Unit</span><a href="../../Iterator.scala.html#20001">foreach</a></span> <span class="typed"><span class="type">(A)Unit</span><a href="#19227">+=</a></span> }
+
+  <span class="comment">/** Appends a number of elements provided by an iterable object
+   *  via its &lt;code&gt;elements&lt;/code&gt; method.
+   *
+   *  @param iter  the iterable object.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Iterable[A])Unit</span><a id="19231">++=</a></span>(<span class="typed"><span class="type">Iterable[A]</span><a id="29085">iter</a></span>: <span class="typed"><span class="type">Iterable[A]</span><a href="../../Iterable.scala.html#401">Iterable</a></span>[A]) { <span class="typed"><span class="type">(Iterator[A])Unit</span><a href="#19230">++=</a></span>(<span class="typed"><span class="type">Iterable[A]</span><a href="#29085">iter</a></span>.<span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="../../Iterable.scala.html#17309">elements</a></span>) }
+
+  <span class="comment">/** Appends a number of elements in an array
+   *
+   *  @param src    the array
+   *  @param start  the first element to append
+   *  @param len    the number of elements to append           
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Array[A],Int,Int)Unit</span><a id="19232">++=</a></span>(<span class="typed"><span class="type">Array[A]</span><a id="29082">src</a></span>: <span class="typed"><span class="type">Array[A]</span><a href="../../Array.scala.html#1070">Array</a></span>[A], <span class="typed"><span class="type">Int</span><a id="29083">start</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Int</span><a id="29084">len</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>) {
+    <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="96596">i</a></span> = <span class="typed"><span class="type">Int</span><a href="#29083">start</a></span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="96597">end</a></span> = <span class="typed"><span class="type">Int</span><a href="#96596">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int</span><a href="#29084">len</a></span>
+    <span class="typed"><span class="type">Unit</span><a href="#96599" class="keyword">while</a></span> (<span class="typed"><span class="type">Int</span><a href="#96596">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int</span><a href="#96597">end</a></span>) {
+      <span class="typed"><span class="type">Buffer.this.type</span><a href="#11206" class="keyword">this</a></span> <span class="typed"><span class="type">(A)Unit</span><a href="#19227">+=</a></span> <span class="typed"><span class="type">(Int)A</span><a href="../../Array.scala.html#17253">src</a></span>(<span class="typed"><span class="type">Int</span><a href="#96596">i</a></span>)
+      <span class="typed"><span class="type">Int</span><a href="#96596">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+    }
+  }
+  <span class="comment">/** return a read only alias of this buffer 
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Seq[A]</span><a id="19233">readOnly</a></span> : <span class="typed"><span class="type">Seq[A]</span><a href="../../Seq.scala.html#761">Seq</a></span>[A]
+
+  <span class="comment">/** Appends a number of elements provided by an iterable object
+   *  via its &lt;code&gt;elements&lt;/code&gt; method. The identity of the
+   *  buffer is returned.
+   *
+   *  @param iter     the iterable object.
+   *  @return       the updated buffer.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Iterable[A])scala.collection.mutable.Buffer[A]</span><a id="19234">++</a></span>(<span class="typed"><span class="type">Iterable[A]</span><a id="29052">iter</a></span>: <span class="typed"><span class="type">Iterable[A]</span><a href="../../Iterable.scala.html#401">Iterable</a></span>[A]): <span class="typed"><span class="type">scala.collection.mutable.Buffer[A]</span><a href="#11206">Buffer</a></span>[A] = { <span class="typed"><span class="type">Buffer.this.type</span><a href="#11206" class="keyword">this</a></span> <span class="typed"><span class="type">(Iterable[A])Unit</span><a href="#19231">++=</a></span> <span class="typed"><span class="type">Iterable[A]</span><a href="#29052">iter</a></span>; <span class="typed"><span class="type">scala.collection.mutable.Buffer[A]</span><a href="#11206" class="keyword">this</a></span> }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">[B &gt;: A](Iterable[B])Seq[B]</span><a id="19235">++</a></span>[<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="19237">B</a></span> &gt;: A](<span class="typed"><span class="type">Iterable[B]</span><a id="29054">that</a></span> : <span class="typed"><span class="type">Iterable[B]</span><a href="../../Iterable.scala.html#401">Iterable</a></span>[B]) : <span class="typed"><span class="type">Seq[B]</span><a href="../../Seq.scala.html#761">Seq</a></span>[B] = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[B]</span><a id="96629">buf</a></span> = <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[B]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[B]</span><a href="ArrayBuffer.scala.html#11377">ArrayBuffer</a></span>[B]
+    <span class="typed"><span class="type">Buffer.this.type</span><a href="#11206" class="keyword">this</a></span> <span class="typed"><span class="type">(scala.collection.mutable.Buffer[B])Unit</span><a href="../../Iterable.scala.html#17354">copyToBuffer</a></span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[B]</span><a href="#96629">buf</a></span>
+    <span class="typed"><span class="type">Iterable[B]</span><a href="#29054">that</a></span> <span class="typed"><span class="type">(scala.collection.mutable.Buffer[B])Unit</span><a href="../../Iterable.scala.html#17354">copyToBuffer</a></span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[B]</span><a href="#96629">buf</a></span>
+    <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[B]</span><a href="#96629">buf</a></span>
+  }
+   
+  <span class="comment">/** Appends a number of elements provided by an iterator
+   *  via its &lt;code&gt;elements&lt;/code&gt; method. The identity of the
+   *  buffer is returned.
+   *
+   *  @param iter   the iterator
+   *  @return       the updated buffer.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Iterator[A])scala.collection.mutable.Buffer[A]</span><a id="19238">++</a></span>(<span class="typed"><span class="type">Iterator[A]</span><a id="29061">iter</a></span>: <span class="typed"><span class="type">Iterator[A]</span><a href="../../Iterator.scala.html#1337">Iterator</a></span>[A]): <span class="typed"><span class="type">scala.collection.mutable.Buffer[A]</span><a href="#11206">Buffer</a></span>[A] = { <span class="typed"><span class="type">Buffer.this.type</span><a href="#11206" class="keyword">this</a></span> <span class="typed"><span class="type">(Iterator[A])Unit</span><a href="#19230">++=</a></span> <span class="typed"><span class="type">Iterator[A]</span><a href="#29061">iter</a></span>; <span class="typed"><span class="type">scala.collection.mutable.Buffer[A]</span><a href="#11206" class="keyword">this</a></span> }
+
+  <span class="comment">/** Prepends a number of elements provided by an iterable object
+   *  via its &lt;code&gt;elements&lt;/code&gt; method. The identity of the
+   *  buffer is returned.
+   *
+   *  @param iter  the iterable object.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Iterable[A])scala.collection.mutable.Buffer[A]</span><a id="19239">++:</a></span>(<span class="typed"><span class="type">Iterable[A]</span><a id="29104">iter</a></span>: <span class="typed"><span class="type">Iterable[A]</span><a href="../../Iterable.scala.html#401">Iterable</a></span>[A]): <span class="typed"><span class="type">scala.collection.mutable.Buffer[A]</span><a href="#11206">Buffer</a></span>[A] = {
+    <span class="typed"><span class="type">Iterable[A]</span><a href="#29104">iter</a></span>.<span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="../../Iterable.scala.html#17309">elements</a></span>.<span class="typed"><span class="type">=&gt; List[A]</span><a href="../../Iterator.scala.html#20046">toList</a></span>.<span class="typed"><span class="type">=&gt; List[A]</span><a href="../../List.scala.html#20934">reverse</a></span>.<span class="typed"><span class="type">((A) =&gt; Unit)Unit</span><a href="../../List.scala.html#20910">foreach</a></span>(<span class="typed"><span class="type">A</span><a id="96639">e</a></span> =&gt; <span class="typed"><span class="type">A</span><a href="#96639">e</a></span> <span class="typed"><span class="type">(A)scala.collection.mutable.Buffer[A]</span><a href="#19229">+:</a></span> <span class="typed"><span class="type">Buffer.this.type</span><a href="#11206" class="keyword">this</a></span>)
+    <span class="typed"><span class="type">scala.collection.mutable.Buffer[A]</span><a href="#11206" class="keyword">this</a></span>
+  }
+
+  <span class="comment">/** Removes a single element from this buffer, at its first occurrence.
+   *  If the list does not contain that element, it is unchanged
+   *
+   *  @param x  the element to remove.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A)Unit</span><a id="19240">-=</a></span> (<span class="typed"><span class="type">A</span><a id="96641">x</a></span>: <span class="typed"><span class="type">A</span><a href="#15752">A</a></span>) {
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="96642">i</a></span> = <span class="typed"><span class="type">(A)Int</span><a href="../../Seq.scala.html#17166">indexOf</a></span>(<span class="typed"><span class="type">A</span><a href="#96641">x</a></span>)
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span>(<span class="typed"><span class="type">Int</span><a href="#96642">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3140">!=</a></span> -<span class="typed"><span class="type">Int(-1)</span><span class="int">1</span></span>) <span class="typed"><span class="type">(Int)A</span><a href="#19248">remove</a></span>(<span class="typed"><span class="type">Int</span><a href="#96642">i</a></span>)
+  }
+
+  <span class="comment">/** Appends a sequence of elements to this buffer.
+   *
+   *  @param elems  the elements to append.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A*)Unit</span><a id="19241">append</a></span>(<span class="typed"><span class="type">A*</span><a id="34515">elems</a></span>: <span class="typed"><span class="type">A*</span><a id="2739">A</a></span>*) { <span class="typed"><span class="type">Buffer.this.type</span><a href="#11206" class="keyword">this</a></span> <span class="typed"><span class="type">(Iterable[A])Unit</span><a href="#19231">++=</a></span> <span class="typed"><span class="type">A*</span><a href="#34515">elems</a></span> }
+
+  <span class="comment">/** Appends a number of elements provided by an iterable object
+   *  via its &lt;code&gt;elements&lt;/code&gt; method.
+   *
+   *  @param iter  the iterable object.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Iterable[A])Unit</span><a id="19242">appendAll</a></span>(<span class="typed"><span class="type">Iterable[A]</span><a id="29096">iter</a></span>: <span class="typed"><span class="type">Iterable[A]</span><a href="../../Iterable.scala.html#401">Iterable</a></span>[A]) { <span class="typed"><span class="type">Buffer.this.type</span><a href="#11206" class="keyword">this</a></span> <span class="typed"><span class="type">(Iterable[A])Unit</span><a href="#19231">++=</a></span> <span class="typed"><span class="type">Iterable[A]</span><a href="#29096">iter</a></span> }
+
+  <span class="comment">/** Prepend an element to this list.
+   *
+   *  @param elem  the element to prepend.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A*)Unit</span><a id="19243">prepend</a></span>(<span class="typed"><span class="type">A*</span><a id="96661">elems</a></span>: <span class="typed"><span class="type">A*</span><a id="2739">A</a></span>*) { <span class="typed"><span class="type">A*</span><a href="#96661">elems</a></span> <span class="typed"><span class="type">(Iterable[A])scala.collection.mutable.Buffer[A]</span><a href="#19239">++:</a></span> <span class="typed"><span class="type">Buffer.this.type</span><a href="#11206" class="keyword">this</a></span> }
+
+  <span class="comment">/** Prepends a number of elements provided by an iterable object
+   *  via its &lt;code&gt;elements&lt;/code&gt; method. The identity of the
+   *  buffer is returned.
+   *
+   *  @param iter  the iterable object.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Iterable[A])Unit</span><a id="19244">prependAll</a></span>(<span class="typed"><span class="type">Iterable[A]</span><a id="29108">iter</a></span>: <span class="typed"><span class="type">Iterable[A]</span><a href="../../Iterable.scala.html#401">Iterable</a></span>[A]) { <span class="typed"><span class="type">Iterable[A]</span><a href="#29108">iter</a></span> <span class="typed"><span class="type">(Iterable[A])scala.collection.mutable.Buffer[A]</span><a href="#19239">++:</a></span> <span class="typed"><span class="type">Buffer.this.type</span><a href="#11206" class="keyword">this</a></span> }
+
+  <span class="comment">/** Inserts new elements at the index &lt;code&gt;n&lt;/code&gt;. Opposed to method
+   *  &lt;code&gt;update&lt;/code&gt;, this method will not replace an element with a
+   *  one. Instead, it will insert the new elements at index &lt;code&gt;n&lt;/code&gt;.
+   *
+   *  @param n      the index where a new element will be inserted.
+   *  @param elems  the new elements to insert.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,A*)Unit</span><a id="19245">insert</a></span>(<span class="typed"><span class="type">Int</span><a id="94895">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">A*</span><a id="94896">elems</a></span>: <span class="typed"><span class="type">A*</span><a id="2739">A</a></span>*) { <span class="typed"><span class="type">(Int,Iterable[A])Unit</span><a href="#19246">insertAll</a></span>(<span class="typed"><span class="type">Int</span><a href="#94895">n</a></span>, <span class="typed"><span class="type">A*</span><a href="#94896">elems</a></span>) }
+
+  <span class="comment">/** Inserts new elements at the index &lt;code&gt;n&lt;/code&gt;. Opposed to method
+   *  &lt;code&gt;update&lt;/code&gt;, this method will not replace an element with a
+   *  one. Instead, it will insert a new element at index &lt;code&gt;n&lt;/code&gt;.
+   *
+   *  @param n     the index where a new element will be inserted.
+   *  @param iter    the iterable object providing all elements to insert.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,Iterable[A])Unit</span><a id="19246">insertAll</a></span>(<span class="typed"><span class="type">Int</span><a id="29116">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Iterable[A]</span><a id="29117">iter</a></span>: <span class="typed"><span class="type">Iterable[A]</span><a href="../../Iterable.scala.html#401">Iterable</a></span>[A]): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span>
+
+  <span class="comment">/** Replace element at index &lt;code&gt;n&lt;/code&gt; with the new element
+   *  &lt;code&gt;newelem&lt;/code&gt;.
+   *
+   *  @param n       the index of the element to replace.
+   *  @param newelem the new element.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,A)Unit</span><a id="19247">update</a></span>(<span class="typed"><span class="type">Int</span><a id="29126">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">A</span><a id="29127">newelem</a></span>: <span class="typed"><span class="type">A</span><a href="#15752">A</a></span>): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span>
+
+  <span class="comment">/** Removes the element on a given index position.
+   *
+   *  @param n  the index which refers to the element to delete.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)A</span><a id="19248">remove</a></span>(<span class="typed"><span class="type">Int</span><a id="29131">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">A</span><a href="#15752">A</a></span>
+
+  <span class="comment">/** Removes the first &lt;code&gt;n&lt;/code&gt; elements.
+   *
+   *  @param n  the number of elements to remove from the beginning
+   *            of this buffer.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Unit</span><a id="19249">trimStart</a></span>(<span class="typed"><span class="type">Int</span><a id="94809">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>) {
+    <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="96664">i</a></span> = <span class="typed"><span class="type">Int</span><a href="#94809">n</a></span>
+    <span class="typed"><span class="type">Unit</span><a href="#96665" class="keyword">while</a></span> (<span class="typed"><span class="type">Int</span><a href="#96664">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) { <span class="typed"><span class="type">(Int)A</span><a href="#19248">remove</a></span>(<span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>); <span class="typed"><span class="type">Int</span><a href="#96664">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span> }
+  }
+
+  <span class="comment">/** Removes the last &lt;code&gt;n&lt;/code&gt; elements.
+   *
+   *  @param n  the number of elements to remove from the end
+   *            of this buffer.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Unit</span><a id="19250">trimEnd</a></span>(<span class="typed"><span class="type">Int</span><a id="94791">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>) {
+    <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="96685">i</a></span> = <span class="typed"><span class="type">Int</span><a href="#94791">n</a></span>
+    <span class="typed"><span class="type">Unit</span><a href="#96686" class="keyword">while</a></span> (<span class="typed"><span class="type">Int</span><a href="#96685">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) { <span class="typed"><span class="type">(Int)A</span><a href="#19248">remove</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="../../Seq.scala.html#17146">length</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>); <span class="typed"><span class="type">Int</span><a href="#96685">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span> }
+  }
+
+  <span class="comment">/** Clears the buffer contents.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="19251">clear</a></span>(): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span>
+
+  <span class="comment">/** Send a message to this scriptable object.
+   *
+   *  @param cmd  the message to send.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(scala.collection.mutable.Message[(scala.collection.mutable.Location, A)])Unit</span><a id="19252">&lt;&lt;</a></span>(<span class="typed"><span class="type">scala.collection.mutable.Message[(scala.collection.mutable.Location, A)]</span><a id="29137">cmd</a></span>: <span class="typed"><span class="type">scala.collection.mutable.Message[(scala.collection.mutable.Location, A)]</span><a href="Message.scala.html#11233">Message</a></span>[(Location, A)]) {
+    <span class="typed"><span class="type">scala.collection.mutable.Message[(scala.collection.mutable.Location, A)]</span><a href="#29137">cmd</a></span> <span class="typed"><span class="type">Unit</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <a id="1">Include</a>(<a id="1">(</a><span class="typed"><span class="type">scala.collection.mutable.Location</span><a id="96720">l</a></span>, <span class="typed"><span class="type">A</span><a id="96721">elem</a></span>)) =&gt; <span class="typed"><span class="type">scala.collection.mutable.Location</span><a href="#96720">l</a></span> <span class="typed"><span class="type">Unit</span><span class="keyword">match</span></span> {
+        <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <span class="typed"><span class="type">object scala.collection.mutable.Start</span><a href="Location.scala.html#11435">Start</a></span> =&gt; <span class="typed"><span class="type">(A*)Unit</span><a href="#19243">prepend</a></span>(<span class="typed"><span class="type">A</span><a href="#96721">elem</a></span>)
+        <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <span class="typed"><span class="type">object scala.collection.mutable.End</span><a href="Location.scala.html#11174">End</a></span> =&gt; <span class="typed"><span class="type">(A*)Unit</span><a href="#19241">append</a></span>(<span class="typed"><span class="type">A</span><a href="#96721">elem</a></span>)
+        <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <a id="1">Index</a>(<span class="typed"><span class="type">Int</span><a id="96726">n</a></span>) =&gt; <span class="typed"><span class="type">(Int,A*)Unit</span><a href="#19245">insert</a></span>(<span class="typed"><span class="type">Int</span><a href="#96726">n</a></span>, <span class="typed"><span class="type">A</span><a href="#96721">elem</a></span>)
+        <span class="typed"><span class="type">Nothing</span><span class="keyword">case</span></span> _ =&gt; <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.lang.UnsupportedOperationException</span><a id="30111" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.UnsupportedOperationException</span><a href="../../Predef.scala.html#13340">UnsupportedOperationException</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;message &quot;)</span><span class="string">&quot;message &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">scala.collection.mutable.Message[(scala.collection.mutable.Location, A)]</span><a href="#29137">cmd</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot; not understood&quot;)</span><span class="string">&quot; not understood&quot;</span></span>)
+      }
+      <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <a id="1">Update</a>(<a id="1">(</a><span class="typed"><span class="type">scala.collection.mutable.Location</span><a id="96729">l</a></span>, <span class="typed"><span class="type">A</span><a id="96730">elem</a></span>)) =&gt; <span class="typed"><span class="type">scala.collection.mutable.Location</span><a href="#96729">l</a></span> <span class="typed"><span class="type">Unit</span><span class="keyword">match</span></span> {
+        <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <span class="typed"><span class="type">object scala.collection.mutable.Start</span><a href="Location.scala.html#11435">Start</a></span> =&gt; <span class="typed"><span class="type">(Int,A)Unit</span><a href="#19247">update</a></span>(<span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>, <span class="typed"><span class="type">A</span><a href="#96730">elem</a></span>)
+        <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <span class="typed"><span class="type">object scala.collection.mutable.End</span><a href="Location.scala.html#11174">End</a></span> =&gt; <span class="typed"><span class="type">(Int,A)Unit</span><a href="#19247">update</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="../../Seq.scala.html#17146">length</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>, <span class="typed"><span class="type">A</span><a href="#96730">elem</a></span>)
+        <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <a id="1">Index</a>(<span class="typed"><span class="type">Int</span><a id="96745">n</a></span>) =&gt; <span class="typed"><span class="type">(Int,A)Unit</span><a href="#19247">update</a></span>(<span class="typed"><span class="type">Int</span><a href="#96745">n</a></span>, <span class="typed"><span class="type">A</span><a href="#96730">elem</a></span>)
+        <span class="typed"><span class="type">Nothing</span><span class="keyword">case</span></span> _ =&gt; <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.lang.UnsupportedOperationException</span><a id="30111" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.UnsupportedOperationException</span><a href="../../Predef.scala.html#13340">UnsupportedOperationException</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;message &quot;)</span><span class="string">&quot;message &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">scala.collection.mutable.Message[(scala.collection.mutable.Location, A)]</span><a href="#29137">cmd</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot; not understood&quot;)</span><span class="string">&quot; not understood&quot;</span></span>)
+      }
+      <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <a id="1">Remove</a>(<a id="1">(</a><span class="typed"><span class="type">scala.collection.mutable.Location</span><a id="96748">l</a></span>, _)) =&gt; <span class="typed"><span class="type">scala.collection.mutable.Location</span><a href="#96748">l</a></span> <span class="typed"><span class="type">Unit</span><span class="keyword">match</span></span> {
+        <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <span class="typed"><span class="type">object scala.collection.mutable.Start</span><a href="Location.scala.html#11435">Start</a></span> =&gt; <span class="typed"><span class="type">(Int)A</span><a href="#19248">remove</a></span>(<span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>)
+        <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <span class="typed"><span class="type">object scala.collection.mutable.End</span><a href="Location.scala.html#11174">End</a></span> =&gt; <span class="typed"><span class="type">(Int)A</span><a href="#19248">remove</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="../../Seq.scala.html#17146">length</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>)
+        <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <a id="1">Index</a>(<span class="typed"><span class="type">Int</span><a id="96763">n</a></span>) =&gt; <span class="typed"><span class="type">(Int)A</span><a href="#19248">remove</a></span>(<span class="typed"><span class="type">Int</span><a href="#96763">n</a></span>)
+        <span class="typed"><span class="type">Nothing</span><span class="keyword">case</span></span> _ =&gt; <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.lang.UnsupportedOperationException</span><a id="30111" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.UnsupportedOperationException</span><a href="../../Predef.scala.html#13340">UnsupportedOperationException</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;message &quot;)</span><span class="string">&quot;message &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">scala.collection.mutable.Message[(scala.collection.mutable.Location, A)]</span><a href="#29137">cmd</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot; not understood&quot;)</span><span class="string">&quot; not understood&quot;</span></span>)
+      }
+      <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <a id="1">Reset</a>() =&gt; <span class="typed"><span class="type">()Unit</span><a href="#19251">clear</a></span>
+      <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <span class="typed"><span class="type">scala.collection.mutable.Script[_]</span><a id="96766">s</a></span>: <span class="typed"><span class="type">scala.collection.mutable.Script[_]</span><a href="Message.scala.html#11494">Script</a></span>[_] =&gt; <span class="typed"><span class="type">scala.collection.mutable.Script[_]</span><a href="#96766">s</a></span>.<span class="typed"><span class="type">=&gt; Iterator[scala.collection.mutable.Message[_]]</span><a href="ResizableArray.scala.html#22612">elements</a></span> <span class="typed"><span class="type">((scala.collection.mutable.Message[_]) =&gt; Unit)Unit</span><a href="../../Iterator.scala.html#20001">foreach</a></span> <span class="typed"><span class="type">(scala.collection.mutable.Message[(scala.collection.mutable.Location, A)])Unit</span><a href="#19252">&lt;&lt;</a></span>
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">case</span></span> _ =&gt; <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.lang.UnsupportedOperationException</span><a id="30111" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.UnsupportedOperationException</span><a href="../../Predef.scala.html#13340">UnsupportedOperationException</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;message &quot;)</span><span class="string">&quot;message &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">scala.collection.mutable.Message[(scala.collection.mutable.Location, A)]</span><a href="#29137">cmd</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot; not understood&quot;)</span><span class="string">&quot; not understood&quot;</span></span>)
+    }
+  }
+
+  <span class="comment">/** Return a clone of this buffer.
+   *
+   *  @return a buffer with the same elements.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()scala.collection.mutable.Buffer[A]</span><a id="19253">clone</a></span>(): <span class="typed"><span class="type">scala.collection.mutable.Buffer[A]</span><a href="#11206">Buffer</a></span>[A] = <span class="typed"><span class="type">()AnyRef</span><a href="#133318" class="keyword">super</a></span>.<span class="typed"><span class="type">()AnyRef</span><a id="133318">clone</a></span>().<span class="typed"><span class="type">scala.collection.mutable.Buffer[A]</span><a id="3501">asInstanceOf</a></span>[<span class="typed"><span class="type">scala.collection.mutable.Buffer[A]</span><a href="#11206">Buffer</a></span>[A]]
+
+  <span class="comment">/** The hashCode method always yields an error, since it is not
+   *  safe to use buffers as keys in hash tables.
+   *
+   *  @return never.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()Int</span><a id="19254">hashCode</a></span>(): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> =
+    <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.lang.UnsupportedOperationException</span><a id="30111" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.UnsupportedOperationException</span><a href="../../Predef.scala.html#13340">UnsupportedOperationException</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;unsuitable as hash key&quot;)</span><span class="string">&quot;unsuitable as hash key&quot;</span></span>)
+
+  <span class="comment">/** Defines the prefix of the string representation.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">protected</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; String</span><a id="19255">stringPrefix</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span> = <span class="typed"><span class="type">java.lang.String(&quot;Buffer&quot;)</span><span class="string">&quot;Buffer&quot;</span></span>
+    
+}
+
+        </pre>
+    </body>
+</html>

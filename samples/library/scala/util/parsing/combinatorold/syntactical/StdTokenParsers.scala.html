@@ -1,0 +1,57 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/util/parsing/combinatorold/syntactical/StdTokenParsers.scala</title>
+        <script type="text/javascript" src="../../../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2006-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: StdTokenParsers.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+
+<span class="keyword">package</span> scala.util.parsing.combinatorold.syntactical
+
+<span class="keyword">import</span> scala.util.parsing.syntax._
+
+<span class="comment">/** This component provides primitive parsers for the standard tokens defined in `StdTokens'.
+*
+* @author Martin Odersky, Adriaan Moors
+ */</span>
+<span class="keyword">trait</span> <span class="typed"><span class="type">trait StdTokenParsers extends java.lang.Object with scala.util.parsing.combinatorold.syntactical.TokenParsers with ScalaObject</span><a id="15698">StdTokenParsers</a></span> <span class="keyword">extends</span> <span class="typed"><span class="type">scala.util.parsing.combinatorold.syntactical.TokenParsers</span><a href="TokenParsers.scala.html#15707">TokenParsers</a></span> {
+  <span class="keyword">type</span> <span class="typed"><span class="type">&gt;: Nothing &lt;: scala.util.parsing.syntax.StdTokens</span><a id="95812">Tokens</a></span> &lt;: StdTokens
+  <span class="keyword">import</span> lexical.{Keyword, NumericLit, StringLit, Identifier}
+
+  <span class="comment">/** A parser which matches a single keyword token.
+   *
+   * @param chars    The character string making up the matched keyword. 
+   * @return a `UnitParser' that matches the given string
+   */</span>
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <span class="typed"><span class="type">implicit scala.util.parsing.combinatorold.syntactical.StdTokenParsers.keyword : (String)StdTokenParsers.this.UnitParser</span><a id="95814">keyword</a></span>(<span class="typed"><span class="type">String</span><a id="95821">chars</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>): <span class="typed"><span class="type">StdTokenParsers.this.UnitParser</span><a href="../Parsers.scala.html#29469">UnitParser</a></span> = <span class="typed"><span class="type">implicit scala.util.parsing.combinatorold.Parsers.accept : (StdTokenParsers.this.Elem)StdTokenParsers.this.UnitParser</span><a href="../Parsers.scala.html#29488">accept</a></span>(<span class="typed"><span class="type">(String)StdTokenParsers.this.lexical.Keyword</span><a href="../../syntax/StdTokens.scala.html#66413">Keyword</a></span>(<span class="typed"><span class="type">String</span><a href="#95821">chars</a></span>))
+
+  <span class="comment">/** A parser which matches a numeric literal */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; StdTokenParsers.this.Parser[String]</span><a id="95815">numericLit</a></span>: <span class="typed"><span class="type">StdTokenParsers.this.Parser[String]</span><a href="../Parsers.scala.html#29467">Parser</a></span>[String] = 
+    <span class="typed"><span class="type">(String,(StdTokenParsers.this.Elem) =&gt; Boolean)StdTokenParsers.this.Parser[StdTokenParsers.this.Elem]</span><a href="../Parsers.scala.html#29486">elem</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;number&quot;)</span><span class="string">&quot;number&quot;</span></span>, <span class="typed"><span class="type">StdTokenParsers.this.Elem</span><a href="#95838">_</a></span>.<span class="typed"><span class="type">Boolean</span><a id="3499">isInstanceOf</a></span>[<span class="typed"><span class="type">StdTokenParsers.this.lexical.NumericLit</span><a href="../../syntax/StdTokens.scala.html#18161">NumericLit</a></span>]) <span class="typed"><span class="type">((StdTokenParsers.this.Elem) =&gt; String)StdTokenParsers.this.Parser[String]</span><a href="../Parsers.scala.html#29606">^^</a></span> (<span class="typed"><span class="type">StdTokenParsers.this.Elem</span><a href="#95841">_</a></span>.<span class="typed"><span class="type">=&gt; String</span><a href="../../syntax/Tokens.scala.html#40273">chars</a></span>)
+
+  <span class="comment">/** A parser which matches a string literal */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; StdTokenParsers.this.Parser[String]</span><a id="95816">stringLit</a></span>: <span class="typed"><span class="type">StdTokenParsers.this.Parser[String]</span><a href="../Parsers.scala.html#29467">Parser</a></span>[String] = 
+    <span class="typed"><span class="type">(String,(StdTokenParsers.this.Elem) =&gt; Boolean)StdTokenParsers.this.Parser[StdTokenParsers.this.Elem]</span><a href="../Parsers.scala.html#29486">elem</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;string literal&quot;)</span><span class="string">&quot;string literal&quot;</span></span>, <span class="typed"><span class="type">StdTokenParsers.this.Elem</span><a href="#95849">_</a></span>.<span class="typed"><span class="type">Boolean</span><a id="3499">isInstanceOf</a></span>[<span class="typed"><span class="type">StdTokenParsers.this.lexical.StringLit</span><a href="../../syntax/StdTokens.scala.html#18164">StringLit</a></span>]) <span class="typed"><span class="type">((StdTokenParsers.this.Elem) =&gt; String)StdTokenParsers.this.Parser[String]</span><a href="../Parsers.scala.html#29606">^^</a></span> (<span class="typed"><span class="type">StdTokenParsers.this.Elem</span><a href="#95852">_</a></span>.<span class="typed"><span class="type">=&gt; String</span><a href="../../syntax/Tokens.scala.html#40273">chars</a></span>)
+
+  <span class="comment">/** A parser which matches an identifier */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; StdTokenParsers.this.Parser[String]</span><a id="95817">ident</a></span>: <span class="typed"><span class="type">StdTokenParsers.this.Parser[String]</span><a href="../Parsers.scala.html#29467">Parser</a></span>[String] = 
+    <span class="typed"><span class="type">(String,(StdTokenParsers.this.Elem) =&gt; Boolean)StdTokenParsers.this.Parser[StdTokenParsers.this.Elem]</span><a href="../Parsers.scala.html#29486">elem</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;identifier&quot;)</span><span class="string">&quot;identifier&quot;</span></span>, <span class="typed"><span class="type">StdTokenParsers.this.Elem</span><a href="#95860">_</a></span>.<span class="typed"><span class="type">Boolean</span><a id="3499">isInstanceOf</a></span>[<span class="typed"><span class="type">StdTokenParsers.this.lexical.Identifier</span><a href="../../syntax/StdTokens.scala.html#18167">Identifier</a></span>]) <span class="typed"><span class="type">((StdTokenParsers.this.Elem) =&gt; String)StdTokenParsers.this.Parser[String]</span><a href="../Parsers.scala.html#29606">^^</a></span> (<span class="typed"><span class="type">StdTokenParsers.this.Elem</span><a href="#95863">_</a></span>.<span class="typed"><span class="type">=&gt; String</span><a href="../../syntax/Tokens.scala.html#40273">chars</a></span>)
+}
+
+
+
+        </pre>
+    </body>
+</html>

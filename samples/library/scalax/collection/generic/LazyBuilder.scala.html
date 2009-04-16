@@ -1,0 +1,37 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scalax/collection/generic/LazyBuilder.scala</title>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: ListBuffer.scala 14378 2008-03-13 11:39:05Z dragos $</span>
+
+<span class="keyword">package</span> scalax.collection.generic
+
+<span class="keyword">import</span> collection.mutable.ListBuffer
+<span class="keyword">import</span> collection.immutable.{List, Nil, ::}
+
+<span class="keyword">abstract</span> <span class="keyword">class</span> <span class="typed"><span class="type">class LazyBuilder[+CC[B], A] extends java.lang.Object with scalax.collection.generic.Builder[CC,A] with ScalaObject</span><a id="10488">LazyBuilder</a></span>[+<span class="typed"><span class="type">[B]&gt;: Nothing &lt;: Any</span><a id="13133">CC</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="54091">B</a></span>], <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="13134">A</a></span>] <span class="keyword">extends</span> <span class="typed"><span class="type">scalax.collection.generic.Builder[CC,A]</span><a href="Builder.scala.html#10377">Builder</a></span>[CC, A] {
+  <span class="keyword">protected</span> <span class="keyword">var</span> <span class="typed"><span class="type">scalax.collection.mutable.ListBuffer[scalax.collection.Iterator[A]]</span><span id="54084"><span id="54082"><span id="54083"><a id="54093">parts</a></span></span></span></span> = <span class="typed"><span class="type">scalax.collection.mutable.ListBuffer[scalax.collection.Iterator[A]]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scalax.collection.mutable.ListBuffer[scalax.collection.Iterator[A]]</span><a href="../mutable/ListBuffer.scala.html#6533">ListBuffer</a></span>[Iterator[A]]
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A)Unit</span><a id="54085">+=</a></span>(<span class="typed"><span class="type">A</span><a id="54094">x</a></span>: <span class="typed"><span class="type">A</span><a href="#13134">A</a></span>) = { <span class="typed"><span class="type">=&gt; scalax.collection.mutable.ListBuffer[scalax.collection.Iterator[A]]</span><a href="#54082">parts</a></span> <span class="typed"><span class="type">(scalax.collection.Iterator[A])Unit</span><a href="../mutable/ListBuffer.scala.html#42797">+=</a></span> <span class="typed"><span class="type">object scalax.collection.Iterator</span><a href="../Iterator.scala.html#6387">Iterator</a></span>.<span class="typed"><span class="type">(A)java.lang.Object with scalax.collection.Iterator[A]</span><a href="../Iterator.scala.html#24379">single</a></span>(<span class="typed"><span class="type">A</span><a href="#54094">x</a></span>) }
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(scalax.collection.Iterator[A])Unit</span><a id="54086">++=</a></span>(<span class="typed"><span class="type">scalax.collection.Iterator[A]</span><a id="54131">xs</a></span>: <span class="typed"><span class="type">scalax.collection.Iterator[A]</span><a href="../Iterator.scala.html#6386">Iterator</a></span>[A]) { <span class="typed"><span class="type">=&gt; scalax.collection.mutable.ListBuffer[scalax.collection.Iterator[A]]</span><a href="#54082">parts</a></span> <span class="typed"><span class="type">(scalax.collection.Iterator[A])Unit</span><a href="../mutable/ListBuffer.scala.html#42797">+=</a></span> <span class="typed"><span class="type">scalax.collection.Iterator[A]</span><a href="#54131">xs</a></span> }
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(scalax.collection.Iterable[A])Unit</span><a id="54087">++=</a></span>(<span class="typed"><span class="type">scalax.collection.Iterable[A]</span><a id="54134">xs</a></span>: <span class="typed"><span class="type">scalax.collection.Iterable[A]</span><a href="../Iterable.scala.html#6449">Iterable</a></span>[A]) { <span class="typed"><span class="type">=&gt; scalax.collection.mutable.ListBuffer[scalax.collection.Iterator[A]]</span><a href="#54082">parts</a></span> <span class="typed"><span class="type">(scalax.collection.Iterator[A])Unit</span><a href="../mutable/ListBuffer.scala.html#42797">+=</a></span> <span class="typed"><span class="type">scalax.collection.Iterable[A]</span><a href="#54134">xs</a></span>.<span class="typed"><span class="type">=&gt; scalax.collection.Iterator[A]</span><a href="IterableTemplate.scala.html#17388">elements</a></span> }
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; scalax.collection.Iterator[A]</span><a id="54088">elements</a></span>: <span class="typed"><span class="type">scalax.collection.Iterator[A]</span><a href="../Iterator.scala.html#6386">Iterator</a></span>[A] = <span class="typed"><span class="type">object scalax.collection.Iterator</span><a href="../Iterator.scala.html#6387">Iterator</a></span>.<span class="typed"><span class="type">(scalax.collection.Iterator[scalax.collection.Iterator[A]])scalax.collection.Iterator.IteratorIteratorOps[A]</span><a href="../Iterator.scala.html#24402">iteratorIteratorWrapper</a></span>(<span class="typed"><span class="type">=&gt; scalax.collection.mutable.ListBuffer[scalax.collection.Iterator[A]]</span><a href="#54082">parts</a></span>.<span class="typed"><span class="type">=&gt; scalax.collection.Iterator[scalax.collection.Iterator[A]]</span><a href="IterableForwarder.scala.html#42837">elements</a></span>).<span class="typed"><span class="type">=&gt; scalax.collection.Iterator[A]</span><a href="../Iterator.scala.html#54144">flatten</a></span> <span class="comment">// !!! can remove the wrapper once new compiler is in starr</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; CC[A]</span><a id="54089">result</a></span>: <span class="typed"><span class="type">CC[A]</span><a href="#13133">CC</a></span>[A]
+  <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="54090">clear</a></span>() { <span class="typed"><span class="type">=&gt; scalax.collection.mutable.ListBuffer[scalax.collection.Iterator[A]]</span><a href="#54082">parts</a></span>.<span class="typed"><span class="type">()Unit</span><a href="../mutable/ListBuffer.scala.html#42798">clear</a></span>() } 
+}
+
+        </pre>
+    </body>
+</html>

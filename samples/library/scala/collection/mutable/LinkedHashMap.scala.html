@@ -1,0 +1,81 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/mutable/LinkedHashMap.scala</title>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: LinkedHashMap.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+
+<span class="keyword">package</span> scala.collection.mutable
+
+<span class="keyword">import</span> Predef._
+
+<span class="comment">/** This class implements mutable maps using a hashtable.
+ *
+ *  @author  Matthias Zenger
+ *  @author  Martin Odersky
+ *  @version 2.0, 31/12/2006
+ */</span>
+<span class="keyword">object</span> <span class="typed"><span class="type">object scala.collection.mutable.LinkedHashMap</span><a id="11486">LinkedHashMap</a></span> {
+
+  <span class="comment">/** The empty map of this type */</span>  
+  <span class="keyword">def</span> <span class="typed"><span class="type">[A, B]scala.collection.mutable.LinkedHashMap[A,B]</span><a id="105581">empty</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="105584">A</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="105585">B</a></span>] = <span class="typed"><span class="type">scala.collection.mutable.LinkedHashMap[A,B]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.LinkedHashMap[A,B]</span><a href="#11485">LinkedHashMap</a></span>[A, B]
+
+  <span class="comment">/** The canonical factory for this type
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[A, B]((A, B)*)scala.collection.mutable.Map[A,B]</span><a id="105586">apply</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="105589">A</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="105590">B</a></span>](<span class="typed"><span class="type">(A, B)*</span><a id="105605">elems</a></span>: <span class="typed"><span class="type">(A, B)*</span><a id="2739">(</a></span>A, B)*) = <span class="typed"><span class="type">scala.collection.mutable.LinkedHashMap[A,B]</span><a href="#105581">empty</a></span>[<span class="typed"><span class="type">A</span><a href="#105589">A</a></span>, <span class="typed"><span class="type">B</span><a href="#105590">B</a></span>] <span class="typed"><span class="type">(Iterable[(A, B)])scala.collection.mutable.Map[A,B]</span><a href="Map.scala.html#21357">++</a></span> <span class="typed"><span class="type">(A, B)*</span><a href="#105605">elems</a></span>
+}
+
+@<span class="typed"><span class="type">serializable</span><a href="../../serializable.scala.html#647">serializable</a></span>
+<span class="keyword">class</span> <span class="typed"><span class="type">class LinkedHashMap[A, B] extends java.lang.Object with scala.collection.mutable.Map[A,B] with scala.collection.mutable.HashTable[A] with scala.collection.mutable.DefaultMapModel[A,B] with ScalaObject</span><a id="11485">LinkedHashMap</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="16124">A</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="16125">B</a></span>] <span class="keyword">extends</span> <span class="typed"><span class="type">scala.collection.mutable.Map[A,B]</span><a href="Map.scala.html#11125">Map</a></span>[A,B] <span class="keyword">with</span> <span class="typed"><span class="type">scala.collection.mutable.HashTable[A]</span><a href="HashTable.scala.html#11422">HashTable</a></span>[A] <span class="keyword">with</span> <span class="typed"><span class="type">scala.collection.mutable.DefaultMapModel[A,B]</span><a href="DefaultMapModel.scala.html#11296">DefaultMapModel</a></span>[A,B] {
+  <span class="keyword">private</span> <span class="keyword">var</span> <span class="typed"><span class="type">List[LinkedHashMap.this.Entry]</span><span id="105597"><span id="105595"><span id="105596"><a id="105620">ordered</a></span></span></span></span> = <span class="typed"><span class="type">object Nil</span><a href="../../List.scala.html#333">List</a></span>[Entry]()
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A)Option[B]</span><a id="105598">remove</a></span>(<span class="typed"><span class="type">A</span><a id="105621">key</a></span>: <span class="typed"><span class="type">A</span><a href="#16124">A</a></span>): <span class="typed"><span class="type">Option[B]</span><a href="../../Option.scala.html#932">Option</a></span>[B] = <span class="typed"><span class="type">(A)Option[LinkedHashMap.this.Entry]</span><a href="HashTable.scala.html#21426">removeEntry</a></span>(<span class="typed"><span class="type">A</span><a href="#105621">key</a></span>) <span class="typed"><span class="type">Option[B]</span><span class="keyword">match</span></span> {
+    <span class="typed"><span class="type">None.type</span><span class="keyword">case</span></span> <span class="typed"><span class="type">object None</span><a href="../../Option.scala.html#534">None</a></span> =&gt; <span class="typed"><span class="type">object None</span><a href="../../Option.scala.html#534">None</a></span>
+    <span class="typed"><span class="type">Some[B]</span><span class="keyword">case</span></span> <a id="1">Some</a>(<span class="typed"><span class="type">LinkedHashMap.this.Entry</span><a id="105622">e</a></span>) =&gt; 
+      <span class="typed"><span class="type">(List[LinkedHashMap.this.Entry])Unit</span><a href="#105596">ordered</a></span> = <span class="typed"><span class="type">=&gt; List[LinkedHashMap.this.Entry]</span><a href="#105595">ordered</a></span>.<span class="typed"><span class="type">((LinkedHashMap.this.Entry) =&gt; Boolean)List[LinkedHashMap.this.Entry]</span><a href="../../List.scala.html#20911">filter</a></span>(<span class="typed"><span class="type">LinkedHashMap.this.Entry</span><a href="#105625">_</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5793">ne</a></span> <span class="typed"><span class="type">LinkedHashMap.this.Entry</span><a href="#105622">e</a></span>)
+      <span class="typed"><span class="type">(B)Some[B]</span><a href="../../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">LinkedHashMap.this.Entry</span><a href="#105622">e</a></span>.<span class="typed"><span class="type">=&gt; B</span><a href="DefaultEntry.scala.html#25655">value</a></span>)
+    }
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A)Unit</span><a id="105599">-=</a></span> (<span class="typed"><span class="type">A</span><a id="105627">key</a></span>: <span class="typed"><span class="type">A</span><a href="#16124">A</a></span>) { <span class="typed"><span class="type">(A)Option[B]</span><a href="#105598">remove</a></span>(<span class="typed"><span class="type">A</span><a href="#105627">key</a></span>) }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(A,B)Option[B]</span><a id="105600">put</a></span>(<span class="typed"><span class="type">A</span><a id="105628">key</a></span>: <span class="typed"><span class="type">A</span><a href="#16124">A</a></span>, <span class="typed"><span class="type">B</span><a id="105629">value</a></span>: <span class="typed"><span class="type">B</span><a href="#16125">B</a></span>): <span class="typed"><span class="type">Option[B]</span><a href="../../Option.scala.html#932">Option</a></span>[B] = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">LinkedHashMap.this.Entry</span><a id="105630">e</a></span> = <span class="typed"><span class="type">(A)LinkedHashMap.this.Entry</span><a href="HashTable.scala.html#21424">findEntry</a></span>(<span class="typed"><span class="type">A</span><a href="#105628">key</a></span>)
+    <span class="typed"><span class="type">Option[B]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">LinkedHashMap.this.Entry</span><a href="#105630">e</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="3507">==</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) {
+      <span class="keyword">val</span> <span class="typed"><span class="type">scala.collection.mutable.DefaultEntry[A,B]</span><a id="105632">e</a></span> = <span class="typed"><span class="type">scala.collection.mutable.DefaultEntry[A,B]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.DefaultEntry[A,B]</span><a href="DefaultMapModel.scala.html#21436">Entry</a></span>(<span class="typed"><span class="type">A</span><a href="#105628">key</a></span>, <span class="typed"><span class="type">B</span><a href="#105629">value</a></span>)
+      <span class="typed"><span class="type">(List[LinkedHashMap.this.Entry])Unit</span><a href="#105596">ordered</a></span> = <span class="typed"><span class="type">scala.collection.mutable.DefaultEntry[A,B]</span><a href="#105632">e</a></span> <span class="typed"><span class="type">(LinkedHashMap.this.Entry)List[LinkedHashMap.this.Entry]</span><a href="../../List.scala.html#20872">::</a></span> <span class="typed"><span class="type">=&gt; List[LinkedHashMap.this.Entry]</span><a href="#105595">ordered</a></span>
+      <span class="typed"><span class="type">(LinkedHashMap.this.Entry)Unit</span><a href="HashTable.scala.html#21425">addEntry</a></span>(<span class="typed"><span class="type">scala.collection.mutable.DefaultEntry[A,B]</span><a href="#105632">e</a></span>)
+      <span class="typed"><span class="type">object None</span><a href="../../Option.scala.html#534">None</a></span>
+    } <span class="keyword">else</span> {
+      <span class="keyword">val</span> <span class="typed"><span class="type">Some[B]</span><a id="105636">ret</a></span> = <span class="typed"><span class="type">(B)Some[B]</span><a href="../../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">LinkedHashMap.this.Entry</span><a href="#105630">e</a></span>.<span class="typed"><span class="type">=&gt; B</span><a href="DefaultEntry.scala.html#25655">value</a></span>)
+      <span class="typed"><span class="type">LinkedHashMap.this.Entry</span><a href="#105630">e</a></span>.<span class="typed"><span class="type">(B)Unit</span><a href="DefaultEntry.scala.html#25656">value</a></span> = <span class="typed"><span class="type">B</span><a href="#105629">value</a></span>
+      <span class="typed"><span class="type">Some[B]</span><a href="#105636">ret</a></span>
+    }
+  }
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(A,B)Unit</span><a id="105601">update</a></span>(<span class="typed"><span class="type">A</span><a id="105638">key</a></span>: <span class="typed"><span class="type">A</span><a href="#16124">A</a></span>, <span class="typed"><span class="type">B</span><a id="105639">value</a></span>: <span class="typed"><span class="type">B</span><a href="#16125">B</a></span>) { <span class="typed"><span class="type">(A,B)Option[B]</span><a href="#105600">put</a></span>(<span class="typed"><span class="type">A</span><a href="#105638">key</a></span>, <span class="typed"><span class="type">B</span><a href="#105639">value</a></span>) }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="105602">clear</a></span>() {
+    <span class="typed"><span class="type">(List[LinkedHashMap.this.Entry])Unit</span><a href="#105596">ordered</a></span> = <span class="typed"><span class="type">object Nil</span><a href="../../List.scala.html#333">Nil</a></span>
+    <span class="keyword">super</span>.<span class="typed"><span class="type">()Unit</span><a href="HashTable.scala.html#21428">clear</a></span>()
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()scala.collection.mutable.Map[A,B]</span><a id="105603">clone</a></span>(): <span class="typed"><span class="type">scala.collection.mutable.Map[A,B]</span><a href="Map.scala.html#11125">Map</a></span>[A, B] = <span class="typed"><span class="type">scala.collection.mutable.LinkedHashMap[A,B]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.LinkedHashMap[A,B]</span><a href="#11485">LinkedHashMap</a></span>[A, B] <span class="typed"><span class="type">(Iterable[(A, B)])scala.collection.mutable.Map[A,B]</span><a href="Map.scala.html#21357">++</a></span> <span class="typed"><span class="type">scala.collection.mutable.LinkedHashMap[A,B]</span><a href="#11485" class="keyword">this</a></span>
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Iterator[(A, B)]</span><a id="105604">elements</a></span> = <span class="typed"><span class="type">=&gt; List[LinkedHashMap.this.Entry]</span><a href="#105595">ordered</a></span>.<span class="typed"><span class="type">=&gt; List[LinkedHashMap.this.Entry]</span><a href="../../List.scala.html#20934">reverse</a></span>.<span class="typed"><span class="type">=&gt; Iterator[LinkedHashMap.this.Entry]</span><a href="../../List.scala.html#20889">elements</a></span> <span class="typed"><span class="type">((LinkedHashMap.this.Entry) =&gt; (A, B))Iterator[(A, B)]</span><a href="../../Iterator.scala.html#19980">map</a></span> {<span class="typed"><span class="type">LinkedHashMap.this.Entry</span><a id="105673">e</a></span> =&gt; <span class="typed"><span class="type">(A,B)(A, B)</span><a href="../../Tuple2.scala.html#20366">(</a></span><span class="typed"><span class="type">LinkedHashMap.this.Entry</span><a href="#105673">e</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="DefaultEntry.scala.html#25653">key</a></span>, <span class="typed"><span class="type">LinkedHashMap.this.Entry</span><a href="#105673">e</a></span>.<span class="typed"><span class="type">=&gt; B</span><a href="DefaultEntry.scala.html#25655">value</a></span>)}
+}
+
+        </pre>
+    </body>
+</html>

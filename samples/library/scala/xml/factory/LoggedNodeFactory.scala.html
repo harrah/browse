@@ -1,0 +1,108 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/xml/factory/LoggedNodeFactory.scala</title>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |                                         **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: LoggedNodeFactory.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+
+<span class="keyword">package</span> scala.xml.factory
+
+
+<span class="comment">/** &lt;p&gt;
+ *    This class logs what the nodefactory is actually doing.
+ *    If you want to see what happens during loading, use it like this:
+ *  &lt;/p&gt;&lt;pre&gt;
+ *  &lt;b&gt;object&lt;/b&gt; testLogged &lt;b&gt;extends&lt;/b&gt; Application {
+ *
+ *    &lt;b&gt;val&lt;/b&gt; x = &lt;b&gt;new&lt;/b&gt; scala.xml.nobinding.NoBindingFactoryAdapter 
+ *          &lt;b&gt;with&lt;/b&gt; scala.xml.LoggedNodeFactory[scala.xml.Elem]()
+ *          &lt;b&gt;with&lt;/b&gt; scala.util.logging.ConsoleLogger;
+ *
+ *    Console.println(&quot;Start&quot;);
+ *
+ *    &lt;b&gt;val&lt;/b&gt; doc = x.loadXML(new org.xml.sax.InputSource(&quot;http://lamp.epfl.ch/~buraq&quot;));
+ *
+ *    Console.println(&quot;End&quot;);
+ *
+ *    Console.println(doc);
+ *  }&lt;/pre&gt;
+ *
+ *  @author  Burak Emir
+ *  @version 1.0
+ */</span>
+<span class="keyword">abstract</span> <span class="keyword">class</span> <span class="typed"><span class="type">class LoggedNodeFactory[A &lt;: scala.xml.Node] extends java.lang.Object with scala.xml.factory.NodeFactory[A] with scala.util.logging.Logged with ScalaObject</span><a id="14765">LoggedNodeFactory</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: scala.xml.Node</span><a id="16320">A</a></span> &lt;: Node] 
+<span class="keyword">extends</span> <span class="typed"><span class="type">scala.xml.factory.NodeFactory[A]</span><a href="NodeFactory.scala.html#14759">NodeFactory</a></span>[A]
+<span class="keyword">with</span> scala.util.logging.<span class="typed"><span class="type">scala.util.logging.Logged</span><a href="../../util/logging/Logged.scala.html#15539">Logged</a></span> {
+
+  <span class="comment">// configuration values;</span>
+  <span class="keyword">val</span> <span class="typed"><span class="type">Boolean</span><span id="112031"><a id="112030">logNode</a></span></span>      = <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+  <span class="keyword">val</span> <span class="typed"><span class="type">Boolean</span><span id="112033"><a id="112032">logText</a></span></span>      = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+  <span class="keyword">val</span> <span class="typed"><span class="type">Boolean</span><span id="112035"><a id="112034">logComment</a></span></span>   = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+  <span class="keyword">val</span> <span class="typed"><span class="type">Boolean</span><span id="112037"><a id="112036">logProcInstr</a></span></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+
+  <span class="keyword">final</span> <span class="keyword">val</span> <span class="typed"><span class="type">Int(0)</span><span id="112039"><a id="112038">NONE</a></span></span>  = <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>
+  <span class="keyword">final</span> <span class="keyword">val</span> <span class="typed"><span class="type">Int(1)</span><span id="112041"><a id="112040">CACHE</a></span></span> = <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+  <span class="keyword">final</span> <span class="keyword">val</span> <span class="typed"><span class="type">Int(2)</span><span id="112043"><a id="112042">FULL</a></span></span>  = <span class="typed"><span class="type">Int(2)</span><span class="int">2</span></span>
+  <span class="comment">/** 0 = no loggging, 1 = cache hits, 2 = detail */</span>
+  <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><span id="112045"><a id="112044">logCompressLevel</a></span></span>  = <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+  
+  <span class="comment">// methods of NodeFactory</span>
+
+  <span class="comment">/** logged version of makeNode method */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(String,String,scala.xml.MetaData,scala.xml.NamespaceBinding,Seq[scala.xml.Node])A</span><a id="112046">makeNode</a></span>(<span class="typed"><span class="type">String</span><a id="112051">pre</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>, <span class="typed"><span class="type">String</span><a id="112052">label</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>, <span class="typed"><span class="type">scala.xml.MetaData</span><a id="112053">attrSeq</a></span>: <span class="typed"><span class="type">scala.xml.MetaData</span><a href="../MetaData.scala.html#7378">MetaData</a></span>,
+                        <span class="typed"><span class="type">scala.xml.NamespaceBinding</span><a id="112054">scope</a></span>: <span class="typed"><span class="type">scala.xml.NamespaceBinding</span><a href="../NamespaceBinding.scala.html#7324">NamespaceBinding</a></span>, <span class="typed"><span class="type">Seq[scala.xml.Node]</span><a id="112055">children</a></span>: <span class="typed"><span class="type">Seq[scala.xml.Node]</span><a href="../../Seq.scala.html#761">Seq</a></span>[Node]): <span class="typed"><span class="type">A</span><a href="#16320">A</a></span> = {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#112030">logNode</a></span>)
+      <span class="typed"><span class="type">(String)Unit</span><a href="../../util/logging/Logged.scala.html#44411">log</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;[makeNode for &quot;)</span><span class="string">&quot;[makeNode for &quot;</span></span><span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span><span class="typed"><span class="type">String</span><a href="#112052">label</a></span><span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span><span class="typed"><span class="type">java.lang.String(&quot;]&quot;)</span><span class="string">&quot;]&quot;</span></span>);
+
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="112056">hash</a></span> = <span class="typed"><span class="type">object scala.xml.Utility</span><a href="../Utility.scala.html#7277">Utility</a></span>.<span class="typed"><span class="type">(String,String,Int,Int,Seq[scala.xml.Node])Int</span><a href="../Utility.scala.html#25384">hashCode</a></span>(<span class="typed"><span class="type">String</span><a href="#112051">pre</a></span>, <span class="typed"><span class="type">String</span><a href="#112052">label</a></span>, <span class="typed"><span class="type">scala.xml.MetaData</span><a href="#112053">attrSeq</a></span>.<span class="typed"><span class="type">()Int</span><a id="5780">hashCode</a></span>(), <span class="typed"><span class="type">scala.xml.NamespaceBinding</span><a href="#112054">scope</a></span>.<span class="typed"><span class="type">()Int</span><a id="5780">hashCode</a></span>(), <span class="typed"><span class="type">Seq[scala.xml.Node]</span><a href="#112055">children</a></span>)
+
+    <span class="comment">/*
+    if(logCompressLevel &gt;= FULL) {
+      log(&quot;[hashcode total:&quot;+hash);
+      log(&quot; elem name &quot;+uname+&quot; hash &quot;+ ? ));
+      log(&quot; attrs     &quot;+attrSeq+&quot; hash &quot;+attrSeq.hashCode());
+      log(&quot; children :&quot;+children+&quot; hash &quot;+children.hashCode());
+    }
+    */</span>
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">=&gt; scala.collection.mutable.HashMap[Int,List[A]]</span><a href="NodeFactory.scala.html#26272">cache</a></span>.<span class="typed"><span class="type">(Int)Option[List[A]]</span><a href="../../collection/mutable/DefaultMapModel.scala.html#21440">get</a></span>( <span class="typed"><span class="type">Int</span><a href="#112056">hash</a></span> ).<span class="typed"><span class="type">=&gt; Boolean</span><a href="../../Option.scala.html#18268">isEmpty</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> (<span class="typed"><span class="type">=&gt; Int</span><a href="#112044">logCompressLevel</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3144">&gt;=</a></span> <span class="typed"><span class="type">Int(1)</span><span >CACHE</span></span>))
+      <span class="typed"><span class="type">(String)Unit</span><a href="../../util/logging/Logged.scala.html#44411">log</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;[cache hit !]&quot;)</span><span class="string">&quot;[cache hit !]&quot;</span></span>);
+
+    <span class="keyword">super</span>.<span class="typed"><span class="type">(String,String,scala.xml.MetaData,scala.xml.NamespaceBinding,Seq[scala.xml.Node])A</span><a href="NodeFactory.scala.html#26278">makeNode</a></span>(<span class="typed"><span class="type">String</span><a href="#112051">pre</a></span>, <span class="typed"><span class="type">String</span><a href="#112052">label</a></span>, <span class="typed"><span class="type">scala.xml.MetaData</span><a href="#112053">attrSeq</a></span>, <span class="typed"><span class="type">scala.xml.NamespaceBinding</span><a href="#112054">scope</a></span>, <span class="typed"><span class="type">Seq[scala.xml.Node]</span><a href="#112055">children</a></span>)
+  }
+  
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(String)scala.xml.Text</span><a id="112047">makeText</a></span>(<span class="typed"><span class="type">String</span><a id="112060">s</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>) = {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#112032">logText</a></span>)
+      <span class="typed"><span class="type">(String)Unit</span><a href="../../util/logging/Logged.scala.html#44411">log</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;[makeText:&quot;&quot;)</span><span class="string">&quot;[makeText:\&quot;&quot;</span></span><span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span><span class="typed"><span class="type">String</span><a href="#112060">s</a></span><span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span><span class="typed"><span class="type">java.lang.String(&quot;&quot;]&quot;)</span><span class="string">&quot;\&quot;]&quot;</span></span>);
+    <span class="keyword">super</span>.<span class="typed"><span class="type">(String)scala.xml.Text</span><a href="NodeFactory.scala.html#26279">makeText</a></span>(<span class="typed"><span class="type">String</span><a href="#112060">s</a></span>)
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(String)Seq[scala.xml.Comment]</span><a id="112048">makeComment</a></span>(<span class="typed"><span class="type">String</span><a id="112063">s</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>): <span class="typed"><span class="type">Seq[scala.xml.Comment]</span><a href="../../Seq.scala.html#761">Seq</a></span>[Comment] = {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#112034">logComment</a></span>)
+      <span class="typed"><span class="type">(String)Unit</span><a href="../../util/logging/Logged.scala.html#44411">log</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;[makeComment:&quot;&quot;)</span><span class="string">&quot;[makeComment:\&quot;&quot;</span></span><span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span><span class="typed"><span class="type">String</span><a href="#112063">s</a></span><span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span><span class="typed"><span class="type">java.lang.String(&quot;&quot;]&quot;)</span><span class="string">&quot;\&quot;]&quot;</span></span>);
+    <span class="keyword">super</span>.<span class="typed"><span class="type">(String)Seq[scala.xml.Comment]</span><a href="NodeFactory.scala.html#26280">makeComment</a></span>(<span class="typed"><span class="type">String</span><a href="#112063">s</a></span>)
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(String,String)Seq[scala.xml.ProcInstr]</span><a id="112049">makeProcInstr</a></span>(<span class="typed"><span class="type">String</span><a id="112065">t</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>, <span class="typed"><span class="type">String</span><a id="112066">s</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>): <span class="typed"><span class="type">Seq[scala.xml.ProcInstr]</span><a href="../../Seq.scala.html#761">Seq</a></span>[ProcInstr] = {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#112036">logProcInstr</a></span>)
+      <span class="typed"><span class="type">(String)Unit</span><a href="../../util/logging/Logged.scala.html#44411">log</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;[makeProcInstr:&quot;&quot;)</span><span class="string">&quot;[makeProcInstr:\&quot;&quot;</span></span><span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span><span class="typed"><span class="type">String</span><a href="#112065">t</a></span><span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span><span class="typed"><span class="type">java.lang.String(&quot; &quot;)</span><span class="string">&quot; &quot;</span></span><span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">String</span><a href="#112066">s</a></span><span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span><span class="typed"><span class="type">java.lang.String(&quot;&quot;]&quot;)</span><span class="string">&quot;\&quot;]&quot;</span></span>);
+    <span class="keyword">super</span>.<span class="typed"><span class="type">(String,String)Seq[scala.xml.ProcInstr]</span><a href="NodeFactory.scala.html#26281">makeProcInstr</a></span>(<span class="typed"><span class="type">String</span><a href="#112065">t</a></span>, <span class="typed"><span class="type">String</span><a href="#112066">s</a></span>)
+  }
+
+}
+
+        </pre>
+    </body>
+</html>

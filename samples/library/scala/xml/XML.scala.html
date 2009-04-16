@@ -1,0 +1,171 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/xml/XML.scala</title>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: XML.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+
+<span class="keyword">package</span> scala.xml
+
+
+<span class="keyword">import</span> Predef._
+<span class="keyword">import</span> scala.xml.parsing.NoBindingFactoryAdapter
+<span class="keyword">import</span> org.xml.sax.InputSource
+<span class="keyword">import</span> java.io.{File, FileDescriptor, FileInputStream, FileOutputStream}
+<span class="keyword">import</span> java.io.{InputStream, Reader, StringReader, Writer}
+
+<span class="comment">/** The object &lt;code&gt;XML&lt;/code&gt; provides constants, and functions to load
+ *  and save XML elements. Use this when data binding is not desired, i.e.
+ *  when XML is handled using &lt;code&gt;Symbol&lt;/code&gt; nodes.
+ *
+ *  @author  Burak Emir
+ *  @version 1.0, 25/04/2005
+ */</span>
+<span class="keyword">object</span> <span class="typed"><span class="type">object scala.xml.XML</span><a id="7322">XML</a></span> {
+
+  <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.String</span><span id="25952"><a id="25951">xml</a></span></span>       = <span class="typed"><span class="type">java.lang.String(&quot;xml&quot;)</span><span class="string">&quot;xml&quot;</span></span>
+  <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.String</span><span id="25954"><a id="25953">xmlns</a></span></span>     = <span class="typed"><span class="type">java.lang.String(&quot;xmlns&quot;)</span><span class="string">&quot;xmlns&quot;</span></span>
+  <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.String</span><span id="25956"><a id="25955">namespace</a></span></span> = <span class="typed"><span class="type">java.lang.String(&quot;http://www.w3.org/XML/1998/namespace&quot;)</span><span class="string">&quot;http://www.w3.org/XML/1998/namespace&quot;</span></span>
+  <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.String</span><span id="25958"><a id="25957">preserve</a></span></span>  = <span class="typed"><span class="type">java.lang.String(&quot;preserve&quot;)</span><span class="string">&quot;preserve&quot;</span></span>
+  <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.String</span><span id="25960"><a id="25959">space</a></span></span>     = <span class="typed"><span class="type">java.lang.String(&quot;space&quot;)</span><span class="string">&quot;space&quot;</span></span>
+  <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.String</span><span id="25962"><a id="25961">lang</a></span></span>      = <span class="typed"><span class="type">java.lang.String(&quot;lang&quot;)</span><span class="string">&quot;lang&quot;</span></span>
+  <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.String</span><span id="25964"><a id="25963">encoding</a></span></span>  = <span class="typed"><span class="type">java.lang.String(&quot;ISO-8859-1&quot;)</span><span class="string">&quot;ISO-8859-1&quot;</span></span>
+
+  <span class="comment">// functions for generic xml loading, saving</span>
+
+  <span class="comment">/** loads XML from given file, using XML parser in JDK. */</span>
+  <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">(java.io.File)scala.xml.Elem</span><a id="25965">loadFile</a></span>(<span class="typed"><span class="type">java.io.File</span><a id="25979">file</a></span>: <span class="typed"><span class="type">java.io.File</span><a id="3667">File</a></span>): <span class="typed"><span class="type">scala.xml.Elem</span><a href="Elem.scala.html#7366">Elem</a></span> = 
+    <span class="typed"><span class="type">scala.xml.parsing.NoBindingFactoryAdapter</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.xml.parsing.NoBindingFactoryAdapter</span><a href="parsing/NoBindingFactoryAdapter.scala.html#12558">NoBindingFactoryAdapter</a></span>().<span class="typed"><span class="type">(org.xml.sax.InputSource)scala.xml.Elem</span><a href="parsing/NoBindingFactoryAdapter.scala.html#26249">loadXML</a></span>(<span class="typed"><span class="type">(java.io.InputStream)org.xml.sax.InputSource</span><a id="26286" class="keyword">new</a></span> <span class="typed"><span class="type">org.xml.sax.InputSource</span><a id="25925">InputSource</a></span>( 
+      <span class="typed"><span class="type">(java.io.File)java.io.FileInputStream</span><a id="26315" class="keyword">new</a></span> <span class="typed"><span class="type">java.io.FileInputStream</span><a id="3808">FileInputStream</a></span>(<span class="typed"><span class="type">java.io.File</span><a href="#25979">file</a></span>)
+    ))
+
+  <span class="comment">/** loads XML from given file descriptor, using XML parser in JDK.
+   *
+   *  @param fileDesc ...
+   *  @return         ...
+   */</span>
+  <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">(java.io.FileDescriptor)scala.xml.Elem</span><a id="25966">loadFile</a></span>(<span class="typed"><span class="type">java.io.FileDescriptor</span><a id="26335">fileDesc</a></span>: <span class="typed"><span class="type">java.io.FileDescriptor</span><a id="3748">FileDescriptor</a></span>): <span class="typed"><span class="type">scala.xml.Elem</span><a href="Elem.scala.html#7366">Elem</a></span> = 
+    <span class="typed"><span class="type">scala.xml.parsing.NoBindingFactoryAdapter</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.xml.parsing.NoBindingFactoryAdapter</span><a href="parsing/NoBindingFactoryAdapter.scala.html#12558">NoBindingFactoryAdapter</a></span>().<span class="typed"><span class="type">(org.xml.sax.InputSource)scala.xml.Elem</span><a href="parsing/NoBindingFactoryAdapter.scala.html#26249">loadXML</a></span>(<span class="typed"><span class="type">(java.io.InputStream)org.xml.sax.InputSource</span><a id="26286" class="keyword">new</a></span> <span class="typed"><span class="type">org.xml.sax.InputSource</span><a id="25925">InputSource</a></span>( 
+      <span class="typed"><span class="type">(java.io.FileDescriptor)java.io.FileInputStream</span><a id="26316" class="keyword">new</a></span> <span class="typed"><span class="type">java.io.FileInputStream</span><a id="3808">FileInputStream</a></span>(<span class="typed"><span class="type">java.io.FileDescriptor</span><a href="#26335">fileDesc</a></span>)
+    ))
+
+  <span class="comment">/** loads XML from given file, using XML parser in JDK. */</span>
+  <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">(String)scala.xml.Elem</span><a id="25967">loadFile</a></span>(<span class="typed"><span class="type">String</span><a id="26340">fileName</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>): <span class="typed"><span class="type">scala.xml.Elem</span><a href="Elem.scala.html#7366">Elem</a></span> = 
+    <span class="typed"><span class="type">scala.xml.parsing.NoBindingFactoryAdapter</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.xml.parsing.NoBindingFactoryAdapter</span><a href="parsing/NoBindingFactoryAdapter.scala.html#12558">NoBindingFactoryAdapter</a></span>().<span class="typed"><span class="type">(org.xml.sax.InputSource)scala.xml.Elem</span><a href="parsing/NoBindingFactoryAdapter.scala.html#26249">loadXML</a></span>(<span class="typed"><span class="type">(java.io.InputStream)org.xml.sax.InputSource</span><a id="26286" class="keyword">new</a></span> <span class="typed"><span class="type">org.xml.sax.InputSource</span><a id="25925">InputSource</a></span>( 
+      <span class="typed"><span class="type">java.io.FileInputStream</span><span class="keyword">new</span></span> <span class="typed"><span class="type">java.io.FileInputStream</span><a id="3808">FileInputStream</a></span>(<span class="typed"><span class="type">String</span><a href="#26340">fileName</a></span>)
+    ));
+
+  <span class="comment">/** loads XML from given InputStream, using XML parser in JDK. */</span>
+  <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">(java.io.InputStream)scala.xml.Elem</span><a id="25968">load</a></span>( <span class="typed"><span class="type">java.io.InputStream</span><a id="26345">is</a></span>:<span class="typed"><span class="type">java.io.InputStream</span><a id="3742">InputStream</a></span> ): <span class="typed"><span class="type">scala.xml.Elem</span><a href="Elem.scala.html#7366">Elem</a></span> = 
+    <span class="typed"><span class="type">scala.xml.parsing.NoBindingFactoryAdapter</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.xml.parsing.NoBindingFactoryAdapter</span><a href="parsing/NoBindingFactoryAdapter.scala.html#12558">NoBindingFactoryAdapter</a></span>().<span class="typed"><span class="type">(org.xml.sax.InputSource)scala.xml.Elem</span><a href="parsing/NoBindingFactoryAdapter.scala.html#26249">loadXML</a></span>(<span class="typed"><span class="type">(java.io.InputStream)org.xml.sax.InputSource</span><a id="26286" class="keyword">new</a></span> <span class="typed"><span class="type">org.xml.sax.InputSource</span><a id="25925">InputSource</a></span>(<span class="typed"><span class="type">java.io.InputStream</span><a href="#26345">is</a></span>))
+
+  <span class="comment">/** loads XML from given Reader, using XML parser in JDK. */</span>
+  <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">(java.io.Reader)scala.xml.Elem</span><a id="25969">load</a></span>(<span class="typed"><span class="type">java.io.Reader</span><a id="26349">reader</a></span>: <span class="typed"><span class="type">java.io.Reader</span><a id="3553">Reader</a></span>): <span class="typed"><span class="type">scala.xml.Elem</span><a href="Elem.scala.html#7366">Elem</a></span> = 
+    <span class="typed"><span class="type">scala.xml.parsing.NoBindingFactoryAdapter</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.xml.parsing.NoBindingFactoryAdapter</span><a href="parsing/NoBindingFactoryAdapter.scala.html#12558">NoBindingFactoryAdapter</a></span>().<span class="typed"><span class="type">(org.xml.sax.InputSource)scala.xml.Elem</span><a href="parsing/NoBindingFactoryAdapter.scala.html#26249">loadXML</a></span>(<span class="typed"><span class="type">(java.io.Reader)org.xml.sax.InputSource</span><a id="26287" class="keyword">new</a></span> <span class="typed"><span class="type">org.xml.sax.InputSource</span><a id="25925">InputSource</a></span>(<span class="typed"><span class="type">java.io.Reader</span><a href="#26349">reader</a></span>))
+
+  <span class="comment">/** loads XML from given sysID, using XML parser in JDK. */</span>
+  <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">(String)scala.xml.Elem</span><a id="25970">load</a></span>(<span class="typed"><span class="type">String</span><a id="26353">sysID</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>): <span class="typed"><span class="type">scala.xml.Elem</span><a href="Elem.scala.html#7366">Elem</a></span> = 
+    <span class="typed"><span class="type">scala.xml.parsing.NoBindingFactoryAdapter</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.xml.parsing.NoBindingFactoryAdapter</span><a href="parsing/NoBindingFactoryAdapter.scala.html#12558">NoBindingFactoryAdapter</a></span>().<span class="typed"><span class="type">(org.xml.sax.InputSource)scala.xml.Elem</span><a href="parsing/NoBindingFactoryAdapter.scala.html#26249">loadXML</a></span>(<span class="typed"><span class="type">(java.lang.String)org.xml.sax.InputSource</span><a id="26285" class="keyword">new</a></span> <span class="typed"><span class="type">org.xml.sax.InputSource</span><a id="25925">InputSource</a></span>(<span class="typed"><span class="type">String</span><a href="#26353">sysID</a></span>))
+  
+  <span class="comment">/** loads XML from a given input source, using XML parser in JDK.
+   *
+   *  @param source ...
+   *  @return       ...
+   */</span>
+  <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">(org.xml.sax.InputSource)scala.xml.Elem</span><a id="25971">load</a></span>(<span class="typed"><span class="type">org.xml.sax.InputSource</span><a id="26357">source</a></span>: <span class="typed"><span class="type">org.xml.sax.InputSource</span><a id="25925">InputSource</a></span>): <span class="typed"><span class="type">scala.xml.Elem</span><a href="Elem.scala.html#7366">Elem</a></span> = 
+    <span class="typed"><span class="type">scala.xml.parsing.NoBindingFactoryAdapter</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.xml.parsing.NoBindingFactoryAdapter</span><a href="parsing/NoBindingFactoryAdapter.scala.html#12558">NoBindingFactoryAdapter</a></span>().<span class="typed"><span class="type">(org.xml.sax.InputSource)scala.xml.Elem</span><a href="parsing/NoBindingFactoryAdapter.scala.html#26249">loadXML</a></span>(<span class="typed"><span class="type">org.xml.sax.InputSource</span><a href="#26357">source</a></span>)
+
+  <span class="comment">/** loads XML from a string, using XML parser in JDK. */</span>
+  <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">(String)scala.xml.Elem</span><a id="25972">loadString</a></span>(<span class="typed"><span class="type">String</span><a id="26359">string</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>): <span class="typed"><span class="type">scala.xml.Elem</span><a href="Elem.scala.html#7366">Elem</a></span> = 
+    <span class="typed"><span class="type">(java.io.Reader)scala.xml.Elem</span><a href="#25969">load</a></span>(<span class="typed"><span class="type">java.io.StringReader</span><span class="keyword">new</span></span> <span class="typed"><span class="type">java.io.StringReader</span><a id="3580">StringReader</a></span>(<span class="typed"><span class="type">String</span><a href="#26359">string</a></span>))
+
+  <span class="comment">/** Saves XML to filename with encoding ISO-8859-1 without xml-decl without
+   *  &lt;code&gt;doctype&lt;/code&gt;.
+   *
+   *  @param filename ...
+   *  @param node     ...
+   */</span>
+  <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">(String,scala.xml.Node)Unit</span><a id="25973">save</a></span>(<span class="typed"><span class="type">String</span><a id="26370">filename</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>, <span class="typed"><span class="type">scala.xml.Node</span><a id="26371">node</a></span>: <span class="typed"><span class="type">scala.xml.Node</span><a href="Node.scala.html#7174">Node</a></span>): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = 
+    <span class="typed"><span class="type">(String,scala.xml.Node,String)Unit</span><a href="#25974">save</a></span>(<span class="typed"><span class="type">String</span><a href="#26370">filename</a></span>, <span class="typed"><span class="type">scala.xml.Node</span><a href="#26371">node</a></span>, <span class="typed"><span class="type">=&gt; java.lang.String</span><a href="#25963">encoding</a></span>)
+
+  <span class="comment">/** saves XML to filename with given encoding, without xml-decl without
+   *  &lt;code&gt;doctype&lt;/code&gt;.
+   *
+   *  @param filename ...
+   *  @param node     ...
+   *  @param enc      ...
+   */</span>
+  <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">(String,scala.xml.Node,String)Unit</span><a id="25974">save</a></span>(<span class="typed"><span class="type">String</span><a id="26373">filename</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>, <span class="typed"><span class="type">scala.xml.Node</span><a id="26374">node</a></span>: <span class="typed"><span class="type">scala.xml.Node</span><a href="Node.scala.html#7174">Node</a></span>, <span class="typed"><span class="type">String</span><a id="26375">enc</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = 
+    <span class="typed"><span class="type">(String,scala.xml.Node,String,Boolean,scala.xml.dtd.DocType)Unit</span><a href="#25976">saveFull</a></span>(<span class="typed"><span class="type">String</span><a href="#26373">filename</a></span>, <span class="typed"><span class="type">scala.xml.Node</span><a href="#26374">node</a></span>, <span class="typed"><span class="type">String</span><a href="#26375">enc</a></span>, <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>, <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>);
+
+  <span class="comment">/** saves a node to a file with given filename using encoding iso-8859-1
+   *  optionally with xmldecl and doctype declaration.
+   *
+   *  @param filename the filename
+   *  @param node     the xml node we want to write
+   *  @param xmlDecl  if true, write xml declaration
+   *  @param doctype  if not null, write doctype declaration
+   */</span>
+  <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">(String,scala.xml.Node,Boolean,scala.xml.dtd.DocType)Unit</span><a id="25975">saveFull</a></span>(<span class="typed"><span class="type">String</span><a id="26394">filename</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>, <span class="typed"><span class="type">scala.xml.Node</span><a id="26395">node</a></span>: <span class="typed"><span class="type">scala.xml.Node</span><a href="Node.scala.html#7174">Node</a></span>, <span class="typed"><span class="type">Boolean</span><a id="26396">xmlDecl</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span>, <span class="typed"><span class="type">scala.xml.dtd.DocType</span><a id="26397">doctype</a></span>: dtd.<span class="typed"><span class="type">scala.xml.dtd.DocType</span><a href="dtd/DocType.scala.html#9854">DocType</a></span>): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = 
+    <span class="typed"><span class="type">(String,scala.xml.Node,String,Boolean,scala.xml.dtd.DocType)Unit</span><a href="#25976">saveFull</a></span>(<span class="typed"><span class="type">String</span><a href="#26394">filename</a></span>, <span class="typed"><span class="type">scala.xml.Node</span><a href="#26395">node</a></span>, <span class="typed"><span class="type">=&gt; java.lang.String</span><a href="#25963">encoding</a></span>, <span class="typed"><span class="type">Boolean</span><a href="#26396">xmlDecl</a></span>, <span class="typed"><span class="type">scala.xml.dtd.DocType</span><a href="#26397">doctype</a></span>)
+
+  <span class="comment">/** Saves a node to a file with given filename using given encoding
+   *  optionally with xmldecl and doctype declaration.
+   *
+   *  @param filename the filename
+   *  @param node     the xml node we want to write
+   *  @param enc      encoding to use
+   *  @param xmlDecl  if true, write xml declaration
+   *  @param doctype  if not null, write doctype declaration
+   */</span>
+
+  <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">(String,scala.xml.Node,String,Boolean,scala.xml.dtd.DocType)Unit</span><a id="25976">saveFull</a></span>(<span class="typed"><span class="type">String</span><a id="26377">filename</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>, <span class="typed"><span class="type">scala.xml.Node</span><a id="26378">node</a></span>: <span class="typed"><span class="type">scala.xml.Node</span><a href="Node.scala.html#7174">Node</a></span>, <span class="typed"><span class="type">String</span><a id="26379">enc</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>, <span class="typed"><span class="type">Boolean</span><a id="26380">xmlDecl</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span>, <span class="typed"><span class="type">scala.xml.dtd.DocType</span><a id="26381">doctype</a></span>: dtd.<span class="typed"><span class="type">scala.xml.dtd.DocType</span><a href="dtd/DocType.scala.html#9854">DocType</a></span>) {
+    <span class="keyword">var</span> <span class="typed"><span class="type">java.io.FileOutputStream</span><a id="26399">fos</a></span>: <span class="typed"><span class="type">java.io.FileOutputStream</span><a id="3796">FileOutputStream</a></span> = <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>
+    <span class="keyword">var</span> <span class="typed"><span class="type">java.io.Writer</span><a id="26400">w</a></span>: <span class="typed"><span class="type">java.io.Writer</span><a id="3802">Writer</a></span> = <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>
+    <span class="keyword">try</span> {
+      <span class="comment">// using NIO classes of JDK 1.4</span>
+      <span class="keyword">import</span> java.io.{FileOutputStream, Writer}
+      <span class="keyword">import</span> java.nio.channels.{Channels, FileChannel}
+      
+      <span class="typed"><span class="type">java.io.FileOutputStream</span><a href="#26399">fos</a></span> = <span class="typed"><span class="type">java.io.FileOutputStream</span><span class="keyword">new</span></span> <span class="typed"><span class="type">java.io.FileOutputStream</span><a id="3796">FileOutputStream</a></span>(<span class="typed"><span class="type">String</span><a href="#26377">filename</a></span>)
+      <span class="typed"><span class="type">java.io.Writer</span><a href="#26400">w</a></span> = <span class="typed"><span class="type">object java.nio.channels.Channels</span><a id="21964">Channels</a></span>.<span class="typed"><span class="type">(java.nio.channels.WritableByteChannel,java.lang.String)java.io.Writer</span><a id="22280">newWriter</a></span>(<span class="typed"><span class="type">java.io.FileOutputStream</span><a href="#26399">fos</a></span>.<span class="typed"><span class="type">()java.nio.channels.FileChannel</span><a id="26411">getChannel</a></span>(), <span class="typed"><span class="type">String</span><a href="#26379">enc</a></span>)
+      <span class="typed"><span class="type">(java.io.Writer,scala.xml.Node,String,Boolean,scala.xml.dtd.DocType)Unit</span><a href="#25977">write</a></span>(<span class="typed"><span class="type">java.io.Writer</span><a href="#26400">w</a></span>, <span class="typed"><span class="type">scala.xml.Node</span><a href="#26378">node</a></span>, <span class="typed"><span class="type">String</span><a href="#26379">enc</a></span>, <span class="typed"><span class="type">Boolean</span><a href="#26380">xmlDecl</a></span>, <span class="typed"><span class="type">scala.xml.dtd.DocType</span><a href="#26381">doctype</a></span>) 
+    } <span class="keyword">finally</span> {
+      <span class="typed"><span class="type">java.io.Writer</span><a href="#26400">w</a></span>.<span class="typed"><span class="type">()Unit</span><a id="26426">close</a></span>()
+      <span class="typed"><span class="type">java.io.FileOutputStream</span><a href="#26399">fos</a></span>.<span class="typed"><span class="type">()Unit</span><a id="26409">close</a></span>()
+    }
+  }
+
+  <span class="comment">/** Writes the given node using writer, optionally with xml decl and doctype.
+   *  It's the caller's responsibility to close the writer.
+   *
+   *  @param w        the writer 
+   *  @param node     the xml node we want to write
+   *  @param enc      the string to be used in &lt;code&gt;xmlDecl&lt;/code&gt;
+   *  @param xmlDecl  if true, write xml declaration
+   *  @param doctype  if not null, write doctype declaration
+   */</span>
+  <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">(java.io.Writer,scala.xml.Node,String,Boolean,scala.xml.dtd.DocType)Unit</span><a id="25977">write</a></span>(<span class="typed"><span class="type">java.io.Writer</span><a id="26525">w</a></span>: java.io.<span class="typed"><span class="type">java.io.Writer</span><a id="3802">Writer</a></span>, <span class="typed"><span class="type">scala.xml.Node</span><a id="26526">node</a></span>: <span class="typed"><span class="type">scala.xml.Node</span><a href="Node.scala.html#7174">Node</a></span>, <span class="typed"><span class="type">String</span><a id="26527">enc</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>, <span class="typed"><span class="type">Boolean</span><a id="26528">xmlDecl</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span>, <span class="typed"><span class="type">scala.xml.dtd.DocType</span><a id="26529">doctype</a></span>: dtd.<span class="typed"><span class="type">scala.xml.dtd.DocType</span><a href="dtd/DocType.scala.html#9854">DocType</a></span>) {
+    <span class="comment">/* TODO: optimize by giving writer parameter to toXML*/</span>
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Boolean</span><a href="#26528">xmlDecl</a></span>) <span class="typed"><span class="type">java.io.Writer</span><a href="#26525">w</a></span>.<span class="typed"><span class="type">(java.lang.String)Unit</span><a id="26420">write</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;&lt;?xml version='1.0' encoding='&quot;)</span><span class="string">&quot;&lt;?xml version='1.0' encoding='&quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">String</span><a href="#26527">enc</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot;'?&gt;\012&quot;)</span><span class="string">&quot;'?&gt;\n&quot;</span></span>)
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">scala.xml.dtd.DocType</span><a href="#26529">doctype</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5793">ne</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) <span class="typed"><span class="type">java.io.Writer</span><a href="#26525">w</a></span>.<span class="typed"><span class="type">(java.lang.String)Unit</span><a id="26420">write</a></span>( <span class="typed"><span class="type">scala.xml.dtd.DocType</span><a href="#26529">doctype</a></span>.<span class="typed"><span class="type">()String</span><a href="dtd/DocType.scala.html#26393">toString</a></span>() <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot;\012&quot;)</span><span class="string">&quot;\n&quot;</span></span>)
+    <span class="typed"><span class="type">java.io.Writer</span><a href="#26525">w</a></span>.<span class="typed"><span class="type">(java.lang.String)Unit</span><a id="26420">write</a></span>(<span class="typed"><span class="type">object scala.xml.Utility</span><a href="Utility.scala.html#7277">Utility</a></span>.<span class="typed"><span class="type">(scala.xml.Node)String</span><a href="Utility.scala.html#25379">toXML</a></span>(<span class="typed"><span class="type">scala.xml.Node</span><a href="#26526">node</a></span>))
+  }
+}
+
+        </pre>
+    </body>
+</html>

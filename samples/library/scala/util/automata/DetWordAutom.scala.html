@@ -1,0 +1,96 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/util/automata/DetWordAutom.scala</title>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: DetWordAutom.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+
+<span class="keyword">package</span> scala.util.automata
+
+
+<span class="keyword">import</span> scala.collection.{Set, Map}
+
+<span class="comment">/** A deterministic automaton. States are integers, where
+ *  0 is always the only initial state. Transitions are represented
+ *  in the delta function. A default transitions is one that
+ *  is taken when no other transition can be taken.
+ *  All states are reachable. Accepting states are those for which
+ *  the partial function 'finals' is defined.
+ *
+ *  @author Burak Emir
+ *  @version 1.0
+ */</span>
+<span class="keyword">abstract</span> <span class="keyword">class</span> <span class="typed"><span class="type">class DetWordAutom[T &lt;: AnyRef] extends java.lang.Object with ScalaObject</span><a id="12962">DetWordAutom</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: AnyRef</span><a id="16037">T</a></span> &lt;: AnyRef] {
+
+  <span class="keyword">val</span> <span class="typed"><span class="type">=&gt; Int</span><a id="50801">nstates</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>
+  <span class="keyword">val</span> <span class="typed"><span class="type">=&gt; Array[Int]</span><a id="50802">finals</a></span>: <span class="typed"><span class="type">Array[Int]</span><a href="../../Array.scala.html#1070">Array</a></span>[Int]
+  <span class="keyword">val</span> <span class="typed"><span class="type">=&gt; Array[scala.collection.Map[T,Int]]</span><a id="50803">delta</a></span>: <span class="typed"><span class="type">Array[scala.collection.Map[T,Int]]</span><a href="../../Array.scala.html#1070">Array</a></span>[Map[T,Int]]
+  <span class="keyword">val</span> <span class="typed"><span class="type">=&gt; Array[Int]</span><a id="50804">default</a></span>: <span class="typed"><span class="type">Array[Int]</span><a href="../../Array.scala.html#1070">Array</a></span>[Int]
+
+  <span class="comment">/**
+   *  @param q ...
+   *  @return  ...
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Boolean</span><a id="50805">isFinal</a></span>(<span class="typed"><span class="type">Int</span><a id="59584">q</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>) = <span class="typed"><span class="type">(Int)Int</span><a href="../../Array.scala.html#17253">finals</a></span>(<span class="typed"><span class="type">Int</span><a href="#59584">q</a></span>) <span class="typed"><span class="type">(Int)Boolean</span><a id="3140">!=</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>
+
+  <span class="comment">/**
+   *  @param q ...
+   *  @return  ...
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Boolean</span><a id="50806">isSink</a></span>(<span class="typed"><span class="type">Int</span><a id="103968">q</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>) = <span class="typed"><span class="type">(Int)scala.collection.Map[T,Int]</span><a href="../../Array.scala.html#17253">delta</a></span>(<span class="typed"><span class="type">Int</span><a href="#103968">q</a></span>).<span class="typed"><span class="type">=&gt; Boolean</span><a href="../../collection/Map.scala.html#21390">isEmpty</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">(Int)Int</span><a href="../../Array.scala.html#17253">default</a></span>(<span class="typed"><span class="type">Int</span><a href="#103968">q</a></span>) <span class="typed"><span class="type">(Int)Boolean</span><a id="3139">==</a></span> <span class="typed"><span class="type">Int</span><a href="#103968">q</a></span>
+
+  <span class="comment">/**
+   *  @param q     ...
+   *  @param label ...
+   *  @return      ...
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,T)Int</span><a id="50807">next</a></span>(<span class="typed"><span class="type">Int</span><a id="103979">q</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">T</span><a id="103980">label</a></span>: <span class="typed"><span class="type">T</span><a href="#16037">T</a></span>) = {
+    <span class="typed"><span class="type">(Int)scala.collection.Map[T,Int]</span><a href="../../Array.scala.html#17253">delta</a></span>(<span class="typed"><span class="type">Int</span><a href="#103979">q</a></span>).<span class="typed"><span class="type">(T)Option[Int]</span><a href="../../collection/Map.scala.html#21386">get</a></span>(<span class="typed"><span class="type">T</span><a href="#103980">label</a></span>) <span class="typed"><span class="type">Int</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">Int</span><span class="keyword">case</span></span> <a id="1">Some</a>(<span class="typed"><span class="type">Int</span><a id="103985">p</a></span>) =&gt; <span class="typed"><span class="type">Int</span><a href="#103985">p</a></span>
+      <span class="typed"><span class="type">Int</span><span class="keyword">case</span></span> _       =&gt; <span class="typed"><span class="type">(Int)Int</span><a href="../../Array.scala.html#17253">default</a></span>(<span class="typed"><span class="type">Int</span><a href="#103979">q</a></span>)
+    }
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()String</span><a id="50808">toString</a></span>() = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">StringBuilder</span><a id="103990">sb</a></span> = <span class="typed"><span class="type">(String)StringBuilder</span><a href="../../StringBuilder.scala.html#19622" class="keyword">new</a></span> <span class="typed"><span class="type">StringBuilder</span><a href="../../StringBuilder.scala.html#1433">StringBuilder</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;[DetWordAutom  nstates=&quot;)</span><span class="string">&quot;[DetWordAutom  nstates=&quot;</span></span>)
+    <span class="typed"><span class="type">StringBuilder</span><a href="#103990">sb</a></span>.<span class="typed"><span class="type">(Int)StringBuilder</span><a href="../../StringBuilder.scala.html#19648">append</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="#50801">nstates</a></span>)
+    <span class="typed"><span class="type">StringBuilder</span><a href="#103990">sb</a></span>.<span class="typed"><span class="type">(String)StringBuilder</span><a href="../../StringBuilder.scala.html#19639">append</a></span>(<span class="typed"><span class="type">java.lang.String(&quot; finals=&quot;)</span><span class="string">&quot; finals=&quot;</span></span>)
+    <span class="keyword">var</span> <span class="typed"><span class="type">scala.collection.immutable.ListMap[Int,Int]</span><a id="103991">map</a></span> = <span class="typed"><span class="type">scala.collection.immutable.ListMap[Int,Int]</span><span class="keyword">new</span></span> scala.collection.immutable.<span class="typed"><span class="type">scala.collection.immutable.ListMap[Int,Int]</span><a href="../../collection/immutable/ListMap.scala.html#9305">ListMap</a></span>[Int,Int]
+    <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="103992">j</a></span> = <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>; <span class="typed"><span class="type">Unit</span><a href="#103993" class="keyword">while</a></span>( <span class="typed"><span class="type">Int</span><a href="#103992">j</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#50801">nstates</a></span> ) {
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#103992">j</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">=&gt; Array[Int]</span><a href="#50802">finals</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="../../Array.scala.html#17252">length</a></span>) 
+        <span class="typed"><span class="type">scala.collection.immutable.ListMap[Int,Int]</span><a href="#103991">map</a></span> = <span class="typed"><span class="type">scala.collection.immutable.ListMap[Int,Int]</span><a href="#103991">map</a></span>.<span class="typed"><span class="type">(Int,Int)scala.collection.immutable.ListMap[Int,Int]</span><a href="../../collection/immutable/ListMap.scala.html#67797">update</a></span>(<span class="typed"><span class="type">Int</span><a href="#103992">j</a></span>, <span class="typed"><span class="type">(Int)Int</span><a href="../../Array.scala.html#17253">finals</a></span>(<span class="typed"><span class="type">Int</span><a href="#103992">j</a></span>))
+      <span class="typed"><span class="type">Int</span><a href="#103992">j</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+    }
+    <span class="typed"><span class="type">StringBuilder</span><a href="#103990">sb</a></span>.<span class="typed"><span class="type">(String)StringBuilder</span><a href="../../StringBuilder.scala.html#19639">append</a></span>(<span class="typed"><span class="type">scala.collection.immutable.ListMap[Int,Int]</span><a href="#103991">map</a></span>.<span class="typed"><span class="type">()String</span><a href="../../collection/Map.scala.html#21399">toString</a></span>())
+    <span class="typed"><span class="type">StringBuilder</span><a href="#103990">sb</a></span>.<span class="typed"><span class="type">(String)StringBuilder</span><a href="../../StringBuilder.scala.html#19639">append</a></span>(<span class="typed"><span class="type">java.lang.String(&quot; delta=\012&quot;)</span><span class="string">&quot; delta=\n&quot;</span></span>)
+    <span class="keyword">for</span> (<span class="typed"><span class="type">((Int) =&gt; Unit)Unit</span><a href="../../Range.scala.html#25001" id="104047">i</a></span> &lt;- <span class="typed"><span class="type">implicit scala.Predef.intWrapper : (Int)scala.runtime.RichInt</span><a href="../../Predef.scala.html#13511" class="int">0</a></span> <span class="typed"><span class="type">(Int)Range</span><a href="../../runtime/RichInt.scala.html#19402">until</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#50801">nstates</a></span>) {
+      <span class="typed"><span class="type">StringBuilder</span><a href="#103990">sb</a></span>.<span class="typed"><span class="type">(Int)StringBuilder</span><a href="../../StringBuilder.scala.html#19648">append</a></span>( <span class="typed"><span class="type">Int</span><a href="#104047">i</a></span> )
+      <span class="typed"><span class="type">StringBuilder</span><a href="#103990">sb</a></span>.<span class="typed"><span class="type">(String)StringBuilder</span><a href="../../StringBuilder.scala.html#19639">append</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;-&gt;&quot;)</span><span class="string">&quot;-&gt;&quot;</span></span>)
+      <span class="typed"><span class="type">StringBuilder</span><a href="#103990">sb</a></span>.<span class="typed"><span class="type">(String)StringBuilder</span><a href="../../StringBuilder.scala.html#19639">append</a></span>(<span class="typed"><span class="type">(Int)scala.collection.Map[T,Int]</span><a href="../../Array.scala.html#17253">delta</a></span>(<span class="typed"><span class="type">Int</span><a href="#104047">i</a></span>).<span class="typed"><span class="type">()String</span><a href="../../collection/Map.scala.html#21399">toString</a></span>())
+      <span class="typed"><span class="type">StringBuilder</span><a href="#103990">sb</a></span>.<span class="typed"><span class="type">(Char)StringBuilder</span><a href="../../StringBuilder.scala.html#19646">append</a></span>(<span class="typed"><span class="type">Char('\012')</span><span class="char">'\n'</span></span>)
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#104047">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">=&gt; Array[Int]</span><a href="#50804">default</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="../../Array.scala.html#17252">length</a></span>) {
+        <span class="typed"><span class="type">StringBuilder</span><a href="#103990">sb</a></span>.<span class="typed"><span class="type">(String)StringBuilder</span><a href="../../StringBuilder.scala.html#19639">append</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;_&gt;&quot;)</span><span class="string">&quot;_&gt;&quot;</span></span>)
+        <span class="typed"><span class="type">StringBuilder</span><a href="#103990">sb</a></span>.<span class="typed"><span class="type">(String)StringBuilder</span><a href="../../StringBuilder.scala.html#19639">append</a></span>(<span class="typed"><span class="type">(Int)Int</span><a href="../../Array.scala.html#17253">default</a></span>(<span class="typed"><span class="type">Int</span><a href="#104047">i</a></span>).<span class="typed"><span class="type">()java.lang.String</span><a id="3498">toString</a></span>())
+        <span class="typed"><span class="type">StringBuilder</span><a href="#103990">sb</a></span>.<span class="typed"><span class="type">(Char)StringBuilder</span><a href="../../StringBuilder.scala.html#19646">append</a></span>(<span class="typed"><span class="type">Char('\012')</span><span class="char">'\n'</span></span>)
+      }
+    }
+    <span class="typed"><span class="type">StringBuilder</span><a href="#103990">sb</a></span>.<span class="typed"><span class="type">()String</span><a href="../../StringBuilder.scala.html#19672">toString</a></span>()
+  }
+}
+
+        </pre>
+    </body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/testing/Benchmark.scala</title>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: Benchmark.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+
+<span class="keyword">package</span> scala.testing
+
+
+<span class="keyword">import</span> compat.Platform
+
+<span class="comment">/** &lt;p&gt;
+ *    &lt;code&gt;Benchmark&lt;/code&gt; can be used to quickly turn an existing
+ *    class into a benchmark. Here is a short example:
+ *  &lt;/p&gt;&lt;pre&gt;
+ *  &lt;b&gt;object&lt;/b&gt; sort1 &lt;b&gt;extends&lt;/b&gt; Sorter &lt;b&gt;with&lt;/b&gt; Benchmark {
+ *    &lt;b&gt;def&lt;/b&gt; run = sort(List.range(1, 1000))
+ *  }
+ *  &lt;/pre&gt;
+ *  &lt;p&gt;
+ *    The &lt;code&gt;run&lt;/code&gt; method has to be defined by the user, who
+ *    will perform the timed operation there.
+ *    Run the benchmark as follows:
+ *  &lt;/p&gt;
+ *  &lt;pre&gt;
+ *  &amp;gt; scala sort1 5 times.log
+ *  &lt;/pre&gt;
+ *  &lt;p&gt;
+ *    This will run the benchmark 5 times and log the execution times in
+ *    a file called &lt;code&gt;times.log&lt;/code&gt;
+ *  &lt;/p&gt;
+ *
+ *  @author Iulian Dragos, Burak Emir
+ */</span>
+<span class="keyword">trait</span> <span class="typed"><span class="type">trait Benchmark extends java.lang.Object with ScalaObject</span><a id="15461">Benchmark</a></span> {
+
+  <span class="comment">/** this method should be implemented by the concrete benchmark */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="92875">run</a></span>()
+
+  <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><span id="92878"><span id="92876"><span id="92877"><a id="92883">multiplier</a></span></span></span></span> = <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+
+  <span class="comment">/** Run the benchmark the specified number of times
+   *  and return a list with the execution times in milliseconds
+   *  in reverse order of the execution
+   *
+   *  @param noTimes ...
+   *  @return        ...
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)List[Long]</span><a id="92879">runBenchmark</a></span>(<span class="typed"><span class="type">Int</span><a id="92885">noTimes</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">List[Long]</span><a href="../List.scala.html#524">List</a></span>[Long] =
+    <span class="keyword">for</span> (<span class="typed"><span class="type">((Int) =&gt; Long)List[Long]</span><a href="../List.scala.html#20904" id="92909">i</a></span> &lt;- <span class="typed"><span class="type">object List</span><a href="../List.scala.html#525">List</a></span>.<span class="typed"><span class="type">(Int,Int)List[Int]</span><a href="../List.scala.html#16983">range</a></span>(<span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>, <span class="typed"><span class="type">Int</span><a href="#92885">noTimes</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>)) <span class="keyword">yield</span> {
+      <span class="keyword">val</span> <span class="typed"><span class="type">Long</span><a id="92910">startTime</a></span> = <span class="typed"><span class="type">object scala.compat.Platform</span><a href="../compat/Platform.scala.html#12224">Platform</a></span>.<span class="typed"><span class="type">=&gt; Long</span><a href="../compat/Platform.scala.html#17285">currentTime</a></span>
+      <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="92911">i</a></span> = <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>; <span class="typed"><span class="type">Unit</span><a href="#92913" class="keyword">while</a></span> (<span class="typed"><span class="type">Int</span><a href="#92911">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#92876">multiplier</a></span>) {
+        <span class="typed"><span class="type">()Unit</span><a href="#92875">run</a></span>()
+        <span class="typed"><span class="type">Int</span><a href="#92911">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+      }
+      <span class="keyword">val</span> <span class="typed"><span class="type">Long</span><a id="92912">stopTime</a></span> = <span class="typed"><span class="type">object scala.compat.Platform</span><a href="../compat/Platform.scala.html#12224">Platform</a></span>.<span class="typed"><span class="type">=&gt; Long</span><a href="../compat/Platform.scala.html#17285">currentTime</a></span>
+      <span class="typed"><span class="type">object scala.compat.Platform</span><a href="../compat/Platform.scala.html#12224">Platform</a></span>.<span class="typed"><span class="type">=&gt; Unit</span><a href="../compat/Platform.scala.html#17286">collectGarbage</a></span>
+
+      <span class="typed"><span class="type">Long</span><a href="#92912">stopTime</a></span> <span class="typed"><span class="type">(Long)Long</span><a id="3269">-</a></span> <span class="typed"><span class="type">Long</span><a href="#92910">startTime</a></span>
+    }
+
+  <span class="comment">/** a string that is written at the beginning of the output line
+   *   that contains the timings. By default, this is the class name.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; String</span><a id="92880">prefix</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span> = <span class="typed"><span class="type">()java.lang.Class[_ &lt;: java.lang.Object]</span><a href="#15461" id="3509">getClass</a></span>().<span class="typed"><span class="type">()java.lang.String</span><a id="3946">getName</a></span>()
+
+  <span class="comment">/**
+   * The entry point. It takes two arguments (n), (name) 
+   *  and an optional argument multiplier (mult).
+   *  (n) is the number of consecutive runs, (name) the name 
+   *  of a log file where to append the times.
+   *  if (mult) is present, the same thing is repeated (mult)
+   *  times.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Array[String])Unit</span><a id="92881">main</a></span>(<span class="typed"><span class="type">Array[String]</span><a id="92949">args</a></span>: <span class="typed"><span class="type">Array[String]</span><a href="../Array.scala.html#1070">Array</a></span>[String]) {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Array[String]</span><a href="#92949">args</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="../Array.scala.html#17252">length</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>) {
+      <span class="keyword">val</span> <span class="typed"><span class="type">java.io.FileWriter</span><a id="92951">logFile</a></span> = <span class="typed"><span class="type">(java.lang.String,Boolean)java.io.FileWriter</span><a id="92953" class="keyword">new</a></span> java.io.<span class="typed"><span class="type">java.io.FileWriter</span><a id="3622">FileWriter</a></span>(<span class="typed"><span class="type">(Int)String</span><a href="../Array.scala.html#17253">args</a></span>(<span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>), <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>) <span class="comment">// append, not overwrite</span>
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Array[String]</span><a href="#92949">args</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="../Array.scala.html#17252">length</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3144">&gt;=</a></span> <span class="typed"><span class="type">Int(3)</span><span class="int">3</span></span>)
+         <span class="typed"><span class="type">(Int)Unit</span><a href="#92877">multiplier</a></span> = <span class="typed"><span class="type">implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString</span><a href="../Predef.scala.html#13518">args</a></span>(<span class="typed"><span class="type">Int(2)</span><span class="int">2</span></span>).<span class="typed"><span class="type">=&gt; Int</span><a href="../runtime/RichString.scala.html#19305">toInt</a></span>
+      <span class="typed"><span class="type">java.io.FileWriter</span><a href="#92951">logFile</a></span>.<span class="typed"><span class="type">(java.lang.String)Unit</span><a id="26420">write</a></span>(<span class="typed"><span class="type">=&gt; String</span><a href="#92880">prefix</a></span>)
+      <span class="keyword">for</span> (<span class="typed"><span class="type">((Long) =&gt; Unit)Unit</span><a href="../List.scala.html#20910" id="93000">t</a></span> &lt;- <span class="typed"><span class="type">(Int)List[Long]</span><a href="#92879">runBenchmark</a></span>(<span class="typed"><span class="type">implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString</span><a href="../Predef.scala.html#13518">args</a></span>(<span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>).<span class="typed"><span class="type">=&gt; Int</span><a href="../runtime/RichString.scala.html#19305">toInt</a></span>))
+        <span class="typed"><span class="type">java.io.FileWriter</span><a href="#92951">logFile</a></span>.<span class="typed"><span class="type">(java.lang.String)Unit</span><a id="26420">write</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;\011\011&quot;)</span><span class="string">&quot;\t\t&quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">Long</span><a href="#93000">t</a></span>)
+
+      <span class="typed"><span class="type">java.io.FileWriter</span><a href="#92951">logFile</a></span>.<span class="typed"><span class="type">(java.lang.String)Unit</span><a id="26420">write</a></span>(<span class="typed"><span class="type">object scala.compat.Platform</span><a href="../compat/Platform.scala.html#12224">Platform</a></span>.<span class="typed"><span class="type">=&gt; java.lang.String</span><a href="../compat/Platform.scala.html#17283">EOL</a></span>)
+      <span class="typed"><span class="type">java.io.FileWriter</span><a href="#92951">logFile</a></span>.<span class="typed"><span class="type">()Unit</span><a id="33596">flush</a></span>()
+    } <span class="keyword">else</span> {
+      <span class="typed"><span class="type">object Console</span><a href="../Console.scala.html#438">Console</a></span>.<span class="typed"><span class="type">(Any)Unit</span><a href="../Console.scala.html#31300">println</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;Usage: scala benchmarks.program &lt;runs&gt; &lt;logfile&gt;&quot;)</span><span class="string">&quot;Usage: scala benchmarks.program &lt;runs&gt; &lt;logfile&gt;&quot;</span></span>)
+      <span class="typed"><span class="type">object Console</span><a href="../Console.scala.html#438">Console</a></span>.<span class="typed"><span class="type">(Any)Unit</span><a href="../Console.scala.html#31300">println</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;   or: scala benchmarks.program &lt;runs&gt; &lt;logfile&gt; &lt;multiplier&gt;&quot;)</span><span class="string">&quot;   or: scala benchmarks.program &lt;runs&gt; &lt;logfile&gt; &lt;multiplier&gt;&quot;</span></span>)
+    }
+  }
+}
+
+
+        </pre>
+    </body>
+</html>

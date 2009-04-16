@@ -1,0 +1,160 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/Function.scala</title>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |                                         **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: Function.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+
+<span class="keyword">package</span> scala
+
+<span class="comment">/** A module defining utility methods for higher-order functional programming.
+ *
+ *  @author  Martin Odersky
+ *  @version 1.0, 29/11/2006
+ */</span>
+<span class="keyword">object</span> <span class="typed"><span class="type">object Function</span><a id="1149">Function</a></span> {
+
+  <span class="comment">/** Given a sequence of functions &lt;code&gt;f&lt;sub&gt;1&lt;/sub&gt;&lt;/code&gt;, ...,
+   *  &lt;code&gt;f&lt;sub&gt;n&lt;/sub&gt;&lt;/code&gt;, return the function &lt;code&gt;f&lt;sub&gt;1&lt;/sub&gt;
+   *  andThen ... andThen f&lt;sub&gt;n&lt;/sub&gt;&lt;/code&gt;.
+   *
+   *  @param fs The given sequence of functions
+   *  @return   ...
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[a](Seq[(a) =&gt; a])(a) =&gt; a</span><a id="127967">chain</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="127969">a</a></span>](<span class="typed"><span class="type">Seq[(a) =&gt; a]</span><a id="128136">fs</a></span>: <span class="typed"><span class="type">Seq[(a) =&gt; a]</span><a href="Seq.scala.html#761">Seq</a></span>[a =&gt; a]): a =&gt; a = { <span class="typed"><span class="type">a</span><a id="128138">x</a></span> =&gt; (<span class="typed"><span class="type">a</span><a href="#128138">x</a></span> <span class="typed"><span class="type">(a)((a, (a) =&gt; a) =&gt; a)a</span><a href="Iterable.scala.html#17342">/:</a></span> <span class="typed"><span class="type">Seq[(a) =&gt; a]</span><a href="#128136">fs</a></span>) ((<span class="typed"><span class="type">a</span><a id="128142">x</a></span>, <span class="typed"><span class="type">(a) =&gt; a</span><a id="128143">f</a></span>) =&gt; <span class="typed"><span class="type">(a)a</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">a</span><a href="#128142">x</a></span>)) }
+
+  <span class="comment">/** The constant function */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[T, U](T)(U)T</span><a id="127970">const</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="127973">T</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="127974">U</a></span>](<span class="typed"><span class="type">T</span><a id="128144">x</a></span>: <span class="typed"><span class="type">T</span><a href="#127973">T</a></span>)(<span class="typed"><span class="type">U</span><a id="128145">y</a></span>: <span class="typed"><span class="type">U</span><a href="#127974">U</a></span>): <span class="typed"><span class="type">T</span><a href="#127973">T</a></span> = <span class="typed"><span class="type">T</span><a href="#128144">x</a></span>
+
+  <span class="comment">/** Currying for functions of arity 2. This transforms a function
+   *  of arity 2 into a a unary function returning another unary function.
+   *
+   *  @param f  ...
+   *  @return   ...
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[a1, a2, b]((a1, a2) =&gt; b)(a1) =&gt; (a2) =&gt; b</span><a id="127975">curried</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="127979">a1</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="127980">a2</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="127981">b</a></span>](<span class="typed"><span class="type">(a1, a2) =&gt; b</span><a id="128146">f</a></span>: (a1, a2) =&gt; b): a1 =&gt; a2 =&gt; b = {
+    <span class="typed"><span class="type">a1</span><a id="128148">x1</a></span> =&gt; <span class="typed"><span class="type">a2</span><a id="128150">x2</a></span> =&gt; <span class="typed"><span class="type">(a1,a2)b</span><a href="Function2.scala.html#20399">f</a></span>(<span class="typed"><span class="type">a1</span><a href="#128148">x1</a></span>, <span class="typed"><span class="type">a2</span><a href="#128150">x2</a></span>)
+  }
+
+  <span class="comment">/** Currying for functions of arity 3.
+   *
+   *  @param f  ...
+   *  @return   ...
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[a1, a2, a3, b]((a1, a2, a3) =&gt; b)(a1) =&gt; (a2) =&gt; (a3) =&gt; b</span><a id="127982">curried</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="127987">a1</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="127988">a2</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="127989">a3</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="127990">b</a></span>](<span class="typed"><span class="type">(a1, a2, a3) =&gt; b</span><a id="128151">f</a></span>: (a1, a2, a3) =&gt; b): a1 =&gt; a2 =&gt; a3 =&gt; b = {
+    <span class="typed"><span class="type">a1</span><a id="128153">x1</a></span> =&gt; <span class="typed"><span class="type">a2</span><a id="128155">x2</a></span> =&gt; <span class="typed"><span class="type">a3</span><a id="128157">x3</a></span> =&gt; <span class="typed"><span class="type">(a1,a2,a3)b</span><a href="Function3.scala.html#23948">f</a></span>(<span class="typed"><span class="type">a1</span><a href="#128153">x1</a></span>, <span class="typed"><span class="type">a2</span><a href="#128155">x2</a></span>, <span class="typed"><span class="type">a3</span><a href="#128157">x3</a></span>)
+  }
+
+  <span class="comment">/** Currying for functions of arity 4.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[a1, a2, a3, a4, b]((a1, a2, a3, a4) =&gt; b)(a1) =&gt; (a2) =&gt; (a3) =&gt; (a4) =&gt; b</span><a id="127991">curried</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="127997">a1</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="127998">a2</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="127999">a3</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128000">a4</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128001">b</a></span>](<span class="typed"><span class="type">(a1, a2, a3, a4) =&gt; b</span><a id="128158">f</a></span>: (a1, a2, a3, a4) =&gt; b): a1 =&gt; a2 =&gt; a3 =&gt; a4 =&gt; b = {
+    <span class="typed"><span class="type">a1</span><a id="128160">x1</a></span> =&gt; <span class="typed"><span class="type">a2</span><a id="128162">x2</a></span> =&gt; <span class="typed"><span class="type">a3</span><a id="128164">x3</a></span> =&gt; <span class="typed"><span class="type">a4</span><a id="128166">x4</a></span> =&gt; <span class="typed"><span class="type">(a1,a2,a3,a4)b</span><a href="Function4.scala.html#21007">f</a></span>(<span class="typed"><span class="type">a1</span><a href="#128160">x1</a></span>, <span class="typed"><span class="type">a2</span><a href="#128162">x2</a></span>, <span class="typed"><span class="type">a3</span><a href="#128164">x3</a></span>, <span class="typed"><span class="type">a4</span><a href="#128166">x4</a></span>)
+  }
+
+  <span class="comment">/** Currying for functions of arity 5.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[a1, a2, a3, a4, a5, b]((a1, a2, a3, a4, a5) =&gt; b)(a1) =&gt; (a2) =&gt; (a3) =&gt; (a4) =&gt; (a5) =&gt; b</span><a id="128002">curried</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128009">a1</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128010">a2</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128011">a3</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128012">a4</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128013">a5</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128014">b</a></span>](<span class="typed"><span class="type">(a1, a2, a3, a4, a5) =&gt; b</span><a id="128167">f</a></span>: (a1, a2, a3, a4, a5) =&gt; b): a1 =&gt; a2 =&gt; a3 =&gt; a4 =&gt; a5 =&gt; b = {
+    <span class="typed"><span class="type">a1</span><a id="128169">x1</a></span> =&gt; <span class="typed"><span class="type">a2</span><a id="128171">x2</a></span> =&gt; <span class="typed"><span class="type">a3</span><a id="128173">x3</a></span> =&gt; <span class="typed"><span class="type">a4</span><a id="128175">x4</a></span> =&gt; <span class="typed"><span class="type">a5</span><a id="128177">x5</a></span> =&gt; <span class="typed"><span class="type">(a1,a2,a3,a4,a5)b</span><a href="Function5.scala.html#68065">f</a></span>(<span class="typed"><span class="type">a1</span><a href="#128169">x1</a></span>, <span class="typed"><span class="type">a2</span><a href="#128171">x2</a></span>, <span class="typed"><span class="type">a3</span><a href="#128173">x3</a></span>, <span class="typed"><span class="type">a4</span><a href="#128175">x4</a></span>, <span class="typed"><span class="type">a5</span><a href="#128177">x5</a></span>)
+  }
+
+  <span class="comment">/** Uncurrying for functions of arity 2. This transforms a unary function
+   *  returning another unary function into a function of arity 2.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[a1, a2, b]((a1) =&gt; (a2) =&gt; b)(a1, a2) =&gt; b</span><a id="128015">uncurried</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128019">a1</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128020">a2</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128021">b</a></span>](<span class="typed"><span class="type">(a1) =&gt; (a2) =&gt; b</span><a id="128178">f</a></span>: a1 =&gt; a2 =&gt; b): (a1, a2) =&gt; b = {
+    (<span class="typed"><span class="type">a1</span><a id="128180">x1</a></span>, <span class="typed"><span class="type">a2</span><a id="128181">x2</a></span>) =&gt; <span class="typed"><span class="type">(a2)b</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">a1</span><a href="#128180">x1</a></span>)(<span class="typed"><span class="type">a2</span><a href="#128181">x2</a></span>)
+  }
+
+  <span class="comment">/** Uncurrying for functions of arity 3.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[a1, a2, a3, b]((a1) =&gt; (a2) =&gt; (a3) =&gt; b)(a1, a2, a3) =&gt; b</span><a id="128022">uncurried</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128027">a1</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128028">a2</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128029">a3</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128030">b</a></span>](<span class="typed"><span class="type">(a1) =&gt; (a2) =&gt; (a3) =&gt; b</span><a id="128182">f</a></span>: a1 =&gt; a2 =&gt; a3 =&gt; b): (a1, a2, a3) =&gt; b = {
+    (<span class="typed"><span class="type">a1</span><a id="128184">x1</a></span>, <span class="typed"><span class="type">a2</span><a id="128185">x2</a></span>, <span class="typed"><span class="type">a3</span><a id="128186">x3</a></span>) =&gt; <span class="typed"><span class="type">(a3)b</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">a1</span><a href="#128184">x1</a></span>)(<span class="typed"><span class="type">a2</span><a href="#128185">x2</a></span>)(<span class="typed"><span class="type">a3</span><a href="#128186">x3</a></span>)
+  }
+
+  <span class="comment">/** Uncurrying for functions of arity 4.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[a1, a2, a3, a4, b]((a1) =&gt; (a2) =&gt; (a3) =&gt; (a4) =&gt; b)(a1, a2, a3, a4) =&gt; b</span><a id="128031">uncurried</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128037">a1</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128038">a2</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128039">a3</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128040">a4</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128041">b</a></span>](<span class="typed"><span class="type">(a1) =&gt; (a2) =&gt; (a3) =&gt; (a4) =&gt; b</span><a id="128187">f</a></span>: a1 =&gt; a2 =&gt; a3 =&gt; a4 =&gt; b): (a1, a2, a3, a4) =&gt; b = {
+    (<span class="typed"><span class="type">a1</span><a id="128189">x1</a></span>, <span class="typed"><span class="type">a2</span><a id="128190">x2</a></span>, <span class="typed"><span class="type">a3</span><a id="128191">x3</a></span>, <span class="typed"><span class="type">a4</span><a id="128192">x4</a></span>) =&gt; <span class="typed"><span class="type">(a4)b</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">a1</span><a href="#128189">x1</a></span>)(<span class="typed"><span class="type">a2</span><a href="#128190">x2</a></span>)(<span class="typed"><span class="type">a3</span><a href="#128191">x3</a></span>)(<span class="typed"><span class="type">a4</span><a href="#128192">x4</a></span>)
+  }
+
+  <span class="comment">/** Uncurrying for functions of arity 5.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[a1, a2, a3, a4, a5, b]((a1) =&gt; (a2) =&gt; (a3) =&gt; (a4) =&gt; (a5) =&gt; b)(a1, a2, a3, a4, a5) =&gt; b</span><a id="128042">uncurried</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128049">a1</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128050">a2</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128051">a3</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128052">a4</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128053">a5</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128054">b</a></span>](<span class="typed"><span class="type">(a1) =&gt; (a2) =&gt; (a3) =&gt; (a4) =&gt; (a5) =&gt; b</span><a id="128193">f</a></span>: a1 =&gt; a2 =&gt; a3 =&gt; a4 =&gt; a5 =&gt; b): (a1, a2, a3, a4, a5) =&gt; b  =  {
+    (<span class="typed"><span class="type">a1</span><a id="128195">x1</a></span>, <span class="typed"><span class="type">a2</span><a id="128196">x2</a></span>, <span class="typed"><span class="type">a3</span><a id="128197">x3</a></span>, <span class="typed"><span class="type">a4</span><a id="128198">x4</a></span>, <span class="typed"><span class="type">a5</span><a id="128199">x5</a></span>) =&gt; <span class="typed"><span class="type">(a5)b</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">a1</span><a href="#128195">x1</a></span>)(<span class="typed"><span class="type">a2</span><a href="#128196">x2</a></span>)(<span class="typed"><span class="type">a3</span><a href="#128197">x3</a></span>)(<span class="typed"><span class="type">a4</span><a href="#128198">x4</a></span>)(<span class="typed"><span class="type">a5</span><a href="#128199">x5</a></span>)
+  }
+
+  <span class="comment">/** Tupling for functions of arity 2. This transforms a function
+   *  of arity 2 into a unary function that takes a pair of arguments.
+   *
+   *  @param f  ...
+   *  @return   ...
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[a1, a2, b]((a1, a2) =&gt; b)((a1, a2)) =&gt; b</span><a id="128055">tupled</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128059">a1</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128060">a2</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128061">b</a></span>](<span class="typed"><span class="type">(a1, a2) =&gt; b</span><a id="128200">f</a></span>: (a1, a2) =&gt; b): Tuple2[a1, a2] =&gt; b = <span class="typed"><span class="type">b</span><a href="#128202">{</a></span>
+    <span class="typed"><span class="type">b</span><span class="keyword">case</span></span> <a id="1">Tuple2</a>(<span class="typed"><span class="type">a1</span><a id="128203">x1</a></span>, <span class="typed"><span class="type">a2</span><a id="128204">x2</a></span>) =&gt; <span class="typed"><span class="type">(a1,a2)b</span><a href="Function2.scala.html#20399">f</a></span>(<span class="typed"><span class="type">a1</span><a href="#128203">x1</a></span>, <span class="typed"><span class="type">a2</span><a href="#128204">x2</a></span>)
+  }
+
+  <span class="comment">/** Tupling for functions of arity 3. This transforms a function
+   *  of arity 3 into a unary function that takes a triple of arguments.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[a1, a2, a3, b]((a1, a2, a3) =&gt; b)((a1, a2, a3)) =&gt; b</span><a id="128062">tupled</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128067">a1</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128068">a2</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128069">a3</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128070">b</a></span>](<span class="typed"><span class="type">(a1, a2, a3) =&gt; b</span><a id="128205">f</a></span>: (a1, a2, a3) =&gt; b): Tuple3[a1, a2, a3] =&gt; b = <span class="typed"><span class="type">b</span><a href="#128207">{</a></span>
+    <span class="typed"><span class="type">b</span><span class="keyword">case</span></span> <a id="1">Tuple3</a>(<span class="typed"><span class="type">a1</span><a id="128208">x1</a></span>, <span class="typed"><span class="type">a2</span><a id="128209">x2</a></span>, <span class="typed"><span class="type">a3</span><a id="128210">x3</a></span>) =&gt; <span class="typed"><span class="type">(a1,a2,a3)b</span><a href="Function3.scala.html#23948">f</a></span>(<span class="typed"><span class="type">a1</span><a href="#128208">x1</a></span>, <span class="typed"><span class="type">a2</span><a href="#128209">x2</a></span>, <span class="typed"><span class="type">a3</span><a href="#128210">x3</a></span>)
+  }
+
+  <span class="comment">/** Tupling for functions of arity 4. This transforms a function
+   *  of arity 4 into a unary function that takes a 4-tuple of arguments.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[a1, a2, a3, a4, b]((a1, a2, a3, a4) =&gt; b)((a1, a2, a3, a4)) =&gt; b</span><a id="128071">tupled</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128077">a1</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128078">a2</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128079">a3</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128080">a4</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128081">b</a></span>](<span class="typed"><span class="type">(a1, a2, a3, a4) =&gt; b</span><a id="128211">f</a></span>: (a1, a2, a3, a4) =&gt; b): Tuple4[a1, a2, a3, a4] =&gt; b = <span class="typed"><span class="type">b</span><a href="#128213">{</a></span>
+    <span class="typed"><span class="type">b</span><span class="keyword">case</span></span> <a id="1">Tuple4</a>(<span class="typed"><span class="type">a1</span><a id="128214">x1</a></span>, <span class="typed"><span class="type">a2</span><a id="128215">x2</a></span>, <span class="typed"><span class="type">a3</span><a id="128216">x3</a></span>, <span class="typed"><span class="type">a4</span><a id="128217">x4</a></span>) =&gt; <span class="typed"><span class="type">(a1,a2,a3,a4)b</span><a href="Function4.scala.html#21007">f</a></span>(<span class="typed"><span class="type">a1</span><a href="#128214">x1</a></span>, <span class="typed"><span class="type">a2</span><a href="#128215">x2</a></span>, <span class="typed"><span class="type">a3</span><a href="#128216">x3</a></span>, <span class="typed"><span class="type">a4</span><a href="#128217">x4</a></span>)
+  }
+
+  <span class="comment">/** Tupling for functions of arity 5. This transforms a function
+   *  of arity 5 into a unary function that takes a 5-tuple of arguments.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[a1, a2, a3, a4, a5, b]((a1, a2, a3, a4, a5) =&gt; b)((a1, a2, a3, a4, a5)) =&gt; b</span><a id="128082">tupled</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128089">a1</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128090">a2</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128091">a3</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128092">a4</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128093">a5</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128094">b</a></span>](<span class="typed"><span class="type">(a1, a2, a3, a4, a5) =&gt; b</span><a id="128218">f</a></span>: (a1, a2, a3, a4, a5) =&gt; b): Tuple5[a1, a2, a3, a4, a5] =&gt; b = <span class="typed"><span class="type">b</span><a href="#128220">{</a></span>
+    <span class="typed"><span class="type">b</span><span class="keyword">case</span></span> <a id="1">Tuple5</a>(<span class="typed"><span class="type">a1</span><a id="128221">x1</a></span>, <span class="typed"><span class="type">a2</span><a id="128222">x2</a></span>, <span class="typed"><span class="type">a3</span><a id="128223">x3</a></span>, <span class="typed"><span class="type">a4</span><a id="128224">x4</a></span>, <span class="typed"><span class="type">a5</span><a id="128225">x5</a></span>) =&gt; <span class="typed"><span class="type">(a1,a2,a3,a4,a5)b</span><a href="Function5.scala.html#68065">f</a></span>(<span class="typed"><span class="type">a1</span><a href="#128221">x1</a></span>, <span class="typed"><span class="type">a2</span><a href="#128222">x2</a></span>, <span class="typed"><span class="type">a3</span><a href="#128223">x3</a></span>, <span class="typed"><span class="type">a4</span><a href="#128224">x4</a></span>, <span class="typed"><span class="type">a5</span><a href="#128225">x5</a></span>)
+  }
+
+  <span class="comment">/** Un-tupling for functions of arity 2. This transforms a function taking
+   *  a pair of arguments into a binary function which takes each argument separately.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[a1, a2, b](((a1, a2)) =&gt; b)(a1, a2) =&gt; b</span><a id="128095">untupled</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128099">a1</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128100">a2</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128101">b</a></span>](<span class="typed"><span class="type">((a1, a2)) =&gt; b</span><a id="128226">f</a></span>: Tuple2[a1, a2] =&gt; b): (a1, a2) =&gt; b = {
+    (<span class="typed"><span class="type">a1</span><a id="128228">x1</a></span>, <span class="typed"><span class="type">a2</span><a id="128229">x2</a></span>) =&gt; <span class="typed"><span class="type">((a1, a2))b</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">(a1,a2)(a1, a2)</span><a href="Tuple2.scala.html#20366">Tuple2</a></span>(<span class="typed"><span class="type">a1</span><a href="#128228">x1</a></span>, <span class="typed"><span class="type">a2</span><a href="#128229">x2</a></span>))
+  }
+
+  <span class="comment">/** Un-tupling for functions of arity 3. This transforms a function taking
+   *  a triple of arguments into a ternary function which takes each argument separately.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[a1, a2, a3, b](((a1, a2, a3)) =&gt; b)(a1, a2, a3) =&gt; b</span><a id="128102">untupled</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128107">a1</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128108">a2</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128109">a3</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128110">b</a></span>](<span class="typed"><span class="type">((a1, a2, a3)) =&gt; b</span><a id="128232">f</a></span>: Tuple3[a1, a2, a3] =&gt; b): (a1, a2, a3) =&gt; b = {
+    (<span class="typed"><span class="type">a1</span><a id="128234">x1</a></span>, <span class="typed"><span class="type">a2</span><a id="128235">x2</a></span>, <span class="typed"><span class="type">a3</span><a id="128236">x3</a></span>) =&gt; <span class="typed"><span class="type">((a1, a2, a3))b</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">(a1,a2,a3)(a1, a2, a3)</span><a href="Tuple3.scala.html#21271">Tuple3</a></span>(<span class="typed"><span class="type">a1</span><a href="#128234">x1</a></span>, <span class="typed"><span class="type">a2</span><a href="#128235">x2</a></span>, <span class="typed"><span class="type">a3</span><a href="#128236">x3</a></span>))
+  }
+
+  <span class="comment">/** Un-tupling for functions of arity 4. This transforms a function taking
+   *  a 4-tuple of arguments into a function of arity 4 which takes each argument separately.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[a1, a2, a3, a4, b](((a1, a2, a3, a4)) =&gt; b)(a1, a2, a3, a4) =&gt; b</span><a id="128111">untupled</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128117">a1</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128118">a2</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128119">a3</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128120">a4</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128121">b</a></span>](<span class="typed"><span class="type">((a1, a2, a3, a4)) =&gt; b</span><a id="128240">f</a></span>: Tuple4[a1, a2, a3, a4] =&gt; b): (a1, a2, a3, a4) =&gt; b = {
+    (<span class="typed"><span class="type">a1</span><a id="128242">x1</a></span>, <span class="typed"><span class="type">a2</span><a id="128243">x2</a></span>, <span class="typed"><span class="type">a3</span><a id="128244">x3</a></span>, <span class="typed"><span class="type">a4</span><a id="128245">x4</a></span>) =&gt; <span class="typed"><span class="type">((a1, a2, a3, a4))b</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">(a1,a2,a3,a4)(a1, a2, a3, a4)</span><a href="Tuple4.scala.html#21017">Tuple4</a></span>(<span class="typed"><span class="type">a1</span><a href="#128242">x1</a></span>, <span class="typed"><span class="type">a2</span><a href="#128243">x2</a></span>, <span class="typed"><span class="type">a3</span><a href="#128244">x3</a></span>, <span class="typed"><span class="type">a4</span><a href="#128245">x4</a></span>))
+  }
+
+  <span class="comment">/** Un-tupling for functions of arity 5. This transforms a function taking
+   *  a 5-tuple of arguments into a function of arity 5 which takes each argument separately.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[a1, a2, a3, a4, a5, b](((a1, a2, a3, a4, a5)) =&gt; b)(a1, a2, a3, a4, a5) =&gt; b</span><a id="128122">untupled</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128129">a1</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128130">a2</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128131">a3</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128132">a4</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128133">a5</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="128134">b</a></span>](<span class="typed"><span class="type">((a1, a2, a3, a4, a5)) =&gt; b</span><a id="128250">f</a></span>: Tuple5[a1, a2, a3, a4, a5] =&gt; b): (a1, a2, a3, a4, a5) =&gt; b = {
+    (<span class="typed"><span class="type">a1</span><a id="128252">x1</a></span>, <span class="typed"><span class="type">a2</span><a id="128253">x2</a></span>, <span class="typed"><span class="type">a3</span><a id="128254">x3</a></span>, <span class="typed"><span class="type">a4</span><a id="128255">x4</a></span>, <span class="typed"><span class="type">a5</span><a id="128256">x5</a></span>) =&gt; <span class="typed"><span class="type">((a1, a2, a3, a4, a5))b</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">(a1,a2,a3,a4,a5)(a1, a2, a3, a4, a5)</span><a href="Tuple5.scala.html#56513">Tuple5</a></span>(<span class="typed"><span class="type">a1</span><a href="#128252">x1</a></span>, <span class="typed"><span class="type">a2</span><a href="#128253">x2</a></span>, <span class="typed"><span class="type">a3</span><a href="#128254">x3</a></span>, <span class="typed"><span class="type">a4</span><a href="#128255">x4</a></span>, <span class="typed"><span class="type">a5</span><a href="#128256">x5</a></span>))
+  }
+}
+
+        </pre>
+    </body>
+</html>

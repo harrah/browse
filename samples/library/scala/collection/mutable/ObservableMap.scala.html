@@ -1,0 +1,71 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/mutable/ObservableMap.scala</title>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |                                         **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: ObservableMap.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+
+<span class="keyword">package</span> scala.collection.mutable
+
+
+<span class="comment">/** This class is typically used as a mixin. It adds a subscription
+ *  mechanism to the &lt;code&gt;Map&lt;/code&gt; class into which this abstract
+ *  class is mixed in. Class &lt;code&gt;ObservableMap&lt;/code&gt; publishes
+ *  events of the type &lt;code&gt;Message&lt;/code&gt;.
+ *
+ *  @author  Matthias Zenger
+ *  @author  Martin Odersky
+ *  @version 2.0, 31/12/2006
+ */</span>
+<span class="keyword">trait</span> <span class="typed"><span class="type">trait ObservableMap[A, B, This &lt;: scala.collection.mutable.ObservableMap[A,B,This]] extends java.lang.Object with scala.collection.mutable.Map[A,B] with scala.collection.mutable.Publisher[scala.collection.mutable.Message[(A, B)] with scala.collection.mutable.Undoable,This] with ScalaObject</span><a id="11374">ObservableMap</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="16545">A</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="16546">B</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: scala.collection.mutable.ObservableMap[A,B,This]</span><a id="16547">This</a></span> &lt;: ObservableMap[A, B, This]] 
+      <span class="keyword">extends</span> <span class="typed"><span class="type">scala.collection.mutable.Map[A,B]</span><a href="Map.scala.html#11125">Map</a></span>[A, B]
+      <span class="keyword">with</span> <span class="typed"><span class="type">scala.collection.mutable.Publisher[scala.collection.mutable.Message[(A, B)] with scala.collection.mutable.Undoable,This]</span><a href="Publisher.scala.html#11290">Publisher</a></span>[Message[(A, B)]
+      <span class="keyword">with</span> Undoable, This]
+{ self: This =&gt;
+
+  <span class="keyword">abstract</span> <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(A,B)Unit</span><a id="117084">update</a></span>(<span class="typed"><span class="type">A</span><a id="117089">key</a></span>: <span class="typed"><span class="type">A</span><a href="#16545">A</a></span>, <span class="typed"><span class="type">B</span><a id="117090">value</a></span>: <span class="typed"><span class="type">B</span><a href="#16546">B</a></span>): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = <span class="typed"><span class="type">(A)Option[B]</span><a href="../Map.scala.html#21386">get</a></span>(<span class="typed"><span class="type">A</span><a href="#117089">key</a></span>) <span class="typed"><span class="type">Unit</span><span class="keyword">match</span></span> {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <span class="typed"><span class="type">object None</span><a href="../../Option.scala.html#534">None</a></span> =&gt;
+      <span class="typed"><span class="type">(A,B)Unit</span><a href="#134109" class="keyword">super</a></span>.<span class="typed"><span class="type">(A,B)Unit</span><span id="134109"><span id="134110"><a id="134111">update</a></span></span></span>(<span class="typed"><span class="type">A</span><a href="#117089">key</a></span>, <span class="typed"><span class="type">B</span><a href="#117090">value</a></span>)
+      <span class="typed"><span class="type">(scala.collection.mutable.Message[(A, B)] with scala.collection.mutable.Undoable)Unit</span><a href="Publisher.scala.html#51656">publish</a></span>(<span class="typed"><span class="type">template $anon extends scala.collection.mutable.Include[(A, B)] with scala.collection.mutable.Undoable</span><a id="117092" class="keyword">new</a></span> <span class="typed"><span class="type">scala.collection.mutable.Include[(A, B)]</span><a href="Message.scala.html#11464">Include</a></span>(<span class="typed"><span class="type">(A,B)(A, B)</span><a href="../../Tuple2.scala.html#20366">(</a></span><span class="typed"><span class="type">A</span><a href="#117089">key</a></span>, <span class="typed"><span class="type">B</span><a href="#117090">value</a></span>)) <span class="keyword">with</span> <span class="typed"><span class="type">scala.collection.mutable.Undoable</span><a href="Undoable.scala.html#11512">Undoable</a></span> {
+        <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="117097">undo</a></span> = <span class="typed"><span class="type">(A)Unit</span><a href="#117085">-=</a></span>(<span class="typed"><span class="type">A</span><a href="#117089">key</a></span>)
+      })
+    <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <a id="1">Some</a>(<span class="typed"><span class="type">B</span><a id="117110">old</a></span>) =&gt;
+      <span class="typed"><span class="type">(A,B)Unit</span><a href="#134109" class="keyword">super</a></span>.update(<span class="typed"><span class="type">A</span><a href="#117089">key</a></span>, <span class="typed"><span class="type">B</span><a href="#117090">value</a></span>)
+      <span class="typed"><span class="type">(scala.collection.mutable.Message[(A, B)] with scala.collection.mutable.Undoable)Unit</span><a href="Publisher.scala.html#51656">publish</a></span>(<span class="typed"><span class="type">template $anon extends scala.collection.mutable.Update[(A, B)] with scala.collection.mutable.Undoable</span><a id="117112" class="keyword">new</a></span> <span class="typed"><span class="type">scala.collection.mutable.Update[(A, B)]</span><a href="Message.scala.html#11380">Update</a></span>(<span class="typed"><span class="type">(A,B)(A, B)</span><a href="../../Tuple2.scala.html#20366">(</a></span><span class="typed"><span class="type">A</span><a href="#117089">key</a></span>, <span class="typed"><span class="type">B</span><a href="#117090">value</a></span>)) <span class="keyword">with</span> <span class="typed"><span class="type">scala.collection.mutable.Undoable</span><a href="Undoable.scala.html#11512">Undoable</a></span> {
+        <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="117117">undo</a></span> = <span class="typed"><span class="type">(A,B)Unit</span><a href="#117084">update</a></span>(<span class="typed"><span class="type">A</span><a href="#117089">key</a></span>, <span class="typed"><span class="type">B</span><a href="#117110">old</a></span>)
+      })
+  }
+
+  <span class="keyword">abstract</span> <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(A)Unit</span><a id="117085">-=</a></span> (<span class="typed"><span class="type">A</span><a id="117108">key</a></span>: <span class="typed"><span class="type">A</span><a href="#16545">A</a></span>): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = <span class="typed"><span class="type">(A)Option[B]</span><a href="../Map.scala.html#21386">get</a></span>(<span class="typed"><span class="type">A</span><a href="#117108">key</a></span>) <span class="typed"><span class="type">Unit</span><span class="keyword">match</span></span> {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <span class="typed"><span class="type">object None</span><a href="../../Option.scala.html#534">None</a></span> =&gt;
+    <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <a id="1">Some</a>(<span class="typed"><span class="type">B</span><a id="117128">old</a></span>) =&gt;
+      <span class="typed"><span class="type">(A)Unit</span><a href="#134113" class="keyword">super</a></span>.<span class="typed"><span class="type">(A)Unit</span><span id="134113"><a id="134114">-=</a></span></span>(<span class="typed"><span class="type">A</span><a href="#117108">key</a></span>)
+      <span class="typed"><span class="type">(scala.collection.mutable.Message[(A, B)] with scala.collection.mutable.Undoable)Unit</span><a href="Publisher.scala.html#51656">publish</a></span>(<span class="typed"><span class="type">template $anon extends scala.collection.mutable.Remove[(A, B)] with scala.collection.mutable.Undoable</span><a id="117131" class="keyword">new</a></span> <span class="typed"><span class="type">scala.collection.mutable.Remove[(A, B)]</span><a href="Message.scala.html#11197">Remove</a></span>(<span class="typed"><span class="type">(A,B)(A, B)</span><a href="../../Tuple2.scala.html#20366">(</a></span><span class="typed"><span class="type">A</span><a href="#117108">key</a></span>, <span class="typed"><span class="type">B</span><a href="#117128">old</a></span>)) <span class="keyword">with</span> <span class="typed"><span class="type">scala.collection.mutable.Undoable</span><a href="Undoable.scala.html#11512">Undoable</a></span> {
+        <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="117136">undo</a></span> = <span class="typed"><span class="type">(A,B)Unit</span><a href="#117084">update</a></span>(<span class="typed"><span class="type">A</span><a href="#117108">key</a></span>, <span class="typed"><span class="type">B</span><a href="#117128">old</a></span>)
+      })
+  }
+
+  <span class="keyword">abstract</span> <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="117086">clear</a></span>(): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = {
+    <span class="typed"><span class="type">()Unit</span><a href="#134115" class="keyword">super</a></span>.<span class="typed"><span class="type">()Unit</span><a id="134115">clear</a></span>
+    <span class="typed"><span class="type">(scala.collection.mutable.Message[(A, B)] with scala.collection.mutable.Undoable)Unit</span><a href="Publisher.scala.html#51656">publish</a></span>(<span class="typed"><span class="type">template $anon extends scala.collection.mutable.Reset[Nothing] with scala.collection.mutable.Undoable</span><a id="117148" class="keyword">new</a></span> <span class="typed"><span class="type">scala.collection.mutable.Reset[Nothing]</span><a href="Message.scala.html#11287">Reset</a></span> <span class="keyword">with</span> <span class="typed"><span class="type">scala.collection.mutable.Undoable</span><a href="Undoable.scala.html#11512">Undoable</a></span> { 
+      <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="117151">undo</a></span>: <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.lang.UnsupportedOperationException</span><a id="30111" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.UnsupportedOperationException</span><a href="../../Predef.scala.html#13340">UnsupportedOperationException</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;cannot undo&quot;)</span><span class="string">&quot;cannot undo&quot;</span></span>) 
+    })
+  }
+}
+
+        </pre>
+    </body>
+</html>

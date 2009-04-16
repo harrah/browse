@@ -1,0 +1,100 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/RollbackIterator.scala</title>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2007-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: RollbackIterator.scala 16884 2009-01-09 16:52:09Z cunei $</span>
+
+<span class="keyword">package</span> scala.collection
+
+<span class="keyword">import</span> scala.collection.mutable.{ArrayBuffer}
+
+<span class="comment">/** Rollback iterators are buffered iterators which allow for unbounded rollbacks
+ *
+ *  @author  Sean McDirmid
+ */</span>
+<span class="keyword">class</span> <span class="typed"><span class="type">class RollbackIterator[+A] extends BufferedIterator.Default[A] with ScalaObject</span><a id="8407">RollbackIterator</a></span>[+<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="16206">A</a></span>](<span class="typed"><span class="type">Iterator[A]</span><span id="108130"><a id="108146">underlying</a></span></span>: <span class="typed"><span class="type">Iterator[A]</span><a href="../Iterator.scala.html#1337">Iterator</a></span>[A]) <span class="keyword">extends</span> BufferedIterator.<span class="typed"><span class="type">BufferedIterator.Default[A]</span><a href="../BufferedIterator.scala.html#49540">Default</a></span>[A] {
+  <span class="keyword">private</span>[<span class="keyword">this</span>] <span class="keyword">var</span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a id="108132">rollback</a></span>: <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="mutable/ArrayBuffer.scala.html#11377">ArrayBuffer</a></span>[A] = <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>
+  <span class="keyword">protected</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Seq[A]</span><a id="108133">fill</a></span>(<span class="typed"><span class="type">Int</span><a id="108147">sz</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Seq[A]</span><a href="../Seq.scala.html#761">Seq</a></span>[A] =
+    <span class="typed"><span class="type">Seq[A]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Iterator[A]</span><a href="#108130">underlying</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Iterator.scala.html#19975">hasNext</a></span>) <span class="typed"><span class="type">Iterator[A]</span><a href="#108130">underlying</a></span>.<span class="typed"><span class="type">()A</span><a href="../Iterator.scala.html#19976">next</a></span> <span class="typed"><span class="type">(A)List[A]</span><a href="../List.scala.html#20872">::</a></span> <span class="typed"><span class="type">object Nil</span><a href="../List.scala.html#333">Nil</a></span> <span class="keyword">else</span> <span class="typed"><span class="type">object Nil</span><a href="../List.scala.html#333">Nil</a></span>
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()A</span><a id="108134">next</a></span>: <span class="typed"><span class="type">A</span><a href="#16206">A</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">A</span><a id="108153">ret</a></span> = <span class="keyword">super</span>.<span class="typed"><span class="type">()A</span><a href="../BufferedIterator.scala.html#50039">next</a></span>
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="#108132">rollback</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5791">!=</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="#108132">rollback</a></span> <span class="typed"><span class="type">(A)Unit</span><a href="mutable/ArrayBuffer.scala.html#22574">+=</a></span> <span class="typed"><span class="type">A</span><a href="#108153">ret</a></span>
+    <span class="typed"><span class="type">A</span><a href="#108153">ret</a></span>
+  }
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Option[Int]</span><a id="108135">initRollback</a></span> =
+    <span class="typed"><span class="type">Option[Int]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="#108132">rollback</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="3507">==</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) {
+      <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="#108132">rollback</a></span> = <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="mutable/ArrayBuffer.scala.html#11377">ArrayBuffer</a></span>[A]
+      <span class="typed"><span class="type">object None</span><a href="../Option.scala.html#534">None</a></span>
+    }
+    <span class="keyword">else</span> <span class="typed"><span class="type">(Int)Some[Int]</span><a href="../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="#108132">rollback</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="mutable/ResizableArray.scala.html#22603">length</a></span>)
+
+  <span class="comment">/** will rollback all elements iterated during 
+   *  &lt;code&gt;f&lt;/code&gt;'s execution if &lt;code&gt;f&lt;/code&gt; return false 
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[T](=&gt; Option[T])Option[T]</span><a id="108136">tryRead</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="108138">T</a></span>](<span class="typed"><span class="type">=&gt; Option[T]</span><a id="108186">f</a></span>: =&gt; Option[T]): <span class="typed"><span class="type">Option[T]</span><a href="../Option.scala.html#932">Option</a></span>[T] = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">Option[Int]</span><a id="108187">oldLength</a></span> = <span class="typed"><span class="type">=&gt; Option[Int]</span><a href="#108135">initRollback</a></span>
+    <span class="keyword">var</span> <span class="typed"><span class="type">Option[T]</span><a id="108188">g</a></span> : <span class="typed"><span class="type">Option[T]</span><a href="../Option.scala.html#932">Option</a></span>[T] = <span class="typed"><span class="type">object None</span><a href="../Option.scala.html#534">None</a></span>
+    <span class="keyword">try</span> {
+      <span class="typed"><span class="type">Option[T]</span><a href="#108188">g</a></span> = <span class="typed"><span class="type">=&gt; Option[T]</span><a href="#108186">f</a></span>
+    } <span class="keyword">finally</span> {
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Option[T]</span><a href="#108188">g</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Option.scala.html#18268">isEmpty</a></span>) {
+        <span class="comment">//putBack(rollback(0))</span>
+        <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="108189">sz</a></span> = <span class="typed"><span class="type">Option[Int]</span><a href="#108187">oldLength</a></span>.<span class="typed"><span class="type">(=&gt; Int)Int</span><a href="../Option.scala.html#18274">getOrElse</a></span>(<span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>)
+        <span class="keyword">val</span> <span class="typed"><span class="type">Iterator[A]</span><a id="108190">i</a></span> = <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="#108132">rollback</a></span>.<span class="typed"><span class="type">(Int)RandomAccessSeq.MutableProjection[A]</span><a href="../RandomAccessSeq.scala.html#17228">drop</a></span>(<span class="typed"><span class="type">Int</span><a href="#108189">sz</a></span>).<span class="typed"><span class="type">=&gt; RandomAccessSeq.MutableProjection[A]</span><a href="../RandomAccessSeq.scala.html#17231">reverse</a></span>.<span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="../RandomAccessSeq.scala.html#17210">elements</a></span>
+        <span class="typed"><span class="type">Unit</span><a href="#108191" class="keyword">while</a></span> (<span class="typed"><span class="type">Iterator[A]</span><a href="#108190">i</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Iterator.scala.html#19975">hasNext</a></span>) <span class="typed"><span class="type">(A)Unit</span><a href="../BufferedIterator.scala.html#50033">putBack</a></span>(<span class="typed"><span class="type">Iterator[A]</span><a href="#108190">i</a></span>.<span class="typed"><span class="type">()A</span><a href="../Iterator.scala.html#19976">next</a></span>)
+        <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Option[Int]</span><a href="#108187">oldLength</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Option.scala.html#18268">isEmpty</a></span>) <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="#108132">rollback</a></span> = <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>          
+        <span class="keyword">else</span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="#108132">rollback</a></span>.<span class="typed"><span class="type">(Int)Unit</span><a href="mutable/ResizableArray.scala.html#22605">reduceToSize</a></span>(<span class="typed"><span class="type">Int</span><a href="#108189">sz</a></span>)
+      }
+    }
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">Option[T]</span><a href="#108188">g</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Option.scala.html#18268">isEmpty</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">Option[Int]</span><a href="#108187">oldLength</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Option.scala.html#18268">isEmpty</a></span>) 
+      <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="#108132">rollback</a></span> = <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>
+    <span class="typed"><span class="type">Option[T]</span><a href="#108188">g</a></span>
+
+  }
+  <span class="comment">/** remembers elements iterated over during &lt;code&gt;g&lt;/code&gt;'s execution
+   *  and provides these elements to the result of &lt;code&gt;g&lt;/code&gt;'s execution
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[T](=&gt; (Seq[A]) =&gt; T)T</span><a id="108139">remember</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="108141">T</a></span>](<span class="typed"><span class="type">=&gt; (Seq[A]) =&gt; T</span><a id="108199">g</a></span>: =&gt; (Seq[A] =&gt; T)): <span class="typed"><span class="type">T</span><a href="#108141">T</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">Option[Int]</span><a id="108200">oldLength</a></span> = <span class="typed"><span class="type">=&gt; Option[Int]</span><a href="#108135">initRollback</a></span>
+    <span class="keyword">var</span> <span class="typed"><span class="type">Seq[A]</span><a id="108201">in</a></span>: <span class="typed"><span class="type">Seq[A]</span><a href="../Seq.scala.html#761">Seq</a></span>[A] = <span class="typed"><span class="type">object Nil</span><a href="../List.scala.html#333">Nil</a></span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">(Seq[A]) =&gt; T</span><a id="108202">f</a></span> = <span class="keyword">try</span> {
+      <span class="typed"><span class="type">=&gt; (Seq[A]) =&gt; T</span><a href="#108199">g</a></span>
+    } <span class="keyword">finally</span> {
+      <span class="typed"><span class="type">Seq[A]</span><a href="#108201">in</a></span> = <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="#108132">rollback</a></span>.<span class="typed"><span class="type">(Int)RandomAccessSeq.MutableProjection[A]</span><a href="../RandomAccessSeq.scala.html#17228">drop</a></span>(<span class="typed"><span class="type">Option[Int]</span><a href="#108200">oldLength</a></span>.<span class="typed"><span class="type">(=&gt; Int)Int</span><a href="../Option.scala.html#18274">getOrElse</a></span>(<span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>))
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Option[Int]</span><a href="#108200">oldLength</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Option.scala.html#18268">isEmpty</a></span>) <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="#108132">rollback</a></span> = <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>
+    }
+    <span class="typed"><span class="type">(Seq[A])T</span><a href="../Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">Seq[A]</span><a href="#108201">in</a></span>)
+  }
+
+  <span class="comment">/** returns true if any elements are iterated over during &lt;code&gt;f&lt;/code&gt;'s execution 
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(=&gt; Unit)Boolean</span><a id="108142">read</a></span>(<span class="typed"><span class="type">=&gt; Unit</span><a id="108206">f</a></span>: =&gt; Unit): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = <span class="typed"><span class="type">(=&gt; (Seq[A]) =&gt; Boolean)Boolean</span><a href="#108139">remember</a></span>[<span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span>] {
+    <span class="typed"><span class="type">=&gt; Unit</span><a href="#108206">f</a></span>; <span class="typed"><span class="type">Seq[A]</span><a id="108208">seq</a></span> =&gt; <span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">Seq[A]</span><a href="#108208">seq</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Seq.scala.html#17149">isEmpty</a></span>
+  }
+
+  <span class="comment">/** if elements of &lt;code&gt;seq&lt;/code&gt; will be iterated over next in this iterator,
+   *  returns true and iterates over these elements
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Seq[Any])Boolean</span><a id="108143">readIfStartsWith</a></span>(<span class="typed"><span class="type">Seq[Any]</span><a id="108209">seq</a></span> : <span class="typed"><span class="type">Seq[Any]</span><a href="../Seq.scala.html#761">Seq</a></span>[Any]) : <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = 
+    <span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">(=&gt; Option[Unit])Option[Unit]</span><a href="#108136">tryRead</a></span>{<span class="typed"><span class="type">Option[Unit]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Seq[Any]</span><a href="#108209">seq</a></span>.<span class="typed"><span class="type">((Any) =&gt; Boolean)Boolean</span><a href="../Iterable.scala.html#17329">forall</a></span>(<span class="typed"><span class="type">Any</span><a id="108212">a</a></span> =&gt; <span class="typed"><span class="type">=&gt; Boolean</span><a href="../BufferedIterator.scala.html#50035">hasNext</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">()A</span><a href="#108134">next</a></span> <span class="typed"><span class="type">(Any)Boolean</span><a id="3494">==</a></span> <span class="typed"><span class="type">Any</span><a href="#108212">a</a></span>)) <span class="typed"><span class="type">(Unit)Some[Unit]</span><a href="../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">Unit</span><span >(</span></span>)) <span class="keyword">else</span> <span class="typed"><span class="type">object None</span><a href="../Option.scala.html#534">None</a></span>}.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Option.scala.html#18268">isEmpty</a></span>
+
+}
+
+        </pre>
+    </body>
+</html>

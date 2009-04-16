@@ -1,0 +1,77 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/xml/parsing/ConstructingParser.scala</title>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |                                         **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: ConstructingParser.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+
+<span class="keyword">package</span> scala.xml.parsing
+
+<span class="keyword">import</span> java.io.File
+
+<span class="keyword">import</span> scala.io.Source
+
+<span class="keyword">object</span> <span class="typed"><span class="type">object scala.xml.parsing.ConstructingParser</span><a id="12544">ConstructingParser</a></span> {
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">(java.io.File,Boolean)scala.xml.parsing.ConstructingParser</span><a id="74897">fromFile</a></span>(<span class="typed"><span class="type">java.io.File</span><a id="74900">inp</a></span>: <span class="typed"><span class="type">java.io.File</span><a id="3667">File</a></span>, <span class="typed"><span class="type">Boolean</span><a id="74901">preserveWS</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span>) = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">scala.xml.parsing.ConstructingParser</span><a id="74903">p</a></span> = <span class="typed"><span class="type">scala.xml.parsing.ConstructingParser</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.xml.parsing.ConstructingParser</span><a href="#12543">ConstructingParser</a></span>(<span class="typed"><span class="type">object scala.io.Source</span><a href="../../io/Source.scala.html#9108">Source</a></span>.<span class="typed"><span class="type">(java.io.File)scala.io.Source</span><a href="../../io/Source.scala.html#30265">fromFile</a></span>(<span class="typed"><span class="type">java.io.File</span><a href="#74900">inp</a></span>), <span class="typed"><span class="type">Boolean</span><a href="#74901">preserveWS</a></span>)
+    <span class="typed"><span class="type">scala.xml.parsing.ConstructingParser</span><a href="#74903">p</a></span>.<span class="typed"><span class="type">=&gt; Unit</span><a href="MarkupParser.scala.html#44338">nextch</a></span>
+    <span class="typed"><span class="type">scala.xml.parsing.ConstructingParser</span><a href="#74903">p</a></span>
+  }
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">(scala.io.Source,Boolean)scala.xml.parsing.ConstructingParser</span><a id="74898">fromSource</a></span>(<span class="typed"><span class="type">scala.io.Source</span><a id="74916">inp</a></span>: <span class="typed"><span class="type">scala.io.Source</span><a href="../../io/Source.scala.html#9107">Source</a></span>, <span class="typed"><span class="type">Boolean</span><a id="74917">preserveWS</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span>) = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">scala.xml.parsing.ConstructingParser</span><a id="74919">p</a></span> = <span class="typed"><span class="type">scala.xml.parsing.ConstructingParser</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.xml.parsing.ConstructingParser</span><a href="#12543">ConstructingParser</a></span>(<span class="typed"><span class="type">scala.io.Source</span><a href="#74916">inp</a></span>, <span class="typed"><span class="type">Boolean</span><a href="#74917">preserveWS</a></span>)
+    <span class="typed"><span class="type">scala.xml.parsing.ConstructingParser</span><a href="#74919">p</a></span>.<span class="typed"><span class="type">=&gt; Unit</span><a href="MarkupParser.scala.html#44338">nextch</a></span>
+    <span class="typed"><span class="type">scala.xml.parsing.ConstructingParser</span><a href="#74919">p</a></span>
+  }
+}
+
+<span class="comment">/** An xml parser. parses XML and invokes callback methods of a MarkupHandler.
+ *  Don't forget to call next.ch on a freshly instantiated parser in order to
+ *  initialize it. If you get the parser from the object method, initialization
+ *  is already done for you.
+ *
+ *&lt;pre&gt;
+object parseFromURL {
+  def main(args:Array[String]): Unit = {
+    val url = args(0);
+    val src = scala.io.Source.fromURL(url);
+    val cpa = scala.xml.parsing.ConstructingParser.fromSource(src, false); // fromSource initializes automatically
+    val doc = cpa.document();
+
+    // let's see what it is
+    val ppr = new scala.xml.PrettyPrinter(80,5);
+    val ele = doc.docElem;
+    Console.println(&quot;finished parsing&quot;);
+    val out = ppr.format(ele);
+    Console.println(out);
+  }
+}
+&lt;/pre&gt;
+ */</span>
+<span class="keyword">class</span> <span class="typed"><span class="type">class ConstructingParser extends scala.xml.parsing.ConstructingHandler with scala.xml.parsing.ExternalSources with scala.xml.parsing.MarkupParser with ScalaObject</span><a id="12543">ConstructingParser</a></span>(<span class="keyword">val</span> <span class="typed"><span class="type">scala.io.Source</span><span id="74907"><span id="74906"><a id="74912">input</a></span></span></span>: <span class="typed"><span class="type">scala.io.Source</span><a href="../../io/Source.scala.html#9107">Source</a></span>, <span class="keyword">val</span> <span class="typed"><span class="type">Boolean</span><span id="74909"><span id="74908"><a id="74913">preserveWS</a></span></span></span>: <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span>)
+<span class="keyword">extends</span>  <span class="typed"><span class="type">scala.xml.parsing.ConstructingHandler</span><a href="ConstructingHandler.scala.html#12564">ConstructingHandler</a></span>
+<span class="keyword">with</span>     <span class="typed"><span class="type">scala.xml.parsing.ExternalSources</span><a href="ExternalSources.scala.html#12585">ExternalSources</a></span>
+<span class="keyword">with</span>     <span class="typed"><span class="type">scala.xml.parsing.MarkupParser</span><a href="MarkupParser.scala.html#12525">MarkupParser</a></span>  {
+
+  <span class="comment">// default impl. of Logged</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(String)Unit</span><a id="74911">log</a></span>(<span class="typed"><span class="type">String</span><a id="74923">msg</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = <span class="typed"><span class="type">Unit</span><span >{</span></span>}
+}
+
+
+        </pre>
+    </body>
+</html>

@@ -1,0 +1,1081 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/actors/Actor.scala</title>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2005-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: Actor.scala 17470 2009-04-09 16:21:18Z phaller $</span>
+
+<span class="keyword">package</span> scala.actors
+
+<span class="keyword">import</span> scala.collection.mutable.{HashSet, Queue}
+<span class="keyword">import</span> scala.compat.Platform
+
+<span class="keyword">import</span> java.util.{Timer, TimerTask}
+
+<span class="keyword">import</span> java.util.concurrent.ExecutionException
+
+<span class="comment">/**
+ * The &lt;code&gt;Actor&lt;/code&gt; object provides functions for the definition of
+ * actors, as well as actor operations, such as
+ * &lt;code&gt;receive&lt;/code&gt;, &lt;code&gt;react&lt;/code&gt;, &lt;code&gt;reply&lt;/code&gt;,
+ * etc.
+ *
+ * @version 0.9.18
+ * @author Philipp Haller
+ */</span>
+<span class="keyword">object</span> <span class="typed"><span class="type">object scala.actors.Actor</span><a id="7908">Actor</a></span> {
+
+  <span class="keyword">private</span>[actors] <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.ThreadLocal[scala.actors.Actor]</span><span id="27709"><a id="27708">tl</a></span></span> = <span class="typed"><span class="type">java.lang.ThreadLocal[scala.actors.Actor]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">java.lang.ThreadLocal[scala.actors.Actor]</span><a id="1679">ThreadLocal</a></span>[Actor]
+
+  <span class="comment">// timer thread runs as daemon</span>
+  <span class="keyword">private</span>[actors] <span class="keyword">val</span> <span class="typed"><span class="type">java.util.Timer</span><span id="27711"><a id="27710">timer</a></span></span> = <span class="typed"><span class="type">(Boolean)java.util.Timer</span><a id="27871" class="keyword">new</a></span> <span class="typed"><span class="type">java.util.Timer</span><a id="5186">Timer</a></span>(<span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>)
+
+  <span class="comment">/**
+   * Returns the currently executing actor. Should be used instead
+   * of &lt;code&gt;this&lt;/code&gt; in all blocks of code executed by
+   * actors.
+   *
+   * @return returns the currently executing actor.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a id="27712">self</a></span>: <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907">Actor</a></span> = <span class="typed"><span class="type">(scala.actors.IScheduler)scala.actors.Actor</span><a href="#27713">self</a></span>(<span class="typed"><span class="type">object scala.actors.Scheduler</span><a href="Scheduler.scala.html#8166">Scheduler</a></span>)
+
+  <span class="keyword">private</span>[actors] <span class="keyword">def</span> <span class="typed"><span class="type">(scala.actors.IScheduler)scala.actors.Actor</span><a id="27713">self</a></span>(<span class="typed"><span class="type">scala.actors.IScheduler</span><a id="27868">sched</a></span>: <span class="typed"><span class="type">scala.actors.IScheduler</span><a href="Scheduler.scala.html#8114">IScheduler</a></span>): <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907">Actor</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">scala.actors.Actor</span><a id="37259">s</a></span> = <span class="typed"><span class="type">=&gt; java.lang.ThreadLocal[scala.actors.Actor]</span><a href="#27708">tl</a></span>.<span class="typed"><span class="type">()scala.actors.Actor</span><a id="20499">get</a></span>
+    <span class="typed"><span class="type">scala.actors.Actor</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">scala.actors.Actor</span><a href="#37259">s</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) {
+      <span class="keyword">val</span> <span class="typed"><span class="type">scala.actors.ActorProxy</span><a id="37260">r</a></span> = <span class="typed"><span class="type">scala.actors.ActorProxy</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.actors.ActorProxy</span><a href="ActorProxy.scala.html#8060">ActorProxy</a></span>(<span class="typed"><span class="type">=&gt; java.lang.Thread</span><a href="../Predef.scala.html#13657">currentThread</a></span>, <span class="typed"><span class="type">scala.actors.IScheduler</span><a href="#27868">sched</a></span>)
+      <span class="typed"><span class="type">=&gt; java.lang.ThreadLocal[scala.actors.Actor]</span><a href="#27708">tl</a></span>.<span class="typed"><span class="type">(scala.actors.Actor)Unit</span><a id="20500">set</a></span>(<span class="typed"><span class="type">scala.actors.ActorProxy</span><a href="#37260">r</a></span>)
+      <span class="typed"><span class="type">scala.actors.ActorProxy</span><a href="#37260">r</a></span>
+    } <span class="keyword">else</span>
+      <span class="typed"><span class="type">scala.actors.Actor</span><a href="#37259">s</a></span>
+  }
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; scala.actors.IScheduler</span><a id="27714">parentScheduler</a></span>: <span class="typed"><span class="type">scala.actors.IScheduler</span><a href="Scheduler.scala.html#8114">IScheduler</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">scala.actors.Actor</span><a id="37264">s</a></span> = <span class="typed"><span class="type">=&gt; java.lang.ThreadLocal[scala.actors.Actor]</span><a href="#27708">tl</a></span>.<span class="typed"><span class="type">()scala.actors.Actor</span><a id="20499">get</a></span>
+    <span class="typed"><span class="type">scala.actors.IScheduler</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">scala.actors.Actor</span><a href="#37264">s</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) <span class="typed"><span class="type">object scala.actors.Scheduler</span><a href="Scheduler.scala.html#8166">Scheduler</a></span> <span class="keyword">else</span> <span class="typed"><span class="type">scala.actors.Actor</span><a href="#37264">s</a></span>.<span class="typed"><span class="type">=&gt; scala.actors.IScheduler</span><a href="#27630">scheduler</a></span>
+  }
+
+  <span class="comment">/**
+   * Resets an actor proxy associated with the current thread.
+   * It replaces the implicit &lt;code&gt;ActorProxy&lt;/code&gt; instance
+   * of the current thread (if any) with a new instance.
+   *
+   * This permits to re-use the current thread as an actor
+   * even if its &lt;code&gt;ActorProxy&lt;/code&gt; has died for some reason.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Unit</span><a id="27715">resetProxy</a></span> {
+    <span class="keyword">val</span> <span class="typed"><span class="type">scala.actors.Actor</span><a id="37266">a</a></span> = <span class="typed"><span class="type">=&gt; java.lang.ThreadLocal[scala.actors.Actor]</span><a href="#27708">tl</a></span>.<span class="typed"><span class="type">()scala.actors.Actor</span><a id="20499">get</a></span>
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> ((<span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5793">ne</a></span> <span class="typed"><span class="type">scala.actors.Actor</span><a href="#37266">a</a></span>) <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">scala.actors.Actor</span><a href="#37266">a</a></span>.<span class="typed"><span class="type">Boolean</span><a id="3499">isInstanceOf</a></span>[<span class="typed"><span class="type">scala.actors.ActorProxy</span><a href="ActorProxy.scala.html#8060">ActorProxy</a></span>])
+      <span class="typed"><span class="type">=&gt; java.lang.ThreadLocal[scala.actors.Actor]</span><a href="#27708">tl</a></span>.<span class="typed"><span class="type">(scala.actors.Actor)Unit</span><a id="20500">set</a></span>(<span class="typed"><span class="type">scala.actors.ActorProxy</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.actors.ActorProxy</span><a href="ActorProxy.scala.html#8060">ActorProxy</a></span>(<span class="typed"><span class="type">=&gt; java.lang.Thread</span><a href="../Predef.scala.html#13657">currentThread</a></span>, <span class="typed"><span class="type">=&gt; scala.actors.IScheduler</span><a href="#27714">parentScheduler</a></span>))
+  }
+
+  <span class="comment">/**
+   * Removes any reference to an &lt;code&gt;Actor&lt;/code&gt; instance
+   * currently stored in thread-local storage.
+   *
+   * This allows to release references from threads that are
+   * potentially long-running or being re-used (e.g. inside
+   * a thread pool). Permanent references in thread-local storage
+   * are a potential memory leak.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Unit</span><a id="27716">clearSelf</a></span> {
+    <span class="typed"><span class="type">=&gt; java.lang.ThreadLocal[scala.actors.Actor]</span><a href="#27708">tl</a></span>.<span class="typed"><span class="type">(scala.actors.Actor)Unit</span><a id="20500">set</a></span>(<span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>)
+  }
+
+  <span class="comment">/**
+   * &lt;p&gt;This is a factory method for creating actors.&lt;/p&gt;
+   *
+   * &lt;p&gt;The following example demonstrates its usage:&lt;/p&gt;
+   *
+   * &lt;pre&gt;
+   * import scala.actors.Actor._
+   * ...
+   * val a = actor {
+   *   ...
+   * }
+   * &lt;/pre&gt;
+   *
+   * @param  body  the code block to be executed by the newly created actor
+   * @return       the newly created actor. Note that it is automatically started.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(=&gt; Unit)scala.actors.Actor</span><a id="27717">actor</a></span>(<span class="typed"><span class="type">=&gt; Unit</span><a id="37268">body</a></span>: =&gt; Unit): <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907">Actor</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">&lt;refinement&gt; extends java.lang.Object with scala.actors.Actor</span><a id="37269">a</a></span> = <span class="typed"><span class="type">template $anon extends java.lang.Object with scala.actors.Actor</span><a id="37270" class="keyword">new</a></span> <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907">Actor</a></span> {
+      <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="37272">act</a></span>() = <span class="typed"><span class="type">=&gt; Unit</span><a href="#37268">body</a></span>
+      <span class="keyword">override</span> <span class="keyword">final</span> <span class="keyword">val</span> <span class="typed"><span class="type">scala.actors.IScheduler</span><span id="37274"><a id="37273">scheduler</a></span></span>: <span class="typed"><span class="type">scala.actors.IScheduler</span><a href="Scheduler.scala.html#8114">IScheduler</a></span> = <span class="typed"><span class="type">=&gt; scala.actors.IScheduler</span><a href="#27714">parentScheduler</a></span>
+    }
+    <span class="typed"><span class="type">&lt;refinement&gt; extends java.lang.Object with scala.actors.Actor</span><a href="#37269">a</a></span>.<span class="typed"><span class="type">()scala.actors.Actor</span><a href="#27670">start</a></span>()
+    <span class="typed"><span class="type">&lt;refinement&gt; extends java.lang.Object with scala.actors.Actor</span><a href="#37269">a</a></span>
+  }
+
+  <span class="comment">/**
+   * &lt;p&gt;
+   * This is a factory method for creating actors whose
+   * body is defined using a &lt;code&gt;Responder&lt;/code&gt;.
+   * &lt;/p&gt;
+   *
+   * &lt;p&gt;The following example demonstrates its usage:&lt;/p&gt;
+   *
+   * &lt;pre&gt;
+   * import scala.actors.Actor._
+   * import Responder.exec
+   * ...
+   * val a = reactor {
+   *   for {
+   *     res &lt;- b !! MyRequest;
+   *     if exec(println(&quot;result: &quot;+res))
+   *   } yield {}
+   * }
+   * &lt;/pre&gt;
+   *
+   * @param  body  the &lt;code&gt;Responder&lt;/code&gt; to be executed by the newly created actor
+   * @return       the newly created actor. Note that it is automatically started.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(=&gt; Responder[Unit])scala.actors.Actor</span><a id="27718">reactor</a></span>(<span class="typed"><span class="type">=&gt; Responder[Unit]</span><a id="37285">body</a></span>: =&gt; Responder[Unit]): <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907">Actor</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">&lt;refinement&gt; extends java.lang.Object with scala.actors.Actor</span><a id="37286">a</a></span> = <span class="typed"><span class="type">template $anon extends java.lang.Object with scala.actors.Actor</span><a id="37287" class="keyword">new</a></span> <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907">Actor</a></span> {
+      <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="37289">act</a></span>() {
+        <span class="typed"><span class="type">object Responder</span><a href="../Responder.scala.html#1524">Responder</a></span>.<span class="typed"><span class="type">(Responder[Unit])Option[Unit]</span><a href="../Responder.scala.html#27780">run</a></span>(<span class="typed"><span class="type">=&gt; Responder[Unit]</span><a href="#37285">body</a></span>)
+      }
+      <span class="keyword">override</span> <span class="keyword">final</span> <span class="keyword">val</span> <span class="typed"><span class="type">scala.actors.IScheduler</span><span id="37291"><a id="37290">scheduler</a></span></span>: <span class="typed"><span class="type">scala.actors.IScheduler</span><a href="Scheduler.scala.html#8114">IScheduler</a></span> = <span class="typed"><span class="type">=&gt; scala.actors.IScheduler</span><a href="#27714">parentScheduler</a></span>
+    }
+    <span class="typed"><span class="type">&lt;refinement&gt; extends java.lang.Object with scala.actors.Actor</span><a href="#37286">a</a></span>.<span class="typed"><span class="type">()scala.actors.Actor</span><a href="#27670">start</a></span>()
+    <span class="typed"><span class="type">&lt;refinement&gt; extends java.lang.Object with scala.actors.Actor</span><a href="#37286">a</a></span>
+  }
+
+  <span class="comment">/**
+   * Receives the next message from the mailbox of the current actor
+   * &lt;code&gt;self&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Any</span><a id="27719">?</a></span> : <span class="typed"><span class="type">Any</span><a id="49">Any</a></span> = <span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="#27712">self</a></span>.<span class="typed"><span class="type">=&gt; Any</span><a href="#27651">?</a></span>
+
+  <span class="comment">/**
+   * Receives a message from the mailbox of
+   * &lt;code&gt;self&lt;/code&gt;. Blocks if no message matching any of the
+   * cases of &lt;code&gt;f&lt;/code&gt; can be received.
+   *
+   * @param  f a partial function specifying patterns and actions
+   * @return   the result of processing the received message
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[A](PartialFunction[Any,A])A</span><a id="27720">receive</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="27722">A</a></span>](<span class="typed"><span class="type">PartialFunction[Any,A]</span><a id="27809">f</a></span>: <span class="typed"><span class="type">PartialFunction[Any,A]</span><a href="../PartialFunction.scala.html#1295">PartialFunction</a></span>[Any, A]): <span class="typed"><span class="type">A</span><a href="#27722">A</a></span> =
+    <span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="#27712">self</a></span>.<span class="typed"><span class="type">(PartialFunction[Any,A])A</span><a href="#27633">receive</a></span>(<span class="typed"><span class="type">PartialFunction[Any,A]</span><a href="#27809">f</a></span>)
+
+  <span class="comment">/**
+   * Receives a message from the mailbox of
+   * &lt;code&gt;self&lt;/code&gt;. Blocks at most &lt;code&gt;msec&lt;/code&gt;
+   * milliseconds if no message matching any of the cases of
+   * &lt;code&gt;f&lt;/code&gt; can be received. If no message could be
+   * received the &lt;code&gt;TIMEOUT&lt;/code&gt; action is executed if
+   * specified.
+   *
+   * @param  msec the time span before timeout
+   * @param  f    a partial function specifying patterns and actions
+   * @return      the result of processing the received message
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[R](Long)(PartialFunction[Any,R])R</span><a id="27723">receiveWithin</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="27725">R</a></span>](<span class="typed"><span class="type">Long</span><a id="37309">msec</a></span>: <span class="typed"><span class="type">Long</span><a id="2397">Long</a></span>)(<span class="typed"><span class="type">PartialFunction[Any,R]</span><a id="37310">f</a></span>: <span class="typed"><span class="type">PartialFunction[Any,R]</span><a href="../PartialFunction.scala.html#1295">PartialFunction</a></span>[Any, R]): <span class="typed"><span class="type">R</span><a href="#27725">R</a></span> =
+    <span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="#27712">self</a></span>.<span class="typed"><span class="type">(Long)(PartialFunction[Any,R])R</span><a href="#27636">receiveWithin</a></span>(<span class="typed"><span class="type">Long</span><a href="#37309">msec</a></span>)(<span class="typed"><span class="type">PartialFunction[Any,R]</span><a href="#37310">f</a></span>)
+
+  <span class="comment">/**
+   * Lightweight variant of &lt;code&gt;receive&lt;/code&gt;.
+   *
+   * Actions in &lt;code&gt;f&lt;/code&gt; have to contain the rest of the
+   * computation of &lt;code&gt;self&lt;/code&gt;, as this method will never
+   * return.
+   *
+   * @param  f a partial function specifying patterns and actions
+   * @return   this function never returns
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(PartialFunction[Any,Unit])Nothing</span><a id="27726">react</a></span>(<span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a id="27752">f</a></span>: <span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="../PartialFunction.scala.html#1295">PartialFunction</a></span>[Any, Unit]): <span class="typed"><span class="type">Nothing</span><a id="2165">Nothing</a></span> =
+    <span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="#27712">self</a></span>.<span class="typed"><span class="type">(PartialFunction[Any,Unit])Nothing</span><a href="#27639">react</a></span>(<span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="#27752">f</a></span>)
+
+  <span class="comment">/**
+   * Lightweight variant of &lt;code&gt;receiveWithin&lt;/code&gt;.
+   *
+   * Actions in &lt;code&gt;f&lt;/code&gt; have to contain the rest of the
+   * computation of &lt;code&gt;self&lt;/code&gt;, as this method will never
+   * return.
+   *
+   * @param  msec the time span before timeout
+   * @param  f    a partial function specifying patterns and actions
+   * @return      this function never returns
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Long)(PartialFunction[Any,Unit])Nothing</span><a id="27727">reactWithin</a></span>(<span class="typed"><span class="type">Long</span><a id="27800">msec</a></span>: <span class="typed"><span class="type">Long</span><a id="2397">Long</a></span>)(<span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a id="27801">f</a></span>: <span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="../PartialFunction.scala.html#1295">PartialFunction</a></span>[Any, Unit]): <span class="typed"><span class="type">Nothing</span><a id="2165">Nothing</a></span> =
+    <span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="#27712">self</a></span>.<span class="typed"><span class="type">(Long)(PartialFunction[Any,Unit])Nothing</span><a href="#27640">reactWithin</a></span>(<span class="typed"><span class="type">Long</span><a href="#27800">msec</a></span>)(<span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="#27801">f</a></span>)
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">(PartialFunction[Any,Unit])Nothing</span><a id="27728">eventloop</a></span>(<span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a id="37320">f</a></span>: <span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="../PartialFunction.scala.html#1295">PartialFunction</a></span>[Any, Unit]): <span class="typed"><span class="type">Nothing</span><a id="2165">Nothing</a></span> =
+    <span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="#27712">self</a></span>.<span class="typed"><span class="type">(PartialFunction[Any,Unit])Nothing</span><a href="#27639">react</a></span>(<span class="typed"><span class="type">scala.actors.Actor.RecursiveProxyHandler</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.actors.Actor.RecursiveProxyHandler</span><a href="#27729">RecursiveProxyHandler</a></span>(<span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="#27712">self</a></span>, <span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="#37320">f</a></span>))
+
+  <span class="keyword">private</span> <span class="keyword">class</span> <span class="typed"><span class="type">class RecursiveProxyHandler extends java.lang.Object with PartialFunction[Any,Unit] with ScalaObject</span><a id="27729">RecursiveProxyHandler</a></span>(<span class="typed"><span class="type">scala.actors.Actor</span><span id="37324"><a id="37329">a</a></span></span>: <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907">Actor</a></span>, <span class="typed"><span class="type">PartialFunction[Any,Unit]</span><span id="37325"><a id="37330">f</a></span></span>: <span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="../PartialFunction.scala.html#1295">PartialFunction</a></span>[Any, Unit])
+          <span class="keyword">extends</span> <span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="../PartialFunction.scala.html#1295">PartialFunction</a></span>[Any, Unit] {
+    <span class="keyword">def</span> <span class="typed"><span class="type">(Any)Boolean</span><a id="37327">isDefinedAt</a></span>(<span class="typed"><span class="type">Any</span><a id="37335">m</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> =
+      <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span> <span class="comment">// events are immediately removed from the mailbox</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">(Any)Unit</span><a id="37328">apply</a></span>(<span class="typed"><span class="type">Any</span><a id="37336">m</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>) {
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="#37325">f</a></span>.<span class="typed"><span class="type">(Any)Boolean</span><a href="../PartialFunction.scala.html#17289">isDefinedAt</a></span>(<span class="typed"><span class="type">Any</span><a href="#37336">m</a></span>)) <span class="typed"><span class="type">(Any)Unit</span><a href="../Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">Any</span><a href="#37336">m</a></span>)
+      <span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="#27712">self</a></span>.<span class="typed"><span class="type">(PartialFunction[Any,Unit])Nothing</span><a href="#27639">react</a></span>(<span class="typed"><span class="type">scala.actors.Actor.RecursiveProxyHandler</span><a href="#27729" class="keyword">this</a></span>)
+    }
+  }
+
+  <span class="comment">/**
+   * Returns the actor which sent the last received message.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; scala.actors.OutputChannel[Any]</span><a id="27730">sender</a></span>: <span class="typed"><span class="type">scala.actors.OutputChannel[Any]</span><a href="OutputChannel.scala.html#8150">OutputChannel</a></span>[Any] = <span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="#27712">self</a></span>.<span class="typed"><span class="type">=&gt; scala.actors.OutputChannel[Any]</span><a href="#27652">sender</a></span>
+
+  <span class="comment">/**
+   * Send &lt;code&gt;msg&lt;/code&gt; to the actor waiting in a call to
+   * &lt;code&gt;!?&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Any)Unit</span><a id="27731">reply</a></span>(<span class="typed"><span class="type">Any</span><a id="27756">msg</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = <span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="#27712">self</a></span>.<span class="typed"><span class="type">(Any)Unit</span><a href="#27650">reply</a></span>(<span class="typed"><span class="type">Any</span><a href="#27756">msg</a></span>)
+
+  <span class="comment">/**
+   * Send &lt;code&gt;()&lt;/code&gt; to the actor waiting in a call to
+   * &lt;code&gt;!?&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="27732">reply</a></span>(): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = <span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="#27712">self</a></span>.<span class="typed"><span class="type">(Any)Unit</span><a href="#27650">reply</a></span>(<span class="typed"><span class="type">Unit</span><span >(</span></span>))
+
+  <span class="comment">/**
+   * Returns the number of messages in &lt;code&gt;self&lt;/code&gt;'s mailbox
+   *
+   * @return the number of messages in &lt;code&gt;self&lt;/code&gt;'s mailbox
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Int</span><a id="27733">mailboxSize</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = <span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="#27712">self</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="#27631">mailboxSize</a></span>
+
+  <span class="comment">/**
+   * &lt;p&gt;
+   * Converts a synchronous event-based operation into
+   * an asynchronous &lt;code&gt;Responder&lt;/code&gt;.
+   * &lt;/p&gt;
+   *
+   * &lt;p&gt;The following example demonstrates its usage:&lt;/p&gt;
+   * 
+   * &lt;pre&gt;
+   * val adder = reactor {
+   *   for {
+   *     _ &lt;- respondOn(react) { case Add(a, b) =&gt; reply(a+b) }
+   *   } yield {}
+   * }
+   * &lt;/pre&gt;
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[A, B]((PartialFunction[A,Unit]) =&gt; Nothing)(PartialFunction[A,B]) =&gt; Responder[B]</span><a id="27734">respondOn</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="27737">A</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="27738">B</a></span>](<span class="typed"><span class="type">(PartialFunction[A,Unit]) =&gt; Nothing</span><a id="37347">fun</a></span>: PartialFunction[A, Unit] =&gt; Nothing):
+    PartialFunction[A, B] =&gt; Responder[B] =
+      (<span class="typed"><span class="type">PartialFunction[A,B]</span><a id="37349">caseBlock</a></span>: <span class="typed"><span class="type">PartialFunction[A,B]</span><a href="../PartialFunction.scala.html#1295">PartialFunction</a></span>[A, B]) =&gt; <span class="typed"><span class="type">template $anon extends Responder[B]</span><a id="37350" class="keyword">new</a></span> <span class="typed"><span class="type">Responder[B]</span><a href="../Responder.scala.html#1523">Responder</a></span>[B] {
+        <span class="keyword">def</span> <span class="typed"><span class="type">((B) =&gt; Unit)Nothing</span><a id="37352">respond</a></span>(<span class="typed"><span class="type">(B) =&gt; Unit</span><a id="37354">k</a></span>: B =&gt; Unit) = <span class="typed"><span class="type">(PartialFunction[A,Unit])Nothing</span><a href="../Function1.scala.html#17300">fun</a></span>(<span class="typed"><span class="type">PartialFunction[A,B]</span><a href="#37349">caseBlock</a></span> <span class="typed"><span class="type">((B) =&gt; Unit)PartialFunction[A,Unit]</span><a href="../PartialFunction.scala.html#17295">andThen</a></span> <span class="typed"><span class="type">(B) =&gt; Unit</span><a href="#37354">k</a></span>)
+      }
+
+  <span class="keyword">private</span>[actors] <span class="keyword">trait</span> <span class="typed"><span class="type">trait Body[a] extends java.lang.Object</span><span id="27739"><a id="2163">Body</a></span></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="27740">a</a></span>] {
+    <span class="keyword">def</span> <span class="typed"><span class="type">[b](=&gt; b)Unit</span><a id="37362">andThen</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="37364">b</a></span>](<span class="typed"><span class="type">=&gt; b</span><a id="37366">other</a></span>: =&gt; b): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span>
+  }
+
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <span class="typed"><span class="type">[a](=&gt; a)java.lang.Object with scala.actors.Actor.Body[a]</span><a id="27741">mkBody</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="27743">a</a></span>](<span class="typed"><span class="type">=&gt; a</span><a id="37367">body</a></span>: =&gt; a) = <span class="typed"><span class="type">template $anon extends java.lang.Object with scala.actors.Actor.Body[a]</span><a id="37369" class="keyword">new</a></span> <span class="typed"><span class="type">scala.actors.Actor.Body[a]</span><a href="#27739">Body</a></span>[a] {
+    <span class="keyword">def</span> <span class="typed"><span class="type">[b](=&gt; b)Unit</span><a id="37371">andThen</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="37373">b</a></span>](<span class="typed"><span class="type">=&gt; b</span><a id="37376">other</a></span>: =&gt; b): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = <span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="#27712">self</a></span>.<span class="typed"><span class="type">(=&gt; a,=&gt; b)Unit</span><a href="#27671">seq</a></span>(<span class="typed"><span class="type">=&gt; a</span><a href="#37367">body</a></span>, <span class="typed"><span class="type">=&gt; b</span><a href="#37376">other</a></span>)
+  }
+
+  <span class="comment">/**
+   * Causes &lt;code&gt;self&lt;/code&gt; to repeatedly execute
+   * &lt;code&gt;body&lt;/code&gt;.
+   *
+   * @param body the code block to be executed
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(=&gt; Unit)Unit</span><a id="27744">loop</a></span>(<span class="typed"><span class="type">=&gt; Unit</span><a id="37390">body</a></span>: =&gt; Unit): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = <span class="typed"><span class="type">(=&gt; Unit)java.lang.Object with scala.actors.Actor.Body[Unit]</span><a href="#27741">body</a></span> <span class="typed"><span class="type">(=&gt; Unit)Unit</span><a href="#37362">andThen</a></span> <span class="typed"><span class="type">(=&gt; Unit)Unit</span><a href="#27744">loop</a></span>(<span class="typed"><span class="type">=&gt; Unit</span><a href="#37390">body</a></span>)
+
+  <span class="comment">/**
+   * Causes &lt;code&gt;self&lt;/code&gt; to repeatedly execute
+   * &lt;code&gt;body&lt;/code&gt; while the condition
+   * &lt;code&gt;cond&lt;/code&gt; is &lt;code&gt;true&lt;/code&gt;.
+   *
+   * @param cond the condition to test
+   * @param body the code block to be executed
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(=&gt; Boolean)(=&gt; Unit)Unit</span><a id="27745">loopWhile</a></span>(<span class="typed"><span class="type">=&gt; Boolean</span><a id="37405">cond</a></span>: =&gt; Boolean)(<span class="typed"><span class="type">=&gt; Unit</span><a id="37406">body</a></span>: =&gt; Unit): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> =
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#37405">cond</a></span>) { <span class="typed"><span class="type">(=&gt; Unit)java.lang.Object with scala.actors.Actor.Body[Unit]</span><a href="#27741">body</a></span> <span class="typed"><span class="type">(=&gt; Unit)Unit</span><a href="#37362">andThen</a></span> <span class="typed"><span class="type">(=&gt; Boolean)(=&gt; Unit)Unit</span><a href="#27745">loopWhile</a></span>(<span class="typed"><span class="type">=&gt; Boolean</span><a href="#37405">cond</a></span>)(<span class="typed"><span class="type">=&gt; Unit</span><a href="#37406">body</a></span>) }
+    <span class="keyword">else</span> <span class="typed"><span class="type">=&gt; Unit</span><a href="#27751">continue</a></span>
+
+  <span class="comment">/**
+   * Links &lt;code&gt;self&lt;/code&gt; to actor &lt;code&gt;to&lt;/code&gt;.
+   *
+   * @param  to the actor to link to
+   * @return 
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(scala.actors.AbstractActor)scala.actors.AbstractActor</span><a id="27746">link</a></span>(<span class="typed"><span class="type">scala.actors.AbstractActor</span><a id="37421">to</a></span>: <span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="AbstractActor.scala.html#8201">AbstractActor</a></span>): <span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="AbstractActor.scala.html#8201">AbstractActor</a></span> = <span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="#27712">self</a></span>.<span class="typed"><span class="type">(scala.actors.AbstractActor)scala.actors.AbstractActor</span><a href="#27679">link</a></span>(<span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="#37421">to</a></span>)
+
+  <span class="comment">/**
+   * Links &lt;code&gt;self&lt;/code&gt; to actor defined by &lt;code&gt;body&lt;/code&gt;.
+   *
+   * @param body ...
+   * @return     ...
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(=&gt; Unit)scala.actors.Actor</span><a id="27747">link</a></span>(<span class="typed"><span class="type">=&gt; Unit</span><a id="37426">body</a></span>: =&gt; Unit): <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907">Actor</a></span> = <span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="#27712">self</a></span>.<span class="typed"><span class="type">(=&gt; Unit)scala.actors.Actor</span><a href="#27680">link</a></span>(<span class="typed"><span class="type">=&gt; Unit</span><a href="#37426">body</a></span>)
+
+  <span class="comment">/**
+   * Unlinks &lt;code&gt;self&lt;/code&gt; from actor &lt;code&gt;from&lt;/code&gt;.
+   *
+   * @param from the actor to unlink from
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(scala.actors.Actor)Unit</span><a id="27748">unlink</a></span>(<span class="typed"><span class="type">scala.actors.Actor</span><a id="37435">from</a></span>: <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907">Actor</a></span>): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = <span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="#27712">self</a></span>.<span class="typed"><span class="type">(scala.actors.AbstractActor)Unit</span><a href="#27682">unlink</a></span>(<span class="typed"><span class="type">scala.actors.Actor</span><a href="#37435">from</a></span>)
+
+  <span class="comment">/**
+   * &lt;p&gt;
+   *   Terminates execution of &lt;code&gt;self&lt;/code&gt; with the following
+   *   effect on linked actors:
+   * &lt;/p&gt;
+   * &lt;p&gt;
+   *   For each linked actor &lt;code&gt;a&lt;/code&gt; with
+   *   &lt;code&gt;trapExit&lt;/code&gt; set to &lt;code&gt;true&lt;/code&gt;, send message
+   *   &lt;code&gt;Exit(self, reason)&lt;/code&gt; to &lt;code&gt;a&lt;/code&gt;.
+   * &lt;/p&gt;
+   * &lt;p&gt;
+   *   For each linked actor &lt;code&gt;a&lt;/code&gt; with
+   *   &lt;code&gt;trapExit&lt;/code&gt; set to &lt;code&gt;false&lt;/code&gt; (default),
+   *   call &lt;code&gt;a.exit(reason)&lt;/code&gt; if
+   *   &lt;code&gt;reason != 'normal&lt;/code&gt;.
+   * &lt;/p&gt;
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(AnyRef)Nothing</span><a id="27749">exit</a></span>(<span class="typed"><span class="type">AnyRef</span><a id="37438">reason</a></span>: <span class="typed"><span class="type">AnyRef</span><a id="2015">AnyRef</a></span>): <span class="typed"><span class="type">Nothing</span><a id="2165">Nothing</a></span> = <span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="#27712">self</a></span>.<span class="typed"><span class="type">(AnyRef)Nothing</span><a href="#27693">exit</a></span>(<span class="typed"><span class="type">AnyRef</span><a href="#37438">reason</a></span>)
+
+  <span class="comment">/**
+   * &lt;p&gt;
+   *   Terminates execution of &lt;code&gt;self&lt;/code&gt; with the following
+   *   effect on linked actors:
+   * &lt;/p&gt;
+   * &lt;p&gt;
+   *   For each linked actor &lt;code&gt;a&lt;/code&gt; with
+   *   &lt;code&gt;trapExit&lt;/code&gt; set to &lt;code&gt;true&lt;/code&gt;, send message
+   *   &lt;code&gt;Exit(self, 'normal)&lt;/code&gt; to &lt;code&gt;a&lt;/code&gt;.
+   * &lt;/p&gt;
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">()Nothing</span><a id="27750">exit</a></span>(): <span class="typed"><span class="type">Nothing</span><a id="2165">Nothing</a></span> = <span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="#27712">self</a></span>.<span class="typed"><span class="type">()Nothing</span><a href="#27694">exit</a></span>()
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Unit</span><a id="27751">continue</a></span>: <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">scala.actors.KillActorException</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.actors.KillActorException</span><a href="Reaction.scala.html#8240">KillActorException</a></span>
+}
+
+<span class="comment">/**
+ * &lt;p&gt;
+ *   This class provides an implementation of event-based actors.
+ *   The main ideas of our approach are explained in the two papers
+ * &lt;/p&gt;
+ * &lt;ul&gt;
+ *   &lt;li&gt;
+ *     &lt;a href=&quot;http://lampwww.epfl.ch/~odersky/papers/jmlc06.pdf&quot;&gt;
+ *     &lt;span style=&quot;font-weight:bold; white-space:nowrap;&quot;&gt;Event-Based
+ *     Programming without Inversion of Control&lt;/span&gt;&lt;/a&gt;,&lt;br/&gt;
+ *     Philipp Haller and Martin Odersky, &lt;i&gt;Proc. JMLC 2006&lt;/i&gt;, and
+ *   &lt;/li&gt;
+ *   &lt;li&gt;
+ *     &lt;a href=&quot;http://lamp.epfl.ch/~phaller/doc/haller07coord.pdf&quot;&gt;
+ *     &lt;span style=&quot;font-weight:bold; white-space:nowrap;&quot;&gt;Actors that
+ *     Unify Threads and Events&lt;/span&gt;&lt;/a&gt;,&lt;br/&gt;
+ *     Philipp Haller and Martin Odersky, &lt;i&gt;Proc. COORDINATION 2007&lt;/i&gt;.
+ *   &lt;/li&gt;
+ * &lt;/ul&gt;
+ *
+ * @version 0.9.18
+ * @author Philipp Haller
+ */</span>
+@<span class="typed"><span class="type">serializable</span><a href="../serializable.scala.html#647">serializable</a></span>
+<span class="keyword">trait</span> <span class="typed"><span class="type">trait Actor extends java.lang.Object with scala.actors.AbstractActor with ScalaObject</span><a id="7907">Actor</a></span> <span class="keyword">extends</span> <span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="AbstractActor.scala.html#8201">AbstractActor</a></span> {
+
+  <span class="keyword">private</span> <span class="keyword">var</span> <span class="typed"><span class="type">Option[Any]</span><span id="27616"><span id="27614"><span id="27615"><a id="37460">received</a></span></span></span></span>: <span class="typed"><span class="type">Option[Any]</span><a href="../Option.scala.html#932">Option</a></span>[Any] = <span class="typed"><span class="type">object None</span><a href="../Option.scala.html#534">None</a></span>
+
+  <span class="keyword">private</span> <span class="keyword">val</span> <span class="typed"><span class="type">(Any) =&gt; Boolean</span><span id="27618"><a id="27617">waitingForNone</a></span></span> = (<span class="typed"><span class="type">Any</span><a id="37462">m</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>) =&gt; <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+  <span class="keyword">private</span> <span class="keyword">var</span> <span class="typed"><span class="type">(Any) =&gt; Boolean</span><span id="27621"><span id="27619"><span id="27620"><a id="37463">waitingFor</a></span></span></span></span>: Any =&gt; Boolean = <span class="typed"><span class="type">=&gt; (Any) =&gt; Boolean</span><a href="#27617">waitingForNone</a></span>
+  <span class="keyword">private</span> <span class="keyword">var</span> <span class="typed"><span class="type">Boolean</span><span id="27624"><span id="27622"><span id="27623"><a id="37464">isSuspended</a></span></span></span></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+
+  <span class="keyword">protected</span> <span class="keyword">val</span> <span class="typed"><span class="type">scala.actors.MessageQueue</span><span id="27626"><a id="27625">mailbox</a></span></span> = <span class="typed"><span class="type">scala.actors.MessageQueue</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.actors.MessageQueue</span><a href="MessageQueue.scala.html#8138">MessageQueue</a></span>
+  <span class="keyword">private</span> <span class="keyword">var</span> <span class="typed"><span class="type">List[scala.actors.OutputChannel[Any]]</span><span id="27629"><span id="27627"><span id="27628"><a id="37485">sessions</a></span></span></span></span>: <span class="typed"><span class="type">List[scala.actors.OutputChannel[Any]]</span><a href="../List.scala.html#524">List</a></span>[OutputChannel[Any]] = <span class="typed"><span class="type">object Nil</span><a href="../List.scala.html#333">Nil</a></span>
+
+  <span class="keyword">protected</span>[actors] <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; scala.actors.IScheduler</span><a id="27630">scheduler</a></span>: <span class="typed"><span class="type">scala.actors.IScheduler</span><a href="Scheduler.scala.html#8114">IScheduler</a></span> =
+    <span class="typed"><span class="type">object scala.actors.Scheduler</span><a href="Scheduler.scala.html#8166">Scheduler</a></span>
+
+  <span class="comment">/**
+   * Returns the number of messages in this actor's mailbox
+   *
+   * @return the number of messages in this actor's mailbox
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Int</span><a id="27631">mailboxSize</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = <span class="typed"><span class="type">(Int)Int</span><a href="#7907" id="5794">synchronized</a></span> {
+    <span class="typed"><span class="type">=&gt; scala.actors.MessageQueue</span><a href="#27625">mailbox</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="MessageQueue.scala.html#37476">size</a></span>
+  }
+
+  <span class="comment">/**
+   * Sends &lt;code&gt;msg&lt;/code&gt; to this actor (asynchronous) supplying
+   * explicit reply destination.
+   *
+   * @param  msg      the message to send
+   * @param  replyTo  the reply destination
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Any,scala.actors.OutputChannel[Any])Unit</span><a id="27632">send</a></span>(<span class="typed"><span class="type">Any</span><a id="37499">msg</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>, <span class="typed"><span class="type">scala.actors.OutputChannel[Any]</span><a id="37500">replyTo</a></span>: <span class="typed"><span class="type">scala.actors.OutputChannel[Any]</span><a href="OutputChannel.scala.html#8150">OutputChannel</a></span>[Any]) = <span class="typed"><span class="type">(Unit)Unit</span><a href="#7907" id="5794">synchronized</a></span> {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">(Any)Boolean</span><a href="../Function1.scala.html#17300">waitingFor</a></span>(<span class="typed"><span class="type">Any</span><a href="#37499">msg</a></span>)) {
+      <span class="typed"><span class="type">(Option[Any])Unit</span><a href="#27615">received</a></span> = <span class="typed"><span class="type">(Any)Some[Any]</span><a href="../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">Any</span><a href="#37499">msg</a></span>)
+
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#27622">isSuspended</a></span>)
+        <span class="typed"><span class="type">(List[scala.actors.OutputChannel[Any]])Unit</span><a href="#27628">sessions</a></span> = <span class="typed"><span class="type">scala.actors.OutputChannel[Any]</span><a href="#37500">replyTo</a></span> <span class="typed"><span class="type">(scala.actors.OutputChannel[Any])List[scala.actors.OutputChannel[Any]]</span><a href="../List.scala.html#20872">::</a></span> <span class="typed"><span class="type">=&gt; List[scala.actors.OutputChannel[Any]]</span><a href="#27627">sessions</a></span>
+      <span class="keyword">else</span>
+        <span class="typed"><span class="type">(List[scala.actors.OutputChannel[Any]])Unit</span><a href="#27628">sessions</a></span> = <span class="typed"><span class="type">(scala.actors.OutputChannel[Any]*)List[scala.actors.OutputChannel[Any]]</span><a href="../List.scala.html#16977">List</a></span>(<span class="typed"><span class="type">scala.actors.OutputChannel[Any]</span><a href="#37500">replyTo</a></span>)
+
+      <span class="typed"><span class="type">((Any) =&gt; Boolean)Unit</span><a href="#27620">waitingFor</a></span> = <span class="typed"><span class="type">=&gt; (Any) =&gt; Boolean</span><a href="#27617">waitingForNone</a></span>
+
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">=&gt; Option[java.util.TimerTask]</span><a href="#27657">onTimeout</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Option.scala.html#18268">isEmpty</a></span>) {
+        <span class="typed"><span class="type">=&gt; Option[java.util.TimerTask]</span><a href="#27657">onTimeout</a></span>.<span class="typed"><span class="type">=&gt; java.util.TimerTask</span><a href="../Option.scala.html#18270">get</a></span>.<span class="typed"><span class="type">()Boolean</span><a id="27898">cancel</a></span>()
+        <span class="typed"><span class="type">(Option[java.util.TimerTask])Unit</span><a href="#27658">onTimeout</a></span> = <span class="typed"><span class="type">object None</span><a href="../Option.scala.html#534">None</a></span>
+      }
+
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#27622">isSuspended</a></span>)
+        <span class="typed"><span class="type">()Unit</span><a href="#27669">resumeActor</a></span>()
+      <span class="keyword">else</span> <span class="comment">// assert continuation != null</span>
+        <span class="typed"><span class="type">=&gt; scala.actors.IScheduler</span><a href="#27630">scheduler</a></span>.<span class="typed"><span class="type">(java.lang.Runnable)Unit</span><a href="Scheduler.scala.html#26777">execute</a></span>(<span class="typed"><span class="type">(scala.actors.Actor,PartialFunction[Any,Unit],Any)scala.actors.Reaction</span><a href="Reaction.scala.html#37525" class="keyword">new</a></span> <span class="typed"><span class="type">scala.actors.Reaction</span><a href="Reaction.scala.html#8234">Reaction</a></span>(<span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907" class="keyword">this</a></span>, <span class="typed"><span class="type">=&gt; PartialFunction[Any,Unit]</span><a href="#27654">continuation</a></span>, <span class="typed"><span class="type">Any</span><a href="#37499">msg</a></span>))
+    } <span class="keyword">else</span> {
+      <span class="typed"><span class="type">=&gt; scala.actors.MessageQueue</span><a href="#27625">mailbox</a></span>.<span class="typed"><span class="type">(Any,scala.actors.OutputChannel[Any])Unit</span><a href="MessageQueue.scala.html#37478">append</a></span>(<span class="typed"><span class="type">Any</span><a href="#37499">msg</a></span>, <span class="typed"><span class="type">scala.actors.OutputChannel[Any]</span><a href="#37500">replyTo</a></span>)
+    }
+  }
+
+  <span class="comment">/**
+   * Receives a message from this actor's mailbox.
+   *
+   * @param  f    a partial function with message patterns and actions
+   * @return      result of processing the received value
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[R](PartialFunction[Any,R])R</span><a id="27633">receive</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="27635">R</a></span>](<span class="typed"><span class="type">PartialFunction[Any,R]</span><a id="37307">f</a></span>: <span class="typed"><span class="type">PartialFunction[Any,R]</span><a href="../PartialFunction.scala.html#1295">PartialFunction</a></span>[Any, R]): <span class="typed"><span class="type">R</span><a href="#27635">R</a></span> = {
+    <span class="typed"><span class="type">(Boolean,=&gt; Any)Unit</span><a href="../Predef.scala.html#13362">assert</a></span>(<span class="typed"><span class="type">object scala.actors.Actor</span><a href="#7908">Actor</a></span>.<span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="#27712">self</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="3507">==</a></span> <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907" class="keyword">this</a></span>, <span class="typed"><span class="type">java.lang.String(&quot;receive from channel belonging to other actor&quot;)</span><span class="string">&quot;receive from channel belonging to other actor&quot;</span></span>)
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#27690">shouldExit</a></span>) <span class="typed"><span class="type">()Nothing</span><a href="#27694">exit</a></span>() <span class="comment">// links</span>
+    <span class="typed"><span class="type">Actor.this.type</span><a href="#7907" class="keyword">this</a></span>.<span class="typed"><span class="type">(Unit)Unit</span><a id="5794">synchronized</a></span> {
+      <span class="keyword">val</span> <span class="typed"><span class="type">scala.actors.MessageQueueElement</span><a id="37606">qel</a></span> = <span class="typed"><span class="type">=&gt; scala.actors.MessageQueue</span><a href="#27625">mailbox</a></span>.<span class="typed"><span class="type">((Any) =&gt; Boolean)scala.actors.MessageQueueElement</span><a href="MessageQueue.scala.html#37484">extractFirst</a></span>((<span class="typed"><span class="type">Any</span><a id="37609">m</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>) =&gt; <span class="typed"><span class="type">PartialFunction[Any,R]</span><a href="#37307">f</a></span>.<span class="typed"><span class="type">(Any)Boolean</span><a href="../PartialFunction.scala.html#17289">isDefinedAt</a></span>(<span class="typed"><span class="type">Any</span><a href="#37609">m</a></span>))
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">scala.actors.MessageQueueElement</span><a href="#37606">qel</a></span>) {
+        <span class="typed"><span class="type">((Any) =&gt; Boolean)Unit</span><a href="#27620">waitingFor</a></span> = <span class="typed"><span class="type">PartialFunction[Any,R]</span><a href="#37307">f</a></span>.<span class="typed"><span class="type">(Any)Boolean</span><a href="../PartialFunction.scala.html#17289">isDefinedAt</a></span>
+        <span class="typed"><span class="type">()Unit</span><a href="#27667">suspendActor</a></span>()
+      } <span class="keyword">else</span> {
+        <span class="typed"><span class="type">(Option[Any])Unit</span><a href="#27615">received</a></span> = <span class="typed"><span class="type">(Any)Some[Any]</span><a href="../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">scala.actors.MessageQueueElement</span><a href="#37606">qel</a></span>.<span class="typed"><span class="type">=&gt; Any</span><a href="MessageQueue.scala.html#37572">msg</a></span>)
+        <span class="typed"><span class="type">(List[scala.actors.OutputChannel[Any]])Unit</span><a href="#27628">sessions</a></span> = <span class="typed"><span class="type">scala.actors.MessageQueueElement</span><a href="#37606">qel</a></span>.<span class="typed"><span class="type">=&gt; scala.actors.OutputChannel[Any]</span><a href="MessageQueue.scala.html#37575">session</a></span> <span class="typed"><span class="type">(scala.actors.OutputChannel[Any])List[scala.actors.OutputChannel[Any]]</span><a href="../List.scala.html#20872">::</a></span> <span class="typed"><span class="type">=&gt; List[scala.actors.OutputChannel[Any]]</span><a href="#27627">sessions</a></span>
+      }
+    }
+    <span class="keyword">val</span> <span class="typed"><span class="type">R</span><a id="37583">result</a></span> = <span class="typed"><span class="type">(Any)R</span><a href="../Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">=&gt; Option[Any]</span><a href="#27614">received</a></span>.<span class="typed"><span class="type">=&gt; Any</span><a href="../Option.scala.html#18270">get</a></span>)
+    <span class="typed"><span class="type">(List[scala.actors.OutputChannel[Any]])Unit</span><a href="#27628">sessions</a></span> = <span class="typed"><span class="type">=&gt; List[scala.actors.OutputChannel[Any]]</span><a href="#27627">sessions</a></span>.<span class="typed"><span class="type">=&gt; List[scala.actors.OutputChannel[Any]]</span><a href="../List.scala.html#20871">tail</a></span>
+    <span class="typed"><span class="type">R</span><a href="#37583">result</a></span>
+  }
+
+  <span class="comment">/**
+   * Receives a message from this actor's mailbox within a certain
+   * time span.
+   *
+   * @param  msec the time span before timeout
+   * @param  f    a partial function with message patterns and actions
+   * @return      result of processing the received value
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[R](Long)(PartialFunction[Any,R])R</span><a id="27636">receiveWithin</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="27638">R</a></span>](<span class="typed"><span class="type">Long</span><a id="37312">msec</a></span>: <span class="typed"><span class="type">Long</span><a id="2397">Long</a></span>)(<span class="typed"><span class="type">PartialFunction[Any,R]</span><a id="37313">f</a></span>: <span class="typed"><span class="type">PartialFunction[Any,R]</span><a href="../PartialFunction.scala.html#1295">PartialFunction</a></span>[Any, R]): <span class="typed"><span class="type">R</span><a href="#27638">R</a></span> = {
+    <span class="typed"><span class="type">(Boolean,=&gt; Any)Unit</span><a href="../Predef.scala.html#13362">assert</a></span>(<span class="typed"><span class="type">object scala.actors.Actor</span><a href="#7908">Actor</a></span>.<span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="#27712">self</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="3507">==</a></span> <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907" class="keyword">this</a></span>, <span class="typed"><span class="type">java.lang.String(&quot;receive from channel belonging to other actor&quot;)</span><span class="string">&quot;receive from channel belonging to other actor&quot;</span></span>)
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#27690">shouldExit</a></span>) <span class="typed"><span class="type">()Nothing</span><a href="#27694">exit</a></span>() <span class="comment">// links</span>
+    <span class="typed"><span class="type">Actor.this.type</span><a href="#7907" class="keyword">this</a></span>.<span class="typed"><span class="type">(Unit)Unit</span><a id="5794">synchronized</a></span> {
+      <span class="comment">// first, remove spurious TIMEOUT message from mailbox if any</span>
+      <span class="keyword">val</span> <span class="typed"><span class="type">scala.actors.MessageQueueElement</span><a id="37641">spurious</a></span> = <span class="typed"><span class="type">=&gt; scala.actors.MessageQueue</span><a href="#27625">mailbox</a></span>.<span class="typed"><span class="type">((Any) =&gt; Boolean)scala.actors.MessageQueueElement</span><a href="MessageQueue.scala.html#37484">extractFirst</a></span>((<span class="typed"><span class="type">Any</span><a id="37644">m</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>) =&gt; <span class="typed"><span class="type">Any</span><a href="#37644">m</a></span> <span class="typed"><span class="type">(Any)Boolean</span><a id="3494">==</a></span> <span class="typed"><span class="type">object scala.actors.TIMEOUT</span><a href="#8157">TIMEOUT</a></span>)
+
+      <span class="keyword">val</span> <span class="typed"><span class="type">scala.actors.MessageQueueElement</span><a id="37642">qel</a></span> = <span class="typed"><span class="type">=&gt; scala.actors.MessageQueue</span><a href="#27625">mailbox</a></span>.<span class="typed"><span class="type">((Any) =&gt; Boolean)scala.actors.MessageQueueElement</span><a href="MessageQueue.scala.html#37484">extractFirst</a></span>((<span class="typed"><span class="type">Any</span><a id="37646">m</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>) =&gt; <span class="typed"><span class="type">PartialFunction[Any,R]</span><a href="#37313">f</a></span>.<span class="typed"><span class="type">(Any)Boolean</span><a href="../PartialFunction.scala.html#17289">isDefinedAt</a></span>(<span class="typed"><span class="type">Any</span><a href="#37646">m</a></span>))
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">scala.actors.MessageQueueElement</span><a href="#37642">qel</a></span>) {
+        <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Long</span><a href="#37312">msec</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3248">==</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) {
+          <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">PartialFunction[Any,R]</span><a href="#37313">f</a></span>.<span class="typed"><span class="type">(Any)Boolean</span><a href="../PartialFunction.scala.html#17289">isDefinedAt</a></span>(<span class="typed"><span class="type">object scala.actors.TIMEOUT</span><a href="#8157">TIMEOUT</a></span>)) {
+            <span class="typed"><span class="type">(Option[Any])Unit</span><a href="#27615">received</a></span> = <span class="typed"><span class="type">(object scala.actors.TIMEOUT)Some[object scala.actors.TIMEOUT]</span><a href="../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">object scala.actors.TIMEOUT</span><a href="#8157">TIMEOUT</a></span>)
+            <span class="typed"><span class="type">(List[scala.actors.OutputChannel[Any]])Unit</span><a href="#27628">sessions</a></span> = <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907" class="keyword">this</a></span> <span class="typed"><span class="type">(scala.actors.OutputChannel[Any])List[scala.actors.OutputChannel[Any]]</span><a href="../List.scala.html#20872">::</a></span> <span class="typed"><span class="type">=&gt; List[scala.actors.OutputChannel[Any]]</span><a href="#27627">sessions</a></span>
+          } <span class="keyword">else</span>
+            <span class="typed"><span class="type">(String)Nothing</span><a href="../Predef.scala.html#13358">error</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;unhandled timeout&quot;)</span><span class="string">&quot;unhandled timeout&quot;</span></span>)
+        }
+        <span class="keyword">else</span> {
+          <span class="typed"><span class="type">((Any) =&gt; Boolean)Unit</span><a href="#27620">waitingFor</a></span> = <span class="typed"><span class="type">PartialFunction[Any,R]</span><a href="#37313">f</a></span>.<span class="typed"><span class="type">(Any)Boolean</span><a href="../PartialFunction.scala.html#17289">isDefinedAt</a></span>
+          <span class="typed"><span class="type">(Option[Any])Unit</span><a href="#27615">received</a></span> = <span class="typed"><span class="type">object None</span><a href="../Option.scala.html#534">None</a></span>
+          <span class="typed"><span class="type">(Long)Unit</span><a href="#27668">suspendActorFor</a></span>(<span class="typed"><span class="type">Long</span><a href="#37312">msec</a></span>)
+          <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Option[Any]</span><a href="#27614">received</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Option.scala.html#18268">isEmpty</a></span>) {
+            <span class="comment">// actor is not resumed because of new message</span>
+            <span class="comment">// therefore, waitingFor has not been updated, yet.</span>
+            <span class="typed"><span class="type">((Any) =&gt; Boolean)Unit</span><a href="#27620">waitingFor</a></span> = <span class="typed"><span class="type">=&gt; (Any) =&gt; Boolean</span><a href="#27617">waitingForNone</a></span>
+            <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">PartialFunction[Any,R]</span><a href="#37313">f</a></span>.<span class="typed"><span class="type">(Any)Boolean</span><a href="../PartialFunction.scala.html#17289">isDefinedAt</a></span>(<span class="typed"><span class="type">object scala.actors.TIMEOUT</span><a href="#8157">TIMEOUT</a></span>)) {
+              <span class="typed"><span class="type">(Option[Any])Unit</span><a href="#27615">received</a></span> = <span class="typed"><span class="type">(object scala.actors.TIMEOUT)Some[object scala.actors.TIMEOUT]</span><a href="../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">object scala.actors.TIMEOUT</span><a href="#8157">TIMEOUT</a></span>)
+              <span class="typed"><span class="type">(List[scala.actors.OutputChannel[Any]])Unit</span><a href="#27628">sessions</a></span> = <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907" class="keyword">this</a></span> <span class="typed"><span class="type">(scala.actors.OutputChannel[Any])List[scala.actors.OutputChannel[Any]]</span><a href="../List.scala.html#20872">::</a></span> <span class="typed"><span class="type">=&gt; List[scala.actors.OutputChannel[Any]]</span><a href="#27627">sessions</a></span>
+            }
+            <span class="keyword">else</span>
+              <span class="typed"><span class="type">(String)Nothing</span><a href="../Predef.scala.html#13358">error</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;unhandled timeout&quot;)</span><span class="string">&quot;unhandled timeout&quot;</span></span>)
+          }
+        }
+      } <span class="keyword">else</span> {
+        <span class="typed"><span class="type">(Option[Any])Unit</span><a href="#27615">received</a></span> = <span class="typed"><span class="type">(Any)Some[Any]</span><a href="../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">scala.actors.MessageQueueElement</span><a href="#37642">qel</a></span>.<span class="typed"><span class="type">=&gt; Any</span><a href="MessageQueue.scala.html#37572">msg</a></span>)
+        <span class="typed"><span class="type">(List[scala.actors.OutputChannel[Any]])Unit</span><a href="#27628">sessions</a></span> = <span class="typed"><span class="type">scala.actors.MessageQueueElement</span><a href="#37642">qel</a></span>.<span class="typed"><span class="type">=&gt; scala.actors.OutputChannel[Any]</span><a href="MessageQueue.scala.html#37575">session</a></span> <span class="typed"><span class="type">(scala.actors.OutputChannel[Any])List[scala.actors.OutputChannel[Any]]</span><a href="../List.scala.html#20872">::</a></span> <span class="typed"><span class="type">=&gt; List[scala.actors.OutputChannel[Any]]</span><a href="#27627">sessions</a></span>
+      }
+    }
+    <span class="keyword">val</span> <span class="typed"><span class="type">R</span><a id="37621">result</a></span> = <span class="typed"><span class="type">(Any)R</span><a href="../Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">=&gt; Option[Any]</span><a href="#27614">received</a></span>.<span class="typed"><span class="type">=&gt; Any</span><a href="../Option.scala.html#18270">get</a></span>)
+    <span class="typed"><span class="type">(List[scala.actors.OutputChannel[Any]])Unit</span><a href="#27628">sessions</a></span> = <span class="typed"><span class="type">=&gt; List[scala.actors.OutputChannel[Any]]</span><a href="#27627">sessions</a></span>.<span class="typed"><span class="type">=&gt; List[scala.actors.OutputChannel[Any]]</span><a href="../List.scala.html#20871">tail</a></span>
+    <span class="typed"><span class="type">R</span><a href="#37621">result</a></span>
+  }
+
+  <span class="comment">/**
+   * Receives a message from this actor's mailbox.
+   * &lt;p&gt;
+   * This method never returns. Therefore, the rest of the computation
+   * has to be contained in the actions of the partial function.
+   *
+   * @param  f    a partial function with message patterns and actions
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(PartialFunction[Any,Unit])Nothing</span><a id="27639">react</a></span>(<span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a id="37316">f</a></span>: <span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="../PartialFunction.scala.html#1295">PartialFunction</a></span>[Any, Unit]): <span class="typed"><span class="type">Nothing</span><a id="2165">Nothing</a></span> = {
+    <span class="typed"><span class="type">(Boolean,=&gt; Any)Unit</span><a href="../Predef.scala.html#13362">assert</a></span>(<span class="typed"><span class="type">object scala.actors.Actor</span><a href="#7908">Actor</a></span>.<span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="#27712">self</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="3507">==</a></span> <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907" class="keyword">this</a></span>, <span class="typed"><span class="type">java.lang.String(&quot;react on channel belonging to other actor&quot;)</span><span class="string">&quot;react on channel belonging to other actor&quot;</span></span>)
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#27690">shouldExit</a></span>) <span class="typed"><span class="type">()Nothing</span><a href="#27694">exit</a></span>() <span class="comment">// links</span>
+    <span class="typed"><span class="type">Actor.this.type</span><a href="#7907" class="keyword">this</a></span>.<span class="typed"><span class="type">(Nothing)Nothing</span><a id="5794">synchronized</a></span> {
+      <span class="keyword">val</span> <span class="typed"><span class="type">scala.actors.MessageQueueElement</span><a id="37686">qel</a></span> = <span class="typed"><span class="type">=&gt; scala.actors.MessageQueue</span><a href="#27625">mailbox</a></span>.<span class="typed"><span class="type">((Any) =&gt; Boolean)scala.actors.MessageQueueElement</span><a href="MessageQueue.scala.html#37484">extractFirst</a></span>((<span class="typed"><span class="type">Any</span><a id="37688">m</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>) =&gt; <span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="#37316">f</a></span>.<span class="typed"><span class="type">(Any)Boolean</span><a href="../PartialFunction.scala.html#17289">isDefinedAt</a></span>(<span class="typed"><span class="type">Any</span><a href="#37688">m</a></span>))
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">scala.actors.MessageQueueElement</span><a href="#37686">qel</a></span>) {
+        <span class="typed"><span class="type">((Any) =&gt; Boolean)Unit</span><a href="#27620">waitingFor</a></span> = <span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="#37316">f</a></span>.<span class="typed"><span class="type">(Any)Boolean</span><a href="../PartialFunction.scala.html#17289">isDefinedAt</a></span>
+        <span class="typed"><span class="type">(PartialFunction[Any,Unit])Unit</span><a href="#27655">continuation</a></span> = <span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="#37316">f</a></span>
+        <span class="typed"><span class="type">(Boolean)Unit</span><a href="#27661">isDetached</a></span> = <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+      } <span class="keyword">else</span> {
+        <span class="typed"><span class="type">(List[scala.actors.OutputChannel[Any]])Unit</span><a href="#27628">sessions</a></span> = <span class="typed"><span class="type">(scala.actors.OutputChannel[Any]*)List[scala.actors.OutputChannel[Any]]</span><a href="../List.scala.html#16977">List</a></span>(<span class="typed"><span class="type">scala.actors.MessageQueueElement</span><a href="#37686">qel</a></span>.<span class="typed"><span class="type">=&gt; scala.actors.OutputChannel[Any]</span><a href="MessageQueue.scala.html#37575">session</a></span>)
+        <span class="typed"><span class="type">(PartialFunction[Any,Unit],Any)Unit</span><a href="#27663">scheduleActor</a></span>(<span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="#37316">f</a></span>, <span class="typed"><span class="type">scala.actors.MessageQueueElement</span><a href="#37686">qel</a></span>.<span class="typed"><span class="type">=&gt; Any</span><a href="MessageQueue.scala.html#37572">msg</a></span>)
+      }
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">scala.actors.SuspendActorException</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.actors.SuspendActorException</span><a href="#8171">SuspendActorException</a></span>
+    }
+  }
+
+  <span class="comment">/**
+   * Receives a message from this actor's mailbox within a certain
+   * time span.
+   * &lt;p&gt;
+   * This method never returns. Therefore, the rest of the computation
+   * has to be contained in the actions of the partial function.
+   *
+   * @param  msec the time span before timeout
+   * @param  f    a partial function with message patterns and actions
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Long)(PartialFunction[Any,Unit])Nothing</span><a id="27640">reactWithin</a></span>(<span class="typed"><span class="type">Long</span><a id="37318">msec</a></span>: <span class="typed"><span class="type">Long</span><a id="2397">Long</a></span>)(<span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a id="37319">f</a></span>: <span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="../PartialFunction.scala.html#1295">PartialFunction</a></span>[Any, Unit]): <span class="typed"><span class="type">Nothing</span><a id="2165">Nothing</a></span> = {
+    <span class="typed"><span class="type">(Boolean,=&gt; Any)Unit</span><a href="../Predef.scala.html#13362">assert</a></span>(<span class="typed"><span class="type">object scala.actors.Actor</span><a href="#7908">Actor</a></span>.<span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="#27712">self</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="3507">==</a></span> <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907" class="keyword">this</a></span>, <span class="typed"><span class="type">java.lang.String(&quot;react on channel belonging to other actor&quot;)</span><span class="string">&quot;react on channel belonging to other actor&quot;</span></span>)
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#27690">shouldExit</a></span>) <span class="typed"><span class="type">()Nothing</span><a href="#27694">exit</a></span>() <span class="comment">// links</span>
+    <span class="typed"><span class="type">Actor.this.type</span><a href="#7907" class="keyword">this</a></span>.<span class="typed"><span class="type">(Nothing)Nothing</span><a id="5794">synchronized</a></span> {
+      <span class="comment">// first, remove spurious TIMEOUT message from mailbox if any</span>
+      <span class="keyword">val</span> <span class="typed"><span class="type">scala.actors.MessageQueueElement</span><a id="37728">spurious</a></span> = <span class="typed"><span class="type">=&gt; scala.actors.MessageQueue</span><a href="#27625">mailbox</a></span>.<span class="typed"><span class="type">((Any) =&gt; Boolean)scala.actors.MessageQueueElement</span><a href="MessageQueue.scala.html#37484">extractFirst</a></span>((<span class="typed"><span class="type">Any</span><a id="37731">m</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>) =&gt; <span class="typed"><span class="type">Any</span><a href="#37731">m</a></span> <span class="typed"><span class="type">(Any)Boolean</span><a id="3494">==</a></span> <span class="typed"><span class="type">object scala.actors.TIMEOUT</span><a href="#8157">TIMEOUT</a></span>)
+
+      <span class="keyword">val</span> <span class="typed"><span class="type">scala.actors.MessageQueueElement</span><a id="37729">qel</a></span> = <span class="typed"><span class="type">=&gt; scala.actors.MessageQueue</span><a href="#27625">mailbox</a></span>.<span class="typed"><span class="type">((Any) =&gt; Boolean)scala.actors.MessageQueueElement</span><a href="MessageQueue.scala.html#37484">extractFirst</a></span>((<span class="typed"><span class="type">Any</span><a id="37733">m</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>) =&gt; <span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="#37319">f</a></span>.<span class="typed"><span class="type">(Any)Boolean</span><a href="../PartialFunction.scala.html#17289">isDefinedAt</a></span>(<span class="typed"><span class="type">Any</span><a href="#37733">m</a></span>))
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">scala.actors.MessageQueueElement</span><a href="#37729">qel</a></span>) {
+        <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Long</span><a href="#37318">msec</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3248">==</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) {
+          <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="#37319">f</a></span>.<span class="typed"><span class="type">(Any)Boolean</span><a href="../PartialFunction.scala.html#17289">isDefinedAt</a></span>(<span class="typed"><span class="type">object scala.actors.TIMEOUT</span><a href="#8157">TIMEOUT</a></span>)) {
+            <span class="typed"><span class="type">(List[scala.actors.OutputChannel[Any]])Unit</span><a href="#27628">sessions</a></span> = <span class="typed"><span class="type">(scala.actors.Actor*)List[scala.actors.Actor]</span><a href="../List.scala.html#16977">List</a></span>(<span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907" class="keyword">this</a></span>)
+            <span class="typed"><span class="type">(PartialFunction[Any,Unit],Any)Unit</span><a href="#27663">scheduleActor</a></span>(<span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="#37319">f</a></span>, <span class="typed"><span class="type">object scala.actors.TIMEOUT</span><a href="#8157">TIMEOUT</a></span>)
+          }
+          <span class="keyword">else</span>
+            <span class="typed"><span class="type">(String)Nothing</span><a href="../Predef.scala.html#13358">error</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;unhandled timeout&quot;)</span><span class="string">&quot;unhandled timeout&quot;</span></span>)
+        }
+        <span class="keyword">else</span> {
+          <span class="typed"><span class="type">((Any) =&gt; Boolean)Unit</span><a href="#27620">waitingFor</a></span> = <span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="#37319">f</a></span>.<span class="typed"><span class="type">(Any)Boolean</span><a href="../PartialFunction.scala.html#17289">isDefinedAt</a></span>
+          <span class="keyword">val</span> <span class="typed"><span class="type">scala.actors.Actor</span><a id="37736">thisActor</a></span> = <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907" class="keyword">this</a></span>
+          <span class="typed"><span class="type">(Option[java.util.TimerTask])Unit</span><a href="#27658">onTimeout</a></span> = <span class="typed"><span class="type">(java.util.TimerTask{ ... })Some[java.util.TimerTask{ ... }]</span><a href="../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">template $anon extends java.util.TimerTask</span><a id="37740" class="keyword">new</a></span> <span class="typed"><span class="type">java.util.TimerTask</span><a id="5252">TimerTask</a></span> {
+            <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="37742">run</a></span>() { <span class="typed"><span class="type">scala.actors.Actor</span><a href="#37736">thisActor</a></span>.<span class="typed"><span class="type">(Any,scala.actors.OutputChannel[Any])Unit</span><a href="#27632">send</a></span>(<span class="typed"><span class="type">object scala.actors.TIMEOUT</span><a href="#8157">TIMEOUT</a></span>, <span class="typed"><span class="type">scala.actors.Actor</span><a href="#37736">thisActor</a></span>) }
+          })
+          <span class="typed"><span class="type">object scala.actors.Actor</span><a href="#7908">Actor</a></span>.<span class="typed"><span class="type">=&gt; java.util.Timer</span><a href="#27710">timer</a></span>.<span class="typed"><span class="type">(java.util.TimerTask,Long)Unit</span><a id="27874">schedule</a></span>(<span class="typed"><span class="type">=&gt; Option[java.util.TimerTask]</span><a href="#27657">onTimeout</a></span>.<span class="typed"><span class="type">=&gt; java.util.TimerTask</span><a href="../Option.scala.html#18270">get</a></span>, <span class="typed"><span class="type">Long</span><a href="#37318">msec</a></span>)
+          <span class="typed"><span class="type">(PartialFunction[Any,Unit])Unit</span><a href="#27655">continuation</a></span> = <span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="#37319">f</a></span>
+          <span class="typed"><span class="type">(Boolean)Unit</span><a href="#27661">isDetached</a></span> = <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+        }
+      } <span class="keyword">else</span> {
+        <span class="typed"><span class="type">(List[scala.actors.OutputChannel[Any]])Unit</span><a href="#27628">sessions</a></span> = <span class="typed"><span class="type">(scala.actors.OutputChannel[Any]*)List[scala.actors.OutputChannel[Any]]</span><a href="../List.scala.html#16977">List</a></span>(<span class="typed"><span class="type">scala.actors.MessageQueueElement</span><a href="#37729">qel</a></span>.<span class="typed"><span class="type">=&gt; scala.actors.OutputChannel[Any]</span><a href="MessageQueue.scala.html#37575">session</a></span>)
+        <span class="typed"><span class="type">(PartialFunction[Any,Unit],Any)Unit</span><a href="#27663">scheduleActor</a></span>(<span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="#37319">f</a></span>, <span class="typed"><span class="type">scala.actors.MessageQueueElement</span><a href="#37729">qel</a></span>.<span class="typed"><span class="type">=&gt; Any</span><a href="MessageQueue.scala.html#37572">msg</a></span>)
+      }
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">scala.actors.SuspendActorException</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.actors.SuspendActorException</span><a href="#8171">SuspendActorException</a></span>
+    }
+  }
+
+  <span class="comment">/**
+   * The behavior of an actor is specified by implementing this
+   * abstract method. Note that the preferred way to create actors
+   * is through the &lt;code&gt;actor&lt;/code&gt; method
+   * defined in object &lt;code&gt;Actor&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="27641">act</a></span>(): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span>
+
+  <span class="comment">/**
+   * Sends &lt;code&gt;msg&lt;/code&gt; to this actor (asynchronous).
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Any)Unit</span><a id="27642">!</a></span>(<span class="typed"><span class="type">Any</span><a id="27941">msg</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>) {
+    <span class="typed"><span class="type">(Any,scala.actors.OutputChannel[Any])Unit</span><a href="#27632">send</a></span>(<span class="typed"><span class="type">Any</span><a href="#27941">msg</a></span>, <span class="typed"><span class="type">object scala.actors.Actor</span><a href="#7908">Actor</a></span>.<span class="typed"><span class="type">(scala.actors.IScheduler)scala.actors.Actor</span><a href="#27713">self</a></span>(<span class="typed"><span class="type">=&gt; scala.actors.IScheduler</span><a href="#27630">scheduler</a></span>))
+  }
+
+  <span class="comment">/**
+   * Forwards &lt;code&gt;msg&lt;/code&gt; to this actor (asynchronous).
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Any)Unit</span><a id="27643">forward</a></span>(<span class="typed"><span class="type">Any</span><a id="37752">msg</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>) {
+    <span class="typed"><span class="type">(Any,scala.actors.OutputChannel[Any])Unit</span><a href="#27632">send</a></span>(<span class="typed"><span class="type">Any</span><a href="#37752">msg</a></span>, <span class="typed"><span class="type">object scala.actors.Actor</span><a href="#7908">Actor</a></span>.<span class="typed"><span class="type">=&gt; scala.actors.OutputChannel[Any]</span><a href="#27730">sender</a></span>)
+  }
+
+  <span class="comment">/**
+   * Sends &lt;code&gt;msg&lt;/code&gt; to this actor and awaits reply
+   * (synchronous).
+   *
+   * @param  msg the message to be sent
+   * @return     the reply
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Any)Any</span><a id="27644">!?</a></span>(<span class="typed"><span class="type">Any</span><a id="37753">msg</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>): <span class="typed"><span class="type">Any</span><a id="49">Any</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">scala.actors.Channel[Any]</span><a id="37754">replyCh</a></span> = <span class="typed"><span class="type">(scala.actors.Actor)scala.actors.Channel[Any]</span><a href="Channel.scala.html#27837" class="keyword">new</a></span> <span class="typed"><span class="type">scala.actors.Channel[Any]</span><a href="Channel.scala.html#7952">Channel</a></span>[Any](<span class="typed"><span class="type">object scala.actors.Actor</span><a href="#7908">Actor</a></span>.<span class="typed"><span class="type">(scala.actors.IScheduler)scala.actors.Actor</span><a href="#27713">self</a></span>(<span class="typed"><span class="type">=&gt; scala.actors.IScheduler</span><a href="#27630">scheduler</a></span>))
+    <span class="typed"><span class="type">(Any,scala.actors.OutputChannel[Any])Unit</span><a href="#27632">send</a></span>(<span class="typed"><span class="type">Any</span><a href="#37753">msg</a></span>, <span class="typed"><span class="type">scala.actors.Channel[Any]</span><a href="#37754">replyCh</a></span>)
+    <span class="typed"><span class="type">scala.actors.Channel[Any]</span><a href="#37754">replyCh</a></span>.<span class="typed"><span class="type">(PartialFunction[Any,Any])Any</span><a href="Channel.scala.html#27841">receive</a></span> <span class="typed"><span class="type">Any</span><a href="#37762">{</a></span>
+      <span class="typed"><span class="type">Any</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Any</span><a id="37763">x</a></span> =&gt; <span class="typed"><span class="type">Any</span><a href="#37763">x</a></span>
+    }
+  }
+
+  <span class="comment">/**
+   * Sends &lt;code&gt;msg&lt;/code&gt; to this actor and awaits reply
+   * (synchronous) within &lt;code&gt;msec&lt;/code&gt; milliseconds.
+   *
+   * @param  msec the time span before timeout
+   * @param  msg  the message to be sent
+   * @return      &lt;code&gt;None&lt;/code&gt; in case of timeout, otherwise
+   *              &lt;code&gt;Some(x)&lt;/code&gt; where &lt;code&gt;x&lt;/code&gt; is the reply
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Long,Any)Option[Any]</span><a id="27645">!?</a></span>(<span class="typed"><span class="type">Long</span><a id="37764">msec</a></span>: <span class="typed"><span class="type">Long</span><a id="2397">Long</a></span>, <span class="typed"><span class="type">Any</span><a id="37765">msg</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>): <span class="typed"><span class="type">Option[Any]</span><a href="../Option.scala.html#932">Option</a></span>[Any] = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">scala.actors.Channel[Any]</span><a id="37766">replyCh</a></span> = <span class="typed"><span class="type">(scala.actors.Actor)scala.actors.Channel[Any]</span><a href="Channel.scala.html#27837" class="keyword">new</a></span> <span class="typed"><span class="type">scala.actors.Channel[Any]</span><a href="Channel.scala.html#7952">Channel</a></span>[Any](<span class="typed"><span class="type">object scala.actors.Actor</span><a href="#7908">Actor</a></span>.<span class="typed"><span class="type">(scala.actors.IScheduler)scala.actors.Actor</span><a href="#27713">self</a></span>(<span class="typed"><span class="type">=&gt; scala.actors.IScheduler</span><a href="#27630">scheduler</a></span>))
+    <span class="typed"><span class="type">(Any,scala.actors.OutputChannel[Any])Unit</span><a href="#27632">send</a></span>(<span class="typed"><span class="type">Any</span><a href="#37765">msg</a></span>, <span class="typed"><span class="type">scala.actors.Channel[Any]</span><a href="#37766">replyCh</a></span>)
+    <span class="typed"><span class="type">scala.actors.Channel[Any]</span><a href="#37766">replyCh</a></span>.<span class="typed"><span class="type">(Long)(PartialFunction[Any,Option[Any]])Option[Any]</span><a href="Channel.scala.html#27845">receiveWithin</a></span>(<span class="typed"><span class="type">Long</span><a href="#37764">msec</a></span>) <span class="typed"><span class="type">Option[Any]</span><a href="#37775">{</a></span>
+      <span class="typed"><span class="type">None.type</span><span class="keyword">case</span></span> <span class="typed"><span class="type">object scala.actors.TIMEOUT</span><a href="#8157">TIMEOUT</a></span> =&gt; <span class="typed"><span class="type">object None</span><a href="../Option.scala.html#534">None</a></span>
+      <span class="typed"><span class="type">Some[Any]</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Any</span><a id="37776">x</a></span> =&gt; <span class="typed"><span class="type">(Any)Some[Any]</span><a href="../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">Any</span><a href="#37776">x</a></span>)
+    }
+  }
+
+  <span class="comment">/**
+   * Sends &lt;code&gt;msg&lt;/code&gt; to this actor and immediately
+   * returns a future representing the reply value.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Any)scala.actors.Future[Any]</span><a id="27646">!!</a></span>(<span class="typed"><span class="type">Any</span><a id="27764">msg</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>): <span class="typed"><span class="type">scala.actors.Future[Any]</span><a href="Future.scala.html#8024">Future</a></span>[Any] = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">scala.actors.Channel[Any]</span><a id="37778">ftch</a></span> = <span class="typed"><span class="type">(scala.actors.Actor)scala.actors.Channel[Any]</span><a href="Channel.scala.html#27837" class="keyword">new</a></span> <span class="typed"><span class="type">scala.actors.Channel[Any]</span><a href="Channel.scala.html#7952">Channel</a></span>[Any](<span class="typed"><span class="type">object scala.actors.Actor</span><a href="#7908">Actor</a></span>.<span class="typed"><span class="type">(scala.actors.IScheduler)scala.actors.Actor</span><a href="#27713">self</a></span>(<span class="typed"><span class="type">=&gt; scala.actors.IScheduler</span><a href="#27630">scheduler</a></span>))
+    <span class="keyword">val</span> <span class="typed"><span class="type">&lt;refinement&gt; extends java.lang.Object with scala.actors.AbstractActor</span><a id="37779">linkedChannel</a></span> = <span class="typed"><span class="type">template $anon extends java.lang.Object with scala.actors.AbstractActor</span><a id="37782" class="keyword">new</a></span> <span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="AbstractActor.scala.html#8201">AbstractActor</a></span> {
+      <span class="keyword">def</span> <span class="typed"><span class="type">(Any)Unit</span><a id="37784">!</a></span>(<span class="typed"><span class="type">Any</span><a id="37799">msg</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>) =
+        <span class="typed"><span class="type">scala.actors.Channel[Any]</span><a href="#37778">ftch</a></span> <span class="typed"><span class="type">(Any)Unit</span><a href="Channel.scala.html#27838">!</a></span> <span class="typed"><span class="type">Any</span><a href="#37799">msg</a></span>
+      <span class="keyword">def</span> <span class="typed"><span class="type">(Any,scala.actors.OutputChannel[Any])Unit</span><a id="37785">send</a></span>(<span class="typed"><span class="type">Any</span><a id="37802">msg</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>, <span class="typed"><span class="type">scala.actors.OutputChannel[Any]</span><a id="37803">replyTo</a></span>: <span class="typed"><span class="type">scala.actors.OutputChannel[Any]</span><a href="OutputChannel.scala.html#8150">OutputChannel</a></span>[Any]) =
+        <span class="typed"><span class="type">scala.actors.Channel[Any]</span><a href="#37778">ftch</a></span>.<span class="typed"><span class="type">(Any,scala.actors.OutputChannel[Any])Unit</span><a href="Channel.scala.html#27839">send</a></span>(<span class="typed"><span class="type">Any</span><a href="#37802">msg</a></span>, <span class="typed"><span class="type">scala.actors.OutputChannel[Any]</span><a href="#37803">replyTo</a></span>)
+      <span class="keyword">def</span> <span class="typed"><span class="type">(Any)Unit</span><a id="37786">forward</a></span>(<span class="typed"><span class="type">Any</span><a id="37807">msg</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>) =
+        <span class="typed"><span class="type">scala.actors.Channel[Any]</span><a href="#37778">ftch</a></span>.<span class="typed"><span class="type">(Any)Unit</span><a href="Channel.scala.html#27840">forward</a></span>(<span class="typed"><span class="type">Any</span><a href="#37807">msg</a></span>)
+      <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a id="37787">receiver</a></span> =
+        <span class="typed"><span class="type">scala.actors.Channel[Any]</span><a href="#37778">ftch</a></span>.<span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="Channel.scala.html#27836">receiver</a></span>
+      <span class="keyword">def</span> <span class="typed"><span class="type">(scala.actors.AbstractActor)Unit</span><a id="37788">linkTo</a></span>(<span class="typed"><span class="type">scala.actors.AbstractActor</span><a id="37814">to</a></span>: <span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="AbstractActor.scala.html#8201">AbstractActor</a></span>) <span class="typed"><span class="type">Unit</span><span >{</span></span> <span class="comment">/* do nothing */</span> }
+      <span class="keyword">def</span> <span class="typed"><span class="type">(scala.actors.AbstractActor)Unit</span><a id="37789">unlinkFrom</a></span>(<span class="typed"><span class="type">scala.actors.AbstractActor</span><a id="37815">from</a></span>: <span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="AbstractActor.scala.html#8201">AbstractActor</a></span>) <span class="typed"><span class="type">Unit</span><span >{</span></span> <span class="comment">/* do nothing */</span> }
+      <span class="keyword">def</span> <span class="typed"><span class="type">(scala.actors.AbstractActor,AnyRef)Unit</span><a id="37790">exit</a></span>(<span class="typed"><span class="type">scala.actors.AbstractActor</span><a id="37816">from</a></span>: <span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="AbstractActor.scala.html#8201">AbstractActor</a></span>, <span class="typed"><span class="type">AnyRef</span><a id="37817">reason</a></span>: <span class="typed"><span class="type">AnyRef</span><a id="2015">AnyRef</a></span>) {
+        <span class="typed"><span class="type">scala.actors.Channel[Any]</span><a href="#37778">ftch</a></span>.<span class="typed"><span class="type">(Any,scala.actors.OutputChannel[Any])Unit</span><a href="Channel.scala.html#27839">send</a></span>(<span class="typed"><span class="type">(scala.actors.AbstractActor,AnyRef)scala.actors.Exit</span><a href="#37819">Exit</a></span>(<span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="#37816">from</a></span>, <span class="typed"><span class="type">AnyRef</span><a href="#37817">reason</a></span>), <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907">Actor</a></span>.<span class="keyword">this</span>)
+      }
+      <span class="comment">// should never be invoked; return dummy value</span>
+      <span class="keyword">def</span> <span class="typed"><span class="type">(Any)Any</span><a id="37791">!?</a></span>(<span class="typed"><span class="type">Any</span><a id="37830">msg</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>) = <span class="typed"><span class="type">Any</span><a href="#37830">msg</a></span>
+      <span class="comment">// should never be invoked; return dummy value</span>
+      <span class="keyword">def</span> <span class="typed"><span class="type">(Long,Any)Option[Any]</span><a id="37792">!?</a></span>(<span class="typed"><span class="type">Long</span><a id="37836">msec</a></span>: <span class="typed"><span class="type">Long</span><a id="2397">Long</a></span>, <span class="typed"><span class="type">Any</span><a id="37837">msg</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>): <span class="typed"><span class="type">Option[Any]</span><a href="../Option.scala.html#932">Option</a></span>[Any] = <span class="typed"><span class="type">(Any)Some[Any]</span><a href="../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">Any</span><a href="#37837">msg</a></span>)
+      <span class="comment">// should never be invoked; return dummy value</span>
+      <span class="keyword">def</span> <span class="typed"><span class="type">(Any)scala.actors.Future[Any]</span><a id="37793">!!</a></span>(<span class="typed"><span class="type">Any</span><a id="37839">msg</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>): <span class="typed"><span class="type">scala.actors.Future[Any]</span><a href="Future.scala.html#8024">Future</a></span>[Any] = {
+        <span class="keyword">val</span> <span class="typed"><span class="type">scala.actors.Channel[Any]</span><a id="37840">someChan</a></span> = <span class="typed"><span class="type">(scala.actors.Actor)scala.actors.Channel[Any]</span><a href="Channel.scala.html#27837" class="keyword">new</a></span> <span class="typed"><span class="type">scala.actors.Channel[Any]</span><a href="Channel.scala.html#7952">Channel</a></span>[Any](<span class="typed"><span class="type">object scala.actors.Actor</span><a href="#7908">Actor</a></span>.<span class="typed"><span class="type">(scala.actors.IScheduler)scala.actors.Actor</span><a href="#27713">self</a></span>(<span class="typed"><span class="type">=&gt; scala.actors.IScheduler</span><a href="#27630">scheduler</a></span>))
+        <span class="typed"><span class="type">template $anon extends scala.actors.Future[Any]</span><a id="37843" class="keyword">new</a></span> <span class="typed"><span class="type">scala.actors.Future[Any]</span><a href="Future.scala.html#8024">Future</a></span>[Any](<span class="typed"><span class="type">scala.actors.Channel[Any]</span><a href="#37840">someChan</a></span>) {
+          <span class="keyword">def</span> <span class="typed"><span class="type">()Any</span><a id="37845">apply</a></span>() =
+            <span class="typed"><span class="type">Any</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#37847">isSet</a></span>) <span class="typed"><span class="type">=&gt; Option[Any]</span><a href="Future.scala.html#27207">value</a></span>.<span class="typed"><span class="type">=&gt; Any</span><a href="../Option.scala.html#18270">get</a></span>
+            <span class="keyword">else</span> <span class="typed"><span class="type">=&gt; scala.actors.InputChannel[Any]</span><a href="Future.scala.html#27204">ch</a></span>.<span class="typed"><span class="type">(PartialFunction[Any,Any])Any</span><a href="InputChannel.scala.html#27213">receive</a></span> <span class="typed"><span class="type">Any</span><a href="#37860">{</a></span>
+              <span class="typed"><span class="type">Any</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Any</span><a id="37861">any</a></span> =&gt; <span class="typed"><span class="type">(Option[Any])Unit</span><a href="Future.scala.html#27208">value</a></span> = <span class="typed"><span class="type">(Any)Some[Any]</span><a href="../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">Any</span><a href="#37861">any</a></span>); <span class="typed"><span class="type">Any</span><a href="#37861">any</a></span>
+            }
+          <span class="keyword">def</span> <span class="typed"><span class="type">((Any) =&gt; Unit)Unit</span><a id="37846">respond</a></span>(<span class="typed"><span class="type">(Any) =&gt; Unit</span><a id="37863">k</a></span>: Any =&gt; Unit): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> =
+            <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#37847">isSet</a></span>) <span class="typed"><span class="type">(Any)Unit</span><a href="../Function1.scala.html#17300">k</a></span>(<span class="typed"><span class="type">=&gt; Option[Any]</span><a href="Future.scala.html#27207">value</a></span>.<span class="typed"><span class="type">=&gt; Any</span><a href="../Option.scala.html#18270">get</a></span>)
+            <span class="keyword">else</span> <span class="typed"><span class="type">=&gt; scala.actors.InputChannel[Any]</span><a href="Future.scala.html#27204">ch</a></span>.<span class="typed"><span class="type">(PartialFunction[Any,Unit])Nothing</span><a href="InputChannel.scala.html#27219">react</a></span> <span class="typed"><span class="type">Unit</span><a href="#37870">{</a></span>
+ 	      <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Any</span><a id="37871">any</a></span> =&gt; <span class="typed"><span class="type">(Option[Any])Unit</span><a href="Future.scala.html#27208">value</a></span> = <span class="typed"><span class="type">(Any)Some[Any]</span><a href="../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">Any</span><a href="#37871">any</a></span>); <span class="typed"><span class="type">(Any)Unit</span><a href="../Function1.scala.html#17300">k</a></span>(<span class="typed"><span class="type">Any</span><a href="#37871">any</a></span>)
+          }
+          <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="37847">isSet</a></span> = <span class="typed"><span class="type">=&gt; Option[Any]</span><a href="Future.scala.html#27207">value</a></span> <span class="typed"><span class="type">Boolean</span><span class="keyword">match</span></span> {
+            <span class="typed"><span class="type">Boolean</span><span class="keyword">case</span></span> <span class="typed"><span class="type">object None</span><a href="../Option.scala.html#534">None</a></span> =&gt; <span class="typed"><span class="type">=&gt; scala.actors.InputChannel[Any]</span><a href="Future.scala.html#27204">ch</a></span>.<span class="typed"><span class="type">(Long)(PartialFunction[Any,Boolean])Boolean</span><a href="InputChannel.scala.html#27216">receiveWithin</a></span>(<span class="typed"><span class="type">Long(0L)</span><span class="int">0</span></span>) <span class="typed"><span class="type">Boolean</span><a href="#37851">{</a></span>
+              <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">case</span></span> <span class="typed"><span class="type">object scala.actors.TIMEOUT</span><a href="#8157">TIMEOUT</a></span> =&gt; <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+              <span class="typed"><span class="type">Boolean</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Any</span><a id="37852">any</a></span> =&gt; <span class="typed"><span class="type">(Option[Any])Unit</span><a href="Future.scala.html#27208">value</a></span> = <span class="typed"><span class="type">(Any)Some[Any]</span><a href="../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">Any</span><a href="#37852">any</a></span>); <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+            }
+            <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">case</span></span> <a id="1">Some</a>(_) =&gt; <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+          }
+        }
+      }
+      <span class="comment">// should never be invoked; return dummy value</span>
+      <span class="keyword">def</span> <span class="typed"><span class="type">[A](Any,PartialFunction[Any,A])scala.actors.Future[A]</span><a id="37794">!!</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="37796">A</a></span>](<span class="typed"><span class="type">Any</span><a id="37873">msg</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>, <span class="typed"><span class="type">PartialFunction[Any,A]</span><a id="37874">f</a></span>: <span class="typed"><span class="type">PartialFunction[Any,A]</span><a href="../PartialFunction.scala.html#1295">PartialFunction</a></span>[Any, A]): <span class="typed"><span class="type">scala.actors.Future[A]</span><a href="Future.scala.html#8024">Future</a></span>[A] = {
+        <span class="keyword">val</span> <span class="typed"><span class="type">scala.actors.Channel[A]</span><a id="37875">someChan</a></span> = <span class="typed"><span class="type">(scala.actors.Actor)scala.actors.Channel[A]</span><a href="Channel.scala.html#27837" class="keyword">new</a></span> <span class="typed"><span class="type">scala.actors.Channel[A]</span><a href="Channel.scala.html#7952">Channel</a></span>[A](<span class="typed"><span class="type">object scala.actors.Actor</span><a href="#7908">Actor</a></span>.<span class="typed"><span class="type">(scala.actors.IScheduler)scala.actors.Actor</span><a href="#27713">self</a></span>(<span class="typed"><span class="type">=&gt; scala.actors.IScheduler</span><a href="#27630">scheduler</a></span>))
+        <span class="typed"><span class="type">template $anon extends scala.actors.Future[A]</span><a id="37878" class="keyword">new</a></span> <span class="typed"><span class="type">scala.actors.Future[A]</span><a href="Future.scala.html#8024">Future</a></span>[A](<span class="typed"><span class="type">scala.actors.Channel[A]</span><a href="#37875">someChan</a></span>) {
+          <span class="keyword">def</span> <span class="typed"><span class="type">()A</span><a id="37880">apply</a></span>() =
+            <span class="typed"><span class="type">A</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#37882">isSet</a></span>) <span class="typed"><span class="type">=&gt; Option[Any]</span><a href="Future.scala.html#27207">value</a></span>.<span class="typed"><span class="type">=&gt; Any</span><a href="../Option.scala.html#18270">get</a></span>.<span class="typed"><span class="type">A</span><a id="3501">asInstanceOf</a></span>[<span class="typed"><span class="type">A</span><a href="#37796">A</a></span>]
+            <span class="keyword">else</span> <span class="typed"><span class="type">=&gt; scala.actors.InputChannel[A]</span><a href="Future.scala.html#27204">ch</a></span>.<span class="typed"><span class="type">(PartialFunction[A,A])A</span><a href="InputChannel.scala.html#27213">receive</a></span> <span class="typed"><span class="type">A</span><a href="#37895">{</a></span>
+              <span class="typed"><span class="type">A</span><span class="keyword">case</span></span> <span class="typed"><span class="type">A</span><a id="37896">any</a></span> =&gt; <span class="typed"><span class="type">(Option[Any])Unit</span><a href="Future.scala.html#27208">value</a></span> = <span class="typed"><span class="type">(A)Some[A]</span><a href="../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">A</span><a href="#37896">any</a></span>); <span class="typed"><span class="type">A</span><a href="#37896">any</a></span>
+            }
+          <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Unit)Unit</span><a id="37881">respond</a></span>(<span class="typed"><span class="type">(A) =&gt; Unit</span><a id="37898">k</a></span>: A =&gt; Unit): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> =
+ 	    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#37882">isSet</a></span>) <span class="typed"><span class="type">(A)Unit</span><a href="../Function1.scala.html#17300">k</a></span>(<span class="typed"><span class="type">=&gt; Option[Any]</span><a href="Future.scala.html#27207">value</a></span>.<span class="typed"><span class="type">=&gt; Any</span><a href="../Option.scala.html#18270">get</a></span>.<span class="typed"><span class="type">A</span><a id="3501">asInstanceOf</a></span>[<span class="typed"><span class="type">A</span><a href="#37796">A</a></span>])
+            <span class="keyword">else</span> <span class="typed"><span class="type">=&gt; scala.actors.InputChannel[A]</span><a href="Future.scala.html#27204">ch</a></span>.<span class="typed"><span class="type">(PartialFunction[A,Unit])Nothing</span><a href="InputChannel.scala.html#27219">react</a></span> <span class="typed"><span class="type">Unit</span><a href="#37904">{</a></span>
+              <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <span class="typed"><span class="type">A</span><a id="37905">any</a></span> =&gt; <span class="typed"><span class="type">(Option[Any])Unit</span><a href="Future.scala.html#27208">value</a></span> = <span class="typed"><span class="type">(A)Some[A]</span><a href="../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">A</span><a href="#37905">any</a></span>); <span class="typed"><span class="type">(A)Unit</span><a href="../Function1.scala.html#17300">k</a></span>(<span class="typed"><span class="type">A</span><a href="#37905">any</a></span>)
+            }
+          <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="37882">isSet</a></span> = <span class="typed"><span class="type">=&gt; Option[Any]</span><a href="Future.scala.html#27207">value</a></span> <span class="typed"><span class="type">Boolean</span><span class="keyword">match</span></span> {
+            <span class="typed"><span class="type">Boolean</span><span class="keyword">case</span></span> <span class="typed"><span class="type">object None</span><a href="../Option.scala.html#534">None</a></span> =&gt; <span class="typed"><span class="type">=&gt; scala.actors.InputChannel[A]</span><a href="Future.scala.html#27204">ch</a></span>.<span class="typed"><span class="type">(Long)(PartialFunction[Any,Boolean])Boolean</span><a href="InputChannel.scala.html#27216">receiveWithin</a></span>(<span class="typed"><span class="type">Long(0L)</span><span class="int">0</span></span>) <span class="typed"><span class="type">Boolean</span><a href="#37886">{</a></span>
+              <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">case</span></span> <span class="typed"><span class="type">object scala.actors.TIMEOUT</span><a href="#8157">TIMEOUT</a></span> =&gt; <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+              <span class="typed"><span class="type">Boolean</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Any</span><a id="37887">any</a></span> =&gt; <span class="typed"><span class="type">(Option[Any])Unit</span><a href="Future.scala.html#27208">value</a></span> = <span class="typed"><span class="type">(Any)Some[Any]</span><a href="../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">Any</span><a href="#37887">any</a></span>); <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+            }
+            <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">case</span></span> <a id="1">Some</a>(_) =&gt; <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+          }
+        }
+      }
+    }
+    <span class="typed"><span class="type">(scala.actors.AbstractActor)Unit</span><a href="#27681">linkTo</a></span>(<span class="typed"><span class="type">&lt;refinement&gt; extends java.lang.Object with scala.actors.AbstractActor</span><a href="#37779">linkedChannel</a></span>)
+    <span class="typed"><span class="type">(Any,scala.actors.OutputChannel[Any])Unit</span><a href="#27632">send</a></span>(<span class="typed"><span class="type">Any</span><a href="#27764">msg</a></span>, <span class="typed"><span class="type">&lt;refinement&gt; extends java.lang.Object with scala.actors.AbstractActor</span><a href="#37779">linkedChannel</a></span>)
+    <span class="typed"><span class="type">template $anon extends scala.actors.Future[Any]</span><a id="37950" class="keyword">new</a></span> <span class="typed"><span class="type">scala.actors.Future[Any]</span><a href="Future.scala.html#8024">Future</a></span>[Any](<span class="typed"><span class="type">scala.actors.Channel[Any]</span><a href="#37778">ftch</a></span>) {
+      <span class="keyword">var</span> <span class="typed"><span class="type">Option[Any]</span><span id="37954"><span id="37952"><span id="37953"><a id="37961">exitReason</a></span></span></span></span>: <span class="typed"><span class="type">Option[Any]</span><a href="../Option.scala.html#932">Option</a></span>[Any] = <span class="typed"><span class="type">object None</span><a href="../Option.scala.html#534">None</a></span>
+      <span class="keyword">val</span> <span class="typed"><span class="type">PartialFunction[Any,Unit]</span><span id="37956"><a id="37955">handleReply</a></span></span>: <span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="../PartialFunction.scala.html#1295">PartialFunction</a></span>[Any, Unit] = <span class="typed"><span class="type">Unit</span><a href="#37963">{</a></span>
+        <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <a id="1">Exit</a>(<span class="typed"><span class="type">scala.actors.AbstractActor</span><a id="37971">from</a></span>, <span class="typed"><span class="type">AnyRef</span><a id="37972">reason</a></span>) =&gt;
+          <span class="typed"><span class="type">(Option[Any])Unit</span><a href="#37953">exitReason</a></span> = <span class="typed"><span class="type">(AnyRef)Some[AnyRef]</span><a href="../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">AnyRef</span><a href="#37972">reason</a></span>)
+        <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Any</span><a id="37974">any</a></span> =&gt;
+          <span class="typed"><span class="type">(Option[Any])Unit</span><a href="Future.scala.html#27208">value</a></span> = <span class="typed"><span class="type">(Any)Some[Any]</span><a href="../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">Any</span><a href="#37974">any</a></span>)
+      }
+
+      <span class="keyword">def</span> <span class="typed"><span class="type">()Any</span><a id="37957">apply</a></span>(): <span class="typed"><span class="type">Any</span><a id="49">Any</a></span> =
+        <span class="typed"><span class="type">Any</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#37959">isSet</a></span>) {
+          <span class="typed"><span class="type">Any</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">=&gt; Option[Any]</span><a href="Future.scala.html#27207">value</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Option.scala.html#18268">isEmpty</a></span>)
+            <span class="typed"><span class="type">=&gt; Option[Any]</span><a href="Future.scala.html#27207">value</a></span>.<span class="typed"><span class="type">=&gt; Any</span><a href="../Option.scala.html#18270">get</a></span>
+          <span class="keyword">else</span> <span class="typed"><span class="type">Any</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">=&gt; Option[Any]</span><a href="#37952">exitReason</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Option.scala.html#18268">isEmpty</a></span>) {
+            <span class="keyword">val</span> <span class="typed"><span class="type">Any</span><a id="37993">reason</a></span> = <span class="typed"><span class="type">=&gt; Option[Any]</span><a href="#37952">exitReason</a></span>.<span class="typed"><span class="type">=&gt; Any</span><a href="../Option.scala.html#18270">get</a></span>
+            <span class="typed"><span class="type">Any</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Any</span><a href="#37993">reason</a></span>.<span class="typed"><span class="type">Boolean</span><a id="3499">isInstanceOf</a></span>[<span class="typed"><span class="type">Throwable</span><a id="2141">Throwable</a></span>])
+              <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.Throwable)java.util.concurrent.ExecutionException</span><a id="38001" class="keyword">new</a></span> <span class="typed"><span class="type">java.util.concurrent.ExecutionException</span><a id="27565">ExecutionException</a></span>(<span class="typed"><span class="type">Any</span><a href="#37993">reason</a></span>.<span class="typed"><span class="type">Throwable</span><a id="3501">asInstanceOf</a></span>[<span class="typed"><span class="type">Throwable</span><a id="2141">Throwable</a></span>])
+            <span class="keyword">else</span>
+              <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.Throwable)java.util.concurrent.ExecutionException</span><a id="38001" class="keyword">new</a></span> <span class="typed"><span class="type">java.util.concurrent.ExecutionException</span><a id="27565">ExecutionException</a></span>(<span class="typed"><span class="type">(java.lang.String)java.lang.Exception</span><a id="19899" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.Exception</span><a href="../Predef.scala.html#13332">Exception</a></span>(<span class="typed"><span class="type">Any</span><a href="#37993">reason</a></span>.<span class="typed"><span class="type">()java.lang.String</span><a id="3498">toString</a></span>()))
+          }
+        } <span class="keyword">else</span> <span class="typed"><span class="type">=&gt; scala.actors.InputChannel[Any]</span><a href="Future.scala.html#27204">ch</a></span>.<span class="typed"><span class="type">(PartialFunction[Any,Any])Any</span><a href="InputChannel.scala.html#27213">receive</a></span>(<span class="typed"><span class="type">=&gt; PartialFunction[Any,Unit]</span><a href="#37955">handleReply</a></span> <span class="typed"><span class="type">((Unit) =&gt; Any)PartialFunction[Any,Any]</span><a href="../PartialFunction.scala.html#17295">andThen</a></span> {(<span class="typed"><span class="type">Unit</span><a id="38011">x</a></span>: <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span>) =&gt; <span class="typed"><span class="type">()Any</span><a href="#37957">apply</a></span>()})
+
+      <span class="keyword">def</span> <span class="typed"><span class="type">((Any) =&gt; Unit)Unit</span><a id="37958">respond</a></span>(<span class="typed"><span class="type">(Any) =&gt; Unit</span><a id="38012">k</a></span>: Any =&gt; Unit): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> =
+ 	<span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#37959">isSet</a></span>)
+          <span class="typed"><span class="type">()Any</span><a href="#37957">apply</a></span>()
+ 	<span class="keyword">else</span>
+          <span class="typed"><span class="type">=&gt; scala.actors.InputChannel[Any]</span><a href="Future.scala.html#27204">ch</a></span>.<span class="typed"><span class="type">(PartialFunction[Any,Unit])Nothing</span><a href="InputChannel.scala.html#27219">react</a></span>(<span class="typed"><span class="type">=&gt; PartialFunction[Any,Unit]</span><a href="#37955">handleReply</a></span> <span class="typed"><span class="type">((Unit) =&gt; Unit)PartialFunction[Any,Unit]</span><a href="../PartialFunction.scala.html#17295">andThen</a></span> {(<span class="typed"><span class="type">Unit</span><a id="38015">x</a></span>: <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span>) =&gt; <span class="typed"><span class="type">(Any)Unit</span><a href="../Function1.scala.html#17300">k</a></span>(<span class="typed"><span class="type">()Any</span><a href="#37957">apply</a></span>())})
+
+      <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="37959">isSet</a></span> = (<span class="typed"><span class="type">=&gt; Option[Any]</span><a href="Future.scala.html#27207">value</a></span> <span class="typed"><span class="type">Boolean</span><span class="keyword">match</span></span> {
+        <span class="typed"><span class="type">Boolean</span><span class="keyword">case</span></span> <span class="typed"><span class="type">object None</span><a href="../Option.scala.html#534">None</a></span> =&gt;
+          <span class="keyword">val</span> <span class="typed"><span class="type">PartialFunction[Any,Boolean]</span><a id="37976">handleTimeout</a></span>: <span class="typed"><span class="type">PartialFunction[Any,Boolean]</span><a href="../PartialFunction.scala.html#1295">PartialFunction</a></span>[Any, Boolean] = <span class="typed"><span class="type">Boolean</span><a href="#37979">{</a></span>
+            <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">case</span></span> <span class="typed"><span class="type">object scala.actors.TIMEOUT</span><a href="#8157">TIMEOUT</a></span> =&gt;
+              <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+          }
+          <span class="keyword">val</span> <span class="typed"><span class="type">PartialFunction[Any,Boolean]</span><a id="37977">whatToDo</a></span> =
+            <span class="typed"><span class="type">PartialFunction[Any,Boolean]</span><a href="#37976">handleTimeout</a></span> <span class="typed"><span class="type">(PartialFunction[Any,Boolean])PartialFunction[Any,Boolean]</span><a href="../PartialFunction.scala.html#17290">orElse</a></span> (<span class="typed"><span class="type">=&gt; PartialFunction[Any,Unit]</span><a href="#37955">handleReply</a></span> <span class="typed"><span class="type">((Unit) =&gt; Boolean)PartialFunction[Any,Boolean]</span><a href="../PartialFunction.scala.html#17295">andThen</a></span> {(<span class="typed"><span class="type">Unit</span><a id="37987">x</a></span>: <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span>) =&gt; <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>})
+          <span class="typed"><span class="type">=&gt; scala.actors.InputChannel[Any]</span><a href="Future.scala.html#27204">ch</a></span>.<span class="typed"><span class="type">(Long)(PartialFunction[Any,Boolean])Boolean</span><a href="InputChannel.scala.html#27216">receiveWithin</a></span>(<span class="typed"><span class="type">Long(0L)</span><span class="int">0</span></span>)(<span class="typed"><span class="type">PartialFunction[Any,Boolean]</span><a href="#37977">whatToDo</a></span>)
+        <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">case</span></span> <a id="1">Some</a>(_) =&gt; <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+      }) <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">=&gt; Option[Any]</span><a href="#37952">exitReason</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Option.scala.html#18268">isEmpty</a></span>
+    }
+  }
+
+  <span class="comment">/**
+   * Sends &lt;code&gt;msg&lt;/code&gt; to this actor and immediately
+   * returns a future representing the reply value.
+   * The reply is post-processed using the partial function
+   * &lt;code&gt;f&lt;/code&gt;. This also allows to recover a more
+   * precise type for the reply value.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[A](Any,PartialFunction[Any,A])scala.actors.Future[A]</span><a id="27647">!!</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="27649">A</a></span>](<span class="typed"><span class="type">Any</span><a id="27767">msg</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>, <span class="typed"><span class="type">PartialFunction[Any,A]</span><a id="27768">f</a></span>: <span class="typed"><span class="type">PartialFunction[Any,A]</span><a href="../PartialFunction.scala.html#1295">PartialFunction</a></span>[Any, A]): <span class="typed"><span class="type">scala.actors.Future[A]</span><a href="Future.scala.html#8024">Future</a></span>[A] = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">scala.actors.Channel[A]</span><a id="38016">ftch</a></span> = <span class="typed"><span class="type">(scala.actors.Actor)scala.actors.Channel[A]</span><a href="Channel.scala.html#27837" class="keyword">new</a></span> <span class="typed"><span class="type">scala.actors.Channel[A]</span><a href="Channel.scala.html#7952">Channel</a></span>[A](<span class="typed"><span class="type">object scala.actors.Actor</span><a href="#7908">Actor</a></span>.<span class="typed"><span class="type">(scala.actors.IScheduler)scala.actors.Actor</span><a href="#27713">self</a></span>(<span class="typed"><span class="type">=&gt; scala.actors.IScheduler</span><a href="#27630">scheduler</a></span>))
+    <span class="typed"><span class="type">(Any,scala.actors.OutputChannel[Any])Unit</span><a href="#27632">send</a></span>(<span class="typed"><span class="type">Any</span><a href="#27767">msg</a></span>, <span class="typed"><span class="type">template $anon extends java.lang.Object with scala.actors.OutputChannel[Any]</span><a id="38019" class="keyword">new</a></span> <span class="typed"><span class="type">scala.actors.OutputChannel[Any]</span><a href="OutputChannel.scala.html#8150">OutputChannel</a></span>[Any] {
+      <span class="keyword">def</span> <span class="typed"><span class="type">(Any)Unit</span><a id="38021">!</a></span>(<span class="typed"><span class="type">Any</span><a id="38027">msg</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>) =
+        <span class="typed"><span class="type">scala.actors.Channel[A]</span><a href="#38016">ftch</a></span> <span class="typed"><span class="type">(A)Unit</span><a href="Channel.scala.html#27838">!</a></span> <span class="typed"><span class="type">(Any)A</span><a href="../Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">Any</span><a href="#38027">msg</a></span>)
+      <span class="keyword">def</span> <span class="typed"><span class="type">(Any,scala.actors.OutputChannel[Any])Unit</span><a id="38022">send</a></span>(<span class="typed"><span class="type">Any</span><a id="38029">msg</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>, <span class="typed"><span class="type">scala.actors.OutputChannel[Any]</span><a id="38030">replyTo</a></span>: <span class="typed"><span class="type">scala.actors.OutputChannel[Any]</span><a href="OutputChannel.scala.html#8150">OutputChannel</a></span>[Any]) =
+        <span class="typed"><span class="type">scala.actors.Channel[A]</span><a href="#38016">ftch</a></span>.<span class="typed"><span class="type">(A,scala.actors.OutputChannel[Any])Unit</span><a href="Channel.scala.html#27839">send</a></span>(<span class="typed"><span class="type">(Any)A</span><a href="../Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">Any</span><a href="#38029">msg</a></span>), <span class="typed"><span class="type">scala.actors.OutputChannel[Any]</span><a href="#38030">replyTo</a></span>)
+      <span class="keyword">def</span> <span class="typed"><span class="type">(Any)Unit</span><a id="38023">forward</a></span>(<span class="typed"><span class="type">Any</span><a id="38032">msg</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>) =
+        <span class="typed"><span class="type">scala.actors.Channel[A]</span><a href="#38016">ftch</a></span>.<span class="typed"><span class="type">(A)Unit</span><a href="Channel.scala.html#27840">forward</a></span>(<span class="typed"><span class="type">(Any)A</span><a href="../Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">Any</span><a href="#38032">msg</a></span>))
+      <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a id="38024">receiver</a></span> =
+        <span class="typed"><span class="type">scala.actors.Channel[A]</span><a href="#38016">ftch</a></span>.<span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="Channel.scala.html#27836">receiver</a></span>
+    })
+    <span class="typed"><span class="type">template $anon extends scala.actors.Future[A]</span><a id="38036" class="keyword">new</a></span> <span class="typed"><span class="type">scala.actors.Future[A]</span><a href="Future.scala.html#8024">Future</a></span>[A](<span class="typed"><span class="type">scala.actors.Channel[A]</span><a href="#38016">ftch</a></span>) {
+      <span class="keyword">def</span> <span class="typed"><span class="type">()A</span><a id="38038">apply</a></span>() =
+        <span class="typed"><span class="type">A</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#38040">isSet</a></span>) <span class="typed"><span class="type">=&gt; Option[Any]</span><a href="Future.scala.html#27207">value</a></span>.<span class="typed"><span class="type">=&gt; Any</span><a href="../Option.scala.html#18270">get</a></span>.<span class="typed"><span class="type">A</span><a id="3501">asInstanceOf</a></span>[<span class="typed"><span class="type">A</span><a href="#27649">A</a></span>]
+        <span class="keyword">else</span> <span class="typed"><span class="type">=&gt; scala.actors.InputChannel[A]</span><a href="Future.scala.html#27204">ch</a></span>.<span class="typed"><span class="type">(PartialFunction[A,A])A</span><a href="InputChannel.scala.html#27213">receive</a></span> <span class="typed"><span class="type">A</span><a href="#38053">{</a></span>
+          <span class="typed"><span class="type">A</span><span class="keyword">case</span></span> <span class="typed"><span class="type">A</span><a id="38054">any</a></span> =&gt; <span class="typed"><span class="type">(Option[Any])Unit</span><a href="Future.scala.html#27208">value</a></span> = <span class="typed"><span class="type">(A)Some[A]</span><a href="../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">A</span><a href="#38054">any</a></span>); <span class="typed"><span class="type">=&gt; Option[Any]</span><a href="Future.scala.html#27207">value</a></span>.<span class="typed"><span class="type">=&gt; Any</span><a href="../Option.scala.html#18270">get</a></span>.<span class="typed"><span class="type">A</span><a id="3501">asInstanceOf</a></span>[<span class="typed"><span class="type">A</span><a href="#27649">A</a></span>]
+        }
+      <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Unit)Unit</span><a id="38039">respond</a></span>(<span class="typed"><span class="type">(A) =&gt; Unit</span><a id="38060">k</a></span>: A =&gt; Unit): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> =
+ 	<span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#38040">isSet</a></span>) <span class="typed"><span class="type">(A)Unit</span><a href="../Function1.scala.html#17300">k</a></span>(<span class="typed"><span class="type">=&gt; Option[Any]</span><a href="Future.scala.html#27207">value</a></span>.<span class="typed"><span class="type">=&gt; Any</span><a href="../Option.scala.html#18270">get</a></span>.<span class="typed"><span class="type">A</span><a id="3501">asInstanceOf</a></span>[<span class="typed"><span class="type">A</span><a href="#27649">A</a></span>])
+ 	<span class="keyword">else</span> <span class="typed"><span class="type">=&gt; scala.actors.InputChannel[A]</span><a href="Future.scala.html#27204">ch</a></span>.<span class="typed"><span class="type">(PartialFunction[A,Unit])Nothing</span><a href="InputChannel.scala.html#27219">react</a></span> <span class="typed"><span class="type">Unit</span><a href="#38066">{</a></span>
+ 	  <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <span class="typed"><span class="type">A</span><a id="38067">any</a></span> =&gt; <span class="typed"><span class="type">(Option[Any])Unit</span><a href="Future.scala.html#27208">value</a></span> = <span class="typed"><span class="type">(A)Some[A]</span><a href="../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">A</span><a href="#38067">any</a></span>); <span class="typed"><span class="type">(A)Unit</span><a href="../Function1.scala.html#17300">k</a></span>(<span class="typed"><span class="type">=&gt; Option[Any]</span><a href="Future.scala.html#27207">value</a></span>.<span class="typed"><span class="type">=&gt; Any</span><a href="../Option.scala.html#18270">get</a></span>.<span class="typed"><span class="type">A</span><a id="3501">asInstanceOf</a></span>[<span class="typed"><span class="type">A</span><a href="#27649">A</a></span>])
+ 	}
+      <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="38040">isSet</a></span> = <span class="typed"><span class="type">=&gt; Option[Any]</span><a href="Future.scala.html#27207">value</a></span> <span class="typed"><span class="type">Boolean</span><span class="keyword">match</span></span> {
+        <span class="typed"><span class="type">Boolean</span><span class="keyword">case</span></span> <span class="typed"><span class="type">object None</span><a href="../Option.scala.html#534">None</a></span> =&gt; <span class="typed"><span class="type">=&gt; scala.actors.InputChannel[A]</span><a href="Future.scala.html#27204">ch</a></span>.<span class="typed"><span class="type">(Long)(PartialFunction[Any,Boolean])Boolean</span><a href="InputChannel.scala.html#27216">receiveWithin</a></span>(<span class="typed"><span class="type">Long(0L)</span><span class="int">0</span></span>) <span class="typed"><span class="type">Boolean</span><a href="#38044">{</a></span>
+          <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">case</span></span> <span class="typed"><span class="type">object scala.actors.TIMEOUT</span><a href="#8157">TIMEOUT</a></span> =&gt; <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+          <span class="typed"><span class="type">Boolean</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Any</span><a id="38045">any</a></span> =&gt; <span class="typed"><span class="type">(Option[Any])Unit</span><a href="Future.scala.html#27208">value</a></span> = <span class="typed"><span class="type">(Any)Some[Any]</span><a href="../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">Any</span><a href="#38045">any</a></span>); <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+        }
+        <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">case</span></span> <a id="1">Some</a>(_) =&gt; <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+      }
+    }
+  }
+
+  <span class="comment">/**
+   * Replies with &lt;code&gt;msg&lt;/code&gt; to the sender.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Any)Unit</span><a id="27650">reply</a></span>(<span class="typed"><span class="type">Any</span><a id="37342">msg</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>) {
+    <span class="typed"><span class="type">=&gt; scala.actors.OutputChannel[Any]</span><a href="#27652">sender</a></span> <span class="typed"><span class="type">(Any)Unit</span><a href="OutputChannel.scala.html#27596">!</a></span> <span class="typed"><span class="type">Any</span><a href="#37342">msg</a></span>
+  }
+
+  <span class="comment">/**
+   * Receives the next message from this actor's mailbox.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Any</span><a id="27651">?</a></span> : <span class="typed"><span class="type">Any</span><a id="49">Any</a></span> = <span class="typed"><span class="type">(PartialFunction[Any,Any])Any</span><a href="#27633">receive</a></span> <span class="typed"><span class="type">Any</span><a href="#38075">{</a></span>
+    <span class="typed"><span class="type">Any</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Any</span><a id="38076">x</a></span> =&gt; <span class="typed"><span class="type">Any</span><a href="#38076">x</a></span>
+  }
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; scala.actors.OutputChannel[Any]</span><a id="27652">sender</a></span>: <span class="typed"><span class="type">scala.actors.OutputChannel[Any]</span><a href="OutputChannel.scala.html#8150">OutputChannel</a></span>[Any] = <span class="typed"><span class="type">=&gt; List[scala.actors.OutputChannel[Any]]</span><a href="#27627">sessions</a></span>.<span class="typed"><span class="type">=&gt; scala.actors.OutputChannel[Any]</span><a href="../List.scala.html#20869">head</a></span>
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a id="27653">receiver</a></span>: <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907">Actor</a></span> = <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907" class="keyword">this</a></span>
+
+  <span class="keyword">private</span> <span class="keyword">var</span> <span class="typed"><span class="type">PartialFunction[Any,Unit]</span><span id="27656"><span id="27654"><span id="27655"><a id="37486">continuation</a></span></span></span></span>: <span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="../PartialFunction.scala.html#1295">PartialFunction</a></span>[Any, Unit] = <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>
+  <span class="keyword">private</span> <span class="keyword">var</span> <span class="typed"><span class="type">Option[java.util.TimerTask]</span><span id="27659"><span id="27657"><span id="27658"><a id="37487">onTimeout</a></span></span></span></span>: <span class="typed"><span class="type">Option[java.util.TimerTask]</span><a href="../Option.scala.html#932">Option</a></span>[TimerTask] = <span class="typed"><span class="type">object None</span><a href="../Option.scala.html#534">None</a></span>
+  <span class="comment">// accessed in Reaction</span>
+  <span class="keyword">private</span>[actors] <span class="keyword">var</span> <span class="typed"><span class="type">Boolean</span><span id="27662"><span id="27660"><span id="27661"><a id="37488">isDetached</a></span></span></span></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+
+  <span class="comment">// guarded by lock of this</span>
+  <span class="keyword">protected</span> <span class="keyword">def</span> <span class="typed"><span class="type">(PartialFunction[Any,Unit],Any)Unit</span><a id="27663">scheduleActor</a></span>(<span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a id="37692">f</a></span>: <span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="../PartialFunction.scala.html#1295">PartialFunction</a></span>[Any, Unit], <span class="typed"><span class="type">Any</span><a id="37693">msg</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>) =
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> ((<span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="#37692">f</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> (<span class="typed"><span class="type">=&gt; PartialFunction[Any,Unit]</span><a href="#27654">continuation</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>)) <span class="typed"><span class="type">Unit</span><span >{</span></span>
+      <span class="comment">// do nothing (timeout is handled instead)</span>
+    }
+    <span class="keyword">else</span> {
+      <span class="keyword">val</span> <span class="typed"><span class="type">scala.actors.Reaction</span><a id="37695">task</a></span> = <span class="typed"><span class="type">(scala.actors.Actor,PartialFunction[Any,Unit],Any)scala.actors.Reaction</span><a href="Reaction.scala.html#37525" class="keyword">new</a></span> <span class="typed"><span class="type">scala.actors.Reaction</span><a href="Reaction.scala.html#8234">Reaction</a></span>(<span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907" class="keyword">this</a></span>,
+                              <span class="typed"><span class="type">PartialFunction[Any,Unit]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="#37692">f</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) <span class="typed"><span class="type">=&gt; PartialFunction[Any,Unit]</span><a href="#27654">continuation</a></span> <span class="keyword">else</span> <span class="typed"><span class="type">PartialFunction[Any,Unit]</span><a href="#37692">f</a></span>,
+                              <span class="typed"><span class="type">Any</span><a href="#37693">msg</a></span>)
+      <span class="typed"><span class="type">=&gt; scala.actors.IScheduler</span><a href="#27630">scheduler</a></span> <span class="typed"><span class="type">(java.lang.Runnable)Unit</span><a href="Scheduler.scala.html#26777">execute</a></span> <span class="typed"><span class="type">scala.actors.Reaction</span><a href="#37695">task</a></span>
+    }
+
+  <span class="keyword">private</span>[actors] <span class="keyword">var</span> <span class="typed"><span class="type">() =&gt; Unit</span><span id="27666"><span id="27664"><span id="27665"><a id="37489">kill</a></span></span></span></span>: () =&gt; Unit = () =&gt; <span class="typed"><span class="type">Unit</span><span >{</span></span>}
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="27667">suspendActor</a></span>() {
+    <span class="typed"><span class="type">(Boolean)Unit</span><a href="#27623">isSuspended</a></span> = <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+    <span class="typed"><span class="type">Unit</span><a href="#38080" class="keyword">while</a></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#27622">isSuspended</a></span>) {
+      <span class="keyword">try</span> {
+        <span class="typed"><span class="type">()Unit</span><a href="#7907" id="5788">wait</a></span>()
+      } <span class="keyword">catch</span> {
+        <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> _: <span class="typed"><span class="type">java.lang.InterruptedException</span><a id="1757">InterruptedException</a></span> =&gt;
+      }
+    }
+    <span class="comment">// links: check if we should exit</span>
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#27690">shouldExit</a></span>) <span class="typed"><span class="type">()Nothing</span><a href="#27694">exit</a></span>()
+  }
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Long)Unit</span><a id="27668">suspendActorFor</a></span>(<span class="typed"><span class="type">Long</span><a id="37654">msec</a></span>: <span class="typed"><span class="type">Long</span><a id="2397">Long</a></span>) {
+    <span class="keyword">val</span> <span class="typed"><span class="type">Long</span><a id="38092">ts</a></span> = <span class="typed"><span class="type">object scala.compat.Platform</span><a href="../compat/Platform.scala.html#12224">Platform</a></span>.<span class="typed"><span class="type">=&gt; Long</span><a href="../compat/Platform.scala.html#17285">currentTime</a></span>
+    <span class="keyword">var</span> <span class="typed"><span class="type">Long</span><a id="38093">waittime</a></span> = <span class="typed"><span class="type">Long</span><a href="#37654">msec</a></span>
+    <span class="keyword">var</span> <span class="typed"><span class="type">Boolean</span><a id="38094">fromExc</a></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+    <span class="typed"><span class="type">(Boolean)Unit</span><a href="#27623">isSuspended</a></span> = <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+    <span class="typed"><span class="type">Unit</span><a href="#38095" class="keyword">while</a></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#27622">isSuspended</a></span>) {
+      <span class="keyword">try</span> {
+        <span class="typed"><span class="type">Boolean</span><a href="#38094">fromExc</a></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+        <span class="typed"><span class="type">(Long)Unit</span><a href="#7907" id="5786">wait</a></span>(<span class="typed"><span class="type">Long</span><a href="#38093">waittime</a></span>)
+      } <span class="keyword">catch</span> {
+        <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> _: <span class="typed"><span class="type">java.lang.InterruptedException</span><a id="1757">InterruptedException</a></span> =&gt; {
+          <span class="typed"><span class="type">Boolean</span><a href="#38094">fromExc</a></span> = <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+          <span class="keyword">val</span> <span class="typed"><span class="type">Long</span><a id="38097">now</a></span> = <span class="typed"><span class="type">object scala.compat.Platform</span><a href="../compat/Platform.scala.html#12224">Platform</a></span>.<span class="typed"><span class="type">=&gt; Long</span><a href="../compat/Platform.scala.html#17285">currentTime</a></span>
+          <span class="keyword">val</span> <span class="typed"><span class="type">Long</span><a id="38098">waited</a></span> = <span class="typed"><span class="type">Long</span><a href="#38097">now</a></span><span class="typed"><span class="type">(Long)Long</span><a id="3269">-</a></span><span class="typed"><span class="type">Long</span><a href="#38092">ts</a></span>
+          <span class="typed"><span class="type">Long</span><a href="#38093">waittime</a></span> = <span class="typed"><span class="type">Long</span><a href="#37654">msec</a></span><span class="typed"><span class="type">(Long)Long</span><a id="3269">-</a></span><span class="typed"><span class="type">Long</span><a href="#38098">waited</a></span>
+          <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Long</span><a href="#38093">waittime</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3250">&lt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) { <span class="typed"><span class="type">(Boolean)Unit</span><a href="#27623">isSuspended</a></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span> }
+        }
+      }
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">Boolean</span><a href="#38094">fromExc</a></span>) { <span class="typed"><span class="type">(Boolean)Unit</span><a href="#27623">isSuspended</a></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span> }
+    }
+    <span class="comment">// links: check if we should exit</span>
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#27690">shouldExit</a></span>) <span class="typed"><span class="type">()Nothing</span><a href="#27694">exit</a></span>()
+  }
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="27669">resumeActor</a></span>() {
+    <span class="typed"><span class="type">(Boolean)Unit</span><a href="#27623">isSuspended</a></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+    <span class="typed"><span class="type">()Unit</span><a href="#7907" id="5784">notify</a></span>()
+  }
+
+  <span class="comment">/**
+   * Starts this actor.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">()scala.actors.Actor</span><a id="27670">start</a></span>(): <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907">Actor</a></span> = <span class="typed"><span class="type">(scala.actors.Actor)scala.actors.Actor</span><a href="#7907" id="5794">synchronized</a></span> {
+    <span class="comment">// Reset various flags.</span>
+    <span class="comment">//</span>
+    <span class="comment">// Note that we do *not* reset `trapExit`. The reason is that</span>
+    <span class="comment">// users should be able to set the field in the constructor</span>
+    <span class="comment">// and before `act` is called.</span>
+
+    <span class="typed"><span class="type">(AnyRef)Unit</span><a href="#27688">exitReason</a></span> = <span class="typed"><span class="type">(String)Symbol</span><a href="../Symbol.scala.html#21460" class="symbol">'normal</a></span>
+    <span class="typed"><span class="type">(Boolean)Unit</span><a href="AbstractActor.scala.html#27602">exiting</a></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+    <span class="typed"><span class="type">(Boolean)Unit</span><a href="#27691">shouldExit</a></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+
+    <span class="typed"><span class="type">=&gt; scala.actors.IScheduler</span><a href="#27630">scheduler</a></span> <span class="typed"><span class="type">(=&gt; Unit)Unit</span><a href="Scheduler.scala.html#26776">execute</a></span> {
+      <span class="typed"><span class="type">=&gt; scala.actors.IScheduler</span><a href="#27630">scheduler</a></span>.<span class="typed"><span class="type">=&gt; scala.actors.ActorGC</span><a href="Scheduler.scala.html#26779">actorGC</a></span>.<span class="typed"><span class="type">(scala.actors.Actor)Unit</span><a href="ActorGC.scala.html#26832">newActor</a></span>(<span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907">Actor</a></span>.<span class="keyword">this</span>)
+      (<span class="typed"><span class="type">(scala.actors.Actor)scala.actors.Reaction</span><a href="Reaction.scala.html#37526" class="keyword">new</a></span> <span class="typed"><span class="type">scala.actors.Reaction</span><a href="Reaction.scala.html#8234">Reaction</a></span>(<span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907">Actor</a></span>.<span class="keyword">this</span>)).<span class="typed"><span class="type">()Unit</span><a href="Reaction.scala.html#37527">run</a></span>()
+    }
+
+    <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907" class="keyword">this</a></span>
+  }
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">[a, b](=&gt; a,=&gt; b)Unit</span><a id="27671">seq</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="27674">a</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="27675">b</a></span>](<span class="typed"><span class="type">=&gt; a</span><a id="37378">first</a></span>: =&gt; a, <span class="typed"><span class="type">=&gt; b</span><a id="37379">next</a></span>: =&gt; b): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">scala.actors.Actor</span><a id="38210">s</a></span> = <span class="typed"><span class="type">object scala.actors.Actor</span><a href="#7908">Actor</a></span>.<span class="typed"><span class="type">(scala.actors.IScheduler)scala.actors.Actor</span><a href="#27713">self</a></span>(<span class="typed"><span class="type">=&gt; scala.actors.IScheduler</span><a href="#27630">scheduler</a></span>)
+    <span class="keyword">val</span> <span class="typed"><span class="type">() =&gt; Unit</span><a id="38211">killNext</a></span> = <span class="typed"><span class="type">scala.actors.Actor</span><a href="#38210">s</a></span>.<span class="typed"><span class="type">=&gt; () =&gt; Unit</span><a href="#27664">kill</a></span>
+    <span class="typed"><span class="type">scala.actors.Actor</span><a href="#38210">s</a></span>.<span class="typed"><span class="type">(() =&gt; Unit)Unit</span><a href="#27665">kill</a></span> = () =&gt; {
+      <span class="typed"><span class="type">scala.actors.Actor</span><a href="#38210">s</a></span>.<span class="typed"><span class="type">(() =&gt; Unit)Unit</span><a href="#27665">kill</a></span> = <span class="typed"><span class="type">() =&gt; Unit</span><a href="#38211">killNext</a></span>
+
+      <span class="comment">// to avoid stack overflow:</span>
+      <span class="comment">// instead of directly executing `next`,</span>
+      <span class="comment">// schedule as continuation</span>
+      <span class="typed"><span class="type">(PartialFunction[Any,Unit],Any)Unit</span><a href="#27663">scheduleActor</a></span>(<span class="typed"><span class="type">Unit</span><a href="#38215">{</a></span> <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> _ =&gt; <span class="typed"><span class="type">=&gt; b</span><a href="#37379">next</a></span> }, <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>)
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">scala.actors.SuspendActorException</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.actors.SuspendActorException</span><a href="#8171">SuspendActorException</a></span>
+    }
+    <span class="typed"><span class="type">=&gt; a</span><a href="#37378">first</a></span>
+    <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">scala.actors.KillActorException</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.actors.KillActorException</span><a href="Reaction.scala.html#8240">KillActorException</a></span>
+  }
+
+  <span class="keyword">private</span>[actors] <span class="keyword">var</span> <span class="typed"><span class="type">List[scala.actors.AbstractActor]</span><span id="27678"><span id="27676"><span id="27677"><a id="37490">links</a></span></span></span></span>: <span class="typed"><span class="type">List[scala.actors.AbstractActor]</span><a href="../List.scala.html#524">List</a></span>[AbstractActor] = <span class="typed"><span class="type">object Nil</span><a href="../List.scala.html#333">Nil</a></span>
+
+  <span class="comment">/**
+   * Links &lt;code&gt;self&lt;/code&gt; to actor &lt;code&gt;to&lt;/code&gt;.
+   *
+   * @param to ...
+   * @return   ...
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(scala.actors.AbstractActor)scala.actors.AbstractActor</span><a id="27679">link</a></span>(<span class="typed"><span class="type">scala.actors.AbstractActor</span><a id="37425">to</a></span>: <span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="AbstractActor.scala.html#8201">AbstractActor</a></span>): <span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="AbstractActor.scala.html#8201">AbstractActor</a></span> = {
+    <span class="typed"><span class="type">(Boolean,=&gt; Any)Unit</span><a href="../Predef.scala.html#13362">assert</a></span>(<span class="typed"><span class="type">object scala.actors.Actor</span><a href="#7908">Actor</a></span>.<span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="#27712">self</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="3507">==</a></span> <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907" class="keyword">this</a></span>, <span class="typed"><span class="type">java.lang.String(&quot;link called on actor different from self&quot;)</span><span class="string">&quot;link called on actor different from self&quot;</span></span>)
+    <span class="typed"><span class="type">(Unit)Unit</span><a href="#7907" id="5794">synchronized</a></span> {
+      <span class="typed"><span class="type">(List[scala.actors.AbstractActor])Unit</span><a href="#27677">links</a></span> = <span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="#37425">to</a></span> <span class="typed"><span class="type">(scala.actors.AbstractActor)List[scala.actors.AbstractActor]</span><a href="../List.scala.html#20872">::</a></span> <span class="typed"><span class="type">=&gt; List[scala.actors.AbstractActor]</span><a href="#27676">links</a></span>
+    }
+    <span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="#37425">to</a></span>.<span class="typed"><span class="type">(scala.actors.AbstractActor)Unit</span><a href="AbstractActor.scala.html#27604">linkTo</a></span>(<span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907" class="keyword">this</a></span>)
+    <span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="#37425">to</a></span>
+  }
+
+  <span class="comment">/**
+   * Links &lt;code&gt;self&lt;/code&gt; to actor defined by &lt;code&gt;body&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(=&gt; Unit)scala.actors.Actor</span><a id="27680">link</a></span>(<span class="typed"><span class="type">=&gt; Unit</span><a id="37424">body</a></span>: =&gt; Unit): <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907">Actor</a></span> = {
+    <span class="typed"><span class="type">(Boolean,=&gt; Any)Unit</span><a href="../Predef.scala.html#13362">assert</a></span>(<span class="typed"><span class="type">object scala.actors.Actor</span><a href="#7908">Actor</a></span>.<span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="#27712">self</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="3507">==</a></span> <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907" class="keyword">this</a></span>, <span class="typed"><span class="type">java.lang.String(&quot;link called on actor different from self&quot;)</span><span class="string">&quot;link called on actor different from self&quot;</span></span>)
+    <span class="keyword">val</span> <span class="typed"><span class="type">&lt;refinement&gt; extends java.lang.Object with scala.actors.Actor</span><a id="38230">a</a></span> = <span class="typed"><span class="type">template $anon extends java.lang.Object with scala.actors.Actor</span><a id="38241" class="keyword">new</a></span> <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907">Actor</a></span> {
+      <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="38243">act</a></span>() = <span class="typed"><span class="type">=&gt; Unit</span><a href="#37424">body</a></span>
+      <span class="keyword">override</span> <span class="keyword">final</span> <span class="keyword">val</span> <span class="typed"><span class="type">scala.actors.IScheduler</span><span id="38245"><a id="38244">scheduler</a></span></span>: <span class="typed"><span class="type">scala.actors.IScheduler</span><a href="Scheduler.scala.html#8114">IScheduler</a></span> = <span class="typed"><span class="type">Actor.this.type</span><a href="#7907">Actor</a></span>.<span class="keyword">this</span>.<span class="typed"><span class="type">=&gt; scala.actors.IScheduler</span><a href="#27630">scheduler</a></span>
+    }
+    <span class="typed"><span class="type">(scala.actors.AbstractActor)scala.actors.AbstractActor</span><a href="#27679">link</a></span>(<span class="typed"><span class="type">&lt;refinement&gt; extends java.lang.Object with scala.actors.Actor</span><a href="#38230">a</a></span>)
+    <span class="typed"><span class="type">&lt;refinement&gt; extends java.lang.Object with scala.actors.Actor</span><a href="#38230">a</a></span>.<span class="typed"><span class="type">()scala.actors.Actor</span><a href="#27670">start</a></span>()
+    <span class="typed"><span class="type">&lt;refinement&gt; extends java.lang.Object with scala.actors.Actor</span><a href="#38230">a</a></span>
+  }
+
+  <span class="keyword">private</span>[actors] <span class="keyword">def</span> <span class="typed"><span class="type">(scala.actors.AbstractActor)Unit</span><a id="27681">linkTo</a></span>(<span class="typed"><span class="type">scala.actors.AbstractActor</span><a id="37944">to</a></span>: <span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="AbstractActor.scala.html#8201">AbstractActor</a></span>) = <span class="typed"><span class="type">(Unit)Unit</span><a href="#7907" id="5794">synchronized</a></span> {
+    <span class="typed"><span class="type">(List[scala.actors.AbstractActor])Unit</span><a href="#27677">links</a></span> = <span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="#37944">to</a></span> <span class="typed"><span class="type">(scala.actors.AbstractActor)List[scala.actors.AbstractActor]</span><a href="../List.scala.html#20872">::</a></span> <span class="typed"><span class="type">=&gt; List[scala.actors.AbstractActor]</span><a href="#27676">links</a></span>
+  }
+
+  <span class="comment">/**
+   * Unlinks &lt;code&gt;self&lt;/code&gt; from actor &lt;code&gt;from&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(scala.actors.AbstractActor)Unit</span><a id="27682">unlink</a></span>(<span class="typed"><span class="type">scala.actors.AbstractActor</span><a id="37437">from</a></span>: <span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="AbstractActor.scala.html#8201">AbstractActor</a></span>) {
+    <span class="typed"><span class="type">(Boolean,=&gt; Any)Unit</span><a href="../Predef.scala.html#13362">assert</a></span>(<span class="typed"><span class="type">object scala.actors.Actor</span><a href="#7908">Actor</a></span>.<span class="typed"><span class="type">=&gt; scala.actors.Actor</span><a href="#27712">self</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="3507">==</a></span> <span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907" class="keyword">this</a></span>, <span class="typed"><span class="type">java.lang.String(&quot;unlink called on actor different from self&quot;)</span><span class="string">&quot;unlink called on actor different from self&quot;</span></span>)
+    <span class="typed"><span class="type">(Unit)Unit</span><a href="#7907" id="5794">synchronized</a></span> {
+      <span class="typed"><span class="type">(List[scala.actors.AbstractActor])Unit</span><a href="#27677">links</a></span> = <span class="typed"><span class="type">=&gt; List[scala.actors.AbstractActor]</span><a href="#27676">links</a></span>.<span class="typed"><span class="type">((scala.actors.AbstractActor) =&gt; Boolean)List[scala.actors.AbstractActor]</span><a href="../List.scala.html#20912">remove</a></span>(<span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="#37437">from</a></span>.<span class="typed"><span class="type">(AnyRef)Boolean</span><a href="#38271" id="3507">==</a></span>)
+    }
+    <span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="#37437">from</a></span>.<span class="typed"><span class="type">(scala.actors.AbstractActor)Unit</span><a href="AbstractActor.scala.html#27605">unlinkFrom</a></span>(<span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907" class="keyword">this</a></span>)
+  }
+
+  <span class="keyword">private</span>[actors] <span class="keyword">def</span> <span class="typed"><span class="type">(scala.actors.AbstractActor)Unit</span><a id="27683">unlinkFrom</a></span>(<span class="typed"><span class="type">scala.actors.AbstractActor</span><a id="38273">from</a></span>: <span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="AbstractActor.scala.html#8201">AbstractActor</a></span>) = <span class="typed"><span class="type">(Unit)Unit</span><a href="#7907" id="5794">synchronized</a></span> {
+    <span class="typed"><span class="type">(List[scala.actors.AbstractActor])Unit</span><a href="#27677">links</a></span> = <span class="typed"><span class="type">=&gt; List[scala.actors.AbstractActor]</span><a href="#27676">links</a></span>.<span class="typed"><span class="type">((scala.actors.AbstractActor) =&gt; Boolean)List[scala.actors.AbstractActor]</span><a href="../List.scala.html#20912">remove</a></span>(<span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="#38273">from</a></span>.<span class="typed"><span class="type">(AnyRef)Boolean</span><a href="#38278" id="3507">==</a></span>)
+  }
+
+  <span class="keyword">var</span> <span class="typed"><span class="type">Boolean</span><span id="27686"><span id="27684"><span id="27685"><a id="37491">trapExit</a></span></span></span></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+  <span class="keyword">private</span>[actors] <span class="keyword">var</span> <span class="typed"><span class="type">AnyRef</span><span id="27689"><span id="27687"><span id="27688"><a id="37492">exitReason</a></span></span></span></span>: <span class="typed"><span class="type">AnyRef</span><a id="2015">AnyRef</a></span> = <span class="typed"><span class="type">(String)Symbol</span><a href="../Symbol.scala.html#21460" class="symbol">'normal</a></span>
+  <span class="keyword">private</span>[actors] <span class="keyword">var</span> <span class="typed"><span class="type">Boolean</span><span id="27692"><span id="27690"><span id="27691"><a id="37493">shouldExit</a></span></span></span></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+
+  <span class="comment">/**
+   * &lt;p&gt;
+   *   Terminates execution of &lt;code&gt;self&lt;/code&gt; with the following
+   *   effect on linked actors:
+   * &lt;/p&gt;
+   * &lt;p&gt;
+   *   For each linked actor &lt;code&gt;a&lt;/code&gt; with
+   *   &lt;code&gt;trapExit&lt;/code&gt; set to &lt;code&gt;true&lt;/code&gt;, send message
+   *   &lt;code&gt;Exit(self, reason)&lt;/code&gt; to &lt;code&gt;a&lt;/code&gt;.
+   * &lt;/p&gt;
+   * &lt;p&gt;
+   *   For each linked actor &lt;code&gt;a&lt;/code&gt; with
+   *   &lt;code&gt;trapExit&lt;/code&gt; set to &lt;code&gt;false&lt;/code&gt; (default),
+   *   call &lt;code&gt;a.exit(reason)&lt;/code&gt; if
+   *   &lt;code&gt;reason != 'normal&lt;/code&gt;.
+   * &lt;/p&gt;
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(AnyRef)Nothing</span><a id="27693">exit</a></span>(<span class="typed"><span class="type">AnyRef</span><a id="37441">reason</a></span>: <span class="typed"><span class="type">AnyRef</span><a id="2015">AnyRef</a></span>): <span class="typed"><span class="type">Nothing</span><a id="2165">Nothing</a></span> = {
+    <span class="typed"><span class="type">(AnyRef)Unit</span><a href="#27688">exitReason</a></span> = <span class="typed"><span class="type">AnyRef</span><a href="#37441">reason</a></span>
+    <span class="typed"><span class="type">()Nothing</span><a href="#27694">exit</a></span>()
+  }
+
+  <span class="comment">/**
+   * Terminates with exit reason &lt;code&gt;'normal&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">()Nothing</span><a id="27694">exit</a></span>(): <span class="typed"><span class="type">Nothing</span><a id="2165">Nothing</a></span> = {
+    <span class="comment">// links</span>
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">=&gt; List[scala.actors.AbstractActor]</span><a href="#27676">links</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Seq.scala.html#17149">isEmpty</a></span>)
+      <span class="typed"><span class="type">()Unit</span><a href="#27695">exitLinked</a></span>()
+    <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">scala.actors.ExitActorException</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.actors.ExitActorException</span><a href="Reaction.scala.html#8063">ExitActorException</a></span>
+  }
+
+  <span class="comment">// Assume !links.isEmpty</span>
+  <span class="keyword">private</span>[actors] <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="27695">exitLinked</a></span>() {
+    <span class="typed"><span class="type">(Boolean)Unit</span><a href="AbstractActor.scala.html#27602">exiting</a></span> = <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+    <span class="comment">// remove this from links</span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">List[scala.actors.AbstractActor]</span><a id="38298">mylinks</a></span> = <span class="typed"><span class="type">=&gt; List[scala.actors.AbstractActor]</span><a href="#27676">links</a></span>.<span class="typed"><span class="type">((scala.actors.AbstractActor) =&gt; Boolean)List[scala.actors.AbstractActor]</span><a href="../List.scala.html#20912">remove</a></span>(<span class="typed"><span class="type">Actor.this.type</span><a href="#7907" class="keyword">this</a></span>.<span class="typed"><span class="type">(AnyRef)Boolean</span><a href="#38301" id="3507">==</a></span>)
+    <span class="comment">// exit linked processes</span>
+    <span class="typed"><span class="type">List[scala.actors.AbstractActor]</span><a href="#38298">mylinks</a></span>.<span class="typed"><span class="type">((scala.actors.AbstractActor) =&gt; Unit)Unit</span><a href="../List.scala.html#20910">foreach</a></span>((<span class="typed"><span class="type">scala.actors.AbstractActor</span><a id="38305">linked</a></span>: <span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="AbstractActor.scala.html#8201">AbstractActor</a></span>) =&gt; {
+      <span class="typed"><span class="type">(scala.actors.AbstractActor)Unit</span><a href="#27682">unlink</a></span>(<span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="#38305">linked</a></span>)
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="#38305">linked</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="AbstractActor.scala.html#27601">exiting</a></span>)
+        <span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="#38305">linked</a></span>.<span class="typed"><span class="type">(scala.actors.AbstractActor,AnyRef)Unit</span><a href="AbstractActor.scala.html#27606">exit</a></span>(<span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907" class="keyword">this</a></span>, <span class="typed"><span class="type">=&gt; AnyRef</span><a href="#27687">exitReason</a></span>)
+    })
+  }
+
+  <span class="comment">// Assume !links.isEmpty</span>
+  <span class="keyword">private</span>[actors] <span class="keyword">def</span> <span class="typed"><span class="type">(AnyRef)Unit</span><a id="27696">exitLinked</a></span>(<span class="typed"><span class="type">AnyRef</span><a id="32804">reason</a></span>: <span class="typed"><span class="type">AnyRef</span><a id="2015">AnyRef</a></span>) {
+    <span class="typed"><span class="type">(AnyRef)Unit</span><a href="#27688">exitReason</a></span> = <span class="typed"><span class="type">AnyRef</span><a href="#32804">reason</a></span>
+    <span class="typed"><span class="type">()Unit</span><a href="#27695">exitLinked</a></span>()
+  }
+
+  <span class="comment">// Assume !this.exiting</span>
+  <span class="keyword">private</span>[actors] <span class="keyword">def</span> <span class="typed"><span class="type">(scala.actors.AbstractActor,AnyRef)Unit</span><a id="27697">exit</a></span>(<span class="typed"><span class="type">scala.actors.AbstractActor</span><a id="37444">from</a></span>: <span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="AbstractActor.scala.html#8201">AbstractActor</a></span>, <span class="typed"><span class="type">AnyRef</span><a id="37445">reason</a></span>: <span class="typed"><span class="type">AnyRef</span><a id="2015">AnyRef</a></span>) {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#27684">trapExit</a></span>) {
+      <span class="typed"><span class="type">Actor.this.type</span><a href="#7907" class="keyword">this</a></span> <span class="typed"><span class="type">(Any)Unit</span><a href="#27642">!</a></span> <span class="typed"><span class="type">(scala.actors.AbstractActor,AnyRef)scala.actors.Exit</span><a href="#37819">Exit</a></span>(<span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="#37444">from</a></span>, <span class="typed"><span class="type">AnyRef</span><a href="#37445">reason</a></span>)
+    }
+    <span class="keyword">else</span> <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">AnyRef</span><a href="#37445">reason</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5791">!=</a></span> <span class="typed"><span class="type">(String)Symbol</span><a href="../Symbol.scala.html#21460" class="symbol">'normal</a></span>)
+      <span class="typed"><span class="type">Actor.this.type</span><a href="#7907" class="keyword">this</a></span>.<span class="typed"><span class="type">(Unit)Unit</span><a id="5794">synchronized</a></span> {
+        <span class="typed"><span class="type">(Boolean)Unit</span><a href="#27691">shouldExit</a></span> = <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+        <span class="typed"><span class="type">(AnyRef)Unit</span><a href="#27688">exitReason</a></span> = <span class="typed"><span class="type">AnyRef</span><a href="#37445">reason</a></span>
+        <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#27622">isSuspended</a></span>)
+          <span class="typed"><span class="type">()Unit</span><a href="#27669">resumeActor</a></span>()
+        <span class="keyword">else</span> <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#27660">isDetached</a></span>)
+          <span class="typed"><span class="type">(PartialFunction[Any,Unit],Any)Unit</span><a href="#27663">scheduleActor</a></span>(<span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>, <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>)
+      }
+  }
+
+  <span class="keyword">private</span>[actors] <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="27698">terminated</a></span>() {
+    <span class="typed"><span class="type">=&gt; scala.actors.IScheduler</span><a href="#27630">scheduler</a></span>.<span class="typed"><span class="type">=&gt; scala.actors.ActorGC</span><a href="Scheduler.scala.html#26779">actorGC</a></span>.<span class="typed"><span class="type">(scala.actors.Actor)Unit</span><a href="ActorGC.scala.html#26837">terminated</a></span>(<span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907" class="keyword">this</a></span>)
+  }
+
+  <span class="keyword">private</span>[actors] <span class="keyword">def</span> <span class="typed"><span class="type">(=&gt; Unit)Unit</span><a id="27699">onTerminate</a></span>(<span class="typed"><span class="type">=&gt; Unit</span><a id="38343">f</a></span>: =&gt; Unit) {
+    <span class="typed"><span class="type">=&gt; scala.actors.IScheduler</span><a href="#27630">scheduler</a></span>.<span class="typed"><span class="type">=&gt; scala.actors.ActorGC</span><a href="Scheduler.scala.html#26779">actorGC</a></span>.<span class="typed"><span class="type">(scala.actors.Actor)(=&gt; Unit)Unit</span><a href="ActorGC.scala.html#26836">onTerminate</a></span>(<span class="typed"><span class="type">scala.actors.Actor</span><a href="#7907" class="keyword">this</a></span>) { <span class="typed"><span class="type">=&gt; Unit</span><a href="#38343">f</a></span> }
+  }
+}
+
+
+<span class="comment">/** &lt;p&gt;
+ *    This object is used as the timeout pattern in
+ *    &lt;a href=&quot;Actor.html#receiveWithin(Long)&quot; target=&quot;contentFrame&quot;&gt;
+ *    &lt;code&gt;receiveWithin&lt;/code&gt;&lt;/a&gt; and
+ *    &lt;a href=&quot;Actor.html#reactWithin(Long)&quot; target=&quot;contentFrame&quot;&gt;
+ *    &lt;code&gt;reactWithin&lt;/code&gt;&lt;/a&gt;.
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    The following example demonstrates its usage:
+ *  &lt;/p&gt;&lt;pre&gt;
+ *    receiveWithin(500) {
+ *      &lt;b&gt;case&lt;/b&gt; (x, y) &lt;b&gt;=&amp;gt;&lt;/b&gt; ...
+ *      &lt;b&gt;case&lt;/b&gt; TIMEOUT &lt;b&gt;=&amp;gt;&lt;/b&gt; ...
+ *    }&lt;/pre&gt;
+ *
+ *  @version 0.9.8
+ *  @author Philipp Haller
+ */</span>
+<span class="keyword">case</span> <span class="keyword">object</span> <span class="typed"><span class="type">object scala.actors.TIMEOUT</span><span id="8157"><span id="19891"><span id="38366"><span id="38372"><span id="38369"><span id="38368"><span id="38370"><span id="3498"><a id="38367">TIMEOUT</a></span></span></span></span></span></span></span></span></span>
+
+
+<span class="keyword">case</span> <span class="keyword">class</span> <span class="typed"><span class="type">class Exit extends java.lang.Object with ScalaObject with Product</span><span id="38376"><span id="38385"><span id="2748"><span id="2749"><span id="38386"><span id="37819"><span id="8021"><span id="5792"><span id="38380"><span id="38378"><span id="19891"><span id="37827"><span id="38379"><span id="38377"><span id="3507"><span id="38381"><span id="3499"><span id="37964"><span id="38387"><span id="8022"><span id="38384"><a href="../runtime/ScalaRunTime.scala.html#19785" id="3498">Exit</a></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span>(<span class="typed"><span class="type">scala.actors.AbstractActor</span><span id="37823"><span id="37822"><span id="37969"><a id="37828">from</a></span></span></span></span>: <span class="typed"><span class="type">scala.actors.AbstractActor</span><a href="AbstractActor.scala.html#8201">AbstractActor</a></span>, <span class="typed"><span class="type">AnyRef</span><span id="37825"><span id="37824"><span id="37970"><a id="37829">reason</a></span></span></span></span>: <span class="typed"><span class="type">AnyRef</span><a id="2015">AnyRef</a></span>)
+
+<span class="comment">/** &lt;p&gt;
+ *    This class is used to manage control flow of actor
+ *    executions.
+ *  &lt;/p&gt;
+ *
+ * @version 0.9.8
+ * @author Philipp Haller
+ */</span>
+<span class="keyword">private</span>[actors] <span class="keyword">class</span> <span class="typed"><span class="type">class SuspendActorException extends java.lang.Throwable with ScalaObject</span><a id="8171">SuspendActorException</a></span> <span class="keyword">extends</span> <span class="typed"><span class="type">java.lang.Throwable</span><a href="../Predef.scala.html#13331">Throwable</a></span> {
+  <span class="comment">/*
+   * For efficiency reasons we do not fill in
+   * the execution stack trace.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()Throwable</span><a id="37708">fillInStackTrace</a></span>(): <span class="typed"><span class="type">Throwable</span><a id="2141">Throwable</a></span> = <span class="typed"><span class="type">scala.actors.SuspendActorException</span><a href="#8171" class="keyword">this</a></span>
+}
+
+        </pre>
+    </body>
+</html>

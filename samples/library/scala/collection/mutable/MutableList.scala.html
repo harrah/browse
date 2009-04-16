@@ -1,0 +1,95 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/mutable/MutableList.scala</title>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |                                         **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: MutableList.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+
+<span class="keyword">package</span> scala.collection.mutable
+
+
+<span class="comment">//import Predef.NoSuchElementException</span>
+
+<span class="comment">/** This class is used internally to represent mutable lists. It is the
+ *  basis for the implementation of the classes &lt;code&gt;Buffer&lt;/code&gt;,
+ *  &lt;code&gt;Stack&lt;/code&gt;, and &lt;code&gt;Queue&lt;/code&gt;.
+ *
+ *  @author  Matthias Zenger
+ *  @version 1.0, 08/07/2003
+ */</span>
+<span class="keyword">trait</span> <span class="typed"><span class="type">trait MutableList[A] extends java.lang.Object with Seq[A] with PartialFunction[Int,A] with ScalaObject</span><a id="11542">MutableList</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="14626">A</a></span>] <span class="keyword">extends</span> <span class="typed"><span class="type">Seq[A]</span><a href="../../Seq.scala.html#761">Seq</a></span>[A] <span class="keyword">with</span> <span class="typed"><span class="type">PartialFunction[Int,A]</span><a href="../../PartialFunction.scala.html#1295">PartialFunction</a></span>[Int, A] {
+
+  <span class="keyword">protected</span> <span class="keyword">var</span> <span class="typed"><span class="type">scala.collection.mutable.LinkedList[A]</span><span id="52717"><span id="52715"><span id="52716"><a id="68492">first0</a></span></span></span></span>: <span class="typed"><span class="type">scala.collection.mutable.LinkedList[A]</span><a href="LinkedList.scala.html#11416">LinkedList</a></span>[A] = <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>
+  <span class="keyword">protected</span> <span class="keyword">var</span> <span class="typed"><span class="type">scala.collection.mutable.LinkedList[A]</span><span id="52720"><span id="52718"><span id="52719"><a id="68493">last0</a></span></span></span></span>: <span class="typed"><span class="type">scala.collection.mutable.LinkedList[A]</span><a href="LinkedList.scala.html#11416">LinkedList</a></span>[A] = <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>
+  <span class="keyword">protected</span> <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><span id="52723"><span id="52721"><span id="52722"><a id="68494">len</a></span></span></span></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>
+
+  <span class="comment">/** Returns the length of this list.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Int</span><a id="52724">length</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="#52721">len</a></span>
+
+  <span class="comment">/** Returns the &lt;code&gt;n&lt;/code&gt;th element of this list. This method
+   *  yields an error if the element does not exist.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)A</span><a id="52725">apply</a></span>(<span class="typed"><span class="type">Int</span><a id="68497">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">A</span><a href="#14626">A</a></span> = <span class="typed"><span class="type">(Int)Option[A]</span><a href="#52726">get</a></span>(<span class="typed"><span class="type">Int</span><a href="#68497">n</a></span>) <span class="typed"><span class="type">A</span><span class="keyword">match</span></span> {
+    <span class="typed"><span class="type">Nothing</span><span class="keyword">case</span></span> <span class="typed"><span class="type">object None</span><a href="../../Option.scala.html#534">None</a></span> =&gt; <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.util.NoSuchElementException</span><a id="25317" class="keyword">new</a></span> <span class="typed"><span class="type">java.util.NoSuchElementException</span><a href="../../Predef.scala.html#13342">NoSuchElementException</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;element not found&quot;)</span><span class="string">&quot;element not found&quot;</span></span>)
+    <span class="typed"><span class="type">A</span><span class="keyword">case</span></span> <a id="1">Some</a>(<span class="typed"><span class="type">A</span><a id="68500">value</a></span>) =&gt; <span class="typed"><span class="type">A</span><a href="#68500">value</a></span>
+  }
+
+  <span class="comment">/** Returns the &lt;code&gt;n&lt;/code&gt;th element of this list or &lt;code&gt;None&lt;/code&gt;
+   *  if this element does not exist.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Option[A]</span><a id="52726">get</a></span>(<span class="typed"><span class="type">Int</span><a id="68498">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Option[A]</span><a href="../../Option.scala.html#932">Option</a></span>[A] = <span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="#52715">first0</a></span>.<span class="typed"><span class="type">(Int)Option[A]</span><a href="SingleLinkedList.scala.html#62302">get</a></span>(<span class="typed"><span class="type">Int</span><a href="#68498">n</a></span>)
+
+  <span class="keyword">protected</span> <span class="keyword">def</span> <span class="typed"><span class="type">(A)Unit</span><a id="52727">prependElem</a></span>(<span class="typed"><span class="type">A</span><a id="68501">elem</a></span>: <span class="typed"><span class="type">A</span><a href="#14626">A</a></span>): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = {
+    <span class="typed"><span class="type">(scala.collection.mutable.LinkedList[A])Unit</span><a href="#52716">first0</a></span> = <span class="typed"><span class="type">scala.collection.mutable.LinkedList[A]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.LinkedList[A]</span><a href="LinkedList.scala.html#11416">LinkedList</a></span>[A](<span class="typed"><span class="type">A</span><a href="#68501">elem</a></span>, <span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="#52715">first0</a></span>)
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Int</span><a href="#52721">len</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3139">==</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>)
+      <span class="typed"><span class="type">(scala.collection.mutable.LinkedList[A])Unit</span><a href="#52719">last0</a></span> = <span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="#52715">first0</a></span>
+    <span class="typed"><span class="type">(Int)Unit</span><a href="#52722">len</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="#52721">len</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+  }
+
+  <span class="keyword">protected</span> <span class="keyword">def</span> <span class="typed"><span class="type">(A)Unit</span><a id="52728">appendElem</a></span>(<span class="typed"><span class="type">A</span><a id="68525">elem</a></span>: <span class="typed"><span class="type">A</span><a href="#14626">A</a></span>): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> =
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Int</span><a href="#52721">len</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3139">==</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>)
+      <span class="typed"><span class="type">(A)Unit</span><a href="#52727">prependElem</a></span>(<span class="typed"><span class="type">A</span><a href="#68525">elem</a></span>)
+    <span class="keyword">else</span> {
+      <span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="#52718">last0</a></span>.<span class="typed"><span class="type">(scala.collection.mutable.LinkedList[A])Unit</span><a href="LinkedList.scala.html#68486">next</a></span> = <span class="typed"><span class="type">scala.collection.mutable.LinkedList[A]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.LinkedList[A]</span><a href="LinkedList.scala.html#11416">LinkedList</a></span>[A](<span class="typed"><span class="type">A</span><a href="#68525">elem</a></span>, <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>)
+      <span class="typed"><span class="type">(scala.collection.mutable.LinkedList[A])Unit</span><a href="#52719">last0</a></span> = <span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="#52718">last0</a></span>.<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="LinkedList.scala.html#68485">next</a></span>
+      <span class="typed"><span class="type">(Int)Unit</span><a href="#52722">len</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="#52721">len</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+    }
+
+  <span class="keyword">protected</span> <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="52729">reset</a></span>() {
+    <span class="typed"><span class="type">(scala.collection.mutable.LinkedList[A])Unit</span><a href="#52716">first0</a></span> = <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>
+    <span class="typed"><span class="type">(scala.collection.mutable.LinkedList[A])Unit</span><a href="#52719">last0</a></span> = <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>
+    <span class="typed"><span class="type">(Int)Unit</span><a href="#52722">len</a></span> = <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>
+  }
+
+  <span class="comment">/** Returns an iterator over all elements of this list.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Iterator[A]</span><a id="52730">elements</a></span>: <span class="typed"><span class="type">Iterator[A]</span><a href="../../Iterator.scala.html#1337">Iterator</a></span>[A] =
+    <span class="typed"><span class="type">Iterator[A]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="#52715">first0</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) <span class="typed"><span class="type">object Nil</span><a href="../../List.scala.html#333">Nil</a></span>.<span class="typed"><span class="type">=&gt; Iterator[Nothing]</span><a href="../../List.scala.html#20889">elements</a></span> <span class="keyword">else</span> <span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="#52715">first0</a></span>.<span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="SingleLinkedList.scala.html#62303">elements</a></span>
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; A</span><a id="52731">last</a></span> = <span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="#52718">last0</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="LinkedList.scala.html#68482">elem</a></span>
+
+  <span class="comment">/** Returns an instance of &lt;code&gt;scala.List&lt;/code&gt; containing the same
+   *  sequence of elements.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; List[A]</span><a id="52732">toList</a></span>: <span class="typed"><span class="type">List[A]</span><a href="../../List.scala.html#524">List</a></span>[A] = <span class="typed"><span class="type">List[A]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="#52715">first0</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) <span class="typed"><span class="type">object Nil</span><a href="../../List.scala.html#333">Nil</a></span> <span class="keyword">else</span> <span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="#52715">first0</a></span>.<span class="typed"><span class="type">=&gt; List[A]</span><a href="SingleLinkedList.scala.html#62304">toList</a></span>
+
+  <span class="keyword">override</span> <span class="keyword">protected</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; String</span><a id="52733">stringPrefix</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span> = <span class="typed"><span class="type">java.lang.String(&quot;MutableList&quot;)</span><span class="string">&quot;MutableList&quot;</span></span>
+}
+
+        </pre>
+    </body>
+</html>

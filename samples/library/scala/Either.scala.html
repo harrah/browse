@@ -1,0 +1,347 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/Either.scala</title>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="keyword">package</span> scala
+
+<span class="comment">/**
+ * &lt;p&gt;
+ * The &lt;code&gt;Either&lt;/code&gt; type represents a value of one of two possible types (a disjoint union).
+ * The data constructors; &lt;code&gt;Left&lt;/code&gt; and &lt;code&gt;Right&lt;/code&gt; represent the two possible 
+ * values. The &lt;code&gt;Either&lt;/code&gt; type is often used as an alternative to 
+ * &lt;code&gt;scala.Option&lt;/code&gt; where &lt;code&gt;Left&lt;/code&gt; represents failure (by convention) and
+ * &lt;code&gt;Right&lt;/code&gt; is akin to &lt;code&gt;Some&lt;/code&gt;.
+ * &lt;/p&gt;
+ *
+ * @author &lt;a href=&quot;mailto:research@workingmouse.com&quot;&gt;Tony Morris&lt;/a&gt;, Workingmouse
+ * @version 1.0, 11/10/2008
+ */</span>
+<span class="keyword">sealed</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <span class="typed"><span class="type">class Either[+A, +B] extends java.lang.Object with ScalaObject</span><a id="359">Either</a></span>[+<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="11080">A</a></span>, +<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="11081">B</a></span>] {
+  <span class="comment">/**
+   * Projects this &lt;code&gt;Either&lt;/code&gt; as a &lt;code&gt;Left&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Either.LeftProjection[A,B]</span><a id="28180">left</a></span> = <span class="typed"><span class="type">object Either</span><a href="#360">Either</a></span>.<span class="typed"><span class="type">(Either[A,B])Either.LeftProjection[A,B]</span><a href="#28236">LeftProjection</a></span>(<span class="typed"><span class="type">Either[A,B]</span><a href="#359" class="keyword">this</a></span>)
+
+  <span class="comment">/**
+   * Projects this &lt;code&gt;Either&lt;/code&gt; as a &lt;code&gt;Right&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Either.RightProjection[A,B]</span><a id="28181">right</a></span> = <span class="typed"><span class="type">object Either</span><a href="#360">Either</a></span>.<span class="typed"><span class="type">(Either[A,B])Either.RightProjection[A,B]</span><a href="#28276">RightProjection</a></span>(<span class="typed"><span class="type">Either[A,B]</span><a href="#359" class="keyword">this</a></span>)
+
+  <span class="comment">/**
+   * Deconstruction of the &lt;code&gt;Either&lt;/code&gt; type (in contrast to pattern matching).
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[X]((A) =&gt; X,(B) =&gt; X)X</span><a id="28182">fold</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="28184">X</a></span>](<span class="typed"><span class="type">(A) =&gt; X</span><a id="28313">fa</a></span>: A =&gt; X, <span class="typed"><span class="type">(B) =&gt; X</span><a id="28314">fb</a></span>: B =&gt; X) = <span class="typed"><span class="type">Either[A,B]</span><a href="#359" class="keyword">this</a></span> <span class="typed"><span class="type">X</span><span class="keyword">match</span></span> {
+    <span class="typed"><span class="type">X</span><span class="keyword">case</span></span> <a id="1">Left</a>(<span class="typed"><span class="type">A</span><a id="28336">a</a></span>) =&gt; <span class="typed"><span class="type">(A)X</span><a href="Function1.scala.html#17300">fa</a></span>(<span class="typed"><span class="type">A</span><a href="#28336">a</a></span>)
+    <span class="typed"><span class="type">X</span><span class="keyword">case</span></span> <a id="1">Right</a>(<span class="typed"><span class="type">B</span><a id="28357">b</a></span>) =&gt; <span class="typed"><span class="type">(B)X</span><a href="Function1.scala.html#17300">fb</a></span>(<span class="typed"><span class="type">B</span><a href="#28357">b</a></span>)
+  }
+
+  <span class="comment">/**
+   * If this is a &lt;code&gt;Left&lt;/code&gt;, then return the left value in &lt;code&gt;Right&lt;/code&gt; or vice versa.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; &lt;refinement&gt; extends Either[B,A] with Product</span><a id="28185">swap</a></span> = <span class="typed"><span class="type">Either[A,B]</span><a href="#359" class="keyword">this</a></span> <span class="typed"><span class="type">&lt;refinement&gt; extends Either[B,A] with Product</span><span class="keyword">match</span></span> {
+    <span class="typed"><span class="type">Right[Nothing,A]</span><span class="keyword">case</span></span> <a id="1">Left</a>(<span class="typed"><span class="type">A</span><a id="28360">a</a></span>) =&gt; <span class="typed"><span class="type">(A)Right[Nothing,A]</span><a href="#28338">Right</a></span>(<span class="typed"><span class="type">A</span><a href="#28360">a</a></span>)
+    <span class="typed"><span class="type">Left[B,Nothing]</span><span class="keyword">case</span></span> <a id="1">Right</a>(<span class="typed"><span class="type">B</span><a id="28364">b</a></span>) =&gt; <span class="typed"><span class="type">(B)Left[B,Nothing]</span><a href="#28317">Left</a></span>(<span class="typed"><span class="type">B</span><a href="#28364">b</a></span>)
+  }
+   
+  <span class="comment">/**
+   * Returns &lt;code&gt;true&lt;/code&gt; if this is a &lt;code&gt;Left&lt;/code&gt;, &lt;code&gt;false&lt;/code&gt; otherwise.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="28186">isLeft</a></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>  <span class="comment">// Default here, overriden in Left</span>
+  
+  <span class="comment">/**
+   * Returns &lt;code&gt;true&lt;/code&gt; if this is a &lt;code&gt;Right&lt;/code&gt;, &lt;code&gt;false&lt;/code&gt; otherwise.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="28187">isRight</a></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span> <span class="comment">// Default here, overriden in Right.</span>
+}
+<span class="comment">/**
+ * The left side of the disjoint union, as opposed to the &lt;code&gt;Right&lt;/code&gt; side.
+ *
+ * @author &lt;a href=&quot;mailto:research@workingmouse.com&quot;&gt;Tony Morris&lt;/a&gt;, Workingmouse
+ * @version 1.0, 11/10/2008
+ */</span>
+<span class="keyword">final</span> <span class="keyword">case</span> <span class="keyword">class</span> <span class="typed"><span class="type">class Left[+A, +B] extends Either[A,B] with ScalaObject with Product</span><span id="28397"><span id="28396"><span id="28332"><span id="2749"><span id="2748"><span id="28327"><span id="1214"><span id="1215"><span id="5792"><span id="28391"><span id="28392"><span id="28394"><span id="3494"><span id="19891"><span id="28393"><span id="28390"><span id="3499"><span id="28395"><span id="28398"><span id="28317"><a href="runtime/ScalaRunTime.scala.html#19785" id="3498">Left</a></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span>[+<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><span id="11082"><span id="28330"><a id="28320">A</a></span></span></span>, +<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><span id="11083"><span id="28331"><a id="28321">B</a></span></span></span>](<span class="typed"><span class="type">A</span><span id="28324"><span id="28323"><span id="28335"><a id="28365">a</a></span></span></span></span>: <span class="typed"><span class="type">A</span><a href="#11082">A</a></span>) <span class="keyword">extends</span> <span class="typed"><span class="type">Either[A,B]</span><a href="#359">Either</a></span>[A, B] { <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="28326">isLeft</a></span> = <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span> }
+<span class="comment">/**
+ * The right side of the disjoint union, as opposed to the &lt;code&gt;Left&lt;/code&gt; side.
+ *
+ * @author &lt;a href=&quot;mailto:research@workingmouse.com&quot;&gt;Tony Morris&lt;/a&gt;, Workingmouse
+ * @version 1.0, 11/10/2008 
+ */</span> 
+<span class="keyword">final</span> <span class="keyword">case</span> <span class="keyword">class</span> <span class="typed"><span class="type">class Right[+A, +B] extends Either[A,B] with ScalaObject with Product</span><span id="28353"><span id="28406"><span id="28408"><span id="2749"><span id="2748"><span id="28407"><span id="5792"><span id="518"><span id="28405"><span id="28409"><span id="19891"><span id="3494"><span id="28402"><span id="28348"><span id="28338"><span id="28403"><span id="519"><span id="28410"><span id="3499"><span id="28404"><a href="runtime/ScalaRunTime.scala.html#19785" id="3498">Right</a></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span>[+<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><span id="11084"><span id="28351"><a id="28341">A</a></span></span></span>, +<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><span id="11085"><span id="28352"><a id="28342">B</a></span></span></span>](<span class="typed"><span class="type">B</span><span id="28345"><span id="28344"><span id="28356"><a id="28361">b</a></span></span></span></span>: <span class="typed"><span class="type">B</span><a href="#11085">B</a></span>) <span class="keyword">extends</span> <span class="typed"><span class="type">Either[A,B]</span><a href="#359">Either</a></span>[A, B] { <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="28347">isRight</a></span> = <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span> }
+
+<span class="keyword">object</span> <span class="typed"><span class="type">object Either</span><a id="360">Either</a></span> {
+
+  <span class="comment">/** 
+   * Returns the &lt;code&gt;Left&lt;/code&gt; values in the given &lt;code&gt;Iterable&lt;/code&gt; of &lt;code&gt;Either&lt;/code&gt;s.
+   *
+   * @deprecated use `for (Left(a) &lt;- es) yield a`
+   * 
+   */</span> 
+  <span class="keyword">def</span> <span class="typed"><span class="type">[A, B](Iterable[Either[A,B]])List[A]</span><a id="28192">lefts</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="28195">A</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="28196">B</a></span>](<span class="typed"><span class="type">Iterable[Either[A,B]]</span><a id="28413">es</a></span>: <span class="typed"><span class="type">Iterable[Either[A,B]]</span><a href="Iterable.scala.html#401">Iterable</a></span>[Either[A, B]]) = 
+    <span class="typed"><span class="type">Iterable[Either[A,B]]</span><a href="#28413">es</a></span>.<span class="typed"><span class="type">(List[A])((Either[A,B], List[A]) =&gt; List[A])List[A]</span><a href="Iterable.scala.html#17339">foldRight</a></span>[<span class="typed"><span class="type">List[A]</span><a href="List.scala.html#524">List</a></span>[A]](<span class="typed"><span class="type">object Nil</span><a href="List.scala.html#333">Nil</a></span>)((<span class="typed"><span class="type">Either[A,B]</span><a id="28418">e</a></span>, <span class="typed"><span class="type">List[A]</span><a id="28419">as</a></span>) =&gt; <span class="typed"><span class="type">Either[A,B]</span><a href="#28418">e</a></span> <span class="typed"><span class="type">List[A]</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">List[A]</span><span class="keyword">case</span></span> <a id="1">Left</a>(<span class="typed"><span class="type">A</span><a id="28420">a</a></span>) =&gt; <span class="typed"><span class="type">A</span><a href="#28420">a</a></span> <span class="typed"><span class="type">(A)List[A]</span><a href="List.scala.html#20872">::</a></span> <span class="typed"><span class="type">List[A]</span><a href="#28419">as</a></span>
+      <span class="typed"><span class="type">List[A]</span><span class="keyword">case</span></span> <a id="1">Right</a>(_) =&gt; <span class="typed"><span class="type">List[A]</span><a href="#28419">as</a></span>
+    })     
+ 
+  <span class="comment">/** 
+   * Returns the &lt;code&gt;Right&lt;/code&gt; values in the given&lt;code&gt;Iterable&lt;/code&gt; of  &lt;code&gt;Either&lt;/code&gt;s.
+   * 
+   * @deprecated use `for (Right(a) &lt;- es) yield a`
+   */</span>      
+  <span class="keyword">def</span> <span class="typed"><span class="type">[A, B](Iterable[Either[A,B]])List[B]</span><a id="28197">rights</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="28200">A</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="28201">B</a></span>](<span class="typed"><span class="type">Iterable[Either[A,B]]</span><a id="28424">es</a></span>: <span class="typed"><span class="type">Iterable[Either[A,B]]</span><a href="Iterable.scala.html#401">Iterable</a></span>[Either[A, B]]) = 
+    <span class="typed"><span class="type">Iterable[Either[A,B]]</span><a href="#28424">es</a></span>.<span class="typed"><span class="type">(List[B])((Either[A,B], List[B]) =&gt; List[B])List[B]</span><a href="Iterable.scala.html#17339">foldRight</a></span>[<span class="typed"><span class="type">List[B]</span><a href="List.scala.html#524">List</a></span>[B]](<span class="typed"><span class="type">object Nil</span><a href="List.scala.html#333">Nil</a></span>)((<span class="typed"><span class="type">Either[A,B]</span><a id="28427">e</a></span>, <span class="typed"><span class="type">List[B]</span><a id="28428">bs</a></span>) =&gt; <span class="typed"><span class="type">Either[A,B]</span><a href="#28427">e</a></span> <span class="typed"><span class="type">List[B]</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">List[B]</span><span class="keyword">case</span></span> <a id="1">Left</a>(_) =&gt; <span class="typed"><span class="type">List[B]</span><a href="#28428">bs</a></span>
+      <span class="typed"><span class="type">List[B]</span><span class="keyword">case</span></span> <a id="1">Right</a>(<span class="typed"><span class="type">B</span><a id="28429">b</a></span>) =&gt; <span class="typed"><span class="type">B</span><a href="#28429">b</a></span> <span class="typed"><span class="type">(B)List[B]</span><a href="List.scala.html#20872">::</a></span> <span class="typed"><span class="type">List[B]</span><a href="#28428">bs</a></span>
+    })
+
+  <span class="comment">/** Transforms an Iterable of Eithers into a pair of lists.
+   *
+   *  @param xs the iterable of Eithers to separate
+   *  @return a pair of lists.
+   *
+   *  @deprecated  use `for ((Left(l), Right(r)) &lt;- es partition isLeft) yield (l, r)`
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[A, B](Iterable[Either[A,B]])(List[A], List[B])</span><a id="28202">separate</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="28205">A</a></span>,<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="28206">B</a></span>](<span class="typed"><span class="type">Iterable[Either[A,B]]</span><a id="28433">es</a></span>: <span class="typed"><span class="type">Iterable[Either[A,B]]</span><a href="Iterable.scala.html#401">Iterable</a></span>[Either[A,B]]): <span class="typed"><span class="type">(List[A], List[B])</span><a href="Tuple2.scala.html#1376">(</a></span>List[A], List[B]) =
+      <span class="typed"><span class="type">Iterable[Either[A,B]]</span><a href="#28433">es</a></span>.<span class="typed"><span class="type">((List[A], List[B]))((Either[A,B], (List[A], List[B])) =&gt; (List[A], List[B]))(List[A], List[B])</span><a href="Iterable.scala.html#17339">foldRight</a></span>[<span class="typed"><span class="type">(List[A], List[B])</span><a href="Tuple2.scala.html#1376">(</a></span>List[A], List[B])](<span class="typed"><span class="type">(object Nil,object Nil)(object Nil, object Nil)</span><a href="Tuple2.scala.html#20366">(</a></span><span class="typed"><span class="type">object Nil</span><a href="List.scala.html#333">Nil</a></span>, <span class="typed"><span class="type">object Nil</span><a href="List.scala.html#333">Nil</a></span>)) <span class="typed"><span class="type">(List[A], List[B])</span><a href="Tuple2.scala.html#20366">{</a></span>
+      <span class="typed"><span class="type">(List[A], List[B])</span><span class="keyword">case</span></span> <a id="1">(</a><a id="1">Left</a>(<span class="typed"><span class="type">A</span><a id="28441">a</a></span>), <a id="1">(</a><span class="typed"><span class="type">List[A]</span><a id="28442">lefts</a></span>, <span class="typed"><span class="type">List[B]</span><a id="28443">rights</a></span>)) =&gt; <span class="typed"><span class="type">(List[A],List[B])(List[A], List[B])</span><a href="Tuple2.scala.html#20366">(</a></span><span class="typed"><span class="type">A</span><a href="#28441">a</a></span> <span class="typed"><span class="type">(A)List[A]</span><a href="List.scala.html#20872">::</a></span> <span class="typed"><span class="type">List[A]</span><a href="#28442">lefts</a></span>, <span class="typed"><span class="type">List[B]</span><a href="#28443">rights</a></span>)
+      <span class="typed"><span class="type">(List[A], List[B])</span><span class="keyword">case</span></span> <a id="1">(</a><a id="1">Right</a>(<span class="typed"><span class="type">B</span><a id="28449">b</a></span>), <a id="1">(</a><span class="typed"><span class="type">List[A]</span><a id="28450">lefts</a></span>, <span class="typed"><span class="type">List[B]</span><a id="28451">rights</a></span>)) =&gt; <span class="typed"><span class="type">(List[A],List[B])(List[A], List[B])</span><a href="Tuple2.scala.html#20366">(</a></span><span class="typed"><span class="type">List[A]</span><a href="#28450">lefts</a></span>, <span class="typed"><span class="type">B</span><a href="#28449">b</a></span> <span class="typed"><span class="type">(B)List[B]</span><a href="List.scala.html#20872">::</a></span> <span class="typed"><span class="type">List[B]</span><a href="#28451">rights</a></span>)
+    }
+
+  <span class="comment">/**
+   * Projects an &lt;code&gt;Either&lt;/code&gt; into a &lt;code&gt;Left&lt;/code&gt;.
+   *
+   * @author &lt;a href=&quot;mailto:research@workingmouse.com&quot;&gt;Tony Morris&lt;/a&gt;, Workingmouse
+   * @version 1.0, 11/10/2008
+   */</span>
+  <span class="keyword">final</span> <span class="keyword">case</span> <span class="keyword">class</span> <span class="typed"><span class="type">class LeftProjection[+A, +B] extends java.lang.Object with ScalaObject with Product</span><span id="28690"><span id="28699"><span id="28688"><span id="28236"><span id="28207"><span id="2749"><span id="2748"><span id="28695"><span id="28210"><span id="5792"><span id="28697"><span id="19891"><span id="28265"><span id="28698"><span id="28689"><span id="3507"><span id="28692"><span id="3499"><span id="28700"><span id="28691"><a href="runtime/ScalaRunTime.scala.html#19785" id="3498">LeftProjection</a></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span>[+<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><span id="28208"><span id="28268"><a id="28239">A</a></span></span></span>, +<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><span id="28209"><span id="28269"><a id="28240">B</a></span></span></span>](<span class="typed"><span class="type">Either[A,B]</span><span id="28243"><span id="28242"><span id="28459"><a id="28270">e</a></span></span></span></span>: <span class="typed"><span class="type">Either[A,B]</span><a href="#359">Either</a></span>[A, B]) {
+    <span class="comment">/**
+     * Returns the value from this &lt;code&gt;Left&lt;/code&gt; or throws &lt;code&gt;Predef.NoSuchElementException&lt;/code&gt;
+     * if this is a &lt;code&gt;Right&lt;/code&gt;.
+     *
+     * @throws Predef.NoSuchElementException if the option is empty.
+     */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; A</span><a id="28245">get</a></span> = <span class="typed"><span class="type">=&gt; Either[A,B]</span><a href="#28242">e</a></span> <span class="typed"><span class="type">A</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">A</span><span class="keyword">case</span></span> <a id="1">Left</a>(<span class="typed"><span class="type">A</span><a id="28462">a</a></span>) =&gt; <span class="typed"><span class="type">A</span><a href="#28462">a</a></span>
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">case</span></span> <a id="1">Right</a>(_) =&gt;  <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.util.NoSuchElementException</span><a id="25317" class="keyword">new</a></span> <span class="typed"><span class="type">java.util.NoSuchElementException</span><a href="Predef.scala.html#13342">NoSuchElementException</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;Either.left.value on Right&quot;)</span><span class="string">&quot;Either.left.value on Right&quot;</span></span>)
+    }
+
+    <span class="comment">/**
+     * Executes the given side-effect if this is a &lt;code&gt;Left&lt;/code&gt;.
+     *
+     * @param e The side-effect to execute.
+     */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Unit)Unit</span><a id="28246">foreach</a></span>(<span class="typed"><span class="type">(A) =&gt; Unit</span><a id="28464">f</a></span>: A =&gt; Unit) = <span class="typed"><span class="type">=&gt; Either[A,B]</span><a href="#28242">e</a></span> <span class="typed"><span class="type">Unit</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <a id="1">Left</a>(<span class="typed"><span class="type">A</span><a id="28466">a</a></span>) =&gt; <span class="typed"><span class="type">(A)Unit</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">A</span><a href="#28466">a</a></span>)
+      <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <a id="1">Right</a>(_) =&gt; <span class="typed"><span class="type">Unit</span><span >{</span></span>}
+    }
+
+    <span class="comment">/**
+     * Returns the value from this &lt;code&gt;Left&lt;/code&gt; or the given argument if this is a
+     * &lt;code&gt;Right&lt;/code&gt;.
+     */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">[AA &gt;: A](=&gt; AA)AA</span><a id="28247">getOrElse</a></span>[<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="28249">AA</a></span> &gt;: A](<span class="typed"><span class="type">=&gt; AA</span><a id="28467">or</a></span>: =&gt; AA) = <span class="typed"><span class="type">=&gt; Either[A,B]</span><a href="#28242">e</a></span> <span class="typed"><span class="type">AA</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">A</span><span class="keyword">case</span></span> <a id="1">Left</a>(<span class="typed"><span class="type">A</span><a id="28469">a</a></span>) =&gt; <span class="typed"><span class="type">A</span><a href="#28469">a</a></span>
+      <span class="typed"><span class="type">AA</span><span class="keyword">case</span></span> <a id="1">Right</a>(_) =&gt; <span class="typed"><span class="type">=&gt; AA</span><a href="#28467">or</a></span>
+    }
+
+    <span class="comment">/**
+     * Returns &lt;code&gt;true&lt;/code&gt; if &lt;code&gt;Right&lt;/code&gt; or returns the result of the application of
+     * the given function to the &lt;code&gt;Left&lt;/code&gt; value.
+     */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)Boolean</span><a id="28250">forall</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="28470">f</a></span>: A =&gt; Boolean) = <span class="typed"><span class="type">=&gt; Either[A,B]</span><a href="#28242">e</a></span> <span class="typed"><span class="type">Boolean</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">Boolean</span><span class="keyword">case</span></span> <a id="1">Left</a>(<span class="typed"><span class="type">A</span><a id="28472">a</a></span>) =&gt; <span class="typed"><span class="type">(A)Boolean</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">A</span><a href="#28472">a</a></span>)
+      <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">case</span></span> <a id="1">Right</a>(_) =&gt; <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+    }
+
+    <span class="comment">/**
+     * Returns &lt;code&gt;false&lt;/code&gt; if &lt;code&gt;Right&lt;/code&gt; or returns the result of the application of
+     * the given function to the &lt;code&gt;Left&lt;/code&gt; value.
+     */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)Boolean</span><a id="28251">exists</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="28473">f</a></span>: A =&gt; Boolean) = <span class="typed"><span class="type">=&gt; Either[A,B]</span><a href="#28242">e</a></span> <span class="typed"><span class="type">Boolean</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">Boolean</span><span class="keyword">case</span></span> <a id="1">Left</a>(<span class="typed"><span class="type">A</span><a id="28475">a</a></span>) =&gt; <span class="typed"><span class="type">(A)Boolean</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">A</span><a href="#28475">a</a></span>)
+      <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">case</span></span> <a id="1">Right</a>(_) =&gt; <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+    }
+
+    <span class="comment">/**
+     * Binds the given function across &lt;code&gt;Left&lt;/code&gt;.
+     *
+     * @param The function to bind across &lt;code&gt;Left&lt;/code&gt;.
+     */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">[BB &gt;: B, X]((A) =&gt; Either[X,BB])Either[X,BB]</span><a id="28252">flatMap</a></span>[<span class="typed"><span class="type">&gt;: B &lt;: Any</span><a id="28255">BB</a></span> &gt;: B, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="28256">X</a></span>](<span class="typed"><span class="type">(A) =&gt; Either[X,BB]</span><a id="28476">f</a></span>: A =&gt; Either[X, BB]) = <span class="typed"><span class="type">=&gt; Either[A,B]</span><a href="#28242">e</a></span> <span class="typed"><span class="type">Either[X,BB]</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">Either[X,BB]</span><span class="keyword">case</span></span> <a id="1">Left</a>(<span class="typed"><span class="type">A</span><a id="28478">a</a></span>) =&gt; <span class="typed"><span class="type">(A)Either[X,BB]</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">A</span><a href="#28478">a</a></span>)
+      <span class="typed"><span class="type">Right[Nothing,B]</span><span class="keyword">case</span></span> <a id="1">Right</a>(<span class="typed"><span class="type">B</span><a id="28479">b</a></span>) =&gt; <span class="typed"><span class="type">(B)Right[Nothing,B]</span><a href="#28338">Right</a></span>(<span class="typed"><span class="type">B</span><a href="#28479">b</a></span>)
+    }
+
+    <span class="comment">/**
+     * Maps the function argument through &lt;code&gt;Left&lt;/code&gt;.
+     */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">[X]((A) =&gt; X)Either[X,B] with Product</span><a id="28257">map</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="28259">X</a></span>](<span class="typed"><span class="type">(A) =&gt; X</span><a id="28482">f</a></span>: A =&gt; X) = <span class="typed"><span class="type">=&gt; Either[A,B]</span><a href="#28242">e</a></span> <span class="typed"><span class="type">&lt;refinement&gt; extends Either[X,B] with Product</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">Left[X,Nothing]</span><span class="keyword">case</span></span> <a id="1">Left</a>(<span class="typed"><span class="type">A</span><a id="28484">a</a></span>) =&gt; <span class="typed"><span class="type">(X)Left[X,Nothing]</span><a href="#28317">Left</a></span>(<span class="typed"><span class="type">(A)X</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">A</span><a href="#28484">a</a></span>))
+      <span class="typed"><span class="type">Right[Nothing,B]</span><span class="keyword">case</span></span> <a id="1">Right</a>(<span class="typed"><span class="type">B</span><a id="28487">b</a></span>) =&gt; <span class="typed"><span class="type">(B)Right[Nothing,B]</span><a href="#28338">Right</a></span>(<span class="typed"><span class="type">B</span><a href="#28487">b</a></span>)
+    }
+
+    <span class="comment">/**
+     * Returns &lt;code&gt;None&lt;/code&gt; if this is a &lt;code&gt;Right&lt;/code&gt; or if the given predicate
+     * &lt;code&gt;p&lt;/code&gt; does not hold for the left value, otherwise, returns a &lt;code&gt;Left&lt;/code&gt;.
+     */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">[Y]((A) =&gt; Boolean)Option[Either[A,Y]]</span><a id="28260">filter</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="28262">Y</a></span>](<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="28505">p</a></span>: A =&gt; Boolean): <span class="typed"><span class="type">Option[Either[A,Y]]</span><a href="Option.scala.html#932">Option</a></span>[Either[A, Y]] = <span class="typed"><span class="type">=&gt; Either[A,B]</span><a href="#28242">e</a></span> <span class="typed"><span class="type">Option[Either[A,Y]]</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">Option[Either[A,Y]]</span><span class="keyword">case</span></span> <a id="1">Left</a>(<span class="typed"><span class="type">A</span><a id="28506">a</a></span>) =&gt; <span class="typed"><span class="type">Option[Either[A,Y]]</span><span class="keyword">if</span></span>(<span class="typed"><span class="type">(A)Boolean</span><a href="Function1.scala.html#17300">p</a></span>(<span class="typed"><span class="type">A</span><a href="#28506">a</a></span>)) <span class="typed"><span class="type">(Left[A,Nothing])Some[Left[A,Nothing]]</span><a href="Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">(A)Left[A,Nothing]</span><a href="#28317">Left</a></span>(<span class="typed"><span class="type">A</span><a href="#28506">a</a></span>)) <span class="keyword">else</span> <span class="typed"><span class="type">object None</span><a href="Option.scala.html#534">None</a></span>
+      <span class="typed"><span class="type">None.type</span><span class="keyword">case</span></span> <a id="1">Right</a>(<span class="typed"><span class="type">B</span><a id="28510">b</a></span>) =&gt; <span class="typed"><span class="type">object None</span><a href="Option.scala.html#534">None</a></span>
+    }
+
+    <span class="comment">/**
+     * Returns a &lt;code&gt;Seq&lt;/code&gt; containing the &lt;code&gt;Left&lt;/code&gt; value if it exists or an empty
+     * &lt;code&gt;Seq&lt;/code&gt; if this is a &lt;code&gt;Right&lt;/code&gt;.
+     */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Seq[A]</span><a id="28263">toSeq</a></span> = <span class="typed"><span class="type">=&gt; Either[A,B]</span><a href="#28242">e</a></span> <span class="typed"><span class="type">Seq[A]</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">Seq.singleton[A]</span><span class="keyword">case</span></span> <a id="1">Left</a>(<span class="typed"><span class="type">A</span><a id="28513">a</a></span>) =&gt; <span class="typed"><span class="type">object Seq</span><a href="Seq.scala.html#762">Seq</a></span>.<span class="typed"><span class="type">(A)Seq.singleton[A]</span><a href="Seq.scala.html#28515">singleton</a></span>(<span class="typed"><span class="type">A</span><a href="#28513">a</a></span>)
+      <span class="typed"><span class="type">Seq[Nothing]</span><span class="keyword">case</span></span> <a id="1">Right</a>(_) =&gt; <span class="typed"><span class="type">object Seq</span><a href="Seq.scala.html#762">Seq</a></span>.<span class="typed"><span class="type">=&gt; Seq[Nothing]</span><a href="Seq.scala.html#18315">empty</a></span>
+    }
+
+    <span class="comment">/**
+     * Returns a &lt;code&gt;Some&lt;/code&gt; containing the &lt;code&gt;Left&lt;/code&gt; value if it exists or a
+     * &lt;code&gt;None&lt;/code&gt; if this is a &lt;code&gt;Right&lt;/code&gt;.
+     */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Option[A]</span><a id="28264">toOption</a></span> = <span class="typed"><span class="type">=&gt; Either[A,B]</span><a href="#28242">e</a></span> <span class="typed"><span class="type">Option[A]</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">Some[A]</span><span class="keyword">case</span></span> <a id="1">Left</a>(<span class="typed"><span class="type">A</span><a id="28659">a</a></span>) =&gt; <span class="typed"><span class="type">(A)Some[A]</span><a href="Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">A</span><a href="#28659">a</a></span>)
+      <span class="typed"><span class="type">None.type</span><span class="keyword">case</span></span> <a id="1">Right</a>(_) =&gt; <span class="typed"><span class="type">object None</span><a href="Option.scala.html#534">None</a></span>
+    }
+  }
+
+  <span class="comment">/**
+   * Projects an &lt;code&gt;Either&lt;/code&gt; into a &lt;code&gt;Right&lt;/code&gt;.
+   *
+   * @author &lt;a href=&quot;mailto:research@workingmouse.com&quot;&gt;Tony Morris&lt;/a&gt;, Workingmouse
+   * @version 1.0, 11/10/2008
+   */</span>
+  <span class="keyword">final</span> <span class="keyword">case</span> <span class="keyword">class</span> <span class="typed"><span class="type">class RightProjection[+A, +B] extends java.lang.Object with ScalaObject with Product</span><span id="28846"><span id="28212"><span id="28854"><span id="28215"><span id="28851"><span id="28845"><span id="2749"><span id="2748"><span id="28848"><span id="5792"><span id="28853"><span id="19891"><span id="3507"><span id="28855"><span id="28844"><span id="3499"><span id="28856"><span id="28276"><span id="28847"><span id="3498"><a href="runtime/ScalaRunTime.scala.html#19785" id="28305">RightProjection</a></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span>[+<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><span id="28213"><span id="28308"><a id="28279">A</a></span></span></span>, +<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><span id="28214"><span id="28309"><a id="28280">B</a></span></span></span>](<span class="typed"><span class="type">Either[A,B]</span><span id="28283"><span id="28282"><span id="28704"><a id="28310">e</a></span></span></span></span>: <span class="typed"><span class="type">Either[A,B]</span><a href="#359">Either</a></span>[A, B]) {
+    <span class="comment">/**
+     * Returns the value from this &lt;code&gt;Right&lt;/code&gt; or throws 
+     * &lt;code&gt;Predef.NoSuchElementException&lt;/code&gt; if this is a &lt;code&gt;Left&lt;/code&gt;.
+     *
+     * @throws Predef.NoSuchElementException if the projection is &lt;code&gt;Left&lt;/code&gt;.
+     */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; B</span><a id="28285">get</a></span> = <span class="typed"><span class="type">=&gt; Either[A,B]</span><a href="#28282">e</a></span> <span class="typed"><span class="type">B</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">case</span></span> <a id="1">Left</a>(_) =&gt;  <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.util.NoSuchElementException</span><a id="25317" class="keyword">new</a></span> <span class="typed"><span class="type">java.util.NoSuchElementException</span><a href="Predef.scala.html#13342">NoSuchElementException</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;Either.right.value on Left&quot;)</span><span class="string">&quot;Either.right.value on Left&quot;</span></span>)
+      <span class="typed"><span class="type">B</span><span class="keyword">case</span></span> <a id="1">Right</a>(<span class="typed"><span class="type">B</span><a id="28708">a</a></span>) =&gt; <span class="typed"><span class="type">B</span><a href="#28708">a</a></span>
+    }
+
+    <span class="comment">/**
+     * Executes the given side-effect if this is a &lt;code&gt;Right&lt;/code&gt;.
+     *
+     * @param e The side-effect to execute.
+     */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">((B) =&gt; Unit)Unit</span><a id="28286">foreach</a></span>(<span class="typed"><span class="type">(B) =&gt; Unit</span><a id="28709">f</a></span>: B =&gt; Unit) = <span class="typed"><span class="type">=&gt; Either[A,B]</span><a href="#28282">e</a></span> <span class="typed"><span class="type">Unit</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <a id="1">Left</a>(_) =&gt; <span class="typed"><span class="type">Unit</span><span >{</span></span>}
+      <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <a id="1">Right</a>(<span class="typed"><span class="type">B</span><a id="28711">b</a></span>) =&gt; <span class="typed"><span class="type">(B)Unit</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">B</span><a href="#28711">b</a></span>)
+    }
+
+    <span class="comment">/**
+     * Returns the value from this &lt;code&gt;Right&lt;/code&gt; or the given argument if this is a
+     * &lt;code&gt;Left&lt;/code&gt;.
+     */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">[BB &gt;: B](=&gt; BB)BB</span><a id="28287">getOrElse</a></span>[<span class="typed"><span class="type">&gt;: B &lt;: Any</span><a id="28289">BB</a></span> &gt;: B](<span class="typed"><span class="type">=&gt; BB</span><a id="28712">or</a></span>: =&gt; BB) = <span class="typed"><span class="type">=&gt; Either[A,B]</span><a href="#28282">e</a></span> <span class="typed"><span class="type">BB</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">BB</span><span class="keyword">case</span></span> <a id="1">Left</a>(_) =&gt; <span class="typed"><span class="type">=&gt; BB</span><a href="#28712">or</a></span>
+      <span class="typed"><span class="type">B</span><span class="keyword">case</span></span> <a id="1">Right</a>(<span class="typed"><span class="type">B</span><a id="28714">b</a></span>) =&gt; <span class="typed"><span class="type">B</span><a href="#28714">b</a></span>
+    }
+
+    <span class="comment">/**
+     * Returns &lt;code&gt;true&lt;/code&gt; if &lt;code&gt;Left&lt;/code&gt; or returns the result of the application of
+     * the given function to the &lt;code&gt;Right&lt;/code&gt; value.
+     */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">((B) =&gt; Boolean)Boolean</span><a id="28290">forall</a></span>(<span class="typed"><span class="type">(B) =&gt; Boolean</span><a id="28715">f</a></span>: B =&gt; Boolean) = <span class="typed"><span class="type">=&gt; Either[A,B]</span><a href="#28282">e</a></span> <span class="typed"><span class="type">Boolean</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">case</span></span> <a id="1">Left</a>(_) =&gt; <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+      <span class="typed"><span class="type">Boolean</span><span class="keyword">case</span></span> <a id="1">Right</a>(<span class="typed"><span class="type">B</span><a id="28717">b</a></span>) =&gt; <span class="typed"><span class="type">(B)Boolean</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">B</span><a href="#28717">b</a></span>)
+    }
+
+    <span class="comment">/**
+     * Returns &lt;code&gt;false&lt;/code&gt; if &lt;code&gt;Left&lt;/code&gt; or returns the result of the application of
+     * the given function to the &lt;code&gt;Right&lt;/code&gt; value.
+     */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">((B) =&gt; Boolean)Boolean</span><a id="28291">exists</a></span>(<span class="typed"><span class="type">(B) =&gt; Boolean</span><a id="28718">f</a></span>: B =&gt; Boolean) = <span class="typed"><span class="type">=&gt; Either[A,B]</span><a href="#28282">e</a></span> <span class="typed"><span class="type">Boolean</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">case</span></span> <a id="1">Left</a>(_) =&gt; <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+      <span class="typed"><span class="type">Boolean</span><span class="keyword">case</span></span> <a id="1">Right</a>(<span class="typed"><span class="type">B</span><a id="28720">b</a></span>) =&gt; <span class="typed"><span class="type">(B)Boolean</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">B</span><a href="#28720">b</a></span>)
+    }
+
+    <span class="comment">/**
+     * Binds the given function across &lt;code&gt;Right&lt;/code&gt;.
+     *
+     * @param The function to bind across &lt;code&gt;Right&lt;/code&gt;.
+     */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">[AA &gt;: A, Y]((B) =&gt; Either[AA,Y])Either[AA,Y]</span><a id="28292">flatMap</a></span>[<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="28295">AA</a></span> &gt;: A, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="28296">Y</a></span>](<span class="typed"><span class="type">(B) =&gt; Either[AA,Y]</span><a id="28721">f</a></span>: B =&gt; Either[AA, Y]) = <span class="typed"><span class="type">=&gt; Either[A,B]</span><a href="#28282">e</a></span> <span class="typed"><span class="type">Either[AA,Y]</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">Left[A,Nothing]</span><span class="keyword">case</span></span> <a id="1">Left</a>(<span class="typed"><span class="type">A</span><a id="28723">a</a></span>) =&gt; <span class="typed"><span class="type">(A)Left[A,Nothing]</span><a href="#28317">Left</a></span>(<span class="typed"><span class="type">A</span><a href="#28723">a</a></span>)
+      <span class="typed"><span class="type">Either[AA,Y]</span><span class="keyword">case</span></span> <a id="1">Right</a>(<span class="typed"><span class="type">B</span><a id="28726">b</a></span>) =&gt; <span class="typed"><span class="type">(B)Either[AA,Y]</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">B</span><a href="#28726">b</a></span>)
+    }
+
+    <span class="comment">/**
+     * Maps the function argument through &lt;code&gt;Right&lt;/code&gt;.
+     */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">[Y]((B) =&gt; Y)Either[A,Y] with Product</span><a id="28297">map</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="28299">Y</a></span>](<span class="typed"><span class="type">(B) =&gt; Y</span><a id="28727">f</a></span>: B =&gt; Y) = <span class="typed"><span class="type">=&gt; Either[A,B]</span><a href="#28282">e</a></span> <span class="typed"><span class="type">&lt;refinement&gt; extends Either[A,Y] with Product</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">Left[A,Nothing]</span><span class="keyword">case</span></span> <a id="1">Left</a>(<span class="typed"><span class="type">A</span><a id="28729">a</a></span>) =&gt; <span class="typed"><span class="type">(A)Left[A,Nothing]</span><a href="#28317">Left</a></span>(<span class="typed"><span class="type">A</span><a href="#28729">a</a></span>)
+      <span class="typed"><span class="type">Right[Nothing,Y]</span><span class="keyword">case</span></span> <a id="1">Right</a>(<span class="typed"><span class="type">B</span><a id="28732">b</a></span>) =&gt; <span class="typed"><span class="type">(Y)Right[Nothing,Y]</span><a href="#28338">Right</a></span>(<span class="typed"><span class="type">(B)Y</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">B</span><a href="#28732">b</a></span>))
+    }
+
+    <span class="comment">/**
+     * Returns &lt;code&gt;None&lt;/code&gt; if this is a &lt;code&gt;Left&lt;/code&gt; or if the given predicate
+     * &lt;code&gt;p&lt;/code&gt; does not hold for the right value, otherwise, returns a &lt;code&gt;Right&lt;/code&gt;.
+     */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">[X]((B) =&gt; Boolean)Option[Either[X,B]]</span><a id="28300">filter</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="28302">X</a></span>](<span class="typed"><span class="type">(B) =&gt; Boolean</span><a id="28748">p</a></span>: B =&gt; Boolean): <span class="typed"><span class="type">Option[Either[X,B]]</span><a href="Option.scala.html#932">Option</a></span>[Either[X, B]] = <span class="typed"><span class="type">=&gt; Either[A,B]</span><a href="#28282">e</a></span> <span class="typed"><span class="type">Option[Either[X,B]]</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">None.type</span><span class="keyword">case</span></span> <a id="1">Left</a>(_) =&gt; <span class="typed"><span class="type">object None</span><a href="Option.scala.html#534">None</a></span>
+      <span class="typed"><span class="type">Option[Either[X,B]]</span><span class="keyword">case</span></span> <a id="1">Right</a>(<span class="typed"><span class="type">B</span><a id="28749">b</a></span>) =&gt; <span class="typed"><span class="type">Option[Either[X,B]]</span><span class="keyword">if</span></span>(<span class="typed"><span class="type">(B)Boolean</span><a href="Function1.scala.html#17300">p</a></span>(<span class="typed"><span class="type">B</span><a href="#28749">b</a></span>)) <span class="typed"><span class="type">(Right[Nothing,B])Some[Right[Nothing,B]]</span><a href="Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">(B)Right[Nothing,B]</span><a href="#28338">Right</a></span>(<span class="typed"><span class="type">B</span><a href="#28749">b</a></span>)) <span class="keyword">else</span> <span class="typed"><span class="type">object None</span><a href="Option.scala.html#534">None</a></span>
+    }
+
+    <span class="comment">/**
+     * Returns a &lt;code&gt;Seq&lt;/code&gt; containing the &lt;code&gt;Right&lt;/code&gt; value if it exists or an empty
+     * &lt;code&gt;Seq&lt;/code&gt; if this is a &lt;code&gt;Left&lt;/code&gt;.
+     */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Seq[B]</span><a id="28303">toSeq</a></span> = <span class="typed"><span class="type">=&gt; Either[A,B]</span><a href="#28282">e</a></span> <span class="typed"><span class="type">Seq[B]</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">Seq[Nothing]</span><span class="keyword">case</span></span> <a id="1">Left</a>(_) =&gt; <span class="typed"><span class="type">object Seq</span><a href="Seq.scala.html#762">Seq</a></span>.<span class="typed"><span class="type">=&gt; Seq[Nothing]</span><a href="Seq.scala.html#18315">empty</a></span>
+      <span class="typed"><span class="type">Seq.singleton[B]</span><span class="keyword">case</span></span> <a id="1">Right</a>(<span class="typed"><span class="type">B</span><a id="28755">b</a></span>) =&gt; <span class="typed"><span class="type">object Seq</span><a href="Seq.scala.html#762">Seq</a></span>.<span class="typed"><span class="type">(B)Seq.singleton[B]</span><a href="Seq.scala.html#28515">singleton</a></span>(<span class="typed"><span class="type">B</span><a href="#28755">b</a></span>)
+    }
+
+    <span class="comment">/**
+     * Returns a &lt;code&gt;Some&lt;/code&gt; containing the &lt;code&gt;Right&lt;/code&gt; value if it exists or a
+     * &lt;code&gt;None&lt;/code&gt; if this is a &lt;code&gt;Left&lt;/code&gt;.
+     */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Option[B]</span><a id="28304">toOption</a></span> = <span class="typed"><span class="type">=&gt; Either[A,B]</span><a href="#28282">e</a></span> <span class="typed"><span class="type">Option[B]</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">None.type</span><span class="keyword">case</span></span> <a id="1">Left</a>(_) =&gt; <span class="typed"><span class="type">object None</span><a href="Option.scala.html#534">None</a></span>
+      <span class="typed"><span class="type">Some[B]</span><span class="keyword">case</span></span> <a id="1">Right</a>(<span class="typed"><span class="type">B</span><a id="28811">b</a></span>) =&gt; <span class="typed"><span class="type">(B)Some[B]</span><a href="Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">B</span><a href="#28811">b</a></span>)
+    }
+  }
+
+  <span class="comment">/**
+   * Joins an &lt;code&gt;Either&lt;/code&gt; through &lt;code&gt;Left&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[A, B](Either[Either[A,B],B])Either[A,B]</span><a id="28217">joinLeft</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="28220">A</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="28221">B</a></span>](<span class="typed"><span class="type">Either[Either[A,B],B]</span><a id="28858">es</a></span>: <span class="typed"><span class="type">Either[Either[A,B],B]</span><a href="#359">Either</a></span>[Either[A, B], B]) =
+    <span class="typed"><span class="type">Either[Either[A,B],B]</span><a href="#28858">es</a></span>.<span class="typed"><span class="type">=&gt; Either.LeftProjection[Either[A,B],B]</span><a href="#28180">left</a></span>.<span class="typed"><span class="type">((Either[A,B]) =&gt; Either[A,B])Either[A,B]</span><a href="#28252">flatMap</a></span>(<span class="typed"><span class="type">Either[A,B]</span><a id="28865">x</a></span> =&gt; <span class="typed"><span class="type">Either[A,B]</span><a href="#28865">x</a></span>)
+
+  <span class="comment">/**
+   * Joins an &lt;code&gt;Either&lt;/code&gt; through &lt;code&gt;Right&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[A, B](Either[A,Either[A,B]])Either[A,B]</span><a id="28222">joinRight</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="28225">A</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="28226">B</a></span>](<span class="typed"><span class="type">Either[A,Either[A,B]]</span><a id="28866">es</a></span>: <span class="typed"><span class="type">Either[A,Either[A,B]]</span><a href="#359">Either</a></span>[A, Either[A, B]]) =
+    <span class="typed"><span class="type">Either[A,Either[A,B]]</span><a href="#28866">es</a></span>.<span class="typed"><span class="type">=&gt; Either.RightProjection[A,Either[A,B]]</span><a href="#28181">right</a></span>.<span class="typed"><span class="type">((Either[A,B]) =&gt; Either[A,B])Either[A,B]</span><a href="#28292">flatMap</a></span>(<span class="typed"><span class="type">Either[A,B]</span><a id="28873">x</a></span> =&gt; <span class="typed"><span class="type">Either[A,B]</span><a href="#28873">x</a></span>)
+
+  <span class="comment">/**
+   * Takes an &lt;code&gt;Either&lt;/code&gt; to its contained value within &lt;code&gt;Left&lt;/code&gt; or 
+   * &lt;code&gt;Right&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[T](Either[T,T])T</span><a id="28227">merge</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="28229">T</a></span>](<span class="typed"><span class="type">Either[T,T]</span><a id="28874">e</a></span>: <span class="typed"><span class="type">Either[T,T]</span><a href="#359">Either</a></span>[T, T]) = <span class="typed"><span class="type">Either[T,T]</span><a href="#28874">e</a></span> <span class="typed"><span class="type">T</span><span class="keyword">match</span></span> {
+    <span class="typed"><span class="type">T</span><span class="keyword">case</span></span> <a id="1">Left</a>(<span class="typed"><span class="type">T</span><a id="28876">t</a></span>) =&gt; <span class="typed"><span class="type">T</span><a href="#28876">t</a></span>
+    <span class="typed"><span class="type">T</span><span class="keyword">case</span></span> <a id="1">Right</a>(<span class="typed"><span class="type">T</span><a id="28877">t</a></span>) =&gt; <span class="typed"><span class="type">T</span><a href="#28877">t</a></span>
+  }
+   
+  <span class="comment">/**
+   * If the condition satisfies, return the given A in &lt;code&gt;Left&lt;/code&gt;, otherwise, return the 
+   * given B in &lt;code&gt;Right&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[A, B](Boolean,=&gt; B,=&gt; A)Either[A,B] with Product</span><a id="28230">cond</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="28233">A</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="28234">B</a></span>](<span class="typed"><span class="type">Boolean</span><a id="28878">test</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span>, <span class="typed"><span class="type">=&gt; B</span><a id="28879">right</a></span>: =&gt; B, <span class="typed"><span class="type">=&gt; A</span><a id="28880">left</a></span>: =&gt; A) = 
+    <span class="typed"><span class="type">&lt;refinement&gt; extends Either[A,B] with Product</span><span class="keyword">if</span></span>(<span class="typed"><span class="type">Boolean</span><a href="#28878">test</a></span>) <span class="typed"><span class="type">(B)Right[Nothing,B]</span><a href="#28338">Right</a></span>(<span class="typed"><span class="type">=&gt; B</span><a href="#28879">right</a></span>) <span class="keyword">else</span> <span class="typed"><span class="type">(A)Left[A,Nothing]</span><a href="#28317">Left</a></span>(<span class="typed"><span class="type">=&gt; A</span><a href="#28880">left</a></span>)
+}
+
+        </pre>
+    </body>
+</html>

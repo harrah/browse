@@ -1,0 +1,68 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/xml/parsing/XhtmlParser.scala</title>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">// $Id: XhtmlParser.scala 13983 2008-02-14 01:54:12Z mihaylov $</span>
+
+<span class="keyword">package</span> scala.xml.parsing
+
+<span class="keyword">import</span> scala.io.{Source}
+
+<span class="comment">/**
+ * Extends the Markup Parser to do the right thing (tm) with PCData blocks.
+ * (c) David Pollak, 2007 WorldWide Conferencing, LLC
+ */</span>
+<span class="keyword">trait</span> <span class="typed"><span class="type">trait PCDataMarkupParser[PCM &lt;: scala.xml.parsing.MarkupParser with scala.xml.parsing.MarkupHandler] extends java.lang.Object with scala.xml.parsing.MarkupParser with ScalaObject</span><a id="12516">PCDataMarkupParser</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: scala.xml.parsing.MarkupParser with scala.xml.parsing.MarkupHandler</span><a id="12698">PCM</a></span> &lt;: MarkupParser <span class="keyword">with</span> MarkupHandler] <span class="keyword">extends</span> <span class="typed"><span class="type">scala.xml.parsing.MarkupParser</span><a href="MarkupParser.scala.html#12525">MarkupParser</a></span> { self: PCM =&gt;
+
+  <span class="comment">/** '&amp;lt;! CharData ::= [CDATA[ ( {char} - {char}&quot;]]&amp;gt;&quot;{char} ) ']]&amp;gt;'
+   *
+   * see [15]
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; scala.xml.NodeSeq</span><a id="44381">xCharData</a></span>: <span class="typed"><span class="type">scala.xml.NodeSeq</span><a href="../NodeSeq.scala.html#7291">NodeSeq</a></span> = {
+    <span class="typed"><span class="type">(Seq[Char])Unit</span><a href="MarkupParser.scala.html#44340">xToken</a></span>(<span class="typed"><span class="type">implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString</span><a href="../../Predef.scala.html#13518" class="string">&quot;[CDATA[&quot;</a></span>)
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="44420">pos1</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="MarkupParser.scala.html#44310">pos</a></span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">StringBuilder</span><a id="44421">sb</a></span>: <span class="typed"><span class="type">StringBuilder</span><a href="../../StringBuilder.scala.html#1433">StringBuilder</a></span> = <span class="typed"><span class="type">()StringBuilder</span><a href="../../StringBuilder.scala.html#19620" class="keyword">new</a></span> <span class="typed"><span class="type">StringBuilder</span><a href="../../StringBuilder.scala.html#1433">StringBuilder</a></span>()
+    <span class="typed"><span class="type">Unit</span><a href="#44422" class="keyword">while</a></span> (<span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>) {
+      <span class="typed"><span class="type">StringBuilder</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Char</span><a href="MarkupParser.scala.html#44319">ch</a></span><span class="typed"><span class="type">(Char)Boolean</span><a id="3016">==</a></span><span class="typed"><span class="type">Char(']')</span><span class="char">']'</span></span>  <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span>
+          { <span class="typed"><span class="type">StringBuilder</span><a href="#44421">sb</a></span>.<span class="typed"><span class="type">(Char)StringBuilder</span><a href="../../StringBuilder.scala.html#19646">append</a></span>(<span class="typed"><span class="type">=&gt; Char</span><a href="MarkupParser.scala.html#44319">ch</a></span>); <span class="typed"><span class="type">=&gt; Unit</span><a href="MarkupParser.scala.html#44338">nextch</a></span>; <span class="typed"><span class="type">=&gt; Char</span><a href="MarkupParser.scala.html#44319">ch</a></span> <span class="typed"><span class="type">(Char)Boolean</span><a id="3016">==</a></span> <span class="typed"><span class="type">Char(']')</span><span class="char">']'</span></span> } <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span>
+          { <span class="typed"><span class="type">StringBuilder</span><a href="#44421">sb</a></span>.<span class="typed"><span class="type">(Char)StringBuilder</span><a href="../../StringBuilder.scala.html#19646">append</a></span>(<span class="typed"><span class="type">=&gt; Char</span><a href="MarkupParser.scala.html#44319">ch</a></span>); <span class="typed"><span class="type">=&gt; Unit</span><a href="MarkupParser.scala.html#44338">nextch</a></span>; <span class="typed"><span class="type">=&gt; Char</span><a href="MarkupParser.scala.html#44319">ch</a></span> <span class="typed"><span class="type">(Char)Boolean</span><a id="3016">==</a></span> <span class="typed"><span class="type">Char('&gt;')</span><span class="char">'&gt;'</span></span> } ) {
+            <span class="typed"><span class="type">StringBuilder</span><a href="#44421">sb</a></span>.<span class="typed"><span class="type">(Int)Unit</span><a href="../../StringBuilder.scala.html#19626">setLength</a></span>(<span class="typed"><span class="type">StringBuilder</span><a href="#44421">sb</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="../../StringBuilder.scala.html#19624">length</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int(2)</span><span class="int">2</span></span>);
+            <span class="typed"><span class="type">=&gt; Unit</span><a href="MarkupParser.scala.html#44338">nextch</a></span>; 
+            <span class="typed"><span class="type">Nothing</span><span class="keyword">return</span></span> <span class="typed"><span class="type">(String)scala.xml.PCData</span><a href="../PCData.scala.html#44461">PCData</a></span>(<span class="typed"><span class="type">StringBuilder</span><a href="#44421">sb</a></span>.<span class="typed"><span class="type">()String</span><a href="../../StringBuilder.scala.html#19672">toString</a></span>)
+          } <span class="keyword">else</span> <span class="typed"><span class="type">StringBuilder</span><a href="#44421">sb</a></span>.<span class="typed"><span class="type">(Char)StringBuilder</span><a href="../../StringBuilder.scala.html#19646">append</a></span>( <span class="typed"><span class="type">=&gt; Char</span><a href="MarkupParser.scala.html#44319">ch</a></span> );
+      <span class="typed"><span class="type">=&gt; Unit</span><a href="MarkupParser.scala.html#44338">nextch</a></span>; 
+    }
+    <span class="comment">// bq: (todo) increase grace when meeting CDATA section</span>
+    <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(String)scala.xml.parsing.FatalError</span><a href="FatalError.scala.html#44473">FatalError</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;this cannot happen&quot;)</span><span class="string">&quot;this cannot happen&quot;</span></span>);
+  }
+}
+
+<span class="comment">/**
+ * An XML Parser that preserves CDATA blocks and knows about HtmlEntities.
+ * (c) David Pollak, 2007 WorldWide Conferencing, LLC
+ */</span>
+<span class="keyword">class</span> <span class="typed"><span class="type">class XhtmlParser extends scala.xml.parsing.ConstructingHandler with scala.xml.parsing.PCDataMarkupParser[scala.xml.parsing.XhtmlParser] with scala.xml.parsing.ExternalSources with ScalaObject</span><a id="12615">XhtmlParser</a></span>(<span class="keyword">val</span> <span class="typed"><span class="type">scala.io.Source</span><span id="44489"><span id="44488"><a id="44501">input</a></span></span></span>: <span class="typed"><span class="type">scala.io.Source</span><a href="../../io/Source.scala.html#9107">Source</a></span>) <span class="keyword">extends</span> <span class="typed"><span class="type">scala.xml.parsing.ConstructingHandler</span><a href="ConstructingHandler.scala.html#12564">ConstructingHandler</a></span> <span class="keyword">with</span> <span class="typed"><span class="type">scala.xml.parsing.PCDataMarkupParser[scala.xml.parsing.XhtmlParser]</span><a href="#12516">PCDataMarkupParser</a></span>[XhtmlParser] <span class="keyword">with</span> <span class="typed"><span class="type">scala.xml.parsing.ExternalSources</span><a href="ExternalSources.scala.html#12585">ExternalSources</a></span>  {
+  <span class="keyword">val</span> <span class="typed"><span class="type">Boolean</span><span id="44492"><a id="44491">preserveWS</a></span></span> = <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+  <span class="typed"><span class="type">=&gt; scala.collection.mutable.Map[String,scala.xml.dtd.EntityDecl]</span><a href="MarkupHandler.scala.html#44389">ent</a></span> <span class="typed"><span class="type">(Iterable[(String, scala.xml.dtd.EntityDecl)])Unit</span><a href="../../collection/mutable/Map.scala.html#21353">++=</a></span> <span class="typed"><span class="type">()List[(java.lang.String, scala.xml.dtd.ParsedEntityDecl)]</span><a href="XhtmlEntities.scala.html#44512">XhtmlEntities</a></span>()
+}
+
+<span class="comment">/**
+ * Convenience method that instantiates, initializes and runs an XhtmlParser
+ * (c) Burak Emir
+ */</span>
+<span class="keyword">object</span> <span class="typed"><span class="type">object scala.xml.parsing.XhtmlParser</span><a id="12616">XhtmlParser</a></span> {
+  <span class="keyword">def</span> <span class="typed"><span class="type">(scala.io.Source)scala.xml.NodeSeq</span><a id="45043">apply</a></span>(<span class="typed"><span class="type">scala.io.Source</span><a id="45045">source</a></span>: <span class="typed"><span class="type">scala.io.Source</span><a href="../../io/Source.scala.html#9107">Source</a></span>): <span class="typed"><span class="type">scala.xml.NodeSeq</span><a href="../NodeSeq.scala.html#7291">NodeSeq</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">scala.xml.parsing.XhtmlParser</span><a id="45046">p</a></span> = <span class="typed"><span class="type">scala.xml.parsing.XhtmlParser</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.xml.parsing.XhtmlParser</span><a href="#12615">XhtmlParser</a></span>(<span class="typed"><span class="type">scala.io.Source</span><a href="#45045">source</a></span>)
+    <span class="typed"><span class="type">scala.xml.parsing.XhtmlParser</span><a href="#45046">p</a></span>.<span class="typed"><span class="type">=&gt; Unit</span><a href="MarkupParser.scala.html#44338">nextch</a></span>
+    <span class="typed"><span class="type">scala.xml.parsing.XhtmlParser</span><a href="#45046">p</a></span>.<span class="typed"><span class="type">()scala.xml.Document</span><a href="MarkupParser.scala.html#44336">document</a></span>
+  }
+}
+
+        </pre>
+    </body>
+</html>

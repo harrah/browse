@@ -1,0 +1,162 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/xml/dtd/ContentModelParser.scala</title>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://www.scala-lang.org/           **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: ContentModelParser.scala 16842 2009-01-06 15:46:05Z michelou $</span>
+
+
+<span class="keyword">package</span> scala.xml.dtd
+
+
+<span class="comment">/** Parser for regexps (content models in DTD element declarations) */</span>
+
+<span class="keyword">object</span> <span class="typed"><span class="type">object scala.xml.dtd.ContentModelParser</span><a id="9777">ContentModelParser</a></span> <span class="keyword">extends</span> <span class="typed"><span class="type">scala.xml.dtd.Scanner</span><a href="Scanner.scala.html#9710">Scanner</a></span> { <span class="comment">// a bit too permissive concerning #PCDATA</span>
+  <span class="keyword">import</span> ContentModel._
+
+  <span class="comment">/** parses the argument to a regexp */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(String)scala.xml.dtd.ContentModel</span><a id="120424">parse</a></span>(<span class="typed"><span class="type">String</span><a id="120434">s</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>): <span class="typed"><span class="type">scala.xml.dtd.ContentModel</span><a href="ContentModel.scala.html#9767">ContentModel</a></span> = { <span class="typed"><span class="type">(String)Unit</span><a href="Scanner.scala.html#112157">initScanner</a></span>(<span class="typed"><span class="type">String</span><a href="#120434">s</a></span>); <span class="typed"><span class="type">=&gt; scala.xml.dtd.ContentModel</span><a href="#120427">contentspec</a></span> }
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Unit</span><a id="120425">accept</a></span>(<span class="typed"><span class="type">Int</span><a id="126603">tok</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>) = {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Int</span><a href="Scanner.scala.html#112145">token</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3140">!=</a></span> <span class="typed"><span class="type">Int</span><a href="#126603">tok</a></span>) {
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">if</span></span> ((<span class="typed"><span class="type">Int</span><a href="#126603">tok</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3139">==</a></span> <span class="typed"><span class="type">Int(6)</span><span >STAR</span></span>) <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> (<span class="typed"><span class="type">=&gt; Int</span><a href="Scanner.scala.html#112145">token</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3139">==</a></span> <span class="typed"><span class="type">Int(10)</span><span >END</span></span>))                  <span class="comment">// common mistake</span>
+        <span class="typed"><span class="type">(String)Nothing</span><a href="../../Predef.scala.html#13358">error</a></span>(<span class="string">&quot;in DTDs, \n&quot;</span><span class="typed"><span class="type">java.lang.String(&quot;in DTDs, \012mixed content models must be like (#PCDATA|Name|Name|...)*&quot;)</span><span >+</span></span>
+              <span class="string">&quot;mixed content models must be like (#PCDATA|Name|Name|...)*&quot;</span>);
+      <span class="keyword">else</span>
+        <span class="typed"><span class="type">(String)Nothing</span><a href="../../Predef.scala.html#13358">error</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;expected &quot;)</span><span class="string">&quot;expected &quot;</span></span><span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span><span class="typed"><span class="type">(Int)String</span><a href="Tokens.scala.html#112141">token2string</a></span>(<span class="typed"><span class="type">Int</span><a href="#126603">tok</a></span>)<span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span>
+              <span class="typed"><span class="type">java.lang.String(&quot;, got unexpected token:&quot;)</span><span class="string">&quot;, got unexpected token:&quot;</span></span><span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span><span class="typed"><span class="type">(Int)String</span><a href="Tokens.scala.html#112141">token2string</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="Scanner.scala.html#112145">token</a></span>));
+    }
+    <span class="typed"><span class="type">=&gt; Unit</span><a href="Scanner.scala.html#112158">nextToken</a></span>
+  }
+
+  <span class="comment">// s [ '+' | '*' | '?' ]</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(scala.xml.dtd.ContentModel.RegExp)scala.xml.dtd.ContentModel.RegExp</span><a id="120426">maybeSuffix</a></span>(<span class="typed"><span class="type">scala.xml.dtd.ContentModel.RegExp</span><a id="126610">s</a></span>: <span class="typed"><span class="type">scala.xml.dtd.ContentModel.RegExp</span><a href="../../util/regexp/Base.scala.html#59155">RegExp</a></span>) = <span class="typed"><span class="type">=&gt; Int</span><a href="Scanner.scala.html#112145">token</a></span> <span class="typed"><span class="type">scala.xml.dtd.ContentModel.RegExp</span><span class="keyword">match</span></span> {	
+    <span class="typed"><span class="type">scala.xml.dtd.ContentModel.Star</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Int(6)</span><span >STAR</span></span> =&gt; <span class="typed"><span class="type">=&gt; Unit</span><a href="Scanner.scala.html#112158">nextToken</a></span>; <span class="typed"><span class="type">(scala.xml.dtd.ContentModel._regexpT)scala.xml.dtd.ContentModel.Star</span><a href="../../util/regexp/Base.scala.html#69800">Star</a></span>(<span class="typed"><span class="type">scala.xml.dtd.ContentModel.RegExp</span><a href="#126610">s</a></span>) 
+    <span class="typed"><span class="type">scala.xml.dtd.ContentModel.Sequ</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Int(7)</span><span >PLUS</span></span> =&gt; <span class="typed"><span class="type">=&gt; Unit</span><a href="Scanner.scala.html#112158">nextToken</a></span>; <span class="typed"><span class="type">(scala.xml.dtd.ContentModel._regexpT*)scala.xml.dtd.ContentModel.Sequ</span><a href="../../util/regexp/Base.scala.html#69773">Sequ</a></span>(<span class="typed"><span class="type">scala.xml.dtd.ContentModel.RegExp</span><a href="#126610">s</a></span>, <span class="typed"><span class="type">(scala.xml.dtd.ContentModel._regexpT)scala.xml.dtd.ContentModel.Star</span><a href="../../util/regexp/Base.scala.html#69800">Star</a></span>(<span class="typed"><span class="type">scala.xml.dtd.ContentModel.RegExp</span><a href="#126610">s</a></span>)) 
+    <span class="typed"><span class="type">scala.xml.dtd.ContentModel.Alt</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Int(8)</span><span >OPT</span></span>  =&gt; <span class="typed"><span class="type">=&gt; Unit</span><a href="Scanner.scala.html#112158">nextToken</a></span>; <span class="typed"><span class="type">(scala.xml.dtd.ContentModel._regexpT*)scala.xml.dtd.ContentModel.Alt</span><a href="../../util/regexp/Base.scala.html#59526">Alt</a></span>(<span class="typed"><span class="type">object scala.xml.dtd.ContentModel.Eps</span><a href="../../util/regexp/Base.scala.html#59165">Eps</a></span>, <span class="typed"><span class="type">scala.xml.dtd.ContentModel.RegExp</span><a href="#126610">s</a></span>)
+    <span class="typed"><span class="type">scala.xml.dtd.ContentModel.RegExp</span><span class="keyword">case</span></span> _    =&gt; <span class="typed"><span class="type">scala.xml.dtd.ContentModel.RegExp</span><a href="#126610">s</a></span>
+  }
+
+  <span class="comment">// contentspec ::= EMPTY | ANY | (#PCDATA) | &quot;(#PCDATA|&quot;regexp)</span>
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; scala.xml.dtd.ContentModel</span><a id="120427">contentspec</a></span>: <span class="typed"><span class="type">scala.xml.dtd.ContentModel</span><a href="ContentModel.scala.html#9767">ContentModel</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="Scanner.scala.html#112145">token</a></span> <span class="typed"><span class="type">scala.xml.dtd.ContentModel</span><span class="keyword">match</span></span> {
+
+    <span class="typed"><span class="type">scala.xml.dtd.ContentModel</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Int(1)</span><span >NAME</span></span> =&gt; <span class="typed"><span class="type">=&gt; String</span><a href="Scanner.scala.html#112148">value</a></span> <span class="typed"><span class="type">scala.xml.dtd.ContentModel</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">scala.xml.dtd.ANY.type</span><span class="keyword">case</span></span> <span class="typed"><span class="type">java.lang.String(&quot;ANY&quot;)</span><span class="string">&quot;ANY&quot;</span></span>   =&gt; <span class="typed"><span class="type">object scala.xml.dtd.ANY</span><a href="ContentModel.scala.html#9864">ANY</a></span> 
+      <span class="typed"><span class="type">scala.xml.dtd.EMPTY.type</span><span class="keyword">case</span></span> <span class="typed"><span class="type">java.lang.String(&quot;EMPTY&quot;)</span><span class="string">&quot;EMPTY&quot;</span></span> =&gt; <span class="typed"><span class="type">object scala.xml.dtd.EMPTY</span><a href="ContentModel.scala.html#9816">EMPTY</a></span>
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">case</span></span> _       =&gt; <span class="typed"><span class="type">(String)Nothing</span><a href="../../Predef.scala.html#13358">error</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;expected ANY, EMPTY or '(' instead of &quot;)</span><span class="string">&quot;expected ANY, EMPTY or '(' instead of &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">=&gt; String</span><a href="Scanner.scala.html#112148">value</a></span> );
+    }
+    <span class="typed"><span class="type">scala.xml.dtd.ContentModel</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Int(3)</span><span >LPAREN</span></span> =&gt; 
+
+      <span class="typed"><span class="type">=&gt; Unit</span><a href="Scanner.scala.html#112158">nextToken</a></span>; 
+      <span class="typed"><span class="type">=&gt; Unit</span><a href="#120428">sOpt</a></span>;
+      <span class="typed"><span class="type">scala.xml.dtd.ContentModel</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Int</span><a href="Scanner.scala.html#112145">token</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3140">!=</a></span> <span class="typed"><span class="type">Int(0)</span><span >TOKEN_PCDATA</span></span>)
+        <span class="typed"><span class="type">(scala.xml.dtd.ContentModel.RegExp)scala.xml.dtd.ELEMENTS</span><a href="ContentModel.scala.html#59226">ELEMENTS</a></span>(<span class="typed"><span class="type">=&gt; scala.xml.dtd.ContentModel.RegExp</span><a href="#120429">regexp</a></span>);
+      <span class="keyword">else</span> {
+        <span class="typed"><span class="type">=&gt; Unit</span><a href="Scanner.scala.html#112158">nextToken</a></span>;
+        <span class="typed"><span class="type">=&gt; Int</span><a href="Scanner.scala.html#112145">token</a></span> <span class="typed"><span class="type">scala.xml.dtd.ContentModel</span><span class="keyword">match</span></span> {
+        <span class="typed"><span class="type">scala.xml.dtd.PCDATA.type</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Int(4)</span><span >RPAREN</span></span> =&gt;
+          <span class="typed"><span class="type">object scala.xml.dtd.PCDATA</span><a href="ContentModel.scala.html#9846">PCDATA</a></span>
+        <span class="typed"><span class="type">scala.xml.dtd.MIXED</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Int(9)</span><span >CHOICE</span></span> =&gt;
+          <span class="keyword">val</span> <span class="typed"><span class="type">scala.xml.dtd.MIXED</span><a id="126619">res</a></span> = <span class="typed"><span class="type">(scala.xml.dtd.ContentModel.RegExp)scala.xml.dtd.MIXED</span><a href="ContentModel.scala.html#59513">MIXED</a></span>(<span class="typed"><span class="type">(scala.xml.dtd.ContentModel.RegExp)scala.xml.dtd.ContentModel.Alt</span><a href="#120431">choiceRest</a></span>(<span class="typed"><span class="type">object scala.xml.dtd.ContentModel.Eps</span><a href="../../util/regexp/Base.scala.html#59165">Eps</a></span>));
+          <span class="typed"><span class="type">=&gt; Unit</span><a href="#120428">sOpt</a></span>;
+          <span class="typed"><span class="type">(Int)Unit</span><a href="#120425">accept</a></span>( <span class="typed"><span class="type">Int(4)</span><span >RPAREN</span></span> );
+          <span class="typed"><span class="type">(Int)Unit</span><a href="#120425">accept</a></span>( <span class="typed"><span class="type">Int(6)</span><span >STAR</span></span> );
+          <span class="typed"><span class="type">scala.xml.dtd.MIXED</span><a href="#126619">res</a></span>
+        <span class="typed"><span class="type">Nothing</span><span class="keyword">case</span></span> _ =&gt;
+          <span class="typed"><span class="type">(String)Nothing</span><a href="../../Predef.scala.html#13358">error</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;unexpected token:&quot;)</span><span class="string">&quot;unexpected token:&quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">(Int)String</span><a href="Tokens.scala.html#112141">token2string</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="Scanner.scala.html#112145">token</a></span>) );
+        }
+      }
+
+    <span class="typed"><span class="type">Nothing</span><span class="keyword">case</span></span> _ =&gt;
+      <span class="typed"><span class="type">(String)Nothing</span><a href="../../Predef.scala.html#13358">error</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;unexpected token:&quot;)</span><span class="string">&quot;unexpected token:&quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">(Int)String</span><a href="Tokens.scala.html#112141">token2string</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="Scanner.scala.html#112145">token</a></span>) );
+    }
+  <span class="comment">//                                  sopt ::= S?</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Unit</span><a id="120428">sOpt</a></span> = <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span>( <span class="typed"><span class="type">=&gt; Int</span><a href="Scanner.scala.html#112145">token</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3139">==</a></span> <span class="typed"><span class="type">Int(13)</span><span >S</span></span> ) <span class="typed"><span class="type">=&gt; Unit</span><a href="Scanner.scala.html#112158">nextToken</a></span>;
+
+  <span class="comment">//                      (' S? mixed ::= '#PCDATA' S? ')'</span>
+  <span class="comment">//                                    | '#PCDATA' (S? '|' S? atom)* S? ')*'</span>
+  <span class="comment">/*
+  def mixed = {
+    accept( TOKEN_PCDATA );
+    sOpt;
+    if( token == RPAREN ) 
+      PCDATA_
+    else {
+      val t = choiceRest( PCDATA_ );
+      if( !isMixed( t ) )
+        error(&quot;mixed content models must be like (#PCDATA.|.|.|.)*&quot;);
+      accept( RPAREN );
+      // lax: (workaround for buggy Java XML parser in JDK1.4.2)
+      if( token == STAR ) accept( STAR ); 
+      // strict:
+      // accept( STAR );
+      Star( t )
+    }
+  }
+*/</span>
+  <span class="comment">//       '(' S? regexp ::= cp S? [seqRest|choiceRest] ')' [ '+' | '*' | '?' ]</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; scala.xml.dtd.ContentModel.RegExp</span><a id="120429">regexp</a></span>: <span class="typed"><span class="type">scala.xml.dtd.ContentModel.RegExp</span><a href="../../util/regexp/Base.scala.html#59155">RegExp</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">scala.xml.dtd.ContentModel.RegExp</span><a id="126634">p</a></span> = <span class="typed"><span class="type">=&gt; scala.xml.dtd.ContentModel.RegExp</span><a href="#120432">particle</a></span>;
+    <span class="typed"><span class="type">=&gt; Unit</span><a href="#120428">sOpt</a></span>;
+    <span class="typed"><span class="type">(scala.xml.dtd.ContentModel.RegExp)scala.xml.dtd.ContentModel.RegExp</span><a href="#120426">maybeSuffix</a></span>( <span class="typed"><span class="type">=&gt; Int</span><a href="Scanner.scala.html#112145">token</a></span> <span class="typed"><span class="type">scala.xml.dtd.ContentModel.RegExp</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">scala.xml.dtd.ContentModel.RegExp</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Int(4)</span><span >RPAREN</span></span>  =&gt; <span class="typed"><span class="type">=&gt; Unit</span><a href="Scanner.scala.html#112158">nextToken</a></span>; <span class="typed"><span class="type">scala.xml.dtd.ContentModel.RegExp</span><a href="#126634">p</a></span>
+      <span class="typed"><span class="type">scala.xml.dtd.ContentModel.Alt</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Int(9)</span><span >CHOICE</span></span>  =&gt; <span class="keyword">val</span> <span class="typed"><span class="type">scala.xml.dtd.ContentModel.Alt</span><a id="126635">q</a></span> = <span class="typed"><span class="type">(scala.xml.dtd.ContentModel.RegExp)scala.xml.dtd.ContentModel.Alt</span><a href="#120431">choiceRest</a></span>( <span class="typed"><span class="type">scala.xml.dtd.ContentModel.RegExp</span><a href="#126634">p</a></span> );<span class="typed"><span class="type">(Int)Unit</span><a href="#120425">accept</a></span>( <span class="typed"><span class="type">Int(4)</span><span >RPAREN</span></span> ); <span class="typed"><span class="type">scala.xml.dtd.ContentModel.Alt</span><a href="#126635">q</a></span>
+      <span class="typed"><span class="type">scala.xml.dtd.ContentModel.Sequ</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Int(5)</span><span >COMMA</span></span>   =&gt; <span class="keyword">val</span> <span class="typed"><span class="type">scala.xml.dtd.ContentModel.Sequ</span><a id="126636">q</a></span> = <span class="typed"><span class="type">(scala.xml.dtd.ContentModel.RegExp)scala.xml.dtd.ContentModel.Sequ</span><a href="#120430">seqRest</a></span>( <span class="typed"><span class="type">scala.xml.dtd.ContentModel.RegExp</span><a href="#126634">p</a></span> );   <span class="typed"><span class="type">(Int)Unit</span><a href="#120425">accept</a></span>( <span class="typed"><span class="type">Int(4)</span><span >RPAREN</span></span> ); <span class="typed"><span class="type">scala.xml.dtd.ContentModel.Sequ</span><a href="#126636">q</a></span>
+    })
+  }
+
+  <span class="comment">//                                             seqRest ::= (',' S? cp S?)+</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(scala.xml.dtd.ContentModel.RegExp)scala.xml.dtd.ContentModel.Sequ</span><a id="120430">seqRest</a></span>(<span class="typed"><span class="type">scala.xml.dtd.ContentModel.RegExp</span><a id="126637">p</a></span>: <span class="typed"><span class="type">scala.xml.dtd.ContentModel.RegExp</span><a href="../../util/regexp/Base.scala.html#59155">RegExp</a></span>) = { 
+    <span class="keyword">var</span> <span class="typed"><span class="type">List[scala.xml.dtd.ContentModel.RegExp]</span><a id="126639">k</a></span> = <span class="typed"><span class="type">(scala.xml.dtd.ContentModel.RegExp*)List[scala.xml.dtd.ContentModel.RegExp]</span><a href="../../List.scala.html#16977">List</a></span>(<span class="typed"><span class="type">scala.xml.dtd.ContentModel.RegExp</span><a href="#126637">p</a></span>);
+    <span class="typed"><span class="type">Unit</span><a href="#126640" class="keyword">while</a></span>( <span class="typed"><span class="type">=&gt; Int</span><a href="Scanner.scala.html#112145">token</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3139">==</a></span> <span class="typed"><span class="type">Int(5)</span><span >COMMA</span></span> ) {
+      <span class="typed"><span class="type">=&gt; Unit</span><a href="Scanner.scala.html#112158">nextToken</a></span>;
+      <span class="typed"><span class="type">=&gt; Unit</span><a href="#120428">sOpt</a></span>;
+      <span class="typed"><span class="type">List[scala.xml.dtd.ContentModel.RegExp]</span><a href="#126639">k</a></span> = <span class="typed"><span class="type">=&gt; scala.xml.dtd.ContentModel.RegExp</span><a href="#120432">particle</a></span><span class="typed"><span class="type">(scala.xml.dtd.ContentModel.RegExp)List[scala.xml.dtd.ContentModel.RegExp]</span><a href="../../List.scala.html#20872">::</a></span><span class="typed"><span class="type">List[scala.xml.dtd.ContentModel.RegExp]</span><a href="#126639">k</a></span>;
+      <span class="typed"><span class="type">=&gt; Unit</span><a href="#120428">sOpt</a></span>;
+    }
+    <span class="typed"><span class="type">(scala.xml.dtd.ContentModel._regexpT*)scala.xml.dtd.ContentModel.Sequ</span><a href="../../util/regexp/Base.scala.html#69773">Sequ</a></span>( <span class="typed"><span class="type">List[scala.xml.dtd.ContentModel.RegExp]</span><a href="#126639">k</a></span>.<span class="typed"><span class="type">=&gt; List[scala.xml.dtd.ContentModel.RegExp]</span><a href="../../List.scala.html#20934">reverse</a></span>:_* )
+  }
+
+  <span class="comment">//                                          choiceRest ::= ('|' S? cp S?)+</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(scala.xml.dtd.ContentModel.RegExp)scala.xml.dtd.ContentModel.Alt</span><a id="120431">choiceRest</a></span>( <span class="typed"><span class="type">scala.xml.dtd.ContentModel.RegExp</span><a id="126620">p</a></span>:<span class="typed"><span class="type">scala.xml.dtd.ContentModel.RegExp</span><a href="../../util/regexp/Base.scala.html#59155">RegExp</a></span> ) = { 
+    <span class="keyword">var</span> <span class="typed"><span class="type">List[scala.xml.dtd.ContentModel.RegExp]</span><a id="126622">k</a></span> = <span class="typed"><span class="type">(scala.xml.dtd.ContentModel.RegExp*)List[scala.xml.dtd.ContentModel.RegExp]</span><a href="../../List.scala.html#16977">List</a></span>( <span class="typed"><span class="type">scala.xml.dtd.ContentModel.RegExp</span><a href="#126620">p</a></span> );
+    <span class="typed"><span class="type">Unit</span><a href="#126623" class="keyword">while</a></span>( <span class="typed"><span class="type">=&gt; Int</span><a href="Scanner.scala.html#112145">token</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3139">==</a></span> <span class="typed"><span class="type">Int(9)</span><span >CHOICE</span></span> ) {
+      <span class="typed"><span class="type">=&gt; Unit</span><a href="Scanner.scala.html#112158">nextToken</a></span>;
+      <span class="typed"><span class="type">=&gt; Unit</span><a href="#120428">sOpt</a></span>;
+      <span class="typed"><span class="type">List[scala.xml.dtd.ContentModel.RegExp]</span><a href="#126622">k</a></span> = <span class="typed"><span class="type">=&gt; scala.xml.dtd.ContentModel.RegExp</span><a href="#120432">particle</a></span><span class="typed"><span class="type">(scala.xml.dtd.ContentModel.RegExp)List[scala.xml.dtd.ContentModel.RegExp]</span><a href="../../List.scala.html#20872">::</a></span><span class="typed"><span class="type">List[scala.xml.dtd.ContentModel.RegExp]</span><a href="#126622">k</a></span>;
+      <span class="typed"><span class="type">=&gt; Unit</span><a href="#120428">sOpt</a></span>;
+    }
+    <span class="typed"><span class="type">(scala.xml.dtd.ContentModel._regexpT*)scala.xml.dtd.ContentModel.Alt</span><a href="../../util/regexp/Base.scala.html#59526">Alt</a></span>( <span class="typed"><span class="type">List[scala.xml.dtd.ContentModel.RegExp]</span><a href="#126622">k</a></span>.<span class="typed"><span class="type">=&gt; List[scala.xml.dtd.ContentModel.RegExp]</span><a href="../../List.scala.html#20934">reverse</a></span>:_* )
+  }
+
+  <span class="comment">//                                  particle ::=  '(' S? regexp</span>
+  <span class="comment">//                                             |  name [ '+' | '*' | '?' ]</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; scala.xml.dtd.ContentModel.RegExp</span><a id="120432">particle</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="Scanner.scala.html#112145">token</a></span> <span class="typed"><span class="type">scala.xml.dtd.ContentModel.RegExp</span><span class="keyword">match</span></span> {
+    <span class="typed"><span class="type">scala.xml.dtd.ContentModel.RegExp</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Int(3)</span><span >LPAREN</span></span> =&gt; <span class="typed"><span class="type">=&gt; Unit</span><a href="Scanner.scala.html#112158">nextToken</a></span>; <span class="typed"><span class="type">=&gt; Unit</span><a href="#120428">sOpt</a></span>; <span class="typed"><span class="type">=&gt; scala.xml.dtd.ContentModel.RegExp</span><a href="#120429">regexp</a></span>; 
+    <span class="typed"><span class="type">scala.xml.dtd.ContentModel.RegExp</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Int(1)</span><span >NAME</span></span>   =&gt; <span class="keyword">val</span> <span class="typed"><span class="type">scala.xml.dtd.ContentModel.Letter</span><a id="126630">a</a></span> = <span class="typed"><span class="type">(scala.xml.dtd.ContentModel._labelT)scala.xml.dtd.ContentModel.Letter</span><a href="../../util/regexp/WordExp.scala.html#59549">Letter</a></span>(<span class="typed"><span class="type">(String)scala.xml.dtd.ContentModel.ElemName</span><a href="ContentModel.scala.html#59338">ElemName</a></span>(<span class="typed"><span class="type">=&gt; String</span><a href="Scanner.scala.html#112148">value</a></span>)); <span class="typed"><span class="type">=&gt; Unit</span><a href="Scanner.scala.html#112158">nextToken</a></span>; <span class="typed"><span class="type">(scala.xml.dtd.ContentModel.RegExp)scala.xml.dtd.ContentModel.RegExp</span><a href="#120426">maybeSuffix</a></span>(<span class="typed"><span class="type">scala.xml.dtd.ContentModel.Letter</span><a href="#126630">a</a></span>)
+    <span class="typed"><span class="type">Nothing</span><span class="keyword">case</span></span> _      =&gt; <span class="typed"><span class="type">(String)Nothing</span><a href="../../Predef.scala.html#13358">error</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;expected '(' or Name, got:&quot;)</span><span class="string">&quot;expected '(' or Name, got:&quot;</span></span><span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span><span class="typed"><span class="type">(Int)String</span><a href="Tokens.scala.html#112141">token2string</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="Scanner.scala.html#112145">token</a></span>));
+  }
+
+  <span class="comment">//                                     atom ::= name</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; scala.xml.dtd.ContentModel.Letter</span><a id="120433">atom</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="Scanner.scala.html#112145">token</a></span> <span class="typed"><span class="type">scala.xml.dtd.ContentModel.Letter</span><span class="keyword">match</span></span> {
+    <span class="typed"><span class="type">scala.xml.dtd.ContentModel.Letter</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Int(1)</span><span >NAME</span></span>   =&gt; <span class="keyword">val</span> <span class="typed"><span class="type">scala.xml.dtd.ContentModel.Letter</span><a id="126650">a</a></span> = <span class="typed"><span class="type">(scala.xml.dtd.ContentModel._labelT)scala.xml.dtd.ContentModel.Letter</span><a href="../../util/regexp/WordExp.scala.html#59549">Letter</a></span>(<span class="typed"><span class="type">(String)scala.xml.dtd.ContentModel.ElemName</span><a href="ContentModel.scala.html#59338">ElemName</a></span>(<span class="typed"><span class="type">=&gt; String</span><a href="Scanner.scala.html#112148">value</a></span>)); <span class="typed"><span class="type">=&gt; Unit</span><a href="Scanner.scala.html#112158">nextToken</a></span>; <span class="typed"><span class="type">scala.xml.dtd.ContentModel.Letter</span><a href="#126650">a</a></span>
+    <span class="typed"><span class="type">Nothing</span><span class="keyword">case</span></span> _      =&gt; <span class="typed"><span class="type">(String)Nothing</span><a href="../../Predef.scala.html#13358">error</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;expected Name, got:&quot;)</span><span class="string">&quot;expected Name, got:&quot;</span></span><span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span><span class="typed"><span class="type">(Int)String</span><a href="Tokens.scala.html#112141">token2string</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="Scanner.scala.html#112145">token</a></span>));
+  }
+}
+
+        </pre>
+    </body>
+</html>

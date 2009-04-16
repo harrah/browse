@@ -1,0 +1,198 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/actors/LinkedQueue.java</title>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*
+  File: LinkedQueue.java
+
+  Originally written by Doug Lea and released into the public domain.
+  This may be used for any purposes whatsoever without acknowledgment.
+  Thanks for the assistance and support of Sun Microsystems Labs,
+  and everyone contributing, testing, and using this code.
+
+  History:
+  Date       Who                What
+  11Jun1998  dl               Create public version
+  25aug1998  dl               added peek
+  10dec1998  dl               added isEmpty
+  10oct1999  dl               lock on node object to ensure visibility
+*/</span>
+
+<span class="keyword">package</span> scala.actors;
+
+<span class="comment">/**
+ * A linked list based channel implementation.
+ * The algorithm avoids contention between puts
+ * and takes when the queue is not empty. 
+ * Normally a put and a take can proceed simultaneously. 
+ * (Although it does not allow multiple concurrent puts or takes.)
+ * This class tends to perform more efficently than
+ * other Channel implementations in producer/consumer
+ * applications.
+ * &lt;p&gt;[&lt;a href=&quot;http://gee.cs.oswego.edu/dl/classes/EDU/oswego/cs/dl/util/concurrent/intro.html&quot;&gt; Introduction to this package. &lt;/a&gt;]
+ **/</span>
+
+public <span class="keyword">class</span> <span class="typed"><span class="type">object scala.actors.LinkedQueue</span><span id="8187"><a id="8186">LinkedQueue</a></span></span> {
+
+
+  <span class="comment">/** 
+   * Dummy header node of list. The first actual node, if it exists, is always 
+   * at head_.next. After each take, the old first node becomes the head.
+   **/</span>
+  <span class="keyword">protected</span> <span class="typed"><span class="type">scala.actors.LinkedNode</span><a href="LinkedNode.java.html#8162">LinkedNode</a></span> <span class="typed"><span class="type">scala.actors.LinkedNode</span><a id="120969">head_</a></span>;         
+
+  <span class="comment">/**
+   * Helper monitor for managing access to last node.
+   **/</span>
+  <span class="keyword">protected</span> <span class="keyword">final</span> Object <span class="typed"><span class="type">java.lang.Object</span><a id="120970">putLock_</a></span> = <span class="keyword">new</span> Object(); 
+
+  <span class="comment">/** 
+   * The last node of list. Put() appends to list, so modifies last_
+   **/</span>
+  <span class="keyword">protected</span> <span class="typed"><span class="type">scala.actors.LinkedNode</span><a href="LinkedNode.java.html#8162">LinkedNode</a></span> <span class="typed"><span class="type">scala.actors.LinkedNode</span><a id="120971">last_</a></span>;         
+
+  <span class="comment">/**
+   * The number of threads waiting for a take.
+   * Notifications are provided in put only if greater than zero.
+   * The bookkeeping is worth it here since in reasonably balanced
+   * usages, the notifications will hardly ever be necessary, so
+   * the call overhead to notify can be eliminated.
+   **/</span>
+  <span class="keyword">protected</span> int <span class="typed"><span class="type">Int</span><a id="120972">waitingForTake_</a></span> = <span class="int">0</span>;  
+
+  public LinkedQueue() {
+    head_ = <span class="keyword">new</span> LinkedNode(<span class="keyword">null</span>); 
+    last_ = head_;
+  }
+
+  <span class="comment">/** Main mechanics for put/offer **/</span>
+  <span class="keyword">protected</span> void <span class="typed"><span class="type">(Any)Unit</span><a id="120974">insert</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136848">x</a></span>) { 
+    synchronized(putLock_) {
+      LinkedNode p = <span class="keyword">new</span> LinkedNode(x);
+      synchronized(last_) {
+        last_.next = p;
+        last_ = p;
+      }
+      <span class="keyword">if</span> (waitingForTake_ &gt; <span class="int">0</span>)
+        putLock_.notify();
+    }
+  }
+
+  <span class="comment">/** Main mechanics for take/poll **/</span>
+  <span class="keyword">protected</span> synchronized Object <span class="typed"><span class="type">()java.lang.Object</span><a id="120975">extract</a></span>() {
+    synchronized(head_) {
+      Object x = <span class="keyword">null</span>;
+      LinkedNode first = head_.next;
+      <span class="keyword">if</span> (first != <span class="keyword">null</span>) {
+        x = first.value;
+        first.value = <span class="keyword">null</span>;
+        head_ = first; 
+      }
+      <span class="keyword">return</span> x;
+    }
+  }
+
+
+  public void <span class="typed"><span class="type">(Any)Unit</span><a id="120976">put</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136849">x</a></span>) throws InterruptedException {
+    <span class="keyword">if</span> (x == <span class="keyword">null</span>) <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException();
+    <span class="keyword">if</span> (Thread.interrupted()) <span class="keyword">throw</span> <span class="keyword">new</span> InterruptedException();
+    insert(x); 
+  }
+
+  public boolean <span class="typed"><span class="type">(Any,Long)Boolean</span><a id="120977">offer</a></span>(Object <span class="typed"><span class="type">java.lang.Object</span><a id="136850">x</a></span>, long <span class="typed"><span class="type">Long</span><a id="136851">msecs</a></span>) throws InterruptedException { 
+    <span class="keyword">if</span> (x == <span class="keyword">null</span>) <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException();
+    <span class="keyword">if</span> (Thread.interrupted()) <span class="keyword">throw</span> <span class="keyword">new</span> InterruptedException();
+    insert(x); 
+    <span class="keyword">return</span> <span class="keyword">true</span>;
+  }
+
+  public Object <span class="typed"><span class="type">()java.lang.Object</span><a id="120978">take</a></span>() throws InterruptedException {
+    <span class="keyword">if</span> (Thread.interrupted()) <span class="keyword">throw</span> <span class="keyword">new</span> InterruptedException();
+    <span class="comment">// try to extract. If fail, then enter wait-based retry loop</span>
+    Object x = extract();
+    <span class="keyword">if</span> (x != <span class="keyword">null</span>)
+      <span class="keyword">return</span> x;
+    <span class="keyword">else</span> { 
+      synchronized(putLock_) {
+        <span class="keyword">try</span> {
+          ++waitingForTake_;
+          <span class="keyword">for</span> (;;) {
+            x = extract();
+            <span class="keyword">if</span> (x != <span class="keyword">null</span>) {
+              --waitingForTake_;
+              <span class="keyword">return</span> x;
+            }
+            <span class="keyword">else</span> {
+              putLock_.wait(); 
+            }
+          }
+        }
+        <span class="keyword">catch</span>(InterruptedException ex) { 
+          --waitingForTake_; 
+          putLock_.notify();
+          <span class="keyword">throw</span> ex; 
+        }
+      }
+    }
+  }
+
+  public Object <span class="typed"><span class="type">()java.lang.Object</span><a id="120979">peek</a></span>() {
+    synchronized(head_) {
+      LinkedNode first = head_.next;
+      <span class="keyword">if</span> (first != <span class="keyword">null</span>) 
+        <span class="keyword">return</span> first.value;
+      <span class="keyword">else</span> 
+        <span class="keyword">return</span> <span class="keyword">null</span>;
+    }
+  }    
+
+
+  public boolean <span class="typed"><span class="type">()Boolean</span><a id="120980">isEmpty</a></span>() {
+    synchronized(head_) {
+      <span class="keyword">return</span> head_.next == <span class="keyword">null</span>;
+    }
+  }    
+
+  public Object <span class="typed"><span class="type">(Long)java.lang.Object</span><a id="120981">poll</a></span>(long <span class="typed"><span class="type">Long</span><a id="136852">msecs</a></span>) throws InterruptedException {
+    <span class="keyword">if</span> (Thread.interrupted()) <span class="keyword">throw</span> <span class="keyword">new</span> InterruptedException();
+    Object x = extract();
+    <span class="keyword">if</span> (x != <span class="keyword">null</span>) 
+      <span class="keyword">return</span> x;
+    <span class="keyword">else</span> {
+      synchronized(putLock_) {
+        <span class="keyword">try</span> {
+          long waitTime = msecs;
+          long start = (msecs &lt;= <span class="int">0</span>)? <span class="int">0</span> : System.currentTimeMillis();
+          ++waitingForTake_;
+          <span class="keyword">for</span> (;;) {
+            x = extract();
+            <span class="keyword">if</span> (x != <span class="keyword">null</span> || waitTime &lt;= <span class="int">0</span>) {
+              --waitingForTake_;
+              <span class="keyword">return</span> x;
+            }
+            <span class="keyword">else</span> {
+              putLock_.wait(waitTime); 
+              waitTime = msecs - (System.currentTimeMillis() - start);
+            }
+          }
+        }
+        <span class="keyword">catch</span>(InterruptedException ex) { 
+          --waitingForTake_; 
+          putLock_.notify();
+          <span class="keyword">throw</span> ex; 
+        }
+      }
+    }
+  }
+}
+
+
+
+        </pre>
+    </body>
+</html>

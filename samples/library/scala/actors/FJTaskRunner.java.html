@@ -1,0 +1,1009 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/actors/FJTaskRunner.java</title>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*
+  File: FJTaskRunner.java
+
+  Originally written by Doug Lea and released into the public domain.
+  This may be used for any purposes whatsoever without acknowledgment.
+  Thanks for the assistance and support of Sun Microsystems Labs,
+  and everyone contributing, testing, and using this code.
+
+  History:
+  Date       Who                What
+  7Jan1999   dl                 First public release
+  13Jan1999  dl                 correct a stat counter update; 
+                                ensure inactive status on run termination;
+                                misc minor cleaup
+  14Jan1999  dl                 Use random starting point in scan;
+                                variable renamings.
+  18Jan1999  dl                 Runloop allowed to die on task exception;
+                                remove useless timed join
+  22Jan1999  dl                 Rework scan to allow use of priorities.
+  6Feb1999   dl                 Documentation updates.
+  7Mar1999   dl                 Add array-based coInvoke
+  31Mar1999  dl                 Revise scan to remove need for NullTasks
+  27Apr1999  dl                 Renamed
+  23oct1999  dl                 Earlier detect of interrupt in scanWhileIdling
+  24nov1999  dl                 Now works on JVMs that do not properly
+                                implement read-after-write of 2 volatiles.
+*/</span>
+
+<span class="keyword">package</span> scala.actors;
+
+<span class="keyword">import</span> java.util.Random;
+
+<span class="comment">/**
+ * Specialized Thread subclass for running FJTasks.
+ * &lt;p&gt;
+ * Each FJTaskRunner keeps FJTasks in a double-ended queue (DEQ).
+ * Double-ended queues support stack-based operations
+ * push and pop, as well as queue-based operations put and take.
+ * Normally, threads run their own tasks. But they
+ * may also steal tasks from each others DEQs.
+ * &lt;p&gt;
+ * The algorithms are minor variants of those used
+ * in &lt;A href=&quot;http://supertech.lcs.mit.edu/cilk/&quot;&gt; Cilk&lt;/A&gt; and
+ * &lt;A href=&quot;http://www.cs.utexas.edu/users/hood/&quot;&gt; Hood&lt;/A&gt;, and
+ * to a lesser extent 
+ * &lt;A href=&quot;http://www.cs.uga.edu/~dkl/filaments/dist.html&quot;&gt; Filaments&lt;/A&gt;,
+ * but are adapted to work in Java.
+ * &lt;p&gt;
+ * The two most important capabilities are:
+ * &lt;ul&gt;
+ *  &lt;li&gt; Fork a FJTask: 
+ *  &lt;pre&gt;
+ *  Push task onto DEQ
+ *  &lt;/pre&gt;
+ *  &lt;li&gt; Get a task to run (for example within taskYield)
+ *  &lt;pre&gt;
+ *  If DEQ is not empty, 
+ *     Pop a task and run it.
+ *  Else if any other DEQ is not empty, 
+ *     Take (&quot;steal&quot;) a task from it and run it.
+ *  Else if the entry queue for our group is not empty,
+ *     Take a task from it and run it.
+ *  Else if current thread is otherwise idling
+ *     If all threads are idling
+ *        Wait for a task to be put on group entry queue
+ *  Else
+ *      Yield or Sleep for a while, and then retry
+ *  &lt;/pre&gt;
+ * &lt;/ul&gt;
+ * The push, pop, and put are designed to only ever called by the
+ * current thread, and take (steal) is only ever called by
+ * other threads.
+ * All other operations are composites and variants of these,
+ * plus a few miscellaneous bookkeeping methods.
+ * &lt;p&gt;
+ * Implementations of the underlying representations and operations
+ * are geared for use on JVMs operating on multiple CPUs (although
+ * they should of course work fine on single CPUs as well).
+ * &lt;p&gt;
+ * A possible snapshot of a FJTaskRunner's DEQ is:
+ * &lt;pre&gt;
+ *     0     1     2     3     4     5     6    ...
+ *  +-----+-----+-----+-----+-----+-----+-----+--
+ *  |     |  t  |  t  |  t  |  t  |     |     | ...  deq array
+ *  +-----+-----+-----+-----+-----+-----+-----+--
+ *           ^                       ^
+ *          base                    top 
+ *   (incremented                     (incremented 
+ *       on take,                         on push    
+ *    decremented                     decremented
+ *       on put)                          on pop)
+ * &lt;/pre&gt;
+ * &lt;p&gt;
+ * FJTasks are held in elements of the DEQ. 
+ * They are maintained in a bounded array that
+ * works similarly to a circular bounded buffer. To ensure
+ * visibility of stolen FJTasks across threads, the array elements
+ * must be &lt;code&gt;volatile&lt;/code&gt;. 
+ * Using volatile rather than synchronizing suffices here since
+ * each task accessed by a thread is either one that it
+ * created or one that has never seen before. Thus we cannot
+ * encounter any staleness problems executing run methods,
+ * although FJTask programmers must be still sure to either synch or use
+ * volatile for shared data within their run methods.
+ * &lt;p&gt;
+ * However, since there is no way
+ * to declare an array of volatiles in Java, the DEQ elements actually
+ * hold VolatileTaskRef objects, each of which in turn holds a
+ * volatile reference to a FJTask. 
+ * Even with the double-indirection overhead of 
+ * volatile refs, using an array for the DEQ works out
+ * better than linking them since fewer shared
+ * memory locations need to be
+ * touched or modified by the threads while using the DEQ.
+ * Further, the double indirection may alleviate cache-line
+ * sharing effects (which cannot otherwise be directly dealt with in Java).
+ * &lt;p&gt;
+ * The indices for the &lt;code&gt;base&lt;/code&gt; and &lt;code&gt;top&lt;/code&gt; of the DEQ
+ * are declared as volatile. The main contention point with
+ * multiple FJTaskRunner threads occurs when one thread is trying
+ * to pop its own stack while another is trying to steal from it.
+ * This is handled via a specialization of Dekker's algorithm,
+ * in which the popping thread pre-decrements &lt;code&gt;top&lt;/code&gt;,
+ * and then checks it against &lt;code&gt;base&lt;/code&gt;. 
+ * To be conservative in the face of JVMs that only partially
+ * honor the specification for volatile, the pop proceeds
+ * without synchronization only if there are apparently enough
+ * items for both a simultaneous pop and take to succeed.
+ * It otherwise enters a 
+ * synchronized lock to check if the DEQ is actually empty,
+ * if so failing. The stealing thread
+ * does almost the opposite, but is set up to be less likely
+ * to win in cases of contention: Steals always run under synchronized
+ * locks in order to avoid conflicts with other ongoing steals.
+ * They pre-increment &lt;code&gt;base&lt;/code&gt;, and then check against
+ * &lt;code&gt;top&lt;/code&gt;. They back out (resetting the base index 
+ * and failing to steal) if the
+ * DEQ is empty or is about to become empty by an ongoing pop.
+ * &lt;p&gt;
+ * A push operation can normally run concurrently with a steal.
+ * A push enters a synch lock only if the DEQ appears full so must
+ * either be resized or have indices adjusted due to wrap-around
+ * of the bounded DEQ. The put operation always requires synchronization.
+ * &lt;p&gt;
+ * When a FJTaskRunner thread has no tasks of its own to run, 
+ * it tries to be a good citizen. 
+ * Threads run at lower priority while scanning for work.
+ * &lt;p&gt;
+ * If the task is currently waiting
+ * via yield, the thread alternates scans (starting at a randomly 
+ * chosen victim) with Thread.yields. This is
+ * well-behaved so long as the JVM handles Thread.yield in a
+ * sensible fashion. (It need not. Thread.yield is so underspecified
+ * that it is legal for a JVM to treat it as a no-op.) This also
+ * keeps things well-behaved even if we are running on a uniprocessor
+ * JVM using a simple cooperative threading model.
+ * &lt;p&gt;
+ * If a thread needing work is
+ * is otherwise idle (which occurs only in the main runloop), and
+ * there are no available tasks to steal or poll, it
+ * instead enters into a sleep-based (actually timed wait(msec))
+ * phase in which it progressively sleeps for longer durations
+ * (up to a maximum of FJTaskRunnerGroup.MAX_SLEEP_TIME,
+ * currently 100ms) between scans. 
+ * If all threads in the group
+ * are idling, they further progress to a hard wait phase, suspending
+ * until a new task is entered into the FJTaskRunnerGroup entry queue.
+ * A sleeping FJTaskRunner thread may be awakened by a new
+ * task being put into the group entry queue or by another FJTaskRunner
+ * becoming active, but not merely by some DEQ becoming non-empty.
+ * Thus the MAX_SLEEP_TIME provides a bound for sleep durations
+ * in cases where all but one worker thread start sleeping
+ * even though there will eventually be work produced
+ * by a thread that is taking a long time to place tasks in DEQ.
+ * These sleep mechanics are handled in the FJTaskRunnerGroup class.
+ * &lt;p&gt;
+ * Composite operations such as taskJoin include heavy
+ * manual inlining of the most time-critical operations
+ * (mainly FJTask.invoke). 
+ * This opens up a few opportunities for further hand-optimizations. 
+ * Until Java compilers get a lot smarter, these tweaks
+ * improve performance significantly enough for task-intensive 
+ * programs to be worth the poorer maintainability and code duplication.
+ * &lt;p&gt;
+ * Because they are so fragile and performance-sensitive, nearly
+ * all methods are declared as final. However, nearly all fields
+ * and methods are also declared as protected, so it is possible,
+ * with much care, to extend functionality in subclasses. (Normally
+ * you would also need to subclass FJTaskRunnerGroup.)
+ * &lt;p&gt;
+ * None of the normal java.lang.Thread class methods should ever be called
+ * on FJTaskRunners. For this reason, it might have been nicer to
+ * declare FJTaskRunner as a Runnable to run within a Thread. However,
+ * this would have complicated many minor logistics. And since
+ * no FJTaskRunner methods should normally be called from outside the
+ * FJTask and FJTaskRunnerGroup classes either, this decision doesn't impact
+ * usage.
+ * &lt;p&gt;
+ * You might think that layering this kind of framework on top of
+ * Java threads, which are already several levels removed from raw CPU
+ * scheduling on most systems, would lead to very poor performance. 
+ * But on the platforms
+ * tested, the performance is quite good.
+ * &lt;p&gt;[&lt;a href=&quot;http://gee.cs.oswego.edu/dl/classes/EDU/oswego/cs/dl/util/concurrent/intro.html&quot;&gt; Introduction to this package. &lt;/a&gt;]
+ * @see FJTask
+ * @see FJTaskRunnerGroup
+ **/</span>
+
+public <span class="keyword">class</span> <span class="typed"><span class="type">object scala.actors.FJTaskRunner</span><span id="8010"><a id="8009">FJTaskRunner</a></span></span> <span class="keyword">extends</span> Thread {
+  
+  <span class="comment">/** The group of which this FJTaskRunner is a member **/</span>
+  <span class="keyword">protected</span> <span class="keyword">final</span> <span class="typed"><span class="type">scala.actors.IFJTaskRunnerGroup</span><a href="IFJTaskRunnerGroup.java.html#7904">IFJTaskRunnerGroup</a></span> <span class="typed"><span class="type">scala.actors.IFJTaskRunnerGroup</span><a id="120876">group</a></span>;
+
+  <span class="comment">/**
+   *  Constructor called only during FJTaskRunnerGroup initialization
+   **/</span>
+
+    <span class="comment">/*protected*/</span> public FJTaskRunner(IFJTaskRunnerGroup g) { 
+    group = g;
+    victimRNG = <span class="keyword">new</span> Random(System.identityHashCode(<span class="keyword">this</span>));
+    runPriority = getPriority();
+    setDaemon(<span class="keyword">true</span>);
+  }
+
+  <span class="comment">/**
+   * Return the FJTaskRunnerGroup of which this thread is a member
+   **/</span>
+  
+  <span class="keyword">protected</span> <span class="keyword">final</span> <span class="typed"><span class="type">scala.actors.IFJTaskRunnerGroup</span><a href="IFJTaskRunnerGroup.java.html#7904">IFJTaskRunnerGroup</a></span> <span class="typed"><span class="type">()scala.actors.IFJTaskRunnerGroup</span><a id="120878">getGroup</a></span>() { <span class="keyword">return</span> group; }
+
+
+  <span class="comment">/* ------------ DEQ Representation ------------------- */</span>
+
+
+  <span class="comment">/**
+   * FJTasks are held in an array-based DEQ with INITIAL_CAPACITY
+   * elements. The DEQ is grown if necessary, but default value is
+   * normally much more than sufficient unless  there are
+   * user programming errors or questionable operations generating
+   * large numbers of Tasks without running them.
+   * Capacities must be a power of two. 
+   **/</span>
+
+  <span class="keyword">protected</span> static <span class="keyword">final</span> int <span class="typed"><span class="type">Int</span><a id="120869">INITIAL_CAPACITY</a></span> = <span class="int">4096</span>; 
+
+  <span class="comment">/**
+   * The maximum supported DEQ capacity.
+   * When exceeded, FJTaskRunner operations throw Errors
+   **/</span>
+
+  <span class="keyword">protected</span> static <span class="keyword">final</span> int <span class="typed"><span class="type">Int</span><a id="120870">MAX_CAPACITY</a></span> = <span class="int">1</span> &lt;&lt; <span class="int">30</span>;
+
+  <span class="comment">/**
+   * An object holding a single volatile reference to a FJTask.
+   **/</span>
+  
+  <span class="keyword">protected</span> <span class="keyword">final</span> static <span class="keyword">class</span> <span class="typed"><span class="type">object scala.actors.FJTaskRunner.VolatileTaskRef</span><span id="120871"><a id="120874">VolatileTaskRef</a></span></span> {
+    <span class="comment">/** The reference **/</span>
+    <span class="keyword">protected</span> volatile FJTask ref;
+
+    <span class="comment">/** Set the reference **/</span>
+    <span class="keyword">protected</span> <span class="keyword">final</span> void put(FJTask r) { ref = r; }
+    <span class="comment">/** Return the reference **/</span>
+    <span class="keyword">protected</span> <span class="keyword">final</span> FJTask get()     { <span class="keyword">return</span> ref; }
+    <span class="comment">/** Return the reference and clear it **/</span>
+    <span class="keyword">protected</span> <span class="keyword">final</span> FJTask take()    { FJTask r = ref; ref = <span class="keyword">null</span>; <span class="keyword">return</span> r;  }
+
+    <span class="comment">/**
+     * Initialization utility for constructing arrays. 
+     * Make an array of given capacity and fill it with
+     * VolatileTaskRefs.
+     **/</span>
+    <span class="keyword">protected</span> static VolatileTaskRef[<span class="typed"><span class="type">Array</span><a href="../Array.scala.html#1070">]</a></span> <span class="typed"><span class="type">(Int)Array[scala.actors.FJTaskRunner.VolatileTaskRef]</span><a id="136870">newArray</a></span>(int <span class="typed"><span class="type">Int</span><a id="136871">cap</a></span>) {
+      VolatileTaskRef[] a = <span class="keyword">new</span> VolatileTaskRef[cap];
+      <span class="keyword">for</span> (int k = <span class="int">0</span>; k &lt; cap; k++) a[k] = <span class="keyword">new</span> VolatileTaskRef();
+      <span class="keyword">return</span> a;
+    }
+
+  }
+
+  <span class="comment">/**
+   * The DEQ array.
+   **/</span>
+    
+  <span class="keyword">protected</span> VolatileTaskRef[] <span class="typed"><span class="type">Array[scala.actors.FJTaskRunner.VolatileTaskRef]</span><a id="120879">deq</a></span> = VolatileTaskRef.newArray(INITIAL_CAPACITY);
+
+  <span class="comment">/** Current size of the task DEQ **/</span>
+  <span class="keyword">protected</span> int <span class="typed"><span class="type">()Int</span><a id="120880">deqSize</a></span>() { <span class="keyword">return</span> deq.length; }
+
+  <span class="comment">/** 
+   * Current top of DEQ. Generally acts just like a stack pointer in an 
+   * array-based stack, except that it circularly wraps around the
+   * array, as in an array-based queue. The value is NOT
+   * always kept within &lt;code&gt;0 ... deq.length&lt;/code&gt; though. 
+   * The current top element is always at &lt;code&gt;top &amp; (deq.length-1)&lt;/code&gt;.
+   * To avoid integer overflow, top is reset down 
+   * within bounds whenever it is noticed to be out out bounds;
+   * at worst when it is at &lt;code&gt;2 * deq.length&lt;/code&gt;.
+   **/</span>
+  <span class="keyword">protected</span> volatile int <span class="typed"><span class="type">Int</span><a id="120881">top</a></span> = <span class="int">0</span>;
+
+
+  <span class="comment">/** 
+   * Current base of DEQ. Acts like a take-pointer in an
+   * array-based bounded queue. Same bounds and usage as top.
+   **/</span>
+
+  <span class="keyword">protected</span> volatile int <span class="typed"><span class="type">Int</span><a id="120882">base</a></span> = <span class="int">0</span>;
+
+
+  <span class="comment">/**
+   * An extra object to synchronize on in order to
+   * achieve a memory barrier.
+   **/</span>
+
+  <span class="keyword">protected</span> <span class="keyword">final</span> Object <span class="typed"><span class="type">java.lang.Object</span><a id="120883">barrier</a></span> = <span class="keyword">new</span> Object();
+
+  <span class="comment">/* ------------ Other BookKeeping ------------------- */</span>
+
+  <span class="comment">/**
+   * Record whether current thread may be processing a task
+   * (i.e., has been started and is not in an idle wait).
+   * Accessed, under synch, ONLY by FJTaskRunnerGroup, but the field is
+   * stored here for simplicity.
+   **/</span>
+
+    <span class="comment">/*protected*/</span> public boolean <span class="typed"><span class="type">Boolean</span><a id="120884">active</a></span> = <span class="keyword">false</span>;
+
+  <span class="comment">/** Random starting point generator for scan() **/</span>
+  <span class="keyword">protected</span> <span class="keyword">final</span> Random <span class="typed"><span class="type">java.util.Random</span><a id="120885">victimRNG</a></span>;
+
+
+  <span class="comment">/** Priority to use while scanning for work **/</span>
+    <span class="keyword">protected</span> int <span class="typed"><span class="type">Int</span><a id="120886">scanPriority</a></span> = Thread.MIN_PRIORITY + <span class="int">1</span>;
+
+  <span class="comment">/** Priority to use while running tasks **/</span>
+  <span class="keyword">protected</span> int <span class="typed"><span class="type">Int</span><a id="120887">runPriority</a></span>;
+
+  <span class="comment">/**
+   * Set the priority to use while scanning.
+   * We do not bother synchronizing access, since
+   * by the time the value is needed, both this FJTaskRunner 
+   * and its FJTaskRunnerGroup will
+   * necessarily have performed enough synchronization
+   * to avoid staleness problems of any consequence.
+   **/</span>
+  <span class="keyword">protected</span> void <span class="typed"><span class="type">(Int)Unit</span><a id="120888">setScanPriority</a></span>(int <span class="typed"><span class="type">Int</span><a id="136872">pri</a></span>) { scanPriority = pri; }
+
+
+  <span class="comment">/**
+   * Set the priority to use while running tasks.
+   * Same usage and rationale as setScanPriority.
+   **/</span>
+  <span class="keyword">protected</span> void <span class="typed"><span class="type">(Int)Unit</span><a id="120889">setRunPriority</a></span>(int <span class="typed"><span class="type">Int</span><a id="136873">pri</a></span>) {  runPriority = pri; }
+
+  <span class="comment">/**
+   * Compile-time constant for statistics gathering.
+   * Even when set, reported values may not be accurate
+   * since all are read and written without synchronization.
+   **/</span>
+
+
+
+  static <span class="keyword">final</span> boolean <span class="typed"><span class="type">Boolean</span><a id="120875">COLLECT_STATS</a></span> = <span class="keyword">true</span>;
+  <span class="comment">// static final boolean COLLECT_STATS = false;</span>
+
+
+  <span class="comment">// for stat collection</span>
+
+  <span class="comment">/** Total number of tasks run **/</span>
+  <span class="keyword">protected</span> int <span class="typed"><span class="type">Int</span><a id="120890">runs</a></span> = <span class="int">0</span>;
+
+  <span class="comment">/** Total number of queues scanned for work **/</span>
+  <span class="keyword">protected</span> int <span class="typed"><span class="type">Int</span><a id="120891">scans</a></span> = <span class="int">0</span>;
+
+  <span class="comment">/** Total number of tasks obtained via scan **/</span>
+  <span class="keyword">protected</span> int <span class="typed"><span class="type">Int</span><a id="120892">steals</a></span> = <span class="int">0</span>;
+
+
+
+    <span class="comment">/* -------- Suspending -------- */</span>
+    <span class="keyword">protected</span> boolean <span class="typed"><span class="type">Boolean</span><a id="120893">suspending</a></span> = <span class="keyword">false</span>;
+
+    synchronized void <span class="typed"><span class="type">(Boolean)Unit</span><a id="120894">setSuspending</a></span>(boolean <span class="typed"><span class="type">Boolean</span><a id="136874">susp</a></span>) {
+        suspending = susp;
+    }
+
+  <span class="comment">/* ------------ DEQ operations ------------------- */</span>
+
+
+  <span class="comment">/**
+   * Push a task onto DEQ.
+   * Called ONLY by current thread.
+   **/</span>
+
+    <span class="comment">/*protected*/</span> public <span class="keyword">final</span> void <span class="typed"><span class="type">(scala.actors.FJTask)Unit</span><a id="120895">push</a></span>(<span class="keyword">final</span> <span class="typed"><span class="type">scala.actors.FJTask</span><a href="FJTask.java.html#8084">FJTask</a></span> <span class="typed"><span class="type">scala.actors.FJTask</span><a id="129844">r</a></span>) {
+    int t = top;
+
+    <span class="comment">/*
+      This test catches both overflows and index wraps.  It doesn't
+      really matter if base value is in the midst of changing in take. 
+      As long as deq length is &lt; 2^30, we are guaranteed to catch wrap in
+      time since base can only be incremented at most length times
+      between pushes (or puts). 
+    */</span>
+
+    <span class="keyword">if</span> (t &lt; (base &amp; (deq.length-<span class="int">1</span>)) + deq.length) {
+
+      deq[t &amp; (deq.length-<span class="int">1</span>)].put(r);
+      top = t + <span class="int">1</span>;
+    }
+
+    <span class="keyword">else</span>  <span class="comment">// isolate slow case to increase chances push is inlined</span>
+      slowPush(r); <span class="comment">// check overflow and retry</span>
+  }
+
+
+  <span class="comment">/**
+   * Handle slow case for push
+   **/</span>
+
+  <span class="keyword">protected</span> synchronized void <span class="typed"><span class="type">(scala.actors.FJTask)Unit</span><a id="120896">slowPush</a></span>(<span class="keyword">final</span> <span class="typed"><span class="type">scala.actors.FJTask</span><a href="FJTask.java.html#8084">FJTask</a></span> <span class="typed"><span class="type">scala.actors.FJTask</span><a id="136875">r</a></span>) {
+    checkOverflow();
+    push(r); <span class="comment">// just recurse -- this one is sure to succeed.</span>
+  }
+
+
+  <span class="comment">/**
+   * Enqueue task at base of DEQ.
+   * Called ONLY by current thread.
+   * This method is currently not called from class FJTask. It could be used
+   * as a faster way to do FJTask.start, but most users would
+   * find the semantics too confusing and unpredictable.
+   **/</span>
+
+  <span class="keyword">protected</span> <span class="keyword">final</span> synchronized void <span class="typed"><span class="type">(scala.actors.FJTask)Unit</span><a id="120897">put</a></span>(<span class="keyword">final</span> <span class="typed"><span class="type">scala.actors.FJTask</span><a href="FJTask.java.html#8084">FJTask</a></span> <span class="typed"><span class="type">scala.actors.FJTask</span><a id="136876">r</a></span>) {
+    <span class="keyword">for</span> (;;) {
+      int b = base - <span class="int">1</span>;
+      <span class="keyword">if</span> (top &lt; b + deq.length) {
+        
+        int newBase = b &amp; (deq.length-<span class="int">1</span>);
+        deq[newBase].put(r);
+        base = newBase;
+        
+        <span class="keyword">if</span> (b != newBase) { <span class="comment">// Adjust for index underflow</span>
+          int newTop = top &amp; (deq.length-<span class="int">1</span>);
+          <span class="keyword">if</span> (newTop &lt; newBase) newTop += deq.length;
+          top = newTop;
+        }
+        <span class="keyword">return</span>;
+      }
+      <span class="keyword">else</span> {
+        checkOverflow();
+        <span class="comment">// ... and retry</span>
+      }
+    }
+  }
+
+  <span class="comment">/**
+   * Return a popped task, or null if DEQ is empty.
+   * Called ONLY by current thread.
+   * &lt;p&gt;
+   * This is not usually called directly but is
+   * instead inlined in callers. This version differs from the
+   * cilk algorithm in that pop does not fully back down and
+   * retry in the case of potential conflict with take. It simply
+   * rechecks under synch lock. This gives a preference
+   * for threads to run their own tasks, which seems to
+   * reduce flailing a bit when there are few tasks to run.
+   **/</span>
+
+  <span class="keyword">protected</span> <span class="keyword">final</span> <span class="typed"><span class="type">scala.actors.FJTask</span><a href="FJTask.java.html#8084">FJTask</a></span> <span class="typed"><span class="type">()scala.actors.FJTask</span><a id="120898">pop</a></span>() {
+    <span class="comment">/* 
+       Decrement top, to force a contending take to back down.
+    */</span>
+
+    int t = --top;      
+
+    <span class="comment">/*
+      To avoid problems with JVMs that do not properly implement
+      read-after-write of a pair of volatiles, we conservatively
+      grab without lock only if the DEQ appears to have at least two
+      elements, thus guaranteeing that both a pop and take will succeed,
+      even if the pre-increment in take is not seen by current thread.
+      Otherwise we recheck under synch.
+    */</span>
+
+    <span class="keyword">if</span> (base + <span class="int">1</span> &lt; t) 
+      <span class="keyword">return</span> deq[t &amp; (deq.length-<span class="int">1</span>)].take();
+    <span class="keyword">else</span>
+      <span class="keyword">return</span> confirmPop(t);
+
+  }
+
+
+  <span class="comment">/**
+   * Check under synch lock if DEQ is really empty when doing pop. 
+   * Return task if not empty, else null.
+   **/</span>
+
+  <span class="keyword">protected</span> <span class="keyword">final</span> synchronized <span class="typed"><span class="type">scala.actors.FJTask</span><a href="FJTask.java.html#8084">FJTask</a></span> <span class="typed"><span class="type">(Int)scala.actors.FJTask</span><a id="120899">confirmPop</a></span>(int <span class="typed"><span class="type">Int</span><a id="136877">provisionalTop</a></span>) {
+    <span class="keyword">if</span> (base &lt;= provisionalTop) 
+      <span class="keyword">return</span> deq[provisionalTop &amp; (deq.length-<span class="int">1</span>)].take();
+    <span class="keyword">else</span> {    <span class="comment">// was empty</span>
+      <span class="comment">/*
+        Reset DEQ indices to zero whenever it is empty.
+        This both avoids unnecessary calls to checkOverflow
+        in push, and helps keep the DEQ from accumulating garbage
+      */</span>
+
+      top = base = <span class="int">0</span>;
+      <span class="keyword">return</span> <span class="keyword">null</span>;
+    }
+  }
+
+
+  <span class="comment">/** 
+   * Take a task from the base of the DEQ.
+   * Always called by other threads via scan()
+   **/</span>
+
+  
+  <span class="keyword">protected</span> <span class="keyword">final</span> synchronized <span class="typed"><span class="type">scala.actors.FJTask</span><a href="FJTask.java.html#8084">FJTask</a></span> <span class="typed"><span class="type">()scala.actors.FJTask</span><a id="120900">take</a></span>() {
+
+    <span class="comment">/*
+      Increment base in order to suppress a contending pop
+    */</span>
+    
+    int b = base++;     
+    
+    <span class="keyword">if</span> (b &lt; top) 
+      <span class="keyword">return</span> confirmTake(b);
+    <span class="keyword">else</span> {
+      <span class="comment">// back out</span>
+      base = b; 
+      <span class="keyword">return</span> <span class="keyword">null</span>;
+    }
+  }
+
+
+  <span class="comment">/**
+   * double-check a potential take
+   **/</span>
+  
+  <span class="keyword">protected</span> <span class="typed"><span class="type">scala.actors.FJTask</span><a href="FJTask.java.html#8084">FJTask</a></span> <span class="typed"><span class="type">(Int)scala.actors.FJTask</span><a id="120901">confirmTake</a></span>(int <span class="typed"><span class="type">Int</span><a id="136878">oldBase</a></span>) {
+
+    <span class="comment">/*
+      Use a second (guaranteed uncontended) synch
+      to serve as a barrier in case JVM does not
+      properly process read-after-write of 2 volatiles
+    */</span>
+
+    synchronized(barrier) {
+      <span class="keyword">if</span> (oldBase &lt; top) {
+        <span class="comment">/*
+          We cannot call deq[oldBase].take here because of possible races when
+          nulling out versus concurrent push operations.  Resulting
+          accumulated garbage is swept out periodically in
+          checkOverflow, or more typically, just by keeping indices
+          zero-based when found to be empty in pop, which keeps active
+          region small and constantly overwritten. 
+        */</span>
+        
+        <span class="keyword">return</span> deq[oldBase &amp; (deq.length-<span class="int">1</span>)].get();
+      }
+      <span class="keyword">else</span> {
+        base = oldBase;
+        <span class="keyword">return</span> <span class="keyword">null</span>;
+      }
+    }
+  }
+
+
+  <span class="comment">/**
+   * Adjust top and base, and grow DEQ if necessary.
+   * Called only while DEQ synch lock being held.
+   * We don't expect this to be called very often. In most
+   * programs using FJTasks, it is never called.
+   **/</span>
+
+  <span class="keyword">protected</span> void <span class="typed"><span class="type">()Unit</span><a id="120902">checkOverflow</a></span>() { 
+    int t = top;
+    int b = base;
+    
+    <span class="keyword">if</span> (t - b &lt; deq.length-<span class="int">1</span>) { <span class="comment">// check if just need an index reset</span>
+      
+      int newBase = b &amp; (deq.length-<span class="int">1</span>);
+      int newTop  = top &amp; (deq.length-<span class="int">1</span>);
+      <span class="keyword">if</span> (newTop &lt; newBase) newTop += deq.length;
+      top = newTop;
+      base = newBase;
+      
+      <span class="comment">/* 
+         Null out refs to stolen tasks. 
+         This is the only time we can safely do it.
+      */</span>
+      
+      int i = newBase;
+      <span class="keyword">while</span> (i != newTop &amp;&amp; deq[i].ref != <span class="keyword">null</span>) {
+        deq[i].ref = <span class="keyword">null</span>;
+        i = (i - <span class="int">1</span>) &amp; (deq.length-<span class="int">1</span>);
+      }
+      
+    }
+    <span class="keyword">else</span> { <span class="comment">// grow by doubling array</span>
+      
+      int newTop = t - b;
+      int oldcap = deq.length;
+      int newcap = oldcap * <span class="int">2</span>;
+      
+      <span class="keyword">if</span> (newcap &gt;= MAX_CAPACITY)
+        <span class="keyword">throw</span> <span class="keyword">new</span> Error(<span class="string">&quot;FJTask queue maximum capacity exceeded&quot;</span>);
+      
+      VolatileTaskRef[] newdeq = <span class="keyword">new</span> VolatileTaskRef[newcap];
+      
+      <span class="comment">// copy in bottom half of new deq with refs from old deq</span>
+      <span class="keyword">for</span> (int j = <span class="int">0</span>; j &lt; oldcap; ++j) newdeq[j] = deq[b++ &amp; (oldcap-<span class="int">1</span>)];
+      
+      <span class="comment">// fill top half of new deq with new refs</span>
+      <span class="keyword">for</span> (int j = oldcap; j &lt; newcap; ++j) newdeq[j] = <span class="keyword">new</span> VolatileTaskRef();
+      
+      deq = newdeq;
+      base = <span class="int">0</span>;
+      top = newTop;
+    }
+  }
+
+
+  <span class="comment">/* ------------ Scheduling  ------------------- */</span>
+
+
+  <span class="comment">/**
+   * Do all but the pop() part of yield or join, by
+   * traversing all DEQs in our group looking for a task to
+   * steal. If none, it checks the entry queue. 
+   * &lt;p&gt;
+   * Since there are no good, portable alternatives,
+   * we rely here on a mixture of Thread.yield and priorities
+   * to reduce wasted spinning, even though these are
+   * not well defined. We are hoping here that the JVM
+   * does something sensible.
+   * @param waitingFor if non-null, the current task being joined
+   **/</span>
+
+  <span class="keyword">protected</span> void <span class="typed"><span class="type">(scala.actors.FJTask)Unit</span><a id="120903">scan</a></span>(<span class="keyword">final</span> <span class="typed"><span class="type">scala.actors.FJTask</span><a href="FJTask.java.html#8084">FJTask</a></span> <span class="typed"><span class="type">scala.actors.FJTask</span><a id="136879">waitingFor</a></span>) {
+
+    FJTask task = <span class="keyword">null</span>;
+
+    <span class="comment">// to delay lowering priority until first failure to steal</span>
+    boolean lowered = <span class="keyword">false</span>;
+    
+    <span class="comment">/*
+      Circularly traverse from a random start index. 
+      
+      This differs slightly from cilk version that uses a random index
+      for each attempted steal.
+      Exhaustive scanning might impede analytic tractablity of 
+      the scheduling policy, but makes it much easier to deal with
+      startup and shutdown.
+    */</span>
+    
+    FJTaskRunner[] ts = group.getArray();
+    int idx = victimRNG.nextInt(ts.length);
+    
+    <span class="keyword">for</span> (int i = <span class="int">0</span>; i &lt; ts.length; ++i) {
+      
+      FJTaskRunner t = ts[idx];
+      <span class="keyword">if</span> (++idx &gt;= ts.length) idx = <span class="int">0</span>; <span class="comment">// circularly traverse</span>
+      
+      <span class="keyword">if</span> (t != <span class="keyword">null</span> &amp;&amp; t != <span class="keyword">this</span>) {
+        
+        <span class="keyword">if</span> (waitingFor != <span class="keyword">null</span> &amp;&amp; waitingFor.isDone()) {
+          break;
+        }
+        <span class="keyword">else</span> {
+          <span class="keyword">if</span> (COLLECT_STATS) ++scans;
+          task = t.take();
+          <span class="keyword">if</span> (task != <span class="keyword">null</span>) {
+            <span class="keyword">if</span> (COLLECT_STATS) ++steals;
+            break;
+          }
+          <span class="keyword">else</span> <span class="keyword">if</span> (isInterrupted()) {
+            break;
+          }
+          <span class="keyword">else</span> <span class="keyword">if</span> (!lowered) { <span class="comment">// if this is first fail, lower priority</span>
+            lowered = <span class="keyword">true</span>;
+            setPriority(scanPriority);
+          }
+          <span class="keyword">else</span> {           <span class="comment">// otherwise we are at low priority; just yield</span>
+            <span class="keyword">yield</span>();
+          }
+        }
+      }
+      
+    } 
+
+    <span class="keyword">if</span> (task == <span class="keyword">null</span>) {
+      <span class="keyword">if</span> (COLLECT_STATS) ++scans;
+      task = group.pollEntryQueue();
+      <span class="keyword">if</span> (COLLECT_STATS) <span class="keyword">if</span> (task != <span class="keyword">null</span>) ++steals;
+    }
+    
+    <span class="keyword">if</span> (lowered) setPriority(runPriority);
+    
+    <span class="keyword">if</span> (task != <span class="keyword">null</span> &amp;&amp; !task.isDone()) {
+      <span class="keyword">if</span> (COLLECT_STATS) ++runs;
+      task.run(); 
+      task.setDone(); 
+    }
+
+  }
+
+  <span class="comment">/**
+   * Same as scan, but called when current thread is idling.
+   * It repeatedly scans other threads for tasks,
+   * sleeping while none are available. 
+   * &lt;p&gt;
+   * This differs from scan mainly in that
+   * since there is no reason to return to recheck any
+   * condition, we iterate until a task is found, backing
+   * off via sleeps if necessary.
+   **/</span>
+
+  <span class="keyword">protected</span> void <span class="typed"><span class="type">()Unit</span><a id="120904">scanWhileIdling</a></span>() {
+    FJTask task = <span class="keyword">null</span>;
+    
+    boolean lowered = <span class="keyword">false</span>;
+    long iters = <span class="int">0</span>;
+    
+    FJTaskRunner[] ts = group.getArray();
+    int idx = victimRNG.nextInt(ts.length);
+    
+    <span class="keyword">do</span> {
+      <span class="keyword">for</span> (int i = <span class="int">0</span>; i &lt; ts.length; ++i) {
+        
+        FJTaskRunner t = ts[idx];
+        <span class="keyword">if</span> (++idx &gt;= ts.length) idx = <span class="int">0</span>; <span class="comment">// circularly traverse</span>
+        
+        <span class="keyword">if</span> (t != <span class="keyword">null</span> &amp;&amp; t != <span class="keyword">this</span>) {
+          <span class="keyword">if</span> (COLLECT_STATS) ++scans;
+          
+          task = t.take();
+          <span class="keyword">if</span> (task != <span class="keyword">null</span>) {
+            <span class="keyword">if</span> (COLLECT_STATS) ++steals;
+            <span class="keyword">if</span> (lowered) setPriority(runPriority);
+            group.setActive(<span class="keyword">this</span>);
+            break;
+          }
+        }
+      } 
+      
+      <span class="keyword">if</span> (task == <span class="keyword">null</span>) {
+        <span class="keyword">if</span> (isInterrupted()) 
+          <span class="keyword">return</span>;
+        
+        <span class="keyword">if</span> (COLLECT_STATS) ++scans;
+        task = group.pollEntryQueue();
+        
+        <span class="keyword">if</span> (task != <span class="keyword">null</span>) {
+          <span class="keyword">if</span> (COLLECT_STATS) ++steals;
+          <span class="keyword">if</span> (lowered) setPriority(runPriority);
+          group.setActive(<span class="keyword">this</span>);
+        }
+        <span class="keyword">else</span> {
+          ++iters;
+          <span class="comment">//  Check here for yield vs sleep to avoid entering group synch lock</span>
+          <span class="keyword">if</span> (iters &gt;= <span class="comment">/*group.SCANS_PER_SLEEP*/</span> <span class="int">15</span>) {
+            group.checkActive(<span class="keyword">this</span>, iters);
+            <span class="keyword">if</span> (isInterrupted())
+              <span class="keyword">return</span>;
+          }
+          <span class="keyword">else</span> <span class="keyword">if</span> (!lowered) {
+            lowered = <span class="keyword">true</span>;
+            setPriority(scanPriority);
+          }
+          <span class="keyword">else</span> {
+            <span class="keyword">yield</span>();
+          }
+        }
+      }
+    } <span class="keyword">while</span> (task == <span class="keyword">null</span>);
+
+
+    <span class="keyword">if</span> (!task.isDone()) {
+      <span class="keyword">if</span> (COLLECT_STATS) ++runs;
+      task.run(); 
+      task.setDone(); 
+    }
+    
+  }
+
+  <span class="comment">/* ------------  composite operations ------------------- */</span>
+
+    
+  <span class="comment">/**
+   * Main runloop
+   **/</span>
+
+  public void <span class="typed"><span class="type">()Unit</span><a id="120905">run</a></span>() {
+    <span class="keyword">try</span>{ 
+      <span class="keyword">while</span> (!interrupted()) {
+        FJTask task = pop();
+        <span class="keyword">if</span> (task != <span class="keyword">null</span>) {
+          <span class="keyword">if</span> (!task.isDone()) {
+            <span class="comment">// inline FJTask.invoke</span>
+            <span class="keyword">if</span> (COLLECT_STATS) ++runs;
+            task.run(); 
+            task.setDone(); 
+          }
+        }
+        <span class="keyword">else</span>
+          scanWhileIdling();
+      }
+      <span class="comment">// check for suspending</span>
+      <span class="keyword">if</span> (suspending) {
+          synchronized(<span class="keyword">this</span>) {
+              <span class="comment">// move all local tasks to group-wide entry queue</span>
+              <span class="keyword">for</span> (int i = <span class="int">0</span>; i &lt; deq.length; ++i) {
+                  synchronized(group) {
+                      <span class="keyword">try</span> {
+                          FJTask task = (FJTask)deq[i].take();
+                          <span class="keyword">if</span> (task != <span class="keyword">null</span>)
+                              group.getEntryQueue().put(task);
+                      } <span class="keyword">catch</span> (InterruptedException ie) {
+                          System.err.println(<span class="string">&quot;Suspend: when transferring task to entryQueue: &quot;</span>+ie);
+                      }
+                  }
+              }
+          }
+      }
+    }
+    <span class="keyword">finally</span> {
+      group.setInactive(<span class="keyword">this</span>);
+    }
+  }
+
+  <span class="comment">/**
+   * Execute a task in this thread. Generally called when current task
+   * cannot otherwise continue.
+   **/</span>
+
+    
+  <span class="keyword">protected</span> <span class="keyword">final</span> void <span class="typed"><span class="type">()Unit</span><a id="120906">taskYield</a></span>() {
+    FJTask task = pop();
+    <span class="keyword">if</span> (task != <span class="keyword">null</span>) {
+      <span class="keyword">if</span> (!task.isDone()) {
+        <span class="keyword">if</span> (COLLECT_STATS) ++runs;
+        task.run(); 
+        task.setDone(); 
+      }
+    }
+    <span class="keyword">else</span>
+      scan(<span class="keyword">null</span>);
+  }
+
+
+  <span class="comment">/**
+   * Process tasks until w is done.
+   * Equivalent to &lt;code&gt;while(!w.isDone()) taskYield(); &lt;/code&gt;
+   **/</span>
+
+  <span class="keyword">protected</span> <span class="keyword">final</span> void <span class="typed"><span class="type">(scala.actors.FJTask)Unit</span><a id="120907">taskJoin</a></span>(<span class="keyword">final</span> <span class="typed"><span class="type">scala.actors.FJTask</span><a href="FJTask.java.html#8084">FJTask</a></span> <span class="typed"><span class="type">scala.actors.FJTask</span><a id="136880">w</a></span>) {
+
+    <span class="keyword">while</span> (!w.isDone()) { 
+
+      FJTask task = pop();
+      <span class="keyword">if</span> (task != <span class="keyword">null</span>) {
+        <span class="keyword">if</span> (!task.isDone()) {
+          <span class="keyword">if</span> (COLLECT_STATS) ++runs;
+          task.run(); 
+          task.setDone(); 
+          <span class="keyword">if</span> (task == w) <span class="keyword">return</span>; <span class="comment">// fast exit if we just ran w</span>
+        }
+      }
+      <span class="keyword">else</span>
+        scan(w);
+    }
+  }
+
+  <span class="comment">/**
+   * A specialized expansion of
+   * &lt;code&gt; w.fork(); invoke(v); w.join(); &lt;/code&gt;
+   **/</span>
+
+
+  <span class="keyword">protected</span> <span class="keyword">final</span> void <span class="typed"><span class="type">(scala.actors.FJTask,scala.actors.FJTask)Unit</span><a id="120908">coInvoke</a></span>(<span class="keyword">final</span> <span class="typed"><span class="type">scala.actors.FJTask</span><a href="FJTask.java.html#8084">FJTask</a></span> <span class="typed"><span class="type">scala.actors.FJTask</span><a id="136881">w</a></span>, <span class="keyword">final</span> <span class="typed"><span class="type">scala.actors.FJTask</span><a href="FJTask.java.html#8084">FJTask</a></span> <span class="typed"><span class="type">scala.actors.FJTask</span><a id="136882">v</a></span>) {
+
+    <span class="comment">// inline  push</span>
+
+    int t = top;
+    <span class="keyword">if</span> (t &lt; (base &amp; (deq.length-<span class="int">1</span>)) + deq.length) {
+
+      deq[t &amp; (deq.length-<span class="int">1</span>)].put(w);
+      top = t + <span class="int">1</span>;
+
+      <span class="comment">// inline  invoke</span>
+
+      <span class="keyword">if</span> (!v.isDone()) { 
+        <span class="keyword">if</span> (COLLECT_STATS) ++runs; 
+        v.run(); 
+        v.setDone(); 
+      }
+      
+      <span class="comment">// inline  taskJoin</span>
+      
+      <span class="keyword">while</span> (!w.isDone()) {
+        FJTask task  = pop();
+        <span class="keyword">if</span> (task != <span class="keyword">null</span>) {
+          <span class="keyword">if</span> (!task.isDone()) {
+            <span class="keyword">if</span> (COLLECT_STATS) ++runs;
+            task.run(); 
+            task.setDone(); 
+            <span class="keyword">if</span> (task == w) <span class="keyword">return</span>; <span class="comment">// fast exit if we just ran w</span>
+          }
+        }
+        <span class="keyword">else</span>
+          scan(w);
+      }
+    }
+
+    <span class="keyword">else</span>      <span class="comment">// handle non-inlinable cases</span>
+      slowCoInvoke(w, v);
+  }
+
+
+  <span class="comment">/**
+   * Backup to handle noninlinable cases of coInvoke
+   **/</span>
+
+  <span class="keyword">protected</span> void <span class="typed"><span class="type">(scala.actors.FJTask,scala.actors.FJTask)Unit</span><a id="120909">slowCoInvoke</a></span>(<span class="keyword">final</span> <span class="typed"><span class="type">scala.actors.FJTask</span><a href="FJTask.java.html#8084">FJTask</a></span> <span class="typed"><span class="type">scala.actors.FJTask</span><a id="136883">w</a></span>, <span class="keyword">final</span> <span class="typed"><span class="type">scala.actors.FJTask</span><a href="FJTask.java.html#8084">FJTask</a></span> <span class="typed"><span class="type">scala.actors.FJTask</span><a id="136884">v</a></span>) {
+    push(w); <span class="comment">// let push deal with overflow</span>
+    FJTask.invoke(v);
+    taskJoin(w);
+  }
+
+
+  <span class="comment">/**
+   * Array-based version of coInvoke
+   **/</span>
+
+  <span class="keyword">protected</span> <span class="keyword">final</span> void <span class="typed"><span class="type">(Array[scala.actors.FJTask])Unit</span><a id="120910">coInvoke</a></span>(<span class="typed"><span class="type">scala.actors.FJTask</span><a href="FJTask.java.html#8084">FJTask</a></span>[] <span class="typed"><span class="type">Array[scala.actors.FJTask]</span><a id="136885">tasks</a></span>) {
+    int nforks = tasks.length - <span class="int">1</span>;
+
+    <span class="comment">// inline bulk push of all but one task</span>
+
+    int t = top;
+
+    <span class="keyword">if</span> (nforks &gt;= <span class="int">0</span> &amp;&amp; t + nforks &lt; (base &amp; (deq.length-<span class="int">1</span>)) + deq.length) {
+      <span class="keyword">for</span> (int i = <span class="int">0</span>; i &lt; nforks; ++i) {
+        deq[t++ &amp; (deq.length-<span class="int">1</span>)].put(tasks[i]);
+        top = t;
+      }
+
+      <span class="comment">// inline invoke of one task</span>
+      FJTask v = tasks[nforks];
+      <span class="keyword">if</span> (!v.isDone()) { 
+        <span class="keyword">if</span> (COLLECT_STATS) ++runs; 
+        v.run(); 
+        v.setDone(); 
+      }
+      
+      <span class="comment">// inline  taskJoins</span>
+      
+      <span class="keyword">for</span> (int i = <span class="int">0</span>; i &lt; nforks; ++i) { 
+        FJTask w = tasks[i];
+        <span class="keyword">while</span> (!w.isDone()) {
+
+          FJTask task = pop();
+          <span class="keyword">if</span> (task != <span class="keyword">null</span>) {
+            <span class="keyword">if</span> (!task.isDone()) {
+              <span class="keyword">if</span> (COLLECT_STATS) ++runs;
+              task.run(); 
+              task.setDone(); 
+            }
+          }
+          <span class="keyword">else</span>
+            scan(w);
+        }
+      }
+    }
+
+    <span class="keyword">else</span>  <span class="comment">// handle non-inlinable cases</span>
+      slowCoInvoke(tasks);
+  }
+
+  <span class="comment">/**
+   * Backup to handle atypical or noninlinable cases of coInvoke
+   **/</span>
+
+  <span class="keyword">protected</span> void <span class="typed"><span class="type">(Array[scala.actors.FJTask])Unit</span><a id="120911">slowCoInvoke</a></span>(<span class="typed"><span class="type">scala.actors.FJTask</span><a href="FJTask.java.html#8084">FJTask</a></span>[] <span class="typed"><span class="type">Array[scala.actors.FJTask]</span><a id="136886">tasks</a></span>) {
+    <span class="keyword">for</span> (int i = <span class="int">0</span>; i &lt; tasks.length; ++i) push(tasks[i]);
+    <span class="keyword">for</span> (int i = <span class="int">0</span>; i &lt; tasks.length; ++i) taskJoin(tasks[i]);
+  }
+
+}
+
+
+        </pre>
+    </body>
+</html>

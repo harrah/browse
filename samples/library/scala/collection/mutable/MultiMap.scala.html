@@ -1,0 +1,56 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/mutable/MultiMap.scala</title>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |                                         **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: MultiMap.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+
+<span class="keyword">package</span> scala.collection.mutable
+
+
+<span class="comment">/** This class is typically used as a mixin. It turns maps which map &lt;code&gt;A&lt;/code&gt;
+ *  to &lt;code&gt;Set[B]&lt;/code&gt; objects into multi maps which map &lt;code&gt;A&lt;/code&gt; to
+ *  &lt;code&gt;B&lt;/code&gt; objects.
+ *
+ *  @author  Matthias Zenger
+ *  @version 1.0, 08/07/2003
+ */</span>
+<span class="keyword">trait</span> <span class="typed"><span class="type">trait MultiMap[A, B] extends java.lang.Object with scala.collection.mutable.Map[A,scala.collection.mutable.Set[B]] with ScalaObject</span><a id="11344">MultiMap</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="13214">A</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="13215">B</a></span>] <span class="keyword">extends</span> <span class="typed"><span class="type">scala.collection.mutable.Map[A,scala.collection.mutable.Set[B]]</span><a href="Map.scala.html#11125">Map</a></span>[A, Set[B]] {
+  <span class="keyword">protected</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; scala.collection.mutable.Set[B]</span><a id="51662">makeSet</a></span>: <span class="typed"><span class="type">scala.collection.mutable.Set[B]</span><a href="Set.scala.html#11392">Set</a></span>[B] = <span class="typed"><span class="type">scala.collection.mutable.HashSet[B]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.HashSet[B]</span><a href="HashSet.scala.html#11140">HashSet</a></span>[B]
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A,B)Unit</span><a id="51663">add</a></span>(<span class="typed"><span class="type">A</span><a id="51683">key</a></span>: <span class="typed"><span class="type">A</span><a href="#13214">A</a></span>, <span class="typed"><span class="type">B</span><a id="51684">value</a></span>: <span class="typed"><span class="type">B</span><a href="#13215">B</a></span>): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = <span class="typed"><span class="type">(A)Option[scala.collection.mutable.Set[B]]</span><a href="../Map.scala.html#21386">get</a></span>(<span class="typed"><span class="type">A</span><a href="#51683">key</a></span>) <span class="typed"><span class="type">Unit</span><span class="keyword">match</span></span> {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <span class="typed"><span class="type">object None</span><a href="../../Option.scala.html#534">None</a></span> =&gt;
+      <span class="keyword">val</span> <span class="typed"><span class="type">scala.collection.mutable.Set[B]</span><a id="54551">set</a></span> = <span class="typed"><span class="type">=&gt; scala.collection.mutable.Set[B]</span><a href="#51662">makeSet</a></span>
+      <span class="typed"><span class="type">scala.collection.mutable.Set[B]</span><a href="#54551">set</a></span> <span class="typed"><span class="type">(B)Unit</span><a href="Set.scala.html#34725">+=</a></span> <span class="typed"><span class="type">B</span><a href="#51684">value</a></span>
+      <span class="typed"><span class="type">MultiMap.this.type</span><a href="#11344" class="keyword">this</a></span>(<span class="typed"><span class="type">A</span><a href="#51683">key</a></span>) = <span class="typed"><span class="type">scala.collection.mutable.Set[B]</span><a href="#54551">set</a></span>
+    <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <a id="1">Some</a>(<span class="typed"><span class="type">scala.collection.mutable.Set[B]</span><a id="54553">set</a></span>) =&gt;
+      <span class="typed"><span class="type">scala.collection.mutable.Set[B]</span><a href="#54553">set</a></span> <span class="typed"><span class="type">(B)Unit</span><a href="Set.scala.html#34725">+=</a></span> <span class="typed"><span class="type">B</span><a href="#51684">value</a></span>
+  }
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A,B)Unit</span><a id="51664">remove</a></span>(<span class="typed"><span class="type">A</span><a id="54555">key</a></span>: <span class="typed"><span class="type">A</span><a href="#13214">A</a></span>, <span class="typed"><span class="type">B</span><a id="54556">value</a></span>: <span class="typed"><span class="type">B</span><a href="#13215">B</a></span>) = <span class="typed"><span class="type">(A)Option[scala.collection.mutable.Set[B]]</span><a href="../Map.scala.html#21386">get</a></span>(<span class="typed"><span class="type">A</span><a href="#54555">key</a></span>) <span class="typed"><span class="type">Unit</span><span class="keyword">match</span></span> {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <span class="typed"><span class="type">object None</span><a href="../../Option.scala.html#534">None</a></span> =&gt;
+    <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <a id="1">Some</a>(<span class="typed"><span class="type">scala.collection.mutable.Set[B]</span><a id="54558">set</a></span>) =&gt; <span class="typed"><span class="type">scala.collection.mutable.Set[B]</span><a href="#54558">set</a></span> <span class="typed"><span class="type">(B)Unit</span><a href="Set.scala.html#34734">-=</a></span> <span class="typed"><span class="type">B</span><a href="#54556">value</a></span>
+  }
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A,(B) =&gt; Boolean)Boolean</span><a id="51665">entryExists</a></span>(<span class="typed"><span class="type">A</span><a id="51696">key</a></span>: <span class="typed"><span class="type">A</span><a href="#13214">A</a></span>, <span class="typed"><span class="type">(B) =&gt; Boolean</span><a id="51697">p</a></span>: B =&gt; Boolean): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = <span class="typed"><span class="type">(A)Option[scala.collection.mutable.Set[B]]</span><a href="../Map.scala.html#21386">get</a></span>(<span class="typed"><span class="type">A</span><a href="#51696">key</a></span>) <span class="typed"><span class="type">Boolean</span><span class="keyword">match</span></span> {
+    <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">case</span></span> <span class="typed"><span class="type">object None</span><a href="../../Option.scala.html#534">None</a></span> =&gt; <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+    <span class="typed"><span class="type">Boolean</span><span class="keyword">case</span></span> <a id="1">Some</a>(<span class="typed"><span class="type">scala.collection.mutable.Set[B]</span><a id="54560">set</a></span>) =&gt; <span class="typed"><span class="type">scala.collection.mutable.Set[B]</span><a href="#54560">set</a></span> <span class="typed"><span class="type">((B) =&gt; Boolean)Boolean</span><a href="../../Iterable.scala.html#17330">exists</a></span> <span class="typed"><span class="type">(B) =&gt; Boolean</span><a href="#51697">p</a></span>
+  }
+}
+
+        </pre>
+    </body>
+</html>

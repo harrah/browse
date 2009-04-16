@@ -1,0 +1,83 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/jcl/MutableIterator.scala</title>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2006-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |                                         **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: MutableIterator.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+<span class="keyword">package</span> scala.collection.jcl;
+
+<span class="keyword">object</span> <span class="typed"><span class="type">object scala.collection.jcl.MutableIterator</span><a id="8666">MutableIterator</a></span> {
+  <span class="keyword">class</span> <span class="typed"><span class="type">class Wrapper[A] extends java.lang.Object with scala.collection.jcl.MutableIterator[A] with ScalaObject</span><a id="113700">Wrapper</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="113701">A</a></span>](<span class="keyword">val</span> <span class="typed"><span class="type">java.util.Iterator[A]</span><span id="113705"><span id="113704"><a id="113712">underlying</a></span></span></span> : java.util.<span class="typed"><span class="type">java.util.Iterator[A]</span><a id="5432">Iterator</a></span>[A]) <span class="keyword">extends</span> <span class="typed"><span class="type">scala.collection.jcl.MutableIterator[A]</span><a href="#8665">MutableIterator</a></span>[A] {
+    <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="113707">hasNext</a></span> = <span class="typed"><span class="type">=&gt; java.util.Iterator[A]</span><a href="#113704">underlying</a></span>.<span class="typed"><span class="type">()Boolean</span><a id="59097">hasNext</a></span>;
+    <span class="keyword">def</span> <span class="typed"><span class="type">()A</span><a id="113708">next</a></span> = <span class="typed"><span class="type">=&gt; java.util.Iterator[A]</span><a href="#113704">underlying</a></span>.<span class="typed"><span class="type">()A</span><a id="59098">next</a></span>.<span class="typed"><span class="type">A</span><a id="3501">asInstanceOf</a></span>[<span class="typed"><span class="type">A</span><a href="#113701">A</a></span>];
+    <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Unit</span><a id="113709">remove</a></span> = <span class="typed"><span class="type">=&gt; java.util.Iterator[A]</span><a href="#113704">underlying</a></span>.<span class="typed"><span class="type">()Unit</span><a id="59099">remove</a></span>;
+  }
+}
+
+<span class="comment">/** An iterator that supports the remove operation.
+ *  These iterators wrap Java iterators, and so have the same fail fast
+ *  behavior when dealing with concurrent modifications.
+ *
+ *  @author Sean McDirmid
+ */</span>
+<span class="keyword">trait</span> <span class="typed"><span class="type">trait MutableIterator[A] extends java.lang.Object with Iterator[A] with ScalaObject</span><a id="8665">MutableIterator</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="16385">A</a></span>] <span class="keyword">extends</span> <span class="typed"><span class="type">Iterator[A]</span><a href="../../Iterator.scala.html#1337">Iterator</a></span>[A] {
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Unit</span><a id="21511">remove</a></span> : <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span>;
+
+  <span class="comment">/* filter doesnt' support remove yet.
+  override def filter(f : A =&gt; Boolean) : MutableIterator[A] = {
+    val buffered = this.buffered0;
+    new buffered.Filter(f);
+  }
+  */</span>
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">[B]((A) =&gt; B)scala.collection.jcl.MutableIterator[B]</span><a id="21512">map</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="21514">B</a></span>](<span class="typed"><span class="type">(A) =&gt; B</span><a id="21608">f</a></span>: A =&gt; B) : <span class="typed"><span class="type">scala.collection.jcl.MutableIterator[B]</span><a href="#8665">MutableIterator</a></span>[B] = <span class="typed"><span class="type">MutableIterator.this.Map[B]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">MutableIterator.this.Map[B]</span><a href="#21518">Map</a></span>(<span class="typed"><span class="type">(A) =&gt; B</span><a href="#21608">f</a></span>);
+  <span class="comment">/** A type-safe version of contains.
+   **/</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A)Boolean</span><a id="21515">has</a></span>(<span class="typed"><span class="type">A</span><a id="47442">a</a></span>: <span class="typed"><span class="type">A</span><a href="#16385">A</a></span>) = <span class="typed"><span class="type">((A) =&gt; Boolean)Boolean</span><a href="../../Iterator.scala.html#20003">exists</a></span>(<span class="typed"><span class="type">A</span><a id="47445">b</a></span> =&gt; <span class="typed"><span class="type">A</span><a href="#47442">a</a></span> <span class="typed"><span class="type">(Any)Boolean</span><a id="3494">==</a></span> <span class="typed"><span class="type">A</span><a href="#47442">a</a></span>);
+
+  <span class="comment">/** Finds and removes the first instance of &quot;a&quot; through the iterator.
+   *  After execution, the iterator's cursor is located where the removed
+   *  element existed.
+   *
+   * @param  a ..
+   * @return &lt;code&gt;false&lt;/code&gt; if &quot;a&quot; is not encountered in the iterator
+   *         and the iterator's cursor is located at the end of its elements.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A)Boolean</span><a id="21516">remove</a></span>(<span class="typed"><span class="type">A</span><a id="21523">a</a></span>: <span class="typed"><span class="type">A</span><a href="#16385">A</a></span>): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = {
+    <span class="typed"><span class="type">Unit</span><a href="#113723" class="keyword">while</a></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="../../Iterator.scala.html#19975">hasNext</a></span>) 
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">()A</span><a href="../../Iterator.scala.html#19976">next</a></span> <span class="typed"><span class="type">(Any)Boolean</span><a id="3494">==</a></span> <span class="typed"><span class="type">A</span><a href="#21523">a</a></span>) { <span class="typed"><span class="type">=&gt; Unit</span><a href="#21511">remove</a></span>; <span class="typed"><span class="type">Nothing</span><span class="keyword">return</span></span> <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>; }
+    <span class="typed"><span class="type">Nothing</span><span class="keyword">return</span></span> <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>;
+  }
+  <span class="comment">/** Removes all elements in the iterator that predicate &quot;p&quot; returns false on.
+   **/</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)Boolean</span><a id="21517">retain</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="21534">p</a></span> : A =&gt; Boolean) : <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = {
+    <span class="keyword">var</span> <span class="typed"><span class="type">Boolean</span><a id="113725">changed</a></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>;
+    <span class="typed"><span class="type">Unit</span><a href="#113726" class="keyword">while</a></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="../../Iterator.scala.html#19975">hasNext</a></span>) 
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">(A)Boolean</span><a href="../../Function1.scala.html#17300">p</a></span>(<span class="typed"><span class="type">()A</span><a href="../../Iterator.scala.html#19976">next</a></span>)) { <span class="typed"><span class="type">=&gt; Unit</span><a href="#21511">remove</a></span>; <span class="typed"><span class="type">Boolean</span><a href="#113725">changed</a></span> = <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>; }
+    <span class="typed"><span class="type">Boolean</span><a href="#113725">changed</a></span>;
+  }
+
+  <span class="comment">/** Standard implementation of a mapped iterator. **/</span>
+  <span class="keyword">class</span> <span class="typed"><span class="type">class Map[B] extends java.lang.Object with scala.collection.jcl.MutableIterator[B] with ScalaObject</span><a id="21518">Map</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="21519">B</a></span>](<span class="typed"><span class="type">(A) =&gt; B</span><span id="55053"><a id="55071">f</a></span></span> : A =&gt; B) <span class="keyword">extends</span> <span class="typed"><span class="type">scala.collection.jcl.MutableIterator[B]</span><a href="#8665">MutableIterator</a></span>[B] {
+    <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="55055">hasNext</a></span> = <span class="typed"><span class="type">MutableIterator.this.type</span><a href="#8665">MutableIterator</a></span>.<span class="keyword">this</span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../../Iterator.scala.html#19975">hasNext</a></span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">()B</span><a id="55056">next</a></span> = <span class="typed"><span class="type">(A)B</span><a href="../../Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">MutableIterator.this.type</span><a href="#8665">MutableIterator</a></span>.<span class="keyword">this</span>.<span class="typed"><span class="type">()A</span><a href="../../Iterator.scala.html#19976">next</a></span>)
+    <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Unit</span><a id="55057">remove</a></span> = <span class="typed"><span class="type">MutableIterator.this.type</span><a href="#8665">MutableIterator</a></span>.<span class="keyword">this</span>.<span class="typed"><span class="type">=&gt; Unit</span><a href="#21511">remove</a></span>
+  }
+}
+
+        </pre>
+    </body>
+</html>

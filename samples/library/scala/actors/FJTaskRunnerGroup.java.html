@@ -1,0 +1,727 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/actors/FJTaskRunnerGroup.java</title>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*
+  File: FJTaskRunnerGroup.java
+
+  Originally written by Doug Lea and released into the public domain.
+  This may be used for any purposes whatsoever without acknowledgment.
+  Thanks for the assistance and support of Sun Microsystems Labs,
+  and everyone contributing, testing, and using this code.
+
+  History:
+  Date       Who                What
+  7Jan1999   dl                 First public release
+  12Jan1999  dl                 made getActiveCount public; misc minor cleanup.
+  14Jan1999  dl                 Added executeTask
+  20Jan1999  dl                 Allow use of priorities; reformat stats
+  6Feb1999   dl                 Lazy thread starts
+  27Apr1999  dl                 Renamed
+*/</span>
+
+<span class="keyword">package</span> scala.actors;
+
+<span class="comment">/**
+ * A stripped down analog of a ThreadGroup used for
+ * establishing and managing FJTaskRunner threads.
+ * ThreadRunnerGroups serve as the control boundary separating
+ * the general world of normal threads from the specialized world
+ * of FJTasks. 
+ * &lt;p&gt;
+ * By intent, this class does not subclass java.lang.ThreadGroup, and
+ * does not support most methods found in ThreadGroups, since they
+ * would make no sense for FJTaskRunner threads. In fact, the class
+ * does not deal with ThreadGroups at all. If you want to restrict
+ * a FJTaskRunnerGroup to a particular ThreadGroup, you can create
+ * it from within that ThreadGroup.
+ * &lt;p&gt;
+ * The main contextual parameter for a FJTaskRunnerGroup is
+ * the group size, established in the constructor. 
+ * Groups must be of a fixed size.
+ * There is no way to dynamically increase or decrease the number
+ * of threads in an existing group.
+ * &lt;p&gt;
+ * In general, the group size should be equal to the number
+ * of CPUs on the system. (Unfortunately, there is no portable
+ * means of automatically detecting the number of CPUs on a JVM, so there is
+ * no good way to automate defaults.)  In principle, when
+ * FJTasks are used for computation-intensive tasks, having only 
+ * as many threads as CPUs should minimize bookkeeping overhead
+ * and contention, and so maximize throughput. However, because
+ * FJTaskRunners lie atop Java threads, and in turn operating system
+ * thread support and scheduling policies, 
+ * it is very possible that using more threads
+ * than CPUs will improve overall throughput even though it adds
+ * to overhead. This will always be so if FJTasks are I/O bound.
+ * So it may pay to experiment a bit when tuning on particular platforms.
+ * You can also use &lt;code&gt;setRunPriorities&lt;/code&gt; to either
+ * increase or decrease the priorities of active threads, which
+ * may interact with group size choice.
+ * &lt;p&gt;
+ * In any case, overestimating group sizes never
+ * seriously degrades performance (at least within reasonable bounds). 
+ * You can also use a value
+ * less than the number of CPUs in order to reserve processing
+ * for unrelated threads. 
+ * &lt;p&gt;
+ * There are two general styles for using a FJTaskRunnerGroup.
+ * You can create one group per entire program execution, for example 
+ * as a static singleton, and use it for all parallel tasks:
+ * &lt;pre&gt;
+ * class Tasks {
+ *   static FJTaskRunnerGroup group;
+ *   public void initialize(int groupsize) {
+ *      group = new FJTaskRunnerGroup(groupSize);
+ *   }
+ *   // ...
+ * }
+ * &lt;/pre&gt;
+ * Alternatively, you can make new groups on the fly and use them only for
+ * particular task sets. This is more flexible,,
+ * and leads to more controllable and deterministic execution patterns,
+ * but it encounters greater overhead on startup. Also, to reclaim
+ * system resources, you should
+ * call &lt;code&gt;FJTaskRunnerGroup.interruptAll&lt;/code&gt; when you are done
+ * using one-shot groups. Otherwise, because FJTaskRunners set 
+ * &lt;code&gt;Thread.isDaemon&lt;/code&gt;
+ * status, they will not normally be reclaimed until program termination.
+ * &lt;p&gt;
+ * The main supported methods are &lt;code&gt;execute&lt;/code&gt;,
+ * which starts a task processed by FJTaskRunner threads,
+ * and &lt;code&gt;invoke&lt;/code&gt;, which starts one and waits for completion.
+ * For example, you might extend the above &lt;code&gt;FJTasks&lt;/code&gt;
+ * class to support a task-based computation, say, the
+ * &lt;code&gt;Fib&lt;/code&gt; class from the &lt;code&gt;FJTask&lt;/code&gt; documentation:
+ * &lt;pre&gt;
+ * class Tasks { // continued
+ *   // ...
+ *   static int fib(int n) {
+ *     try {
+ *       Fib f = new Fib(n);
+ *       group.invoke(f);
+ *       return f.getAnswer();
+ *     }
+ *     catch (InterruptedException ex) {
+ *       throw new Error(&quot;Interrupted during computation&quot;);
+ *     }
+ *   }
+ * }
+ * &lt;/pre&gt;
+ * &lt;p&gt;
+ * Method &lt;code&gt;stats()&lt;/code&gt; can be used to monitor performance.
+ * Both FJTaskRunnerGroup and FJTaskRunner may be compiled with
+ * the compile-time constant COLLECT_STATS set to false. In this
+ * case, various simple counts reported in stats() are not collected.
+ * On platforms tested,
+ * this leads to such a tiny performance improvement that there is 
+ * very little motivation to bother.
+ *
+ * &lt;p&gt;[&lt;a href=&quot;http://gee.cs.oswego.edu/dl/classes/EDU/oswego/cs/dl/util/concurrent/intro.html&quot;&gt; Introduction to this package. &lt;/a&gt;]
+ * &lt;p&gt;
+ * @see FJTask
+ * @see FJTaskRunner
+ **/</span>
+
+public <span class="keyword">class</span> <span class="typed"><span class="type">object scala.actors.FJTaskRunnerGroup</span><span id="8001"><a id="8000">FJTaskRunnerGroup</a></span></span> implements <span class="typed"><span class="type">scala.actors.IFJTaskRunnerGroup</span><a href="IFJTaskRunnerGroup.java.html#7904">IFJTaskRunnerGroup</a></span> {
+
+  <span class="comment">/** The threads in this group **/</span>
+    <span class="comment">/*protected*/</span> <span class="comment">/*final*/</span> <span class="typed"><span class="type">scala.actors.FJTaskRunner</span><a href="FJTaskRunner.java.html#8009">FJTaskRunner</a></span>[] <span class="typed"><span class="type">Array[scala.actors.FJTaskRunner]</span><a id="120802">threads</a></span>;
+
+  <span class="comment">/** Group-wide queue for tasks entered via execute() **/</span>
+    <span class="comment">/*protected*/</span> <span class="keyword">final</span> <span class="typed"><span class="type">scala.actors.LinkedQueue</span><a href="LinkedQueue.java.html#8186">LinkedQueue</a></span> <span class="typed"><span class="type">scala.actors.LinkedQueue</span><a id="120803">entryQueue</a></span> = <span class="keyword">new</span> LinkedQueue();
+
+    public <span class="typed"><span class="type">scala.actors.LinkedQueue</span><a href="LinkedQueue.java.html#8186">LinkedQueue</a></span> <span class="typed"><span class="type">()scala.actors.LinkedQueue</span><a id="120804">getEntryQueue</a></span>() {
+        <span class="keyword">return</span> entryQueue;
+    }
+
+  <span class="comment">/** Number of threads that are not waiting for work **/</span>
+  <span class="keyword">protected</span> int <span class="typed"><span class="type">Int</span><a id="120805">activeCount</a></span> = <span class="int">0</span>;
+
+  <span class="comment">/** Number of threads that have been started. Used to avoid
+      unecessary contention during startup of task sets.
+  **/</span>
+  <span class="keyword">protected</span> int <span class="typed"><span class="type">Int</span><a id="120806">nstarted</a></span> = <span class="int">0</span>;
+
+  <span class="comment">/**
+   * Compile-time constant. If true, various counts of
+   * runs, waits, etc., are maintained. These are NOT
+   * updated with synchronization, so statistics reports
+   * might not be accurate.
+   **/</span>
+  
+  static <span class="keyword">final</span> boolean <span class="typed"><span class="type">Boolean</span><a id="120794">COLLECT_STATS</a></span> = <span class="keyword">true</span>;
+  <span class="comment">//  static final boolean COLLECT_STATS = false;</span>
+
+  <span class="comment">// for stats</span>
+
+  <span class="comment">/** The time at which this ThreadRunnerGroup was constructed **/</span>
+  long <span class="typed"><span class="type">Long</span><a id="120807">initTime</a></span> = <span class="int">0</span>;
+
+  <span class="comment">/** Total number of executes or invokes **/</span>
+  int <span class="typed"><span class="type">Int</span><a id="120808">entries</a></span> = <span class="int">0</span>;
+
+  static <span class="keyword">final</span> int <span class="typed"><span class="type">Int</span><a id="120795">DEFAULT_SCAN_PRIORITY</a></span> = Thread.MIN_PRIORITY+<span class="int">1</span>;
+
+    <span class="comment">/* -------- Suspending -------- */</span>
+
+    <span class="typed"><span class="type">scala.actors.LinkedQueue</span><a href="LinkedQueue.java.html#8186">LinkedQueue</a></span> <span class="typed"><span class="type">()scala.actors.LinkedQueue</span><a id="120809">snapshot</a></span>() throws InterruptedException {
+        synchronized (<span class="keyword">this</span>) {
+            <span class="keyword">for</span> (int i = <span class="int">0</span>; i &lt; threads.length; ++i) {
+                FJTaskRunner t = threads[i];
+                <span class="comment">// set flag in all task runners to suspend</span>
+                t.setSuspending(<span class="keyword">true</span>);
+                <span class="comment">// interrupt all task runners</span>
+                <span class="comment">// assume: current thread not in threads (scheduler)</span>
+                t.interrupt();
+            }
+        }
+
+        <span class="comment">// wait until all of them have terminated</span>
+        <span class="keyword">for</span> (int i = <span class="int">0</span>; i &lt; threads.length; ++i) {
+            Thread t = threads[i];
+            t.join();
+        };
+
+        <span class="keyword">return</span> entryQueue;
+    }
+
+  <span class="comment">/** 
+   * Create a FJTaskRunnerGroup with the indicated number
+   * of FJTaskRunner threads. Normally, the best size to use is
+   * the number of CPUs on the system. 
+   * &lt;p&gt;
+   * The threads in a FJTaskRunnerGroup are created with their
+   * isDaemon status set, so do not normally need to be
+   * shut down manually upon program termination.
+   **/</span>
+
+  public FJTaskRunnerGroup<span class="typed"><span class="type">scala.actors.FJTaskRunnerGroup</span><a href="#8000">(</a></span>int <span class="typed"><span class="type">Int</span><a id="120839">groupSize</a></span>) { 
+      <span class="comment">//System.out.println(&quot;Creating FJTaskRunnerGroup of size &quot;+groupSize);</span>
+    threads = <span class="keyword">new</span> FJTaskRunner[groupSize];
+    initializeThreads();
+    initTime = System.currentTimeMillis();
+  }
+
+
+    public boolean <span class="typed"><span class="type">()Boolean</span><a id="120811">existsTask</a></span>() {
+        FJTask task = <span class="keyword">null</span>;
+        <span class="comment">/*
+          Circularly traverse from a random start index. 
+          
+          This differs slightly from cilk version that uses a random index
+          for each attempted steal.
+          Exhaustive scanning might impede analytic tractablity of 
+          the scheduling policy, but makes it much easier to deal with
+          startup and shutdown.
+        */</span>
+        
+        FJTaskRunner[] ts = threads;
+        int idx = <span class="comment">/*victimRNG.nextInt(ts.length)*/</span> <span class="int">0</span>;
+
+        <span class="keyword">for</span> (int i = <span class="int">0</span>; i &lt; ts.length; ++i) {
+            FJTaskRunner t = ts[idx];
+            <span class="keyword">if</span> (++idx &gt;= ts.length) idx = <span class="int">0</span>; <span class="comment">// circularly traverse</span>
+
+            <span class="keyword">if</span> (t != <span class="keyword">null</span>) {
+                task = t.take();
+                <span class="keyword">if</span> (task != <span class="keyword">null</span>) {
+                    break;
+                }
+            }
+        }
+
+        <span class="keyword">if</span> (task == <span class="keyword">null</span>) {
+            task = pollEntryQueue();
+        }
+
+        <span class="keyword">if</span> (task != <span class="keyword">null</span> &amp;&amp; !task.isDone()) {
+            boolean quit = <span class="keyword">false</span>;
+            <span class="keyword">while</span> (!quit) {
+                quit = <span class="keyword">true</span>;
+                <span class="keyword">try</span> {
+                    <span class="comment">// put task back into entry queue and return true</span>
+                    entryQueue.put(task);
+                } <span class="keyword">catch</span> (InterruptedException ie) {
+                    quit = <span class="keyword">false</span>;
+                }
+            }
+            <span class="keyword">return</span> <span class="keyword">true</span>;
+        }
+        <span class="keyword">else</span> <span class="keyword">return</span> <span class="keyword">false</span>;
+    }
+
+    public boolean <span class="typed"><span class="type">()Boolean</span><a id="120812">checkPoolSize</a></span>() {
+        <span class="comment">// if there is a task in the entryQueue or any of the</span>
+        <span class="comment">// worker queues, increase thread pool size by one</span>
+        <span class="keyword">if</span> (!entryQueue.isEmpty() ||
+            existsTask()) {
+            int newsize = threads.length + <span class="int">1</span>;
+            FJTaskRunner[] newar = <span class="keyword">new</span> FJTaskRunner[newsize];
+            System.arraycopy(threads, <span class="int">0</span>, newar, <span class="int">0</span>, newsize-<span class="int">1</span>);
+            synchronized(<span class="keyword">this</span>) {
+                threads = newar;
+                FJTaskRunner t = <span class="keyword">new</span> FJTaskRunner(<span class="keyword">this</span>);
+                threads[newsize-<span class="int">1</span>] = t;
+                setActive(t);
+            }
+            <span class="keyword">return</span> <span class="keyword">true</span>;
+        }
+        <span class="keyword">else</span> <span class="keyword">return</span> <span class="keyword">false</span>;
+    }
+
+
+  <span class="comment">/**
+   * Arrange for execution of the given task
+   * by placing it in a work queue. If the argument
+   * is not of type FJTask, it is embedded in a FJTask via 
+   * &lt;code&gt;FJTask.Wrap&lt;/code&gt;.
+   * @exception InterruptedException if current Thread is
+   * currently interrupted 
+   **/</span>
+
+  public void <span class="typed"><span class="type">(java.lang.Runnable)Unit</span><a id="120813">execute</a></span>(Runnable <span class="typed"><span class="type">java.lang.Runnable</span><a id="120960">r</a></span>) throws InterruptedException {
+    <span class="keyword">if</span> (r instanceof FJTask) {
+      entryQueue.put((FJTask)r);
+    }
+    <span class="keyword">else</span> {
+      entryQueue.put(<span class="keyword">new</span> FJTask.Wrap(r));
+    }
+    signalNewTask();
+  }
+
+
+  <span class="comment">/**
+   * Specialized form of execute called only from within FJTasks
+   **/</span>
+  public void <span class="typed"><span class="type">(scala.actors.FJTask)Unit</span><a id="120814">executeTask</a></span>(<span class="typed"><span class="type">scala.actors.FJTask</span><a href="FJTask.java.html#8084">FJTask</a></span> <span class="typed"><span class="type">scala.actors.FJTask</span><a id="135250">t</a></span>) {
+    <span class="keyword">try</span> {
+      entryQueue.put(t);
+      signalNewTask();
+    }
+    <span class="keyword">catch</span> (InterruptedException ex) {
+      Thread.currentThread().interrupt();
+    }
+  }
+
+
+  <span class="comment">/**
+   * Start a task and wait it out. Returns when the task completes.
+   * @exception InterruptedException if current Thread is
+   * interrupted before completion of the task.
+   **/</span>
+
+  public void <span class="typed"><span class="type">(java.lang.Runnable)Unit</span><a id="120815">invoke</a></span>(Runnable <span class="typed"><span class="type">java.lang.Runnable</span><a id="135251">r</a></span>) throws InterruptedException {
+    InvokableFJTask w = <span class="keyword">new</span> InvokableFJTask(r);
+    entryQueue.put(w);
+    signalNewTask();
+    w.awaitTermination();
+  }
+
+
+  <span class="comment">/**
+   * Try to shut down all FJTaskRunner threads in this group
+   * by interrupting them all. This method is designed
+   * to be used during cleanup when it is somehow known
+   * that all threads are idle.
+   * FJTaskRunners only
+   * check for interruption when they are not otherwise
+   * processing a task (and its generated subtasks,
+   * if any), so if any threads are active, shutdown may
+   * take a while, and may lead to unpredictable
+   * task processing.
+   **/</span>
+
+  public void <span class="typed"><span class="type">()Unit</span><a id="120816">interruptAll</a></span>() {
+    <span class="comment">// paranoically interrupt current thread last if in group.</span>
+    Thread current = Thread.currentThread();
+    boolean stopCurrent = <span class="keyword">false</span>;
+
+    <span class="keyword">for</span> (int i = <span class="int">0</span>; i &lt; threads.length; ++i) {
+      Thread t = threads[i];
+      <span class="keyword">if</span> (t == current) 
+        stopCurrent = <span class="keyword">true</span>;
+      <span class="keyword">else</span>
+        t.interrupt();
+    }
+    <span class="keyword">if</span> (stopCurrent)
+      current.interrupt();
+  }
+
+
+  <span class="comment">/**
+   * Set the priority to use while a FJTaskRunner is
+   * polling for new tasks to perform. Default
+   * is currently Thread.MIN_PRIORITY+1. The value
+   * set may not go into effect immediately, but
+   * will be used at least the next time a thread scans for work.
+   **/</span>
+  public synchronized void <span class="typed"><span class="type">(Int)Unit</span><a id="120817">setScanPriorities</a></span>(int <span class="typed"><span class="type">Int</span><a id="135252">pri</a></span>) {
+    <span class="keyword">for</span> (int i = <span class="int">0</span>; i &lt; threads.length; ++i) {
+      FJTaskRunner t = threads[i];
+      t.setScanPriority(pri);
+      <span class="keyword">if</span> (!t.active) t.setPriority(pri);
+    }
+  }
+
+
+  <span class="comment">/**
+   * Set the priority to use while a FJTaskRunner is
+   * actively running tasks. Default
+   * is the priority that was in effect by the thread that
+   * constructed this FJTaskRunnerGroup. Setting this value
+   * while threads are running may momentarily result in
+   * them running at this priority even when idly waiting for work.
+   **/</span>
+  public synchronized void <span class="typed"><span class="type">(Int)Unit</span><a id="120818">setRunPriorities</a></span>(int <span class="typed"><span class="type">Int</span><a id="135253">pri</a></span>) {
+    <span class="keyword">for</span> (int i = <span class="int">0</span>; i &lt; threads.length; ++i) {
+      FJTaskRunner t = threads[i];
+      t.setRunPriority(pri);
+      <span class="keyword">if</span> (t.active) t.setPriority(pri);
+    }
+  }
+
+    
+
+  <span class="comment">/** Return the number of FJTaskRunner threads in this group **/</span>
+
+  public int <span class="typed"><span class="type">()Int</span><a id="120819">size</a></span>() { <span class="keyword">return</span> threads.length; }
+
+
+  <span class="comment">/** 
+   * Return the number of threads that are not idly waiting for work.
+   * Beware that even active threads might not be doing any useful
+   * work, but just spinning waiting for other dependent tasks.
+   * Also, since this is just a snapshot value, some tasks
+   * may be in the process of becoming idle.
+   **/</span>
+  public synchronized int <span class="typed"><span class="type">()Int</span><a id="120820">getActiveCount</a></span>() { <span class="keyword">return</span> activeCount; }
+
+  <span class="comment">/**
+   * Prints various snapshot statistics to System.out.
+   * &lt;ul&gt;
+   *   &lt;li&gt; For each FJTaskRunner thread (labeled as T&lt;em&gt;n&lt;/em&gt;, for
+   *         &lt;em&gt;n&lt;/em&gt; from zero to group size - 1):
+   *     &lt;ul&gt;
+   *       &lt;li&gt; A star &quot;*&quot; is printed if the thread is currently active;
+   *            that is, not sleeping while waiting for work. Because
+   *            threads gradually enter sleep modes, an active thread
+   *            may in fact be about to sleep (or wake up).
+   *       &lt;li&gt; &lt;em&gt;Q Cap&lt;/em&gt; The current capacity of its task queue.
+   *       &lt;li&gt; &lt;em&gt;Run&lt;/em&gt; The total number of tasks that have been run.
+   *       &lt;li&gt; &lt;em&gt;New&lt;/em&gt; The number of these tasks that were
+   *               taken from either the entry queue or from other 
+   *               thread queues; that is, the number of tasks run
+   *               that were &lt;em&gt;not&lt;/em&gt; forked by the thread itself.
+   *       &lt;li&gt; &lt;em&gt;Scan&lt;/em&gt; The number of times other task
+   *               queues or the entry queue were polled for tasks.
+   *     &lt;/ul&gt;
+   *   &lt;li&gt; &lt;em&gt;Execute&lt;/em&gt; The total number of tasks entered
+   *        (but not necessarily yet run) via execute or invoke.
+   *   &lt;li&gt; &lt;em&gt;Time&lt;/em&gt; Time in seconds since construction of this
+   *         FJTaskRunnerGroup.
+   *   &lt;li&gt; &lt;em&gt;Rate&lt;/em&gt; The total number of tasks processed
+   *          per second across all threads. This
+   *          may be useful as a simple throughput indicator
+   *          if all processed tasks take approximately the
+   *          same time to run.
+   * &lt;/ul&gt;
+   * &lt;p&gt;
+   * Cautions: Some statistics are updated and gathered 
+   * without synchronization,
+   * so may not be accurate. However, reported counts may be considered
+   * as lower bounds of actual values. 
+   * Some values may be zero if classes are compiled
+   * with COLLECT_STATS set to false. (FJTaskRunner and FJTaskRunnerGroup
+   * classes can be independently compiled with different values of
+   * COLLECT_STATS.) Also, the counts are maintained as ints so could
+   * overflow in exceptionally long-lived applications.
+   * &lt;p&gt;
+   * These statistics can be useful when tuning algorithms or diagnosing
+   * problems. For example:
+   * &lt;ul&gt;
+   *  &lt;li&gt; High numbers of scans may mean that there is insufficient
+   *      parallelism to keep threads busy. However, high scan rates
+   *      are expected if the number
+   *      of Executes is also high or there is a lot of global
+   *      synchronization in the application, and the system is not otherwise
+   *      busy. Threads may scan
+   *      for work hundreds of times upon startup, shutdown, and
+   *      global synch points of task sets.
+   *  &lt;li&gt; Large imbalances in tasks run across different threads might
+   *      just reflect contention with unrelated threads on a system
+   *      (possibly including JVM threads such as GC), but may also
+   *      indicate some systematic bias in how you generate tasks.
+   *  &lt;li&gt; Large task queue capacities may mean that too many tasks are being
+   *     generated before they can be run. 
+   *     Capacities are reported rather than current numbers of tasks
+   *     in queues because they are better indicators of the existence
+   *     of these kinds of possibly-transient problems.
+   *     Queue capacities are
+   *     resized on demand from their initial value of 4096 elements,
+   *     which is much more than sufficient for the kinds of 
+   *     applications that this framework is intended to best support.
+   * &lt;/ul&gt;
+   **/</span>
+
+  public void <span class="typed"><span class="type">()Unit</span><a id="120821">stats</a></span>() {
+    long time = System.currentTimeMillis() - initTime;
+    double secs = ((double)time) / <span class="double">1000.0</span>;
+    long totalRuns = <span class="int">0</span>;
+    long totalScans = <span class="int">0</span>;
+    long totalSteals = <span class="int">0</span>;
+
+    System.out.print(<span class="string">&quot;Thread&quot;</span> +
+                     <span class="string">&quot;\tQ Cap&quot;</span> +
+                       <span class="string">&quot;\tScans&quot;</span> +
+                       <span class="string">&quot;\tNew&quot;</span> +
+                       <span class="string">&quot;\tRuns&quot;</span> +
+                       <span class="string">&quot;\n&quot;</span>);
+
+    <span class="keyword">for</span> (int i = <span class="int">0</span>; i &lt; threads.length; ++i) {
+      FJTaskRunner t = threads[i];
+      int truns = t.runs;
+      totalRuns += truns;
+
+      int tscans = t.scans;
+      totalScans += tscans;
+
+      int tsteals = t.steals;
+      totalSteals += tsteals;
+
+      String star = (getActive(t))? <span class="string">&quot;*&quot;</span> : <span class="string">&quot; &quot;</span>;
+
+
+      System.out.print(<span class="string">&quot;T&quot;</span> + i + star +
+                       <span class="string">&quot;\t&quot;</span> + t.deqSize() +
+                       <span class="string">&quot;\t&quot;</span> + tscans +
+                       <span class="string">&quot;\t&quot;</span> + tsteals +
+                       <span class="string">&quot;\t&quot;</span> + truns +
+                       <span class="string">&quot;\n&quot;</span>);
+    }
+
+    System.out.print(<span class="string">&quot;Total&quot;</span> +
+                     <span class="string">&quot;\t    &quot;</span> +
+                     <span class="string">&quot;\t&quot;</span> + totalScans +
+                     <span class="string">&quot;\t&quot;</span> + totalSteals +
+                     <span class="string">&quot;\t&quot;</span> + totalRuns +
+                     <span class="string">&quot;\n&quot;</span>);
+
+    System.out.print(<span class="string">&quot;Execute: &quot;</span> + entries); 
+    
+    System.out.print(<span class="string">&quot;\tTime: &quot;</span> + secs);
+
+    long rps = <span class="int">0</span>;
+    <span class="keyword">if</span> (secs != <span class="int">0</span>) rps = Math.round((double)(totalRuns) / secs);
+
+    System.out.println(<span class="string">&quot;\tRate: &quot;</span> + rps);
+  }
+
+
+  <span class="comment">/* ------------ Methods called only by FJTaskRunners ------------- */</span>
+
+
+  <span class="comment">/**
+   * Return the array of threads in this group. 
+   * Called only by FJTaskRunner.scan().
+   **/</span>
+
+  public <span class="typed"><span class="type">scala.actors.FJTaskRunner</span><a href="FJTaskRunner.java.html#8009">FJTaskRunner</a></span>[<span class="typed"><span class="type">Array</span><a href="../Array.scala.html#1070">]</a></span> <span class="typed"><span class="type">()Array[scala.actors.FJTaskRunner]</span><a id="120822">getArray</a></span>() { <span class="keyword">return</span> threads; }
+
+
+  <span class="comment">/**
+   * Return a task from entry queue, or null if empty.
+   * Called only by FJTaskRunner.scan().
+   **/</span>
+
+  public <span class="typed"><span class="type">scala.actors.FJTask</span><a href="FJTask.java.html#8084">FJTask</a></span> <span class="typed"><span class="type">()scala.actors.FJTask</span><a id="120823">pollEntryQueue</a></span>() {
+    <span class="keyword">try</span> {
+      FJTask t = (FJTask)(entryQueue.poll(<span class="int">0</span>));
+      <span class="keyword">return</span> t;
+    }
+    <span class="keyword">catch</span>(InterruptedException ex) { <span class="comment">// ignore interrupts</span>
+      Thread.currentThread().interrupt();
+      <span class="keyword">return</span> <span class="keyword">null</span>;
+    }
+  }
+
+
+  <span class="comment">/**
+   * Return active status of t.
+   * Per-thread active status can only be accessed and
+   * modified via synchronized method here in the group class.
+   **/</span>
+
+  <span class="keyword">protected</span> synchronized boolean <span class="typed"><span class="type">(scala.actors.FJTaskRunner)Boolean</span><a id="120824">getActive</a></span>(<span class="typed"><span class="type">scala.actors.FJTaskRunner</span><a href="FJTaskRunner.java.html#8009">FJTaskRunner</a></span> <span class="typed"><span class="type">scala.actors.FJTaskRunner</span><a id="135254">t</a></span>) {
+    <span class="keyword">return</span> t.active;
+  }
+
+
+  <span class="comment">/**
+   * Set active status of thread t to true, and notify others
+   * that might be waiting for work. 
+   **/</span>
+
+  public synchronized void <span class="typed"><span class="type">(scala.actors.FJTaskRunner)Unit</span><a id="120825">setActive</a></span>(<span class="typed"><span class="type">scala.actors.FJTaskRunner</span><a href="FJTaskRunner.java.html#8009">FJTaskRunner</a></span> <span class="typed"><span class="type">scala.actors.FJTaskRunner</span><a id="135255">t</a></span>) {
+    <span class="keyword">if</span> (!t.active) { 
+      t.active = <span class="keyword">true</span>;
+      ++activeCount;
+      <span class="keyword">if</span> (nstarted &lt; threads.length) 
+        threads[nstarted++].start();
+      <span class="keyword">else</span>
+        notifyAll();
+    }
+  }
+
+  <span class="comment">/**
+   * Set active status of thread t to false.
+   **/</span>
+
+  public synchronized void <span class="typed"><span class="type">(scala.actors.FJTaskRunner)Unit</span><a id="120826">setInactive</a></span>(<span class="typed"><span class="type">scala.actors.FJTaskRunner</span><a href="FJTaskRunner.java.html#8009">FJTaskRunner</a></span> <span class="typed"><span class="type">scala.actors.FJTaskRunner</span><a id="135256">t</a></span>) {
+    <span class="keyword">if</span> (t.active) { 
+      t.active = <span class="keyword">false</span>;
+      --activeCount;
+    }
+  }
+
+  <span class="comment">/**
+   * The number of times to scan other threads for tasks 
+   * before transitioning to a mode where scans are
+   * interleaved with sleeps (actually timed waits).
+   * Upon transition, sleeps are for duration of
+   * scans / SCANS_PER_SLEEP milliseconds.
+   * &lt;p&gt;
+   * This is not treated as a user-tunable parameter because
+   * good values do not appear to vary much across JVMs or
+   * applications. Its main role is to help avoid some
+   * useless spinning and contention during task startup.
+   **/</span>
+  static <span class="keyword">final</span> long <span class="typed"><span class="type">Long</span><a id="120796">SCANS_PER_SLEEP</a></span> = <span class="int">15</span>;
+
+  <span class="comment">/**
+   * The maximum time (in msecs) to sleep when a thread is idle,
+   * yet others are not, so may eventually generate work that
+   * the current thread can steal. This value reflects the maximum time
+   * that a thread may sleep when it possibly should not, because there
+   * are other active threads that might generate work. In practice,
+   * designs in which some threads become stalled because others
+   * are running yet not generating tasks are not likely to work
+   * well in this framework anyway, so the exact value does not matter
+   * too much. However, keeping it in the sub-second range does
+   * help smooth out startup and shutdown effects.
+   **/</span>
+
+  static <span class="keyword">final</span> long <span class="typed"><span class="type">Long</span><a id="120797">MAX_SLEEP_TIME</a></span> = <span class="int">100</span>;
+
+  <span class="comment">/**
+   * Set active status of thread t to false, and
+   * then wait until: (a) there is a task in the entry 
+   * queue, or (b) other threads are active, or (c) the current
+   * thread is interrupted. Upon return, it
+   * is not certain that there will be work available.
+   * The thread must itself check. 
+   * &lt;p&gt;
+   * The main underlying reason
+   * for these mechanics is that threads do not
+   * signal each other when they add elements to their queues.
+   * (This would add to task overhead, reduce locality.
+   * and increase contention.)
+   * So we must rely on a tamed form of polling. However, tasks
+   * inserted into the entry queue do result in signals, so
+   * tasks can wait on these if all of them are otherwise idle.
+   **/</span>
+
+  public synchronized void <span class="typed"><span class="type">(scala.actors.FJTaskRunner,Long)Unit</span><a id="120827">checkActive</a></span>(<span class="typed"><span class="type">scala.actors.FJTaskRunner</span><a href="FJTaskRunner.java.html#8009">FJTaskRunner</a></span> <span class="typed"><span class="type">scala.actors.FJTaskRunner</span><a id="135257">t</a></span>, long <span class="typed"><span class="type">Long</span><a id="135258">scans</a></span>) {
+
+    setInactive(t);
+
+    <span class="keyword">try</span> {
+      <span class="comment">// if nothing available, do a hard wait</span>
+      <span class="keyword">if</span> (activeCount == <span class="int">0</span> &amp;&amp; entryQueue.peek() == <span class="keyword">null</span>) { 
+        wait();
+      }
+      <span class="keyword">else</span> { 
+        <span class="comment">// If there is possibly some work,</span>
+        <span class="comment">// sleep for a while before rechecking </span>
+
+        long msecs = scans / SCANS_PER_SLEEP;
+        <span class="keyword">if</span> (msecs &gt; MAX_SLEEP_TIME) msecs = MAX_SLEEP_TIME;
+        int nsecs = (msecs == <span class="int">0</span>) ? <span class="int">1</span> : <span class="int">0</span>; <span class="comment">// forces shortest possible sleep</span>
+        wait(msecs, nsecs);
+      }
+    }
+    <span class="keyword">catch</span> (InterruptedException ex) {
+      notify(); <span class="comment">// avoid lost notifies on interrupts</span>
+      Thread.currentThread().interrupt();
+    }
+  }
+
+  <span class="comment">/* ------------ Utility methods  ------------- */</span>
+
+  <span class="comment">/**
+   * Start or wake up any threads waiting for work
+   **/</span>
+
+  <span class="keyword">protected</span> synchronized void <span class="typed"><span class="type">()Unit</span><a id="120828">signalNewTask</a></span>() {
+    <span class="keyword">if</span> (COLLECT_STATS) ++entries;
+    <span class="keyword">if</span> (nstarted &lt; threads.length) 
+       threads[nstarted++].start();
+    <span class="keyword">else</span>
+      notify();
+  }
+
+  <span class="comment">/**
+   * Create all FJTaskRunner threads in this group.
+   **/</span>
+
+  <span class="keyword">protected</span> void <span class="typed"><span class="type">()Unit</span><a id="120829">initializeThreads</a></span>() {
+    <span class="keyword">for</span> (int i = <span class="int">0</span>; i &lt; threads.length; ++i) threads[i] = <span class="keyword">new</span> FJTaskRunner(<span class="keyword">this</span>);
+  }
+
+
+
+
+  <span class="comment">/**
+   * Wrap wait/notify mechanics around a task so that
+   * invoke() can wait it out 
+   **/</span>
+  <span class="keyword">protected</span> static <span class="keyword">final</span> <span class="keyword">class</span> <span class="typed"><span class="type">object scala.actors.FJTaskRunnerGroup.InvokableFJTask</span><span id="120798"><a id="120801">InvokableFJTask</a></span></span> <span class="keyword">extends</span> FJTask {
+    <span class="keyword">protected</span> <span class="keyword">final</span> Runnable wrapped;
+    <span class="keyword">protected</span> boolean terminated = <span class="keyword">false</span>;
+
+    <span class="keyword">protected</span> InvokableFJTask(Runnable r) { wrapped = r; }
+
+    public void run() {
+      <span class="keyword">try</span> {
+        <span class="keyword">if</span> (wrapped instanceof FJTask)
+          FJTask.invoke((FJTask)(wrapped));
+        <span class="keyword">else</span>
+          wrapped.run();
+      }
+      <span class="keyword">finally</span> {
+        setTerminated();
+      }
+    }
+
+    <span class="keyword">protected</span> synchronized void setTerminated() {
+      terminated = <span class="keyword">true</span>;
+      notifyAll(); 
+    }
+
+    <span class="keyword">protected</span> synchronized void awaitTermination() throws InterruptedException {
+      <span class="keyword">while</span> (!terminated) wait();
+    }
+  }
+
+
+}
+
+
+        </pre>
+    </body>
+</html>

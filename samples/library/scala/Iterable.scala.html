@@ -1,0 +1,525 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/Iterable.scala</title>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: Iterable.scala 17220 2009-02-28 21:32:38Z extempore $</span>
+
+
+<span class="keyword">package</span> scala
+
+
+<span class="keyword">import</span> Predef._
+<span class="keyword">import</span> collection.mutable.{Buffer,ArrayBuffer}
+
+<span class="comment">/** Various utilities for instances of &lt;a href=&quot;Iterable.html&quot;&gt;Iterable&lt;/a&gt;.
+ *
+ *  @author  Matthias Zenger
+ *  @version 1.1, 04/02/2004
+ */</span>
+<span class="keyword">object</span> <span class="typed"><span class="type">object Iterable</span><a id="402">Iterable</a></span> {
+<span class="comment">/*
+  implicit def view[A &lt;% Ordered[A]](x: Iterable[A]): Ordered[Iterable[A]] =
+    new Ordered[Iterable[A]] {
+      def compare[B &gt;: Iterable[A] &lt;% Ordered[B]](that: B): Int = that match {
+        case y: Iterable[A] =&gt;
+          val xs = x.elements
+          val ys = y.elements
+          var res = 0
+          while (xs.hasNext &amp;&amp; ys.hasNext &amp;&amp; (res == 0)) {
+            res = xs.next compare ys.next
+          }
+          if (xs.hasNext) 1
+          else if (ys.hasNext) -1
+          else res
+        case _ =&gt;
+          -(that compare x)
+      }
+    }
+*/</span>
+  <span class="comment">/** The minimum element of a non-empty sequence of ordered elements */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[A](Iterable[A])(implicit (A) =&gt; Ordered[A])A</span><span id="18333"><a id="29849">min</a></span></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="18335">A</a></span> &lt;% Ordered[A]](<span class="typed"><span class="type">Iterable[A]</span><a id="29848">seq</a></span>: <span class="typed"><span class="type">Iterable[A]</span><a href="#401">Iterable</a></span>[A]): <span class="typed"><span class="type">A</span><a href="#18335">A</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">Iterator[A]</span><a id="29850">xs</a></span> = <span class="typed"><span class="type">Iterable[A]</span><a href="#29848">seq</a></span>.<span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">Iterator[A]</span><a href="#29850">xs</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Iterator.scala.html#19975">hasNext</a></span>) <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.lang.IllegalArgumentException</span><a id="21630" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.IllegalArgumentException</span><a href="Predef.scala.html#13341">IllegalArgumentException</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;min(&lt;empty&gt;)&quot;)</span><span class="string">&quot;min(&lt;empty&gt;)&quot;</span></span>)
+    <span class="keyword">var</span> <span class="typed"><span class="type">A</span><a id="29851">min</a></span> = <span class="typed"><span class="type">Iterator[A]</span><a href="#29850">xs</a></span>.<span class="typed"><span class="type">()A</span><a href="Iterator.scala.html#19976">next</a></span>
+    <span class="typed"><span class="type">Unit</span><a href="#29852" class="keyword">while</a></span> (<span class="typed"><span class="type">Iterator[A]</span><a href="#29850">xs</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Iterator.scala.html#19975">hasNext</a></span>) {
+      <span class="keyword">val</span> <span class="typed"><span class="type">A</span><a id="29855">x</a></span> = <span class="typed"><span class="type">Iterator[A]</span><a href="#29850">xs</a></span>.<span class="typed"><span class="type">()A</span><a href="Iterator.scala.html#19976">next</a></span>
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">(A)Ordered[A]</span><a href="Function1.scala.html#17300">x</a></span> <span class="typed"><span class="type">(A)Boolean</span><a href="Ordered.scala.html#18904">&lt;</a></span> <span class="typed"><span class="type">A</span><a href="#29851">min</a></span>) <span class="typed"><span class="type">A</span><a href="#29851">min</a></span> = <span class="typed"><span class="type">A</span><a href="#29855">x</a></span>
+    }
+    <span class="typed"><span class="type">A</span><a href="#29851">min</a></span>
+  }
+
+  <span class="comment">/** The maximum element of a non-empty sequence of ordered elements */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[A](Iterable[A])(implicit (A) =&gt; Ordered[A])A</span><span id="18336"><a id="29863">max</a></span></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="18338">A</a></span> &lt;% Ordered[A]](<span class="typed"><span class="type">Iterable[A]</span><a id="29862">seq</a></span>: <span class="typed"><span class="type">Iterable[A]</span><a href="#401">Iterable</a></span>[A]): <span class="typed"><span class="type">A</span><a href="#18338">A</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">Iterator[A]</span><a id="29864">xs</a></span> = <span class="typed"><span class="type">Iterable[A]</span><a href="#29862">seq</a></span>.<span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">Iterator[A]</span><a href="#29864">xs</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Iterator.scala.html#19975">hasNext</a></span>) <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.lang.IllegalArgumentException</span><a id="21630" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.IllegalArgumentException</span><a href="Predef.scala.html#13341">IllegalArgumentException</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;max(&lt;empty&gt;)&quot;)</span><span class="string">&quot;max(&lt;empty&gt;)&quot;</span></span>)
+    <span class="keyword">var</span> <span class="typed"><span class="type">A</span><a id="29865">max</a></span> = <span class="typed"><span class="type">Iterator[A]</span><a href="#29864">xs</a></span>.<span class="typed"><span class="type">()A</span><a href="Iterator.scala.html#19976">next</a></span>
+    <span class="typed"><span class="type">Unit</span><a href="#29866" class="keyword">while</a></span> (<span class="typed"><span class="type">Iterator[A]</span><a href="#29864">xs</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Iterator.scala.html#19975">hasNext</a></span>) {
+      <span class="keyword">val</span> <span class="typed"><span class="type">A</span><a id="29869">x</a></span> = <span class="typed"><span class="type">Iterator[A]</span><a href="#29864">xs</a></span>.<span class="typed"><span class="type">()A</span><a href="Iterator.scala.html#19976">next</a></span>
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">(A)Ordered[A]</span><a href="Function1.scala.html#17300">max</a></span> <span class="typed"><span class="type">(A)Boolean</span><a href="Ordered.scala.html#18904">&lt;</a></span> <span class="typed"><span class="type">A</span><a href="#29869">x</a></span>) <span class="typed"><span class="type">A</span><a href="#29865">max</a></span> = <span class="typed"><span class="type">A</span><a href="#29869">x</a></span>
+    }
+    <span class="typed"><span class="type">A</span><a href="#29865">max</a></span>
+  }
+
+  <span class="comment">/** The empty iterable object */</span>
+  <span class="keyword">val</span> <span class="typed"><span class="type">&lt;refinement&gt; extends java.lang.Object with Iterable[Nothing]</span><span id="18340"><a id="18339">empty</a></span></span> = <span class="typed"><span class="type">template $anon extends java.lang.Object with Iterable[Nothing]</span><a id="29821" class="keyword">new</a></span> <span class="typed"><span class="type">Iterable[Nothing]</span><a href="#401">Iterable</a></span>[Nothing] {
+    <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; &lt;refinement&gt; extends java.lang.Object with Iterator[Nothing]</span><a id="29823">elements</a></span> = <span class="typed"><span class="type">object Iterator</span><a href="Iterator.scala.html#1338">Iterator</a></span>.<span class="typed"><span class="type">=&gt; &lt;refinement&gt; extends java.lang.Object with Iterator[Nothing]</span><a href="Iterator.scala.html#22746">empty</a></span>
+  }
+  <span class="comment">/** A non-strict projection of an iterable. 
+   * @author Sean McDirmid
+   */</span>
+  <span class="keyword">trait</span> <span class="typed"><span class="type">trait Projection[+A] extends java.lang.Object with Iterable[A] with ScalaObject</span><a id="18341">Projection</a></span>[+<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="18342">A</a></span>] <span class="keyword">extends</span> <span class="typed"><span class="type">Iterable[A]</span><a href="#401">Iterable</a></span>[A] {
+    <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; scala.Iterable.Projection[A]</span><a id="18410">projection</a></span> = <span class="typed"><span class="type">scala.Iterable.Projection[A]</span><a href="#18341" class="keyword">this</a></span>
+    <span class="comment">/** convert to a copied strict collection */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Iterable[A]</span><a id="18411">force</a></span> : <span class="typed"><span class="type">Iterable[A]</span><a href="#401">Iterable</a></span>[A] = <span class="typed"><span class="type">=&gt; List[A]</span><a href="#17360">toList</a></span>
+    
+    <span class="comment">/** non-strict */</span>
+    <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)scala.Iterable.Projection[A]</span><a id="18412">filter</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="21595">p</a></span> : A =&gt; Boolean) : <span class="typed"><span class="type">scala.Iterable.Projection[A]</span><a href="#18341">Projection</a></span>[A] = <span class="typed"><span class="type">template $anon extends java.lang.Object with scala.Iterable.Projection[A]</span><a id="29876" class="keyword">new</a></span> <span class="typed"><span class="type">scala.Iterable.Projection[A]</span><a href="#18341">Projection</a></span>[A] {
+      <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Iterator[A]</span><a id="29878">elements</a></span> = <span class="typed"><span class="type">Projection.this.type</span><a href="#18341">Projection</a></span>.<span class="keyword">this</span>.<span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>.<span class="typed"><span class="type">((A) =&gt; Boolean)Iterator[A]</span><a href="Iterator.scala.html#19994">filter</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a href="#21595">p</a></span>)
+    }
+    <span class="comment">/** non-strict */</span>
+    <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">[B]((A) =&gt; B)scala.Iterable.Projection[B]</span><a id="18413">map</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="18415">B</a></span>](<span class="typed"><span class="type">(A) =&gt; B</span><a id="29883">f</a></span>: A =&gt; B) : <span class="typed"><span class="type">scala.Iterable.Projection[B]</span><a href="#18341">Projection</a></span>[B] = <span class="typed"><span class="type">template $anon extends java.lang.Object with scala.Iterable.Projection[B]</span><a id="29884" class="keyword">new</a></span> <span class="typed"><span class="type">scala.Iterable.Projection[B]</span><a href="#18341">Projection</a></span>[B] {
+      <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Iterator[B]</span><a id="29886">elements</a></span> = <span class="typed"><span class="type">Projection.this.type</span><a href="#18341">Projection</a></span>.<span class="keyword">this</span>.<span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>.<span class="typed"><span class="type">((A) =&gt; B)Iterator[B]</span><a href="Iterator.scala.html#19980">map</a></span>(<span class="typed"><span class="type">(A) =&gt; B</span><a href="#29883">f</a></span>)
+    }
+    <span class="comment">/** non-strict */</span>
+    <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">[B]((A) =&gt; Iterable[B])scala.Iterable.Projection[B]</span><a id="18416">flatMap</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="18418">B</a></span>](<span class="typed"><span class="type">(A) =&gt; Iterable[B]</span><a id="29892">f</a></span>: A =&gt; Iterable[B]) : <span class="typed"><span class="type">scala.Iterable.Projection[B]</span><a href="#18341">Projection</a></span>[B] = <span class="typed"><span class="type">template $anon extends java.lang.Object with scala.Iterable.Projection[B]</span><a id="29893" class="keyword">new</a></span> <span class="typed"><span class="type">scala.Iterable.Projection[B]</span><a href="#18341">Projection</a></span>[B] {
+      <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Iterator[B]</span><a id="29895">elements</a></span> = <span class="typed"><span class="type">Projection.this.type</span><a href="#18341">Projection</a></span>.<span class="keyword">this</span>.<span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>.<span class="typed"><span class="type">((A) =&gt; Iterator[B])Iterator[B]</span><a href="Iterator.scala.html#19989">flatMap</a></span>(<span class="typed"><span class="type">A</span><a id="29903">a</a></span> =&gt; <span class="typed"><span class="type">(A)Iterable[B]</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">A</span><a href="#29903">a</a></span>).<span class="typed"><span class="type">=&gt; Iterator[B]</span><a href="#17309">elements</a></span>)
+    }  
+    <span class="comment">/** non-strict */</span>
+    <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)scala.Iterable.Projection[A]</span><a id="18419">takeWhile</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="29904">p</a></span>: A =&gt; Boolean): <span class="typed"><span class="type">scala.Iterable.Projection[A]</span><a href="#18341">Projection</a></span>[A] = <span class="typed"><span class="type">template $anon extends java.lang.Object with scala.Iterable.Projection[A]</span><a id="29905" class="keyword">new</a></span> <span class="typed"><span class="type">scala.Iterable.Projection[A]</span><a href="#18341">Projection</a></span>[A] {
+      <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Iterator[A]</span><a id="29907">elements</a></span> = <span class="typed"><span class="type">Projection.this.type</span><a href="#18341">Projection</a></span>.<span class="keyword">this</span>.<span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>.<span class="typed"><span class="type">((A) =&gt; Boolean)Iterator[A]</span><a href="Iterator.scala.html#19995">takeWhile</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a href="#29904">p</a></span>)
+    }
+    <span class="comment">/** The projection resulting from the concatenation of this projection with the &lt;code&gt;rest&lt;/code&gt; projection.
+     *  @param rest   The projection that gets appended to this projection
+     */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">[B &gt;: A](=&gt; Iterable[B])scala.Iterable.Projection[B]</span><a id="18420">append</a></span>[<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="18422">B</a></span> &gt;: A](<span class="typed"><span class="type">=&gt; Iterable[B]</span><a id="29913">rest</a></span> : =&gt; Iterable[B]): <span class="typed"><span class="type">scala.Iterable.Projection[B]</span><a href="#18341">Projection</a></span>[B] = <span class="typed"><span class="type">template $anon extends java.lang.Object with scala.Iterable.Projection[B]</span><a id="29914" class="keyword">new</a></span> <span class="typed"><span class="type">scala.Iterable.Projection[B]</span><a href="#18341">Projection</a></span>[B] {
+      <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; &lt;refinement&gt; extends java.lang.Object with Iterator[B]</span><a id="29916">elements</a></span> = <span class="typed"><span class="type">Projection.this.type</span><a href="#18341">Projection</a></span>.<span class="keyword">this</span>.<span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span> <span class="typed"><span class="type">(=&gt; Iterator[B])java.lang.Object with Iterator[B]{def what: Iterator[B]; def what_=(Iterator[B]): Unit}</span><a href="Iterator.scala.html#19986">++</a></span> <span class="typed"><span class="type">=&gt; Iterable[B]</span><a href="#29913">rest</a></span>.<span class="typed"><span class="type">=&gt; Iterator[B]</span><a href="#17309">elements</a></span>
+    }
+  }
+}
+
+
+<span class="comment">/** Collection classes mixing in this class provide a method
+ *  &lt;code&gt;elements&lt;/code&gt; which returns an iterator over all the
+ *  elements contained in the collection.
+ *
+ *  @note If a collection has a known &lt;code&gt;size&lt;/code&gt;, it should also sub-type &lt;code&gt;Collection&lt;/code&gt;. 
+ *        Only potentially unbounded collections should directly sub-class &lt;code&gt;Iterable&lt;/code&gt;. 
+ *  @author  Matthias Zenger
+ *  @version 1.1, 04/02/2004
+ */</span>
+<span class="keyword">trait</span> <span class="typed"><span class="type">trait Iterable[+A] extends java.lang.Object with ScalaObject</span><a id="401">Iterable</a></span>[+<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="12195">A</a></span>] {
+
+  <span class="comment">/** Creates a new iterator over all elements contained in this
+   *  object.
+   *  
+   *  @return the new iterator
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Iterator[A]</span><a id="17309">elements</a></span>: <span class="typed"><span class="type">Iterator[A]</span><a href="Iterator.scala.html#1337">Iterator</a></span>[A]
+
+  <span class="comment">/** Appends two iterable objects.
+   *
+   *  @return the new iterable object
+   *  @deprecated  use &lt;code&gt;++&lt;/code&gt; instead
+   *  @note Will not terminate for infinite-sized collections.
+   */</span>
+  @<span class="typed"><span class="type">deprecated</span><a href="deprecated.scala.html#215">deprecated</a></span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B &gt;: A](Iterable[B])Collection[B]</span><a id="17310">concat</a></span>[<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="17312">B</a></span> &gt;: A](<span class="typed"><span class="type">Iterable[B]</span><a id="28567">that</a></span>: <span class="typed"><span class="type">Iterable[B]</span><a href="#401">Iterable</a></span>[B]): <span class="typed"><span class="type">Collection[B]</span><a href="Collection.scala.html#1382">Collection</a></span>[B] =
+    <span class="typed"><span class="type">Iterable.this.type</span><a href="#401" class="keyword">this</a></span> <span class="typed"><span class="type">(Iterable[B])Collection[B]</span><a href="#17313">++</a></span> <span class="typed"><span class="type">Iterable[B]</span><a href="#28567">that</a></span>
+
+  <span class="comment">/** Appends two iterable objects.
+   *
+   *  @return the new iterable object
+   *  @note Will not terminate for infinite-sized collections.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B &gt;: A](Iterable[B])Collection[B]</span><a id="17313">++</a></span> [<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="17315">B</a></span> &gt;: A](<span class="typed"><span class="type">Iterable[B]</span><a id="25613">that</a></span>: <span class="typed"><span class="type">Iterable[B]</span><a href="#401">Iterable</a></span>[B]): <span class="typed"><span class="type">Collection[B]</span><a href="Collection.scala.html#1382">Collection</a></span>[B] = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[B]</span><a id="29982">buf</a></span> = <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[B]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[B]</span><a href="collection/mutable/ArrayBuffer.scala.html#11377">ArrayBuffer</a></span>[B]
+    <span class="typed"><span class="type">Iterable.this.type</span><a href="#401" class="keyword">this</a></span> <span class="typed"><span class="type">(scala.collection.mutable.Buffer[B])Unit</span><a href="#17354">copyToBuffer</a></span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[B]</span><a href="#29982">buf</a></span>
+    <span class="typed"><span class="type">Iterable[B]</span><a href="#25613">that</a></span> <span class="typed"><span class="type">(scala.collection.mutable.Buffer[B])Unit</span><a href="#17354">copyToBuffer</a></span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[B]</span><a href="#29982">buf</a></span>
+    <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[B]</span><a href="#29982">buf</a></span>
+  }
+
+  <span class="comment">/** Returns the iterable resulting from applying the given function
+   *  &lt;code&gt;f&lt;/code&gt; to each element of this iterable.
+   *
+   *  @note Will not terminate for infinite-sized collections.
+   *  @param f function to apply to each element.
+   *  @return &lt;code&gt;f(a&lt;sub&gt;0&lt;/sub&gt;), ..., f(a&lt;sub&gt;n&lt;/sub&gt;)&lt;/code&gt;
+   *          if this iterable is &lt;code&gt;a&lt;sub&gt;0&lt;/sub&gt;, ..., an&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B]((A) =&gt; B)Iterable[B]</span><a id="17316">map</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="17318">B</a></span>](<span class="typed"><span class="type">(A) =&gt; B</span><a id="21328">f</a></span>: A =&gt; B): <span class="typed"><span class="type">Iterable[B]</span><a href="#401">Iterable</a></span>[B] = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[B]</span><a id="29987">buf</a></span> = <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[B]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[B]</span><a href="collection/mutable/ArrayBuffer.scala.html#11377">ArrayBuffer</a></span>[B]
+    <span class="keyword">val</span> <span class="typed"><span class="type">Iterator[A]</span><a id="29988">elems</a></span> = <span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>
+    <span class="typed"><span class="type">Unit</span><a href="#29989" class="keyword">while</a></span> (<span class="typed"><span class="type">Iterator[A]</span><a href="#29988">elems</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Iterator.scala.html#19975">hasNext</a></span>) <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[B]</span><a href="#29987">buf</a></span> <span class="typed"><span class="type">(B)Unit</span><a href="collection/mutable/ArrayBuffer.scala.html#22574">+=</a></span> <span class="typed"><span class="type">(A)B</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">Iterator[A]</span><a href="#29988">elems</a></span>.<span class="typed"><span class="type">()A</span><a href="Iterator.scala.html#19976">next</a></span>)
+    <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[B]</span><a href="#29987">buf</a></span>
+  }
+
+  <span class="comment">/** Applies the given function &lt;code&gt;f&lt;/code&gt; to each element of
+   *  this iterable, then concatenates the results.
+   *
+   *  @note Will not terminate for infinite-sized collections.
+   *  @param f the function to apply on each element.
+   *  @return  &lt;code&gt;f(a&lt;sub&gt;0&lt;/sub&gt;) ::: ... ::: f(a&lt;sub&gt;n&lt;/sub&gt;)&lt;/code&gt; if
+   *           this iterable is &lt;code&gt;a&lt;sub&gt;0&lt;/sub&gt;, ..., a&lt;sub&gt;n&lt;/sub&gt;&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B]((A) =&gt; Iterable[B])Iterable[B]</span><a id="17319">flatMap</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="17321">B</a></span>](<span class="typed"><span class="type">(A) =&gt; Iterable[B]</span><a id="28561">f</a></span>: A =&gt; Iterable[B]): <span class="typed"><span class="type">Iterable[B]</span><a href="#401">Iterable</a></span>[B] = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[B]</span><a id="29991">buf</a></span> = <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[B]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[B]</span><a href="collection/mutable/ArrayBuffer.scala.html#11377">ArrayBuffer</a></span>[B]
+    <span class="keyword">val</span> <span class="typed"><span class="type">Iterator[A]</span><a id="29992">elems</a></span> = <span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>
+    <span class="typed"><span class="type">Unit</span><a href="#29993" class="keyword">while</a></span> (<span class="typed"><span class="type">Iterator[A]</span><a href="#29992">elems</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Iterator.scala.html#19975">hasNext</a></span>) <span class="typed"><span class="type">(A)Iterable[B]</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">Iterator[A]</span><a href="#29992">elems</a></span>.<span class="typed"><span class="type">()A</span><a href="Iterator.scala.html#19976">next</a></span>) <span class="typed"><span class="type">(scala.collection.mutable.Buffer[B])Unit</span><a href="#17354">copyToBuffer</a></span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[B]</span><a href="#29991">buf</a></span>
+    <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[B]</span><a href="#29991">buf</a></span>
+  }
+
+  <span class="comment">/** Returns all the elements of this iterable that satisfy the
+   *  predicate &lt;code&gt;p&lt;/code&gt;. The order of the elements is preserved.
+   *
+   *  @note Will not terminate for infinite-sized collections.
+   *  @param p the predicate used to filter the list.
+   *  @return the elements of this list satisfying &lt;code&gt;p&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)Iterable[A]</span><a id="17322">filter</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="21596">p</a></span>: A =&gt; Boolean): <span class="typed"><span class="type">Iterable[A]</span><a href="#401">Iterable</a></span>[A] = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a id="29996">buf</a></span> = <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="collection/mutable/ArrayBuffer.scala.html#11377">ArrayBuffer</a></span>[A]
+    <span class="keyword">val</span> <span class="typed"><span class="type">Iterator[A]</span><a id="29997">elems</a></span> = <span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>
+    <span class="typed"><span class="type">Unit</span><a href="#29998" class="keyword">while</a></span> (<span class="typed"><span class="type">Iterator[A]</span><a href="#29997">elems</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Iterator.scala.html#19975">hasNext</a></span>) { <span class="keyword">val</span> <span class="typed"><span class="type">A</span><a id="29999">x</a></span> = <span class="typed"><span class="type">Iterator[A]</span><a href="#29997">elems</a></span>.<span class="typed"><span class="type">()A</span><a href="Iterator.scala.html#19976">next</a></span>; <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">(A)Boolean</span><a href="Function1.scala.html#17300">p</a></span>(<span class="typed"><span class="type">A</span><a href="#29999">x</a></span>)) <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="#29996">buf</a></span> <span class="typed"><span class="type">(A)Unit</span><a href="collection/mutable/ArrayBuffer.scala.html#22574">+=</a></span> <span class="typed"><span class="type">A</span><a href="#29999">x</a></span> }
+    <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="#29996">buf</a></span>
+  }
+
+  <span class="comment">/** Partitions this iterable in two iterables according to a predicate.
+   *
+   *  @param p the predicate on which to partition
+   *  @return  a pair of iterables: the iterable that satisfy the predicate
+   *           &lt;code&gt;p&lt;/code&gt; and the iterable that do not.
+   *           The relative order of the elements in the resulting iterables
+   *           is the same as in the original iterable.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)(Iterable[A], Iterable[A])</span><a id="17323">partition</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="28640">p</a></span>: A =&gt; Boolean): <span class="typed"><span class="type">(Iterable[A], Iterable[A])</span><a href="Tuple2.scala.html#1376">(</a></span>Iterable[A], Iterable[A]) = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a id="30000">matched</a></span> = <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="collection/mutable/ArrayBuffer.scala.html#11377">ArrayBuffer</a></span>[A]
+    <span class="keyword">val</span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a id="30001">failed</a></span> = <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="collection/mutable/ArrayBuffer.scala.html#11377">ArrayBuffer</a></span>[A]
+    <span class="keyword">val</span> <span class="typed"><span class="type">Iterator[A]</span><a id="30002">elems</a></span> = <span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>
+    <span class="typed"><span class="type">Unit</span><a href="#30003" class="keyword">while</a></span> (<span class="typed"><span class="type">Iterator[A]</span><a href="#30002">elems</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Iterator.scala.html#19975">hasNext</a></span>) { <span class="keyword">val</span> <span class="typed"><span class="type">A</span><a id="30004">x</a></span> = <span class="typed"><span class="type">Iterator[A]</span><a href="#30002">elems</a></span>.<span class="typed"><span class="type">()A</span><a href="Iterator.scala.html#19976">next</a></span>; <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">(A)Boolean</span><a href="Function1.scala.html#17300">p</a></span>(<span class="typed"><span class="type">A</span><a href="#30004">x</a></span>)) <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="#30000">matched</a></span> <span class="typed"><span class="type">(A)Unit</span><a href="collection/mutable/ArrayBuffer.scala.html#22574">+=</a></span> <span class="typed"><span class="type">A</span><a href="#30004">x</a></span> <span class="keyword">else</span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="#30001">failed</a></span> <span class="typed"><span class="type">(A)Unit</span><a href="collection/mutable/ArrayBuffer.scala.html#22574">+=</a></span> <span class="typed"><span class="type">A</span><a href="#30004">x</a></span> }
+    <span class="typed"><span class="type">(scala.collection.mutable.ArrayBuffer[A],scala.collection.mutable.ArrayBuffer[A])(scala.collection.mutable.ArrayBuffer[A], scala.collection.mutable.ArrayBuffer[A])</span><a href="Tuple2.scala.html#20366">(</a></span><span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="#30000">matched</a></span>, <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="#30001">failed</a></span>)
+  }
+
+  <span class="comment">/** Returns the longest prefix of this iterable whose elements satisfy
+   *  the predicate &lt;code&gt;p&lt;/code&gt;.
+   *
+   *  @note May not terminate for infinite-sized collections.
+   *  @param p the test predicate.
+   *  @return  the longest prefix of this iterable whose elements satisfy
+   *           the predicate &lt;code&gt;p&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)Iterable[A]</span><a id="17324">takeWhile</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="28559">p</a></span>: A =&gt; Boolean): <span class="typed"><span class="type">Iterable[A]</span><a href="#401">Iterable</a></span>[A] = 
+    (<span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="collection/mutable/ArrayBuffer.scala.html#11377">ArrayBuffer</a></span>[A] <span class="typed"><span class="type">(Iterator[A])scala.collection.mutable.Buffer[A]</span><a href="collection/mutable/Buffer.scala.html#19238">++</a></span> <span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>.<span class="typed"><span class="type">((A) =&gt; Boolean)Iterator[A]</span><a href="Iterator.scala.html#19995">takeWhile</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a href="#28559">p</a></span>))
+
+  <span class="comment">/** Returns the longest suffix of this iterable whose first element
+   *  does not satisfy the predicate &lt;code&gt;p&lt;/code&gt;.
+   *
+   *  @note May not terminate for infinite-sized collections.
+   *  @param p the test predicate.
+   *  @return  the longest suffix of the iterable whose first element
+   *           does not satisfy the predicate &lt;code&gt;p&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)Collection[A]</span><a id="17325">dropWhile</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="28557">p</a></span>: A =&gt; Boolean): <span class="typed"><span class="type">Collection[A]</span><a href="Collection.scala.html#1382">Collection</a></span>[A] = 
+    (<span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="collection/mutable/ArrayBuffer.scala.html#11377">ArrayBuffer</a></span>[A] <span class="typed"><span class="type">(Iterator[A])scala.collection.mutable.Buffer[A]</span><a href="collection/mutable/Buffer.scala.html#19238">++</a></span> <span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>.<span class="typed"><span class="type">((A) =&gt; Boolean)Iterator[A]</span><a href="Iterator.scala.html#19996">dropWhile</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a href="#28557">p</a></span>))
+
+  <span class="comment">/** Returns an iterable consisting only over the first &lt;code&gt;n&lt;/code&gt;
+   *  elements of this iterable, or else the whole iterable, if it has less
+   *  than &lt;code&gt;n&lt;/code&gt; elements.
+   *
+   *  @deprecated API does not make sense for non-ordered collections
+   *  @param n the number of elements to take
+   *  @return  the new iterable
+   */</span>
+  @<span class="typed"><span class="type">deprecated</span><a href="deprecated.scala.html#215">deprecated</a></span> <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Collection[A]</span><a id="17326">take</a></span>(<span class="typed"><span class="type">Int</span><a id="28555">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Collection[A]</span><a href="Collection.scala.html#1382">Collection</a></span>[A] = 
+    (<span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="collection/mutable/ArrayBuffer.scala.html#11377">ArrayBuffer</a></span>[A] <span class="typed"><span class="type">(Iterator[A])scala.collection.mutable.Buffer[A]</span><a href="collection/mutable/Buffer.scala.html#19238">++</a></span> <span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>.<span class="typed"><span class="type">(Int)Iterator[A]</span><a href="Iterator.scala.html#19977">take</a></span>(<span class="typed"><span class="type">Int</span><a href="#28555">n</a></span>))
+
+  <span class="comment">/** Returns this iterable without its &lt;code&gt;n&lt;/code&gt; first elements
+   *  If this iterable has less than &lt;code&gt;n&lt;/code&gt; elements, the empty
+   *  iterable is returned.
+   *
+   *  @note Will not terminate for infinite-sized collections.
+   *  @deprecated API does not make sense for non-ordered collections
+   *  @param n the number of elements to drop
+   *  @return  the new iterable
+   */</span>
+  @<span class="typed"><span class="type">deprecated</span><a href="deprecated.scala.html#215">deprecated</a></span> <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Collection[A]</span><a id="17327">drop</a></span>(<span class="typed"><span class="type">Int</span><a id="28553">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Collection[A]</span><a href="Collection.scala.html#1382">Collection</a></span>[A] =
+    (<span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="collection/mutable/ArrayBuffer.scala.html#11377">ArrayBuffer</a></span>[A] <span class="typed"><span class="type">(Iterator[A])scala.collection.mutable.Buffer[A]</span><a href="collection/mutable/Buffer.scala.html#19238">++</a></span> <span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>.<span class="typed"><span class="type">(Int)Iterator[A]</span><a href="Iterator.scala.html#19978">drop</a></span>(<span class="typed"><span class="type">Int</span><a href="#28553">n</a></span>))
+
+  <span class="comment">/** Apply a function &lt;code&gt;f&lt;/code&gt; to all elements of this
+   *  iterable object.
+   *
+   *  @note Will not terminate for infinite-sized collections.
+   *  @param  f   a function that is applied to every element.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Unit)Unit</span><a id="17328">foreach</a></span>(<span class="typed"><span class="type">(A) =&gt; Unit</span><a id="21527">f</a></span>: A =&gt; Unit): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = <span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>.<span class="typed"><span class="type">((A) =&gt; Unit)Unit</span><a href="Iterator.scala.html#20001">foreach</a></span>(<span class="typed"><span class="type">(A) =&gt; Unit</span><a href="#21527">f</a></span>)
+
+  <span class="comment">/** Apply a predicate &lt;code&gt;p&lt;/code&gt; to all elements of this
+   *  iterable object and return true, iff the predicate yields
+   *  true for all elements.
+   *
+   *  @note May not terminate for infinite-sized collections.
+   *  @param   p     the predicate
+   *  @return true, iff the predicate yields true for all elements.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)Boolean</span><a id="17329">forall</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="30088">p</a></span>: A =&gt; Boolean): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = <span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>.<span class="typed"><span class="type">((A) =&gt; Boolean)Boolean</span><a href="Iterator.scala.html#20002">forall</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a href="#30088">p</a></span>)
+
+  <span class="comment">/** Apply a predicate &lt;code&gt;p&lt;/code&gt; to all elements of this
+   *  iterable object and return true, iff there is at least one
+   *  element for which &lt;code&gt;p&lt;/code&gt; yields true.
+   *
+   *  @note May not terminate for infinite-sized collections.
+   *  @param   p     the predicate
+   *  @return true, iff the predicate yields true for at least one element.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)Boolean</span><a id="17330">exists</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="21538">p</a></span>: A =&gt; Boolean): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = <span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>.<span class="typed"><span class="type">((A) =&gt; Boolean)Boolean</span><a href="Iterator.scala.html#20003">exists</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a href="#21538">p</a></span>)
+
+  <span class="comment">/** Find and return the first element of the iterable object satisfying a
+   *  predicate, if any.
+   *
+   *  @note may not terminate for infinite-sized collections.
+   *  @param p the predicate
+   *  @return the first element in the iterable object satisfying &lt;code&gt;p&lt;/code&gt;,
+   *  or &lt;code&gt;None&lt;/code&gt; if none exists.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)Option[A]</span><a id="17331">find</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="28021">p</a></span>: A =&gt; Boolean): <span class="typed"><span class="type">Option[A]</span><a href="Option.scala.html#932">Option</a></span>[A] = <span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>.<span class="typed"><span class="type">((A) =&gt; Boolean)Option[A]</span><a href="Iterator.scala.html#20005">find</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a href="#28021">p</a></span>)
+
+  <span class="comment">/** Returns index of the first element satisying a predicate, or -1.
+   *
+   *  @note may not terminate for infinite-sized collections.
+   *  @param  p the predicate
+   *  @return   the index of the first element satisfying &lt;code&gt;p&lt;/code&gt;,
+   *            or -1 if such an element does not exist
+   *  @deprecated  Method is pushed to &lt;code&gt;Seq&lt;/code&gt;, will be removed from &lt;code&gt;Iterable&lt;/code&gt;.
+   */</span>
+  @<span class="typed"><span class="type">deprecated</span><a href="deprecated.scala.html#215">deprecated</a></span> <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)Int</span><a id="17332">findIndexOf</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="28551">p</a></span>: A =&gt; Boolean): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> =
+    <span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>.<span class="typed"><span class="type">((A) =&gt; Boolean)Int</span><a href="Iterator.scala.html#20006">findIndexOf</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a href="#28551">p</a></span>)
+
+  <span class="comment">/** Returns the index of the first occurence of the specified
+   *  object in this iterable object.
+   *
+   *  @note may not terminate for infinite-sized collections.
+   *  @param  elem  element to search for.
+   *  @return the index in this sequence of the first occurence of the
+   *          specified element, or -1 if the sequence does not contain
+   *          this element.
+   *  @deprecated  Method is pushed to &lt;code&gt;Seq&lt;/code&gt;, will be removed from &lt;code&gt;Iterable&lt;/code&gt;.
+   */</span>
+  @<span class="typed"><span class="type">deprecated</span><a href="deprecated.scala.html#215">deprecated</a></span> <span class="keyword">def</span> <span class="typed"><span class="type">[B &gt;: A](B)Int</span><a id="17333">indexOf</a></span>[<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="17335">B</a></span> &gt;: A](<span class="typed"><span class="type">B</span><a id="28548">elem</a></span>: <span class="typed"><span class="type">B</span><a href="#17335">B</a></span>): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> =
+    <span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>.<span class="typed"><span class="type">(B)Int</span><a href="Iterator.scala.html#20007">indexOf</a></span>(<span class="typed"><span class="type">B</span><a href="#28548">elem</a></span>)
+
+  <span class="comment">/** Combines the elements of this iterable object together using the binary
+   *  function &lt;code&gt;f&lt;/code&gt;, from left to right, and starting with
+   *  the value &lt;code&gt;z&lt;/code&gt;.
+   *
+   *  @note Will not terminate for infinite-sized collections.
+   *  @return &lt;code&gt;f(... (f(f(z, a&lt;sub&gt;0&lt;/sub&gt;), a&lt;sub&gt;1&lt;/sub&gt;) ...),
+   *          a&lt;sub&gt;n&lt;/sub&gt;)&lt;/code&gt; if the list is
+   *          &lt;code&gt;[a&lt;sub&gt;0&lt;/sub&gt;, a&lt;sub&gt;1&lt;/sub&gt;, ..., a&lt;sub&gt;n&lt;/sub&gt;]&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B](B)((B, A) =&gt; B)B</span><a id="17336">foldLeft</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="17338">B</a></span>](<span class="typed"><span class="type">B</span><a id="30096">z</a></span>: <span class="typed"><span class="type">B</span><a href="#17338">B</a></span>)(<span class="typed"><span class="type">(B, A) =&gt; B</span><a id="30097">op</a></span>: (B, A) =&gt; B): <span class="typed"><span class="type">B</span><a href="#17338">B</a></span> = <span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>.<span class="typed"><span class="type">(B)((B, A) =&gt; B)B</span><a href="Iterator.scala.html#20010">foldLeft</a></span>(<span class="typed"><span class="type">B</span><a href="#30096">z</a></span>)(<span class="typed"><span class="type">(B, A) =&gt; B</span><a href="#30097">op</a></span>)
+
+  <span class="comment">/** Combines the elements of this list together using the binary
+   *  function &lt;code&gt;f&lt;/code&gt;, from right to left, and starting with
+   *  the value &lt;code&gt;z&lt;/code&gt;.
+   *
+   *  @note Will not terminate for infinite-sized collections.
+   *  @return &lt;code&gt;f(a&lt;sub&gt;0&lt;/sub&gt;, f(a&lt;sub&gt;1&lt;/sub&gt;, f(..., f(a&lt;sub&gt;n&lt;/sub&gt;, z)...)))&lt;/code&gt;
+   *          if the list is &lt;code&gt;[a&lt;sub&gt;0&lt;/sub&gt;, a1, ..., a&lt;sub&gt;n&lt;/sub&gt;]&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B](B)((A, B) =&gt; B)B</span><a id="17339">foldRight</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="17341">B</a></span>](<span class="typed"><span class="type">B</span><a id="28415">z</a></span>: <span class="typed"><span class="type">B</span><a href="#17341">B</a></span>)(<span class="typed"><span class="type">(A, B) =&gt; B</span><a id="28416">op</a></span>: (A, B) =&gt; B): <span class="typed"><span class="type">B</span><a href="#17341">B</a></span> = <span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>.<span class="typed"><span class="type">(B)((A, B) =&gt; B)B</span><a href="Iterator.scala.html#20013">foldRight</a></span>(<span class="typed"><span class="type">B</span><a href="#28415">z</a></span>)(<span class="typed"><span class="type">(A, B) =&gt; B</span><a href="#28416">op</a></span>)
+
+  <span class="comment">/** Similar to &lt;code&gt;foldLeft&lt;/code&gt; but can be used as
+   *  an operator with the order of list and zero arguments reversed.
+   *  That is, &lt;code&gt;z /: xs&lt;/code&gt; is the same as &lt;code&gt;xs foldLeft z&lt;/code&gt;
+   *  @note Will not terminate for infinite-sized collections.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B](B)((B, A) =&gt; B)B</span><a id="17342">/:</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="17344">B</a></span>](<span class="typed"><span class="type">B</span><a id="27006">z</a></span>: <span class="typed"><span class="type">B</span><a href="#17344">B</a></span>)(<span class="typed"><span class="type">(B, A) =&gt; B</span><a id="27007">op</a></span>: (B, A) =&gt; B): <span class="typed"><span class="type">B</span><a href="#17344">B</a></span> = <span class="typed"><span class="type">(B)((B, A) =&gt; B)B</span><a href="#17336">foldLeft</a></span>(<span class="typed"><span class="type">B</span><a href="#27006">z</a></span>)(<span class="typed"><span class="type">(B, A) =&gt; B</span><a href="#27007">op</a></span>)
+
+  <span class="comment">/** An alias for &lt;code&gt;foldRight&lt;/code&gt;.
+   *  That is, &lt;code&gt;xs :\ z&lt;/code&gt; is the same as &lt;code&gt;xs foldRight z&lt;/code&gt;
+   *  @note Will not terminate for infinite-sized collections.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B](B)((A, B) =&gt; B)B</span><a id="17345">:\</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="17347">B</a></span>](<span class="typed"><span class="type">B</span><a id="30105">z</a></span>: <span class="typed"><span class="type">B</span><a href="#17347">B</a></span>)(<span class="typed"><span class="type">(A, B) =&gt; B</span><a id="30106">op</a></span>: (A, B) =&gt; B): <span class="typed"><span class="type">B</span><a href="#17347">B</a></span> = <span class="typed"><span class="type">(B)((A, B) =&gt; B)B</span><a href="#17339">foldRight</a></span>(<span class="typed"><span class="type">B</span><a href="#30105">z</a></span>)(<span class="typed"><span class="type">(A, B) =&gt; B</span><a href="#30106">op</a></span>)
+
+  <span class="comment">/** Combines the elements of this iterable object together using the binary
+   *  operator &lt;code&gt;op&lt;/code&gt;, from left to right
+   *  @note Will not terminate for infinite-sized collections.
+   *  @param op  The operator to apply
+   *  @return &lt;code&gt;op(... op(a&lt;sub&gt;0&lt;/sub&gt;,a&lt;sub&gt;1&lt;/sub&gt;), ..., a&lt;sub&gt;n&lt;/sub&gt;)&lt;/code&gt; 
+      if the iterable object has elements
+   *          &lt;code&gt;a&lt;sub&gt;0&lt;/sub&gt;, a&lt;sub&gt;1&lt;/sub&gt;, ..., a&lt;sub&gt;n&lt;/sub&gt;&lt;/code&gt;.
+   *  @throws Predef.UnsupportedOperationException if the iterable object is empty.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B &gt;: A]((B, A) =&gt; B)B</span><a id="17348">reduceLeft</a></span>[<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="17350">B</a></span> &gt;: A](<span class="typed"><span class="type">(B, A) =&gt; B</span><a id="30108">op</a></span>: (B, A) =&gt; B): <span class="typed"><span class="type">B</span><a href="#17350">B</a></span> = <span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>.<span class="typed"><span class="type">((B, A) =&gt; B)B</span><a href="Iterator.scala.html#20022">reduceLeft</a></span>(<span class="typed"><span class="type">(B, A) =&gt; B</span><a href="#30108">op</a></span>)
+
+<span class="comment">/** Combines the elements of this iterable object together using the binary
+   *  operator &lt;code&gt;op&lt;/code&gt;, from right to left
+   *  @note Will not terminate for infinite-sized collections.
+   *  @param op  The operator to apply
+   *
+   *  @return &lt;code&gt;a&lt;sub&gt;0&lt;/sub&gt; op (... op (a&lt;sub&gt;n-1&lt;/sub&gt; op a&lt;sub&gt;n&lt;/sub&gt;)...)&lt;/code&gt;
+   *          if the iterable object has elements &lt;code&gt;a&lt;sub&gt;0&lt;/sub&gt;, a&lt;sub&gt;1&lt;/sub&gt;, ...,
+   *          a&lt;sub&gt;n&lt;/sub&gt;&lt;/code&gt;.
+   *
+   *  @throws Predef.UnsupportedOperationException if the iterator is empty.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B &gt;: A]((A, B) =&gt; B)B</span><a id="17351">reduceRight</a></span>[<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="17353">B</a></span> &gt;: A](<span class="typed"><span class="type">(A, B) =&gt; B</span><a id="30117">op</a></span>: (A, B) =&gt; B): <span class="typed"><span class="type">B</span><a href="#17353">B</a></span> = <span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>.<span class="typed"><span class="type">((A, B) =&gt; B)B</span><a href="Iterator.scala.html#20025">reduceRight</a></span>(<span class="typed"><span class="type">(A, B) =&gt; B</span><a href="#30117">op</a></span>)
+
+  <span class="comment">/** Copy all elements to a given buffer 
+   *  @note Will not terminate for infinite-sized collections.
+   *  @param  dest   The buffer to which elements are copied
+   *  @note Will not terminate if not finite.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B &gt;: A](scala.collection.mutable.Buffer[B])Unit</span><a id="17354">copyToBuffer</a></span>[<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="17356">B</a></span> &gt;: A](<span class="typed"><span class="type">scala.collection.mutable.Buffer[B]</span><a id="29983">dest</a></span>: <span class="typed"><span class="type">scala.collection.mutable.Buffer[B]</span><a href="collection/mutable/Buffer.scala.html#11206">Buffer</a></span>[B]): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = <span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span> <span class="typed"><span class="type">(scala.collection.mutable.Buffer[B])Unit</span><a href="Iterator.scala.html#20043">copyToBuffer</a></span> <span class="typed"><span class="type">scala.collection.mutable.Buffer[B]</span><a href="#29983">dest</a></span>
+  
+  <span class="comment">/** Checks if the other iterable object contains the same elements.
+   *
+   *  @note will not terminate for infinite-sized collections.
+   *  @param that  the other iterable object
+   *  @return true, iff both iterable objects contain the same elements in the same order.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B &gt;: A](Iterable[B])Boolean</span><a id="17357">sameElements</a></span>[<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="17359">B</a></span> &gt;: A](<span class="typed"><span class="type">Iterable[B]</span><a id="30124">that</a></span>: <span class="typed"><span class="type">Iterable[B]</span><a href="#401">Iterable</a></span>[B]): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">Iterator[A]</span><a id="30125">ita</a></span> = <span class="typed"><span class="type">Iterable.this.type</span><a href="#401" class="keyword">this</a></span>.<span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">Iterator[B]</span><a id="30126">itb</a></span> = <span class="typed"><span class="type">Iterable[B]</span><a href="#30124">that</a></span>.<span class="typed"><span class="type">=&gt; Iterator[B]</span><a href="#17309">elements</a></span>
+    <span class="keyword">var</span> <span class="typed"><span class="type">Boolean</span><a id="30127">res</a></span> = <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+    <span class="typed"><span class="type">Unit</span><a href="#30128" class="keyword">while</a></span> (<span class="typed"><span class="type">Boolean</span><a href="#30127">res</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">Iterator[A]</span><a href="#30125">ita</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Iterator.scala.html#19975">hasNext</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">Iterator[B]</span><a href="#30126">itb</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Iterator.scala.html#19975">hasNext</a></span>) {
+      <span class="typed"><span class="type">Boolean</span><a href="#30127">res</a></span> = (<span class="typed"><span class="type">Iterator[A]</span><a href="#30125">ita</a></span>.<span class="typed"><span class="type">()A</span><a href="Iterator.scala.html#19976">next</a></span> <span class="typed"><span class="type">(Any)Boolean</span><a id="3494">==</a></span> <span class="typed"><span class="type">Iterator[B]</span><a href="#30126">itb</a></span>.<span class="typed"><span class="type">()B</span><a href="Iterator.scala.html#19976">next</a></span>)
+    }
+    <span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">Iterator[A]</span><a href="#30125">ita</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Iterator.scala.html#19975">hasNext</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">Iterator[B]</span><a href="#30126">itb</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Iterator.scala.html#19975">hasNext</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">Boolean</span><a href="#30127">res</a></span>
+  }
+
+  <span class="comment">/**
+   *  Returns a list containing all of the elements in this iterable object.
+   *  @note Will not terminate for infinite-sized collections.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; List[A]</span><a id="17360">toList</a></span>: <span class="typed"><span class="type">List[A]</span><a href="List.scala.html#524">List</a></span>[A] = <span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>.<span class="typed"><span class="type">=&gt; List[A]</span><a href="Iterator.scala.html#20046">toList</a></span>
+  
+  <span class="comment">/**
+   *  Returns a sequence containing all of the elements in this iterable object.
+   *  @note Will not terminate for infinite-sized collections.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Seq[A]</span><a id="17361">toSeq</a></span>: <span class="typed"><span class="type">Seq[A]</span><a href="Seq.scala.html#761">Seq</a></span>[A] = <span class="typed"><span class="type">=&gt; List[A]</span><a href="#17360">toList</a></span> 
+
+  <span class="comment">/**
+   *  Returns a stream containing all of the elements in this iterable object.
+   *  @note consider using &lt;code&gt;projection&lt;/code&gt; for lazy behavior.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Stream[A]</span><a id="17362">toStream</a></span>: <span class="typed"><span class="type">Stream[A]</span><a href="Stream.scala.html#260">Stream</a></span>[A] = <span class="typed"><span class="type">object Stream</span><a href="Stream.scala.html#261">Stream</a></span>.<span class="typed"><span class="type">(Iterator[A])Stream[A]</span><a href="Stream.scala.html#30145">fromIterator</a></span>(<span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>)
+
+  <span class="comment">/** Returns a string representation of this iterable object. The resulting string
+   *  begins with the string &lt;code&gt;start&lt;/code&gt; and is finished by the string
+   *  &lt;code&gt;end&lt;/code&gt;. Inside, the string representations of elements (w.r.t.
+   *  the method &lt;code&gt;toString()&lt;/code&gt;) are separated by the string
+   *  &lt;code&gt;sep&lt;/code&gt;.
+   *
+   *  @ex  &lt;code&gt;List(1, 2, 3).mkString(&quot;(&quot;, &quot;; &quot;, &quot;)&quot;) = &quot;(1; 2; 3)&quot;&lt;/code&gt;
+   *  @note Will not terminate for infinite-sized collections.
+   *  @param start starting string.
+   *  @param sep separator string.
+   *  @param end ending string.
+   *  @return a string representation of this iterable object.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(String,String,String)String</span><a id="17363">mkString</a></span>(<span class="typed"><span class="type">String</span><a id="23042">start</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>, <span class="typed"><span class="type">String</span><a id="23043">sep</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>, <span class="typed"><span class="type">String</span><a id="23044">end</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>): <span class="typed"><span class="type">String</span><a id="1859">String</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">StringBuilder</span><a id="30170">buf</a></span> = <span class="typed"><span class="type">()StringBuilder</span><a href="StringBuilder.scala.html#19620" class="keyword">new</a></span> <span class="typed"><span class="type">StringBuilder</span><a href="StringBuilder.scala.html#1433">StringBuilder</a></span>()
+    <span class="typed"><span class="type">(StringBuilder,String,String,String)StringBuilder</span><a href="#17366">addString</a></span>(<span class="typed"><span class="type">StringBuilder</span><a href="#30170">buf</a></span>, <span class="typed"><span class="type">String</span><a href="#23042">start</a></span>, <span class="typed"><span class="type">String</span><a href="#23043">sep</a></span>, <span class="typed"><span class="type">String</span><a href="#23044">end</a></span>).<span class="typed"><span class="type">()String</span><a href="StringBuilder.scala.html#19672">toString</a></span>
+  }
+  
+  <span class="comment">/** Returns a string representation of this iterable object. The string
+   *  representations of elements (w.r.t. the method &lt;code&gt;toString()&lt;/code&gt;)
+   *  are separated by the string &lt;code&gt;sep&lt;/code&gt;.
+   *
+   *  @note Will not terminate for infinite-sized collections.
+   *  @param sep separator string.
+   *  @return a string representation of this iterable object.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(String)String</span><a id="17364">mkString</a></span>(<span class="typed"><span class="type">String</span><a id="23036">sep</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>): <span class="typed"><span class="type">String</span><a id="1859">String</a></span> = <span class="typed"><span class="type">Iterable.this.type</span><a href="#401" class="keyword">this</a></span>.<span class="typed"><span class="type">(String,String,String)String</span><a href="#17363">mkString</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;&quot;)</span><span class="string">&quot;&quot;</span></span>, <span class="typed"><span class="type">String</span><a href="#23036">sep</a></span>, <span class="typed"><span class="type">java.lang.String(&quot;&quot;)</span><span class="string">&quot;&quot;</span></span>)
+
+  <span class="comment">/** Converts a collection into a flat &lt;code&gt;String&lt;/code&gt; by each element's toString method. 
+   *  @note Will not terminate for infinite-sized collections.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; String</span><a id="17365">mkString</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span> = <span class="typed"><span class="type">(String)String</span><a href="#17364">mkString</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;&quot;)</span><span class="string">&quot;&quot;</span></span>)
+   
+  <span class="comment">/** Write all elements of this string into given string builder.
+   *
+   *  @note Will not terminate for infinite-sized collections.
+   *  @param buf the StringBuilder to which elements are appended
+   *  @param start starting string.
+   *  @param sep separator string.
+   *  @param end ending string.
+   *  @return the &lt;code&gt;buf&lt;/code&gt; StringBuilder object
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(StringBuilder,String,String,String)StringBuilder</span><a id="17366">addString</a></span>(<span class="typed"><span class="type">StringBuilder</span><a id="28630">buf</a></span>: <span class="typed"><span class="type">StringBuilder</span><a href="StringBuilder.scala.html#1433">StringBuilder</a></span>, <span class="typed"><span class="type">String</span><a id="28631">start</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>, <span class="typed"><span class="type">String</span><a id="28632">sep</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>, <span class="typed"><span class="type">String</span><a id="28633">end</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="StringBuilder.scala.html#1433">StringBuilder</a></span> = {
+    <span class="typed"><span class="type">StringBuilder</span><a href="#28630">buf</a></span>.<span class="typed"><span class="type">(String)StringBuilder</span><a href="StringBuilder.scala.html#19639">append</a></span>(<span class="typed"><span class="type">String</span><a href="#28631">start</a></span>)
+    <span class="keyword">val</span> <span class="typed"><span class="type">Iterator[A]</span><a id="30198">elems</a></span> = <span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>
+    <span class="typed"><span class="type">Any</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Iterator[A]</span><a href="#30198">elems</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Iterator.scala.html#19975">hasNext</a></span>) <span class="typed"><span class="type">StringBuilder</span><a href="#28630">buf</a></span>.<span class="typed"><span class="type">(Any)StringBuilder</span><a href="StringBuilder.scala.html#19638">append</a></span>(<span class="typed"><span class="type">Iterator[A]</span><a href="#30198">elems</a></span>.<span class="typed"><span class="type">()A</span><a href="Iterator.scala.html#19976">next</a></span>)
+    <span class="typed"><span class="type">Unit</span><a href="#30199" class="keyword">while</a></span> (<span class="typed"><span class="type">Iterator[A]</span><a href="#30198">elems</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Iterator.scala.html#19975">hasNext</a></span>) {
+      <span class="typed"><span class="type">StringBuilder</span><a href="#28630">buf</a></span>.<span class="typed"><span class="type">(String)StringBuilder</span><a href="StringBuilder.scala.html#19639">append</a></span>(<span class="typed"><span class="type">String</span><a href="#28632">sep</a></span>); <span class="typed"><span class="type">StringBuilder</span><a href="#28630">buf</a></span>.<span class="typed"><span class="type">(Any)StringBuilder</span><a href="StringBuilder.scala.html#19638">append</a></span>(<span class="typed"><span class="type">Iterator[A]</span><a href="#30198">elems</a></span>.<span class="typed"><span class="type">()A</span><a href="Iterator.scala.html#19976">next</a></span>)
+    }
+    <span class="typed"><span class="type">StringBuilder</span><a href="#28630">buf</a></span>.<span class="typed"><span class="type">(String)StringBuilder</span><a href="StringBuilder.scala.html#19639">append</a></span>(<span class="typed"><span class="type">String</span><a href="#28633">end</a></span>)
+  }
+
+  <span class="comment">/** Write all elements of this string into given string builder.
+   *
+   *  @note Will not terminate for infinite-sized collections.
+   *  @param buf the StringBuilder to which elements are appended
+   *  @param sep separator string.
+   *  @return the &lt;code&gt;buf&lt;/code&gt; StringBuilder object
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(StringBuilder,String)StringBuilder</span><a id="17367">addString</a></span>(<span class="typed"><span class="type">StringBuilder</span><a id="28626">buf</a></span>: <span class="typed"><span class="type">StringBuilder</span><a href="StringBuilder.scala.html#1433">StringBuilder</a></span>, <span class="typed"><span class="type">String</span><a id="28627">sep</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="StringBuilder.scala.html#1433">StringBuilder</a></span> = <span class="typed"><span class="type">(StringBuilder,String,String,String)StringBuilder</span><a href="#17366">addString</a></span>(<span class="typed"><span class="type">StringBuilder</span><a href="#28626">buf</a></span>, <span class="typed"><span class="type">java.lang.String(&quot;&quot;)</span><span class="string">&quot;&quot;</span></span>, <span class="typed"><span class="type">String</span><a href="#28627">sep</a></span>, <span class="typed"><span class="type">java.lang.String(&quot;&quot;)</span><span class="string">&quot;&quot;</span></span>)
+
+  <span class="comment">/** Write all elements of this string into given string builder, with no separator string
+   *  between elements.
+   *  @note Will not terminate for infinite-sized collections.
+   *  @param buf the StringBuilder to which elements are appended
+   *  @return the &lt;code&gt;buf&lt;/code&gt; StringBuilder object
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(StringBuilder)StringBuilder</span><a id="17368">addString</a></span>(<span class="typed"><span class="type">StringBuilder</span><a id="28628">buf</a></span>: <span class="typed"><span class="type">StringBuilder</span><a href="StringBuilder.scala.html#1433">StringBuilder</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="StringBuilder.scala.html#1433">StringBuilder</a></span> = <span class="typed"><span class="type">(StringBuilder,String,String,String)StringBuilder</span><a href="#17366">addString</a></span>(<span class="typed"><span class="type">StringBuilder</span><a href="#28628">buf</a></span>, <span class="typed"><span class="type">java.lang.String(&quot;&quot;)</span><span class="string">&quot;&quot;</span></span>, <span class="typed"><span class="type">java.lang.String(&quot;&quot;)</span><span class="string">&quot;&quot;</span></span>, <span class="typed"><span class="type">java.lang.String(&quot;&quot;)</span><span class="string">&quot;&quot;</span></span>)
+
+   
+  <span class="comment">/** Fills the given array &lt;code&gt;xs&lt;/code&gt; with the elements of
+   *  this sequence starting at position &lt;code&gt;start&lt;/code&gt;.
+   *
+   *  @note Will not terminate for infinite-sized collections.
+   *  @param  xs the array to fill.
+   *  @param  start starting index.
+   *  @pre    the array must be large enough to hold all elements.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B &gt;: A](Array[B],Int)Unit</span><a id="17369">copyToArray</a></span>[<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="17371">B</a></span> &gt;: A](<span class="typed"><span class="type">Array[B]</span><a id="30230">xs</a></span>: <span class="typed"><span class="type">Array[B]</span><a href="Array.scala.html#1070">Array</a></span>[B], <span class="typed"><span class="type">Int</span><a id="30231">start</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = 
+    <span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>.<span class="typed"><span class="type">(Array[B],Int)Unit</span><a href="Iterator.scala.html#20031">copyToArray</a></span>(<span class="typed"><span class="type">Array[B]</span><a href="#30230">xs</a></span>, <span class="typed"><span class="type">Int</span><a href="#30231">start</a></span>)
+
+  
+  <span class="comment">/** Is this collection empty? */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="17372">isEmpty</a></span> = <span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Iterator.scala.html#19975">hasNext</a></span>
+
+  <span class="comment">/** 
+   * returns a projection that can be used to call non-strict &lt;code&gt;filter&lt;/code&gt;,
+   * &lt;code&gt;map&lt;/code&gt;, and &lt;code&gt;flatMap&lt;/code&gt; methods that build projections
+   * of the collection.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Iterable.Projection[A]</span><a id="17373">projection</a></span> : Iterable.<span class="typed"><span class="type">Iterable.Projection[A]</span><a href="#18341">Projection</a></span>[A] = <span class="typed"><span class="type">template $anon extends java.lang.Object with Iterable.Projection[A]</span><a id="30236" class="keyword">new</a></span> Iterable.<span class="typed"><span class="type">Iterable.Projection[A]</span><a href="#18341">Projection</a></span>[A] {
+    <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Iterator[A]</span><a id="30238">elements</a></span> = <span class="typed"><span class="type">Iterable.this.type</span><a href="#401">Iterable</a></span>.<span class="keyword">this</span>.<span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="#17309">elements</a></span>
+    <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Iterable[A]</span><a id="30239">force</a></span> = <span class="typed"><span class="type">Iterable[A]</span><a href="#401">Iterable</a></span>.<span class="keyword">this</span>
+  }
+  
+  <span class="comment">/** returns true iff this collection has a bound size. 
+   *  Many APIs in this trait will not work on collections of 
+   *  unbound sizes. 
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="17374">hasDefiniteSize</a></span> = <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+  
+}
+
+        </pre>
+    </body>
+</html>

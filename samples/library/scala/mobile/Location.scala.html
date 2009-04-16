@@ -1,0 +1,113 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/mobile/Location.scala</title>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |                                         **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: Location.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+
+<span class="keyword">package</span> scala.mobile
+
+
+<span class="keyword">import</span> java.lang.ClassLoader
+<span class="keyword">import</span> java.net._
+
+<span class="keyword">import</span> scala.collection.mutable._
+
+<span class="comment">/** The class &lt;code&gt;Location&lt;/code&gt; provides a &lt;code&gt;create&lt;/code&gt;
+ *  method to instantiate objects from a network location by
+ *  specifying the URL address of the jar/class file.&lt;p/&gt;
+ *
+ *  An update of the jar/class file should not break your code as far
+ *  as the used class names and method signatures are the same.&lt;p/&gt;
+ *
+ *  Example:&lt;pre&gt;
+ *    &lt;b&gt;val&lt;/b&gt; url = &lt;b&gt;new&lt;/b&gt; URL(&quot;http://scala-lang.org/classes/examples.jar&quot;);
+ *    &lt;b&gt;val&lt;/b&gt; obj = &lt;b&gt;new&lt;/b&gt; Location(url) create &quot;examples.sort&quot;;&lt;/pre&gt;
+ *
+ *  @see &lt;a href=&quot;Code.html&quot;&gt;Code&lt;/a&gt;
+ *
+ *  @author  Stephane Micheloud
+ *  @version 1.0, 04/05/2004
+ */</span>
+<span class="keyword">class</span> <span class="typed"><span class="type">class Location extends java.lang.Object with ScalaObject</span><a id="12835">Location</a></span>(<span class="typed"><span class="type">java.net.URL</span><span id="48571"><a id="48870">url</a></span></span>: <span class="typed"><span class="type">java.net.URL</span><a id="4389">URL</a></span>) {
+
+  <span class="comment">/** A cache containing all class loaders of this location.
+   */</span>
+  <span class="keyword">private</span> <span class="keyword">var</span> <span class="typed"><span class="type">scala.collection.mutable.Map[java.net.URL,java.lang.ClassLoader]</span><span id="48575"><span id="48573"><span id="48574"><a id="48584">lcache</a></span></span></span></span>: <span class="typed"><span class="type">scala.collection.mutable.Map[java.net.URL,java.lang.ClassLoader]</span><a href="../collection/mutable/Map.scala.html#11125">Map</a></span>[URL, ClassLoader] = <span class="typed"><span class="type">scala.collection.mutable.HashMap[java.net.URL,java.lang.ClassLoader]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.HashMap[java.net.URL,java.lang.ClassLoader]</span><a href="../collection/mutable/HashMap.scala.html#11326">HashMap</a></span>
+
+  <span class="comment">/** The class loader associated with this location.
+   */</span>
+  <span class="keyword">private</span> <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.ClassLoader</span><span id="48577"><a id="48576">loader</a></span></span> = <span class="typed"><span class="type">java.lang.ClassLoader</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">java.net.URL</span><a href="#48571">url</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>)
+    <span class="typed"><span class="type">object java.lang.ClassLoader</span><a id="1725">ClassLoader</a></span>.<span class="typed"><span class="type">()java.lang.ClassLoader</span><a id="33563">getSystemClassLoader</a></span>()
+  <span class="keyword">else</span>
+    <span class="typed"><span class="type">=&gt; scala.collection.mutable.Map[java.net.URL,java.lang.ClassLoader]</span><a href="#48573">lcache</a></span>.<span class="typed"><span class="type">(java.net.URL)Option[java.lang.ClassLoader]</span><a href="../collection/Map.scala.html#21386">get</a></span>(<span class="typed"><span class="type">java.net.URL</span><a href="#48571">url</a></span>) <span class="typed"><span class="type">java.lang.ClassLoader</span><span class="keyword">match</span></span> {
+    <span class="typed"><span class="type">java.lang.ClassLoader</span><span class="keyword">case</span></span> <a id="1">Some</a>(<span class="typed"><span class="type">java.lang.ClassLoader</span><a id="48585">cl</a></span>) =&gt;
+      <span class="typed"><span class="type">java.lang.ClassLoader</span><a href="#48585">cl</a></span>
+    <span class="typed"><span class="type">java.net.URLClassLoader</span><span class="keyword">case</span></span> _ =&gt;
+      <span class="keyword">val</span> <span class="typed"><span class="type">java.net.URLClassLoader</span><a id="48586">cl</a></span> = <span class="typed"><span class="type">(Array[java.net.URL])java.net.URLClassLoader</span><a id="48588" class="keyword">new</a></span> <span class="typed"><span class="type">java.net.URLClassLoader</span><a id="4410">URLClassLoader</a></span>(<span class="typed"><span class="type">(java.net.URL*)Array[java.net.URL]</span><a href="../Array.scala.html#17073">Array</a></span>(<span class="typed"><span class="type">java.net.URL</span><a href="#48571">url</a></span>))
+      <span class="typed"><span class="type">=&gt; scala.collection.mutable.Map[java.net.URL,java.lang.ClassLoader]</span><a href="#48573">lcache</a></span>(<span class="typed"><span class="type">java.net.URL</span><a href="#48571">url</a></span>) = <span class="typed"><span class="type">java.net.URLClassLoader</span><a href="#48586">cl</a></span>
+      <span class="typed"><span class="type">java.net.URLClassLoader</span><a href="#48586">cl</a></span>
+  }
+
+  <span class="comment">/** A cache containing all classes of this location.
+   */</span>
+  <span class="keyword">private</span> <span class="keyword">var</span> <span class="typed"><span class="type">scala.collection.mutable.Map[String,java.lang.Class[_]]</span><span id="48580"><span id="48578"><span id="48579"><a id="48867">ccache</a></span></span></span></span>: <span class="typed"><span class="type">scala.collection.mutable.Map[String,java.lang.Class[_]]</span><a href="../collection/mutable/Map.scala.html#11125">Map</a></span>[String, java.lang.Class[T] <span class="keyword">forSome</span> { <span class="keyword">type</span> T }] = <span class="typed"><span class="type">scala.collection.mutable.HashMap[String,java.lang.Class[_]]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.HashMap[String,java.lang.Class[_]]</span><a href="../collection/mutable/HashMap.scala.html#11326">HashMap</a></span>
+
+  <span class="comment">/** Return the code description for the string &lt;code&gt;className&lt;/code&gt;
+   *  at this location.
+   *
+   * @param classname the name of the class
+   * @return          the code description corresponding to
+   *                  &lt;code&gt;className&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(String)scala.mobile.Code</span><a id="48581">create</a></span>(<span class="typed"><span class="type">String</span><a id="48879">className</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>) = <span class="typed"><span class="type">scala.mobile.Code</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.mobile.Code</span><a href="Code.scala.html#12826">Code</a></span>(
+    <span class="typed"><span class="type">=&gt; scala.collection.mutable.Map[String,java.lang.Class[_]]</span><a href="#48578">ccache</a></span>.<span class="typed"><span class="type">(String)Option[java.lang.Class[_]]</span><a href="../collection/Map.scala.html#21386">get</a></span>(<span class="typed"><span class="type">String</span><a href="#48879">className</a></span>) <span class="typed"><span class="type">java.lang.Class[?]</span><span class="keyword">match</span></span> {
+      <span class="typed"><span class="type">java.lang.Class[?]</span><span class="keyword">case</span></span> <a id="1">Some</a>(<span class="typed"><span class="type">java.lang.Class[?]</span><a id="49015">clazz</a></span>) =&gt;
+        <span class="typed"><span class="type">java.lang.Class[?]</span><a href="#49015">clazz</a></span>
+      <span class="typed"><span class="type">java.lang.Class[_14]</span><span class="keyword">case</span></span> _ =&gt;
+        <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.Class[_ &gt;: ?0 with ?0]</span><a id="49018">clazz</a></span> = <span class="typed"><span class="type">java.lang.Class[_14]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; java.lang.ClassLoader</span><a href="#48576">loader</a></span>.<span class="typed"><span class="type">(java.lang.String)java.lang.Class[_]</span><a id="33123">loadClass</a></span>(<span class="typed"><span class="type">String</span><a href="#48879">className</a></span>).<span class="typed"><span class="type">()Boolean</span><a id="3941">isInterface</a></span>()) {
+          <span class="comment">// Scala source: class A { ... };</span>
+          <span class="comment">// Java bytecode: interface A.class + class A$class.class</span>
+          <span class="typed"><span class="type">=&gt; java.lang.ClassLoader</span><a href="#48576">loader</a></span>.<span class="typed"><span class="type">(java.lang.String)java.lang.Class[_]</span><a id="33123">loadClass</a></span>(<span class="typed"><span class="type">String</span><a href="#48879">className</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot;$class&quot;)</span><span class="string">&quot;$class&quot;</span></span>)
+        }
+        <span class="keyword">else</span> {
+          <span class="comment">// Scala source: object A { ... };</span>
+          <span class="comment">// Java bytecode: interface A.class + class A$.class</span>
+          <span class="typed"><span class="type">=&gt; java.lang.ClassLoader</span><a href="#48576">loader</a></span>.<span class="typed"><span class="type">(java.lang.String)java.lang.Class[_]</span><a id="33123">loadClass</a></span>(<span class="typed"><span class="type">String</span><a href="#48879">className</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot;$&quot;)</span><span class="string">&quot;$&quot;</span></span>)
+        }
+        <span class="typed"><span class="type">=&gt; scala.collection.mutable.Map[String,java.lang.Class[_]]</span><a href="#48578">ccache</a></span>(<span class="typed"><span class="type">String</span><a href="#48879">className</a></span>) = <span class="typed"><span class="type">java.lang.Class[_ &gt;: ?0 with ?0]</span><a href="#49018">clazz</a></span>
+        <span class="typed"><span class="type">java.lang.Class[_ &gt;: ?0 with ?0]</span><a href="#49018">clazz</a></span>
+    }
+  )
+
+}
+
+<span class="comment">/** The object &lt;code&gt;Location&lt;/code&gt; can be used to instantiate
+ *  objects on the same Java VM. It is just provided to illustrate
+ *  the special case where resources are available locally.&lt;p/&gt;
+ *
+ *  Example:&lt;pre&gt;
+ *    &lt;b&gt;val&lt;/b&gt; obj = Location.create(&quot;xcode.Math&quot;);
+ *    &lt;b&gt;val&lt;/b&gt; x = obj[Int, Int](&quot;square&quot;)(5);&lt;/pre&gt;
+ *
+ *  @author  Stephane Micheloud
+ *  @version 1.0, 04/05/2004
+ */</span>
+<span class="keyword">object</span> <span class="typed"><span class="type">object scala.mobile.Location</span><a id="12836">Location</a></span> <span class="keyword">extends</span> <span class="typed"><span class="type">scala.mobile.Location</span><a href="#12835">Location</a></span>(<span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>)
+
+        </pre>
+    </body>
+</html>

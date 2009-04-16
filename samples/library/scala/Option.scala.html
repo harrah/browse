@@ -1,0 +1,164 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/Option.scala</title>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: Option.scala 16884 2009-01-09 16:52:09Z cunei $</span>
+
+
+<span class="keyword">package</span> scala
+
+
+<span class="keyword">import</span> Predef._
+
+<span class="keyword">object</span> <span class="typed"><span class="type">object Option</span><a id="933">Option</a></span> {
+  <span class="comment">/** An implicit conversion that converts an option to an iterable value
+   */</span>
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <span class="typed"><span class="type">[A](Option[A])Iterable[A]</span><a id="72832">option2Iterable</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="72834">A</a></span>](<span class="typed"><span class="type">Option[A]</span><a id="72836">xo</a></span>: <span class="typed"><span class="type">Option[A]</span><a href="#932">Option</a></span>[A]): <span class="typed"><span class="type">Iterable[A]</span><a href="Iterable.scala.html#401">Iterable</a></span>[A] = <span class="typed"><span class="type">Option[A]</span><a href="#72836">xo</a></span>.<span class="typed"><span class="type">=&gt; List[A]</span><a href="#18289">toList</a></span>
+}
+
+<span class="comment">/** This class represents optional values. Instances of &lt;code&gt;Option&lt;/code&gt;
+ *  are either instances of case class &lt;code&gt;Some&lt;/code&gt; or it is case
+ *  object &lt;code&gt;None&lt;/code&gt;.
+ *
+ *  @author  Martin Odersky
+ *  @author  Matthias Zenger
+ *  @version 1.1, 16/01/2007
+ */</span>
+<span class="keyword">sealed</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <span class="typed"><span class="type">class Option[+A] extends java.lang.Object with Product with ScalaObject</span><a id="932">Option</a></span>[+<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="15797">A</a></span>] <span class="keyword">extends</span> <span class="typed"><span class="type">Product</span><a href="Product.scala.html#800">Product</a></span> {
+
+  <span class="comment">/** True if the option is the &lt;code&gt;None&lt;/code&gt; value, false otherwise.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="18268">isEmpty</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span>
+
+  <span class="comment">/** True if the option is a &lt;code&gt;Some&lt;/code&gt;(...) false otherwise.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="18269">isDefined</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = <span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">=&gt; Boolean</span><a href="#18268">isEmpty</a></span>
+
+  <span class="comment">/** get the value of this option.
+   *  @requires that the option is nonEmpty.
+   *  @throws Predef.NoSuchElementException if the option is empty.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; A</span><a id="18270">get</a></span>: <span class="typed"><span class="type">A</span><a href="#15797">A</a></span>
+
+  <span class="comment">/** @deprecated; use &lt;code&gt;getOrElse&lt;/code&gt; instead
+   */</span>
+  @<span class="typed"><span class="type">deprecated</span><a href="deprecated.scala.html#215">deprecated</a></span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B &gt;: A](B)B</span><a id="18271">get</a></span>[<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="18273">B</a></span> &gt;: A](<span class="typed"><span class="type">B</span><a id="25830">default</a></span>: <span class="typed"><span class="type">B</span><a href="#18273">B</a></span>): <span class="typed"><span class="type">B</span><a href="#18273">B</a></span> = <span class="typed"><span class="type">Option[A]</span><a href="#932" class="keyword">this</a></span> <span class="typed"><span class="type">B</span><span class="keyword">match</span></span> {
+    <span class="typed"><span class="type">B</span><span class="keyword">case</span></span> <span class="typed"><span class="type">object None</span><a href="#534">None</a></span> =&gt; <span class="typed"><span class="type">B</span><a href="#25830">default</a></span>
+    <span class="typed"><span class="type">A</span><span class="keyword">case</span></span> <a id="1">Some</a>(<span class="typed"><span class="type">A</span><a id="97976">x</a></span>) =&gt; <span class="typed"><span class="type">A</span><a href="#97976">x</a></span>
+  }
+
+  <span class="comment">/** If the option is nonempty return its value,
+   *  otherwise return the result of evaluating a default expression.
+   *
+   *  @param default  the default expression.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B &gt;: A](=&gt; B)B</span><a id="18274">getOrElse</a></span>[<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="18276">B</a></span> &gt;: A](<span class="typed"><span class="type">=&gt; B</span><a id="86661">default</a></span>: =&gt; B): <span class="typed"><span class="type">B</span><a href="#18276">B</a></span> = 
+    <span class="typed"><span class="type">B</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#18268">isEmpty</a></span>) <span class="typed"><span class="type">=&gt; B</span><a href="#86661">default</a></span> <span class="keyword">else</span> <span class="typed"><span class="type">Option.this.type</span><a href="#932" class="keyword">this</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="#18270">get</a></span>
+
+  <span class="comment">/** If the option is nonempty, return a function applied to its value,
+   *  wrapped in a Some i.e. &lt;code&gt;Some(f(this.get))&lt;/code&gt;.
+   *  Otherwise return &lt;code&gt;None&lt;/code&gt;.
+   *
+   *  @param  f   the function to apply
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B]((A) =&gt; B)Option[B]</span><a id="18277">map</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="18279">B</a></span>](<span class="typed"><span class="type">(A) =&gt; B</span><a id="68309">f</a></span>: A =&gt; B): <span class="typed"><span class="type">Option[B]</span><a href="#932">Option</a></span>[B] = 
+    <span class="typed"><span class="type">Option[B]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#18268">isEmpty</a></span>) <span class="typed"><span class="type">object None</span><a href="#534">None</a></span> <span class="keyword">else</span> <span class="typed"><span class="type">(B)Some[B]</span><a href="#19455">Some</a></span>(<span class="typed"><span class="type">(A)B</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">Option.this.type</span><a href="#932" class="keyword">this</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="#18270">get</a></span>))
+
+  <span class="comment">/** If the option is nonempty, return a function applied to its value.
+   *  Otherwise return None.
+   *  @param  f   the function to apply
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B]((A) =&gt; Option[B])Option[B]</span><a id="18280">flatMap</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="18282">B</a></span>](<span class="typed"><span class="type">(A) =&gt; Option[B]</span><a id="32185">f</a></span>: A =&gt; Option[B]): <span class="typed"><span class="type">Option[B]</span><a href="#932">Option</a></span>[B] = 
+    <span class="typed"><span class="type">Option[B]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#18268">isEmpty</a></span>) <span class="typed"><span class="type">object None</span><a href="#534">None</a></span> <span class="keyword">else</span> <span class="typed"><span class="type">(A)Option[B]</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">Option.this.type</span><a href="#932" class="keyword">this</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="#18270">get</a></span>)
+
+  <span class="comment">/** If the option is nonempty and the given predicate &lt;code&gt;p&lt;/code&gt;
+   *  yields &lt;code&gt;false&lt;/code&gt; on its value, return &lt;code&gt;None&lt;/code&gt;.
+   *  Otherwise return the option value itself.
+   *
+   *  @param  p   the predicate used for testing.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)Option[A]</span><a id="18283">filter</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="97981">p</a></span>: A =&gt; Boolean): <span class="typed"><span class="type">Option[A]</span><a href="#932">Option</a></span>[A] = 
+    <span class="typed"><span class="type">Option[A]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#18268">isEmpty</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span> <span class="typed"><span class="type">(A)Boolean</span><a href="Function1.scala.html#17300">p</a></span>(<span class="typed"><span class="type">Option.this.type</span><a href="#932" class="keyword">this</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="#18270">get</a></span>)) <span class="typed"><span class="type">Option[A]</span><a href="#932" class="keyword">this</a></span> <span class="keyword">else</span> <span class="typed"><span class="type">object None</span><a href="#534">None</a></span>
+
+  <span class="comment">/** Apply the given procedure &lt;code&gt;f&lt;/code&gt; to the option's value,
+   *  if it is nonempty. Do nothing if it is empty.
+   *
+   *  @param  f   the procedure to apply.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Unit)Unit</span><a id="18284">foreach</a></span>(<span class="typed"><span class="type">(A) =&gt; Unit</span><a id="97983">f</a></span>: A =&gt; Unit) {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">=&gt; Boolean</span><a href="#18268">isEmpty</a></span>) <span class="typed"><span class="type">(A)Unit</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">Option.this.type</span><a href="#932" class="keyword">this</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="#18270">get</a></span>)
+  }
+
+  <span class="comment">/** If the option is nonempty return it,
+   *  otherwise return the result of evaluating an alternative expression.
+   *  @param alternative  the alternative expression.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B &gt;: A](=&gt; Option[B])Option[B]</span><a id="18285">orElse</a></span>[<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="18287">B</a></span> &gt;: A](<span class="typed"><span class="type">=&gt; Option[B]</span><a id="97985">alternative</a></span>: =&gt; Option[B]): <span class="typed"><span class="type">Option[B]</span><a href="#932">Option</a></span>[B] = 
+    <span class="typed"><span class="type">Option[B]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#18268">isEmpty</a></span>) <span class="typed"><span class="type">=&gt; Option[B]</span><a href="#97985">alternative</a></span> <span class="keyword">else</span> <span class="typed"><span class="type">Option[A]</span><a href="#932" class="keyword">this</a></span>
+
+  <span class="comment">/** An singleton iterator returning the option's value if it is nonempty
+   *  or the empty iterator if the option is empty.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Iterator[A]</span><a id="18288">elements</a></span>: <span class="typed"><span class="type">Iterator[A]</span><a href="Iterator.scala.html#1337">Iterator</a></span>[A] = 
+    <span class="typed"><span class="type">Iterator[A]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#18268">isEmpty</a></span>) <span class="typed"><span class="type">object Iterator</span><a href="Iterator.scala.html#1338">Iterator</a></span>.<span class="typed"><span class="type">=&gt; &lt;refinement&gt; extends java.lang.Object with Iterator[Nothing]</span><a href="Iterator.scala.html#22746">empty</a></span> <span class="keyword">else</span> <span class="typed"><span class="type">object Iterator</span><a href="Iterator.scala.html#1338">Iterator</a></span>.<span class="typed"><span class="type">(A*)Iterator[A]</span><a href="Iterator.scala.html#22751">fromValues</a></span>(<span class="typed"><span class="type">Option.this.type</span><a href="#932" class="keyword">this</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="#18270">get</a></span>)
+
+  <span class="comment">/** A singleton list containing the option's value if it is nonempty
+   *  or the empty list if the option is empty.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; List[A]</span><a id="18289">toList</a></span>: <span class="typed"><span class="type">List[A]</span><a href="List.scala.html#524">List</a></span>[A] = 
+    <span class="typed"><span class="type">List[A]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#18268">isEmpty</a></span>) <span class="typed"><span class="type">object Nil</span><a href="List.scala.html#333">List</a></span>() <span class="keyword">else</span> <span class="typed"><span class="type">(A*)List[A]</span><a href="List.scala.html#16977">List</a></span>(<span class="typed"><span class="type">Option.this.type</span><a href="#932" class="keyword">this</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="#18270">get</a></span>)
+
+  <span class="comment">/** An &lt;code&gt;Either&lt;/code&gt; that is a &lt;code&gt;Left&lt;/code&gt; with the given argument
+   * &lt;code&gt;left&lt;/code&gt; if this is empty, or a &lt;code&gt;Right&lt;/code&gt; if this is nonempty with the
+   * option's value.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[X](=&gt; X)Either[X,A] with Product</span><a id="18290">toRight</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="18292">X</a></span>](<span class="typed"><span class="type">=&gt; X</span><a id="97992">left</a></span>: =&gt; X) =
+    <span class="typed"><span class="type">&lt;refinement&gt; extends Either[X,A] with Product</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#18268">isEmpty</a></span>) <span class="typed"><span class="type">(X)Left[X,Nothing]</span><a href="Either.scala.html#28317">Left</a></span>(<span class="typed"><span class="type">=&gt; X</span><a href="#97992">left</a></span>) <span class="keyword">else</span> <span class="typed"><span class="type">(A)Right[Nothing,A]</span><a href="Either.scala.html#28338">Right</a></span>(<span class="typed"><span class="type">Option.this.type</span><a href="#932" class="keyword">this</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="#18270">get</a></span>)
+
+  <span class="comment">/** An &lt;code&gt;Either&lt;/code&gt; that is a &lt;code&gt;Right&lt;/code&gt; with the given argument
+   * &lt;code&gt;right&lt;/code&gt; if this is empty, or a &lt;code&gt;Left&lt;/code&gt; if this is nonempty with the
+   * option's value.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[X](=&gt; X)Either[A,X] with Product</span><a id="18293">toLeft</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="18295">X</a></span>](<span class="typed"><span class="type">=&gt; X</span><a id="98012">right</a></span>: =&gt; X) =
+    <span class="typed"><span class="type">&lt;refinement&gt; extends Either[A,X] with Product</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#18268">isEmpty</a></span>) <span class="typed"><span class="type">(X)Right[Nothing,X]</span><a href="Either.scala.html#28338">Right</a></span>(<span class="typed"><span class="type">=&gt; X</span><a href="#98012">right</a></span>) <span class="keyword">else</span> <span class="typed"><span class="type">(A)Left[A,Nothing]</span><a href="Either.scala.html#28317">Left</a></span>(<span class="typed"><span class="type">Option.this.type</span><a href="#932" class="keyword">this</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="#18270">get</a></span>)
+}
+
+<span class="comment">/** Class &lt;code&gt;Some[A]&lt;/code&gt; represents existing values of type
+ *  &lt;code&gt;A&lt;/code&gt;.
+ *
+ *  @author  Martin Odersky
+ *  @version 1.0, 16/07/2003
+ */</span>
+<span class="keyword">final</span> <span class="keyword">case</span> <span class="keyword">class</span> <span class="typed"><span class="type">class Some[+A] extends Option[A] with ScalaObject with Product</span><span id="305"><span id="98042"><span id="98034"><span id="98035"><span id="2749"><span id="2748"><span id="19467"><span id="98036"><span id="5792"><span id="19455"><span id="3494"><span id="19464"><span id="19891"><span id="98038"><span id="98039"><span id="98041"><span id="306"><span id="3499"><span id="98037"><span id="98040"><a href="runtime/ScalaRunTime.scala.html#19785" id="3498">Some</a></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span>[+<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><span id="15798"><span id="19466"><a id="19457">A</a></span></span></span>](<span class="typed"><span class="type">A</span><span id="19460"><span id="19459"><span id="19471"><a id="19469">x</a></span></span></span></span>: <span class="typed"><span class="type">A</span><a href="#15798">A</a></span>) <span class="keyword">extends</span> <span class="typed"><span class="type">Option[A]</span><a href="#932">Option</a></span>[A] {
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="19462">isEmpty</a></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; A</span><a id="19463">get</a></span> = <span class="typed"><span class="type">=&gt; A</span><a href="#19459">x</a></span>
+}
+
+
+<span class="comment">/** This case object represents non-existent values.
+ *
+ *  @author  Martin Odersky
+ *  @version 1.0, 16/07/2003
+ */</span>
+<span class="keyword">case</span> <span class="keyword">object</span> <span class="typed"><span class="type">object None</span><span id="19891"><span id="98048"><span id="98049"><span id="98046"><span id="98045"><span id="534"><span id="98051"><span id="3498"><a id="98047">None</a></span></span></span></span></span></span></span></span></span> <span class="keyword">extends</span> <span class="typed"><span class="type">Option[Nothing]</span><a href="#932">Option</a></span>[Nothing] {
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="20388">isEmpty</a></span> = <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Nothing</span><a id="20389">get</a></span> = <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.util.NoSuchElementException</span><a id="25317" class="keyword">new</a></span> <span class="typed"><span class="type">java.util.NoSuchElementException</span><a href="Predef.scala.html#13342">NoSuchElementException</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;None.get&quot;)</span><span class="string">&quot;None.get&quot;</span></span>)
+}
+
+        </pre>
+    </body>
+</html>

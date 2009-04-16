@@ -1,0 +1,396 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scalax/collection/generic/SequenceTemplate.scala</title>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: Sequence.scala 16092 2008-09-12 10:37:06Z nielsen $</span>
+
+
+<span class="keyword">package</span> scalax.collection.generic
+
+<span class="keyword">import</span> util.control.Breaks._
+<span class="keyword">import</span> scalax.collection.immutable.{List, Nil, ::}
+
+<span class="keyword">import</span> Sequence._
+
+<span class="keyword">trait</span> <span class="typed"><span class="type">trait SequenceTemplate[+CC[B] &lt;: scalax.collection.generic.SequenceTemplate[CC,B] with scalax.collection.Sequence[B], A] extends java.lang.Object with PartialFunction[Int,A] with scalax.collection.generic.OrderedIterableTemplate[CC,A] with ScalaObject</span><a id="10665">SequenceTemplate</a></span>[+<span class="typed"><span class="type">[B]&gt;: Nothing &lt;: scalax.collection.generic.SequenceTemplate[CC,B] with scalax.collection.Sequence[B]</span><a id="15735">CC</a></span>[<span class="comment">/*+*/</span><span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="17711">B</a></span>] &lt;: SequenceTemplate[CC, B] <span class="keyword">with</span> Sequence[B], <span class="comment">/*+*/</span><span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="15736">A</a></span>] <span class="keyword">extends</span> <span class="typed"><span class="type">PartialFunction[Int,A]</span><a href="../../../scala/PartialFunction.scala.html#1295">PartialFunction</a></span>[Int, A] <span class="keyword">with</span> <span class="typed"><span class="type">scalax.collection.generic.OrderedIterableTemplate[CC,A]</span><a href="OrderedIterableTemplate.scala.html#10650">OrderedIterableTemplate</a></span>[CC, A] { 
+self <span class="comment">/*: CC[A]*/</span> =&gt;
+
+  <span class="comment">/** Returns the length of the sequence.
+   *
+   *  @return the sequence length.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Int</span><a id="17647">length</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>
+
+  <span class="comment">/** Result of comparing &lt;code&gt;length&lt;/code&gt; with operand &lt;code&gt;len&lt;/code&gt;.
+   *  returns &lt;code&gt;x&lt;/code&gt; where
+   *  &lt;code&gt;x &amp;lt; 0&lt;/code&gt;    iff    &lt;code&gt;this.length &amp;lt; len&lt;/code&gt;
+   *  &lt;code&gt;x == 0&lt;/code&gt;   iff    &lt;code&gt;this.length == len&lt;/code&gt;
+   *  &lt;code&gt;x &amp;gt; 0&lt;/code&gt;    iff    &lt;code&gt;this.length &amp;gt; len&lt;/code&gt;.
+   *
+   *  The method as implemented here does not call length directly; its running time
+   *  is O(length min len) instead of O(length). The method should be overwritten
+   *  if computing length is cheap.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Int</span><a id="17648">lengthCompare</a></span>(<span class="typed"><span class="type">Int</span><a id="88168">len</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> =  {
+    <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="95868">i</a></span> = <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>
+    <span class="typed"><span class="type">(=&gt; Unit)Unit</span><a href="../../util/control/Breaks.scala.html#17489">breakable</a></span> {
+      <span class="keyword">for</span> (<span class="typed"><span class="type">((A) =&gt; Unit)Unit</span><a href="IterableTemplate.scala.html#17412" id="95870">_</a></span> &lt;- <span class="typed"><span class="type">SequenceTemplate.this.type</span><a href="#10665" class="keyword">this</a></span>) {
+        <span class="typed"><span class="type">Int</span><a href="#95868">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+        <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#95868">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">Int</span><a href="#88168">len</a></span>) <span class="typed"><span class="type">=&gt; Unit</span><a href="../../util/control/Breaks.scala.html#17490">break</a></span>
+      }
+    }
+    <span class="typed"><span class="type">Int</span><a href="#95868">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int</span><a href="#88168">len</a></span>
+  }
+
+  <span class="comment">/** Should always be &lt;code&gt;length&lt;/code&gt; */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Int</span><a id="17649">size</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="#17647">length</a></span>
+
+  <span class="comment">/** Is this partial function defined for the index &lt;code&gt;x&lt;/code&gt;?
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Boolean</span><a id="17650">isDefinedAt</a></span>(<span class="typed"><span class="type">Int</span><a id="88165">x</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = (<span class="typed"><span class="type">Int</span><a href="#88165">x</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3144">&gt;=</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> (<span class="typed"><span class="type">Int</span><a href="#88165">x</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#17647">length</a></span>)
+
+  <span class="comment">/** Returns length of longest segment starting from a start index `from`
+   *  such that every element of the segment satisfies predicate `p`.
+   *  @note may not terminate for infinite-sized collections.
+   *  @param  p the predicate
+   *  @param  from  the start index
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean,Int)Int</span><a id="17651">segmentLength</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="25168">p</a></span>: A =&gt; Boolean, <span class="typed"><span class="type">Int</span><a id="25169">from</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = {
+    <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="95911">result</a></span> = <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>
+    <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="95912">i</a></span> = <span class="typed"><span class="type">Int</span><a href="#25169">from</a></span>
+    <span class="typed"><span class="type">(=&gt; Unit)Unit</span><a href="../../util/control/Breaks.scala.html#17489">breakable</a></span> {
+      <span class="keyword">for</span> (<span class="typed"><span class="type">((A) =&gt; Unit)Unit</span><a href="IterableTemplate.scala.html#17412" id="95914">x</a></span> &lt;- <span class="typed"><span class="type">SequenceTemplate.this.type</span><a href="#10665" class="keyword">this</a></span>) {
+        <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#95912">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3144">&gt;=</a></span> <span class="typed"><span class="type">Int</span><a href="#25169">from</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">(A)Boolean</span><a href="../../../scala/Function1.scala.html#17300">p</a></span>(<span class="typed"><span class="type">A</span><a href="#95914">x</a></span>)) { <span class="typed"><span class="type">Int</span><a href="#95911">result</a></span> = <span class="typed"><span class="type">Int</span><a href="#95912">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int</span><a href="#25169">from</a></span>; <span class="typed"><span class="type">=&gt; Unit</span><a href="../../util/control/Breaks.scala.html#17490">break</a></span> }
+        <span class="keyword">else</span> <span class="typed"><span class="type">Int</span><a href="#95912">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+      }
+    }
+    <span class="typed"><span class="type">Int</span><a href="#95911">result</a></span>
+  }
+
+  <span class="comment">/** Returns length of longest prefix of this seqence
+   *  such that every element of the prefix satisfies predicate `p`.
+   *  @note may not terminate for infinite-sized collections.
+   *  @param  p the predicate
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)Int</span><a id="17652">prefixLength</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="25166">p</a></span>: A =&gt; Boolean) = <span class="typed"><span class="type">((A) =&gt; Boolean,Int)Int</span><a href="#17651">segmentLength</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a href="#25166">p</a></span>, <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>)
+
+  <span class="comment">/** Returns index of the first element satisfying a predicate, or -1, if none exists.
+   *
+   *  @note may not terminate for infinite-sized collections.
+   *  @param  p the predicate
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)Int</span><a id="17653">indexWhere</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="88178">p</a></span>: A =&gt; Boolean): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = <span class="typed"><span class="type">((A) =&gt; Boolean,Int)Int</span><a href="#17654">indexWhere</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a href="#88178">p</a></span>, <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>)
+
+  <span class="comment">/** Returns index of the first element starting from a start index
+   *  satisying a predicate, or -1, if none exists.
+   *
+   *  @note may not terminate for infinite-sized collections.
+   *  @param  p the predicate
+   *  @param  from  the start index
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean,Int)Int</span><a id="17654">indexWhere</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="88176">p</a></span>: A =&gt; Boolean, <span class="typed"><span class="type">Int</span><a id="88177">from</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = {
+    <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="95959">result</a></span> = -<span class="typed"><span class="type">Int(-1)</span><span class="int">1</span></span>
+    <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="95960">i</a></span> = <span class="typed"><span class="type">Int</span><a href="#88177">from</a></span>
+    <span class="typed"><span class="type">(=&gt; Unit)Unit</span><a href="../../util/control/Breaks.scala.html#17489">breakable</a></span> {
+      <span class="keyword">for</span> (<span class="typed"><span class="type">((A) =&gt; Unit)Unit</span><a href="IterableTemplate.scala.html#17412" id="95962">x</a></span> &lt;- <span class="typed"><span class="type">SequenceTemplate.this.type</span><a href="#10665" class="keyword">this</a></span>) {
+        <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#95960">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3144">&gt;=</a></span> <span class="typed"><span class="type">Int</span><a href="#88177">from</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">(A)Boolean</span><a href="../../../scala/Function1.scala.html#17300">p</a></span>(<span class="typed"><span class="type">A</span><a href="#95962">x</a></span>)) { <span class="typed"><span class="type">Int</span><a href="#95959">result</a></span> = <span class="typed"><span class="type">Int</span><a href="#95960">i</a></span>; <span class="typed"><span class="type">=&gt; Unit</span><a href="../../util/control/Breaks.scala.html#17490">break</a></span> }
+        <span class="keyword">else</span> <span class="typed"><span class="type">Int</span><a href="#95960">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+      }
+    }
+    <span class="typed"><span class="type">Int</span><a href="#95959">result</a></span>
+  }
+
+  <span class="comment">/** Returns index of the first element satisying a predicate, or -1.
+   *
+   *  @deprecated  Use `indexWhere` instead
+   */</span>
+  @<span class="typed"><span class="type">deprecated</span><a href="../../../scala/deprecated.scala.html#215">deprecated</a></span> <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)Int</span><a id="17655">findIndexOf</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="95986">p</a></span>: A =&gt; Boolean): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = <span class="typed"><span class="type">((A) =&gt; Boolean)Int</span><a href="#17653">indexWhere</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a href="#95986">p</a></span>)
+
+  <span class="comment">/** Returns the index of the first occurence of the specified
+   *  object in this iterable object.
+   *
+   *  @note may not terminate for infinite-sized collections.
+   *  @param  elem  element to search for.
+   *  @return the index in this sequence of the first occurence of the
+   *          specified element, or -1 if the sequence does not contain
+   *          this element.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B &gt;: A](B)Int</span><a id="17656">indexOf</a></span>[<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="17658">B</a></span> &gt;: A](<span class="typed"><span class="type">B</span><a id="83534">elem</a></span>: <span class="typed"><span class="type">B</span><a href="#17658">B</a></span>): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = <span class="typed"><span class="type">(B,Int)Int</span><a href="#17659">indexOf</a></span>(<span class="typed"><span class="type">B</span><a href="#83534">elem</a></span>, <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>)
+
+  <span class="comment">/** Returns the index of the first occurence of the specified
+   *  object in this iterable object,  starting from a start index, or
+   *  -1, if none exists.
+   *
+   *  @note may not terminate for infinite-sized collections.
+   *  @param  elem  element to search for.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B &gt;: A](B,Int)Int</span><a id="17659">indexOf</a></span>[<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="17661">B</a></span> &gt;: A](<span class="typed"><span class="type">B</span><a id="83530">elem</a></span>: <span class="typed"><span class="type">B</span><a href="#17661">B</a></span>, <span class="typed"><span class="type">Int</span><a id="83531">from</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = <span class="typed"><span class="type">((A) =&gt; Boolean,Int)Int</span><a href="#17654">indexWhere</a></span>(<span class="typed"><span class="type">B</span><a href="#83530">elem</a></span> <span class="typed"><span class="type">(Any)Boolean</span><a href="#96016" id="3494">==</a></span>, <span class="typed"><span class="type">Int</span><a href="#83531">from</a></span>)
+
+ <span class="comment">/** Returns the index of the last occurence of the specified element
+   *  in this sequence, or -1 if the sequence does not contain this element.
+   *
+   *  @param  elem   element to search for.
+   *  @return the index in this sequence of the last occurence of the
+   *          specified element, or -1 if the sequence does not contain
+   *          this element.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B &gt;: A](B)Int</span><a id="17662">lastIndexOf</a></span>[<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="17664">B</a></span> &gt;: A](<span class="typed"><span class="type">B</span><a id="96017">elem</a></span>: <span class="typed"><span class="type">B</span><a href="#17664">B</a></span>): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = <span class="typed"><span class="type">(B,Int)Int</span><a href="#17665">lastIndexOf</a></span>(<span class="typed"><span class="type">B</span><a href="#96017">elem</a></span>, <span class="typed"><span class="type">=&gt; Int</span><a href="#17647">length</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>)
+
+  <span class="comment">/** Returns the index of the last
+    *  occurence of the specified element in this sequence
+    *  before or at a given end index,
+    *  or -1 if the sequence does not contain this element.
+    *
+    *  @param  elem   element to search for.
+    *  @param  end    the end index
+    */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B &gt;: A](B,Int)Int</span><a id="17665">lastIndexOf</a></span>[<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="17667">B</a></span> &gt;: A](<span class="typed"><span class="type">B</span><a id="96019">elem</a></span>: <span class="typed"><span class="type">B</span><a href="#17667">B</a></span>, <span class="typed"><span class="type">Int</span><a id="96020">end</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = {
+    <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="96042">i</a></span> = <span class="typed"><span class="type">Int</span><a href="#96020">end</a></span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">scalax.collection.Iterator[A]</span><a id="96043">it</a></span> = <span class="typed"><span class="type">=&gt; scalax.collection.Iterator[A]</span><a href="#17671">reversedElements</a></span>
+    <span class="typed"><span class="type">Unit</span><a href="#96044" class="keyword">while</a></span> (<span class="typed"><span class="type">scalax.collection.Iterator[A]</span><a href="#96043">it</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Iterator.scala.html#20216">hasNext</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">scalax.collection.Iterator[A]</span><a href="#96043">it</a></span>.<span class="typed"><span class="type">()A</span><a href="../Iterator.scala.html#20217">next</a></span> <span class="typed"><span class="type">(Any)Boolean</span><a id="3495">!=</a></span> <span class="typed"><span class="type">B</span><a href="#96019">elem</a></span>) <span class="typed"><span class="type">Int</span><a href="#96042">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+    <span class="typed"><span class="type">Int</span><a href="#96042">i</a></span>
+  }
+
+  <span class="comment">/** Returns index of the last element satisying a predicate, or -1, if none exists.
+   *
+   *  @param  p the predicate
+   *  @return   the index of the last element satisfying &lt;code&gt;p&lt;/code&gt;,
+   *            or -1 if such an element does not exist
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)Int</span><a id="17668">lastIndexWhere</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="63161">p</a></span>: A =&gt; Boolean): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = <span class="typed"><span class="type">((A) =&gt; Boolean,Int)Int</span><a href="#17669">lastIndexWhere</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a href="#63161">p</a></span>, <span class="typed"><span class="type">=&gt; Int</span><a href="#17647">length</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>)
+
+  <span class="comment">/** Returns index of the last element not exceeding a given end index
+   *  and satisying a predicate, or -1 if none exists.
+   *
+   *  @param  end the end index
+   *  @param  p the predicate
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean,Int)Int</span><a id="17669">lastIndexWhere</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="63159">p</a></span>: A =&gt; Boolean, <span class="typed"><span class="type">Int</span><a id="63160">end</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = {
+    <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="96084">i</a></span> = <span class="typed"><span class="type">Int</span><a href="#63160">end</a></span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">scalax.collection.Iterator[A]</span><a id="96085">it</a></span> = <span class="typed"><span class="type">=&gt; scalax.collection.Iterator[A]</span><a href="#17671">reversedElements</a></span>
+    <span class="typed"><span class="type">Unit</span><a href="#96086" class="keyword">while</a></span> (<span class="typed"><span class="type">scalax.collection.Iterator[A]</span><a href="#96085">it</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Iterator.scala.html#20216">hasNext</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> (<span class="typed"><span class="type">Int</span><a href="#96084">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">Int</span><a href="#63160">end</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">(A)Boolean</span><a href="../../../scala/Function1.scala.html#17300">p</a></span>(<span class="typed"><span class="type">scalax.collection.Iterator[A]</span><a href="#96085">it</a></span>.<span class="typed"><span class="type">()A</span><a href="../Iterator.scala.html#20217">next</a></span>))) <span class="typed"><span class="type">Int</span><a href="#96084">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+    <span class="typed"><span class="type">Int</span><a href="#96084">i</a></span>
+  }
+
+  <span class="comment">/** A sequence of type &lt;code&gt;C&lt;/code&gt; consisting of all elements of 
+   *  this sequence in reverse order.
+   *  @note  the operation is implemented by building a new sequence
+   *         from &lt;code&gt;this(length - 1), ..., this(0)&lt;/code&gt;
+   *  If random access is inefficient for the given sequence implementation, 
+   *  this operation should be overridden.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; CC[A]</span><a id="17670">reverse</a></span>: <span class="typed"><span class="type">CC[A]</span><a href="#15735">CC</a></span>[A] = {
+    <span class="keyword">var</span> <span class="typed"><span class="type">scalax.collection.immutable.List[A]</span><a id="96107">xs</a></span>: <span class="typed"><span class="type">scalax.collection.immutable.List[A]</span><a href="../immutable/List.scala.html#7583">List</a></span>[A] = <span class="typed"><span class="type">(Nothing*)scalax.collection.immutable.List[Nothing]</span><a href="../immutable/List.scala.html#39003">List</a></span>()
+    <span class="keyword">for</span> (<span class="typed"><span class="type">((A) =&gt; Unit)Unit</span><a href="IterableTemplate.scala.html#17412" id="96111">x</a></span> &lt;- <span class="typed"><span class="type">SequenceTemplate.this.type</span><a href="#10665" class="keyword">this</a></span>) 
+      <span class="typed"><span class="type">scalax.collection.immutable.List[A]</span><a href="#96107">xs</a></span> = <span class="typed"><span class="type">A</span><a href="#96111">x</a></span> <span class="typed"><span class="type">(A)scalax.collection.immutable.List[A]</span><a href="../immutable/List.scala.html#38947">::</a></span> <span class="typed"><span class="type">scalax.collection.immutable.List[A]</span><a href="#96107">xs</a></span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">scalax.collection.generic.Builder[CC,A]</span><a id="96108">b</a></span> = <span class="typed"><span class="type">scalax.collection.generic.Builder[CC,A]</span><a href="IterableTemplate.scala.html#17389">newBuilder</a></span>[<span class="typed"><span class="type">A</span><a href="#15736">A</a></span>]
+    <span class="keyword">for</span> (<span class="typed"><span class="type">((A) =&gt; Unit)Unit</span><a href="../immutable/Stream.scala.html#38909" id="96121">x</a></span> &lt;- <span class="typed"><span class="type">scalax.collection.immutable.List[A]</span><a href="#96107">xs</a></span>)
+      <span class="typed"><span class="type">scalax.collection.generic.Builder[CC,A]</span><a href="#96108">b</a></span> <span class="typed"><span class="type">(A)Unit</span><a href="Builder.scala.html#17933">+=</a></span> <span class="typed"><span class="type">A</span><a href="#96121">x</a></span>
+    <span class="typed"><span class="type">scalax.collection.generic.Builder[CC,A]</span><a href="#96108">b</a></span>.<span class="typed"><span class="type">=&gt; CC[A]</span><a href="Builder.scala.html#17935">result</a></span>
+  }
+
+  <span class="comment">/** The elements of this sequence in reversed order
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; scalax.collection.Iterator[A]</span><a id="17671">reversedElements</a></span>: <span class="typed"><span class="type">scalax.collection.Iterator[A]</span><a href="../Iterator.scala.html#6386">Iterator</a></span>[A] = <span class="typed"><span class="type">=&gt; CC[A]</span><a href="#17670">reverse</a></span>.<span class="typed"><span class="type">=&gt; scalax.collection.Iterator[A]</span><a href="IterableTemplate.scala.html#17388">elements</a></span>
+
+  <span class="comment">/**
+   * Checks whether the argument sequence is contained at the 
+   * specified index within the receiver object. 
+   * 
+   * If the both the receiver object, &lt;code&gt;this&lt;/code&gt; and 
+   * the argument, &lt;code&gt;that&lt;/code&gt; are infinite sequences 
+   * this method may not terminate.
+   *
+   * @return true if &lt;code&gt;that&lt;/code&gt; is contained in 
+   * &lt;code&gt;this&lt;/code&gt;, at the specified index, otherwise false 
+   *
+   * @see String.startsWith
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B](scalax.collection.Sequence[B],Int)Boolean</span><a id="17672">startsWith</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="17674">B</a></span>](<span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a id="39185">that</a></span>: <span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a href="../Sequence.scala.html#6296">Sequence</a></span>[B], <span class="typed"><span class="type">Int</span><a id="39186">offset</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = {  
+    <span class="keyword">val</span> <span class="typed"><span class="type">scalax.collection.Iterator[A]</span><a id="96141">i</a></span> = <span class="typed"><span class="type">=&gt; scalax.collection.Iterator[A]</span><a href="IterableTemplate.scala.html#17388">elements</a></span>.<span class="typed"><span class="type">(Int)scalax.collection.Iterator[A]</span><a href="../Iterator.scala.html#20219">drop</a></span>(<span class="typed"><span class="type">Int</span><a href="#39186">offset</a></span>)
+    <span class="keyword">val</span> <span class="typed"><span class="type">scalax.collection.Iterator[B]</span><a id="96142">j</a></span> = <span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a href="#39185">that</a></span>.<span class="typed"><span class="type">=&gt; scalax.collection.Iterator[B]</span><a href="IterableTemplate.scala.html#17388">elements</a></span>
+    <span class="typed"><span class="type">Unit</span><a href="#96143" class="keyword">while</a></span> (<span class="typed"><span class="type">scalax.collection.Iterator[B]</span><a href="#96142">j</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Iterator.scala.html#20216">hasNext</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">scalax.collection.Iterator[A]</span><a href="#96141">i</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Iterator.scala.html#20216">hasNext</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">scalax.collection.Iterator[A]</span><a href="#96141">i</a></span>.<span class="typed"><span class="type">()A</span><a href="../Iterator.scala.html#20217">next</a></span> <span class="typed"><span class="type">(Any)Boolean</span><a id="3494">==</a></span> <span class="typed"><span class="type">scalax.collection.Iterator[B]</span><a href="#96142">j</a></span>.<span class="typed"><span class="type">()B</span><a href="../Iterator.scala.html#20217">next</a></span>) <span class="typed"><span class="type">Unit</span><span >{</span></span>}
+    <span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">scalax.collection.Iterator[B]</span><a href="#96142">j</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Iterator.scala.html#20216">hasNext</a></span>
+  }
+
+  <span class="comment">/**
+   * Check whether the receiver object starts with the argument sequence.
+   *
+   * @return true if &lt;code&gt;that&lt;/code&gt; is a prefix of &lt;code&gt;this&lt;/code&gt;,
+   * otherwise false 
+   *
+   * @see Sequence.startsWith
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B](scalax.collection.Sequence[B])Boolean</span><a id="17675">startsWith</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="17677">B</a></span>](<span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a id="39183">that</a></span>: <span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a href="../Sequence.scala.html#6296">Sequence</a></span>[B]): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = <span class="typed"><span class="type">(scalax.collection.Sequence[B],Int)Boolean</span><a href="#17672">startsWith</a></span>(<span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a href="#39183">that</a></span>, <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>)
+
+  <span class="comment">/** @return true if this sequence end with that sequence 
+   *  @see String.endsWith 
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B](scalax.collection.Sequence[B])Boolean</span><a id="17678">endsWith</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="17680">B</a></span>](<span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a id="63365">that</a></span>: <span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a href="../Sequence.scala.html#6296">Sequence</a></span>[B]): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">scalax.collection.Iterator[A]</span><a id="96158">i</a></span> = <span class="typed"><span class="type">SequenceTemplate.this.type</span><a href="#10665" class="keyword">this</a></span>.<span class="typed"><span class="type">=&gt; scalax.collection.Iterator[A]</span><a href="IterableTemplate.scala.html#17388">elements</a></span>.<span class="typed"><span class="type">(Int)scalax.collection.Iterator[A]</span><a href="../Iterator.scala.html#20219">drop</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="#17647">length</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a href="#63365">that</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="#17647">length</a></span>)
+    <span class="keyword">val</span> <span class="typed"><span class="type">scalax.collection.Iterator[B]</span><a id="96159">j</a></span> = <span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a href="#63365">that</a></span>.<span class="typed"><span class="type">=&gt; scalax.collection.Iterator[B]</span><a href="IterableTemplate.scala.html#17388">elements</a></span>
+    <span class="typed"><span class="type">Unit</span><a href="#96160" class="keyword">while</a></span> (<span class="typed"><span class="type">scalax.collection.Iterator[A]</span><a href="#96158">i</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Iterator.scala.html#20216">hasNext</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">scalax.collection.Iterator[B]</span><a href="#96159">j</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Iterator.scala.html#20216">hasNext</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">scalax.collection.Iterator[A]</span><a href="#96158">i</a></span>.<span class="typed"><span class="type">()A</span><a href="../Iterator.scala.html#20217">next</a></span> <span class="typed"><span class="type">(Any)Boolean</span><a id="3494">==</a></span> <span class="typed"><span class="type">scalax.collection.Iterator[B]</span><a href="#96159">j</a></span>.<span class="typed"><span class="type">()B</span><a href="../Iterator.scala.html#20217">next</a></span>) <span class="typed"><span class="type">Unit</span><span >(</span></span>)
+    <span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">scalax.collection.Iterator[B]</span><a href="#96159">j</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Iterator.scala.html#20216">hasNext</a></span>
+  }
+
+  <span class="comment">/** @return -1 if &lt;code&gt;that&lt;/code&gt; not contained in this, otherwise the
+   *  index where &lt;code&gt;that&lt;/code&gt; is contained
+   *  @see String.indexOf
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B &gt;: A](scalax.collection.Sequence[B])Int</span><a id="17681">indexOf</a></span>[<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="17683">B</a></span> &gt;: A](<span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a id="83527">that</a></span>: <span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a href="../Sequence.scala.html#6296">Sequence</a></span>[B]): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = {
+    <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="96175">i</a></span> = <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>
+    <span class="keyword">var</span> <span class="typed"><span class="type">scalax.collection.Sequence[A]</span><a id="96176">s</a></span>: <span class="typed"><span class="type">scalax.collection.Sequence[A]</span><a href="../Sequence.scala.html#6296">Sequence</a></span>[A] = <span class="typed"><span class="type">=&gt; CC[A]</span><a href="IterableTemplate.scala.html#17387">thisCC</a></span>
+    <span class="typed"><span class="type">Unit</span><a href="#96177" class="keyword">while</a></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">scalax.collection.Sequence[A]</span><a href="#96176">s</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="IterableTemplate.scala.html#17395">isEmpty</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span>(<span class="typed"><span class="type">scalax.collection.Sequence[A]</span><a href="#96176">s</a></span> <span class="typed"><span class="type">(scalax.collection.Sequence[B])Boolean</span><a href="#17675">startsWith</a></span> <span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a href="#83527">that</a></span>)) {
+      <span class="typed"><span class="type">Int</span><a href="#96175">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+      <span class="typed"><span class="type">scalax.collection.Sequence[A]</span><a href="#96176">s</a></span> = <span class="typed"><span class="type">scalax.collection.Sequence[A]</span><a href="#96176">s</a></span> <span class="typed"><span class="type">(Int)scalax.collection.Sequence[A]</span><a href="IterableTemplate.scala.html#17477">drop</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+    } 
+    <span class="typed"><span class="type">Int</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">scalax.collection.Sequence[A]</span><a href="#96176">s</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="IterableTemplate.scala.html#17395">isEmpty</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span> <span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a href="#83527">that</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="IterableTemplate.scala.html#17395">isEmpty</a></span>) <span class="typed"><span class="type">Int</span><a href="#96175">i</a></span> <span class="keyword">else</span> -<span class="typed"><span class="type">Int(-1)</span><span class="int">1</span></span>
+  }
+
+  <span class="comment">/** Tests if the given value &lt;code&gt;elem&lt;/code&gt; is a member of this 
+   *  sequence.
+   *
+   *  @param elem element whose membership has to be tested.
+   *  @return     &lt;code&gt;true&lt;/code&gt; iff there is an element of this sequence
+   *              which is equal (w.r.t. &lt;code&gt;==&lt;/code&gt;) to &lt;code&gt;elem&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Any)Boolean</span><a id="17684">contains</a></span>(<span class="typed"><span class="type">Any</span><a id="39245">elem</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = <span class="typed"><span class="type">((A) =&gt; Boolean)Boolean</span><a href="IterableTemplate.scala.html#17414">exists</a></span> (<span class="typed"><span class="type">A</span><a href="#96207">_</a></span> <span class="typed"><span class="type">(Any)Boolean</span><a id="3494">==</a></span> <span class="typed"><span class="type">Any</span><a href="#39245">elem</a></span>)
+
+  <span class="comment">/** Computes the union of this sequence and the given sequence
+   *  &lt;code&gt;that&lt;/code&gt;.
+   *
+   *  @param that the sequence of elements to add to the sequence.
+   *  @return     an sequence containing the elements of this
+   *              sequence and those of the given sequence &lt;code&gt;that&lt;/code&gt;
+   *              which are not contained in this sequence.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B &gt;: A](scalax.collection.Sequence[B])CC[B]</span><a id="17685">union</a></span>[<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="17687">B</a></span> &gt;: A](<span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a id="96208">that</a></span>: <span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a href="../Sequence.scala.html#6296">Sequence</a></span>[B]): <span class="typed"><span class="type">CC[B]</span><a href="#15735">CC</a></span>[B] = <span class="typed"><span class="type">SequenceTemplate.this.type</span><a href="#10665" class="keyword">this</a></span> <span class="typed"><span class="type">(scalax.collection.Iterable[B])CC[B]</span><a href="IterableTemplate.scala.html#17397">++</a></span> (<span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a href="#96208">that</a></span> <span class="typed"><span class="type">(scalax.collection.Sequence[B])scalax.collection.Sequence[B]</span><a href="#17688">diff</a></span> <span class="typed"><span class="type">=&gt; CC[A]</span><a href="IterableTemplate.scala.html#17387">thisCC</a></span>)
+
+  <span class="comment">/** Computes the difference between this sequence and the given sequence
+   *  &lt;code&gt;that&lt;/code&gt;.
+   *
+   *  @param that the sequence of elements to remove from this sequence.
+   *  @return     this sequence without the elements of the given sequence
+   *              &lt;code&gt;that&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B &gt;: A](scalax.collection.Sequence[B])CC[A]</span><a id="17688">diff</a></span>[<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="17690">B</a></span> &gt;: A](<span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a id="39225">that</a></span>: <span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a href="../Sequence.scala.html#6296">Sequence</a></span>[B]): <span class="typed"><span class="type">CC[A]</span><a href="#15735">CC</a></span>[A] = <span class="typed"><span class="type">SequenceTemplate.this.type</span><a href="#10665" class="keyword">this</a></span> <span class="typed"><span class="type">((A) =&gt; Boolean)CC[A]</span><a href="IterableTemplate.scala.html#17410">remove</a></span> (<span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a href="#39225">that</a></span> <span class="typed"><span class="type">(Any)Boolean</span><a href="#17684">contains</a></span> <span class="typed"><span class="type">A</span><a href="#96236">_</a></span>)
+
+  <span class="comment">/** Computes the intersection between this sequence and the given sequence
+   *  &lt;code&gt;that&lt;/code&gt;.
+   *
+   *  @param that the sequence to intersect.
+   *  @return     the sequence of elements contained both in this sequence and
+   *              in the given sequence &lt;code&gt;that&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B &gt;: A](scalax.collection.Sequence[B])CC[A]</span><a id="17691">intersect</a></span>[<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="17693">B</a></span> &gt;: A](<span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a id="96237">that</a></span>: <span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a href="../Sequence.scala.html#6296">Sequence</a></span>[B]): <span class="typed"><span class="type">CC[A]</span><a href="#15735">CC</a></span>[A] = <span class="typed"><span class="type">SequenceTemplate.this.type</span><a href="#10665" class="keyword">this</a></span> <span class="typed"><span class="type">((A) =&gt; Boolean)CC[A]</span><a href="IterableTemplate.scala.html#17409">filter</a></span>(<span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a href="#96237">that</a></span> <span class="typed"><span class="type">(Any)Boolean</span><a href="#17684">contains</a></span> <span class="typed"><span class="type">A</span><a href="#96240">_</a></span>)
+
+  <span class="comment">/** Builds a new sequence from this sequence in which any duplicates (wrt to ==) removed.
+   *  Among duplicate elements, only the first one is retained in the result sequence
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; CC[A]</span><a id="17694">removeDuplicates</a></span>: <span class="typed"><span class="type">CC[A]</span><a href="#15735">CC</a></span>[A] = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">scalax.collection.generic.Builder[CC,A]</span><a id="96243">b</a></span> = <span class="typed"><span class="type">scalax.collection.generic.Builder[CC,A]</span><a href="IterableTemplate.scala.html#17389">newBuilder</a></span>[<span class="typed"><span class="type">A</span><a href="#15736">A</a></span>]
+    <span class="keyword">var</span> <span class="typed"><span class="type">scalax.collection.Set[A]</span><a id="96244">seen</a></span> = <span class="typed"><span class="type">(A*)scalax.collection.Set[A]</span><a href="../Set.scala.html#39257">Set</a></span>[<span class="typed"><span class="type">A</span><a href="#15736">A</a></span>]()
+    <span class="keyword">for</span> (<span class="typed"><span class="type">((A) =&gt; Unit)Unit</span><a href="IterableTemplate.scala.html#17412" id="96247">x</a></span> &lt;- <span class="typed"><span class="type">SequenceTemplate.this.type</span><a href="#10665" class="keyword">this</a></span>) {
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span>(<span class="typed"><span class="type">scalax.collection.Set[A]</span><a href="#96244">seen</a></span> <span class="typed"><span class="type">(A)Boolean</span><a href="SetTemplate.scala.html#23830">contains</a></span> <span class="typed"><span class="type">A</span><a href="#96247">x</a></span>)) {
+        <span class="typed"><span class="type">scalax.collection.generic.Builder[CC,A]</span><a href="#96243">b</a></span> <span class="typed"><span class="type">(A)Unit</span><a href="Builder.scala.html#17933">+=</a></span> <span class="typed"><span class="type">A</span><a href="#96247">x</a></span>
+        <span class="typed"><span class="type">scalax.collection.Set[A]</span><a href="#96244">seen</a></span> <span class="typed"><span class="type">(A)scalax.collection.Set[A]</span><a href="SetTemplate.scala.html#23831">+=</a></span> <span class="typed"><span class="type">A</span><a href="#96247">x</a></span>
+      }
+    }
+    <span class="typed"><span class="type">scalax.collection.generic.Builder[CC,A]</span><a href="#96243">b</a></span>.<span class="typed"><span class="type">=&gt; CC[A]</span><a href="Builder.scala.html#17935">result</a></span>
+  }
+
+  <span class="comment">/** Returns a new sequence of given length containing the elements of this sequence followed by zero
+   *  or more occurrences of given elements. 
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B &gt;: A](Int,B)CC[B]</span><a id="17695">padTo</a></span>[<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="17697">B</a></span> &gt;: A](<span class="typed"><span class="type">Int</span><a id="96257">len</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">B</span><a id="96258">elem</a></span>: <span class="typed"><span class="type">B</span><a href="#17697">B</a></span>): <span class="typed"><span class="type">CC[B]</span><a href="#15735">CC</a></span>[B] = {
+    <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="96260">diff</a></span> = <span class="typed"><span class="type">Int</span><a href="#96257">len</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#17647">length</a></span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">scalax.collection.generic.Builder[CC,B]</span><a id="96261">b</a></span> = <span class="typed"><span class="type">scalax.collection.generic.Builder[CC,B]</span><a href="IterableTemplate.scala.html#17389">newBuilder</a></span>[<span class="typed"><span class="type">B</span><a href="#17697">B</a></span>] <span class="comment">//!!! drop [B] and get surprising results!</span>
+    <span class="typed"><span class="type">scalax.collection.generic.Builder[CC,B]</span><a href="#96261">b</a></span> <span class="typed"><span class="type">(scalax.collection.Iterable[B])Unit</span><a href="Growable.scala.html#17913">++=</a></span> <span class="typed"><span class="type">=&gt; CC[A]</span><a href="IterableTemplate.scala.html#17387">thisCC</a></span>
+    <span class="typed"><span class="type">Unit</span><a href="#96262" class="keyword">while</a></span> (<span class="typed"><span class="type">Int</span><a href="#96260">diff</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) {
+      <span class="typed"><span class="type">scalax.collection.generic.Builder[CC,B]</span><a href="#96261">b</a></span> <span class="typed"><span class="type">(B)Unit</span><a href="Builder.scala.html#17933">+=</a></span> <span class="typed"><span class="type">B</span><a href="#96258">elem</a></span>
+      <span class="typed"><span class="type">Int</span><a href="#96260">diff</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-=</a></span><span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span> 
+    }
+    <span class="typed"><span class="type">scalax.collection.generic.Builder[CC,B]</span><a href="#96261">b</a></span>.<span class="typed"><span class="type">=&gt; CC[B]</span><a href="Builder.scala.html#17935">result</a></span>
+  }
+
+  <span class="comment">/**
+   *  Overridden for efficiency.
+   *
+   *  @return  the sequence itself
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; scalax.collection.Sequence[A]</span><a id="17698">toSequence</a></span>: <span class="typed"><span class="type">scalax.collection.Sequence[A]</span><a href="../Sequence.scala.html#6296">Sequence</a></span>[A] = <span class="typed"><span class="type">=&gt; CC[A]</span><a href="IterableTemplate.scala.html#17387">thisCC</a></span> 
+
+  <span class="comment">/** Force toString from Iterable, not from Function */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()String</span><a id="17699">toString</a></span> = <span class="keyword">super</span>[OrderedIterableTemplate].<span class="typed"><span class="type">()String</span><a href="IterableTemplate.scala.html#17468">toString</a></span>
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Range</span><a id="17700">indices</a></span>: <span class="typed"><span class="type">Range</span><a href="../../../scala/Range.scala.html#1535">Range</a></span> = <span class="typed"><span class="type">implicit scala.Predef.intWrapper : (Int)scala.runtime.RichInt</span><a href="../../../scala/Predef.scala.html#13511" class="int">0</a></span> <span class="typed"><span class="type">(Int)Range</span><a href="../../../scala/runtime/RichInt.scala.html#19402">until</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#17647">length</a></span>
+
+  <span class="comment">/** Creates a view of this iterable @see OrderedIterable.View
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; scalax.collection.generic.SequenceView[CC,A]</span><a id="17701">view</a></span>: <span class="typed"><span class="type">scalax.collection.generic.SequenceView[CC,A]</span><a href="SequenceView.scala.html#10695">SequenceView</a></span>[CC, A] = <span class="typed"><span class="type">template $anon extends java.lang.Object with scalax.collection.generic.SequenceView[CC,A]</span><a id="96303" class="keyword">new</a></span> <span class="typed"><span class="type">scalax.collection.generic.SequenceView[CC,A]</span><a href="SequenceView.scala.html#10695">SequenceView</a></span>[CC, A] { <span class="comment">// !!! Martin: We should maybe infer the type parameters here?</span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">scalax.collection.Sequence[_]</span><span id="96306"><a id="96305">origin</a></span></span>: <span class="typed"><span class="type">scalax.collection.Sequence[_]</span><a href="../Sequence.scala.html#6296">Sequence</a></span>[_] = <span class="typed"><span class="type">=&gt; scalax.collection.Sequence[A]</span><a href="IterableTemplate.scala.html#17387">thisCC</a></span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">scalax.collection.Iterator[A]</span><span id="96308"><a id="96307">elements</a></span></span>: <span class="typed"><span class="type">scalax.collection.Iterator[A]</span><a href="../Iterator.scala.html#6386">Iterator</a></span>[A] = <span class="typed"><span class="type">SequenceTemplate.this.type</span><a href="#10665">self</a></span>.<span class="typed"><span class="type">=&gt; scalax.collection.Iterator[A]</span><a href="IterableTemplate.scala.html#17388">elements</a></span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><span id="96310"><a id="96309">length</a></span></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = <span class="typed"><span class="type">SequenceTemplate.this.type</span><a href="#10665">self</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="#17647">length</a></span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">(Int)A</span><a id="96311">apply</a></span>(<span class="typed"><span class="type">Int</span><a id="96321">idx</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">A</span><a href="#15736">A</a></span> = <span class="typed"><span class="type">SequenceTemplate.this.type</span><a href="#10665">self</a></span>.<span class="typed"><span class="type">(Int)A</span><a href="../../../scala/Function1.scala.html#17300">apply</a></span>(<span class="typed"><span class="type">Int</span><a href="#96321">idx</a></span>)
+  }
+
+  <span class="comment">/** A sub-sequence view  starting at index `from`
+   *  and extending up to (but not including) index `until`.
+   *
+   *  @param from   The index of the first element of the slice
+   *  @param until  The index of the element following the slice
+   *  @note  The difference between `view` and `slice` is that `view` produces
+   *         a view of the current sequence, whereas `slice` produces a new sequence.
+   *
+   *  @note view(from, to)  is equivalent to view.slice(from, to)
+   */</span> 
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Int,Int)scalax.collection.generic.SequenceView[CC,A]</span><a id="17702">view</a></span>(<span class="typed"><span class="type">Int</span><a id="73152">from</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Int</span><a id="73153">until</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">scalax.collection.generic.SequenceView[CC,A]</span><a href="SequenceView.scala.html#10695">SequenceView</a></span>[CC, A] = <span class="typed"><span class="type">=&gt; scalax.collection.generic.SequenceView[CC,A]</span><a href="#17701">view</a></span>.<span class="typed"><span class="type">(Int,Int)scalax.collection.generic.SequenceView[CC,A]</span><a href="SequenceView.scala.html#24319">slice</a></span>(<span class="typed"><span class="type">Int</span><a href="#73152">from</a></span>, <span class="typed"><span class="type">Int</span><a href="#73153">until</a></span>)
+
+  <span class="comment">/** Returns index of the last element satisying a predicate, or -1.
+   *  @deprecated use `lastIndexWhere` instead
+   */</span>
+  @<span class="typed"><span class="type">deprecated</span><a href="../../../scala/deprecated.scala.html#215">deprecated</a></span> <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)Int</span><a id="17703">findLastIndexOf</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="96332">p</a></span>: A =&gt; Boolean): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = <span class="typed"><span class="type">((A) =&gt; Boolean)Int</span><a href="#17668">lastIndexWhere</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a href="#96332">p</a></span>)
+
+  <span class="comment">/** A sub-sequence starting at index &lt;code&gt;from&lt;/code&gt; 
+    *  and extending up to the length of the current sequence
+    *
+    *  @param from   The index of the first element of the slice
+    *  @throws IndexOutOfBoundsException if &lt;code&gt;from &amp;lt; 0&lt;/code&gt;
+    *  @deprecated   use &lt;code&gt;drop&lt;/code&gt; instead
+    */</span>
+  @<span class="typed"><span class="type">deprecated</span><a href="../../../scala/deprecated.scala.html#215">deprecated</a></span> <span class="keyword">def</span> <span class="typed"><span class="type">(Int)scalax.collection.Sequence[A]</span><a id="17704">slice</a></span>(<span class="typed"><span class="type">Int</span><a id="24586">from</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">scalax.collection.Sequence[A]</span><a href="../Sequence.scala.html#6296">Sequence</a></span>[A] = <span class="typed"><span class="type">(Int,Int)CC[A]</span><a href="IterableTemplate.scala.html#17478">slice</a></span>(<span class="typed"><span class="type">Int</span><a href="#24586">from</a></span>, <span class="typed"><span class="type">=&gt; Int</span><a href="#17647">length</a></span>)
+
+  <span class="comment">/** @deprecated Should be replaced by 
+   *
+   *   &lt;code&gt;(s1, s2) forall { case (x, y) =&gt; f(x, y) }&lt;/code&gt;
+   */</span>
+  @<span class="typed"><span class="type">deprecated</span><a href="../../../scala/deprecated.scala.html#215">deprecated</a></span> <span class="keyword">def</span> <span class="typed"><span class="type">[B](scalax.collection.Sequence[B])((A, B) =&gt; Boolean)Boolean</span><a id="17705">equalsWith</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="17707">B</a></span>](<span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a id="96345">that</a></span>: <span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a href="../Sequence.scala.html#6296">Sequence</a></span>[B])(<span class="typed"><span class="type">(A, B) =&gt; Boolean</span><a id="96346">f</a></span>: (A,B) =&gt; Boolean): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">scalax.collection.Iterator[A]</span><a id="96347">i</a></span> = <span class="typed"><span class="type">SequenceTemplate.this.type</span><a href="#10665" class="keyword">this</a></span>.<span class="typed"><span class="type">=&gt; scalax.collection.Iterator[A]</span><a href="IterableTemplate.scala.html#17388">elements</a></span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">scalax.collection.Iterator[B]</span><a id="96348">j</a></span> = <span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a href="#96345">that</a></span>.<span class="typed"><span class="type">=&gt; scalax.collection.Iterator[B]</span><a href="IterableTemplate.scala.html#17388">elements</a></span>
+    <span class="typed"><span class="type">Unit</span><a href="#96349" class="keyword">while</a></span> (<span class="typed"><span class="type">scalax.collection.Iterator[A]</span><a href="#96347">i</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Iterator.scala.html#20216">hasNext</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">scalax.collection.Iterator[B]</span><a href="#96348">j</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Iterator.scala.html#20216">hasNext</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">(A,B)Boolean</span><a href="../../../scala/Function2.scala.html#20399">f</a></span>(<span class="typed"><span class="type">scalax.collection.Iterator[A]</span><a href="#96347">i</a></span>.<span class="typed"><span class="type">()A</span><a href="../Iterator.scala.html#20217">next</a></span>, <span class="typed"><span class="type">scalax.collection.Iterator[B]</span><a href="#96348">j</a></span>.<span class="typed"><span class="type">()B</span><a href="../Iterator.scala.html#20217">next</a></span>)) <span class="typed"><span class="type">Unit</span><span >(</span></span>)
+    <span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">scalax.collection.Iterator[A]</span><a href="#96347">i</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Iterator.scala.html#20216">hasNext</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">scalax.collection.Iterator[B]</span><a href="#96348">j</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../Iterator.scala.html#20216">hasNext</a></span>
+  }
+
+  <span class="comment">/** Is &lt;code&gt;that&lt;/code&gt; a slice in this? 
+   *  @deprecated  Should be repaced by &lt;code&gt;indexOf(that) != -1&lt;/code&gt;
+   */</span>
+  @<span class="typed"><span class="type">deprecated</span><a href="../../../scala/deprecated.scala.html#215">deprecated</a></span> <span class="keyword">def</span> <span class="typed"><span class="type">[B](scalax.collection.Sequence[B])Boolean</span><a id="17708">containsSlice</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="17710">B</a></span>](<span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a id="96350">that</a></span>: <span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a href="../Sequence.scala.html#6296">Sequence</a></span>[B]): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = <span class="typed"><span class="type">(scalax.collection.Sequence[Any])Int</span><a href="#17681">indexOf</a></span>(<span class="typed"><span class="type">scalax.collection.Sequence[B]</span><a href="#96350">that</a></span>) <span class="typed"><span class="type">(Int)Boolean</span><a id="3140">!=</a></span> -<span class="typed"><span class="type">Int(-1)</span><span class="int">1</span></span> 
+
+}
+
+        </pre>
+    </body>
+</html>

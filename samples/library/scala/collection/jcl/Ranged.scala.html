@@ -1,0 +1,67 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/jcl/Ranged.scala</title>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2006-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |                                         **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: Ranged.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+<span class="keyword">package</span> scala.collection.jcl;
+
+<span class="comment">/** Any collection (including maps) whose keys (or elements) are ordered.
+ *
+ *  @author Sean McDirmid
+ */</span>
+<span class="keyword">trait</span> <span class="typed"><span class="type">trait Ranged[K, A] extends java.lang.Object with scala.collection.Ranged[K,A] with scala.collection.jcl.MutableIterable[A] with ScalaObject</span><a id="8662">Ranged</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="15607">K</a></span>,<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="15608">A</a></span>] <span class="keyword">extends</span> scala.collection.<span class="typed"><span class="type">scala.collection.Ranged[K,A]</span><a href="../Ranged.scala.html#8431">Ranged</a></span>[K,A] <span class="keyword">with</span> <span class="typed"><span class="type">scala.collection.jcl.MutableIterable[A]</span><a href="MutableIterable.scala.html#8743">MutableIterable</a></span>[A] {
+  <span class="keyword">protected</span> <span class="keyword">type</span> <span class="typed"><span class="type">&gt;: Nothing &lt;: scala.collection.jcl.Ranged[K,A]</span><a id="29215">SortedSelf</a></span> &lt;: Ranged[K,A];
+
+  <span class="comment">/** Comparison function that orders keys. */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(K,K)Int</span><a id="29216">compare</a></span>(<span class="typed"><span class="type">K</span><a id="34916">k0</a></span>: <span class="typed"><span class="type">K</span><a href="#15607">K</a></span>, <span class="typed"><span class="type">K</span><a id="34917">k1</a></span>: <span class="typed"><span class="type">K</span><a href="#15607">K</a></span>): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>;
+
+  <span class="comment">/** Creates a ranged projection of this collection. Any mutations in the
+   *  ranged projection will update this collection and vice versa.  Note: keys
+   *  are not garuanteed to be consistent between this collection and the projection.
+   *  This is the case for buffers where indexing is relative to the projection. 
+   *
+   *  @param from  The lower-bound (inclusive) of the ranged projection.
+   *               &lt;code&gt;None&lt;/code&gt; if there is no lower bound.
+   *  @param until The upper-bound (exclusive) of the ranged projection.
+   *               &lt;code&gt;None&lt;/code&gt; if there is no upper bound.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Option[K],Option[K])Ranged.this.SortedSelf</span><a id="29217">rangeImpl</a></span>(<span class="typed"><span class="type">Option[K]</span><a id="34999">from</a></span>: <span class="typed"><span class="type">Option[K]</span><a href="../../Option.scala.html#932">Option</a></span>[K], <span class="typed"><span class="type">Option[K]</span><a id="35000">until</a></span>: <span class="typed"><span class="type">Option[K]</span><a href="../../Option.scala.html#932">Option</a></span>[K]) : <span class="typed"><span class="type">Ranged.this.SortedSelf</span><a href="#29215">SortedSelf</a></span>;
+  <span class="comment">/** Creates a ranged projection of this collection with no upper-bound.
+   ** @param from The lower-bound (inclusive) of the ranged projection.
+   **/</span>
+  <span class="keyword">override</span> <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">(K)Ranged.this.SortedSelf</span><a id="29218">from</a></span>(<span class="typed"><span class="type">K</span><a id="34953">from</a></span>: <span class="typed"><span class="type">K</span><a href="#15607">K</a></span>): <span class="typed"><span class="type">Ranged.this.SortedSelf</span><a href="#29215">SortedSelf</a></span> = <span class="typed"><span class="type">(Option[K],Option[K])Ranged.this.SortedSelf</span><a href="#29217">rangeImpl</a></span>(<span class="typed"><span class="type">(K)Some[K]</span><a href="../../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">K</span><a href="#34953">from</a></span>), <span class="typed"><span class="type">object None</span><a href="../../Option.scala.html#534">None</a></span>);
+  <span class="comment">/** Creates a ranged projection of this collection with no lower-bound.
+   ** @param until The upper-bound (exclusive) of the ranged projection.
+   **/</span>
+  <span class="keyword">override</span> <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">(K)Ranged.this.SortedSelf</span><a id="29219">until</a></span>(<span class="typed"><span class="type">K</span><a id="34956">until</a></span>: <span class="typed"><span class="type">K</span><a href="#15607">K</a></span>): <span class="typed"><span class="type">Ranged.this.SortedSelf</span><a href="#29215">SortedSelf</a></span> = <span class="typed"><span class="type">(Option[K],Option[K])Ranged.this.SortedSelf</span><a href="#29217">rangeImpl</a></span>(<span class="typed"><span class="type">object None</span><a href="../../Option.scala.html#534">None</a></span>, <span class="typed"><span class="type">(K)Some[K]</span><a href="../../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">K</span><a href="#34956">until</a></span>));
+  
+  <span class="comment">/** Creates a ranged projection of this collection with both a lower-bound and an upper-bound.
+   ** @param from The upper-bound (exclusive) of the ranged projection.
+   **/</span>
+  <span class="keyword">override</span> <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">(K,K)Ranged.this.SortedSelf</span><a id="29220">range</a></span>(<span class="typed"><span class="type">K</span><a id="94149">from</a></span>: <span class="typed"><span class="type">K</span><a href="#15607">K</a></span>, <span class="typed"><span class="type">K</span><a id="94150">until</a></span>: <span class="typed"><span class="type">K</span><a href="#15607">K</a></span>) : <span class="typed"><span class="type">Ranged.this.SortedSelf</span><a href="#29215">SortedSelf</a></span> = <span class="typed"><span class="type">(Option[K],Option[K])Ranged.this.SortedSelf</span><a href="#29217">rangeImpl</a></span>(<span class="typed"><span class="type">(K)Some[K]</span><a href="../../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">K</span><a href="#94149">from</a></span>),<span class="typed"><span class="type">(K)Some[K]</span><a href="../../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">K</span><a href="#94150">until</a></span>));
+
+  <span class="comment">/** A wrapper around Java comparators. */</span>
+  <span class="keyword">protected</span> <span class="keyword">class</span> <span class="typed"><span class="type">class Comparator[K] extends java.lang.Object with java.util.Comparator[Any] with ScalaObject</span><span id="29221"><span id="29422"><a id="29425">Comparator</a></span></span></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="29222">K</a></span> &lt;% Ordered[K]] <span class="keyword">extends</span> java.util.<span class="typed"><span class="type">java.util.Comparator[Any]</span><a id="5129">Comparator</a></span>[Any] {
+    <span class="keyword">def</span> <span class="typed"><span class="type">(Any,Any)Int</span><a id="29424">compare</a></span>(<span class="typed"><span class="type">Any</span><a id="94155">x0</a></span> : <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>, <span class="typed"><span class="type">Any</span><a id="94156">x1</a></span> : <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>) = {
+      <span class="typed"><span class="type">Any</span><a href="#94155">x0</a></span>.<span class="typed"><span class="type">(K)Ordered[K]</span><a href="../../Function1.scala.html#17300" id="3501">asInstanceOf</a></span>[<span class="typed"><span class="type">K</span><a href="#29222">K</a></span>].<span class="typed"><span class="type">(K)Int</span><a href="../../Ordered.scala.html#18903">compare</a></span>(<span class="typed"><span class="type">Any</span><a href="#94156">x1</a></span>.<span class="typed"><span class="type">K</span><a id="3501">asInstanceOf</a></span>[<span class="typed"><span class="type">K</span><a href="#29222">K</a></span>]); <span class="comment">//!!!</span>
+    }
+  }
+}
+
+        </pre>
+    </body>
+</html>

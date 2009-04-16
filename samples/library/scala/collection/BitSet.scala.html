@@ -1,0 +1,170 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/BitSet.scala</title>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: BitSet.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+
+<span class="keyword">package</span> scala.collection
+
+<span class="comment">/** &lt;p&gt;
+ *    The class &lt;code&gt;BitSet&lt;/code&gt; provides the interface for a space-efficient
+ *    implementation of dense integer sets represented as bits in array of
+ *    integers. Bit indices are between &lt;code&gt;0..(capacity-1)&lt;/code&gt; inclusive.
+ *  &lt;/p&gt;
+ *
+ *  @author  Burak Emir, Stephane Micheloud, Nikolay Mihaylov
+ *  @author  Martin Odersky
+ *  @version 2.0  01/01/2007
+ */</span>
+
+<span class="keyword">abstract</span> <span class="keyword">class</span> <span class="typed"><span class="type">class BitSet extends java.lang.Object with scala.collection.Set[Int] with ScalaObject</span><a id="8440">BitSet</a></span> <span class="keyword">extends</span> <span class="typed"><span class="type">scala.collection.Set[Int]</span><a href="Set.scala.html#8428">Set</a></span>[Int] {
+
+  <span class="keyword">import</span> compat.Platform.arraycopy
+
+  <span class="comment">/** number of bits in this bitset */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Int</span><a id="50704">size</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>
+
+  <span class="comment">/**
+   *  @param i ...
+   *  @return &lt;code&gt;true&lt;/code&gt; if bit &lt;code&gt;i&lt;/code&gt; is set.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Boolean</span><a id="50705">contains</a></span>(<span class="typed"><span class="type">Int</span><a id="82785">i</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = {
+    (<span class="typed"><span class="type">Int</span><a href="#82785">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#50706">capacity</a></span>) <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> {
+      <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="82788">j</a></span> = <span class="typed"><span class="type">(Int)Int</span><a href="#50714">offset</a></span>(<span class="typed"><span class="type">Int</span><a href="#82785">i</a></span>)
+      (<span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3142">&lt;=</a></span> <span class="typed"><span class="type">Int</span><a href="#82788">j</a></span>) <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> (<span class="typed"><span class="type">Int</span><a href="#82788">j</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">=&gt; Array[Int]</span><a href="#50707">arr</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="../Array.scala.html#17252">length</a></span>) <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span>
+      ((<span class="typed"><span class="type">(Int)Int</span><a href="../Array.scala.html#17253">arr</a></span>(<span class="typed"><span class="type">Int</span><a href="#82788">j</a></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3151">&amp;</a></span> <span class="typed"><span class="type">(Int)Int</span><a href="#50715">mask</a></span>(<span class="typed"><span class="type">Int</span><a href="#82785">i</a></span>)) <span class="typed"><span class="type">(Int)Boolean</span><a id="3140">!=</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>)
+    }
+  }
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Int</span><a id="50706">capacity</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>
+
+  <span class="keyword">protected</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Array[Int]</span><a id="50707">arr</a></span>: <span class="typed"><span class="type">Array[Int]</span><a href="../Array.scala.html#1070">Array</a></span>[Int]
+
+  <span class="comment">/** returns an iterator over the truth values of all bits */</span>
+   <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Iterator[Int]</span><a id="50708">elements</a></span>: <span class="typed"><span class="type">Iterator[Int]</span><a href="../Iterator.scala.html#1337">Iterator</a></span>[Int] = <span class="typed"><span class="type">template $anon extends java.lang.Object with Iterator[Int]</span><a id="82802" class="keyword">new</a></span> <span class="typed"><span class="type">Iterator[Int]</span><a href="../Iterator.scala.html#1337">Iterator</a></span>[Int] {
+     <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><span id="82806"><span id="82804"><span id="82805"><a id="82812">i</a></span></span></span></span> = <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>
+     <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Unit</span><a id="82807">findNext</a></span>: <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = {
+       <span class="typed"><span class="type">Unit</span><a href="#82814" class="keyword">while</a></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">BitSet.this.type</span><a href="#8440">BitSet</a></span>.<span class="keyword">this</span>.<span class="typed"><span class="type">(Int)Boolean</span><a href="#50705">contains</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="#82804">i</a></span>) <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> (<span class="typed"><span class="type">=&gt; Int</span><a href="#82804">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#50706">capacity</a></span>))
+         <span class="typed"><span class="type">(Int)Unit</span><a href="#82805">i</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="#82804">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+     }
+     <span class="typed"><span class="type">=&gt; Unit</span><a href="#82807">findNext</a></span>
+     <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="82808">hasNext</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="#82804">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#50706">capacity</a></span>
+     <span class="keyword">def</span> <span class="typed"><span class="type">()Int</span><a id="82809">next</a></span>(): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = { <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="82837">j</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="#82804">i</a></span>; <span class="typed"><span class="type">(Int)Unit</span><a href="#82805">i</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="#82804">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>; <span class="typed"><span class="type">=&gt; Unit</span><a href="#82807">findNext</a></span>; <span class="typed"><span class="type">Int</span><a href="#82837">j</a></span> }
+   }
+
+
+  <span class="comment">/**
+   * @return a copy of the array underlying this bitset
+   */</span>
+     <span class="comment">/*
+  def toArray: Array[Int] = {
+    val length = memsize(capacity)
+    val newarr = new Array[Int](length)
+    if (arr.length &gt; 0)
+      arraycopy(this.arr, 0, newarr, 0, length)
+    newarr
+  }*/</span>
+
+  <span class="comment">/** Checks if two bitsets are structurally identical.
+   *  Uses accelerated (32 x faster) check if the other set is a BitSet
+   *
+   *  @param other ...
+   *  @return      &lt;code&gt;true&lt;/code&gt;, iff both bitsets contain the same
+   *               elements.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Any)Boolean</span><a id="50709">equals</a></span>(<span class="typed"><span class="type">Any</span><a id="82856">other</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = <span class="typed"><span class="type">Any</span><a href="#82856">other</a></span> <span class="typed"><span class="type">Boolean</span><span class="keyword">match</span></span> {
+    <span class="typed"><span class="type">Boolean</span><span class="keyword">case</span></span> <span class="typed"><span class="type">scala.collection.BitSet</span><a id="82857">that</a></span>: <span class="typed"><span class="type">scala.collection.BitSet</span><a href="#8440">BitSet</a></span> =&gt;
+      (<span class="typed"><span class="type">=&gt; Int</span><a href="#50704">size</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3139">==</a></span> <span class="typed"><span class="type">scala.collection.BitSet</span><a href="#82857">that</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="#50704">size</a></span>) <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> {
+        <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="82860">len</a></span> = <span class="typed"><span class="type">(Int)Int</span><a href="#50712">memsize</a></span>(<span class="typed"><span class="type">object Math</span><a href="../Math.scala.html#606">Math</a></span>.<span class="typed"><span class="type">(Int,Int)Int</span><a href="../Math.scala.html#25150">min</a></span>(<span class="typed"><span class="type">BitSet.this.type</span><a href="#8440" class="keyword">this</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="#50706">capacity</a></span>, <span class="typed"><span class="type">scala.collection.BitSet</span><a href="#82857">that</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="#50706">capacity</a></span>))
+        <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="82861">i</a></span> = <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>
+        <span class="typed"><span class="type">Unit</span><a href="#82862" class="keyword">while</a></span> (<span class="typed"><span class="type">Int</span><a href="#82861">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int</span><a href="#82860">len</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">(Int)Int</span><a href="../Array.scala.html#17253">arr</a></span>(<span class="typed"><span class="type">Int</span><a href="#82861">i</a></span>) <span class="typed"><span class="type">(Int)Boolean</span><a id="3139">==</a></span> <span class="typed"><span class="type">scala.collection.BitSet</span><a href="#82857">that</a></span>.<span class="typed"><span class="type">(Int)Int</span><a href="../Array.scala.html#17253">arr</a></span>(<span class="typed"><span class="type">Int</span><a href="#82861">i</a></span>)) <span class="typed"><span class="type">Int</span><a href="#82861">i</a></span> = <span class="typed"><span class="type">Int</span><a href="#82861">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+        <span class="typed"><span class="type">Int</span><a href="#82861">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3139">==</a></span> <span class="typed"><span class="type">Int</span><a href="#82860">len</a></span>
+      }
+    <span class="typed"><span class="type">Boolean</span><span class="keyword">case</span></span> _ =&gt;
+      <span class="keyword">super</span>.<span class="typed"><span class="type">(Any)Boolean</span><a href="Set.scala.html#22913">equals</a></span>(<span class="typed"><span class="type">Any</span><a href="#82856">other</a></span>)
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()Int</span><a id="50710">hashCode</a></span>(): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="82910">len</a></span> = <span class="typed"><span class="type">(Int)Int</span><a href="#50712">memsize</a></span>(<span class="typed"><span class="type">BitSet.this.type</span><a href="#8440" class="keyword">this</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="#50706">capacity</a></span>)
+    <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="82911">h</a></span> = <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>
+    <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="82912">i</a></span> = <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>
+    <span class="typed"><span class="type">Unit</span><a href="#82913" class="keyword">while</a></span> (<span class="typed"><span class="type">Int</span><a href="#82912">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int</span><a href="#82910">len</a></span>) { <span class="typed"><span class="type">Int</span><a href="#82911">h</a></span> = <span class="typed"><span class="type">Int</span><a href="#82911">h</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3147">*</a></span> <span class="typed"><span class="type">Int(41)</span><span class="int">41</span></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">(Int)Int</span><a href="../Array.scala.html#17253">arr</a></span>(<span class="typed"><span class="type">Int</span><a href="#82912">i</a></span>); <span class="typed"><span class="type">Int</span><a href="#82912">i</a></span> = <span class="typed"><span class="type">Int</span><a href="#82912">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span> }
+    <span class="typed"><span class="type">Int</span><a href="#82911">h</a></span>
+  }
+
+  <span class="comment">/** Checks if this set is a subset of set &lt;code&gt;that&lt;/code&gt;.
+   *  Uses accelerated (32 x faster) check if the other set is a BitSet
+   *
+   *  @param other another set.
+   *  @return      &lt;code&gt;true&lt;/code&gt;, iff the other set is a superset of
+   *               this set.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(scala.collection.Set[Int])Boolean</span><a id="50711">subsetOf</a></span>(<span class="typed"><span class="type">scala.collection.Set[Int]</span><a id="82956">other</a></span>: <span class="typed"><span class="type">scala.collection.Set[Int]</span><a href="Set.scala.html#8428">Set</a></span>[Int]): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = <span class="typed"><span class="type">scala.collection.Set[Int]</span><a href="#82956">other</a></span> <span class="typed"><span class="type">Boolean</span><span class="keyword">match</span></span> {
+    <span class="typed"><span class="type">Boolean</span><span class="keyword">case</span></span> <span class="typed"><span class="type">scala.collection.BitSet</span><a id="82957">that</a></span>: <span class="typed"><span class="type">scala.collection.BitSet</span><a href="#8440">BitSet</a></span> =&gt;
+      <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="82958">thisLen</a></span> = <span class="typed"><span class="type">(Int)Int</span><a href="#50712">memsize</a></span>(<span class="typed"><span class="type">BitSet.this.type</span><a href="#8440" class="keyword">this</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="#50706">capacity</a></span>)
+      <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="82959">thatLen</a></span> = <span class="typed"><span class="type">(Int)Int</span><a href="#50712">memsize</a></span>(<span class="typed"><span class="type">scala.collection.BitSet</span><a href="#82957">that</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="#50706">capacity</a></span>)
+      <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="82960">minLen</a></span> = <span class="typed"><span class="type">object Math</span><a href="../Math.scala.html#606">Math</a></span>.<span class="typed"><span class="type">(Int,Int)Int</span><a href="../Math.scala.html#25150">min</a></span>(<span class="typed"><span class="type">Int</span><a href="#82958">thisLen</a></span>, <span class="typed"><span class="type">Int</span><a href="#82959">thatLen</a></span>)
+      <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="82961">i</a></span> = <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>
+      <span class="typed"><span class="type">Unit</span><a href="#82962" class="keyword">while</a></span> (<span class="typed"><span class="type">Int</span><a href="#82961">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int</span><a href="#82960">minLen</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">scala.collection.BitSet</span><a href="#82957">that</a></span>.<span class="typed"><span class="type">(Int)Int</span><a href="../Array.scala.html#17253">arr</a></span>(<span class="typed"><span class="type">Int</span><a href="#82961">i</a></span>) <span class="typed"><span class="type">(Int)Boolean</span><a id="3139">==</a></span> (<span class="typed"><span class="type">scala.collection.BitSet</span><a href="#82957">that</a></span>.<span class="typed"><span class="type">(Int)Int</span><a href="../Array.scala.html#17253">arr</a></span>(<span class="typed"><span class="type">Int</span><a href="#82961">i</a></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3150">|</a></span> <span class="typed"><span class="type">(Int)Int</span><a href="../Array.scala.html#17253">arr</a></span>(<span class="typed"><span class="type">Int</span><a href="#82961">i</a></span>))) <span class="typed"><span class="type">Int</span><a href="#82961">i</a></span> = <span class="typed"><span class="type">Int</span><a href="#82961">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+      <span class="typed"><span class="type">Unit</span><a href="#82963" class="keyword">while</a></span> (<span class="typed"><span class="type">Int</span><a href="#82961">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int</span><a href="#82958">thisLen</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">(Int)Int</span><a href="../Array.scala.html#17253">arr</a></span>(<span class="typed"><span class="type">Int</span><a href="#82961">i</a></span>) <span class="typed"><span class="type">(Int)Boolean</span><a id="3139">==</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) <span class="typed"><span class="type">Int</span><a href="#82961">i</a></span> = <span class="typed"><span class="type">Int</span><a href="#82961">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+      <span class="typed"><span class="type">Int</span><a href="#82961">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3139">==</a></span> <span class="typed"><span class="type">Int</span><a href="#82958">thisLen</a></span>
+    <span class="typed"><span class="type">Boolean</span><span class="keyword">case</span></span> _ =&gt;
+      <span class="keyword">super</span>.<span class="typed"><span class="type">(scala.collection.Set[Int])Boolean</span><a href="Set.scala.html#22910">subsetOf</a></span>(<span class="typed"><span class="type">scala.collection.Set[Int]</span><a href="#82956">other</a></span>)
+  }
+
+  <span class="comment">/**
+   *  @param n the number of bits to be stored.
+   *  @return  the number of &lt;code&gt;Int&lt;/code&gt; cells needed to store
+   *           &lt;code&gt;n&lt;/code&gt; bits.
+   */</span>
+  <span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Int</span><a id="50712">memsize</a></span>(<span class="typed"><span class="type">Int</span><a id="82863">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = <span class="typed"><span class="type">(Int)Int</span><a href="#50714">offset</a></span>(<span class="typed"><span class="type">Int</span><a href="#82863">n</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int(31)</span><span class="int">31</span></span>)
+
+  <span class="comment">/** 
+   *  @param n ...
+   *  @return  the number of bits represented by &lt;code&gt;n&lt;/code&gt; words.
+   */</span>
+  <span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Int</span><a id="50713">nbits</a></span>(<span class="typed"><span class="type">Int</span><a id="83045">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = <span class="typed"><span class="type">Int</span><a href="#83045">n</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3088">&lt;&lt;</a></span> <span class="typed"><span class="type">Int(5)</span><span class="int">5</span></span>
+
+  <span class="comment">/**
+   *  @param n ...
+   *  @return the position in the array where the bit resides.
+   */</span>
+  <span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Int</span><a id="50714">offset</a></span>(<span class="typed"><span class="type">Int</span><a id="82789">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = <span class="typed"><span class="type">Int</span><a href="#82789">n</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3090">&gt;&gt;&gt;</a></span> <span class="typed"><span class="type">Int(5)</span><span class="int">5</span></span>
+
+  <span class="comment">/**
+   *  @param n ...
+   *  @return a mask with 1 at the position of the bit.
+   */</span>
+  <span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Int</span><a id="50715">mask</a></span>(<span class="typed"><span class="type">Int</span><a id="82799">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span> <span class="typed"><span class="type">(Int)Int</span><a id="3088">&lt;&lt;</a></span> (<span class="typed"><span class="type">Int</span><a href="#82799">n</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3151">&amp;</a></span> <span class="typed"><span class="type">Int(31)</span><span class="int">0x1F</span></span>)
+
+  <span class="comment">/**
+   * @return a copy of the array underlying this bitset
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Array[Int]</span><a id="50716">underlying</a></span> : <span class="typed"><span class="type">Array[Int]</span><a href="../Array.scala.html#1070">Array</a></span>[Int] = {
+     <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="83051">length</a></span> = <span class="typed"><span class="type">(Int)Int</span><a href="#50712">memsize</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="#50706">capacity</a></span>)
+     <span class="keyword">val</span> <span class="typed"><span class="type">Array[Int]</span><a id="83052">newarr</a></span> = <span class="typed"><span class="type">Array[Int]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">Array[Int]</span><a href="../Array.scala.html#1070">Array</a></span>[Int](<span class="typed"><span class="type">Int</span><a href="#83051">length</a></span>)
+     <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Array[Int]</span><a href="#50707">arr</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="../Array.scala.html#17252">length</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>)
+       <span class="typed"><span class="type">(AnyRef,Int,AnyRef,Int,Int)Unit</span><a href="../compat/Platform.scala.html#17279">arraycopy</a></span>(<span class="typed"><span class="type">BitSet.this.type</span><a href="#8440" class="keyword">this</a></span>.<span class="typed"><span class="type">=&gt; Array[Int]</span><a href="#50707">arr</a></span>, <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>, <span class="typed"><span class="type">Array[Int]</span><a href="#83052">newarr</a></span>, <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>, <span class="typed"><span class="type">Int</span><a href="#83051">length</a></span>)
+     <span class="typed"><span class="type">Array[Int]</span><a href="#83052">newarr</a></span>
+   }
+
+  <span class="keyword">protected</span> <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; java.lang.String</span><a id="50717">stringPrefix</a></span> = <span class="typed"><span class="type">java.lang.String(&quot;Set&quot;)</span><span class="string">&quot;Set&quot;</span></span>
+}
+
+        </pre>
+    </body>
+</html>

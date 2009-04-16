@@ -1,0 +1,66 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/actors/remote/JavaSerializer.scala</title>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2005-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: JavaSerializer.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+<span class="keyword">package</span> scala.actors.remote
+
+<span class="keyword">import</span> java.io.{ByteArrayInputStream, ByteArrayOutputStream,
+                ObjectInputStream, ObjectOutputStream, InputStream,
+                ObjectStreamClass}
+
+<span class="comment">/**
+ *  @author Guy Oliver
+ */</span>
+<span class="keyword">class</span> <span class="typed"><span class="type">class CustomObjectInputStream extends java.io.ObjectInputStream with ScalaObject</span><a id="8362">CustomObjectInputStream</a></span>(<span class="typed"><span class="type">java.io.InputStream</span><span id="122853"><a id="122860">os</a></span></span>: <span class="typed"><span class="type">java.io.InputStream</span><a id="3742">InputStream</a></span>, <span class="typed"><span class="type">java.lang.ClassLoader</span><span id="122854"><a id="122861">cl</a></span></span>: <span class="typed"><span class="type">java.lang.ClassLoader</span><a id="1724">ClassLoader</a></span>) <span class="keyword">extends</span> <span class="typed"><span class="type">java.io.ObjectInputStream</span><a id="3832">ObjectInputStream</a></span>(<span class="typed"><span class="type">java.io.InputStream</span><a href="#122860">os</a></span>) {
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(java.io.ObjectStreamClass)Class[_]</span><a id="122856">resolveClass</a></span>(<span class="typed"><span class="type">java.io.ObjectStreamClass</span><a id="122864">cd</a></span>: <span class="typed"><span class="type">java.io.ObjectStreamClass</span><a id="3541">ObjectStreamClass</a></span>): Class[T] <span class="typed"><span class="type">Class[_]</span><a id="1670" class="keyword">forSome</a></span> { <span class="keyword">type</span> T } =
+    <span class="keyword">try</span> {
+      <span class="typed"><span class="type">java.lang.ClassLoader</span><a href="#122854">cl</a></span>.<span class="typed"><span class="type">(java.lang.String)java.lang.Class[_]</span><a id="33123">loadClass</a></span>(<span class="typed"><span class="type">java.io.ObjectStreamClass</span><a href="#122864">cd</a></span>.<span class="typed"><span class="type">()java.lang.String</span><a id="122893">getName</a></span>())
+    } <span class="keyword">catch</span> {
+      <span class="typed"><span class="type">java.lang.Class[?0]</span><span class="keyword">case</span></span> <span class="typed"><span class="type">java.lang.ClassNotFoundException</span><a id="123004">cnf</a></span>: <span class="typed"><span class="type">java.lang.ClassNotFoundException</span><a id="1727">ClassNotFoundException</a></span> =&gt;
+        <span class="keyword">super</span>.<span class="typed"><span class="type">(java.io.ObjectStreamClass)java.lang.Class[_]</span><a id="43492">resolveClass</a></span>(<span class="typed"><span class="type">java.io.ObjectStreamClass</span><a href="#122864">cd</a></span>)
+    }
+}
+
+<span class="comment">/**
+ *  @author Philipp Haller
+ */</span>
+<span class="keyword">class</span> <span class="typed"><span class="type">class JavaSerializer extends scala.actors.remote.Serializer with ScalaObject</span><a id="8338">JavaSerializer</a></span>(<span class="typed"><span class="type">scala.actors.remote.Service</span><span id="111752"><a id="111757">serv</a></span></span>: <span class="typed"><span class="type">scala.actors.remote.Service</span><a href="Service.scala.html#8266">Service</a></span>, <span class="typed"><span class="type">java.lang.ClassLoader</span><span id="111753"><a id="111758">cl</a></span></span>: <span class="typed"><span class="type">java.lang.ClassLoader</span><a id="1724">ClassLoader</a></span>) <span class="keyword">extends</span> <span class="typed"><span class="type">scala.actors.remote.Serializer</span><a href="Serializer.scala.html#8260">Serializer</a></span>(<span class="typed"><span class="type">scala.actors.remote.Service</span><a href="#111757">serv</a></span>) {
+  <span class="keyword">def</span> <span class="typed"><span class="type">(AnyRef)Array[Byte]</span><a id="111755">serialize</a></span>(<span class="typed"><span class="type">AnyRef</span><a id="123030">o</a></span>: <span class="typed"><span class="type">AnyRef</span><a id="2015">AnyRef</a></span>): <span class="typed"><span class="type">Array[Byte]</span><a href="../../Array.scala.html#1070">Array</a></span>[Byte] = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">java.io.ByteArrayOutputStream</span><a id="123031">bos</a></span> = <span class="typed"><span class="type">java.io.ByteArrayOutputStream</span><span class="keyword">new</span></span> <span class="typed"><span class="type">java.io.ByteArrayOutputStream</span><a id="3649">ByteArrayOutputStream</a></span>()
+    <span class="keyword">val</span> <span class="typed"><span class="type">java.io.ObjectOutputStream</span><a id="123032">out</a></span> = <span class="typed"><span class="type">java.io.ObjectOutputStream</span><span class="keyword">new</span></span> <span class="typed"><span class="type">java.io.ObjectOutputStream</span><a id="3658">ObjectOutputStream</a></span>(<span class="typed"><span class="type">java.io.ByteArrayOutputStream</span><a href="#123031">bos</a></span>)
+    <span class="typed"><span class="type">java.io.ObjectOutputStream</span><a href="#123032">out</a></span>.<span class="typed"><span class="type">(Any)Unit</span><a id="43365">writeObject</a></span>(<span class="typed"><span class="type">AnyRef</span><a href="#123030">o</a></span>)
+    <span class="typed"><span class="type">java.io.ObjectOutputStream</span><a href="#123032">out</a></span>.<span class="typed"><span class="type">()Unit</span><a id="43385">flush</a></span>()
+    <span class="typed"><span class="type">java.io.ByteArrayOutputStream</span><a href="#123031">bos</a></span>.<span class="typed"><span class="type">()Array[Byte]</span><a id="33607">toByteArray</a></span>()
+  }
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Array[Byte])AnyRef</span><a id="111756">deserialize</a></span>(<span class="typed"><span class="type">Array[Byte]</span><a id="123038">bytes</a></span>: <span class="typed"><span class="type">Array[Byte]</span><a href="../../Array.scala.html#1070">Array</a></span>[Byte]): <span class="typed"><span class="type">AnyRef</span><a id="2015">AnyRef</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">java.io.ByteArrayInputStream</span><a id="123039">bis</a></span> = <span class="typed"><span class="type">java.io.ByteArrayInputStream</span><span class="keyword">new</span></span> <span class="typed"><span class="type">java.io.ByteArrayInputStream</span><a id="3556">ByteArrayInputStream</a></span>(<span class="typed"><span class="type">Array[Byte]</span><a href="#123038">bytes</a></span>)
+
+    <span class="comment">// use custom stream only if cl != null</span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">java.io.ObjectInputStream</span><a id="123040">in</a></span> = <span class="typed"><span class="type">java.io.ObjectInputStream</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">java.lang.ClassLoader</span><a href="#111753">cl</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5791">!=</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>)
+      <span class="typed"><span class="type">scala.actors.remote.CustomObjectInputStream</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.actors.remote.CustomObjectInputStream</span><a href="#8362">CustomObjectInputStream</a></span>(<span class="typed"><span class="type">java.io.ByteArrayInputStream</span><a href="#123039">bis</a></span>, <span class="typed"><span class="type">java.lang.ClassLoader</span><a href="#111753">cl</a></span>)
+    <span class="keyword">else</span>
+      <span class="typed"><span class="type">java.io.ObjectInputStream</span><span class="keyword">new</span></span> <span class="typed"><span class="type">java.io.ObjectInputStream</span><a id="3832">ObjectInputStream</a></span>(<span class="typed"><span class="type">java.io.ByteArrayInputStream</span><a href="#123039">bis</a></span>)
+
+    <span class="typed"><span class="type">java.io.ObjectInputStream</span><a href="#123040">in</a></span>.<span class="typed"><span class="type">()java.lang.Object</span><a id="43485">readObject</a></span>()
+  }
+}
+
+        </pre>
+    </body>
+</html>

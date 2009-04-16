@@ -1,0 +1,46 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/mutable/RevertableHistory.scala</title>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: RevertableHistory.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+
+<span class="keyword">package</span> scala.collection.mutable
+
+
+<span class="comment">/** A revertable history is a &lt;code&gt;History&lt;/code&gt; object which supports
+ *  an undo operation. Type variable &lt;code&gt;A&lt;/code&gt; refers to the type
+ *  of the published events, &lt;code&gt;B&lt;/code&gt; denotes the publisher type.
+ *  Type &lt;code&gt;B&lt;/code&gt; is typically a subtype of &lt;code&gt;Publisher&lt;/code&gt;.
+ *  
+ *  @author  Matthias Zenger
+ *  @version 1.0, 08/07/2003
+ */</span>
+@<span class="typed"><span class="type">serializable</span><a href="../../serializable.scala.html#647">serializable</a></span>
+<span class="keyword">class</span> <span class="typed"><span class="type">class RevertableHistory[A &lt;: scala.collection.mutable.Undoable, B] extends scala.collection.mutable.History[A,B] with scala.collection.mutable.Undoable with ScalaObject</span><a id="11389">RevertableHistory</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: scala.collection.mutable.Undoable</span><a id="13097">A</a></span> &lt;: Undoable, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="13098">B</a></span>] <span class="keyword">extends</span> <span class="typed"><span class="type">scala.collection.mutable.History[A,B]</span><a href="History.scala.html#11428">History</a></span>[A, B] <span class="keyword">with</span> <span class="typed"><span class="type">scala.collection.mutable.Undoable</span><a href="Undoable.scala.html#11512">Undoable</a></span> {
+
+  <span class="comment">/** Rollback the full history.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="53962">undo</a></span>: <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">List[(B, A)]</span><a id="53966">old</a></span> = <span class="typed"><span class="type">=&gt; scala.collection.mutable.Queue[(B, A)]</span><a href="History.scala.html#53952">log</a></span>.<span class="typed"><span class="type">=&gt; List[(B, A)]</span><a href="MutableList.scala.html#52732">toList</a></span>.<span class="typed"><span class="type">=&gt; List[(B, A)]</span><a href="../../List.scala.html#20934">reverse</a></span>
+    <span class="typed"><span class="type">()Unit</span><a href="History.scala.html#53960">clear</a></span>
+    <span class="typed"><span class="type">List[(B, A)]</span><a href="#53966">old</a></span>.<span class="typed"><span class="type">(((B, A)) =&gt; Unit)Unit</span><a href="../../List.scala.html#20910">foreach</a></span> <span class="typed"><span class="type">Unit</span><a href="#53970">{</a></span> <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <a id="1">(</a><span class="typed"><span class="type">B</span><a id="53971">sub</a></span>, <span class="typed"><span class="type">A</span><a id="53972">event</a></span>) =&gt; <span class="typed"><span class="type">A</span><a href="#53972">event</a></span>.<span class="typed"><span class="type">()Unit</span><a href="Undoable.scala.html#53963">undo</a></span> }
+  }
+}
+
+        </pre>
+    </body>
+</html>

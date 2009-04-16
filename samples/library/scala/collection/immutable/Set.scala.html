@@ -1,0 +1,200 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/immutable/Set.scala</title>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: Set.scala 16884 2009-01-09 16:52:09Z cunei $</span>
+
+
+<span class="keyword">package</span> scala.collection.immutable
+
+
+<span class="comment">/** Canonical factories for immutable sets.  The canonical immutable sets are
+  *  currently implemented using &lt;a href=&quot;HashSet.html&quot;&gt;immutable hash sets&lt;/a&gt;.
+  */</span> 
+<span class="keyword">object</span> <span class="typed"><span class="type">object scala.collection.immutable.Set</span><a id="9492">Set</a></span> {
+  <span class="comment">/** The empty set of this type
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[A]scala.collection.immutable.Set[A]</span><a id="53414">empty</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="53416">A</a></span>]: <span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#9491">Set</a></span>[A] = <span class="typed"><span class="type">scala.collection.immutable.EmptySet[A]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.immutable.EmptySet[A]</span><a href="EmptySet.scala.html#9185">EmptySet</a></span>[A]
+
+  <span class="comment">/** The canonical factory for this type
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[A](A*)scala.collection.immutable.Set[A]</span><a id="53417">apply</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="53419">A</a></span>](<span class="typed"><span class="type">A*</span><a id="53422">elems</a></span>: <span class="typed"><span class="type">A*</span><a id="2739">A</a></span>*) = <span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#53414">empty</a></span>[<span class="typed"><span class="type">A</span><a href="#53419">A</a></span>] <span class="typed"><span class="type">(Iterable[A])scala.collection.immutable.Set[A]</span><a href="#50962">++</a></span> <span class="typed"><span class="type">A*</span><a href="#53422">elems</a></span>
+}
+
+<span class="comment">/** &lt;p&gt;
+ *    This class defines the interface for immutable sets.  Operations
+ *    on an immutable set leave the original set unchanged, and return
+ *    a new set if needed.
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    Concrete set implementations just have to provide functionality for
+ *    the abstract methods in &lt;code&gt;scala.collection.Set&lt;/code&gt; as well as
+ *    for &lt;code&gt;+&lt;/code&gt; and &lt;code&gt;-&lt;/code&gt;.
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    Note that abstract immutable.Set's are not covariant in their type
+ *    parameter.  This is because some implementations cannot support the
+ *    &lt;code&gt;+&lt;/code&gt; method for arbitrary types.
+ *  &lt;/p&gt;
+ *
+ *  @author  Matthias Zenger, Martin Odersky
+ *  @version 1.1, 03/05/2004
+ */</span>
+<span class="keyword">trait</span> <span class="typed"><span class="type">trait Set[A] extends java.lang.Object with scala.collection.Set[A] with ScalaObject</span><a id="9491">Set</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="13080">A</a></span>] <span class="keyword">extends</span> <span class="typed"><span class="type">java.lang.Object</span><a id="2163">AnyRef</a></span> <span class="keyword">with</span> collection.<span class="typed"><span class="type">scala.collection.Set[A]</span><a href="../Set.scala.html#8428">Set</a></span>[A] {
+
+  <span class="comment">/** @return an empty set of arbitrary element type
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B]scala.collection.immutable.Set[B]</span><a id="50957">empty</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="50959">B</a></span>]: <span class="typed"><span class="type">scala.collection.immutable.Set[B]</span><a href="#9491">Set</a></span>[B]
+
+  <span class="comment">/** Create a new set with an additional element.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A)scala.collection.immutable.Set[A]</span><a id="50960">+</a></span>(<span class="typed"><span class="type">A</span><a id="51011">elem</a></span>: <span class="typed"><span class="type">A</span><a href="#13080">A</a></span>): <span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#9491">Set</a></span>[A]
+
+  <span class="comment">/** Add two or more elements to this set. 
+   *  @param    elem1 the first element.
+   *  @param    elem2 the second element.
+   *  @param    elems the remaining elements.
+   *  @return a new set with the elements added.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A,A,A*)scala.collection.immutable.Set[A]</span><a id="50961">+</a></span> (<span class="typed"><span class="type">A</span><a id="51007">elem1</a></span>: <span class="typed"><span class="type">A</span><a href="#13080">A</a></span>, <span class="typed"><span class="type">A</span><a id="51008">elem2</a></span>: <span class="typed"><span class="type">A</span><a href="#13080">A</a></span>, <span class="typed"><span class="type">A*</span><a id="51009">elems</a></span>: <span class="typed"><span class="type">A*</span><a id="2739">A</a></span>*): <span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#9491">Set</a></span>[A] = 
+    <span class="typed"><span class="type">Set.this.type</span><a href="#9491" class="keyword">this</a></span> <span class="typed"><span class="type">(A)scala.collection.immutable.Set[A]</span><a href="#50960">+</a></span> <span class="typed"><span class="type">A</span><a href="#51007">elem1</a></span> <span class="typed"><span class="type">(A)scala.collection.immutable.Set[A]</span><a href="#50960">+</a></span> <span class="typed"><span class="type">A</span><a href="#51008">elem2</a></span> <span class="typed"><span class="type">(Iterable[A])scala.collection.immutable.Set[A]</span><a href="#50962">++</a></span> <span class="typed"><span class="type">A*</span><a href="#51009">elems</a></span>
+
+  <span class="comment">/** Add all the elements provided by an iterator
+   *  of the iterable object &lt;code&gt;elems&lt;/code&gt; to the set.
+   *
+   *  @param elems  the iterable object containing the elements to be added 
+   *  @return a new set with the elements added.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Iterable[A])scala.collection.immutable.Set[A]</span><a id="50962">++</a></span> (<span class="typed"><span class="type">Iterable[A]</span><a id="52314">elems</a></span>: <span class="typed"><span class="type">Iterable[A]</span><a href="../../Iterable.scala.html#401">Iterable</a></span>[A]): <span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#9491">Set</a></span>[A] = 
+    (<span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#9491" class="keyword">this</a></span> <span class="typed"><span class="type">(scala.collection.immutable.Set[A])((scala.collection.immutable.Set[A], A) =&gt; scala.collection.immutable.Set[A])scala.collection.immutable.Set[A]</span><a href="../../Iterable.scala.html#17342">/:</a></span> <span class="typed"><span class="type">Iterable[A]</span><a href="#52314">elems</a></span>) ((<span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a id="53461">s</a></span>, <span class="typed"><span class="type">A</span><a id="53462">elem</a></span>) =&gt; <span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#53461">s</a></span> <span class="typed"><span class="type">(A)scala.collection.immutable.Set[A]</span><a href="#50960">+</a></span> <span class="typed"><span class="type">A</span><a href="#53462">elem</a></span>)
+
+  <span class="comment">/** Add all the elements provided by an iterator to the set.
+   *  @param elems  the iterator containing the elements to be added 
+   *  @return a new set with the elements added.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Iterator[A])scala.collection.immutable.Set[A]</span><a id="50963">++</a></span> (<span class="typed"><span class="type">Iterator[A]</span><a id="52316">elems</a></span>: <span class="typed"><span class="type">Iterator[A]</span><a href="../../Iterator.scala.html#1337">Iterator</a></span>[A]): <span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#9491">Set</a></span>[A] = 
+    (<span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#9491" class="keyword">this</a></span> <span class="typed"><span class="type">(scala.collection.immutable.Set[A])((scala.collection.immutable.Set[A], A) =&gt; scala.collection.immutable.Set[A])scala.collection.immutable.Set[A]</span><a href="../../Iterator.scala.html#20016">/:</a></span> <span class="typed"><span class="type">Iterator[A]</span><a href="#52316">elems</a></span>) ((<span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a id="53467">s</a></span>, <span class="typed"><span class="type">A</span><a id="53468">elem</a></span>) =&gt; <span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#53467">s</a></span> <span class="typed"><span class="type">(A)scala.collection.immutable.Set[A]</span><a href="#50960">+</a></span> <span class="typed"><span class="type">A</span><a href="#53468">elem</a></span>)
+
+  <span class="comment">/** &lt;code&gt;incl&lt;/code&gt; can be used to add many elements to the set
+   *  at the same time.
+   *  @deprecated use &lt;code&gt;+&lt;/code&gt; instead
+   */</span>
+  @<span class="typed"><span class="type">deprecated</span><a href="../../deprecated.scala.html#215">deprecated</a></span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A*)scala.collection.immutable.Set[A]</span><a id="50964">incl</a></span>(<span class="typed"><span class="type">A*</span><a id="53470">elems</a></span>: <span class="typed"><span class="type">A*</span><a id="2739">A</a></span>*): <span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#9491">Set</a></span>[A] = <span class="typed"><span class="type">(Iterable[A])scala.collection.immutable.Set[A]</span><a href="#50965">incl</a></span>(<span class="typed"><span class="type">A*</span><a href="#53470">elems</a></span>)
+    
+  <span class="comment">/** This method will add all the elements provided by an iterator
+   *  of the iterable object &lt;code&gt;that&lt;/code&gt; to the set.
+   *  @deprecated use &lt;code&gt;++&lt;/code&gt; instead
+   */</span>
+  @<span class="typed"><span class="type">deprecated</span><a href="../../deprecated.scala.html#215">deprecated</a></span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Iterable[A])scala.collection.immutable.Set[A]</span><a id="50965">incl</a></span>(<span class="typed"><span class="type">Iterable[A]</span><a id="53472">that</a></span>: <span class="typed"><span class="type">Iterable[A]</span><a href="../../Iterable.scala.html#401">Iterable</a></span>[A]): <span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#9491">Set</a></span>[A] =
+    <span class="typed"><span class="type">Iterable[A]</span><a href="#53472">that</a></span>.<span class="typed"><span class="type">(scala.collection.immutable.Set[A])((scala.collection.immutable.Set[A], A) =&gt; scala.collection.immutable.Set[A])scala.collection.immutable.Set[A]</span><a href="../../Iterable.scala.html#17336">foldLeft</a></span>(<span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#9491" class="keyword">this</a></span>)((<span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a id="53475">set</a></span>, <span class="typed"><span class="type">A</span><a id="53476">elem</a></span>) =&gt; <span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#53475">set</a></span> <span class="typed"><span class="type">(A)scala.collection.immutable.Set[A]</span><a href="#50960">+</a></span> <span class="typed"><span class="type">A</span><a href="#53476">elem</a></span>)
+
+  <span class="comment">/** Remove a single element from a set.
+   *  @param elem the element to be removed
+   *  @return a new set with the element removed.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A)scala.collection.immutable.Set[A]</span><a id="50966">-</a></span>(<span class="typed"><span class="type">A</span><a id="53478">elem</a></span>: <span class="typed"><span class="type">A</span><a href="#13080">A</a></span>): <span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#9491">Set</a></span>[A]
+    
+  <span class="comment">/** Remove two or more elements from this set.
+   *
+   *  @param    elem1 the first element.
+   *  @param    elem2 the second element.
+   *  @param    elems the remaining elements.
+   *  @return a new set with the elements removed.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A,A,A*)scala.collection.immutable.Set[A]</span><a id="50967">-</a></span> (<span class="typed"><span class="type">A</span><a id="53479">elem1</a></span>: <span class="typed"><span class="type">A</span><a href="#13080">A</a></span>, <span class="typed"><span class="type">A</span><a id="53480">elem2</a></span>: <span class="typed"><span class="type">A</span><a href="#13080">A</a></span>, <span class="typed"><span class="type">A*</span><a id="53481">elems</a></span>: <span class="typed"><span class="type">A*</span><a id="2739">A</a></span>*): <span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#9491">Set</a></span>[A] = 
+    <span class="typed"><span class="type">Set.this.type</span><a href="#9491" class="keyword">this</a></span> <span class="typed"><span class="type">(A)scala.collection.immutable.Set[A]</span><a href="#50966">-</a></span> <span class="typed"><span class="type">A</span><a href="#53479">elem1</a></span> <span class="typed"><span class="type">(A)scala.collection.immutable.Set[A]</span><a href="#50966">-</a></span> <span class="typed"><span class="type">A</span><a href="#53480">elem2</a></span> <span class="typed"><span class="type">(Iterable[A])scala.collection.immutable.Set[A]</span><a href="#50968">--</a></span> <span class="typed"><span class="type">A*</span><a href="#53481">elems</a></span>
+
+  <span class="comment">/** Remove all the elements provided by an iterator
+   *  of the iterable object &lt;code&gt;elems&lt;/code&gt; from the set.
+   *
+   *  @param elems An iterable object containing the elements to remove from the set.
+   *  @return a new set with the elements removed.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Iterable[A])scala.collection.immutable.Set[A]</span><a id="50968">--</a></span> (<span class="typed"><span class="type">Iterable[A]</span><a id="53486">elems</a></span>: <span class="typed"><span class="type">Iterable[A]</span><a href="../../Iterable.scala.html#401">Iterable</a></span>[A]): <span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#9491">Set</a></span>[A] = <span class="typed"><span class="type">Set.this.type</span><a href="#9491" class="keyword">this</a></span> <span class="typed"><span class="type">(Iterator[A])scala.collection.immutable.Set[A]</span><a href="#50969">--</a></span> <span class="typed"><span class="type">Iterable[A]</span><a href="#53486">elems</a></span>.<span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="../../Iterable.scala.html#17309">elements</a></span>
+
+  <span class="comment">/** Remove all the elements provided by an iterator
+   *  &lt;code&gt;elems&lt;/code&gt; from the set.
+   *
+   *  @param elems An iterator containing the elements to remove from the set.
+   *  @return a new set with the elements removed.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Iterator[A])scala.collection.immutable.Set[A]</span><a id="50969">--</a></span> (<span class="typed"><span class="type">Iterator[A]</span><a id="53485">elems</a></span>: <span class="typed"><span class="type">Iterator[A]</span><a href="../../Iterator.scala.html#1337">Iterator</a></span>[A]): <span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#9491">Set</a></span>[A] =
+    (<span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#9491" class="keyword">this</a></span> <span class="typed"><span class="type">(scala.collection.immutable.Set[A])((scala.collection.immutable.Set[A], A) =&gt; scala.collection.immutable.Set[A])scala.collection.immutable.Set[A]</span><a href="../../Iterator.scala.html#20016">/:</a></span> <span class="typed"><span class="type">Iterator[A]</span><a href="#53485">elems</a></span>) ((<span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a id="53491">s</a></span>, <span class="typed"><span class="type">A</span><a id="53492">elem</a></span>) =&gt; <span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#53491">s</a></span> <span class="typed"><span class="type">(A)scala.collection.immutable.Set[A]</span><a href="#50966">-</a></span> <span class="typed"><span class="type">A</span><a href="#53492">elem</a></span>)
+
+  <span class="comment">/** &lt;code&gt;excl&lt;/code&gt; removes many elements from the set.
+   */</span>
+  @<span class="typed"><span class="type">deprecated</span><a href="../../deprecated.scala.html#215">deprecated</a></span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A*)scala.collection.immutable.Set[A]</span><a id="50970">excl</a></span>(<span class="typed"><span class="type">A*</span><a id="53494">elems</a></span>: <span class="typed"><span class="type">A*</span><a id="2739">A</a></span>*): <span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#9491">Set</a></span>[A] = <span class="typed"><span class="type">(Iterable[A])scala.collection.immutable.Set[A]</span><a href="#50971">excl</a></span>(<span class="typed"><span class="type">A*</span><a href="#53494">elems</a></span>)
+    
+  <span class="comment">/** This method removes all the elements provided by an iterator
+   *  of the iterable object &lt;code&gt;that&lt;/code&gt; from the set.
+   *
+   *  @param that the iterable collection.
+   */</span>
+  @<span class="typed"><span class="type">deprecated</span><a href="../../deprecated.scala.html#215">deprecated</a></span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Iterable[A])scala.collection.immutable.Set[A]</span><a id="50971">excl</a></span>(<span class="typed"><span class="type">Iterable[A]</span><a id="53496">that</a></span>: <span class="typed"><span class="type">Iterable[A]</span><a href="../../Iterable.scala.html#401">Iterable</a></span>[A]): <span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#9491">Set</a></span>[A] =
+    <span class="typed"><span class="type">Iterable[A]</span><a href="#53496">that</a></span>.<span class="typed"><span class="type">(scala.collection.immutable.Set[A])((scala.collection.immutable.Set[A], A) =&gt; scala.collection.immutable.Set[A])scala.collection.immutable.Set[A]</span><a href="../../Iterable.scala.html#17336">foldLeft</a></span>(<span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#9491" class="keyword">this</a></span>)((<span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a id="53499">set</a></span>, <span class="typed"><span class="type">A</span><a id="53500">elem</a></span>) =&gt; <span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#53499">set</a></span> <span class="typed"><span class="type">(A)scala.collection.immutable.Set[A]</span><a href="#50966">-</a></span> <span class="typed"><span class="type">A</span><a href="#53500">elem</a></span>)
+
+  <span class="comment">/** This method computes an intersection with set &lt;code&gt;that&lt;/code&gt;.
+   *  It removes all the elements that are not present in &lt;code&gt;that&lt;/code&gt;.
+   *
+   *  @param that the set to intersect with.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(scala.collection.Set[A])scala.collection.immutable.Set[A]</span><a id="50972">intersect</a></span>(<span class="typed"><span class="type">scala.collection.Set[A]</span><a id="53502">that</a></span>: collection.<span class="typed"><span class="type">scala.collection.Set[A]</span><a href="../Set.scala.html#8428">Set</a></span>[A]): <span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#9491">Set</a></span>[A] = <span class="typed"><span class="type">((A) =&gt; Boolean)scala.collection.immutable.Set[A]</span><a href="#50980">filter</a></span>(<span class="typed"><span class="type">scala.collection.Set[A]</span><a href="#53502">that</a></span>.<span class="typed"><span class="type">(A)Boolean</span><a href="../Set.scala.html#22907">contains</a></span>)
+
+  <span class="comment">/** This method is an alias for &lt;code&gt;intersect&lt;/code&gt;. 
+   *  It computes an intersection with set &lt;code&gt;that&lt;/code&gt;.
+   *  It removes all the elements that are not present in &lt;code&gt;that&lt;/code&gt;.
+   *
+   *  @param that the set to intersect with
+   */</span>
+   <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(scala.collection.Set[A])scala.collection.immutable.Set[A]</span><a id="50973">**</a></span> (<span class="typed"><span class="type">scala.collection.Set[A]</span><a id="53506">that</a></span>: collection.<span class="typed"><span class="type">scala.collection.Set[A]</span><a href="../Set.scala.html#8428">Set</a></span>[A]): <span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#9491">Set</a></span>[A] = <span class="typed"><span class="type">(scala.collection.Set[A])scala.collection.immutable.Set[A]</span><a href="#50972">intersect</a></span>(<span class="typed"><span class="type">scala.collection.Set[A]</span><a href="#53506">that</a></span>)
+
+  <span class="comment">/** Returns the set resulting from applying the given function &lt;code&gt;f&lt;/code&gt; to each
+   *  element of this set.
+   *
+   *  @param f function to apply to each element.
+   *  @return a set containing &lt;code&gt;f(a0), ..., f(an)&lt;/code&gt; 
+   *          if this set contains &lt;code&gt;a0, ..., an&lt;/code&gt;.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">[B]((A) =&gt; B)scala.collection.immutable.Set[B]</span><a id="50974">map</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="50976">B</a></span>](<span class="typed"><span class="type">(A) =&gt; B</span><a id="53507">f</a></span>: A =&gt; B): <span class="typed"><span class="type">scala.collection.immutable.Set[B]</span><a href="#9491">Set</a></span>[B] =
+    <span class="typed"><span class="type">(scala.collection.immutable.Set[B])((scala.collection.immutable.Set[B], A) =&gt; scala.collection.immutable.Set[B])scala.collection.immutable.Set[B]</span><a href="../../Iterable.scala.html#17336">foldLeft</a></span>(<span class="typed"><span class="type">scala.collection.immutable.Set[B]</span><a href="#50957">empty</a></span>[<span class="typed"><span class="type">B</span><a href="#50976">B</a></span>])((<span class="typed"><span class="type">scala.collection.immutable.Set[B]</span><a id="53510">set</a></span>: <span class="typed"><span class="type">scala.collection.immutable.Set[B]</span><a href="#9491">Set</a></span>[B], <span class="typed"><span class="type">A</span><a id="53511">elem</a></span>: <span class="typed"><span class="type">A</span><a href="#13080">A</a></span>) =&gt; <span class="typed"><span class="type">scala.collection.immutable.Set[B]</span><a href="#53510">set</a></span> <span class="typed"><span class="type">(B)scala.collection.immutable.Set[B]</span><a href="#50960">+</a></span> <span class="typed"><span class="type">(A)B</span><a href="../../Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">A</span><a href="#53511">elem</a></span>))
+
+  <span class="comment">/** Applies the given function &lt;code&gt;f&lt;/code&gt; to each element of
+   *  this set, then forms the union of all results.
+   *
+   *  @param f function to apply to each element.
+   *  @return a set containing all elements in each &lt;code&gt;f(a0), ..., f(an)&lt;/code&gt; 
+   *          if this set contains &lt;code&gt;a0, ..., an&lt;/code&gt;.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">[B]((A) =&gt; Iterable[B])scala.collection.immutable.Set[B]</span><a id="50977">flatMap</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="50979">B</a></span>](<span class="typed"><span class="type">(A) =&gt; Iterable[B]</span><a id="53513">f</a></span>: A =&gt; Iterable[B]): <span class="typed"><span class="type">scala.collection.immutable.Set[B]</span><a href="#9491">Set</a></span>[B] =
+    <span class="typed"><span class="type">(scala.collection.immutable.Set[B])((scala.collection.immutable.Set[B], A) =&gt; scala.collection.immutable.Set[B])scala.collection.immutable.Set[B]</span><a href="../../Iterable.scala.html#17336">foldLeft</a></span>(<span class="typed"><span class="type">scala.collection.immutable.Set[B]</span><a href="#50957">empty</a></span>[<span class="typed"><span class="type">B</span><a href="#50979">B</a></span>])((<span class="typed"><span class="type">scala.collection.immutable.Set[B]</span><a id="53516">set</a></span>: <span class="typed"><span class="type">scala.collection.immutable.Set[B]</span><a href="#9491">Set</a></span>[B], <span class="typed"><span class="type">A</span><a id="53517">elem</a></span>: <span class="typed"><span class="type">A</span><a href="#13080">A</a></span>) =&gt; <span class="typed"><span class="type">scala.collection.immutable.Set[B]</span><a href="#53516">set</a></span> <span class="typed"><span class="type">(Iterable[B])scala.collection.immutable.Set[B]</span><a href="#50962">++</a></span> <span class="typed"><span class="type">(A)Iterable[B]</span><a href="../../Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">A</span><a href="#53517">elem</a></span>))
+
+  <span class="comment">/** Method &lt;code&gt;filter&lt;/code&gt; removes all elements from the set for
+   *  which the predicate &lt;code&gt;p&lt;/code&gt; yields the value &lt;code&gt;false&lt;/code&gt;.
+   *
+   *  @param p The predicate used to filter the set
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)scala.collection.immutable.Set[A]</span><a id="50980">filter</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="53503">p</a></span>: A =&gt; Boolean): <span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#9491">Set</a></span>[A] =
+    (<span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#9491" class="keyword">this</a></span> <span class="typed"><span class="type">(scala.collection.immutable.Set[A])((scala.collection.immutable.Set[A], A) =&gt; scala.collection.immutable.Set[A])scala.collection.immutable.Set[A]</span><a href="../../Iterable.scala.html#17342">/:</a></span> <span class="typed"><span class="type">=&gt; List[A]</span><a href="../../Iterable.scala.html#17360">toList</a></span>)((<span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a id="53537">set</a></span>, <span class="typed"><span class="type">A</span><a id="53538">elem</a></span>) =&gt; <span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">(A)Boolean</span><a href="../../Function1.scala.html#17300">p</a></span>(<span class="typed"><span class="type">A</span><a href="#53538">elem</a></span>)) <span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#53537">set</a></span> <span class="keyword">else</span> <span class="typed"><span class="type">scala.collection.immutable.Set[A]</span><a href="#53537">set</a></span> <span class="typed"><span class="type">(A)scala.collection.immutable.Set[A]</span><a href="#50966">-</a></span> <span class="typed"><span class="type">A</span><a href="#53538">elem</a></span>)
+
+}
+
+        </pre>
+    </body>
+</html>

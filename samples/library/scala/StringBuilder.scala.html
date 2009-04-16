@@ -1,0 +1,965 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/StringBuilder.scala</title>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2006-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: StringBuilder.scala 16884 2009-01-09 16:52:09Z cunei $</span>
+
+
+<span class="keyword">package</span> scala
+
+<span class="keyword">import</span> Predef._
+
+<span class="comment">/** &lt;p&gt;
+ *    A mutable sequence of characters.  This class provides an API compatible
+ *    with &lt;a class=&quot;java/lang/StringBuilder&quot; href=&quot;&quot; target=&quot;_top&quot;&gt;
+ *    &lt;code&gt;java.lang.StringBuilder&lt;/code&gt;&lt;/a&gt;.
+ *  &lt;/p&gt;
+ *
+ *  @author Stephane Micheloud
+ *  @version 1.0
+ */</span>
+@<span class="typed"><span class="type">serializable</span><a href="serializable.scala.html#647">serializable</a></span>
+@<span class="typed"><span class="type">SerialVersionUID</span><a href="SerialVersionUID.scala.html#263">SerialVersionUID</a></span>(<span class="int">0</span> <span class="typed"><span class="type">Long(-8525408645367278351L)</span><span >-</span></span> <span class="long">8525408645367278351L</span>)
+<span class="keyword">final</span> <span class="keyword">class</span> <span class="typed"><span class="type">class StringBuilder extends java.lang.Object with (Int) =&gt; Char with ScalaObject</span><a id="1433">StringBuilder</a></span>(<span class="typed"><span class="type">Int</span><span id="19610"><a id="19681">initCapacity</a></span></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="keyword">private</span> <span class="keyword">val</span> <span class="typed"><span class="type">String</span><span id="19612"><span id="19611"><a id="19682">initValue</a></span></span></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>)
+      <span class="keyword">extends</span> (Int =&gt; Char) {
+  <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#19610">initCapacity</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">java.lang.IllegalArgumentException</span><span class="keyword">new</span></span> <span class="typed"><span class="type">java.lang.IllegalArgumentException</span><a href="Predef.scala.html#13341">IllegalArgumentException</a></span>
+  <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; String</span><a href="#19611">initValue</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">java.lang.NullPointerException</span><span class="keyword">new</span></span> <span class="typed"><span class="type">java.lang.NullPointerException</span><a href="Predef.scala.html#13335">NullPointerException</a></span>
+
+  <span class="comment">/** The value is used for character storage. */</span>
+  <span class="keyword">private</span> <span class="keyword">var</span> <span class="typed"><span class="type">Array[Char]</span><span id="19616"><span id="19614"><span id="19615"><a id="84736">value</a></span></span></span></span> = <span class="typed"><span class="type">Array[Char]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">Array[Char]</span><a href="Array.scala.html#1070">Array</a></span>[Char](<span class="typed"><span class="type">Int</span><a href="#19610">initCapacity</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">=&gt; String</span><a href="#19611">initValue</a></span>.<span class="typed"><span class="type">()Int</span><a id="5819">length</a></span>)
+
+  <span class="comment">/** The count is the number of characters used. */</span>
+  <span class="keyword">private</span> <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><span id="19619"><span id="19617"><span id="19618"><a id="84737">count</a></span></span></span></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>
+
+  <span class="comment">/** Constructs a string builder with no characters in it and an 
+   *  initial capacity of 16 characters.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">()StringBuilder</span><a id="19620" class="keyword">this</a></span>() = <span class="typed"><span class="type">StringBuilder.this.type</span><a href="#1433" class="keyword">this</a></span>(<span class="typed"><span class="type">Int(16)</span><span class="int">16</span></span>, <span class="typed"><span class="type">java.lang.String(&quot;&quot;)</span><span class="string">&quot;&quot;</span></span>)
+
+  <span class="comment">/** Constructs a string builder with no characters in it and an 
+   *  initial capacity specified by the &lt;code&gt;capacity&lt;/code&gt; argument. 
+   *
+   *  @param  capacity  the initial capacity.
+   *  @throws NegativeArraySizeException  if the &lt;code&gt;capacity&lt;/code&gt;
+   *                    argument is less than &lt;code&gt;0&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)StringBuilder</span><a id="19621" class="keyword">this</a></span>(<span class="typed"><span class="type">Int</span><a id="19678">capacity</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>) = <span class="typed"><span class="type">StringBuilder.this.type</span><a href="#1433" class="keyword">this</a></span>(<span class="typed"><span class="type">Int</span><a href="#19678">capacity</a></span>, <span class="typed"><span class="type">java.lang.String(&quot;&quot;)</span><span class="string">&quot;&quot;</span></span>)
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">(String)StringBuilder</span><a id="19622" class="keyword">this</a></span>(<span class="typed"><span class="type">String</span><a id="19676">str</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>) = <span class="typed"><span class="type">StringBuilder.this.type</span><a href="#1433" class="keyword">this</a></span>(<span class="typed"><span class="type">Int(16)</span><span class="int">16</span></span>, <span class="typed"><span class="type">String</span><a href="#19676">str</a></span>)
+
+  <span class="typed"><span class="type">(String)StringBuilder</span><a href="#19639">append</a></span>(<span class="typed"><span class="type">=&gt; String</span><a href="#19611">initValue</a></span>)
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Array[Char]</span><a id="19623">toArray</a></span>: <span class="typed"><span class="type">Array[Char]</span><a href="Array.scala.html#1070">Array</a></span>[Char] = <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Int</span><a id="19624">length</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Unit</span><a id="19625">length_=</a></span>(<span class="typed"><span class="type">Int</span><a id="84790">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>) { <span class="typed"><span class="type">(Int)Unit</span><a href="#19626">setLength</a></span>(<span class="typed"><span class="type">Int</span><a href="#84790">n</a></span>) }
+
+  <span class="comment">/** Sets the length of the character sequence.
+   *
+   *  @param  newLength  the new length
+   *  @throws IndexOutOfBoundsException  if the &lt;code&gt;n&lt;/code&gt; argument is negative.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Unit</span><a id="19626">setLength</a></span>(<span class="typed"><span class="type">Int</span><a id="31069">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>) {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#31069">n</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>)
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(Int)java.lang.StringIndexOutOfBoundsException</span><a id="57032" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.StringIndexOutOfBoundsException</span><a href="Predef.scala.html#13339">StringIndexOutOfBoundsException</a></span>(<span class="typed"><span class="type">Int</span><a href="#31069">n</a></span>)
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#31069">n</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="Array.scala.html#17252">length</a></span>) <span class="typed"><span class="type">(Int)Unit</span><a href="#19630">expandCapacity</a></span>(<span class="typed"><span class="type">Int</span><a href="#31069">n</a></span>)
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int</span><a href="#31069">n</a></span>)
+      <span class="typed"><span class="type">Unit</span><a href="#84798" class="keyword">while</a></span> (<span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int</span><a href="#31069">n</a></span>) {
+        <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>) = <span class="typed"><span class="type">Char('\00')</span><span class="char">'\0'</span></span>; <span class="typed"><span class="type">(Int)Unit</span><a href="#19618">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+      }
+    <span class="keyword">else</span>
+      <span class="typed"><span class="type">(Int)Unit</span><a href="#19618">count</a></span> = <span class="typed"><span class="type">Int</span><a href="#31069">n</a></span>
+  }
+
+  <span class="comment">/** Returns the current capacity. The capacity is the amount of storage 
+   *  available for newly inserted characters, beyond which an allocation 
+   *  will occur.
+   *
+   *  @return  the current capacity
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Int</span><a id="19627">capacity</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="Array.scala.html#17252">length</a></span>
+
+  <span class="comment">/** Same as &lt;code&gt;ensureCapacity&lt;/code&gt;. */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Unit</span><a id="19628">capacity_=</a></span>(<span class="typed"><span class="type">Int</span><a id="84825">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>) { <span class="typed"><span class="type">(Int)Unit</span><a href="#19629">ensureCapacity</a></span>(<span class="typed"><span class="type">Int</span><a href="#84825">n</a></span>) }
+
+  <span class="comment">/** &lt;p&gt;
+   *    Ensures that the capacity is at least equal to the specified minimum.
+   *    If the current capacity is less than the argument, then a new internal
+   *    array is allocated with greater capacity. The new capacity is the larger of: 
+   *  &lt;/p&gt;
+   *  &lt;ul&gt;
+   *    &lt;li&gt;The &lt;code&gt;n&lt;/code&gt; argument. 
+   *    &lt;li&gt;Twice the old capacity, plus &lt;code&gt;2&lt;/code&gt;. 
+   *  &lt;/ul&gt;
+   *  &lt;p&gt;
+   *    If the &lt;code&gt;n&lt;/code&gt; argument is non-positive, this
+   *    method takes no action and simply returns.
+   *  &lt;/p&gt;
+   *
+   *  @param n the minimum desired capacity.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Unit</span><a id="19629">ensureCapacity</a></span>(<span class="typed"><span class="type">Int</span><a id="58480">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>) {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#58480">n</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="Array.scala.html#17252">length</a></span>) <span class="typed"><span class="type">(Int)Unit</span><a href="#19630">expandCapacity</a></span>(<span class="typed"><span class="type">Int</span><a href="#58480">n</a></span>)
+  }
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Unit</span><a id="19630">expandCapacity</a></span>(<span class="typed"><span class="type">Int</span><a id="84796">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>) {
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="84828">newCapacity</a></span> = (<span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="Array.scala.html#17252">length</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3147">*</a></span> <span class="typed"><span class="type">Int(2)</span><span class="int">2</span></span>
+    <span class="typed"><span class="type">(Array[Char])Unit</span><a href="#19615">value</a></span> = <span class="typed"><span class="type">object StringBuilder</span><a href="#1434">StringBuilder</a></span>.<span class="typed"><span class="type">(Array[Char],Int)Array[Char]</span><a href="#26563">copyOf</a></span>(
+      <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>,
+      <span class="typed"><span class="type">Int</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#84828">newCapacity</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) <span class="typed"><span class="type">object Math</span><a href="Math.scala.html#606">Math</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="Math.scala.html#25087">MAX_INT</a></span> <span class="keyword">else</span> <span class="typed"><span class="type">Int</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#84796">n</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">Int</span><a href="#84828">newCapacity</a></span>) <span class="typed"><span class="type">Int</span><a href="#84796">n</a></span> <span class="keyword">else</span> <span class="typed"><span class="type">Int</span><a href="#84828">newCapacity</a></span>
+    )
+  }
+
+  <span class="comment">/** &lt;p&gt;
+   *    Returns the &lt;code&gt;Char&lt;/code&gt; value in this sequence at the specified index.
+   *    The first &lt;code&gt;Char&lt;/code&gt; value is at index &lt;code&gt;0&lt;/code&gt;, the next at index
+   *    &lt;code&gt;1&lt;/code&gt;, and so on, as in array indexing.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The index argument must be greater than or equal to
+   *    &lt;code&gt;0&lt;/code&gt;, and less than the length of this sequence.
+   *  &lt;/p&gt;
+   *
+   *  @param  index   the index of the desired &lt;code&gt;Char&lt;/code&gt; value.
+   *  @return         the &lt;code&gt;Char&lt;/code&gt; value at the specified index.
+   *  @throws IndexOutOfBoundsException  if &lt;code&gt;index&lt;/code&gt; is 
+   *                  negative or greater than or equal to &lt;code&gt;length()&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Char</span><a id="19631">charAt</a></span>(<span class="typed"><span class="type">Int</span><a id="47562">index</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Char</span><a id="2387">Char</a></span> = {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#47562">index</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span> <span class="typed"><span class="type">Int</span><a href="#47562">index</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3144">&gt;=</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>)
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(Int)java.lang.StringIndexOutOfBoundsException</span><a id="57032" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.StringIndexOutOfBoundsException</span><a href="Predef.scala.html#13339">StringIndexOutOfBoundsException</a></span>(<span class="typed"><span class="type">Int</span><a href="#47562">index</a></span>)
+    <span class="typed"><span class="type">(Int)Char</span><a href="Array.scala.html#17253">value</a></span>(<span class="typed"><span class="type">Int</span><a href="#47562">index</a></span>)
+  }
+
+  <span class="comment">/** Same as &lt;code&gt;charAt&lt;/code&gt;. */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Char</span><a id="19632">apply</a></span>(<span class="typed"><span class="type">Int</span><a id="84844">i</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Char</span><a id="2387">Char</a></span> = <span class="typed"><span class="type">(Int)Char</span><a href="#19631">charAt</a></span>(<span class="typed"><span class="type">Int</span><a href="#84844">i</a></span>)
+
+  <span class="comment">/** &lt;p&gt;
+   *    Removes the &lt;code&gt;Char&lt;/code&gt; at the specified position in this
+   *    sequence. This sequence is shortened by one &lt;code&gt;Char&lt;/code&gt;.
+   *  &lt;/p&gt;
+   *
+   *  @param  index  Index of &lt;code&gt;Char&lt;/code&gt; to remove
+   *  @return        This object.
+   *  @throws StringIndexOutOfBoundsException  if the &lt;code&gt;index&lt;/code&gt;
+   *	             is negative or greater than or equal to &lt;code&gt;length()&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)StringBuilder</span><a id="19633">deleteCharAt</a></span>(<span class="typed"><span class="type">Int</span><a id="58484">index</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> = {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#58484">index</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span> <span class="typed"><span class="type">Int</span><a href="#58484">index</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3144">&gt;=</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>)
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(Int)java.lang.StringIndexOutOfBoundsException</span><a id="57032" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.StringIndexOutOfBoundsException</span><a href="Predef.scala.html#13339">StringIndexOutOfBoundsException</a></span>(<span class="typed"><span class="type">Int</span><a href="#58484">index</a></span>)
+    compat.<span class="typed"><span class="type">object scala.compat.Platform</span><a href="compat/Platform.scala.html#12224">Platform</a></span>.<span class="typed"><span class="type">(AnyRef,Int,AnyRef,Int,Int)Unit</span><a href="compat/Platform.scala.html#17279">arraycopy</a></span>(<span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>, <span class="typed"><span class="type">Int</span><a href="#58484">index</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>, <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>, <span class="typed"><span class="type">Int</span><a href="#58484">index</a></span>, <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int</span><a href="#58484">index</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>)
+    <span class="typed"><span class="type">(Int)Unit</span><a href="#19618">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+    <span class="typed"><span class="type">StringBuilder</span><a href="#1433" class="keyword">this</a></span>
+  }
+
+  <span class="comment">/** &lt;p&gt;
+   *    The character at the specified index is set to &lt;code&gt;ch&lt;/code&gt;. This 
+   *    sequence is altered to represent a new character sequence that is 
+   *    identical to the old character sequence, except that it contains the 
+   *    character &lt;code&gt;ch&lt;/code&gt; at position &lt;code&gt;index&lt;/code&gt;. 
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The index argument must be greater than or equal to 
+   *    &lt;code&gt;0&lt;/code&gt;, and less than the length of this sequence. 
+   *  &lt;/p&gt;
+   *
+   *  @param  index   the index of the character to modify.
+   *  @param  ch      the new character.
+   *  @throws IndexOutOfBoundsException  if &lt;code&gt;index&lt;/code&gt; is 
+   *                  negative or greater than or equal to &lt;code&gt;length()&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,Char)Unit</span><a id="19634">setCharAt</a></span>(<span class="typed"><span class="type">Int</span><a id="58387">index</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Char</span><a id="58388">ch</a></span>: <span class="typed"><span class="type">Char</span><a id="2387">Char</a></span>) {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#58387">index</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span> <span class="typed"><span class="type">Int</span><a href="#58387">index</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3144">&gt;=</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>)
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(Int)java.lang.StringIndexOutOfBoundsException</span><a id="57032" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.StringIndexOutOfBoundsException</span><a href="Predef.scala.html#13339">StringIndexOutOfBoundsException</a></span>(<span class="typed"><span class="type">Int</span><a href="#58387">index</a></span>)
+    <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>(<span class="typed"><span class="type">Int</span><a href="#58387">index</a></span>) = <span class="typed"><span class="type">Char</span><a href="#58388">ch</a></span>
+  }
+
+  <span class="comment">/** Same as &lt;code&gt;setCharAt&lt;/code&gt;. */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,Char)Unit</span><a id="19635">update</a></span>(<span class="typed"><span class="type">Int</span><a id="84905">i</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Char</span><a id="84906">c</a></span>: <span class="typed"><span class="type">Char</span><a id="2387">Char</a></span>) { <span class="typed"><span class="type">(Int,Char)Unit</span><a href="#19634">setCharAt</a></span>(<span class="typed"><span class="type">Int</span><a href="#84905">i</a></span>, <span class="typed"><span class="type">Char</span><a href="#84906">c</a></span>) }
+
+  <span class="comment">/** Returns a new &lt;code&gt;String&lt;/code&gt; that contains a subsequence of
+   *  characters currently contained in this character sequence. The 
+   *  substring begins at the specified index and extends to the end of
+   *  this sequence.
+   * 
+   *  @param  start  The beginning index, inclusive.
+   *  @return        The new string.
+   *  @throws StringIndexOutOfBoundsException  if &lt;code&gt;start&lt;/code&gt; is
+   *                 less than zero, or greater than the length of this object.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)String</span><a id="19636">substring</a></span>(<span class="typed"><span class="type">Int</span><a id="84907">start</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">String</span><a id="1859">String</a></span> = <span class="typed"><span class="type">(Int,Int)String</span><a href="#19637">substring</a></span>(<span class="typed"><span class="type">Int</span><a href="#84907">start</a></span>, <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>)
+
+  <span class="comment">/** Returns a new &lt;code&gt;String&lt;/code&gt; that contains a subsequence of
+   *  characters currently contained in this sequence. The 
+   *  substring begins at the specified &lt;code&gt;start&lt;/code&gt; and 
+   *  extends to the character at index &lt;code&gt;end - 1&lt;/code&gt;.
+   *
+   *  @param  start  The beginning index, inclusive.
+   *  @param  end    The ending index, exclusive.
+   *  @return The new string.
+   *  @throws StringIndexOutOfBoundsException  if &lt;code&gt;start&lt;/code&gt;
+   *                 or &lt;code&gt;end&lt;/code&gt; are negative or greater than
+   *		     &lt;code&gt;length()&lt;/code&gt;, or &lt;code&gt;start&lt;/code&gt; is
+   *		     greater than &lt;code&gt;end&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,Int)String</span><a id="19637">substring</a></span>(<span class="typed"><span class="type">Int</span><a id="84909">start</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Int</span><a id="84910">end</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">String</span><a id="1859">String</a></span> = {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#84909">start</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>)
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(Int)java.lang.StringIndexOutOfBoundsException</span><a id="57032" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.StringIndexOutOfBoundsException</span><a href="Predef.scala.html#13339">StringIndexOutOfBoundsException</a></span>(<span class="typed"><span class="type">Int</span><a href="#84909">start</a></span>)
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#84910">end</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>)
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(Int)java.lang.StringIndexOutOfBoundsException</span><a id="57032" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.StringIndexOutOfBoundsException</span><a href="Predef.scala.html#13339">StringIndexOutOfBoundsException</a></span>(<span class="typed"><span class="type">Int</span><a href="#84910">end</a></span>)
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#84909">start</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">Int</span><a href="#84910">end</a></span>)
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(Int)java.lang.StringIndexOutOfBoundsException</span><a id="57032" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.StringIndexOutOfBoundsException</span><a href="Predef.scala.html#13339">StringIndexOutOfBoundsException</a></span>(<span class="typed"><span class="type">Int</span><a href="#84910">end</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int</span><a href="#84909">start</a></span>)
+    <span class="typed"><span class="type">(Array[Char],Int,Int)java.lang.String</span><a id="5808" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.String</span><a href="Predef.scala.html#13327">String</a></span>(<span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>, <span class="typed"><span class="type">Int</span><a href="#84909">start</a></span>, <span class="typed"><span class="type">Int</span><a href="#84910">end</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int</span><a href="#84909">start</a></span>)
+  }
+
+  <span class="comment">/** &lt;p&gt;
+   *    Appends the string representation of the &lt;code&gt;Any&lt;/code&gt; 
+   *    argument.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The argument is converted to a string as if by the method 
+   *    &lt;code&gt;String.valueOf&lt;/code&gt;, and the characters of that 
+   *    string are then appended to this sequence.
+   *  &lt;/p&gt;
+   *
+   *  @param  x   an &lt;code&gt;Any&lt;/code&gt; object.
+   *  @return     a reference to this object.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Any)StringBuilder</span><a id="19638">append</a></span>(<span class="typed"><span class="type">Any</span><a id="19699">x</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> =
+    <span class="typed"><span class="type">(String)StringBuilder</span><a href="#19639">append</a></span>(<span class="typed"><span class="type">object java.lang.String</span><a id="1860">String</a></span>.<span class="typed"><span class="type">(Any)java.lang.String</span><a id="5873">valueOf</a></span>(<span class="typed"><span class="type">Any</span><a href="#19699">x</a></span>))
+
+  <span class="comment">/** Appends the specified string to this character sequence.
+   *
+   *  @param  s   a string.
+   *  @return     a reference to this object.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(String)StringBuilder</span><a id="19639">append</a></span>(<span class="typed"><span class="type">String</span><a id="19698">s</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.String</span><a id="84983">str</a></span> = <span class="typed"><span class="type">java.lang.String</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">String</span><a href="#19698">s</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="3507">==</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) <span class="typed"><span class="type">java.lang.String(&quot;null&quot;)</span><span class="string">&quot;null&quot;</span></span> <span class="keyword">else</span> <span class="typed"><span class="type">String</span><a href="#19698">s</a></span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="84984">len</a></span> = <span class="typed"><span class="type">java.lang.String</span><a href="#84983">str</a></span>.<span class="typed"><span class="type">()Int</span><a id="5819">length</a></span>
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#84984">len</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) {
+      <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="84987">newCount</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int</span><a href="#84984">len</a></span>
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#84987">newCount</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="Array.scala.html#17252">length</a></span>) <span class="typed"><span class="type">(Int)Unit</span><a href="#19630">expandCapacity</a></span>(<span class="typed"><span class="type">Int</span><a href="#84987">newCount</a></span>)
+      <span class="typed"><span class="type">java.lang.String</span><a href="#84983">str</a></span>.<span class="typed"><span class="type">(Int,Int,Array[Char],Int)Unit</span><a id="5826">getChars</a></span>(<span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>, <span class="typed"><span class="type">Int</span><a href="#84984">len</a></span>, <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>, <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>)
+      <span class="typed"><span class="type">(Int)Unit</span><a href="#19618">count</a></span> = <span class="typed"><span class="type">Int</span><a href="#84987">newCount</a></span>
+    }
+    <span class="typed"><span class="type">StringBuilder</span><a href="#1433" class="keyword">this</a></span>
+  }
+
+  <span class="comment">/** Appends the specified string builder to this sequence.
+   *
+   *  @param sb
+   *  @return 
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(StringBuilder)StringBuilder</span><a id="19640">append</a></span>(<span class="typed"><span class="type">StringBuilder</span><a id="19697">sb</a></span>: <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> =
+    <span class="typed"><span class="type">StringBuilder</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">StringBuilder</span><a href="#19697">sb</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="3507">==</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>)
+      <span class="typed"><span class="type">(String)StringBuilder</span><a href="#19639">append</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;null&quot;)</span><span class="string">&quot;null&quot;</span></span>)
+    <span class="keyword">else</span> {
+      <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="84995">len</a></span> = <span class="typed"><span class="type">StringBuilder</span><a href="#19697">sb</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="#19624">length</a></span>
+      <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="84996">newCount</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int</span><a href="#84995">len</a></span>
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#84996">newCount</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="Array.scala.html#17252">length</a></span>) <span class="typed"><span class="type">(Int)Unit</span><a href="#19630">expandCapacity</a></span>(<span class="typed"><span class="type">Int</span><a href="#84996">newCount</a></span>)
+      compat.<span class="typed"><span class="type">object scala.compat.Platform</span><a href="compat/Platform.scala.html#12224">Platform</a></span>.<span class="typed"><span class="type">(AnyRef,Int,AnyRef,Int,Int)Unit</span><a href="compat/Platform.scala.html#17279">arraycopy</a></span>(<span class="typed"><span class="type">StringBuilder</span><a href="#19697">sb</a></span>.<span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19623">toArray</a></span>, <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>, <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>, <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>, <span class="typed"><span class="type">Int</span><a href="#84995">len</a></span>)
+      <span class="typed"><span class="type">(Int)Unit</span><a href="#19618">count</a></span> = <span class="typed"><span class="type">Int</span><a href="#84996">newCount</a></span>
+      <span class="typed"><span class="type">StringBuilder</span><a href="#1433" class="keyword">this</a></span>
+    }
+
+  <span class="comment">/** &lt;p&gt;
+   *    Appends the string representation of the &lt;code&gt;Char&lt;/code&gt; sequence 
+   *    argument to this sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The characters of the sequence argument are appended, in order,
+   *    to the contents of this sequence. The length of this sequence
+   *    increases by the length of the argument.
+   *  &lt;/p&gt;
+   *
+   *  @param  x  the characters to be appended.
+   *  @return    a reference to this object.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Seq[Char])StringBuilder</span><a id="19641">append</a></span>(<span class="typed"><span class="type">Seq[Char]</span><a id="19696">x</a></span>: <span class="typed"><span class="type">Seq[Char]</span><a href="Seq.scala.html#761">Seq</a></span>[Char]): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> =
+    <span class="typed"><span class="type">(Array[Char],Int,Int)StringBuilder</span><a href="#19643">append</a></span>(<span class="typed"><span class="type">Seq[Char]</span><a href="#19696">x</a></span>.<span class="typed"><span class="type">Array[Char]</span><a href="Seq.scala.html#17185">toArray</a></span>, <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>, <span class="typed"><span class="type">Seq[Char]</span><a href="#19696">x</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="Seq.scala.html#17146">length</a></span>)
+
+  <span class="comment">/** &lt;p&gt;
+   *    Appends the string representation of the &lt;code&gt;Char&lt;/code&gt; array 
+   *    argument to this sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The characters of the array argument are appended, in order, to 
+   *    the contents of this sequence. The length of this sequence
+   *    increases by the length of the argument.
+   *  &lt;/p&gt;
+   *
+   *  @param  x  the characters to be appended.
+   *  @return    a reference to this object.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Array[Char])StringBuilder</span><a id="19642">append</a></span>(<span class="typed"><span class="type">Array[Char]</span><a id="19695">x</a></span>: <span class="typed"><span class="type">Array[Char]</span><a href="Array.scala.html#1070">Array</a></span>[Char]): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> =
+    <span class="typed"><span class="type">(Array[Char],Int,Int)StringBuilder</span><a href="#19643">append</a></span>(<span class="typed"><span class="type">Array[Char]</span><a href="#19695">x</a></span>, <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>, <span class="typed"><span class="type">Array[Char]</span><a href="#19695">x</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="Array.scala.html#17252">length</a></span>)
+
+  <span class="comment">/** &lt;p&gt;
+   *    Appends the string representation of a subarray of the
+   *    &lt;code&gt;char&lt;/code&gt; array argument to this sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    Characters of the &lt;code&gt;Char&lt;/code&gt; array &lt;code&gt;x&lt;/code&gt;, starting at
+   *    index &lt;code&gt;offset&lt;/code&gt;, are appended, in order, to the contents
+   *    of this sequence. The length of this sequence increases
+   *    by the value of &lt;code&gt;len&lt;/code&gt;.
+   *  &lt;/p&gt;
+   *
+   *  @param  x      the characters to be appended.
+   *  @param  offset the index of the first &lt;code&gt;Char&lt;/code&gt; to append.
+   *  @param  len    the number of &lt;code&gt;Char&lt;/code&gt;s to append.
+   *  @return        a reference to this object.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Array[Char],Int,Int)StringBuilder</span><a id="19643">append</a></span>(<span class="typed"><span class="type">Array[Char]</span><a id="19692">x</a></span>: <span class="typed"><span class="type">Array[Char]</span><a href="Array.scala.html#1070">Array</a></span>[Char], <span class="typed"><span class="type">Int</span><a id="19693">offset</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Int</span><a id="19694">len</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="85172">newCount</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int</span><a href="#19694">len</a></span>
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#85172">newCount</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="Array.scala.html#17252">length</a></span>) <span class="typed"><span class="type">(Int)Unit</span><a href="#19630">expandCapacity</a></span>(<span class="typed"><span class="type">Int</span><a href="#85172">newCount</a></span>)
+    compat.<span class="typed"><span class="type">object scala.compat.Platform</span><a href="compat/Platform.scala.html#12224">Platform</a></span>.<span class="typed"><span class="type">(AnyRef,Int,AnyRef,Int,Int)Unit</span><a href="compat/Platform.scala.html#17279">arraycopy</a></span>(<span class="typed"><span class="type">Array[Char]</span><a href="#19692">x</a></span>, <span class="typed"><span class="type">Int</span><a href="#19693">offset</a></span>, <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>, <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>, <span class="typed"><span class="type">Int</span><a href="#19694">len</a></span>)
+    <span class="typed"><span class="type">(Int)Unit</span><a href="#19618">count</a></span> = <span class="typed"><span class="type">Int</span><a href="#85172">newCount</a></span>
+    <span class="typed"><span class="type">StringBuilder</span><a href="#1433" class="keyword">this</a></span>
+  }
+
+  <span class="comment">/** &lt;p&gt;
+   *    Appends the string representation of the &lt;code&gt;Boolean&lt;/code&gt; 
+   *    argument to the sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The argument is converted to a string as if by the method 
+   *    &lt;code&gt;String.valueOf&lt;/code&gt;, and the characters of that 
+   *   string are then appended to this sequence. 
+   *  &lt;/p&gt;
+   *
+   *   @param  x  a &lt;code&gt;Boolean&lt;/code&gt;.
+   *   @return    a reference to this object.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Boolean)StringBuilder</span><a id="19644">append</a></span>(<span class="typed"><span class="type">Boolean</span><a id="19691">x</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> = {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Boolean</span><a href="#19691">x</a></span>) {
+      <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="85176">newCount</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int(4)</span><span class="int">4</span></span>
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#85176">newCount</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="Array.scala.html#17252">length</a></span>) <span class="typed"><span class="type">(Int)Unit</span><a href="#19630">expandCapacity</a></span>(<span class="typed"><span class="type">Int</span><a href="#85176">newCount</a></span>)
+      <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>) = <span class="typed"><span class="type">Char('t')</span><span class="char">'t'</span></span>; <span class="typed"><span class="type">(Int)Unit</span><a href="#19618">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+      <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>) = <span class="typed"><span class="type">Char('r')</span><span class="char">'r'</span></span>; <span class="typed"><span class="type">(Int)Unit</span><a href="#19618">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+      <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>) = <span class="typed"><span class="type">Char('u')</span><span class="char">'u'</span></span>; <span class="typed"><span class="type">(Int)Unit</span><a href="#19618">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+      <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>) = <span class="typed"><span class="type">Char('e')</span><span class="char">'e'</span></span>; <span class="typed"><span class="type">(Int)Unit</span><a href="#19618">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+    } <span class="keyword">else</span> {
+      <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="85272">newCount</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int(5)</span><span class="int">5</span></span>
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#85272">newCount</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="Array.scala.html#17252">length</a></span>) <span class="typed"><span class="type">(Int)Unit</span><a href="#19630">expandCapacity</a></span>(<span class="typed"><span class="type">Int</span><a href="#85272">newCount</a></span>)
+      <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>) = <span class="typed"><span class="type">Char('f')</span><span class="char">'f'</span></span>; <span class="typed"><span class="type">(Int)Unit</span><a href="#19618">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+      <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>) = <span class="typed"><span class="type">Char('a')</span><span class="char">'a'</span></span>; <span class="typed"><span class="type">(Int)Unit</span><a href="#19618">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+      <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>) = <span class="typed"><span class="type">Char('l')</span><span class="char">'l'</span></span>; <span class="typed"><span class="type">(Int)Unit</span><a href="#19618">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+      <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>) = <span class="typed"><span class="type">Char('s')</span><span class="char">'s'</span></span>; <span class="typed"><span class="type">(Int)Unit</span><a href="#19618">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+      <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>) = <span class="typed"><span class="type">Char('e')</span><span class="char">'e'</span></span>; <span class="typed"><span class="type">(Int)Unit</span><a href="#19618">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+    }
+    <span class="typed"><span class="type">StringBuilder</span><a href="#1433" class="keyword">this</a></span>
+  }
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Byte)StringBuilder</span><a id="19645">append</a></span>(<span class="typed"><span class="type">Byte</span><a id="19690">x</a></span>: <span class="typed"><span class="type">Byte</span><a id="2377">Byte</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> =
+    <span class="typed"><span class="type">(String)StringBuilder</span><a href="#19639">append</a></span>(<span class="typed"><span class="type">object java.lang.String</span><a id="1860">String</a></span>.<span class="typed"><span class="type">(Any)java.lang.String</span><a id="5873">valueOf</a></span>(<span class="typed"><span class="type">Byte</span><a href="#19690">x</a></span>))
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Char)StringBuilder</span><a id="19646">append</a></span>(<span class="typed"><span class="type">Char</span><a id="19689">x</a></span>: <span class="typed"><span class="type">Char</span><a id="2387">Char</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="85395">newCount</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#85395">newCount</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="Array.scala.html#17252">length</a></span>) <span class="typed"><span class="type">(Int)Unit</span><a href="#19630">expandCapacity</a></span>(<span class="typed"><span class="type">Int</span><a href="#85395">newCount</a></span>)
+    <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>) = <span class="typed"><span class="type">Char</span><a href="#19689">x</a></span>; <span class="typed"><span class="type">(Int)Unit</span><a href="#19618">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+    <span class="typed"><span class="type">StringBuilder</span><a href="#1433" class="keyword">this</a></span>
+  }
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Short)StringBuilder</span><a id="19647">append</a></span>(<span class="typed"><span class="type">Short</span><a id="19688">x</a></span>: <span class="typed"><span class="type">Short</span><a id="2382">Short</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> =
+    <span class="typed"><span class="type">(String)StringBuilder</span><a href="#19639">append</a></span>(<span class="typed"><span class="type">object java.lang.String</span><a id="1860">String</a></span>.<span class="typed"><span class="type">(Any)java.lang.String</span><a id="5873">valueOf</a></span>(<span class="typed"><span class="type">Short</span><a href="#19688">x</a></span>))
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)StringBuilder</span><a id="19648">append</a></span>(<span class="typed"><span class="type">Int</span><a id="19687">x</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> =
+    <span class="typed"><span class="type">(String)StringBuilder</span><a href="#19639">append</a></span>(<span class="typed"><span class="type">object java.lang.String</span><a id="1860">String</a></span>.<span class="typed"><span class="type">(Int)java.lang.String</span><a id="5880">valueOf</a></span>(<span class="typed"><span class="type">Int</span><a href="#19687">x</a></span>))
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Long)StringBuilder</span><a id="19649">append</a></span>(<span class="typed"><span class="type">Long</span><a id="19686">x</a></span>: <span class="typed"><span class="type">Long</span><a id="2397">Long</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> =
+    <span class="typed"><span class="type">(String)StringBuilder</span><a href="#19639">append</a></span>(<span class="typed"><span class="type">object java.lang.String</span><a id="1860">String</a></span>.<span class="typed"><span class="type">(Long)java.lang.String</span><a id="5881">valueOf</a></span>(<span class="typed"><span class="type">Long</span><a href="#19686">x</a></span>))
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Float)StringBuilder</span><a id="19650">append</a></span>(<span class="typed"><span class="type">Float</span><a id="19685">x</a></span>: <span class="typed"><span class="type">Float</span><a id="2402">Float</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> =
+    <span class="typed"><span class="type">(String)StringBuilder</span><a href="#19639">append</a></span>(<span class="typed"><span class="type">object java.lang.String</span><a id="1860">String</a></span>.<span class="typed"><span class="type">(Float)java.lang.String</span><a id="5882">valueOf</a></span>(<span class="typed"><span class="type">Float</span><a href="#19685">x</a></span>))
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Double)StringBuilder</span><a id="19651">append</a></span>(<span class="typed"><span class="type">Double</span><a id="19684">x</a></span>: <span class="typed"><span class="type">Double</span><a id="2407">Double</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> = 
+    <span class="typed"><span class="type">(String)StringBuilder</span><a href="#19639">append</a></span>(<span class="typed"><span class="type">object java.lang.String</span><a id="1860">String</a></span>.<span class="typed"><span class="type">(Double)java.lang.String</span><a id="5883">valueOf</a></span>(<span class="typed"><span class="type">Double</span><a href="#19684">x</a></span>))
+
+  <span class="comment">/** Removes the characters in a substring of this sequence.
+   *  The substring begins at the specified &lt;code&gt;start&lt;/code&gt; and extends to
+   *  the character at index &lt;code&gt;end - 1&lt;/code&gt; or to the end of the
+   *  sequence if no such character exists. If
+   *  &lt;code&gt;start&lt;/code&gt; is equal to &lt;code&gt;end&lt;/code&gt;, no changes are made.
+   *
+   *  @param  start  The beginning index, inclusive.
+   *  @param  end    The ending index, exclusive.
+   *  @return        This object.
+   *  @throws StringIndexOutOfBoundsException  if &lt;code&gt;start&lt;/code&gt;
+   *                 is negative, greater than &lt;code&gt;length()&lt;/code&gt;, or
+   *		     greater than &lt;code&gt;end&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,Int)StringBuilder</span><a id="19652">delete</a></span>(<span class="typed"><span class="type">Int</span><a id="85442">start</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Int</span><a id="85443">end</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> = {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#85442">start</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span> <span class="typed"><span class="type">Int</span><a href="#85442">start</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">Int</span><a href="#85443">end</a></span>)
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(Int)java.lang.StringIndexOutOfBoundsException</span><a id="57032" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.StringIndexOutOfBoundsException</span><a href="Predef.scala.html#13339">StringIndexOutOfBoundsException</a></span>(<span class="typed"><span class="type">Int</span><a href="#85442">start</a></span>)
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="85444">end0</a></span> = <span class="typed"><span class="type">Int</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#85443">end</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>) <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span> <span class="keyword">else</span> <span class="typed"><span class="type">Int</span><a href="#85443">end</a></span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="85445">len</a></span> = <span class="typed"><span class="type">Int</span><a href="#85444">end0</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int</span><a href="#85442">start</a></span>
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#85445">len</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) {
+      compat.<span class="typed"><span class="type">object scala.compat.Platform</span><a href="compat/Platform.scala.html#12224">Platform</a></span>.<span class="typed"><span class="type">(AnyRef,Int,AnyRef,Int,Int)Unit</span><a href="compat/Platform.scala.html#17279">arraycopy</a></span>(<span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>, <span class="typed"><span class="type">Int</span><a href="#85442">start</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int</span><a href="#85445">len</a></span>, <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>, <span class="typed"><span class="type">Int</span><a href="#85442">start</a></span>, <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int</span><a href="#85444">end0</a></span>)
+      <span class="typed"><span class="type">(Int)Unit</span><a href="#19618">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-=</a></span> <span class="typed"><span class="type">Int</span><a href="#85445">len</a></span>
+    }
+    <span class="typed"><span class="type">StringBuilder</span><a href="#1433" class="keyword">this</a></span>
+  }
+
+  <span class="comment">/** Replaces the characters in a substring of this sequence
+   *  with characters in the specified &lt;code&gt;String&lt;/code&gt;. The substring
+   *  begins at the specified &lt;code&gt;start&lt;/code&gt; and extends to the character
+   *  at index &lt;code&gt;end - 1&lt;/code&gt; or to the end of the sequence if no such
+   *  character exists. First the characters in the substring are removed and
+   *  then the specified &lt;code&gt;String&lt;/code&gt; is inserted at &lt;code&gt;start&lt;/code&gt;.
+   * 
+   *  @param  start  The beginning index, inclusive.
+   *  @param  end    The ending index, exclusive.
+   *  @param  str    String that will replace previous contents.
+   *  @return        This object.
+   *  @throws StringIndexOutOfBoundsException  if &lt;code&gt;start&lt;/code&gt;
+   *                 is negative, greater than &lt;code&gt;length()&lt;/code&gt;, or
+   *		     greater than &lt;code&gt;end&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,Int,String)Unit</span><a id="19653">replace</a></span>(<span class="typed"><span class="type">Int</span><a id="85503">start</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Int</span><a id="85504">end</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">String</span><a id="85505">str</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>) {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#85503">start</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span> <span class="typed"><span class="type">Int</span><a href="#85503">start</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span> <span class="typed"><span class="type">Int</span><a href="#85503">start</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">Int</span><a href="#85504">end</a></span>)
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(Int)java.lang.StringIndexOutOfBoundsException</span><a id="57032" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.StringIndexOutOfBoundsException</span><a href="Predef.scala.html#13339">StringIndexOutOfBoundsException</a></span>(<span class="typed"><span class="type">Int</span><a href="#85503">start</a></span>)
+
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="85506">end0</a></span> = <span class="typed"><span class="type">Int</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#85504">end</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>) <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span> <span class="keyword">else</span> <span class="typed"><span class="type">Int</span><a href="#85504">end</a></span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="85507">len</a></span> = <span class="typed"><span class="type">String</span><a href="#85505">str</a></span>.<span class="typed"><span class="type">()Int</span><a id="5819">length</a></span>()
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="85508">newCount</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int</span><a href="#85507">len</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> (<span class="typed"><span class="type">Int</span><a href="#85506">end0</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int</span><a href="#85503">start</a></span>)
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#85508">newCount</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="Array.scala.html#17252">length</a></span>) <span class="typed"><span class="type">(Int)Unit</span><a href="#19630">expandCapacity</a></span>(<span class="typed"><span class="type">Int</span><a href="#85508">newCount</a></span>)
+
+    compat.<span class="typed"><span class="type">object scala.compat.Platform</span><a href="compat/Platform.scala.html#12224">Platform</a></span>.<span class="typed"><span class="type">(AnyRef,Int,AnyRef,Int,Int)Unit</span><a href="compat/Platform.scala.html#17279">arraycopy</a></span>(<span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>, <span class="typed"><span class="type">Int</span><a href="#85504">end</a></span>, <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>, <span class="typed"><span class="type">Int</span><a href="#85503">start</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int</span><a href="#85507">len</a></span>, <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int</span><a href="#85504">end</a></span>)
+    <span class="typed"><span class="type">String</span><a href="#85505">str</a></span>.<span class="typed"><span class="type">(Int,Int,Array[Char],Int)Unit</span><a id="5826">getChars</a></span>(<span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>, <span class="typed"><span class="type">Int</span><a href="#85507">len</a></span>, <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>, <span class="typed"><span class="type">Int</span><a href="#85503">start</a></span>)  
+    <span class="typed"><span class="type">(Int)Unit</span><a href="#19618">count</a></span> = <span class="typed"><span class="type">Int</span><a href="#85508">newCount</a></span>
+    <span class="typed"><span class="type">StringBuilder</span><a href="#1433" class="keyword">this</a></span>
+  }
+
+  <span class="comment">/** Inserts the string representation of a subarray of the &lt;code&gt;str&lt;/code&gt;
+   *  array argument into this sequence. The subarray begins at the specified
+   *  &lt;code&gt;offset&lt;/code&gt; and extends &lt;code&gt;len&lt;/code&gt; &lt;code&gt;char&lt;/code&gt;s.
+   *  The characters of the subarray are inserted into this sequence at
+   *  the position indicated by &lt;code&gt;index&lt;/code&gt;. The length of this
+   *  sequence increases by &lt;code&gt;len&lt;/code&gt; &lt;code&gt;Char&lt;/code&gt;s.
+   *
+   * @param  index   position at which to insert subarray.
+   * @param  str     a &lt;code&gt;Char&lt;/code&gt; array.
+   * @param  offset  the index of the first &lt;code&gt;char&lt;/code&gt; in subarray to
+   *                 be inserted.
+   * @param  len     the number of &lt;code&gt;Char&lt;/code&gt;s in the subarray to
+   *                 be inserted.
+   * @return         This object
+   * @throws StringIndexOutOfBoundsException  if &lt;code&gt;index&lt;/code&gt;
+   *                 is negative or greater than &lt;code&gt;length()&lt;/code&gt;, or
+   *                 &lt;code&gt;offset&lt;/code&gt; or &lt;code&gt;len&lt;/code&gt; are negative, or
+   *                 &lt;code&gt;(offset+len)&lt;/code&gt; is greater than
+   *                 &lt;code&gt;str.length&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,Array[Char],Int,Int)StringBuilder</span><a id="19654">insert</a></span>(<span class="typed"><span class="type">Int</span><a id="58440">index</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Array[Char]</span><a id="58441">str</a></span>: <span class="typed"><span class="type">Array[Char]</span><a href="Array.scala.html#1070">Array</a></span>[Char], <span class="typed"><span class="type">Int</span><a id="58442">offset</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Int</span><a id="58443">len</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> = {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#58440">index</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span> <span class="typed"><span class="type">Int</span><a href="#58440">index</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>)
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(Int)java.lang.StringIndexOutOfBoundsException</span><a id="57032" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.StringIndexOutOfBoundsException</span><a href="Predef.scala.html#13339">StringIndexOutOfBoundsException</a></span>(<span class="typed"><span class="type">Int</span><a href="#58440">index</a></span>)
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#58442">offset</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span> <span class="typed"><span class="type">Int</span><a href="#58443">len</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span> <span class="typed"><span class="type">Int</span><a href="#58442">offset</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">Array[Char]</span><a href="#58441">str</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="Array.scala.html#17252">length</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int</span><a href="#58443">len</a></span>)
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.lang.StringIndexOutOfBoundsException</span><a id="57031" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.StringIndexOutOfBoundsException</span><a href="Predef.scala.html#13339">StringIndexOutOfBoundsException</a></span>(
+                <span class="typed"><span class="type">java.lang.String(&quot;offset &quot;)</span><span class="string">&quot;offset &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">Int</span><a href="#58442">offset</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot;, len &quot;)</span><span class="string">&quot;, len &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">Int</span><a href="#58443">len</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span>
+                <span class="typed"><span class="type">java.lang.String(&quot;, str.length &quot;)</span><span class="string">&quot;, str.length &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">Array[Char]</span><a href="#58441">str</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="Array.scala.html#17252">length</a></span>)
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="85553">newCount</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int</span><a href="#58443">len</a></span>
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#85553">newCount</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="Array.scala.html#17252">length</a></span>) <span class="typed"><span class="type">(Int)Unit</span><a href="#19630">expandCapacity</a></span>(<span class="typed"><span class="type">Int</span><a href="#85553">newCount</a></span>)
+    compat.<span class="typed"><span class="type">object scala.compat.Platform</span><a href="compat/Platform.scala.html#12224">Platform</a></span>.<span class="typed"><span class="type">(AnyRef,Int,AnyRef,Int,Int)Unit</span><a href="compat/Platform.scala.html#17279">arraycopy</a></span>(<span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>, <span class="typed"><span class="type">Int</span><a href="#58440">index</a></span>, <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>, <span class="typed"><span class="type">Int</span><a href="#58440">index</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int</span><a href="#58443">len</a></span>, <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int</span><a href="#58440">index</a></span>)
+    compat.<span class="typed"><span class="type">object scala.compat.Platform</span><a href="compat/Platform.scala.html#12224">Platform</a></span>.<span class="typed"><span class="type">(AnyRef,Int,AnyRef,Int,Int)Unit</span><a href="compat/Platform.scala.html#17279">arraycopy</a></span>(<span class="typed"><span class="type">Array[Char]</span><a href="#58441">str</a></span>, <span class="typed"><span class="type">Int</span><a href="#58442">offset</a></span>, <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>, <span class="typed"><span class="type">Int</span><a href="#58440">index</a></span>, <span class="typed"><span class="type">Int</span><a href="#58443">len</a></span>)
+    <span class="typed"><span class="type">(Int)Unit</span><a href="#19618">count</a></span> = <span class="typed"><span class="type">Int</span><a href="#85553">newCount</a></span>
+    <span class="typed"><span class="type">StringBuilder</span><a href="#1433" class="keyword">this</a></span>
+  }
+
+  <span class="comment">/** &lt;p&gt;
+   *    Inserts the string representation of the &lt;code&gt;Any&lt;/code&gt; 
+   *    argument into this character sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The second argument is converted to a string as if by the method 
+   *    &lt;code&gt;String.valueOf&lt;/code&gt;, and the characters of that 
+   *    string are then inserted into this sequence at the indicated 
+   *    offset. 
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The offset argument must be greater than or equal to 
+   *    &lt;code&gt;0&lt;/code&gt;, and less than or equal to the length of this 
+   *    sequence.
+   *  &lt;/p&gt;
+   *
+   *  @param  offset  the offset.
+   *  @param  x       an &lt;code&gt;Any&lt;/code&gt; value.
+   *  @return         a reference to this object.
+   *  @throws StringIndexOutOfBoundsException  if the offset is invalid.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,Any)StringBuilder</span><a id="19655">insert</a></span>(<span class="typed"><span class="type">Int</span><a id="58438">at</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Any</span><a id="58439">x</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> =
+    <span class="typed"><span class="type">(Int,String)StringBuilder</span><a href="#19656">insert</a></span>(<span class="typed"><span class="type">Int</span><a href="#58438">at</a></span>, <span class="typed"><span class="type">object java.lang.String</span><a id="1860">String</a></span>.<span class="typed"><span class="type">(Any)java.lang.String</span><a id="5873">valueOf</a></span>(<span class="typed"><span class="type">Any</span><a href="#58439">x</a></span>))
+
+  <span class="comment">/** Inserts the string into this character sequence.
+   *
+   *  @param  at  the offset position.
+   *  @param  x   a string.
+   *  @return     a reference to this object.
+   *  @throws StringIndexOutOfBoundsException  if the offset is invalid.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,String)StringBuilder</span><a id="19656">insert</a></span>(<span class="typed"><span class="type">Int</span><a id="58436">at</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">String</span><a id="58437">x</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> = {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#58436">at</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span> <span class="typed"><span class="type">Int</span><a href="#58436">at</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>)
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(Int)java.lang.StringIndexOutOfBoundsException</span><a id="57032" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.StringIndexOutOfBoundsException</span><a href="Predef.scala.html#13339">StringIndexOutOfBoundsException</a></span>(<span class="typed"><span class="type">Int</span><a href="#58436">at</a></span>)
+    <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.String</span><a id="85603">str</a></span> = <span class="typed"><span class="type">java.lang.String</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">String</span><a href="#58437">x</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="3507">==</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) <span class="typed"><span class="type">java.lang.String(&quot;null&quot;)</span><span class="string">&quot;null&quot;</span></span> <span class="keyword">else</span> <span class="typed"><span class="type">String</span><a href="#58437">x</a></span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="85604">len</a></span> = <span class="typed"><span class="type">java.lang.String</span><a href="#85603">str</a></span>.<span class="typed"><span class="type">()Int</span><a id="5819">length</a></span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="85605">newCount</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int</span><a href="#85604">len</a></span>
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#85605">newCount</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="Array.scala.html#17252">length</a></span>) <span class="typed"><span class="type">(Int)Unit</span><a href="#19630">expandCapacity</a></span>(<span class="typed"><span class="type">Int</span><a href="#85605">newCount</a></span>)
+    compat.<span class="typed"><span class="type">object scala.compat.Platform</span><a href="compat/Platform.scala.html#12224">Platform</a></span>.<span class="typed"><span class="type">(AnyRef,Int,AnyRef,Int,Int)Unit</span><a href="compat/Platform.scala.html#17279">arraycopy</a></span>(<span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>, <span class="typed"><span class="type">Int</span><a href="#58436">at</a></span>, <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>, <span class="typed"><span class="type">Int</span><a href="#58436">at</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int</span><a href="#85604">len</a></span>, <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int</span><a href="#58436">at</a></span>)
+    <span class="typed"><span class="type">java.lang.String</span><a href="#85603">str</a></span>.<span class="typed"><span class="type">(Int,Int,Array[Char],Int)Unit</span><a id="5826">getChars</a></span>(<span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>, <span class="typed"><span class="type">Int</span><a href="#85604">len</a></span>, <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>, <span class="typed"><span class="type">Int</span><a href="#58436">at</a></span>)
+    <span class="typed"><span class="type">(Int)Unit</span><a href="#19618">count</a></span> = <span class="typed"><span class="type">Int</span><a href="#85605">newCount</a></span>
+    <span class="typed"><span class="type">StringBuilder</span><a href="#1433" class="keyword">this</a></span>
+  }
+
+  <span class="comment">/** Inserts the string representation of the &lt;code&gt;Char&lt;/code&gt; sequence 
+   *  argument into this sequence.
+   *
+   *  @param  at  the offset position.
+   *  @param  x   a character sequence.
+   *  @return     a reference to this object.
+   *  @throws StringIndexOutOfBoundsException  if the offset is invalid.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,Seq[Char])StringBuilder</span><a id="19657">insert</a></span>(<span class="typed"><span class="type">Int</span><a id="58434">at</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Seq[Char]</span><a id="58435">x</a></span>: <span class="typed"><span class="type">Seq[Char]</span><a href="Seq.scala.html#761">Seq</a></span>[Char]): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> =
+    <span class="typed"><span class="type">(Int,Array[Char])StringBuilder</span><a href="#19658">insert</a></span>(<span class="typed"><span class="type">Int</span><a href="#58434">at</a></span>, <span class="typed"><span class="type">Seq[Char]</span><a href="#58435">x</a></span>.<span class="typed"><span class="type">Array[Char]</span><a href="Seq.scala.html#17185">toArray</a></span>)
+
+  <span class="comment">/** Inserts the string representation of the &lt;code&gt;Char&lt;/code&gt; array 
+   *  argument into this sequence.
+   *
+   *  @param  at  the offset position.
+   *  @param  x   a character array.
+   *  @return     a reference to this object.
+   *  @throws StringIndexOutOfBoundsException  if the offset is invalid.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,Array[Char])StringBuilder</span><a id="19658">insert</a></span>(<span class="typed"><span class="type">Int</span><a id="58432">at</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Array[Char]</span><a id="58433">x</a></span>: <span class="typed"><span class="type">Array[Char]</span><a href="Array.scala.html#1070">Array</a></span>[Char]): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> = {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#58432">at</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span> <span class="typed"><span class="type">Int</span><a href="#58432">at</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>)
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(Int)java.lang.StringIndexOutOfBoundsException</span><a id="57032" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.StringIndexOutOfBoundsException</span><a href="Predef.scala.html#13339">StringIndexOutOfBoundsException</a></span>(<span class="typed"><span class="type">Int</span><a href="#58432">at</a></span>)
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="85653">len</a></span> = <span class="typed"><span class="type">Array[Char]</span><a href="#58433">x</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="Array.scala.html#17252">length</a></span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="85654">newCount</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int</span><a href="#85653">len</a></span>
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#85654">newCount</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="Array.scala.html#17252">length</a></span>) <span class="typed"><span class="type">(Int)Unit</span><a href="#19630">expandCapacity</a></span>(<span class="typed"><span class="type">Int</span><a href="#85654">newCount</a></span>)
+    compat.<span class="typed"><span class="type">object scala.compat.Platform</span><a href="compat/Platform.scala.html#12224">Platform</a></span>.<span class="typed"><span class="type">(AnyRef,Int,AnyRef,Int,Int)Unit</span><a href="compat/Platform.scala.html#17279">arraycopy</a></span>(<span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>, <span class="typed"><span class="type">Int</span><a href="#58432">at</a></span>, <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>, <span class="typed"><span class="type">Int</span><a href="#58432">at</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int</span><a href="#85653">len</a></span>, <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int</span><a href="#58432">at</a></span>)
+    compat.<span class="typed"><span class="type">object scala.compat.Platform</span><a href="compat/Platform.scala.html#12224">Platform</a></span>.<span class="typed"><span class="type">(AnyRef,Int,AnyRef,Int,Int)Unit</span><a href="compat/Platform.scala.html#17279">arraycopy</a></span>(<span class="typed"><span class="type">Array[Char]</span><a href="#58433">x</a></span>, <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>, <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>, <span class="typed"><span class="type">Int</span><a href="#58432">at</a></span>, <span class="typed"><span class="type">Int</span><a href="#85653">len</a></span>)
+    <span class="typed"><span class="type">(Int)Unit</span><a href="#19618">count</a></span> = <span class="typed"><span class="type">Int</span><a href="#85654">newCount</a></span>
+    <span class="typed"><span class="type">StringBuilder</span><a href="#1433" class="keyword">this</a></span>
+  }
+
+  <span class="comment">/** &lt;p&gt;
+   *    Inserts the string representation of the &lt;code&gt;Boolean&lt;/code&gt; argument
+   *    into this sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The offset argument must be greater than or equal to 0, and less than
+   *    or equal to the length of this sequence.
+   *  &lt;/p&gt;
+   *
+   *  @param  at  the offset position.
+   *  @param  x   a &lt;code&gt;Boolean&lt;/code&gt; value.
+   *  @return     a reference to this object.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,Boolean)StringBuilder</span><a id="19659">insert</a></span>(<span class="typed"><span class="type">Int</span><a id="58430">at</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Boolean</span><a id="58431">x</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> =
+    <span class="typed"><span class="type">(Int,String)StringBuilder</span><a href="#19656">insert</a></span>(<span class="typed"><span class="type">Int</span><a href="#58430">at</a></span>, <span class="typed"><span class="type">object java.lang.String</span><a id="1860">String</a></span>.<span class="typed"><span class="type">(Boolean)java.lang.String</span><a id="5878">valueOf</a></span>(<span class="typed"><span class="type">Boolean</span><a href="#58431">x</a></span>))
+
+  <span class="comment">/** &lt;p&gt;
+   *    Inserts the string representation of the &lt;code&gt;Byte&lt;/code&gt; argument
+   *    into this sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The offset argument must be greater than or equal to 0, and less than
+   *    or equal to the length of this sequence.
+   *  &lt;/p&gt;
+   *
+   *  @param  at  the offset position.
+   *  @param  x   a &lt;code&gt;Byte&lt;/code&gt; value.
+   *  @return     a reference to this object.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,Byte)StringBuilder</span><a id="19660">insert</a></span>(<span class="typed"><span class="type">Int</span><a id="58428">at</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Byte</span><a id="58429">x</a></span>: <span class="typed"><span class="type">Byte</span><a id="2377">Byte</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> =
+    <span class="typed"><span class="type">(Int,String)StringBuilder</span><a href="#19656">insert</a></span>(<span class="typed"><span class="type">Int</span><a href="#58428">at</a></span>, <span class="typed"><span class="type">object java.lang.String</span><a id="1860">String</a></span>.<span class="typed"><span class="type">(Any)java.lang.String</span><a id="5873">valueOf</a></span>(<span class="typed"><span class="type">Byte</span><a href="#58429">x</a></span>))
+
+  <span class="comment">/** &lt;p&gt;
+   *    Inserts the string representation of the &lt;code&gt;Char&lt;/code&gt; argument
+   *    into this sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The offset argument must be greater than or equal to 0, and less than
+   *    or equal to the length of this sequence.
+   *  &lt;/p&gt;
+   *
+   *  @param  at  the offset position.
+   *  @param  x   a &lt;code&gt;Char&lt;/code&gt; value.
+   *  @return     a reference to this object.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,Char)StringBuilder</span><a id="19661">insert</a></span>(<span class="typed"><span class="type">Int</span><a id="58426">at</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Char</span><a id="58427">x</a></span>: <span class="typed"><span class="type">Char</span><a id="2387">Char</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> = {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#58426">at</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span> <span class="typed"><span class="type">Int</span><a href="#58426">at</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>)
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(Int)java.lang.StringIndexOutOfBoundsException</span><a id="57032" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.StringIndexOutOfBoundsException</span><a href="Predef.scala.html#13339">StringIndexOutOfBoundsException</a></span>(<span class="typed"><span class="type">Int</span><a href="#58426">at</a></span>)
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="85702">newCount</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#85702">newCount</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="Array.scala.html#17252">length</a></span>) <span class="typed"><span class="type">(Int)Unit</span><a href="#19630">expandCapacity</a></span>(<span class="typed"><span class="type">Int</span><a href="#85702">newCount</a></span>)
+    compat.<span class="typed"><span class="type">object scala.compat.Platform</span><a href="compat/Platform.scala.html#12224">Platform</a></span>.<span class="typed"><span class="type">(AnyRef,Int,AnyRef,Int,Int)Unit</span><a href="compat/Platform.scala.html#17279">arraycopy</a></span>(<span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>, <span class="typed"><span class="type">Int</span><a href="#58426">at</a></span>, <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>, <span class="typed"><span class="type">Int</span><a href="#58426">at</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>, <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int</span><a href="#58426">at</a></span>)
+    <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>(<span class="typed"><span class="type">Int</span><a href="#58426">at</a></span>) = <span class="typed"><span class="type">Char</span><a href="#58427">x</a></span>
+    <span class="typed"><span class="type">(Int)Unit</span><a href="#19618">count</a></span> = <span class="typed"><span class="type">Int</span><a href="#85702">newCount</a></span>
+    <span class="typed"><span class="type">StringBuilder</span><a href="#1433" class="keyword">this</a></span>
+  }
+
+  <span class="comment">/** &lt;p&gt;
+   *    Inserts the string representation of the &lt;code&gt;Short&lt;/code&gt; argument
+   *    into this sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The offset argument must be greater than or equal to 0, and less than
+   *    or equal to the length of this sequence.
+   *  &lt;/p&gt;
+   *
+   *  @param  at  the offset position.
+   *  @param  x   a &lt;code&gt;Short&lt;/code&gt; value.
+   *  @return     a reference to this object.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,Short)StringBuilder</span><a id="19662">insert</a></span>(<span class="typed"><span class="type">Int</span><a id="58424">at</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Short</span><a id="58425">x</a></span>: <span class="typed"><span class="type">Short</span><a id="2382">Short</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> =
+    <span class="typed"><span class="type">(Int,String)StringBuilder</span><a href="#19656">insert</a></span>(<span class="typed"><span class="type">Int</span><a href="#58424">at</a></span>, <span class="typed"><span class="type">object java.lang.String</span><a id="1860">String</a></span>.<span class="typed"><span class="type">(Any)java.lang.String</span><a id="5873">valueOf</a></span>(<span class="typed"><span class="type">Short</span><a href="#58425">x</a></span>))
+
+  <span class="comment">/** &lt;p&gt;
+   *    Inserts the string representation of the &lt;code&gt;Int&lt;/code&gt; argument
+   *    into this sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The offset argument must be greater than or equal to 0, and less than
+   *    or equal to the length of this sequence.
+   *  &lt;/p&gt;
+   *
+   *  @param  at  the offset position.
+   *  @param  x   a &lt;code&gt;Int&lt;/code&gt; value.
+   *  @return     a reference to this object.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,Int)StringBuilder</span><a id="19663">insert</a></span>(<span class="typed"><span class="type">Int</span><a id="58422">at</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Int</span><a id="58423">x</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> =
+    <span class="typed"><span class="type">(Int,String)StringBuilder</span><a href="#19656">insert</a></span>(<span class="typed"><span class="type">Int</span><a href="#58422">at</a></span>, <span class="typed"><span class="type">object java.lang.String</span><a id="1860">String</a></span>.<span class="typed"><span class="type">(Int)java.lang.String</span><a id="5880">valueOf</a></span>(<span class="typed"><span class="type">Int</span><a href="#58423">x</a></span>))
+
+  <span class="comment">/** &lt;p&gt;
+   *    Inserts the string representation of the &lt;code&gt;Long&lt;/code&gt; argument
+   *    into this sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The offset argument must be greater than or equal to 0, and less than
+   *    or equal to the length of this sequence.
+   *  &lt;/p&gt;
+   *
+   *  @param  at  the offset position.
+   *  @param  x   a &lt;code&gt;Long&lt;/code&gt; value.
+   *  @return     a reference to this object.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,Long)StringBuilder</span><a id="19664">insert</a></span>(<span class="typed"><span class="type">Int</span><a id="58420">at</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Long</span><a id="58421">x</a></span>: <span class="typed"><span class="type">Long</span><a id="2397">Long</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> =
+    <span class="typed"><span class="type">(Int,String)StringBuilder</span><a href="#19656">insert</a></span>(<span class="typed"><span class="type">Int</span><a href="#58420">at</a></span>, <span class="typed"><span class="type">object java.lang.String</span><a id="1860">String</a></span>.<span class="typed"><span class="type">(Long)java.lang.String</span><a id="5881">valueOf</a></span>(<span class="typed"><span class="type">Long</span><a href="#58421">x</a></span>))
+
+  <span class="comment">/** &lt;p&gt;
+   *    Inserts the string representation of the &lt;code&gt;Float&lt;/code&gt; argument
+   *    into this sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The offset argument must be greater than or equal to 0, and less than
+   *    or equal to the length of this sequence.
+   *  &lt;/p&gt;
+   *
+   *  @param  at  the offset position.
+   *  @param  x   a &lt;code&gt;Float&lt;/code&gt; value.
+   *  @return     a reference to this object.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,Float)StringBuilder</span><a id="19665">insert</a></span>(<span class="typed"><span class="type">Int</span><a id="58418">at</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Float</span><a id="58419">x</a></span>: <span class="typed"><span class="type">Float</span><a id="2402">Float</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> =
+    <span class="typed"><span class="type">(Int,String)StringBuilder</span><a href="#19656">insert</a></span>(<span class="typed"><span class="type">Int</span><a href="#58418">at</a></span>, <span class="typed"><span class="type">object java.lang.String</span><a id="1860">String</a></span>.<span class="typed"><span class="type">(Float)java.lang.String</span><a id="5882">valueOf</a></span>(<span class="typed"><span class="type">Float</span><a href="#58419">x</a></span>))
+
+  <span class="comment">/** &lt;p&gt;
+   *    Inserts the string representation of the &lt;code&gt;Double&lt;/code&gt; argument
+   *    into this sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The offset argument must be greater than or equal to 0, and less than
+   *    or equal to the length of this sequence.
+   *  &lt;/p&gt;
+   *
+   *  @param  at  the offset position.
+   *  @param  x   a &lt;code&gt;Double&lt;/code&gt; value.
+   *  @return     a reference to this object.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,Double)StringBuilder</span><a id="19666">insert</a></span>(<span class="typed"><span class="type">Int</span><a id="58416">at</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Double</span><a id="58417">x</a></span>: <span class="typed"><span class="type">Double</span><a id="2407">Double</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> =
+    <span class="typed"><span class="type">(Int,String)StringBuilder</span><a href="#19656">insert</a></span>(<span class="typed"><span class="type">Int</span><a href="#58416">at</a></span>, <span class="typed"><span class="type">object java.lang.String</span><a id="1860">String</a></span>.<span class="typed"><span class="type">(Double)java.lang.String</span><a id="5883">valueOf</a></span>(<span class="typed"><span class="type">Double</span><a href="#58417">x</a></span>))
+
+  <span class="comment">/** &lt;p&gt;
+   *    Returns the index within this string of the first occurrence of the
+   *    specified substring. The integer returned is the smallest value 
+   *    &lt;i&gt;k&lt;/i&gt; such that:
+   *  &lt;/p&gt;
+   *  &lt;blockquote&gt;&lt;pre&gt;
+   *  this.toString().startsWith(str, &lt;i&gt;k&lt;/i&gt;)&lt;/pre&gt;
+   *  &lt;/blockquote&gt;
+   *  &lt;p&gt;
+   *    is &lt;code&gt;true&lt;/code&gt;.
+   *  &lt;/p&gt;
+   *
+   *  @param  str  any string.
+   *  @return      if the string argument occurs as a substring within this
+   *               object, then the index of the first character of the first
+   *               such substring is returned; if it does not occur as a
+   *               substring, &lt;code&gt;-1&lt;/code&gt; is returned.
+   *  @throws NullPointerException if &lt;code&gt;str&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(String)Int</span><a id="19667">indexOf</a></span>(<span class="typed"><span class="type">String</span><a id="85763">str</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = <span class="typed"><span class="type">(String,Int)Int</span><a href="#19668">indexOf</a></span>(<span class="typed"><span class="type">String</span><a href="#85763">str</a></span>, <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>)
+
+  <span class="comment">/** &lt;p&gt;
+   *    Returns the index within this string of the first occurrence of the
+   *    specified substring, starting at the specified index. The integer
+   *    returned is the smallest value &lt;code&gt;k&lt;/code&gt; for which:
+   *  &lt;/p&gt;&lt;pre&gt;
+   *    k &gt;= Math.min(fromIndex, str.length()) &amp;&amp;
+   *                   this.toString().startsWith(str, k)&lt;/pre&gt;
+   *  &lt;p&gt;
+   *    If no such value of &lt;code&gt;k&lt;/code&gt; exists, then &lt;code&gt;-1&lt;/code&gt;
+   *    is returned.
+   *  &lt;/p&gt;
+   *
+   *  @param str        the substring for which to search.
+   *  @param fromIndex  the index from which to start the search.
+   *  @return           the index within this string of the first occurrence
+   *                    of the specified substring, starting at the specified index.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(String,Int)Int</span><a id="19668">indexOf</a></span>(<span class="typed"><span class="type">String</span><a id="85765">str</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>, <span class="typed"><span class="type">Int</span><a id="85766">fromIndex</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> =
+    <span class="typed"><span class="type">object StringBuilder</span><a href="#1434">StringBuilder</a></span>.<span class="typed"><span class="type">(Array[Char],Int,Int,Array[Char],Int,Int,Int)Int</span><a href="#26564">indexOf</a></span>(<span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>, <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>, <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>, <span class="typed"><span class="type">String</span><a href="#85765">str</a></span>.<span class="typed"><span class="type">()Array[Char]</span><a id="5870">toCharArray</a></span>, <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>, <span class="typed"><span class="type">String</span><a href="#85765">str</a></span>.<span class="typed"><span class="type">()Int</span><a id="5819">length</a></span>(), <span class="typed"><span class="type">Int</span><a href="#85766">fromIndex</a></span>)
+
+  <span class="comment">/** &lt;p&gt;
+   *    Returns the index within this string of the rightmost occurrence
+   *    of the specified substring.  The rightmost empty string &quot;&quot; is
+   *    considered to occur at the index value &lt;code&gt;this.length()&lt;/code&gt;. 
+   *    The returned index is the largest value &lt;i&gt;k&lt;/i&gt; such that 
+   *  &lt;/p&gt;
+   *  &lt;blockquote&gt;&lt;pre&gt;
+   *  this.toString().startsWith(str, k)&lt;/pre&gt;
+   *  &lt;/blockquote&gt;
+   *  &lt;p&gt;
+   *    is true.
+   *  &lt;/p&gt;
+   *
+   * @param  str  the substring to search for.
+   * @return      if the string argument occurs one or more times as a substring
+   *              within this object, then the index of the first character of
+   *              the last such substring is returned. If it does not occur as
+   *              a substring, &lt;code&gt;-1&lt;/code&gt; is returned.
+   * @throws NullPointerException  if &lt;code&gt;str&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(String)Int</span><a id="19669">lastIndexOf</a></span>(<span class="typed"><span class="type">String</span><a id="85778">str</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = <span class="typed"><span class="type">(String,Int)Int</span><a href="#19670">lastIndexOf</a></span>(<span class="typed"><span class="type">String</span><a href="#85778">str</a></span>, <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>)
+
+  <span class="comment">/** &lt;p&gt;
+   *    Returns the index within this string of the last occurrence of the
+   *    specified substring. The integer returned is the largest value
+   *    &lt;code&gt;k&lt;/code&gt; such that:
+   *  &lt;/p&gt;&lt;pre&gt;
+   *    k &lt;= Math.min(fromIndex, str.length()) &amp;&amp;
+   *                   this.toString().startsWith(str, k)&lt;/pre&gt;
+   *  &lt;p&gt;
+   *    If no such value of &lt;code&gt;k&lt;/code&gt; exists, then &lt;code&gt;-1&lt;/code&gt;
+   *    is returned.
+   *  &lt;/p&gt;
+   *
+   *  @param  str        the substring to search for.
+   *  @param  fromIndex  the index to start the search from.
+   *  @return            the index within this sequence of the last occurrence
+   *                     of the specified substring.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(String,Int)Int</span><a id="19670">lastIndexOf</a></span>(<span class="typed"><span class="type">String</span><a id="85780">str</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>, <span class="typed"><span class="type">Int</span><a id="85781">fromIndex</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> =
+    <span class="typed"><span class="type">object StringBuilder</span><a href="#1434">StringBuilder</a></span>.<span class="typed"><span class="type">(Array[Char],Int,Int,Array[Char],Int,Int,Int)Int</span><a href="#26565">lastIndexOf</a></span>(<span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>, <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>, <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>, <span class="typed"><span class="type">String</span><a href="#85780">str</a></span>.<span class="typed"><span class="type">()Array[Char]</span><a id="5870">toCharArray</a></span>, <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>, <span class="typed"><span class="type">String</span><a href="#85780">str</a></span>.<span class="typed"><span class="type">()Int</span><a id="5819">length</a></span>(), <span class="typed"><span class="type">Int</span><a href="#85781">fromIndex</a></span>)
+
+  <span class="comment">/** &lt;p&gt;
+   *    Causes this character sequence to be replaced by the reverse of the
+   *    sequence. If there are any surrogate pairs included in the sequence,
+   *    these are treated as single characters for the reverse operation.
+   *    Thus, the order of the high-low surrogates is never reversed.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    Let &lt;i&gt;n&lt;/i&gt; be the character length of this character sequence
+   *    (not the length in &lt;code&gt;Char&lt;/code&gt; values) just prior to
+   *    execution of the &lt;code&gt;reverse&lt;/code&gt; method. Then the
+   *    character at index &lt;i&gt;k&lt;/i&gt; in the new character sequence is
+   *    equal to the character at index &lt;i&gt;n-k-1&lt;/i&gt; in the old
+   *    character sequence.
+   *  &lt;/p&gt;
+   *
+   *  @return  a reference to this object.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">()StringBuilder</span><a id="19671">reverse</a></span>(): <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span> = {
+    <span class="keyword">var</span> <span class="typed"><span class="type">Boolean</span><a id="85793">hasSurrogate</a></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="85794">n</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+    <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="85795">j</a></span> = (<span class="typed"><span class="type">Int</span><a href="#85794">n</a></span><span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span><span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3092">&gt;&gt;</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+    <span class="typed"><span class="type">Unit</span><a href="#85796" class="keyword">while</a></span> (<span class="typed"><span class="type">Int</span><a href="#85795">j</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3144">&gt;=</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) {
+      <span class="keyword">val</span> <span class="typed"><span class="type">Char</span><a id="85801">temp</a></span> = <span class="typed"><span class="type">(Int)Char</span><a href="Array.scala.html#17253">value</a></span>(<span class="typed"><span class="type">Int</span><a href="#85795">j</a></span>)
+      <span class="keyword">val</span> <span class="typed"><span class="type">Char</span><a id="85802">temp2</a></span> = <span class="typed"><span class="type">(Int)Char</span><a href="Array.scala.html#17253">value</a></span>(<span class="typed"><span class="type">Int</span><a href="#85794">n</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int</span><a href="#85795">j</a></span>)
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">Boolean</span><a href="#85793">hasSurrogate</a></span>)
+        <span class="typed"><span class="type">Boolean</span><a href="#85793">hasSurrogate</a></span> =
+          (<span class="typed"><span class="type">Char</span><a href="#85801">temp</a></span> <span class="typed"><span class="type">(Char)Boolean</span><a id="3021">&gt;=</a></span> <span class="typed"><span class="type">object StringBuilder</span><a href="#1434">StringBuilder</a></span>.<span class="typed"><span class="type">=&gt; Char</span><a href="#26557">MIN_SURROGATE</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">Char</span><a href="#85801">temp</a></span> <span class="typed"><span class="type">(Char)Boolean</span><a id="3019">&lt;=</a></span> <span class="typed"><span class="type">object StringBuilder</span><a href="#1434">StringBuilder</a></span>.<span class="typed"><span class="type">=&gt; Char</span><a href="#26559">MAX_SURROGATE</a></span>) <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span>
+       	  (<span class="typed"><span class="type">Char</span><a href="#85802">temp2</a></span> <span class="typed"><span class="type">(Char)Boolean</span><a id="3021">&gt;=</a></span> <span class="typed"><span class="type">object StringBuilder</span><a href="#1434">StringBuilder</a></span>.<span class="typed"><span class="type">=&gt; Char</span><a href="#26557">MIN_SURROGATE</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">Char</span><a href="#85802">temp2</a></span> <span class="typed"><span class="type">(Char)Boolean</span><a id="3019">&lt;=</a></span> <span class="typed"><span class="type">object StringBuilder</span><a href="#1434">StringBuilder</a></span>.<span class="typed"><span class="type">=&gt; Char</span><a href="#26559">MAX_SURROGATE</a></span>)
+      <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>(<span class="typed"><span class="type">Int</span><a href="#85795">j</a></span>) = <span class="typed"><span class="type">Char</span><a href="#85802">temp2</a></span>
+      <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>(<span class="typed"><span class="type">Int</span><a href="#85794">n</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int</span><a href="#85795">j</a></span>) = <span class="typed"><span class="type">Char</span><a href="#85801">temp</a></span>
+      <span class="typed"><span class="type">Int</span><a href="#85795">j</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+    }
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Boolean</span><a href="#85793">hasSurrogate</a></span>) {
+      <span class="comment">// Reverse back all valid surrogate pairs</span>
+      <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="85863">i</a></span> = <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>
+      <span class="typed"><span class="type">Unit</span><a href="#85864" class="keyword">while</a></span> (<span class="typed"><span class="type">Int</span><a href="#85863">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>) {
+        <span class="keyword">val</span> <span class="typed"><span class="type">Char</span><a id="85867">c2</a></span> = <span class="typed"><span class="type">(Int)Char</span><a href="Array.scala.html#17253">value</a></span>(<span class="typed"><span class="type">Int</span><a href="#85863">i</a></span>)
+	<span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">object StringBuilder</span><a href="#1434">StringBuilder</a></span>.<span class="typed"><span class="type">(Char)Boolean</span><a href="#26561">isLowSurrogate</a></span>(<span class="typed"><span class="type">Char</span><a href="#85867">c2</a></span>)) {
+          <span class="keyword">val</span> <span class="typed"><span class="type">Char</span><a id="85873">c1</a></span> = <span class="typed"><span class="type">(Int)Char</span><a href="Array.scala.html#17253">value</a></span>(<span class="typed"><span class="type">Int</span><a href="#85863">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>)
+          <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">object StringBuilder</span><a href="#1434">StringBuilder</a></span>.<span class="typed"><span class="type">(Char)Boolean</span><a href="#26562">isHighSurrogate</a></span>(<span class="typed"><span class="type">Char</span><a href="#85873">c1</a></span>)) {
+            <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>(<span class="typed"><span class="type">Int</span><a href="#85863">i</a></span>) = <span class="typed"><span class="type">Char</span><a href="#85873">c1</a></span>; <span class="typed"><span class="type">Int</span><a href="#85863">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+            <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>(<span class="typed"><span class="type">Int</span><a href="#85863">i</a></span>) = <span class="typed"><span class="type">Char</span><a href="#85867">c2</a></span>
+          }
+        }
+        <span class="typed"><span class="type">Int</span><a href="#85863">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+      }
+    }
+    <span class="typed"><span class="type">StringBuilder</span><a href="#1433" class="keyword">this</a></span>
+  }
+
+  <span class="comment">/** Returns a string representing the data in this sequence.
+   *  A new &lt;code&gt;String&lt;/code&gt; object is allocated and initialized to 
+   *  contain the character sequence currently represented by this 
+   *  object. This &lt;code&gt;String&lt;/code&gt; is then returned. Subsequent 
+   *  changes to this sequence do not affect the contents of the 
+   *  &lt;code&gt;String&lt;/code&gt;.
+   *
+   *  @return  a string representation of this sequence of characters.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()String</span><a id="19672">toString</a></span>(): <span class="typed"><span class="type">String</span><a id="1859">String</a></span> = <span class="typed"><span class="type">(Array[Char],Int,Int)java.lang.String</span><a id="5808" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.String</span><a href="Predef.scala.html#13327">String</a></span>(<span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>, <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>, <span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>)
+
+  @<span class="typed"><span class="type">throws</span><a href="throws.scala.html#254">throws</a></span>(<span class="typed"><span class="type">java.lang.Class[java.io.IOException]</span><span >classOf</span></span>[java.io.IOException])
+  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">(java.io.ObjectOutputStream)Unit</span><a id="19673">writeObject</a></span>(<span class="typed"><span class="type">java.io.ObjectOutputStream</span><a id="85994">s</a></span>: java.io.<span class="typed"><span class="type">java.io.ObjectOutputStream</span><a id="3658">ObjectOutputStream</a></span>) {
+    <span class="typed"><span class="type">java.io.ObjectOutputStream</span><a href="#85994">s</a></span>.<span class="typed"><span class="type">()Unit</span><a id="43368">defaultWriteObject</a></span>()
+    <span class="typed"><span class="type">java.io.ObjectOutputStream</span><a href="#85994">s</a></span>.<span class="typed"><span class="type">(Int)Unit</span><a id="43392">writeInt</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="#19617">count</a></span>)
+    <span class="typed"><span class="type">java.io.ObjectOutputStream</span><a href="#85994">s</a></span>.<span class="typed"><span class="type">(Any)Unit</span><a id="43365">writeObject</a></span>(<span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#19614">value</a></span>)
+  }
+
+  @<span class="typed"><span class="type">throws</span><a href="throws.scala.html#254">throws</a></span>(<span class="typed"><span class="type">java.lang.Class[java.io.IOException]</span><span >classOf</span></span>[java.io.IOException])
+  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">(java.io.ObjectInputStream)Unit</span><a id="19674">readObject</a></span>(<span class="typed"><span class="type">java.io.ObjectInputStream</span><a id="85995">s</a></span>: java.io.<span class="typed"><span class="type">java.io.ObjectInputStream</span><a id="3832">ObjectInputStream</a></span> ) {
+    <span class="typed"><span class="type">java.io.ObjectInputStream</span><a href="#85995">s</a></span>.<span class="typed"><span class="type">()Unit</span><a id="43488">defaultReadObject</a></span>()
+    <span class="typed"><span class="type">(Int)Unit</span><a href="#19618">count</a></span> = <span class="typed"><span class="type">java.io.ObjectInputStream</span><a href="#85995">s</a></span>.<span class="typed"><span class="type">()Int</span><a id="43511">readInt</a></span>()
+    <span class="typed"><span class="type">(Array[Char])Unit</span><a href="#19615">value</a></span> = <span class="typed"><span class="type">java.io.ObjectInputStream</span><a href="#85995">s</a></span>.<span class="typed"><span class="type">()java.lang.Object</span><a id="43485">readObject</a></span>().<span class="typed"><span class="type">Array[Char]</span><a id="3501">asInstanceOf</a></span>[<span class="typed"><span class="type">Array[Char]</span><a href="Array.scala.html#1070">Array</a></span>[Char]]
+  }
+
+}
+
+
+<span class="keyword">object</span> <span class="typed"><span class="type">object StringBuilder</span><a id="1434">StringBuilder</a></span> {
+
+  <span class="keyword">private</span> <span class="keyword">val</span> <span class="typed"><span class="type">Char</span><span id="26550"><a id="26549">MIN_HIGH_SURROGATE</a></span></span> = <span class="typed"><span class="type">Char('?')</span><span class="char">'\uD800'</span></span>
+  <span class="keyword">private</span> <span class="keyword">val</span> <span class="typed"><span class="type">Char</span><span id="26552"><a id="26551">MAX_HIGH_SURROGATE</a></span></span> = <span class="typed"><span class="type">Char('?')</span><span class="char">'\uDBFF'</span></span>
+
+  <span class="keyword">private</span> <span class="keyword">val</span> <span class="typed"><span class="type">Char</span><span id="26554"><a id="26553">MIN_LOW_SURROGATE</a></span></span> = <span class="typed"><span class="type">Char('?')</span><span class="char">'\uDC00'</span></span>
+  <span class="keyword">private</span> <span class="keyword">val</span> <span class="typed"><span class="type">Char</span><span id="26556"><a id="26555">MAX_LOW_SURROGATE</a></span></span> = <span class="typed"><span class="type">Char('?')</span><span class="char">'\uDFFF'</span></span>
+
+  <span class="comment">// constants &lt;code&gt;java.langCharacter.MIN-/MAX_SURROGATE&lt;/code&gt; exist since 1.5</span>
+  <span class="keyword">private</span> <span class="keyword">val</span> <span class="typed"><span class="type">Char</span><span id="26558"><a id="26557">MIN_SURROGATE</a></span></span> = <span class="typed"><span class="type">=&gt; Char</span><a href="#26549">MIN_HIGH_SURROGATE</a></span>
+  <span class="keyword">private</span> <span class="keyword">val</span> <span class="typed"><span class="type">Char</span><span id="26560"><a id="26559">MAX_SURROGATE</a></span></span> = <span class="typed"><span class="type">=&gt; Char</span><a href="#26555">MAX_LOW_SURROGATE</a></span>
+
+  <span class="comment">// methods &lt;code&gt;java.langCharacter.isLow-/isHighSurrogate&lt;/code&gt; exist since 1.5</span>
+  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Char)Boolean</span><a id="26561">isLowSurrogate</a></span>(<span class="typed"><span class="type">Char</span><a id="85872">ch</a></span>: <span class="typed"><span class="type">Char</span><a id="2387">Char</a></span>): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> =
+    <span class="typed"><span class="type">=&gt; Char</span><a href="#26553">MIN_LOW_SURROGATE</a></span> <span class="typed"><span class="type">(Char)Boolean</span><a id="3019">&lt;=</a></span> <span class="typed"><span class="type">Char</span><a href="#85872">ch</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">Char</span><a href="#85872">ch</a></span> <span class="typed"><span class="type">(Char)Boolean</span><a id="3019">&lt;=</a></span> <span class="typed"><span class="type">=&gt; Char</span><a href="#26555">MAX_LOW_SURROGATE</a></span>
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Char)Boolean</span><a id="26562">isHighSurrogate</a></span>(<span class="typed"><span class="type">Char</span><a id="85896">ch</a></span>: <span class="typed"><span class="type">Char</span><a id="2387">Char</a></span>): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> =
+    <span class="typed"><span class="type">=&gt; Char</span><a href="#26549">MIN_HIGH_SURROGATE</a></span> <span class="typed"><span class="type">(Char)Boolean</span><a id="3019">&lt;=</a></span> <span class="typed"><span class="type">Char</span><a href="#85896">ch</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">Char</span><a href="#85896">ch</a></span> <span class="typed"><span class="type">(Char)Boolean</span><a id="3019">&lt;=</a></span> <span class="typed"><span class="type">=&gt; Char</span><a href="#26551">MAX_HIGH_SURROGATE</a></span>
+
+  <span class="comment">// method &lt;code&gt;java.util.Arrays.copyOf&lt;/code&gt; exists since 1.6</span>
+  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Array[Char],Int)Array[Char]</span><a id="26563">copyOf</a></span>(<span class="typed"><span class="type">Array[Char]</span><a id="84832">src</a></span>: <span class="typed"><span class="type">Array[Char]</span><a href="Array.scala.html#1070">Array</a></span>[Char], <span class="typed"><span class="type">Int</span><a id="84833">newLength</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Array[Char]</span><a href="Array.scala.html#1070">Array</a></span>[Char] = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">Array[Char]</span><a id="86001">dest</a></span> = <span class="typed"><span class="type">Array[Char]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">Array[Char]</span><a href="Array.scala.html#1070">Array</a></span>[Char](<span class="typed"><span class="type">Int</span><a href="#84833">newLength</a></span>)
+    compat.<span class="typed"><span class="type">object scala.compat.Platform</span><a href="compat/Platform.scala.html#12224">Platform</a></span>.<span class="typed"><span class="type">(AnyRef,Int,AnyRef,Int,Int)Unit</span><a href="compat/Platform.scala.html#17279">arraycopy</a></span>(<span class="typed"><span class="type">Array[Char]</span><a href="#84832">src</a></span>, <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>, <span class="typed"><span class="type">Array[Char]</span><a href="#86001">dest</a></span>, <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>, <span class="typed"><span class="type">object Math</span><a href="Math.scala.html#606">Math</a></span>.<span class="typed"><span class="type">(Int,Int)Int</span><a href="Math.scala.html#25150">min</a></span>(<span class="typed"><span class="type">Array[Char]</span><a href="#84832">src</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="Array.scala.html#17252">length</a></span>, <span class="typed"><span class="type">Int</span><a href="#84833">newLength</a></span>))
+    <span class="typed"><span class="type">Array[Char]</span><a href="#86001">dest</a></span>
+  }
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Array[Char],Int,Int,Array[Char],Int,Int,Int)Int</span><a id="26564">indexOf</a></span>(<span class="typed"><span class="type">Array[Char]</span><a id="85771">source</a></span>: <span class="typed"><span class="type">Array[Char]</span><a href="Array.scala.html#1070">Array</a></span>[Char], <span class="typed"><span class="type">Int</span><a id="85772">sourceOffset</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Int</span><a id="85773">sourceCount</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>,
+                      <span class="typed"><span class="type">Array[Char]</span><a id="85774">target</a></span>: <span class="typed"><span class="type">Array[Char]</span><a href="Array.scala.html#1070">Array</a></span>[Char], <span class="typed"><span class="type">Int</span><a id="85775">targetOffset</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Int</span><a id="85776">targetCount</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>,
+                      <span class="typed"><span class="type">Int</span><a id="85777">fromIndex</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> =
+    <span class="typed"><span class="type">Int</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#85777">fromIndex</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3144">&gt;=</a></span> <span class="typed"><span class="type">Int</span><a href="#85773">sourceCount</a></span>)
+      <span class="typed"><span class="type">Int</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#85776">targetCount</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3139">==</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) <span class="typed"><span class="type">Int</span><a href="#85773">sourceCount</a></span> <span class="keyword">else</span> -<span class="typed"><span class="type">Int(-1)</span><span class="int">1</span></span>
+    <span class="keyword">else</span> {
+      <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="86018">inx</a></span> = <span class="typed"><span class="type">Int</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#85777">fromIndex</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span> <span class="keyword">else</span> <span class="typed"><span class="type">Int</span><a href="#85777">fromIndex</a></span>
+      <span class="typed"><span class="type">Int</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#85776">targetCount</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3139">==</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>)
+        <span class="typed"><span class="type">Int</span><a href="#86018">inx</a></span>
+      <span class="keyword">else</span> {
+        <span class="keyword">val</span> <span class="typed"><span class="type">Char</span><a id="86021">first</a></span>  = <span class="typed"><span class="type">(Int)Char</span><a href="Array.scala.html#17253">target</a></span>(<span class="typed"><span class="type">Int</span><a href="#85775">targetOffset</a></span>)
+        <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="86022">max</a></span> = <span class="typed"><span class="type">Int</span><a href="#85772">sourceOffset</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> (<span class="typed"><span class="type">Int</span><a href="#85773">sourceCount</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int</span><a href="#85776">targetCount</a></span>)
+
+        <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="86023">i</a></span> = <span class="typed"><span class="type">Int</span><a href="#85772">sourceOffset</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int</span><a href="#86018">inx</a></span>
+        <span class="typed"><span class="type">Unit</span><a href="#86024" class="keyword">while</a></span> (<span class="typed"><span class="type">Int</span><a href="#86023">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3142">&lt;=</a></span> <span class="typed"><span class="type">Int</span><a href="#86022">max</a></span>) {
+          <span class="comment">/* Look for first character. */</span>
+          <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">(Int)Char</span><a href="Array.scala.html#17253">source</a></span>(<span class="typed"><span class="type">Int</span><a href="#86023">i</a></span>) <span class="typed"><span class="type">(Char)Boolean</span><a id="3017">!=</a></span> <span class="typed"><span class="type">Char</span><a href="#86021">first</a></span>) {
+            <span class="typed"><span class="type">Int</span><a href="#86023">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+            <span class="typed"><span class="type">Unit</span><a href="#86059" class="keyword">while</a></span> (<span class="typed"><span class="type">Int</span><a href="#86023">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3142">&lt;=</a></span> <span class="typed"><span class="type">Int</span><a href="#86022">max</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">(Int)Char</span><a href="Array.scala.html#17253">source</a></span>(<span class="typed"><span class="type">Int</span><a href="#86023">i</a></span>) <span class="typed"><span class="type">(Char)Boolean</span><a id="3017">!=</a></span> <span class="typed"><span class="type">Char</span><a href="#86021">first</a></span>) <span class="typed"><span class="type">Int</span><a href="#86023">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+          }
+          <span class="comment">/* Found first character, now look at the rest of v2 */</span>
+          <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#86023">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3142">&lt;=</a></span> <span class="typed"><span class="type">Int</span><a href="#86022">max</a></span>) {
+            <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="86089">j</a></span> = <span class="typed"><span class="type">Int</span><a href="#86023">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+            <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="86090">end</a></span> = <span class="typed"><span class="type">Int</span><a href="#86089">j</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int</span><a href="#85776">targetCount</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+            <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="86091">k</a></span> = <span class="typed"><span class="type">Int</span><a href="#85775">targetOffset</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+            <span class="typed"><span class="type">Unit</span><a href="#86092" class="keyword">while</a></span> (<span class="typed"><span class="type">Int</span><a href="#86089">j</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int</span><a href="#86090">end</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">(Int)Char</span><a href="Array.scala.html#17253">source</a></span>(<span class="typed"><span class="type">Int</span><a href="#86089">j</a></span>) <span class="typed"><span class="type">(Char)Boolean</span><a id="3016">==</a></span> <span class="typed"><span class="type">(Int)Char</span><a href="Array.scala.html#17253">target</a></span>(<span class="typed"><span class="type">Int</span><a href="#86091">k</a></span>)) {
+              <span class="typed"><span class="type">Int</span><a href="#86089">j</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+              <span class="typed"><span class="type">Int</span><a href="#86091">k</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+            }
+            <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#86089">j</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3139">==</a></span> <span class="typed"><span class="type">Int</span><a href="#86090">end</a></span>) {
+              <span class="comment">/* Found whole string. */</span>
+              <span class="typed"><span class="type">Nothing</span><span class="keyword">return</span></span> <span class="typed"><span class="type">Int</span><a href="#86023">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int</span><a href="#85772">sourceOffset</a></span>
+            }
+          } <span class="comment">// if</span>
+          <span class="typed"><span class="type">Int</span><a href="#86023">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+        } <span class="comment">// while</span>
+        -<span class="typed"><span class="type">Int(-1)</span><span class="int">1</span></span>
+      }
+    }
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Array[Char],Int,Int,Array[Char],Int,Int,Int)Int</span><a id="26565">lastIndexOf</a></span>(<span class="typed"><span class="type">Array[Char]</span><a id="85786">source</a></span>: <span class="typed"><span class="type">Array[Char]</span><a href="Array.scala.html#1070">Array</a></span>[Char], <span class="typed"><span class="type">Int</span><a id="85787">sourceOffset</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Int</span><a id="85788">sourceCount</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>,
+                          <span class="typed"><span class="type">Array[Char]</span><a id="85789">target</a></span>: <span class="typed"><span class="type">Array[Char]</span><a href="Array.scala.html#1070">Array</a></span>[Char], <span class="typed"><span class="type">Int</span><a id="85790">targetOffset</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Int</span><a id="85791">targetCount</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>,
+                          <span class="typed"><span class="type">Int</span><a id="85792">fromIndex</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="86188">rightIndex</a></span> = <span class="typed"><span class="type">Int</span><a href="#85788">sourceCount</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int</span><a href="#85791">targetCount</a></span>
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#85792">fromIndex</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) <span class="typed"><span class="type">Nothing</span><span class="keyword">return</span></span> -<span class="typed"><span class="type">Int(-1)</span><span class="int">1</span></span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="86189">inx</a></span> = <span class="typed"><span class="type">Int</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#85792">fromIndex</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">Int</span><a href="#86188">rightIndex</a></span>) <span class="typed"><span class="type">Int</span><a href="#86188">rightIndex</a></span> <span class="keyword">else</span> <span class="typed"><span class="type">Int</span><a href="#85792">fromIndex</a></span>
+    <span class="comment">// Empty string always matches</span>
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#85791">targetCount</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3139">==</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) <span class="typed"><span class="type">Nothing</span><span class="keyword">return</span></span> <span class="typed"><span class="type">Int</span><a href="#86189">inx</a></span>
+
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="86190">strLastIndex</a></span> = <span class="typed"><span class="type">Int</span><a href="#85790">targetOffset</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int</span><a href="#85791">targetCount</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">Char</span><a id="86191">strLastChar</a></span> = <span class="typed"><span class="type">(Int)Char</span><a href="Array.scala.html#17253">target</a></span>(<span class="typed"><span class="type">Int</span><a href="#86190">strLastIndex</a></span>)
+    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="86192">min</a></span> = <span class="typed"><span class="type">Int</span><a href="#85787">sourceOffset</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int</span><a href="#85791">targetCount</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+    <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="86193">i</a></span> = <span class="typed"><span class="type">Int</span><a href="#86192">min</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int</span><a href="#85792">fromIndex</a></span>
+
+    <span class="typed"><span class="type">Unit</span><a href="#86194" class="keyword">while</a></span> (<span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>) {
+      <span class="typed"><span class="type">Unit</span><a href="#86211" class="keyword">while</a></span> (<span class="typed"><span class="type">Int</span><a href="#86193">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3144">&gt;=</a></span> <span class="typed"><span class="type">Int</span><a href="#86192">min</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">(Int)Char</span><a href="Array.scala.html#17253">source</a></span>(<span class="typed"><span class="type">Int</span><a href="#86193">i</a></span>) <span class="typed"><span class="type">(Char)Boolean</span><a id="3017">!=</a></span> <span class="typed"><span class="type">Char</span><a href="#86191">strLastChar</a></span>) <span class="typed"><span class="type">Int</span><a href="#86193">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#86193">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int</span><a href="#86192">min</a></span>) <span class="typed"><span class="type">Nothing</span><span class="keyword">return</span></span> -<span class="typed"><span class="type">Int(-1)</span><span class="int">1</span></span>
+      <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="86207">j</a></span> = <span class="typed"><span class="type">Int</span><a href="#86193">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+      <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="86208">start</a></span> = <span class="typed"><span class="type">Int</span><a href="#86207">j</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> (<span class="typed"><span class="type">Int</span><a href="#85791">targetCount</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>)
+      <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="86209">k</a></span> = <span class="typed"><span class="type">Int</span><a href="#86190">strLastIndex</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+      <span class="keyword">var</span> <span class="typed"><span class="type">Boolean</span><a id="86210">outerWhile</a></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+      <span class="typed"><span class="type">Unit</span><a href="#86212" class="keyword">while</a></span> (<span class="typed"><span class="type">Int</span><a href="#86207">j</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">Int</span><a href="#86208">start</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">Boolean</span><a href="#86210">outerWhile</a></span>) {
+        <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">(Int)Char</span><a href="Array.scala.html#17253">source</a></span>(<span class="typed"><span class="type">Int</span><a href="#86207">j</a></span>) <span class="typed"><span class="type">(Char)Boolean</span><a id="3017">!=</a></span> <span class="typed"><span class="type">(Int)Char</span><a href="Array.scala.html#17253">target</a></span>(<span class="typed"><span class="type">Int</span><a href="#86209">k</a></span>)) {
+          <span class="typed"><span class="type">Int</span><a href="#86207">j</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+          <span class="typed"><span class="type">Int</span><a href="#86209">k</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+          <span class="typed"><span class="type">Int</span><a href="#86193">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+          <span class="typed"><span class="type">Boolean</span><a href="#86210">outerWhile</a></span> = <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+        }
+      }
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">Boolean</span><a href="#86210">outerWhile</a></span>) <span class="typed"><span class="type">Nothing</span><span class="keyword">return</span></span> <span class="typed"><span class="type">Int</span><a href="#86208">start</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int</span><a href="#85787">sourceOffset</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+    }
+    -<span class="typed"><span class="type">Int(-1)</span><span class="int">1</span></span>
+  }
+
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <span class="typed"><span class="type">implicit scala.StringBuilder.toCharSequence : (StringBuilder)java.lang.CharSequence</span><a id="26566">toCharSequence</a></span>(<span class="typed"><span class="type">StringBuilder</span><a id="26568">sb</a></span>: <span class="typed"><span class="type">StringBuilder</span><a href="#1433">StringBuilder</a></span>): java.lang.<span class="typed"><span class="type">java.lang.CharSequence</span><a id="2120">CharSequence</a></span> = <span class="typed"><span class="type">template $anon extends java.lang.Object with java.lang.CharSequence</span><a id="86324" class="keyword">new</a></span> java.lang.<span class="typed"><span class="type">java.lang.CharSequence</span><a id="2120">CharSequence</a></span> {
+    <span class="keyword">def</span> <span class="typed"><span class="type">()Int</span><a id="86326">length</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = <span class="typed"><span class="type">StringBuilder</span><a href="#26568">sb</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="#19624">length</a></span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Char</span><a id="86327">charAt</a></span>(<span class="typed"><span class="type">Int</span><a id="86333">index</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Char</span><a id="2387">Char</a></span> = <span class="typed"><span class="type">StringBuilder</span><a href="#26568">sb</a></span>.<span class="typed"><span class="type">(Int)Char</span><a href="#19631">charAt</a></span>(<span class="typed"><span class="type">Int</span><a href="#86333">index</a></span>)
+    <span class="keyword">def</span> <span class="typed"><span class="type">(Int,Int)java.lang.CharSequence</span><a id="86328">subSequence</a></span>(<span class="typed"><span class="type">Int</span><a id="86334">start</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Int</span><a id="86335">end</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): java.lang.<span class="typed"><span class="type">java.lang.CharSequence</span><a id="2120">CharSequence</a></span> = <span class="typed"><span class="type">StringBuilder</span><a href="#26568">sb</a></span>.<span class="typed"><span class="type">(Int,Int)String</span><a href="#19637">substring</a></span>(<span class="typed"><span class="type">Int</span><a href="#86334">start</a></span>, <span class="typed"><span class="type">Int</span><a href="#86335">end</a></span>)
+    <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()String</span><a id="86329">toString</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span> = <span class="typed"><span class="type">StringBuilder</span><a href="#26568">sb</a></span>.<span class="typed"><span class="type">()String</span><a href="#19672">toString</a></span>
+  }
+}
+
+        </pre>
+    </body>
+</html>

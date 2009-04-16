@@ -1,0 +1,71 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scalax/collection/generic/Growable.scala</title>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: Iterable.scala 15188 2008-05-24 15:01:02Z stepancheg $</span>
+
+<span class="keyword">package</span> scalax.collection.generic
+
+<span class="comment">/** This class represents collections that can be augmented using a += operator.
+ *        
+ *  @autor   Martin Odersky
+ *  @owner   Martin Odersky
+ *  @version 2.8
+ */</span>
+<span class="keyword">trait</span> <span class="typed"><span class="type">trait Growable[A] extends java.lang.Object with ScalaObject</span><a id="10296">Growable</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="11097">A</a></span>] { 
+
+  <span class="comment">/** Adds a single element to this collection.
+   *
+   *  @param elem  the element to add.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A)Unit</span><a id="17910">+=</a></span>(<span class="typed"><span class="type">A</span><a id="23924">elem</a></span>: <span class="typed"><span class="type">A</span><a href="#11097">A</a></span>): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span>
+
+  <span class="comment">/** Adds two or more elements to this collection.
+   *
+   *  @param elem1 the first element to add.
+   *  @param elem2 the second element to add.
+   *  @param elems the remaining elements to add.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A,A,A*)Unit</span><a id="17911">+=</a></span>(<span class="typed"><span class="type">A</span><a id="23920">elem1</a></span>: <span class="typed"><span class="type">A</span><a href="#11097">A</a></span>, <span class="typed"><span class="type">A</span><a id="23921">elem2</a></span>: <span class="typed"><span class="type">A</span><a href="#11097">A</a></span>, <span class="typed"><span class="type">A*</span><a id="23922">elems</a></span>: <span class="typed"><span class="type">A*</span><a id="2739">A</a></span>*) {
+    <span class="typed"><span class="type">Growable.this.type</span><a href="#10296" class="keyword">this</a></span> <span class="typed"><span class="type">(A)Unit</span><a href="#17910">+=</a></span> <span class="typed"><span class="type">A</span><a href="#23920">elem1</a></span> 
+    <span class="typed"><span class="type">Growable.this.type</span><a href="#10296" class="keyword">this</a></span> <span class="typed"><span class="type">(A)Unit</span><a href="#17910">+=</a></span> <span class="typed"><span class="type">A</span><a href="#23921">elem2</a></span>
+    <span class="typed"><span class="type">Growable.this.type</span><a href="#10296" class="keyword">this</a></span> <span class="typed"><span class="type">(scalax.collection.Iterable[A])Unit</span><a href="#17913">++=</a></span> <span class="typed"><span class="type">A*</span><a href="#23922">elems</a></span>.<span class="typed"><span class="type">scalax.collection.Iterable[A]</span><a id="3501">asInstanceOf</a></span>[<span class="typed"><span class="type">scalax.collection.Iterable[A]</span><a href="../Iterable.scala.html#6449">Iterable</a></span>[A]] <span class="comment">// !@!</span>
+  }
+
+  <span class="comment">/** Adds a number of elements provided by an iterator to this collection.
+   *
+   *  @param iter  the iterator.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(scalax.collection.Iterator[A])Unit</span><a id="17912">++=</a></span>(<span class="typed"><span class="type">scalax.collection.Iterator[A]</span><a id="23962">iter</a></span>: collection.<span class="typed"><span class="type">scalax.collection.Iterator[A]</span><a href="../Iterator.scala.html#6386">Iterator</a></span>[A]) { <span class="typed"><span class="type">scalax.collection.Iterator[A]</span><a href="#23962">iter</a></span> <span class="typed"><span class="type">((A) =&gt; Unit)Unit</span><a href="../Iterator.scala.html#20248">foreach</a></span> <span class="typed"><span class="type">(A)Unit</span><a href="#17910">+=</a></span> }
+
+  <span class="comment">/** Adds a number of elements provided by an iterable object to this collection.
+   *
+   *  @param iter  the iterable object.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(scalax.collection.Iterable[A])Unit</span><a id="17913">++=</a></span>(<span class="typed"><span class="type">scalax.collection.Iterable[A]</span><a id="23961">iter</a></span>: collection.<span class="typed"><span class="type">scalax.collection.Iterable[A]</span><a href="../Iterable.scala.html#6449">Iterable</a></span>[A]) { <span class="typed"><span class="type">scalax.collection.Iterable[A]</span><a href="#23961">iter</a></span> <span class="typed"><span class="type">((A) =&gt; Unit)Unit</span><a href="IterableTemplate.scala.html#17412">foreach</a></span> <span class="typed"><span class="type">(A)Unit</span><a href="#17910">+=</a></span> }
+
+  <span class="comment">/** Clears the collection contents.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="17914">clear</a></span>()
+}
+  
+
+  
+
+
+        </pre>
+    </body>
+</html>

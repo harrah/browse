@@ -1,0 +1,531 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/Stream.scala</title>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: Stream.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+
+<span class="keyword">package</span> scala
+
+<span class="keyword">import</span> Predef._
+
+<span class="comment">/**
+ * The object &lt;code&gt;Stream&lt;/code&gt; provides helper functions
+ * to manipulate streams.
+ *
+ * @author Martin Odersky, Matthias Zenger
+ * @version 1.1 08/08/03
+ */</span>
+<span class="keyword">object</span> <span class="typed"><span class="type">object Stream</span><a id="261">Stream</a></span> {
+
+  <span class="keyword">def</span> <span class="typed"><span class="type">[A](A*)Stream[A]</span><a id="30131">apply</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="30133">A</a></span>](<span class="typed"><span class="type">A*</span><a id="110351">xs</a></span>: <span class="typed"><span class="type">A*</span><a id="2739">A</a></span>*) = (<span class="typed"><span class="type">A*</span><a href="#110351">xs</a></span> <span class="typed"><span class="type">(Stream[A])((A, Stream[A]) =&gt; Stream[A])Stream[A]</span><a href="Iterable.scala.html#17345">:\</a></span> (<span class="typed"><span class="type">=&gt; Stream[Nothing]</span><a href="#30141">empty</a></span>: <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A]))(<span class="typed"><span class="type">(A,=&gt; Stream[A])Stream[A]</span><a href="#52368">cons</a></span>(<span class="typed"><span class="type">A</span><a href="#110355">_</a></span>, <span class="typed"><span class="type">Stream[A]</span><a href="#110356">_</a></span>))
+    
+  <span class="keyword">def</span> <span class="typed"><span class="type">[A](Stream[A])Option[Seq[A]]</span><a id="30134">unapplySeq</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="30136">A</a></span>](<span class="typed"><span class="type">Stream[A]</span><a id="110358">xs</a></span>: <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A]): <span class="typed"><span class="type">Option[Seq[A]]</span><a href="Option.scala.html#932">Option</a></span>[Seq[A]] = <span class="typed"><span class="type">(Stream[A])Some[Stream[A]]</span><a href="Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">Stream[A]</span><a href="#110358">xs</a></span>)
+
+  <span class="keyword">object</span> <span class="typed"><span class="type">object scala.Stream.lazy_::</span><a id="30137">lazy_::</a></span> {
+    <span class="keyword">def</span> <span class="typed"><span class="type">[A](Stream[A])Option[(A, Stream[A])]</span><a id="110361">unapply</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="110363">A</a></span>](<span class="typed"><span class="type">Stream[A]</span><a id="110365">xs</a></span>: <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A]): <span class="typed"><span class="type">Option[(A, Stream[A])]</span><a href="Option.scala.html#932">Option</a></span>[(A, Stream[A])] = 
+      <span class="typed"><span class="type">Option[(A, Stream[A])]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Stream[A]</span><a href="#110365">xs</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span>) <span class="typed"><span class="type">object None</span><a href="Option.scala.html#534">None</a></span>
+      <span class="keyword">else</span> <span class="typed"><span class="type">((A, Stream[A]))Some[(A, Stream[A])]</span><a href="Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">Stream[A]</span><a href="#110365">xs</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="#18364">head</a></span>, <span class="typed"><span class="type">Stream[A]</span><a href="#110365">xs</a></span>.<span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span>)
+  }
+
+   <span class="comment">/** a stream with a definite size */</span>
+  <span class="keyword">trait</span> <span class="typed"><span class="type">trait Definite[+A] extends Stream[A] with () =&gt; Stream[A] with ScalaObject</span><a id="30139">Definite</a></span>[+<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="30140">A</a></span>] <span class="keyword">extends</span> <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A] <span class="keyword">with</span> <span class="typed"><span class="type">() =&gt; Stream[A]</span><a href="Function0.scala.html#413">Function0</a></span>[Stream[A]] {
+     <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="88068">hasDefiniteSize</a></span> = <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+     <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()scala.Stream.Definite[A]</span><a id="88069">apply</a></span> = <span class="typed"><span class="type">scala.Stream.Definite[A]</span><a href="#30139" class="keyword">this</a></span>
+
+    <span class="comment">/** Converts stream to string. Redefined here as
+     *  super[Stream].toString does not pass because of an implementation
+     *  restriction (super[C] cannot be called when C is a class).
+     */</span>
+    <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()java.lang.String</span><a id="88070">toString</a></span> =
+      <span class="typed"><span class="type">java.lang.String(&quot;Stream(&quot;)</span><span class="string">&quot;Stream(&quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">(StringBuilder,String)StringBuilder</span><a href="#18408">addDefinedElems</a></span>(<span class="typed"><span class="type">()StringBuilder</span><a href="StringBuilder.scala.html#19620" class="keyword">new</a></span> <span class="typed"><span class="type">StringBuilder</span><a href="StringBuilder.scala.html#1433">StringBuilder</a></span>(), <span class="typed"><span class="type">java.lang.String(&quot;&quot;)</span><span class="string">&quot;&quot;</span></span>) <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot;)&quot;)</span><span class="string">&quot;)&quot;</span></span>
+   }
+   
+  <span class="comment">/** The empty stream */</span>
+  <span class="keyword">val</span> <span class="typed"><span class="type">Stream[Nothing]</span><span id="30142"><a id="30141">empty</a></span></span>: <span class="typed"><span class="type">Stream[Nothing]</span><a href="#260">Stream</a></span>[Nothing] = <span class="typed"><span class="type">template $anon extends Stream[Nothing] with scala.Stream.Definite[Nothing]</span><a id="110389" class="keyword">new</a></span> <span class="typed"><span class="type">scala.Stream.Definite[Nothing]</span><a href="#30139">Definite</a></span>[Nothing] {
+    <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="110391">isEmpty</a></span> = <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Nothing</span><a id="110392">head</a></span>: <span class="typed"><span class="type">Nothing</span><a id="2165">Nothing</a></span> = <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.util.NoSuchElementException</span><a id="25317" class="keyword">new</a></span> <span class="typed"><span class="type">java.util.NoSuchElementException</span><a href="Predef.scala.html#13342">NoSuchElementException</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;head of empty stream&quot;)</span><span class="string">&quot;head of empty stream&quot;</span></span>)
+    <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Stream[Nothing]</span><a id="110393">tail</a></span>: <span class="typed"><span class="type">Stream[Nothing]</span><a href="#260">Stream</a></span>[Nothing] = <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.lang.UnsupportedOperationException</span><a id="30111" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.UnsupportedOperationException</span><a href="Predef.scala.html#13340">UnsupportedOperationException</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;tail of empty stream&quot;)</span><span class="string">&quot;tail of empty stream&quot;</span></span>)
+    <span class="keyword">protected</span> <span class="keyword">def</span> <span class="typed"><span class="type">(StringBuilder,String)StringBuilder</span><a id="110394">addDefinedElems</a></span>(<span class="typed"><span class="type">StringBuilder</span><a id="110404">buf</a></span>: <span class="typed"><span class="type">StringBuilder</span><a href="StringBuilder.scala.html#1433">StringBuilder</a></span>, <span class="typed"><span class="type">String</span><a id="110405">prefix</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="StringBuilder.scala.html#1433">StringBuilder</a></span> = <span class="typed"><span class="type">StringBuilder</span><a href="#110404">buf</a></span>
+  }
+
+  <span class="keyword">object</span> <span class="typed"><span class="type">object scala.Stream.cons</span><a id="30143">cons</a></span> {
+
+    <span class="comment">/** A stream consisting of a given first element and remaining elements 
+     *  @param hd   The first element of the result stream
+     *  @param tl   The remaining elements of the result stream
+     */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">[A](A,=&gt; Stream[A])Stream[A]</span><a id="52368">apply</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="52370">A</a></span>](<span class="typed"><span class="type">A</span><a id="52374">hd</a></span>: <span class="typed"><span class="type">A</span><a href="#52370">A</a></span>, <span class="typed"><span class="type">=&gt; Stream[A]</span><a id="52375">tl</a></span>: =&gt; Stream[A]) = <span class="typed"><span class="type">template $anon extends Stream[A]</span><a id="52377" class="keyword">new</a></span> <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A] {
+      <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="52379">hasDefiniteSize</a></span> = <span class="typed"><span class="type">Boolean</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#52385">tlDefined</a></span>) <span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#52382">tlVal</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="#18368">hasDefiniteSize</a></span> <span class="keyword">else</span> <span class="keyword">super</span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="#18368">hasDefiniteSize</a></span>
+      <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="52380">isEmpty</a></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+      <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; A</span><a id="52381">head</a></span> = <span class="typed"><span class="type">A</span><a href="#52374">hd</a></span>
+      <span class="keyword">private</span> <span class="keyword">var</span> <span class="typed"><span class="type">Stream[A]</span><span id="52384"><span id="52382"><span id="52383"><a id="52389">tlVal</a></span></span></span></span>: <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A] = _
+      <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="52385">tlDefined</a></span> = <span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#52382">tlVal</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5793">ne</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>
+      <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Stream[A]</span><a id="52386">tail</a></span>: <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A] = {
+        <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">=&gt; Boolean</span><a href="#52385">tlDefined</a></span>) { <span class="typed"><span class="type">(Stream[A])Unit</span><a href="#52383">tlVal</a></span> = <span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#52375">tl</a></span> }
+        <span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#52382">tlVal</a></span> 
+      }
+      <span class="keyword">protected</span> <span class="keyword">def</span> <span class="typed"><span class="type">(StringBuilder,String)StringBuilder</span><a id="52387">addDefinedElems</a></span>(<span class="typed"><span class="type">StringBuilder</span><a id="52400">buf</a></span>: <span class="typed"><span class="type">StringBuilder</span><a href="StringBuilder.scala.html#1433">StringBuilder</a></span>, <span class="typed"><span class="type">String</span><a id="52401">prefix</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="StringBuilder.scala.html#1433">StringBuilder</a></span> = {
+        <span class="keyword">val</span> <span class="typed"><span class="type">StringBuilder</span><a id="52402">buf1</a></span> = <span class="typed"><span class="type">StringBuilder</span><a href="#52400">buf</a></span>.<span class="typed"><span class="type">(String)StringBuilder</span><a href="StringBuilder.scala.html#19639">append</a></span>(<span class="typed"><span class="type">String</span><a href="#52401">prefix</a></span>).<span class="typed"><span class="type">(Any)StringBuilder</span><a href="StringBuilder.scala.html#19638">append</a></span>(<span class="typed"><span class="type">A</span><a href="#52374">hd</a></span>)
+        <span class="typed"><span class="type">StringBuilder</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#52385">tlDefined</a></span>) <span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#52382">tlVal</a></span>.<span class="typed"><span class="type">(StringBuilder,String)StringBuilder</span><a href="#18408">addDefinedElems</a></span>(<span class="typed"><span class="type">StringBuilder</span><a href="#52402">buf1</a></span>, <span class="typed"><span class="type">java.lang.String(&quot;, &quot;)</span><span class="string">&quot;, &quot;</span></span>) <span class="keyword">else</span> <span class="typed"><span class="type">StringBuilder</span><a href="#52402">buf1</a></span> <span class="typed"><span class="type">(String)StringBuilder</span><a href="StringBuilder.scala.html#19639">append</a></span> <span class="typed"><span class="type">java.lang.String(&quot;, ?&quot;)</span><span class="string">&quot;, ?&quot;</span></span>
+      }
+    }
+
+    <span class="keyword">def</span> <span class="typed"><span class="type">[A](Stream[A])Option[(A, Stream[A])]</span><a id="52371">unapply</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="52373">A</a></span>](<span class="typed"><span class="type">Stream[A]</span><a id="110407">str</a></span>: <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A]): <span class="typed"><span class="type">Option[(A, Stream[A])]</span><a href="Option.scala.html#932">Option</a></span>[(A, Stream[A])] =
+      <span class="typed"><span class="type">Option[(A, Stream[A])]</span><span class="keyword">if</span></span>(<span class="typed"><span class="type">Stream[A]</span><a href="#110407">str</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span>)
+        <span class="typed"><span class="type">object None</span><a href="Option.scala.html#534">None</a></span>
+      <span class="keyword">else</span>
+        <span class="typed"><span class="type">((A, Stream[A]))Some[(A, Stream[A])]</span><a href="Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">(A,Stream[A])(A, Stream[A])</span><a href="Tuple2.scala.html#20366">(</a></span><span class="typed"><span class="type">Stream[A]</span><a href="#110407">str</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="#18364">head</a></span>, <span class="typed"><span class="type">Stream[A]</span><a href="#110407">str</a></span>.<span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span>))
+  }
+
+  <span class="comment">/** A stream containing all elements of a given iterator, in the order they are produced.
+   *  @param it   The iterator producing the stream's elements
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[A](Iterator[A])Stream[A]</span><a id="30145">fromIterator</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="30147">A</a></span>](<span class="typed"><span class="type">Iterator[A]</span><a id="30168">it</a></span>: <span class="typed"><span class="type">Iterator[A]</span><a href="Iterator.scala.html#1337">Iterator</a></span>[A]): <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A] =
+    <span class="typed"><span class="type">Stream[A]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Iterator[A]</span><a href="#30168">it</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Iterator.scala.html#19975">hasNext</a></span>) <span class="typed"><span class="type">(A,=&gt; Stream[A])Stream[A]</span><a href="#52368">cons</a></span>(<span class="typed"><span class="type">Iterator[A]</span><a href="#30168">it</a></span>.<span class="typed"><span class="type">()A</span><a href="Iterator.scala.html#19976">next</a></span>, <span class="typed"><span class="type">(Iterator[A])Stream[A]</span><a href="#30145">fromIterator</a></span>(<span class="typed"><span class="type">Iterator[A]</span><a href="#30168">it</a></span>)) <span class="keyword">else</span> <span class="typed"><span class="type">=&gt; Stream[Nothing]</span><a href="#30141">empty</a></span>
+
+  <span class="comment">/** The concatenation of a sequence of streams 
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[A](Iterable[Stream[A]])Stream[A]</span><a id="30148">concat</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="30150">A</a></span>](<span class="typed"><span class="type">Iterable[Stream[A]]</span><a id="110413">xs</a></span>: <span class="typed"><span class="type">Iterable[Stream[A]]</span><a href="Iterable.scala.html#401">Iterable</a></span>[Stream[A]]): <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A] = <span class="typed"><span class="type">(Iterator[Stream[A]])Stream[A]</span><a href="#30154">concat</a></span>(<span class="typed"><span class="type">Iterable[Stream[A]]</span><a href="#110413">xs</a></span>.<span class="typed"><span class="type">=&gt; Iterator[Stream[A]]</span><a href="Iterable.scala.html#17309">elements</a></span>)
+
+  <span class="comment">/** The concatenation of all given streams 
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[A](Stream[A],Stream[A],Stream[A]*)Stream[A]</span><a id="30151">concat</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="30153">A</a></span>](<span class="typed"><span class="type">Stream[A]</span><a id="110417">s1</a></span>: <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A], <span class="typed"><span class="type">Stream[A]</span><a id="110418">s2</a></span>: <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A], <span class="typed"><span class="type">Stream[A]*</span><a id="110419">ss</a></span>: <span class="typed"><span class="type">Stream[A]*</span><a id="2739">Stream</a></span>[A]*): <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A] =
+    <span class="typed"><span class="type">Stream[A]</span><a href="#110417">s1</a></span> <span class="typed"><span class="type">(=&gt; Iterable[A])Stream[A]</span><a href="#18369">append</a></span> <span class="typed"><span class="type">Stream[A]</span><a href="#110418">s2</a></span> <span class="typed"><span class="type">(=&gt; Iterable[A])Stream[A]</span><a href="#18369">append</a></span> <span class="typed"><span class="type">(Iterator[Stream[A]])Stream[A]</span><a href="#30154">concat</a></span>(<span class="typed"><span class="type">Stream[A]*</span><a href="#110419">ss</a></span>.<span class="typed"><span class="type">=&gt; Iterator[Stream[A]]</span><a href="Iterable.scala.html#17309">elements</a></span>)
+
+  <span class="comment">/** The concatenation of all streams returned by an iterator
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[A](Iterator[Stream[A]])Stream[A]</span><a id="30154">concat</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="30156">A</a></span>](<span class="typed"><span class="type">Iterator[Stream[A]]</span><a id="110415">xs</a></span>: <span class="typed"><span class="type">Iterator[Stream[A]]</span><a href="Iterator.scala.html#1337">Iterator</a></span>[Stream[A]]): <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A] =
+    <span class="typed"><span class="type">Stream[A]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Iterator[Stream[A]]</span><a href="#110415">xs</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Iterator.scala.html#19975">hasNext</a></span>) <span class="typed"><span class="type">Iterator[Stream[A]]</span><a href="#110415">xs</a></span>.<span class="typed"><span class="type">()Stream[A]</span><a href="Iterator.scala.html#19976">next</a></span> <span class="typed"><span class="type">(=&gt; Iterable[A])Stream[A]</span><a href="#18369">append</a></span> <span class="typed"><span class="type">(Iterator[Stream[A]])Stream[A]</span><a href="#30154">concat</a></span>(<span class="typed"><span class="type">Iterator[Stream[A]]</span><a href="#110415">xs</a></span>)
+    <span class="keyword">else</span> <span class="typed"><span class="type">=&gt; Stream[Nothing]</span><a href="#30141">empty</a></span>
+
+  <span class="comment">/**
+   * Create a stream with element values
+   * &lt;code&gt;v&lt;sub&gt;n+1&lt;/sub&gt; = v&lt;sub&gt;n&lt;/sub&gt; + 1&lt;/code&gt;
+   * where &lt;code&gt;v&lt;sub&gt;0&lt;/sub&gt; = start&lt;/code&gt;
+   * and &lt;code&gt;v&lt;sub&gt;i&lt;/sub&gt; &amp;lt; end&lt;/code&gt;.
+   *
+   * @param start the start value of the stream
+   * @param end the end value of the stream
+   * @return the stream starting at value &lt;code&gt;start&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,Int)Stream[Int]</span><a id="30157">range</a></span>(<span class="typed"><span class="type">Int</span><a id="110462">start</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Int</span><a id="110463">end</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Stream[Int]</span><a href="#260">Stream</a></span>[Int] = 
+    <span class="typed"><span class="type">(Int,Int,Int)Stream[Int]</span><a href="#30158">range</a></span>(<span class="typed"><span class="type">Int</span><a href="#110462">start</a></span>, <span class="typed"><span class="type">Int</span><a href="#110463">end</a></span>, <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>)
+
+  <span class="comment">/**
+   * Create a stream with element values
+   * &lt;code&gt;v&lt;sub&gt;n+1&lt;/sub&gt; = v&lt;sub&gt;n&lt;/sub&gt; + step&lt;/code&gt;
+   * where &lt;code&gt;v&lt;sub&gt;0&lt;/sub&gt; = start&lt;/code&gt;
+   * and elements are in the range between &lt;code&gt;start&lt;/code&gt; (inclusive)
+   * and &lt;code&gt;end&lt;/code&gt; (exclusive)
+   *
+   * @param start the start value of the stream
+   * @param end the end value of the stream
+   * @param step the increment value of the stream
+   * @return the stream starting at value &lt;code&gt;start&lt;/code&gt;.
+   */</span>
+  <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Int,Int,Int)Stream[Int]</span><a id="30158">range</a></span>(<span class="typed"><span class="type">Int</span><a id="110468">start</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Int</span><a id="110469">end</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Int</span><a id="110470">step</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Stream[Int]</span><a href="#260">Stream</a></span>[Int] = {
+    <span class="typed"><span class="type">Stream[Int]</span><span class="keyword">if</span></span> ((<span class="typed"><span class="type">Int</span><a href="#110470">step</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3142">&lt;=</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span> <span class="typed"><span class="type">Int</span><a href="#110468">start</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int</span><a href="#110469">end</a></span>) <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> (<span class="typed"><span class="type">Int</span><a href="#110470">step</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3144">&gt;=</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span> <span class="typed"><span class="type">Int</span><a href="#110468">start</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">Int</span><a href="#110469">end</a></span>)) 
+      <span class="typed"><span class="type">(Int,=&gt; Stream[Int])Stream[Int]</span><a href="#52368">cons</a></span>(<span class="typed"><span class="type">Int</span><a href="#110468">start</a></span>, <span class="typed"><span class="type">(Int,Int,Int)Stream[Int]</span><a href="#30158">range</a></span>(<span class="typed"><span class="type">Int</span><a href="#110468">start</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int</span><a href="#110470">step</a></span>, <span class="typed"><span class="type">Int</span><a href="#110469">end</a></span>, <span class="typed"><span class="type">Int</span><a href="#110470">step</a></span>))
+    <span class="keyword">else</span> 
+      <span class="typed"><span class="type">=&gt; Stream[Nothing]</span><a href="#30141">empty</a></span>
+  }
+
+  <span class="comment">/**
+   * Create a stream with element values
+   * &lt;code&gt;v&lt;sub&gt;n+1&lt;/sub&gt; = step(v&lt;sub&gt;n&lt;/sub&gt;)&lt;/code&gt;
+   * where &lt;code&gt;v&lt;sub&gt;0&lt;/sub&gt; = start&lt;/code&gt;
+   * and elements are in the range between &lt;code&gt;start&lt;/code&gt; (inclusive)
+   * and &lt;code&gt;end&lt;/code&gt; (exclusive)
+   *
+   * @param start the start value of the stream
+   * @param end the end value of the stream
+   * @param step the increment function of the stream, must be monotonically increasing or decreasing
+   * @return the stream starting at value &lt;code&gt;start&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,Int,(Int) =&gt; Int)Stream[Int]</span><a id="30159">range</a></span>(<span class="typed"><span class="type">Int</span><a id="110465">start</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Int</span><a id="110466">end</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">(Int) =&gt; Int</span><a id="110467">step</a></span>: Int =&gt; Int): <span class="typed"><span class="type">Stream[Int]</span><a href="#260">Stream</a></span>[Int] = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">Boolean</span><a id="110480">up</a></span> = <span class="typed"><span class="type">(Int)Int</span><a href="Function1.scala.html#17300">step</a></span>(<span class="typed"><span class="type">Int</span><a href="#110465">start</a></span>) <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">Int</span><a href="#110465">start</a></span>
+    <span class="keyword">val</span> <span class="typed"><span class="type">Boolean</span><a id="110481">down</a></span> = <span class="typed"><span class="type">(Int)Int</span><a href="Function1.scala.html#17300">step</a></span>(<span class="typed"><span class="type">Int</span><a href="#110465">start</a></span>) <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int</span><a href="#110465">start</a></span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Stream[Int]</span><a id="110482">loop</a></span>(<span class="typed"><span class="type">Int</span><a id="110485">lo</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Stream[Int]</span><a href="#260">Stream</a></span>[Int] =
+      <span class="typed"><span class="type">Stream[Int]</span><span class="keyword">if</span></span> ((<span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">Boolean</span><a href="#110480">up</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span> <span class="typed"><span class="type">Int</span><a href="#110485">lo</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">&lt;</a></span> <span class="typed"><span class="type">Int</span><a href="#110466">end</a></span>) <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">Boolean</span><a href="#110481">down</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span> <span class="typed"><span class="type">Int</span><a href="#110485">lo</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&gt;</a></span> <span class="typed"><span class="type">Int</span><a href="#110466">end</a></span>)) <span class="typed"><span class="type">(Int,=&gt; Stream[Int])Stream[Int]</span><a href="#52368">cons</a></span>(<span class="typed"><span class="type">Int</span><a href="#110485">lo</a></span>, <span class="typed"><span class="type">(Int)Stream[Int]</span><a href="#110482">loop</a></span>(<span class="typed"><span class="type">(Int)Int</span><a href="Function1.scala.html#17300">step</a></span>(<span class="typed"><span class="type">Int</span><a href="#110485">lo</a></span>)))
+      <span class="keyword">else</span> <span class="typed"><span class="type">=&gt; Stream[Nothing]</span><a href="#30141">empty</a></span>
+    <span class="typed"><span class="type">(Int)Stream[Int]</span><a href="#110482">loop</a></span>(<span class="typed"><span class="type">Int</span><a href="#110465">start</a></span>)
+  }
+   
+  <span class="comment">/**
+   * Create an infinite stream starting at &lt;code&gt;start&lt;/code&gt;
+   * and incrementing by step &lt;code&gt;step&lt;/code&gt;
+   *
+   * @param start the start value of the stream
+   * @param step the increment value of the stream
+   * @return the stream starting at value &lt;code&gt;start&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,Int)Stream[Int]</span><a id="30160">from</a></span>(<span class="typed"><span class="type">Int</span><a id="110489">start</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">Int</span><a id="110490">step</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Stream[Int]</span><a href="#260">Stream</a></span>[Int] =
+    <span class="typed"><span class="type">(Int,=&gt; Stream[Int])Stream[Int]</span><a href="#52368">cons</a></span>(<span class="typed"><span class="type">Int</span><a href="#110489">start</a></span>, <span class="typed"><span class="type">(Int,Int)Stream[Int]</span><a href="#30160">from</a></span>(<span class="typed"><span class="type">Int</span><a href="#110489">start</a></span><span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span><span class="typed"><span class="type">Int</span><a href="#110490">step</a></span>, <span class="typed"><span class="type">Int</span><a href="#110490">step</a></span>))
+
+  <span class="comment">/**
+   * Create an infinite stream starting at &lt;code&gt;start&lt;/code&gt;
+   * and incrementing by 1.
+   *
+   * @param start the start value of the stream
+   * @return the stream starting at value &lt;code&gt;start&lt;/code&gt;.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Stream[Int]</span><a id="30161">from</a></span>(<span class="typed"><span class="type">Int</span><a id="110493">start</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Stream[Int]</span><a href="#260">Stream</a></span>[Int] = <span class="typed"><span class="type">(Int,Int)Stream[Int]</span><a href="#30160">from</a></span>(<span class="typed"><span class="type">Int</span><a href="#110493">start</a></span>, <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>)
+
+  <span class="comment">/**
+   * Create an infinite stream containing the given element.
+   *
+   * @param elem the element composing the resulting stream
+   * @return the stream containing an inifinite number of elem
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[A](A)Stream[A]</span><a id="30162">const</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="30164">A</a></span>](<span class="typed"><span class="type">A</span><a id="110526">elem</a></span>: <span class="typed"><span class="type">A</span><a href="#30164">A</a></span>): <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A] = <span class="typed"><span class="type">(A,=&gt; Stream[A])Stream[A]</span><a href="#52368">cons</a></span>(<span class="typed"><span class="type">A</span><a href="#110526">elem</a></span>, <span class="typed"><span class="type">(A)Stream[A]</span><a href="#30162">const</a></span>(<span class="typed"><span class="type">A</span><a href="#110526">elem</a></span>))
+
+  <span class="comment">/** Create a stream containing several copies of an element.
+   *
+   *  @param n    the length of the resulting stream
+   *  @param elem the element composing the resulting stream
+   *  @return     the stream composed of n elements all equal to elem
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[A](Int,A)Stream[A]</span><a id="30165">make</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="30167">A</a></span>](<span class="typed"><span class="type">Int</span><a id="110529">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>, <span class="typed"><span class="type">A</span><a id="110530">elem</a></span>: <span class="typed"><span class="type">A</span><a href="#30167">A</a></span>): <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A] = 
+    <span class="typed"><span class="type">object Stream</span><a href="#261">Stream</a></span>.<span class="typed"><span class="type">(A)Stream[A]</span><a href="#30162">const</a></span>(<span class="typed"><span class="type">A</span><a href="#110530">elem</a></span>) <span class="typed"><span class="type">(Int)Stream[A]</span><a href="#18376">take</a></span> <span class="typed"><span class="type">Int</span><a href="#110529">n</a></span>
+}
+
+<span class="comment">/**
+ * &lt;p&gt;The class &lt;code&gt;Stream&lt;/code&gt; implements lazy lists where elements
+ * are only evaluated when they are needed. Here is an example:&lt;/p&gt;
+ * &lt;pre&gt;
+ * &lt;b&gt;object&lt;/b&gt; Main &lt;b&gt;extends&lt;/b&gt; Application {
+ *
+ *   &lt;b&gt;def&lt;/b&gt; from(n: Int): Stream[Int] =
+ *     Stream.cons(n, from(n + 1))
+ *
+ *   &lt;b&gt;def&lt;/b&gt; sieve(s: Stream[Int]): Stream[Int] =
+ *     Stream.cons(s.head, sieve(s.tail filter { _ % s.head != 0 }))
+ *
+ *   &lt;b&gt;def&lt;/b&gt; primes = sieve(from(2))
+ *
+ *   primes take 10 print
+ * }
+ * &lt;/pre&gt;
+ *
+ * @author Martin Odersky, Matthias Zenger
+ * @version 1.1 08/08/03
+ */</span>
+<span class="keyword">abstract</span> <span class="keyword">class</span> <span class="typed"><span class="type">class Stream[+A] extends java.lang.Object with Seq.Projection[A] with ScalaObject</span><a id="260">Stream</a></span>[+<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="16264">A</a></span>] <span class="keyword">extends</span> Seq.<span class="typed"><span class="type">Seq.Projection[A]</span><a href="Seq.scala.html#18330">Projection</a></span>[A] {
+
+  <span class="comment">/** is this stream empty? */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="18362">isEmpty</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span>
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; List[A]</span><a id="18363">force</a></span> : <span class="typed"><span class="type">List[A]</span><a href="List.scala.html#524">List</a></span>[A] = <span class="typed"><span class="type">=&gt; List[A]</span><a href="Iterable.scala.html#17360">toList</a></span>
+  
+  <span class="comment">/** The first element of this stream 
+   *  @throws Predef.NoSuchElementException if the stream is empty.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; A</span><a id="18364">head</a></span>: <span class="typed"><span class="type">A</span><a href="#16264">A</a></span>
+
+  <span class="comment">/** A stream consisting of the remaining elements of this stream after the first one.
+   *  @throws Predef.UnsupportedOperationException if the stream is empty.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Stream[A]</span><a id="18365">tail</a></span>: <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A]
+
+  <span class="comment">/** The length of this stream */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Int</span><a id="18366">length</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = {
+    <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="110537">len</a></span> = <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>
+    <span class="keyword">var</span> <span class="typed"><span class="type">Stream[A]</span><a id="110538">here</a></span> = <span class="typed"><span class="type">Stream[A]</span><a href="#260" class="keyword">this</a></span>
+    <span class="typed"><span class="type">Unit</span><a href="#110539" class="keyword">while</a></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">Stream[A]</span><a href="#110538">here</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span>) {
+      <span class="typed"><span class="type">Int</span><a href="#110537">len</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+      <span class="typed"><span class="type">Stream[A]</span><a href="#110538">here</a></span> = <span class="typed"><span class="type">Stream[A]</span><a href="#110538">here</a></span>.<span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span>
+    }
+    <span class="typed"><span class="type">Int</span><a href="#110537">len</a></span>
+  }
+
+  <span class="comment">/** Result of comparing &lt;code&gt;length&lt;/code&gt; with operand &lt;code&gt;l&lt;/code&gt;.
+   *  returns &lt;code&gt;x&lt;/code&gt; where
+   *  &lt;code&gt;x &amp;lt; 0&lt;/code&gt;    iff    &lt;code&gt;this.length &amp;lt; l&lt;/code&gt;
+   *  &lt;code&gt;x == 0&lt;/code&gt;   iff    &lt;code&gt;this.length == l&lt;/code&gt;
+   *  &lt;code&gt;x &amp;gt; 0&lt;/code&gt;    iff    &lt;code&gt;this.length &amp;gt; that&lt;/code&gt;.
+   *
+   *  This method is used by matching streams against right-ignoring (...,_*) patterns.
+   *
+   *  This method does not call &lt;code&gt;Stream.length&lt;/code&gt;, it works for &lt;code&gt;O(l)&lt;/code&gt;,
+   *  not for &lt;code&gt;O(length)&lt;/code&gt; and does not force full Stream evaluation.
+   */</span>
+  <span class="keyword">final</span> <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Int</span><a id="18367">lengthCompare</a></span>(<span class="typed"><span class="type">Int</span><a id="110563">l</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>) = {
+    <span class="typed"><span class="type">Int</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span>) <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int</span><a href="#110563">l</a></span>
+    <span class="keyword">else</span> <span class="typed"><span class="type">Int</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#110563">l</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3142">&lt;=</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+    <span class="keyword">else</span> <span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span>.<span class="typed"><span class="type">(Int)Int</span><a href="#18367">lengthCompare</a></span>(<span class="typed"><span class="type">Int</span><a href="#110563">l</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>)
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="18368">hasDefiniteSize</a></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+  
+  
+  <span class="comment">/** The stream resulting from the concatenation of this stream with the argument stream.
+   *  @param rest   The stream that gets appended to this stream
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">[B &gt;: A](=&gt; Iterable[B])Stream[B]</span><a id="18369">append</a></span>[<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="18371">B</a></span> &gt;: A](<span class="typed"><span class="type">=&gt; Iterable[B]</span><a id="52424">rest</a></span>: =&gt; Iterable[B]): <span class="typed"><span class="type">Stream[B]</span><a href="#260">Stream</a></span>[B] =
+    <span class="typed"><span class="type">Stream[B]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span>) <span class="typed"><span class="type">=&gt; Iterable[B]</span><a href="#52424">rest</a></span>.<span class="typed"><span class="type">=&gt; Stream[B]</span><a href="Iterable.scala.html#17362">toStream</a></span> <span class="keyword">else</span> <span class="typed"><span class="type">object Stream</span><a href="#261">Stream</a></span>.<span class="typed"><span class="type">(B,=&gt; Stream[B])Stream[B]</span><a href="#52368">cons</a></span>(<span class="typed"><span class="type">=&gt; A</span><a href="#18364">head</a></span>, <span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span> <span class="typed"><span class="type">(=&gt; Iterable[B])Stream[B]</span><a href="#18369">append</a></span> <span class="typed"><span class="type">=&gt; Iterable[B]</span><a href="#52424">rest</a></span>)
+    
+
+  <span class="comment">/** An iterator returning the elements of this stream one by one.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Iterator[A]</span><a id="18372">elements</a></span>: <span class="typed"><span class="type">Iterator[A]</span><a href="Iterator.scala.html#1337">Iterator</a></span>[A] = <span class="typed"><span class="type">template $anon extends java.lang.Object with Iterator[A]</span><a id="110600" class="keyword">new</a></span> <span class="typed"><span class="type">Iterator[A]</span><a href="Iterator.scala.html#1337">Iterator</a></span>[A] {
+    <span class="keyword">var</span> <span class="typed"><span class="type">Stream[A]</span><span id="110604"><span id="110602"><span id="110603"><a id="110609">current</a></span></span></span></span> = <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>.<span class="keyword">this</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="110605">hasNext</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = <span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#110602">current</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">()A</span><a id="110606">next</a></span>: <span class="typed"><span class="type">A</span><a href="#16264">A</a></span> = { <span class="keyword">val</span> <span class="typed"><span class="type">A</span><a id="110613">result</a></span> = <span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#110602">current</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="#18364">head</a></span>; <span class="typed"><span class="type">(Stream[A])Unit</span><a href="#110603">current</a></span> = <span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#110602">current</a></span>.<span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span>; <span class="typed"><span class="type">A</span><a href="#110613">result</a></span> }
+  }
+
+  <span class="comment">/** The stream without its last element.
+   *  @throws Predef.UnsupportedOperationException if the stream is empty.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Stream[A]</span><a id="18373">init</a></span>: <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A] =
+    <span class="typed"><span class="type">Stream[A]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span>) <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.lang.UnsupportedOperationException</span><a id="30111" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.UnsupportedOperationException</span><a href="Predef.scala.html#13340">UnsupportedOperationException</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;Stream.empty.init&quot;)</span><span class="string">&quot;Stream.empty.init&quot;</span></span>)
+    <span class="keyword">else</span> <span class="typed"><span class="type">Stream[A]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span>) <span class="typed"><span class="type">object Stream</span><a href="#261">Stream</a></span>.<span class="typed"><span class="type">=&gt; Stream[Nothing]</span><a href="#30141">empty</a></span>
+    <span class="keyword">else</span> <span class="typed"><span class="type">object Stream</span><a href="#261">Stream</a></span>.<span class="typed"><span class="type">(A,=&gt; Stream[A])Stream[A]</span><a href="#52368">cons</a></span>(<span class="typed"><span class="type">=&gt; A</span><a href="#18364">head</a></span>, <span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span>.<span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18373">init</a></span>)
+
+  <span class="comment">/** Returns the last element of this stream.
+   *
+   *  @return the last element of the stream.
+   *  @throws Predef.NoSuchElementException if the stream is empty.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; A</span><a id="18374">last</a></span>: <span class="typed"><span class="type">A</span><a href="#16264">A</a></span> =
+    <span class="typed"><span class="type">A</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span>) <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.util.NoSuchElementException</span><a id="25317" class="keyword">new</a></span> <span class="typed"><span class="type">java.util.NoSuchElementException</span><a href="Predef.scala.html#13342">NoSuchElementException</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;Stream.empty.last&quot;)</span><span class="string">&quot;Stream.empty.last&quot;</span></span>)
+    <span class="keyword">else</span> 
+      <span class="typed"><span class="type">A</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span>) <span class="typed"><span class="type">=&gt; A</span><a href="#18364">head</a></span> <span class="keyword">else</span> <span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="#18374">last</a></span>
+
+  <span class="comment">/** Returns the &lt;code&gt;n&lt;/code&gt;-th element of this stream. The first element
+   *  (head of the stream) is at position 0.
+   *
+   *  @param n index of the element to return
+   *  @return  the element at position &lt;code&gt;n&lt;/code&gt; in this stream.
+   *  @throws Predef.NoSuchElementException if the stream is too short.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Int)A</span><a id="18375">apply</a></span>(<span class="typed"><span class="type">Int</span><a id="110374">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">A</span><a href="#16264">A</a></span> = <span class="typed"><span class="type">(Int)Stream[A]</span><a href="#18377">drop</a></span>(<span class="typed"><span class="type">Int</span><a href="#110374">n</a></span>).<span class="typed"><span class="type">=&gt; A</span><a href="#18364">head</a></span>
+
+  <span class="comment">/** Returns the &lt;code&gt;n&lt;/code&gt; first elements of this stream, or else the whole 
+   *  stream, if it has less than &lt;code&gt;n&lt;/code&gt; elements.
+   *
+   *  @param n the number of elements to take.
+   *  @return the &lt;code&gt;n&lt;/code&gt; first elements of this stream.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Stream[A]</span><a id="18376">take</a></span>(<span class="typed"><span class="type">Int</span><a id="110533">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A] =
+    <span class="typed"><span class="type">Stream[A]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span> <span class="typed"><span class="type">Int</span><a href="#110533">n</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3142">&lt;=</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) <span class="typed"><span class="type">object Stream</span><a href="#261">Stream</a></span>.<span class="typed"><span class="type">=&gt; Stream[Nothing]</span><a href="#30141">empty</a></span>
+    <span class="keyword">else</span> <span class="typed"><span class="type">object Stream</span><a href="#261">Stream</a></span>.<span class="typed"><span class="type">(A,=&gt; Stream[A])Stream[A]</span><a href="#52368">cons</a></span>(<span class="typed"><span class="type">=&gt; A</span><a href="#18364">head</a></span>, <span class="typed"><span class="type">Stream[A]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#110533">n</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3139">==</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>) <span class="typed"><span class="type">object Stream</span><a href="#261">Stream</a></span>.<span class="typed"><span class="type">=&gt; Stream[Nothing]</span><a href="#30141">empty</a></span> <span class="keyword">else</span> (<span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span>.<span class="typed"><span class="type">(Int)Stream[A]</span><a href="#18376">take</a></span>(<span class="typed"><span class="type">Int</span><a href="#110533">n</a></span><span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span><span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>)))
+
+  <span class="comment">/** Returns the stream without its &lt;code&gt;n&lt;/code&gt; first elements.
+   *  If the stream has less than &lt;code&gt;n&lt;/code&gt; elements, the empty stream is returned.
+   *
+   *  @param n the number of elements to drop.
+   *  @return the stream without its &lt;code&gt;n&lt;/code&gt; first elements.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Stream[A]</span><a id="18377">drop</a></span>(<span class="typed"><span class="type">Int</span><a id="110623">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>): <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A] = {
+    <span class="typed"><span class="type">Stream[A]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span> <span class="typed"><span class="type">Int</span><a href="#110623">n</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3142">&lt;=</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) <span class="typed"><span class="type">Stream[A]</span><a href="#260" class="keyword">this</a></span>
+    <span class="keyword">else</span> <span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span>.<span class="typed"><span class="type">(Int)Stream[A]</span><a href="#18377">drop</a></span>(<span class="typed"><span class="type">Int</span><a href="#110623">n</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>)
+  }
+   
+
+  <span class="comment">/** Returns the longest prefix of this stream whose elements satisfy
+   *  the predicate &lt;code&gt;p&lt;/code&gt;.
+   *
+   *  @param p the test predicate.
+   *  @return  the longest prefix of this stream whose elements satisfy
+   *           the predicate &lt;code&gt;p&lt;/code&gt;.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)Stream[A]</span><a id="18378">takeWhile</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="110658">p</a></span>: A =&gt; Boolean): <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A] =
+    <span class="typed"><span class="type">Stream[A]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">(A)Boolean</span><a href="Function1.scala.html#17300">p</a></span>(<span class="typed"><span class="type">=&gt; A</span><a href="#18364">head</a></span>)) <span class="typed"><span class="type">object Stream</span><a href="#261">Stream</a></span>.<span class="typed"><span class="type">=&gt; Stream[Nothing]</span><a href="#30141">empty</a></span>
+    <span class="keyword">else</span> <span class="typed"><span class="type">object Stream</span><a href="#261">Stream</a></span>.<span class="typed"><span class="type">(A,=&gt; Stream[A])Stream[A]</span><a href="#52368">cons</a></span>(<span class="typed"><span class="type">=&gt; A</span><a href="#18364">head</a></span>, <span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span> <span class="typed"><span class="type">((A) =&gt; Boolean)Stream[A]</span><a href="#18378">takeWhile</a></span> <span class="typed"><span class="type">(A) =&gt; Boolean</span><a href="#110658">p</a></span>)
+
+  <span class="comment">/** Returns the longest suffix of this stream whose first element
+   *  does not satisfy the predicate &lt;code&gt;p&lt;/code&gt;.
+   *
+   *  @param p the test predicate.
+   *  @return  the longest suffix of the stream whose first element
+   *           does not satisfy the predicate &lt;code&gt;p&lt;/code&gt;.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)Stream[A]</span><a id="18379">dropWhile</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="110661">p</a></span>: A =&gt; Boolean): <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A] = {
+    <span class="typed"><span class="type">Stream[A]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">(A)Boolean</span><a href="Function1.scala.html#17300">p</a></span>(<span class="typed"><span class="type">=&gt; A</span><a href="#18364">head</a></span>)) <span class="typed"><span class="type">Stream[A]</span><a href="#260" class="keyword">this</a></span>
+    <span class="keyword">else</span> <span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span>.<span class="typed"><span class="type">((A) =&gt; Boolean)Stream[A]</span><a href="#18379">dropWhile</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a href="#110661">p</a></span>)
+  }
+
+  <span class="comment">/** Returns the stream resulting from applying the given function &lt;code&gt;f&lt;/code&gt; to each
+   *  element of this stream.
+   *
+   *  @param f function to apply to each element.
+   *  @return &lt;code&gt;[f(a0), ..., f(an)]&lt;/code&gt; if this stream is &lt;code&gt;[a0, ..., an]&lt;/code&gt;.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">[B]((A) =&gt; B)Stream[B]</span><a id="18380">map</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="18382">B</a></span>](<span class="typed"><span class="type">(A) =&gt; B</span><a id="110663">f</a></span>: A =&gt; B): <span class="typed"><span class="type">Stream[B]</span><a href="#260">Stream</a></span>[B] =
+    <span class="typed"><span class="type">Stream[B]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span>) <span class="typed"><span class="type">object Stream</span><a href="#261">Stream</a></span>.<span class="typed"><span class="type">=&gt; Stream[Nothing]</span><a href="#30141">empty</a></span>
+    <span class="keyword">else</span> <span class="typed"><span class="type">object Stream</span><a href="#261">Stream</a></span>.<span class="typed"><span class="type">(B,=&gt; Stream[B])Stream[B]</span><a href="#52368">cons</a></span>(<span class="typed"><span class="type">(A)B</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">=&gt; A</span><a href="#18364">head</a></span>), <span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span> <span class="typed"><span class="type">((A) =&gt; B)Stream[B]</span><a href="#18380">map</a></span> <span class="typed"><span class="type">(A) =&gt; B</span><a href="#110663">f</a></span>)
+
+  <span class="comment">/** Apply the given function &lt;code&gt;f&lt;/code&gt; to each element of this stream
+   *  (while respecting the order of the elements).
+   *
+   *  @param f the treatment to apply to each element.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Unit)Unit</span><a id="18383">foreach</a></span>(<span class="typed"><span class="type">(A) =&gt; Unit</span><a id="110667">f</a></span>: A =&gt; Unit) {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span>) <span class="typed"><span class="type">Unit</span><span >{</span></span>}
+    <span class="keyword">else</span> { <span class="typed"><span class="type">(A)Unit</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">=&gt; A</span><a href="#18364">head</a></span>); <span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span>.<span class="typed"><span class="type">((A) =&gt; Unit)Unit</span><a href="#18383">foreach</a></span>(<span class="typed"><span class="type">(A) =&gt; Unit</span><a href="#110667">f</a></span>) }
+  }
+
+  <span class="comment">/** Returns all the elements of this stream that satisfy the
+   *  predicate &lt;code&gt;p&lt;/code&gt;. The order of the elements is preserved.
+   *
+   *  @param p the predicate used to filter the stream.
+   *  @return the elements of this stream satisfying &lt;code&gt;p&lt;/code&gt;.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)Stream[A]</span><a id="18384">filter</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="110669">p</a></span>: A =&gt; Boolean): <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A] = {
+    <span class="typed"><span class="type">Stream[A]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span>) <span class="typed"><span class="type">Stream[A]</span><a href="#260" class="keyword">this</a></span>
+    <span class="keyword">else</span> <span class="typed"><span class="type">Stream[A]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">(A)Boolean</span><a href="Function1.scala.html#17300">p</a></span>(<span class="typed"><span class="type">=&gt; A</span><a href="#18364">head</a></span>)) <span class="typed"><span class="type">object Stream</span><a href="#261">Stream</a></span>.<span class="typed"><span class="type">(A,=&gt; Stream[A])Stream[A]</span><a href="#52368">cons</a></span>(<span class="typed"><span class="type">=&gt; A</span><a href="#18364">head</a></span>, <span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span>.<span class="typed"><span class="type">((A) =&gt; Boolean)Stream[A]</span><a href="#18384">filter</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a href="#110669">p</a></span>))
+    <span class="keyword">else</span> <span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span>.<span class="typed"><span class="type">((A) =&gt; Boolean)Stream[A]</span><a href="#18384">filter</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a href="#110669">p</a></span>)
+  }
+
+  <span class="comment">/** Tests if the predicate &lt;code&gt;p&lt;/code&gt; is satisfied by all elements
+   *  in this stream.
+   *
+   *  @param p the test predicate.
+   *  @return  &lt;code&gt;true&lt;/code&gt; iff all elements of this stream satisfy the
+   *           predicate &lt;code&gt;p&lt;/code&gt;.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)Boolean</span><a id="18385">forall</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="110673">p</a></span>: A =&gt; Boolean): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = {
+    <span class="typed"><span class="type">Boolean</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span>) <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+    <span class="keyword">else</span> <span class="typed"><span class="type">Boolean</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">(A)Boolean</span><a href="Function1.scala.html#17300">p</a></span>(<span class="typed"><span class="type">=&gt; A</span><a href="#18364">head</a></span>)) <span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span>.<span class="typed"><span class="type">((A) =&gt; Boolean)Boolean</span><a href="#18385">forall</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a href="#110673">p</a></span>)
+    <span class="keyword">else</span> <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+  }
+
+  <span class="comment">/** Tests the existence in this stream of an element that satisfies the
+   *  predicate &lt;code&gt;p&lt;/code&gt;.
+   *
+   *  @param p the test predicate.
+   *  @return  &lt;code&gt;true&lt;/code&gt; iff there exists an element in this stream that
+   *           satisfies the predicate &lt;code&gt;p&lt;/code&gt;.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)Boolean</span><a id="18386">exists</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="110675">p</a></span>: A =&gt; Boolean): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = {
+    <span class="typed"><span class="type">Boolean</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span>) <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+    <span class="keyword">else</span> <span class="typed"><span class="type">Boolean</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">(A)Boolean</span><a href="Function1.scala.html#17300">p</a></span>(<span class="typed"><span class="type">=&gt; A</span><a href="#18364">head</a></span>)) <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+    <span class="keyword">else</span> <span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span>.<span class="typed"><span class="type">((A) =&gt; Boolean)Boolean</span><a href="#18386">exists</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a href="#110675">p</a></span>)
+  }
+
+  <span class="comment">/** Combines the elements of this stream together using the binary
+   *  function &lt;code&gt;f&lt;/code&gt;, from left to right, and starting with
+   *  the value &lt;code&gt;z&lt;/code&gt;.
+   *
+   *  @return &lt;code&gt;f(... (f(f(z, a&lt;sub&gt;0&lt;/sub&gt;), a&lt;sub&gt;1&lt;/sub&gt;) ...),
+   *          a&lt;sub&gt;n&lt;/sub&gt;)&lt;/code&gt; if the stream is
+   *          &lt;code&gt;[a&lt;sub&gt;0&lt;/sub&gt;, a&lt;sub&gt;1&lt;/sub&gt;, ..., a&lt;sub&gt;n&lt;/sub&gt;]&lt;/code&gt;.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">[B](B)((B, A) =&gt; B)B</span><a id="18387">foldLeft</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="18389">B</a></span>](<span class="typed"><span class="type">B</span><a id="110677">z</a></span>: <span class="typed"><span class="type">B</span><a href="#18389">B</a></span>)(<span class="typed"><span class="type">(B, A) =&gt; B</span><a id="110678">f</a></span>: (B, A) =&gt; B): <span class="typed"><span class="type">B</span><a href="#18389">B</a></span> = {
+    <span class="typed"><span class="type">B</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span>) <span class="typed"><span class="type">B</span><a href="#110677">z</a></span>
+    <span class="keyword">else</span> <span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span>.<span class="typed"><span class="type">(B)((B, A) =&gt; B)B</span><a href="#18387">foldLeft</a></span>(<span class="typed"><span class="type">(B,A)B</span><a href="Function2.scala.html#20399">f</a></span>(<span class="typed"><span class="type">B</span><a href="#110677">z</a></span>, <span class="typed"><span class="type">=&gt; A</span><a href="#18364">head</a></span>))(<span class="typed"><span class="type">(B, A) =&gt; B</span><a href="#110678">f</a></span>)
+  }
+
+  <span class="comment">/** Combines the elements of this stream together using the binary
+   *  function &lt;code&gt;f&lt;/code&gt;, from rigth to left, and starting with
+   *  the value &lt;code&gt;z&lt;/code&gt;.
+   *
+   *  @return &lt;code&gt;f(a&lt;sub&gt;0&lt;/sub&gt;, f(a&lt;sub&gt;1&lt;/sub&gt;, f(..., f(a&lt;sub&gt;n&lt;/sub&gt;, z)...)))&lt;/code&gt;
+   *          if the stream is &lt;code&gt;[a&lt;sub&gt;0&lt;/sub&gt;, a1, ..., a&lt;sub&gt;n&lt;/sub&gt;]&lt;/code&gt;.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">[B](B)((A, B) =&gt; B)B</span><a id="18390">foldRight</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="18392">B</a></span>](<span class="typed"><span class="type">B</span><a id="110681">z</a></span>: <span class="typed"><span class="type">B</span><a href="#18392">B</a></span>)(<span class="typed"><span class="type">(A, B) =&gt; B</span><a id="110682">f</a></span>: (A, B) =&gt; B): <span class="typed"><span class="type">B</span><a href="#18392">B</a></span> =
+    <span class="typed"><span class="type">B</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span>) <span class="typed"><span class="type">B</span><a href="#110681">z</a></span>
+    <span class="keyword">else</span> <span class="typed"><span class="type">(A,B)B</span><a href="Function2.scala.html#20399">f</a></span>(<span class="typed"><span class="type">=&gt; A</span><a href="#18364">head</a></span>, <span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span>.<span class="typed"><span class="type">(B)((A, B) =&gt; B)B</span><a href="#18390">foldRight</a></span>(<span class="typed"><span class="type">B</span><a href="#110681">z</a></span>)(<span class="typed"><span class="type">(A, B) =&gt; B</span><a href="#110682">f</a></span>))
+
+  <span class="comment">/** Applies the given function &lt;code&gt;f&lt;/code&gt; to each element of
+   *  this stream, then concatenates the results.
+   *
+   *  @param f the function to apply on each element.
+   *  @return  &lt;code&gt;f(a&lt;sub&gt;0&lt;/sub&gt;) ::: ... ::: f(a&lt;sub&gt;n&lt;/sub&gt;)&lt;/code&gt; if
+   *           this stream is &lt;code&gt;[a&lt;sub&gt;0&lt;/sub&gt;, ..., a&lt;sub&gt;n&lt;/sub&gt;]&lt;/code&gt;.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">[B]((A) =&gt; Iterable[B])Stream[B]</span><a id="18393">flatMap</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="18395">B</a></span>](<span class="typed"><span class="type">(A) =&gt; Iterable[B]</span><a id="110685">f</a></span>: A =&gt; Iterable[B]): <span class="typed"><span class="type">Stream[B]</span><a href="#260">Stream</a></span>[B] = {
+    <span class="comment">// drops A's for which f yields an empty Iterable[B]</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">(Stream[A])Stream[B]</span><a id="110686">loop</a></span>(<span class="typed"><span class="type">Stream[A]</span><a id="110687">s</a></span>: <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A]): <span class="typed"><span class="type">Stream[B]</span><a href="#260">Stream</a></span>[B] = {
+      <span class="typed"><span class="type">Stream[B]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Stream[A]</span><a href="#110687">s</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span>)
+        <span class="typed"><span class="type">object Stream</span><a href="#261">Stream</a></span>.<span class="typed"><span class="type">=&gt; Stream[Nothing]</span><a href="#30141">empty</a></span>
+      <span class="keyword">else</span> {
+        <span class="keyword">val</span> <span class="typed"><span class="type">Iterable[B]</span><a id="110688">i</a></span> = <span class="typed"><span class="type">(A)Iterable[B]</span><a href="Function1.scala.html#17300">f</a></span>(<span class="typed"><span class="type">Stream[A]</span><a href="#110687">s</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="#18364">head</a></span>)
+        <span class="typed"><span class="type">Stream[B]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Iterable[B]</span><a href="#110688">i</a></span> <span class="typed"><span class="type">=&gt; Boolean</span><a href="Iterable.scala.html#17372">isEmpty</a></span>)
+          <span class="typed"><span class="type">(Stream[A])Stream[B]</span><a href="#110686">loop</a></span>(<span class="typed"><span class="type">Stream[A]</span><a href="#110687">s</a></span>.<span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span>)
+        <span class="keyword">else</span>
+          <span class="typed"><span class="type">Iterable[B]</span><a href="#110688">i</a></span>.<span class="typed"><span class="type">=&gt; Stream[B]</span><a href="Iterable.scala.html#17362">toStream</a></span> <span class="typed"><span class="type">(=&gt; Iterable[B])Stream[B]</span><a href="#18369">append</a></span> <span class="typed"><span class="type">(Stream[A])Stream[B]</span><a href="#110686">loop</a></span>(<span class="typed"><span class="type">Stream[A]</span><a href="#110687">s</a></span>.<span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span>)
+      }
+    }
+
+    <span class="typed"><span class="type">(Stream[A])Stream[B]</span><a href="#110686">loop</a></span>(<span class="typed"><span class="type">Stream[A]</span><a href="#260" class="keyword">this</a></span>)
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Stream[A]</span><a id="18396">toStream</a></span> = <span class="typed"><span class="type">Stream[A]</span><a href="#260" class="keyword">this</a></span>
+
+  <span class="comment">/** A stream consisting of all elements of this stream in reverse order.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Stream[A]</span><a id="18397">reverse</a></span>: <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A] =
+    <span class="typed"><span class="type">(Stream[A])((Stream[A], A) =&gt; Stream[A])Stream[A]</span><a href="#18387">foldLeft</a></span>(<span class="typed"><span class="type">object Stream</span><a href="#261">Stream</a></span>.<span class="typed"><span class="type">=&gt; Stream[Nothing]</span><a href="#30141">empty</a></span>: <span class="typed"><span class="type">Stream[A]</span><a href="#260">Stream</a></span>[A])((<span class="typed"><span class="type">Stream[A]</span><a id="110701">xs</a></span>, <span class="typed"><span class="type">A</span><a id="110702">x</a></span>) =&gt; <span class="typed"><span class="type">object Stream</span><a href="#261">Stream</a></span>.<span class="typed"><span class="type">(A,=&gt; Stream[A])Stream[A]</span><a href="#52368">cons</a></span>(<span class="typed"><span class="type">A</span><a href="#110702">x</a></span>, <span class="typed"><span class="type">Stream[A]</span><a href="#110701">xs</a></span>))
+
+  <span class="comment">/** Fills the given array &lt;code&gt;xs&lt;/code&gt; with the elements of
+   *  this stream starting at position &lt;code&gt;start&lt;/code&gt;.
+   *
+   *  @param  xs the array to fill.
+   *  @param  start starting index.
+   *  @pre    the array must be large enough to hold all elements.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">final</span> <span class="keyword">def</span> <span class="typed"><span class="type">[B &gt;: A](Array[B],Int)Unit</span><a id="18398">copyToArray</a></span>[<span class="typed"><span class="type">&gt;: A &lt;: Any</span><a id="18400">B</a></span> &gt;: A](<span class="typed"><span class="type">Array[B]</span><a id="110704">xs</a></span>: <span class="typed"><span class="type">Array[B]</span><a href="Array.scala.html#1070">Array</a></span>[B], <span class="typed"><span class="type">Int</span><a id="110705">start</a></span>: <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span>) {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span>) { <span class="typed"><span class="type">Array[B]</span><a href="#110704">xs</a></span>(<span class="typed"><span class="type">Int</span><a href="#110705">start</a></span>) = <span class="typed"><span class="type">=&gt; A</span><a href="#18364">head</a></span>; <span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span>.<span class="typed"><span class="type">(Array[B],Int)Unit</span><a href="#18398">copyToArray</a></span>(<span class="typed"><span class="type">Array[B]</span><a href="#110704">xs</a></span>, <span class="typed"><span class="type">Int</span><a href="#110705">start</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3145">+</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>) }
+  }
+
+  <span class="comment">/** Returns a stream formed from this stream and the specified stream
+   *  &lt;code&gt;that&lt;/code&gt; by associating each element of the former with
+   *  the element at the same position in the latter.
+   *  If one of the two streams is longer than the other, its remaining elements are ignored.
+   *
+   *  @return     &lt;code&gt;Stream({a&lt;sub&gt;0&lt;/sub&gt;,b&lt;sub&gt;0&lt;/sub&gt;}, ...,
+   *              {a&lt;sub&gt;min(m,n)&lt;/sub&gt;,b&lt;sub&gt;min(m,n)&lt;/sub&gt;)}&lt;/code&gt; when
+   *              &lt;code&gt;Stream(a&lt;sub&gt;0&lt;/sub&gt;, ..., a&lt;sub&gt;m&lt;/sub&gt;)
+   *              zip Stream(b&lt;sub&gt;0&lt;/sub&gt;, ..., b&lt;sub&gt;n&lt;/sub&gt;)&lt;/code&gt; is invoked.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">[B](Stream[B])Stream[(A, B)]</span><a id="18401">zip</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="18403">B</a></span>](<span class="typed"><span class="type">Stream[B]</span><a id="110727">that</a></span>: <span class="typed"><span class="type">Stream[B]</span><a href="#260">Stream</a></span>[B]): <span class="typed"><span class="type">Stream[(A, B)]</span><a href="#260">Stream</a></span>[(A, B)] =
+    <span class="typed"><span class="type">Stream[(A, B)]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Stream.this.type</span><a href="#260" class="keyword">this</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2748">||</a></span> <span class="typed"><span class="type">Stream[B]</span><a href="#110727">that</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span>) <span class="typed"><span class="type">object Stream</span><a href="#261">Stream</a></span>.<span class="typed"><span class="type">=&gt; Stream[Nothing]</span><a href="#30141">empty</a></span>
+    <span class="keyword">else</span> <span class="typed"><span class="type">object Stream</span><a href="#261">Stream</a></span>.<span class="typed"><span class="type">((A, B),=&gt; Stream[(A, B)])Stream[(A, B)]</span><a href="#52368">cons</a></span>(<span class="typed"><span class="type">(A,B)(A, B)</span><a href="Tuple2.scala.html#20366">(</a></span><span class="typed"><span class="type">Stream.this.type</span><a href="#260" class="keyword">this</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="#18364">head</a></span>, <span class="typed"><span class="type">Stream[B]</span><a href="#110727">that</a></span>.<span class="typed"><span class="type">=&gt; B</span><a href="#18364">head</a></span>), <span class="typed"><span class="type">Stream.this.type</span><a href="#260" class="keyword">this</a></span>.<span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span> <span class="typed"><span class="type">(Stream[B])Stream[(A, B)]</span><a href="#18401">zip</a></span> <span class="typed"><span class="type">Stream[B]</span><a href="#110727">that</a></span>.<span class="typed"><span class="type">=&gt; Stream[B]</span><a href="#18365">tail</a></span>)
+
+  
+  <span class="comment">/** Returns a stream that pairs each element of this stream
+   *  with its index, counting from 0.
+   *
+   *  @return      the stream &lt;code&gt;Stream({a&lt;sub&gt;0&lt;/sub&gt;,0}, {a&lt;sub&gt;0&lt;/sub&gt;,1},...)&lt;/code&gt;
+   *               where &lt;code&gt;a&lt;sub&gt;i&lt;/sub&gt;&lt;/code&gt; are the elements of this stream.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Stream[(A, Int)]</span><a id="18404">zipWithIndex</a></span>: <span class="typed"><span class="type">Stream[(A, Int)]</span><a href="#260">Stream</a></span>[(A, Int)] =
+    <span class="typed"><span class="type">(Stream[Int])Stream[(A, Int)]</span><a href="#18401">zip</a></span>(<span class="typed"><span class="type">object Stream</span><a href="#261">Stream</a></span>.<span class="typed"><span class="type">(Int)Stream[Int]</span><a href="#30161">from</a></span>(<span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>))
+
+  <span class="comment">/** Prints elements of this stream one by one, separated by commas */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Unit</span><a id="18405">print</a></span> { <span class="typed"><span class="type">(String)Unit</span><a href="#18406">print</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;, &quot;)</span><span class="string">&quot;, &quot;</span></span>) }
+
+  <span class="comment">/** Prints elements of this stream one by one, separated by &lt;code&gt;sep&lt;/code&gt;
+   *  @param sep   The separator string printed between consecutive elements. 
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(String)Unit</span><a id="18406">print</a></span>(<span class="typed"><span class="type">String</span><a id="110737">sep</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>) {
+    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="Seq.scala.html#17149">isEmpty</a></span>) <span class="typed"><span class="type">object Console</span><a href="Console.scala.html#438">Console</a></span>.<span class="typed"><span class="type">(Any)Unit</span><a href="Console.scala.html#31300">println</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;Stream.empty&quot;)</span><span class="string">&quot;Stream.empty&quot;</span></span>)
+    <span class="keyword">else</span> { <span class="typed"><span class="type">object Console</span><a href="Console.scala.html#438">Console</a></span>.<span class="typed"><span class="type">(Any)Unit</span><a href="Console.scala.html#31297">print</a></span>(<span class="typed"><span class="type">=&gt; A</span><a href="#18364">head</a></span>); <span class="typed"><span class="type">object Console</span><a href="Console.scala.html#438">Console</a></span>.<span class="typed"><span class="type">(Any)Unit</span><a href="Console.scala.html#31297">print</a></span>(<span class="typed"><span class="type">String</span><a href="#110737">sep</a></span>); <span class="typed"><span class="type">=&gt; Stream[A]</span><a href="#18365">tail</a></span>.<span class="typed"><span class="type">(String)Unit</span><a href="#18406">print</a></span>(<span class="typed"><span class="type">String</span><a href="#110737">sep</a></span>) }
+  }
+
+  <span class="comment">/** Converts stream to string */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()java.lang.String</span><a id="18407">toString</a></span> =
+    <span class="typed"><span class="type">java.lang.String(&quot;Stream(&quot;)</span><span class="string">&quot;Stream(&quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">(StringBuilder,String)StringBuilder</span><a href="#18408">addDefinedElems</a></span>(<span class="typed"><span class="type">()StringBuilder</span><a href="StringBuilder.scala.html#19620" class="keyword">new</a></span> <span class="typed"><span class="type">StringBuilder</span><a href="StringBuilder.scala.html#1433">StringBuilder</a></span>(), <span class="typed"><span class="type">java.lang.String(&quot;&quot;)</span><span class="string">&quot;&quot;</span></span>) <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot;)&quot;)</span><span class="string">&quot;)&quot;</span></span>
+
+  <span class="comment">/** Write all elements of this string into given string builder */</span>
+  <span class="keyword">protected</span> <span class="keyword">def</span> <span class="typed"><span class="type">(StringBuilder,String)StringBuilder</span><a id="18408">addDefinedElems</a></span>(<span class="typed"><span class="type">StringBuilder</span><a id="52407">buf</a></span>: <span class="typed"><span class="type">StringBuilder</span><a href="StringBuilder.scala.html#1433">StringBuilder</a></span>, <span class="typed"><span class="type">String</span><a id="52408">prefix</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>): <span class="typed"><span class="type">StringBuilder</span><a href="StringBuilder.scala.html#1433">StringBuilder</a></span>
+}
+
+        </pre>
+    </body>
+</html>

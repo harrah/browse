@@ -1,0 +1,215 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/mutable/Queue.scala</title>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: Queue.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+
+<span class="keyword">package</span> scala.collection.mutable
+
+
+<span class="comment">//import Predef.{NoSuchElementException, UnsupportedOperationException}</span>
+
+<span class="comment">/** &lt;code&gt;Queue&lt;/code&gt; objects implement data structures that allow to
+ *  insert and retrieve elements in a first-in-first-out (FIFO) manner.
+ *
+ *  @author  Matthias Zenger
+ *  @version 1.1, 03/05/2004
+ */</span>
+@<span class="typed"><span class="type">serializable</span><a href="../../serializable.scala.html#647">serializable</a></span> @<span class="typed"><span class="type">cloneable</span><a href="../../cloneable.scala.html#629">cloneable</a></span>
+<span class="keyword">class</span> <span class="typed"><span class="type">class Queue[A] extends java.lang.Object with scala.collection.mutable.MutableList[A] with scala.collection.mutable.CloneableCollection with ScalaObject</span><a id="11488">Queue</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="15197">A</a></span>] <span class="keyword">extends</span> <span class="typed"><span class="type">scala.collection.mutable.MutableList[A]</span><a href="MutableList.scala.html#11542">MutableList</a></span>[A] <span class="keyword">with</span> <span class="typed"><span class="type">scala.collection.mutable.CloneableCollection</span><a href="CloneableCollection.scala.html#11278">CloneableCollection</a></span> {
+
+  <span class="comment">/** Checks if the queue is empty.
+   *
+   *  @return true, iff there is no element in the queue.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="52735">isEmpty</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = (<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="MutableList.scala.html#52715">first0</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>)
+
+  <span class="comment">/** Inserts a single element at the end of the queue.
+   *
+   *  @param  elem        the element to insert
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A)Unit</span><a id="52736">+=</a></span>(<span class="typed"><span class="type">A</span><a id="74713">elem</a></span>: <span class="typed"><span class="type">A</span><a href="#15197">A</a></span>): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = <span class="typed"><span class="type">(A)Unit</span><a href="MutableList.scala.html#52728">appendElem</a></span>(<span class="typed"><span class="type">A</span><a href="#74713">elem</a></span>)
+
+  <span class="comment">/** Adds all elements provided by an &lt;code&gt;Iterable&lt;/code&gt; object
+   *  at the end of the queue. The elements are prepended in the order they
+   *  are given out by the iterator.
+   *
+   *  @param  iter        an iterable object
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Iterable[A])Unit</span><a id="52737">++=</a></span>(<span class="typed"><span class="type">Iterable[A]</span><a id="74719">iter</a></span>: <span class="typed"><span class="type">Iterable[A]</span><a href="../../Iterable.scala.html#401">Iterable</a></span>[A]): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = <span class="typed"><span class="type">Queue.this.type</span><a href="#11488" class="keyword">this</a></span> <span class="typed"><span class="type">(Iterator[A])Unit</span><a href="#52738">++=</a></span> <span class="typed"><span class="type">Iterable[A]</span><a href="#74719">iter</a></span>.<span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="../../Iterable.scala.html#17309">elements</a></span>
+
+  <span class="comment">/** Adds all elements provided by an iterator
+   *  at the end of the queue. The elements are prepended in the order they
+   *  are given out by the iterator.
+   *
+   *  @param  it        an iterator
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(Iterator[A])Unit</span><a id="52738">++=</a></span>(<span class="typed"><span class="type">Iterator[A]</span><a id="74718">it</a></span>: <span class="typed"><span class="type">Iterator[A]</span><a href="../../Iterator.scala.html#1337">Iterator</a></span>[A]): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = <span class="typed"><span class="type">Iterator[A]</span><a href="#74718">it</a></span> <span class="typed"><span class="type">((A) =&gt; Unit)Unit</span><a href="../../Iterator.scala.html#20001">foreach</a></span> <span class="typed"><span class="type">(A)Unit</span><a href="MutableList.scala.html#52728">appendElem</a></span>
+
+  <span class="comment">/** Adds all elements to the queue.
+   *
+   *  @param  elems       the elements to add.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">(A*)Unit</span><a id="52739">enqueue</a></span>(<span class="typed"><span class="type">A*</span><a id="54457">elems</a></span>: <span class="typed"><span class="type">A*</span><a id="2739">A</a></span>*): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = (<span class="typed"><span class="type">Queue.this.type</span><a href="#11488" class="keyword">this</a></span> <span class="typed"><span class="type">(Iterable[A])Unit</span><a href="#52737">++=</a></span> <span class="typed"><span class="type">A*</span><a href="#54457">elems</a></span>)
+
+  <span class="comment">/** Returns the first element in the queue, and removes this element
+   *  from the queue.
+   *
+   *  @throws Predef.NoSuchElementException
+   *  @return the first element of the queue.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">()A</span><a id="52740">dequeue</a></span>(): <span class="typed"><span class="type">A</span><a href="#15197">A</a></span> =
+    <span class="typed"><span class="type">A</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="MutableList.scala.html#52715">first0</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>)
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.util.NoSuchElementException</span><a id="25317" class="keyword">new</a></span> <span class="typed"><span class="type">java.util.NoSuchElementException</span><a href="../../Predef.scala.html#13342">NoSuchElementException</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;queue empty&quot;)</span><span class="string">&quot;queue empty&quot;</span></span>)
+    <span class="keyword">else</span> {
+      <span class="keyword">val</span> <span class="typed"><span class="type">A</span><a id="86353">res</a></span> = <span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="MutableList.scala.html#52715">first0</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="LinkedList.scala.html#68482">elem</a></span>
+      <span class="typed"><span class="type">(scala.collection.mutable.LinkedList[A])Unit</span><a href="MutableList.scala.html#52716">first0</a></span> = <span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="MutableList.scala.html#52715">first0</a></span>.<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="LinkedList.scala.html#68485">next</a></span>
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="MutableList.scala.html#52715">first0</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) <span class="typed"><span class="type">(scala.collection.mutable.LinkedList[A])Unit</span><a href="MutableList.scala.html#52719">last0</a></span> = <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>
+      <span class="typed"><span class="type">(Int)Unit</span><a href="MutableList.scala.html#52722">len</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="MutableList.scala.html#52721">len</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+      <span class="typed"><span class="type">A</span><a href="#86353">res</a></span>
+    }
+
+  <span class="comment">/** Returns the first element in the queue which satisfies the
+   *  given predicate, and removes this element from the queue.
+   *
+   *  @param p   the predicate used for choosing the first element
+   *  @return the first element of the queue for which p yields true
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)Option[A]</span><a id="52741">dequeueFirst</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="86371">p</a></span>: A =&gt; Boolean): <span class="typed"><span class="type">Option[A]</span><a href="../../Option.scala.html#932">Option</a></span>[A] =
+    <span class="typed"><span class="type">Option[A]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="MutableList.scala.html#52715">first0</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>)
+      <span class="typed"><span class="type">object None</span><a href="../../Option.scala.html#534">None</a></span>
+    <span class="keyword">else</span> <span class="typed"><span class="type">Option[A]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">(A)Boolean</span><a href="../../Function1.scala.html#17300">p</a></span>(<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="MutableList.scala.html#52715">first0</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="LinkedList.scala.html#68482">elem</a></span>)) {
+      <span class="keyword">val</span> <span class="typed"><span class="type">Option[A]</span><a id="86373">res</a></span>: <span class="typed"><span class="type">Option[A]</span><a href="../../Option.scala.html#932">Option</a></span>[A] = <span class="typed"><span class="type">(A)Some[A]</span><a href="../../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="MutableList.scala.html#52715">first0</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="LinkedList.scala.html#68482">elem</a></span>)
+      <span class="typed"><span class="type">(scala.collection.mutable.LinkedList[A])Unit</span><a href="MutableList.scala.html#52716">first0</a></span> = <span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="MutableList.scala.html#52715">first0</a></span>.<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="LinkedList.scala.html#68485">next</a></span>
+      <span class="typed"><span class="type">(Int)Unit</span><a href="MutableList.scala.html#52722">len</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="MutableList.scala.html#52721">len</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="MutableList.scala.html#52715">first0</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) {
+        <span class="typed"><span class="type">(scala.collection.mutable.LinkedList[A])Unit</span><a href="MutableList.scala.html#52719">last0</a></span> = <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>
+      } <span class="keyword">else</span> <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="MutableList.scala.html#52715">first0</a></span>.<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="LinkedList.scala.html#68485">next</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) {
+        <span class="typed"><span class="type">(scala.collection.mutable.LinkedList[A])Unit</span><a href="MutableList.scala.html#52719">last0</a></span> = <span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="MutableList.scala.html#52715">first0</a></span>
+      }
+      <span class="typed"><span class="type">Option[A]</span><a href="#86373">res</a></span>
+    } <span class="keyword">else</span>
+      <span class="typed"><span class="type">(scala.collection.mutable.LinkedList[A],(A) =&gt; Boolean)Option[scala.collection.mutable.LinkedList[A]]</span><a href="#52743">extractFirst</a></span>(<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="MutableList.scala.html#52715">first0</a></span>, <span class="typed"><span class="type">(A) =&gt; Boolean</span><a href="#86371">p</a></span>) <span class="typed"><span class="type">Option[A]</span><span class="keyword">match</span></span> {
+        <span class="typed"><span class="type">None.type</span><span class="keyword">case</span></span> <span class="typed"><span class="type">object None</span><a href="../../Option.scala.html#534">None</a></span> =&gt; <span class="typed"><span class="type">object None</span><a href="../../Option.scala.html#534">None</a></span>
+        <span class="typed"><span class="type">Some[A]</span><span class="keyword">case</span></span> <a id="1">Some</a>(<span class="typed"><span class="type">scala.collection.mutable.LinkedList[A]</span><a id="86394">cell</a></span>) =&gt; <span class="typed"><span class="type">(A)Some[A]</span><a href="../../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">scala.collection.mutable.LinkedList[A]</span><a href="#86394">cell</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="LinkedList.scala.html#68482">elem</a></span>)
+      }
+
+  <span class="comment">/** Returns all elements in the queue which satisfy the
+   *  given predicate, and removes those elements from the queue.
+   *
+   *  @param p   the predicate used for choosing elements
+   *  @return    a sequence of all elements in the queue for which
+   *             p yields true.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">((A) =&gt; Boolean)Seq[A]</span><a id="52742">dequeueAll</a></span>(<span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="86396">p</a></span>: A =&gt; Boolean): <span class="typed"><span class="type">Seq[A]</span><a href="../../Seq.scala.html#761">Seq</a></span>[A] = {
+    <span class="typed"><span class="type">Seq[A]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="MutableList.scala.html#52715">first0</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>)
+      <span class="typed"><span class="type">object Seq</span><a href="../../Seq.scala.html#762">Seq</a></span>.<span class="typed"><span class="type">=&gt; Seq[Nothing]</span><a href="../../Seq.scala.html#18315">empty</a></span>
+    <span class="keyword">else</span> {
+      <span class="keyword">val</span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a id="86397">res</a></span> = <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="ArrayBuffer.scala.html#11377">ArrayBuffer</a></span>[A]
+      <span class="typed"><span class="type">Unit</span><a href="#86399" class="keyword">while</a></span> ((<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="MutableList.scala.html#52715">first0</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5793">ne</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">(A)Boolean</span><a href="../../Function1.scala.html#17300">p</a></span>(<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="MutableList.scala.html#52715">first0</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="LinkedList.scala.html#68482">elem</a></span>)) {
+        <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="#86397">res</a></span> <span class="typed"><span class="type">(A)Unit</span><a href="ArrayBuffer.scala.html#22574">+=</a></span> <span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="MutableList.scala.html#52715">first0</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="LinkedList.scala.html#68482">elem</a></span>
+        <span class="typed"><span class="type">(scala.collection.mutable.LinkedList[A])Unit</span><a href="MutableList.scala.html#52716">first0</a></span> = <span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="MutableList.scala.html#52715">first0</a></span>.<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="LinkedList.scala.html#68485">next</a></span>
+        <span class="typed"><span class="type">(Int)Unit</span><a href="MutableList.scala.html#52722">len</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="MutableList.scala.html#52721">len</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+        <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="MutableList.scala.html#52715">first0</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) {
+          <span class="typed"><span class="type">(scala.collection.mutable.LinkedList[A])Unit</span><a href="MutableList.scala.html#52719">last0</a></span> = <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>
+        } <span class="keyword">else</span> <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="MutableList.scala.html#52715">first0</a></span>.<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="LinkedList.scala.html#68485">next</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) {
+          <span class="typed"><span class="type">(scala.collection.mutable.LinkedList[A])Unit</span><a href="MutableList.scala.html#52719">last0</a></span> = <span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="MutableList.scala.html#52715">first0</a></span>
+        }
+      }
+      <span class="keyword">var</span> <span class="typed"><span class="type">Option[scala.collection.mutable.LinkedList[A]]</span><a id="86398">cell</a></span>: <span class="typed"><span class="type">Option[scala.collection.mutable.LinkedList[A]]</span><a href="../../Option.scala.html#932">Option</a></span>[LinkedList[A]] = <span class="typed"><span class="type">(scala.collection.mutable.LinkedList[A],(A) =&gt; Boolean)Option[scala.collection.mutable.LinkedList[A]]</span><a href="#52743">extractFirst</a></span>(<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="MutableList.scala.html#52715">first0</a></span>, <span class="typed"><span class="type">(A) =&gt; Boolean</span><a href="#86396">p</a></span>)
+      <span class="typed"><span class="type">Unit</span><a href="#86400" class="keyword">while</a></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">Option[scala.collection.mutable.LinkedList[A]]</span><a href="#86398">cell</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="../../Option.scala.html#18268">isEmpty</a></span>) {
+        <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="#86397">res</a></span> <span class="typed"><span class="type">(A)Unit</span><a href="ArrayBuffer.scala.html#22574">+=</a></span> <span class="typed"><span class="type">Option[scala.collection.mutable.LinkedList[A]]</span><a href="#86398">cell</a></span>.<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="../../Option.scala.html#18270">get</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="LinkedList.scala.html#68482">elem</a></span>
+        <span class="typed"><span class="type">Option[scala.collection.mutable.LinkedList[A]]</span><a href="#86398">cell</a></span> = <span class="typed"><span class="type">(scala.collection.mutable.LinkedList[A],(A) =&gt; Boolean)Option[scala.collection.mutable.LinkedList[A]]</span><a href="#52743">extractFirst</a></span>(<span class="typed"><span class="type">Option[scala.collection.mutable.LinkedList[A]]</span><a href="#86398">cell</a></span>.<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="../../Option.scala.html#18270">get</a></span>, <span class="typed"><span class="type">(A) =&gt; Boolean</span><a href="#86396">p</a></span>)
+      }
+      <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[A]</span><a href="#86397">res</a></span>
+    }
+  }
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">(scala.collection.mutable.LinkedList[A],(A) =&gt; Boolean)Option[scala.collection.mutable.LinkedList[A]]</span><a id="52743">extractFirst</a></span>(<span class="typed"><span class="type">scala.collection.mutable.LinkedList[A]</span><a id="86392">start</a></span>: <span class="typed"><span class="type">scala.collection.mutable.LinkedList[A]</span><a href="LinkedList.scala.html#11416">LinkedList</a></span>[A], <span class="typed"><span class="type">(A) =&gt; Boolean</span><a id="86393">p</a></span>: A =&gt; Boolean): <span class="typed"><span class="type">Option[scala.collection.mutable.LinkedList[A]]</span><a href="../../Option.scala.html#932">Option</a></span>[LinkedList[A]] = {
+    <span class="typed"><span class="type">Option[scala.collection.mutable.LinkedList[A]]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#52735">isEmpty</a></span>) <span class="typed"><span class="type">object None</span><a href="../../Option.scala.html#534">None</a></span>
+    <span class="keyword">else</span> {
+      <span class="keyword">var</span> <span class="typed"><span class="type">scala.collection.mutable.LinkedList[A]</span><a id="86426">cell</a></span> = <span class="typed"><span class="type">scala.collection.mutable.LinkedList[A]</span><a href="#86392">start</a></span>
+      <span class="typed"><span class="type">Unit</span><a href="#86427" class="keyword">while</a></span> ((<span class="typed"><span class="type">scala.collection.mutable.LinkedList[A]</span><a href="#86426">cell</a></span>.<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="LinkedList.scala.html#68485">next</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5793">ne</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2749">&amp;&amp;</a></span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span><span class="typed"><span class="type">(A)Boolean</span><a href="../../Function1.scala.html#17300">p</a></span>(<span class="typed"><span class="type">scala.collection.mutable.LinkedList[A]</span><a href="#86426">cell</a></span>.<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="LinkedList.scala.html#68485">next</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="LinkedList.scala.html#68482">elem</a></span>)) {
+        <span class="typed"><span class="type">scala.collection.mutable.LinkedList[A]</span><a href="#86426">cell</a></span> = <span class="typed"><span class="type">scala.collection.mutable.LinkedList[A]</span><a href="#86426">cell</a></span>.<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="LinkedList.scala.html#68485">next</a></span>
+      }
+      <span class="typed"><span class="type">Option[scala.collection.mutable.LinkedList[A]]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">scala.collection.mutable.LinkedList[A]</span><a href="#86426">cell</a></span>.<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="LinkedList.scala.html#68485">next</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>)
+        <span class="typed"><span class="type">object None</span><a href="../../Option.scala.html#534">None</a></span>
+      <span class="keyword">else</span> {
+        <span class="keyword">val</span> <span class="typed"><span class="type">Option[scala.collection.mutable.LinkedList[A]]</span><a id="86433">res</a></span>: <span class="typed"><span class="type">Option[scala.collection.mutable.LinkedList[A]]</span><a href="../../Option.scala.html#932">Option</a></span>[LinkedList[A]] = <span class="typed"><span class="type">(scala.collection.mutable.LinkedList[A])Some[scala.collection.mutable.LinkedList[A]]</span><a href="../../Option.scala.html#19455">Some</a></span>(<span class="typed"><span class="type">scala.collection.mutable.LinkedList[A]</span><a href="#86426">cell</a></span>.<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="LinkedList.scala.html#68485">next</a></span>)
+        <span class="typed"><span class="type">scala.collection.mutable.LinkedList[A]</span><a href="#86426">cell</a></span>.<span class="typed"><span class="type">(scala.collection.mutable.LinkedList[A])Unit</span><a href="LinkedList.scala.html#68486">next</a></span> = <span class="typed"><span class="type">scala.collection.mutable.LinkedList[A]</span><a href="#86426">cell</a></span>.<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="LinkedList.scala.html#68485">next</a></span>.<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="LinkedList.scala.html#68485">next</a></span>
+        <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">scala.collection.mutable.LinkedList[A]</span><a href="#86426">cell</a></span>.<span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="LinkedList.scala.html#68485">next</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>)
+          <span class="typed"><span class="type">(scala.collection.mutable.LinkedList[A])Unit</span><a href="MutableList.scala.html#52719">last0</a></span> = <span class="typed"><span class="type">scala.collection.mutable.LinkedList[A]</span><a href="#86426">cell</a></span>
+        <span class="typed"><span class="type">(Int)Unit</span><a href="MutableList.scala.html#52722">len</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="MutableList.scala.html#52721">len</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3146">-</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+        <span class="typed"><span class="type">Option[scala.collection.mutable.LinkedList[A]]</span><a href="#86433">res</a></span>
+      }
+    }
+  }
+
+  <span class="comment">/** Returns the first element in the queue, or throws an error if there
+   *  is no element contained in the queue.
+   *
+   *  @return the first element.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; A</span><a id="52744">front</a></span>: <span class="typed"><span class="type">A</span><a href="#15197">A</a></span> = <span class="typed"><span class="type">=&gt; scala.collection.mutable.LinkedList[A]</span><a href="MutableList.scala.html#52715">first0</a></span>.<span class="typed"><span class="type">=&gt; A</span><a href="LinkedList.scala.html#68482">elem</a></span>
+
+  <span class="comment">/** Removes all elements from the queue. After this operation is completed,
+   *  the queue will be empty.
+   */</span>
+  <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="52745">clear</a></span>(): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = <span class="typed"><span class="type">()Unit</span><a href="MutableList.scala.html#52729">reset</a></span>
+
+  <span class="comment">/** Checks if two queues are structurally identical.
+   *
+   *  @return true, iff both queues contain the same sequence of elements.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Any)Boolean</span><a id="52746">equals</a></span>(<span class="typed"><span class="type">Any</span><a id="74739">obj</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = <span class="typed"><span class="type">Any</span><a href="#74739">obj</a></span> <span class="typed"><span class="type">Boolean</span><span class="keyword">match</span></span> {
+    <span class="typed"><span class="type">Boolean</span><span class="keyword">case</span></span> <span class="typed"><span class="type">scala.collection.mutable.Queue[_]</span><a id="86456">that</a></span>: <span class="typed"><span class="type">scala.collection.mutable.Queue[_]</span><a href="#11488">Queue</a></span>[_] =&gt;
+      (<span class="typed"><span class="type">Queue.this.type</span><a href="#11488" class="keyword">this</a></span>.<span class="typed"><span class="type">=&gt; Iterator[A]</span><a href="MutableList.scala.html#52730">elements</a></span> <span class="typed"><span class="type">(Iterator[_])java.lang.Object with Iterator[(A, _)]</span><a href="../../Iterator.scala.html#19997">zip</a></span> <span class="typed"><span class="type">scala.collection.mutable.Queue[_]</span><a href="#86456">that</a></span>.<span class="typed"><span class="type">=&gt; Iterator[_]</span><a href="MutableList.scala.html#52730">elements</a></span>) <span class="typed"><span class="type">(((A, _)) =&gt; Boolean)Boolean</span><a href="../../Iterator.scala.html#20002">forall</a></span> <span class="typed"><span class="type">Boolean</span><a href="#86465">{</a></span>
+        <span class="typed"><span class="type">Boolean</span><span class="keyword">case</span></span> <a id="1">(</a><span class="typed"><span class="type">A</span><a id="86466">thiselem</a></span>, <span class="typed"><span class="type">_</span><a id="86467">thatelem</a></span>) =&gt; <span class="typed"><span class="type">A</span><a href="#86466">thiselem</a></span> <span class="typed"><span class="type">(Any)Boolean</span><a id="3494">==</a></span> <span class="typed"><span class="type">_</span><a href="#86467">thatelem</a></span>
+      }
+    <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">case</span></span> _ =&gt;
+      <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+  }
+
+  <span class="comment">/** The hashCode method always yields an error, since it is not
+   *  safe to use mutable queues as keys in hash tables.
+   *
+   *  @throws Predef.UnsupportedOperationException
+   *  @return never.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()Int</span><a id="52747">hashCode</a></span>(): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> =
+    <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.lang.UnsupportedOperationException</span><a id="30111" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.UnsupportedOperationException</span><a href="../../Predef.scala.html#13340">UnsupportedOperationException</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;unsuitable as hash key&quot;)</span><span class="string">&quot;unsuitable as hash key&quot;</span></span>)
+
+  <span class="comment">/** Returns a textual representation of a queue as a string.
+   *
+   *  @return the string representation of this queue.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()String</span><a id="52748">toString</a></span>() = <span class="typed"><span class="type">=&gt; List[A]</span><a href="MutableList.scala.html#52732">toList</a></span>.<span class="typed"><span class="type">(String,String,String)String</span><a href="../../Iterable.scala.html#17363">mkString</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;Queue(&quot;)</span><span class="string">&quot;Queue(&quot;</span></span>, <span class="typed"><span class="type">java.lang.String(&quot;, &quot;)</span><span class="string">&quot;, &quot;</span></span>, <span class="typed"><span class="type">java.lang.String(&quot;)&quot;)</span><span class="string">&quot;)&quot;</span></span>)
+
+  <span class="comment">/** This method clones the queue.
+   *
+   *  @return  a queue with the same elements.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()scala.collection.mutable.Queue[A]</span><a id="52749">clone</a></span>(): <span class="typed"><span class="type">scala.collection.mutable.Queue[A]</span><a href="#11488">Queue</a></span>[A] = {
+    <span class="keyword">val</span> <span class="typed"><span class="type">scala.collection.mutable.Queue[A]</span><a id="86470">res</a></span> = <span class="typed"><span class="type">scala.collection.mutable.Queue[A]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.Queue[A]</span><a href="#11488">Queue</a></span>[A]
+    <span class="typed"><span class="type">scala.collection.mutable.Queue[A]</span><a href="#86470">res</a></span> <span class="typed"><span class="type">(Iterable[A])Unit</span><a href="#52737">++=</a></span> <span class="typed"><span class="type">scala.collection.mutable.Queue[A]</span><a href="#11488" class="keyword">this</a></span>
+    <span class="typed"><span class="type">scala.collection.mutable.Queue[A]</span><a href="#86470">res</a></span>
+  }
+}
+
+        </pre>
+    </body>
+</html>

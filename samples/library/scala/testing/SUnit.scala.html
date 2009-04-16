@@ -1,0 +1,271 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/testing/SUnit.scala</title>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: SUnit.scala 16884 2009-01-09 16:52:09Z cunei $</span>
+
+
+<span class="keyword">package</span> scala.testing
+
+<span class="keyword">import</span> scala.collection.mutable.ArrayBuffer
+
+<span class="comment">/**
+ * &lt;p&gt;
+ *   Unit testing methods in the spirit of
+ *   &lt;a href=&quot;http://www.junit.org/&quot; target=&quot;_top&quot;&gt;JUnit&lt;/a&gt; framework.
+ * &lt;/p&gt;
+ * &lt;p&gt;
+ *   Use these classes like this:
+ * &lt;/p&gt;
+ * &lt;pre&gt;
+ * &lt;b&gt;import&lt;/b&gt; scala.testing.SUnit
+ * &lt;b&gt;import&lt;/b&gt; SUnit._
+ *
+ * &lt;b&gt;class&lt;/b&gt; MyTest(n: String) &lt;b&gt;extends&lt;/b&gt; TestCase(n) {
+ *
+ *   &lt;b&gt;override def&lt;/b&gt; runTest() = n &lt;b&gt;match&lt;/b&gt; {
+ *     &lt;b&gt;case&lt;/b&gt; &quot;myTest1&quot; =&gt; assertTrue(&lt;b&gt;true&lt;/b&gt;)
+ *     &lt;b&gt;case&lt;/b&gt; &quot;myTest2&quot; =&gt; assertTrue(&quot;hello&quot;, &lt;b&gt;false&lt;/b&gt;)
+ *   }
+ * }
+ *
+ * &lt;b&gt;val&lt;/b&gt; r = &lt;b&gt;new&lt;/b&gt; TestResult()
+ * suite.run(r)
+ * &lt;b&gt;for&lt;/b&gt; (tf &amp;lt;- r.failures()) {
+ *   println(tf.toString())
+ * }
+ * &lt;/pre&gt;
+ * &lt;p&gt;
+ *   The trait &lt;code&gt;TestConsoleMain&lt;/code&gt; contains this code as
+ *   a &lt;code&gt;main&lt;/code&gt; method, for convenience.
+ * &lt;/p&gt;
+ *
+ * @deprecated SUnit will be removed in 2.8.0. There are several free and
+ * sophisticated testing frameworks for Scala available, examples are
+ * &quot;ScalaTest&quot;, &quot;ScalaCheck&quot; or &quot;Specs&quot;.
+ *
+ * @author Burak Emir
+ */</span>
+@<span class="typed"><span class="type">deprecated</span><a href="../deprecated.scala.html#215">deprecated</a></span>
+<span class="keyword">object</span> <span class="typed"><span class="type">object scala.testing.SUnit</span><a id="15504">SUnit</a></span> {
+
+  <span class="comment">/** &lt;p&gt;
+   *    Convenience trait, mix it in a &lt;code&gt;TestMain&lt;/code&gt; object and
+   *    implement &quot;suite&quot; to get this code.
+   *  &lt;/p&gt;&lt;pre&gt;
+   *  &lt;b&gt;val&lt;/b&gt; r = &lt;b&gt;new&lt;/b&gt; TestResult()
+   *  suite.run(r)
+   *  &lt;b&gt;for&lt;/b&gt; (&lt;b&gt;val&lt;/b&gt; tf &amp;lt;- r.failures()) {
+   *    println(tf.toString())
+   *  &lt;/pre&gt;
+   */</span>
+  <span class="keyword">trait</span> <span class="typed"><span class="type">trait TestConsoleMain extends java.lang.Object with ScalaObject</span><a id="97660">TestConsoleMain</a></span> {
+    <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; scala.testing.SUnit.TestSuite</span><a id="97672">suite</a></span>: <span class="typed"><span class="type">scala.testing.SUnit.TestSuite</span><a href="#97665">TestSuite</a></span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">(Array[String])Unit</span><a id="97673">main</a></span>(<span class="typed"><span class="type">Array[String]</span><a id="97686">args</a></span>: <span class="typed"><span class="type">Array[String]</span><a href="../Array.scala.html#1070">Array</a></span>[String]) {
+      <span class="keyword">val</span> <span class="typed"><span class="type">scala.testing.SUnit.TestResult</span><a id="97687">r</a></span> = <span class="typed"><span class="type">scala.testing.SUnit.TestResult</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.testing.SUnit.TestResult</span><a href="#97664">TestResult</a></span>()
+      <span class="typed"><span class="type">=&gt; scala.testing.SUnit.TestSuite</span><a href="#97672">suite</a></span>.<span class="typed"><span class="type">(scala.testing.SUnit.TestResult)Unit</span><a href="#97685">run</a></span>(<span class="typed"><span class="type">scala.testing.SUnit.TestResult</span><a href="#97687">r</a></span>)
+      <span class="keyword">for</span> (<span class="typed"><span class="type">((scala.testing.SUnit.TestFailure) =&gt; Unit)Unit</span><a href="../Iterator.scala.html#20001" id="97716">tf</a></span> &lt;- <span class="typed"><span class="type">scala.testing.SUnit.TestResult</span><a href="#97687">r</a></span>.<span class="typed"><span class="type">()Iterator[scala.testing.SUnit.TestFailure]</span><a href="#97693">failures</a></span>()) 
+        <span class="typed"><span class="type">(Any)Unit</span><a href="../Predef.scala.html#13489">println</a></span>(<span class="typed"><span class="type">scala.testing.SUnit.TestFailure</span><a href="#97716">tf</a></span>.<span class="typed"><span class="type">()java.lang.String</span><a href="#97709">toString</a></span>())
+    }
+  }
+
+  <span class="comment">/** a Test can be run with its result being collected */</span>
+  <span class="keyword">trait</span> <span class="typed"><span class="type">trait Test extends java.lang.Object</span><span id="97661"><a id="2163">Test</a></span></span> {
+    <span class="keyword">def</span> <span class="typed"><span class="type">(scala.testing.SUnit.TestResult)Unit</span><a id="97677">run</a></span>(<span class="typed"><span class="type">scala.testing.SUnit.TestResult</span><a id="97696">r</a></span>: <span class="typed"><span class="type">scala.testing.SUnit.TestResult</span><a href="#97664">TestResult</a></span>): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span>
+  }
+
+  <span class="comment">/** The class &lt;code&gt;TestCase&lt;/code&gt; defines the fixture to run multiple
+   *  tests.
+   *
+   *  @param name ...
+   */</span>
+  <span class="keyword">abstract</span> <span class="keyword">class</span> <span class="typed"><span class="type">class TestCase extends java.lang.Object with scala.testing.SUnit.Test with scala.testing.SUnit.Assert with ScalaObject</span><a id="97662">TestCase</a></span>(<span class="keyword">val</span> <span class="typed"><span class="type">String</span><span id="97722"><span id="97721"><a id="97758">name</a></span></span></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>) <span class="keyword">extends</span> <span class="typed"><span class="type">scala.testing.SUnit.Test</span><a href="#97661">Test</a></span> <span class="keyword">with</span> <span class="typed"><span class="type">scala.testing.SUnit.Assert</span><a href="#97669">Assert</a></span> {
+
+    <span class="keyword">protected</span> <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="97724">runTest</a></span>(): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span>
+
+    <span class="keyword">def</span> <span class="typed"><span class="type">(scala.testing.SUnit.TestResult)Unit</span><a id="97725">run</a></span>(<span class="typed"><span class="type">scala.testing.SUnit.TestResult</span><a id="97759">r</a></span>: <span class="typed"><span class="type">scala.testing.SUnit.TestResult</span><a href="#97664">TestResult</a></span>) {
+      <span class="keyword">try</span> {
+        <span class="typed"><span class="type">()Unit</span><a href="#97724">runTest</a></span>()
+      } <span class="keyword">catch</span> {
+        <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> <span class="typed"><span class="type">java.lang.Throwable</span><a id="97760">t</a></span>:<span class="typed"><span class="type">Throwable</span><a id="2141">Throwable</a></span> =&gt; <span class="typed"><span class="type">scala.testing.SUnit.TestResult</span><a href="#97759">r</a></span>.<span class="typed"><span class="type">(scala.testing.SUnit.Test,Throwable)Unit</span><a href="#97691">addFailure</a></span>(<span class="typed"><span class="type">scala.testing.SUnit.TestCase</span><a href="#97662" class="keyword">this</a></span>, <span class="typed"><span class="type">java.lang.Throwable</span><a href="#97760">t</a></span>)
+      }
+    }
+
+    <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="97726">setUp</a></span>() <span class="typed"><span class="type">Unit</span><span >{</span></span>}
+
+    <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="97727">tearDown</a></span>() <span class="typed"><span class="type">Unit</span><span >{</span></span>}
+
+    <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()String</span><a id="97728">toString</a></span>() = <span class="typed"><span class="type">=&gt; String</span><a href="#97721">name</a></span>
+  }
+
+  <span class="comment">/** The class &lt;code&gt;TestFailure&lt;/code&gt; collects a failed test together
+   *  with the thrown exception.
+   */</span>
+  <span class="keyword">class</span> <span class="typed"><span class="type">class TestFailure extends java.lang.Object with ScalaObject</span><a id="97663">TestFailure</a></span>(<span class="keyword">val</span> <span class="typed"><span class="type">scala.testing.SUnit.Test</span><span id="97704"><span id="97703"><a id="97713">failedTest</a></span></span></span>: <span class="typed"><span class="type">scala.testing.SUnit.Test</span><a href="#97661">Test</a></span>, <span class="keyword">val</span> <span class="typed"><span class="type">Throwable</span><span id="97706"><span id="97705"><a id="97714">thrownException</a></span></span></span>: <span class="typed"><span class="type">Throwable</span><a id="2141">Throwable</a></span>) {
+
+    <span class="keyword">def</span> <span class="typed"><span class="type">((scala.testing.SUnit.Test, Throwable))scala.testing.SUnit.TestFailure</span><a id="97708" class="keyword">this</a></span>(<span class="typed"><span class="type">(scala.testing.SUnit.Test, Throwable)</span><a id="97712">p</a></span>: <span class="typed"><span class="type">(scala.testing.SUnit.Test, Throwable)</span><a href="../Tuple2.scala.html#1376">(</a></span>Test, Throwable)) = <span class="typed"><span class="type">TestFailure.this.type</span><a href="#97663" class="keyword">this</a></span>(<span class="typed"><span class="type">(scala.testing.SUnit.Test, Throwable)</span><a href="#97712">p</a></span>.<span class="typed"><span class="type">=&gt; scala.testing.SUnit.Test</span><a href="../Tuple2.scala.html#19161">_1</a></span>, <span class="typed"><span class="type">(scala.testing.SUnit.Test, Throwable)</span><a href="#97712">p</a></span>.<span class="typed"><span class="type">=&gt; Throwable</span><a href="../Tuple2.scala.html#19163">_2</a></span>)
+
+    <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()java.lang.String</span><a id="97709">toString</a></span>() =
+      <span class="typed"><span class="type">=&gt; scala.testing.SUnit.Test</span><a href="#97703">failedTest</a></span>.<span class="typed"><span class="type">()java.lang.String</span><a id="5783">toString</a></span>() <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot; failed due to &quot;)</span><span class="string">&quot; failed due to &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">=&gt; Throwable</span><a href="#97705">thrownException</a></span>.<span class="typed"><span class="type">()java.lang.String</span><a id="19186">toString</a></span>()
+
+    <span class="keyword">def</span> <span class="typed"><span class="type">()String</span><a id="97710">trace</a></span>(): <span class="typed"><span class="type">String</span><a id="1859">String</a></span> = <span class="typed"><span class="type">implicit scala.Predef.exceptionWrapper : (Throwable)scala.runtime.RichException</span><a href="../Predef.scala.html#13521">thrownException</a></span>.<span class="typed"><span class="type">=&gt; String</span><a href="../runtime/RichException.scala.html#19176">getStackTraceString</a></span>
+
+  }
+
+  <span class="comment">/** a TestResult collects the result of executing a test case */</span>
+  <span class="keyword">class</span> <span class="typed"><span class="type">class TestResult extends java.lang.Object with ScalaObject</span><a id="97664">TestResult</a></span> {
+    <span class="keyword">val</span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[(scala.testing.SUnit.Test, Throwable)]</span><span id="97690"><a id="97689">buf</a></span></span> = <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[(scala.testing.SUnit.Test, Throwable)]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[(scala.testing.SUnit.Test, Throwable)]</span><a href="../collection/mutable/ArrayBuffer.scala.html#11377">ArrayBuffer</a></span>[(Test, Throwable)]()
+
+    <span class="keyword">def</span> <span class="typed"><span class="type">(scala.testing.SUnit.Test,Throwable)Unit</span><a id="97691">addFailure</a></span>(<span class="typed"><span class="type">scala.testing.SUnit.Test</span><a id="97761">test</a></span>: <span class="typed"><span class="type">scala.testing.SUnit.Test</span><a href="#97661">Test</a></span>, <span class="typed"><span class="type">Throwable</span><a id="97762">t</a></span>: <span class="typed"><span class="type">Throwable</span><a id="2141">Throwable</a></span>) {
+      <span class="typed"><span class="type">=&gt; scala.collection.mutable.ArrayBuffer[(scala.testing.SUnit.Test, Throwable)]</span><a href="#97689">buf</a></span> <span class="typed"><span class="type">((scala.testing.SUnit.Test, Throwable))Unit</span><a href="../collection/mutable/ArrayBuffer.scala.html#22574">+=</a></span> (<span class="typed"><span class="type">(scala.testing.SUnit.Test,Throwable)(scala.testing.SUnit.Test, Throwable)</span><a href="../Tuple2.scala.html#20366">(</a></span><span class="typed"><span class="type">scala.testing.SUnit.Test</span><a href="#97761">test</a></span>, <span class="typed"><span class="type">Throwable</span><a href="#97762">t</a></span>))
+    }
+
+    <span class="keyword">def</span> <span class="typed"><span class="type">()Int</span><a id="97692">failureCount</a></span>() =
+      <span class="typed"><span class="type">=&gt; scala.collection.mutable.ArrayBuffer[(scala.testing.SUnit.Test, Throwable)]</span><a href="#97689">buf</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="../collection/mutable/ResizableArray.scala.html#22603">length</a></span>
+
+    <span class="keyword">def</span> <span class="typed"><span class="type">()Iterator[scala.testing.SUnit.TestFailure]</span><a id="97693">failures</a></span>() =
+      <span class="typed"><span class="type">=&gt; scala.collection.mutable.ArrayBuffer[(scala.testing.SUnit.Test, Throwable)]</span><a href="#97689">buf</a></span>.<span class="typed"><span class="type">=&gt; Iterator[(scala.testing.SUnit.Test, Throwable)]</span><a href="../collection/mutable/ResizableArray.scala.html#22612">elements</a></span> <span class="typed"><span class="type">(((scala.testing.SUnit.Test, Throwable)) =&gt; scala.testing.SUnit.TestFailure)Iterator[scala.testing.SUnit.TestFailure]</span><a href="../Iterator.scala.html#19980">map</a></span> { <span class="typed"><span class="type">(scala.testing.SUnit.Test, Throwable)</span><a id="97700">x</a></span> =&gt; <span class="typed"><span class="type">((scala.testing.SUnit.Test, Throwable))scala.testing.SUnit.TestFailure</span><a href="#97708" class="keyword">new</a></span> <span class="typed"><span class="type">scala.testing.SUnit.TestFailure</span><a href="#97663">TestFailure</a></span>(<span class="typed"><span class="type">(scala.testing.SUnit.Test, Throwable)</span><a href="#97700">x</a></span>) }
+  }
+
+  <span class="comment">/** The class &lt;code&gt;TestSuite&lt;/code&gt; runs a composite of test cases.
+   */</span>
+  <span class="keyword">class</span> <span class="typed"><span class="type">class TestSuite extends java.lang.Object with scala.testing.SUnit.Test with ScalaObject</span><a id="97665">TestSuite</a></span>(<span class="typed"><span class="type">scala.testing.SUnit.Test*</span><span id="97679"><a id="97783">tests</a></span></span>: <span class="typed"><span class="type">scala.testing.SUnit.Test*</span><a id="2739">Test</a></span>*) <span class="keyword">extends</span> <span class="typed"><span class="type">scala.testing.SUnit.Test</span><a href="#97661">Test</a></span> {
+
+    <span class="keyword">def</span> <span class="typed"><span class="type">(Seq[String],(String) =&gt; scala.testing.SUnit.Test)scala.testing.SUnit.TestSuite</span><a id="97681" class="keyword">this</a></span>(<span class="typed"><span class="type">Seq[String]</span><a id="97786">names</a></span>: <span class="typed"><span class="type">Seq[String]</span><a href="../Seq.scala.html#761">Seq</a></span>[String], <span class="typed"><span class="type">(String) =&gt; scala.testing.SUnit.Test</span><a id="97787">constr</a></span>: String =&gt; Test) =
+      <span class="typed"><span class="type">TestSuite.this.type</span><a href="#97665" class="keyword">this</a></span>((<span class="typed"><span class="type">Seq[String]</span><a href="#97786">names</a></span> <span class="typed"><span class="type">((String) =&gt; scala.testing.SUnit.Test)Seq[scala.testing.SUnit.Test]</span><a href="../Seq.scala.html#17169">map</a></span> <span class="typed"><span class="type">(String) =&gt; scala.testing.SUnit.Test</span><a href="#97787">constr</a></span>):_*)
+
+    <span class="keyword">val</span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[scala.testing.SUnit.Test]</span><span id="97683"><a id="97682">buf</a></span></span> = <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[scala.testing.SUnit.Test]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.ArrayBuffer[scala.testing.SUnit.Test]</span><a href="../collection/mutable/ArrayBuffer.scala.html#11377">ArrayBuffer</a></span>[Test]()
+
+    <span class="typed"><span class="type">=&gt; scala.collection.mutable.ArrayBuffer[scala.testing.SUnit.Test]</span><a href="#97682">buf</a></span> <span class="typed"><span class="type">(Iterable[scala.testing.SUnit.Test])Unit</span><a href="../collection/mutable/ArrayBuffer.scala.html#22575">++=</a></span> <span class="typed"><span class="type">scala.testing.SUnit.Test*</span><a href="#97679">tests</a></span>
+
+    <span class="keyword">def</span> <span class="typed"><span class="type">(scala.testing.SUnit.Test)Unit</span><a id="97684">addTest</a></span>(<span class="typed"><span class="type">scala.testing.SUnit.Test</span><a id="97794">t</a></span>: <span class="typed"><span class="type">scala.testing.SUnit.Test</span><a href="#97661">Test</a></span>) {
+      <span class="typed"><span class="type">=&gt; scala.collection.mutable.ArrayBuffer[scala.testing.SUnit.Test]</span><a href="#97682">buf</a></span> <span class="typed"><span class="type">(scala.testing.SUnit.Test)Unit</span><a href="../collection/mutable/ArrayBuffer.scala.html#22574">+=</a></span> <span class="typed"><span class="type">scala.testing.SUnit.Test</span><a href="#97794">t</a></span>
+    }
+
+    <span class="keyword">def</span> <span class="typed"><span class="type">(scala.testing.SUnit.TestResult)Unit</span><a id="97685">run</a></span>(<span class="typed"><span class="type">scala.testing.SUnit.TestResult</span><a id="97695">r</a></span>: <span class="typed"><span class="type">scala.testing.SUnit.TestResult</span><a href="#97664">TestResult</a></span>) {
+      <span class="keyword">for</span> (<span class="typed"><span class="type">((scala.testing.SUnit.Test) =&gt; Unit)Unit</span><a href="../Iterable.scala.html#17328" id="97796">t</a></span> &lt;- <span class="typed"><span class="type">=&gt; scala.collection.mutable.ArrayBuffer[scala.testing.SUnit.Test]</span><a href="#97682">buf</a></span>) <span class="typed"><span class="type">scala.testing.SUnit.Test</span><a href="#97796">t</a></span>.<span class="typed"><span class="type">(scala.testing.SUnit.TestResult)Unit</span><a href="#97677">run</a></span>(<span class="typed"><span class="type">scala.testing.SUnit.TestResult</span><a href="#97695">r</a></span>)
+    }
+  }
+
+  <span class="comment">/** an AssertFailed is thrown for a failed assertion */</span>
+  <span class="keyword">case</span> <span class="keyword">class</span> <span class="typed"><span class="type">class AssertFailed extends java.lang.RuntimeException with ScalaObject with Product</span><span id="2746"><span id="97864"><span id="97863"><span id="97848"><span id="2748"><span id="2749"><span id="97862"><span id="5792"><span id="97667"><span id="97846"><span id="97851"><span id="97857"><span id="19891"><span id="97852"><span id="3507"><span id="97858"><span id="97847"><span id="3499"><span id="97861"><span id="97850"><span id="97666"><a href="../runtime/ScalaRunTime.scala.html#19785" id="3498">AssertFailed</a></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span>(<span class="typed"><span class="type">String</span><span id="97800"><span id="97799"><span id="97839"><a id="97956">msg</a></span></span></span></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>, <span class="typed"><span class="type">Boolean</span><span id="97802"><span id="97801"><span id="97840"><a id="97957">stackTrace</a></span></span></span></span>: <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span>) <span class="keyword">extends</span> <span class="typed"><span class="type">java.lang.RuntimeException</span><a href="../Predef.scala.html#13334">RuntimeException</a></span> {
+    <span class="keyword">private</span> <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.String</span><span id="97805"><a id="97804">msg0</a></span></span> = <span class="typed"><span class="type">java.lang.String</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a href="#97801">stackTrace</a></span>) {
+      <span class="keyword">import</span> java.io._
+      <span class="keyword">val</span> <span class="typed"><span class="type">java.io.StringWriter</span><a id="97811">wrt</a></span> = <span class="typed"><span class="type">java.io.StringWriter</span><span class="keyword">new</span></span> <span class="typed"><span class="type">java.io.StringWriter</span><a id="3619">StringWriter</a></span>
+      <span class="typed"><span class="type">(java.io.PrintWriter)Unit</span><a href="#97666" id="19189">printStackTrace</a></span>(<span class="typed"><span class="type">java.io.PrintWriter</span><span class="keyword">new</span></span> <span class="typed"><span class="type">java.io.PrintWriter</span><a id="3757">PrintWriter</a></span>(<span class="typed"><span class="type">java.io.StringWriter</span><a href="#97811">wrt</a></span>))
+      <span class="typed"><span class="type">java.io.StringWriter</span><a href="#97811">wrt</a></span>.<span class="typed"><span class="type">()java.lang.String</span><a id="97821">toString</a></span>
+    } <span class="keyword">else</span> <span class="typed"><span class="type">=&gt; String</span><a href="#97799">msg</a></span>
+    <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()java.lang.String</span><a id="97806">toString</a></span>() =
+      <span class="typed"><span class="type">java.lang.String</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; java.lang.String</span><a href="#97804">msg0</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) <span class="typed"><span class="type">java.lang.String(&quot;failed assertion: &quot;)</span><span class="string">&quot;failed assertion: &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">=&gt; String</span><a href="#97799">msg</a></span> <span class="keyword">else</span> <span class="typed"><span class="type">=&gt; java.lang.String</span><a href="#97804">msg0</a></span>
+  }
+
+  <span class="comment">/** this class defines useful &lt;code&gt;assert&lt;/code&gt; methods */</span>
+  <span class="keyword">trait</span> <span class="typed"><span class="type">trait Assert extends java.lang.Object with ScalaObject</span><a id="97669">Assert</a></span> {
+
+    <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="97732">enableStackTrace</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+
+    <span class="comment">/** fails if &lt;code&gt;! actual.sameElements(expected)&lt;/code&gt; */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">[A](Seq[A],Seq[A])Unit</span><a id="97733">assertSameElements</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="97735">A</a></span>](<span class="typed"><span class="type">Seq[A]</span><a id="97869">actual</a></span>: <span class="typed"><span class="type">Seq[A]</span><a href="../Seq.scala.html#761">Seq</a></span>[A], <span class="typed"><span class="type">Seq[A]</span><a id="97870">expected</a></span>: <span class="typed"><span class="type">Seq[A]</span><a href="../Seq.scala.html#761">Seq</a></span>[A]) {
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2745">!</a></span> <span class="typed"><span class="type">Seq[A]</span><a href="#97869">actual</a></span>.<span class="typed"><span class="type">(Iterable[A])Boolean</span><a href="../Iterable.scala.html#17357">sameElements</a></span>(<span class="typed"><span class="type">Seq[A]</span><a href="#97870">expected</a></span>))
+        <span class="typed"><span class="type">(String,String,String)Unit</span><a href="#97755">fail</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;(no message)&quot;)</span><span class="string">&quot;(no message)&quot;</span></span>, <span class="typed"><span class="type">Seq[A]</span><a href="#97869">actual</a></span>.<span class="typed"><span class="type">()String</span><a href="../Collection.scala.html#17380">toString</a></span>, <span class="typed"><span class="type">Seq[A]</span><a href="#97870">expected</a></span>.<span class="typed"><span class="type">()String</span><a href="../Collection.scala.html#17380">toString</a></span>)
+    }
+
+    <span class="comment">/** fails if expected != actual */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">[A](String,A,A)Unit</span><a id="97736">assertEquals</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="97738">A</a></span>](<span class="typed"><span class="type">String</span><a id="97884">msg</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>, <span class="typed"><span class="type">A</span><a id="97885">expected</a></span>: <span class="typed"><span class="type">A</span><a href="#97738">A</a></span>, <span class="typed"><span class="type">A</span><a id="97886">actual</a></span>: <span class="typed"><span class="type">A</span><a href="#97738">A</a></span>) {
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">A</span><a href="#97885">expected</a></span> <span class="typed"><span class="type">(Any)Boolean</span><a id="3495">!=</a></span> <span class="typed"><span class="type">A</span><a href="#97886">actual</a></span>) <span class="typed"><span class="type">(String,A,A)Unit</span><a href="#97755">fail</a></span>(<span class="typed"><span class="type">String</span><a href="#97884">msg</a></span>, <span class="typed"><span class="type">A</span><a href="#97885">expected</a></span>, <span class="typed"><span class="type">A</span><a href="#97886">actual</a></span>)
+    }
+
+    <span class="comment">/** fails if expected != actual */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">[A](A,A)Unit</span><a id="97739">assertEquals</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="97741">A</a></span>](<span class="typed"><span class="type">A</span><a id="97894">expected</a></span>: <span class="typed"><span class="type">A</span><a href="#97741">A</a></span>, <span class="typed"><span class="type">A</span><a id="97895">actual</a></span>: <span class="typed"><span class="type">A</span><a href="#97741">A</a></span>) {
+      <span class="typed"><span class="type">(String,A,A)Unit</span><a href="#97736">assertEquals</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;(no message)&quot;)</span><span class="string">&quot;(no message)&quot;</span></span>, <span class="typed"><span class="type">A</span><a href="#97894">expected</a></span>, <span class="typed"><span class="type">A</span><a href="#97895">actual</a></span>)
+    }
+
+    <span class="comment">/** succeeds if actual is false */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">(String,Boolean)Unit</span><a id="97742">assertFalse</a></span>(<span class="typed"><span class="type">String</span><a id="97900">msg</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>, <span class="typed"><span class="type">Boolean</span><a id="97901">actual</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span>) {
+      <span class="typed"><span class="type">(String,Boolean,Boolean)Unit</span><a href="#97736">assertEquals</a></span>(<span class="typed"><span class="type">String</span><a href="#97900">msg</a></span>, <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>, <span class="typed"><span class="type">Boolean</span><a href="#97901">actual</a></span>)
+    }
+
+    <span class="comment">/** succeeds if actual is false */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">(Boolean)Unit</span><a id="97743">assertFalse</a></span>(<span class="typed"><span class="type">Boolean</span><a id="97906">actual</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span>) {
+      <span class="typed"><span class="type">(String,Boolean)Unit</span><a href="#97742">assertFalse</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;(no message)&quot;)</span><span class="string">&quot;(no message)&quot;</span></span>, <span class="typed"><span class="type">Boolean</span><a href="#97906">actual</a></span>)
+    }
+
+    <span class="comment">/** fails if null eq actual */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">(String,AnyRef)Unit</span><a id="97744">assertNotNull</a></span>(<span class="typed"><span class="type">String</span><a id="97914">msg</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>, <span class="typed"><span class="type">AnyRef</span><a id="97915">actual</a></span>: <span class="typed"><span class="type">AnyRef</span><a id="2015">AnyRef</a></span>) {
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">AnyRef</span><a href="#97915">actual</a></span>) <span class="typed"><span class="type">(String)Unit</span><a href="#97754">fail</a></span>(<span class="typed"><span class="type">String</span><a href="#97914">msg</a></span>)
+    }
+
+    <span class="comment">/** fails if null eq actual */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">(AnyRef)Unit</span><a id="97745">assertNotNull</a></span>(<span class="typed"><span class="type">AnyRef</span><a id="97918">actual</a></span>: <span class="typed"><span class="type">AnyRef</span><a id="2015">AnyRef</a></span>): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span>  =
+      <span class="typed"><span class="type">(String,AnyRef)Unit</span><a href="#97744">assertNotNull</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;(no message)&quot;)</span><span class="string">&quot;(no message)&quot;</span></span>, <span class="typed"><span class="type">AnyRef</span><a href="#97918">actual</a></span>)
+
+    <span class="comment">/** fails if &lt;code&gt;expected eq actual&lt;/code&gt; */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">(String,AnyRef,AnyRef)Unit</span><a id="97746">assertNotEq</a></span>(<span class="typed"><span class="type">String</span><a id="97920">msg</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>, <span class="typed"><span class="type">AnyRef</span><a id="97921">expected</a></span>: <span class="typed"><span class="type">AnyRef</span><a id="2015">AnyRef</a></span>, <span class="typed"><span class="type">AnyRef</span><a id="97922">actual</a></span>: <span class="typed"><span class="type">AnyRef</span><a id="2015">AnyRef</a></span>) {
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">AnyRef</span><a href="#97921">expected</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5792">eq</a></span> <span class="typed"><span class="type">AnyRef</span><a href="#97922">actual</a></span>) <span class="typed"><span class="type">(String)Unit</span><a href="#97754">fail</a></span>(<span class="typed"><span class="type">String</span><a href="#97920">msg</a></span>)
+    }
+
+    <span class="comment">/** fails if &lt;code&gt;expected eq actual&lt;/code&gt; */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">(AnyRef,AnyRef)Unit</span><a id="97747">assertNotEq</a></span>(<span class="typed"><span class="type">AnyRef</span><a id="97925">expected</a></span>: <span class="typed"><span class="type">AnyRef</span><a id="2015">AnyRef</a></span>, <span class="typed"><span class="type">AnyRef</span><a id="97926">actual</a></span>: <span class="typed"><span class="type">AnyRef</span><a id="2015">AnyRef</a></span>) {
+      <span class="typed"><span class="type">(String,AnyRef,AnyRef)Unit</span><a href="#97746">assertNotEq</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;(no message)&quot;)</span><span class="string">&quot;(no message)&quot;</span></span>, <span class="typed"><span class="type">AnyRef</span><a href="#97925">expected</a></span>, <span class="typed"><span class="type">AnyRef</span><a href="#97926">actual</a></span>)
+    }
+
+    <span class="comment">/** fails if actual ne null */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">(String,AnyRef)Unit</span><a id="97748">assertNull</a></span>(<span class="typed"><span class="type">String</span><a id="97928">msg</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>, <span class="typed"><span class="type">AnyRef</span><a id="97929">actual</a></span>: <span class="typed"><span class="type">AnyRef</span><a id="2015">AnyRef</a></span>) {
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5793">ne</a></span> <span class="typed"><span class="type">AnyRef</span><a href="#97929">actual</a></span>) <span class="typed"><span class="type">(String)Unit</span><a href="#97754">fail</a></span>(<span class="typed"><span class="type">String</span><a href="#97928">msg</a></span>)
+    }
+
+    <span class="comment">/** fails if actual ne null */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">(AnyRef)Unit</span><a id="97749">assertNull</a></span>(<span class="typed"><span class="type">AnyRef</span><a id="97932">actual</a></span>: <span class="typed"><span class="type">AnyRef</span><a id="2015">AnyRef</a></span>) {
+      <span class="typed"><span class="type">(String,AnyRef)Unit</span><a href="#97748">assertNull</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;(no message)&quot;)</span><span class="string">&quot;(no message)&quot;</span></span>, <span class="typed"><span class="type">AnyRef</span><a href="#97932">actual</a></span>)
+    }
+
+    <span class="comment">/** fails if &lt;code&gt;expected ne actual&lt;/code&gt; */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">(String,AnyRef,AnyRef)Unit</span><a id="97750">assertEq</a></span>(<span class="typed"><span class="type">String</span><a id="97934">msg</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>, <span class="typed"><span class="type">AnyRef</span><a id="97935">expected</a></span>: <span class="typed"><span class="type">AnyRef</span><a id="2015">AnyRef</a></span>, <span class="typed"><span class="type">AnyRef</span><a id="97936">actual</a></span>: <span class="typed"><span class="type">AnyRef</span><a id="2015">AnyRef</a></span>) {
+      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">AnyRef</span><a href="#97935">expected</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5793">ne</a></span> <span class="typed"><span class="type">AnyRef</span><a href="#97936">actual</a></span>) <span class="typed"><span class="type">(String)Unit</span><a href="#97754">fail</a></span>(<span class="typed"><span class="type">String</span><a href="#97934">msg</a></span>)
+    }
+
+    <span class="comment">/** fails if expected ne actual */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">(AnyRef,AnyRef)Unit</span><a id="97751">assertEq</a></span>(<span class="typed"><span class="type">AnyRef</span><a id="97939">expected</a></span>: <span class="typed"><span class="type">AnyRef</span><a id="2015">AnyRef</a></span>, <span class="typed"><span class="type">AnyRef</span><a id="97940">actual</a></span>: <span class="typed"><span class="type">AnyRef</span><a id="2015">AnyRef</a></span>) {
+      <span class="typed"><span class="type">(String,AnyRef,AnyRef)Unit</span><a href="#97750">assertEq</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;(no message)&quot;)</span><span class="string">&quot;(no message)&quot;</span></span>, <span class="typed"><span class="type">AnyRef</span><a href="#97939">expected</a></span>, <span class="typed"><span class="type">AnyRef</span><a href="#97940">actual</a></span>)
+    }
+
+    <span class="comment">/** succeeds if actual == true */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">(String,Boolean)Unit</span><a id="97752">assertTrue</a></span>(<span class="typed"><span class="type">String</span><a id="97942">msg</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>, <span class="typed"><span class="type">Boolean</span><a id="97943">actual</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span>) {
+      <span class="typed"><span class="type">(String,Boolean,Boolean)Unit</span><a href="#97736">assertEquals</a></span>(<span class="typed"><span class="type">String</span><a href="#97942">msg</a></span>, <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>, <span class="typed"><span class="type">Boolean</span><a href="#97943">actual</a></span>)
+    }
+
+    <span class="comment">/** succeeds if actual == true */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">(Boolean)Unit</span><a id="97753">assertTrue</a></span>(<span class="typed"><span class="type">Boolean</span><a id="97948">actual</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span>) {
+      <span class="typed"><span class="type">(String,Boolean)Unit</span><a href="#97752">assertTrue</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;(no message)&quot;)</span><span class="string">&quot;(no message)&quot;</span></span>, <span class="typed"><span class="type">Boolean</span><a href="#97948">actual</a></span>)
+    }
+
+    <span class="comment">/** throws &lt;code&gt;AssertFailed&lt;/code&gt; with given message &lt;code&gt;msg&lt;/code&gt;.
+     */</span>
+    <span class="keyword">def</span> <span class="typed"><span class="type">(String)Unit</span><a id="97754">fail</a></span>(<span class="typed"><span class="type">String</span><a id="97878">msg</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>) {
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(String,Boolean)scala.testing.SUnit.AssertFailed</span><a href="#97850">AssertFailed</a></span>(<span class="typed"><span class="type">String</span><a href="#97878">msg</a></span>, <span class="typed"><span class="type">=&gt; Boolean</span><a href="#97732">enableStackTrace</a></span>)
+    }
+
+    <span class="keyword">def</span> <span class="typed"><span class="type">[A](String,A,A)Unit</span><a id="97755">fail</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="97757">A</a></span>](<span class="typed"><span class="type">String</span><a id="97874">msg</a></span>: <span class="typed"><span class="type">String</span><a id="1859">String</a></span>, <span class="typed"><span class="type">A</span><a id="97875">expected</a></span>: <span class="typed"><span class="type">A</span><a href="#97757">A</a></span>, <span class="typed"><span class="type">A</span><a id="97876">actual</a></span>: <span class="typed"><span class="type">A</span><a href="#97757">A</a></span>) {
+      <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(String,Boolean)scala.testing.SUnit.AssertFailed</span><a href="#97850">AssertFailed</a></span>(<span class="typed"><span class="type">String</span><a href="#97874">msg</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span>
+                         <span class="typed"><span class="type">java.lang.String(&quot;, expected: &quot;)</span><span class="string">&quot;, expected: &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">A</span><a href="#97875">expected</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span>
+                         <span class="typed"><span class="type">java.lang.String(&quot;, actual: &quot;)</span><span class="string">&quot;, actual: &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5800">+</a></span> <span class="typed"><span class="type">A</span><a href="#97876">actual</a></span>, <span class="typed"><span class="type">=&gt; Boolean</span><a href="#97732">enableStackTrace</a></span>)
+    }
+  }
+}
+
+        </pre>
+    </body>
+</html>

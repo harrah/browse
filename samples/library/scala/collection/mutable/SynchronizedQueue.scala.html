@@ -1,0 +1,108 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/mutable/SynchronizedQueue.scala</title>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body onload="initializeLinked()">
+        <pre>
+<span class="comment">/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |                                         **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */</span>
+
+<span class="comment">// $Id: SynchronizedQueue.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+
+
+<span class="keyword">package</span> scala.collection.mutable
+
+
+<span class="comment">/** This is a synchronized version of the &lt;code&gt;Queue[T]&lt;/code&gt; class. It
+ *  implements a data structure that allows one to insert and retrieve
+ *  elements in a first-in-first-out (FIFO) manner.
+ *
+ *  @author  Matthias Zenger
+ *  @version 1.0, 03/05/2004
+ */</span>
+<span class="keyword">class</span> <span class="typed"><span class="type">class SynchronizedQueue[A] extends scala.collection.mutable.Queue[A] with ScalaObject</span><a id="11482">SynchronizedQueue</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="14886">A</a></span>] <span class="keyword">extends</span> <span class="typed"><span class="type">scala.collection.mutable.Queue[A]</span><a href="Queue.scala.html#11488">Queue</a></span>[A] {
+
+  <span class="comment">/** Checks if the queue is empty.
+   *
+   *  @return true, iff there is no element in the queue.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="74695">isEmpty</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = <span class="typed"><span class="type">(Boolean)Boolean</span><a href="#11482" id="5794">synchronized</a></span> { <span class="keyword">super</span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="Queue.scala.html#52735">isEmpty</a></span> }
+
+  <span class="comment">/** Inserts a single element at the end of the queue.
+   *
+   *  @param  elem        the element to insert
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(A)Unit</span><a id="74696">+=</a></span>(<span class="typed"><span class="type">A</span><a id="74710">elem</a></span>: <span class="typed"><span class="type">A</span><a href="#14886">A</a></span>): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = <span class="typed"><span class="type">(Unit)Unit</span><a href="#11482" id="5794">synchronized</a></span> { <span class="keyword">super</span>.<span class="typed"><span class="type">(A)Unit</span><a href="Queue.scala.html#52736">+=</a></span>(<span class="typed"><span class="type">A</span><a href="#74710">elem</a></span>) }
+
+  <span class="comment">/** Adds all elements provided by an &lt;code&gt;Iterable&lt;/code&gt; object
+   *  at the end of the queue. The elements are prepended in the order they
+   *  are given out by the iterator.
+   *
+   *  @param  iter        an iterable object
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Iterable[A])Unit</span><a id="74697">++=</a></span>(<span class="typed"><span class="type">Iterable[A]</span><a id="74714">iter</a></span>: <span class="typed"><span class="type">Iterable[A]</span><a href="../../Iterable.scala.html#401">Iterable</a></span>[A]): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = <span class="typed"><span class="type">(Unit)Unit</span><a href="#11482" id="5794">synchronized</a></span> { <span class="keyword">super</span>.<span class="typed"><span class="type">(Iterable[A])Unit</span><a href="Queue.scala.html#52737">++=</a></span>(<span class="typed"><span class="type">Iterable[A]</span><a href="#74714">iter</a></span>) }
+
+  <span class="comment">/** Adds all elements provided by an iterator
+   *  at the end of the queue. The elements are prepended in the order they
+   *  are given out by the iterator.
+   *
+   *  @param  it        an iterator
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Iterator[A])Unit</span><a id="74698">++=</a></span>(<span class="typed"><span class="type">Iterator[A]</span><a id="74720">it</a></span>: <span class="typed"><span class="type">Iterator[A]</span><a href="../../Iterator.scala.html#1337">Iterator</a></span>[A]): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = <span class="typed"><span class="type">(Unit)Unit</span><a href="#11482" id="5794">synchronized</a></span> { <span class="keyword">super</span>.<span class="typed"><span class="type">(Iterator[A])Unit</span><a href="Queue.scala.html#52738">++=</a></span>(<span class="typed"><span class="type">Iterator[A]</span><a href="#74720">it</a></span>) }
+
+  <span class="comment">/** Adds all elements to the queue.
+   *
+   *  @param  elems       the elements to add.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(A*)Unit</span><a id="74699">enqueue</a></span>(<span class="typed"><span class="type">A*</span><a id="74724">elems</a></span>: <span class="typed"><span class="type">A*</span><a id="2739">A</a></span>*): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = <span class="typed"><span class="type">(Unit)Unit</span><a href="#11482" id="5794">synchronized</a></span> { <span class="keyword">super</span>.<span class="typed"><span class="type">(Iterable[A])Unit</span><a href="Queue.scala.html#52737">++=</a></span>(<span class="typed"><span class="type">A*</span><a href="#74724">elems</a></span>) }
+
+  <span class="comment">/** Returns the first element in the queue, and removes this element
+   *  from the queue.
+   *
+   *  @return the first element of the queue.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()A</span><a id="74700">dequeue</a></span>(): <span class="typed"><span class="type">A</span><a href="#14886">A</a></span> = <span class="typed"><span class="type">(A)A</span><a href="#11482" id="5794">synchronized</a></span> { <span class="keyword">super</span>.<span class="typed"><span class="type">()A</span><a href="Queue.scala.html#52740">dequeue</a></span> }
+
+  <span class="comment">/** Returns the first element in the queue, or throws an error if there
+   *  is no element contained in the queue.
+   *
+   *  @return the first element.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; A</span><a id="74701">front</a></span>: <span class="typed"><span class="type">A</span><a href="#14886">A</a></span> = <span class="typed"><span class="type">(A)A</span><a href="#11482" id="5794">synchronized</a></span> { <span class="keyword">super</span>.<span class="typed"><span class="type">=&gt; A</span><a href="Queue.scala.html#52744">front</a></span> }
+
+  <span class="comment">/** Removes all elements from the queue. After this operation is completed,
+   *  the queue will be empty.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="74702">clear</a></span>(): <span class="typed"><span class="type">Unit</span><a id="2167">Unit</a></span> = <span class="typed"><span class="type">(Unit)Unit</span><a href="#11482" id="5794">synchronized</a></span> { <span class="keyword">super</span>.<span class="typed"><span class="type">()Unit</span><a href="Queue.scala.html#52745">clear</a></span> }
+
+  <span class="comment">/** Checks if two queues are structurally identical.
+   *
+   *  @return true, iff both queues contain the same sequence of elements.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Any)Boolean</span><a id="74703">equals</a></span>(<span class="typed"><span class="type">Any</span><a id="74736">that</a></span>: <span class="typed"><span class="type">Any</span><a id="49">Any</a></span>): <span class="typed"><span class="type">Boolean</span><a id="2168">Boolean</a></span> = <span class="typed"><span class="type">(Boolean)Boolean</span><a href="#11482" id="5794">synchronized</a></span> { <span class="keyword">super</span>.<span class="typed"><span class="type">(Any)Boolean</span><a href="Queue.scala.html#52746">equals</a></span>(<span class="typed"><span class="type">Any</span><a href="#74736">that</a></span>) }
+
+  <span class="comment">/** The hashCode method always yields an error, since it is not
+   *  safe to use mutable queues as keys in hash tables.
+   *
+   *  @return never.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()Int</span><a id="74704">hashCode</a></span>(): <span class="typed"><span class="type">Int</span><a id="2392">Int</a></span> = <span class="typed"><span class="type">(Int)Int</span><a href="#11482" id="5794">synchronized</a></span> { <span class="keyword">super</span>.<span class="typed"><span class="type">()Int</span><a href="Queue.scala.html#52747">hashCode</a></span>() }
+
+  <span class="comment">/** Returns a textual representation of a queue as a string.
+   *
+   *  @return the string representation of this queue.
+   */</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()String</span><a id="74705">toString</a></span>() = <span class="typed"><span class="type">(String)String</span><a href="#11482" id="5794">synchronized</a></span> { <span class="keyword">super</span>.<span class="typed"><span class="type">()String</span><a href="Queue.scala.html#52748">toString</a></span>() }
+}
+
+        </pre>
+    </body>
+</html>
