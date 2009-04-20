@@ -7,11 +7,11 @@ package sxr
 /** Represents a link to a definition.  The path is the path to the file and target is
 * the symbol ID targeted.  The '#' is not included.  To get the constructed path,
 * call toString. */
-private class Link(val path: String, val target: String) extends NotNull
+private class Link(val path: String, val target: Int) extends NotNull
 {
 	override def toString = path + "#" + target
+	def retarget(newTarget: Int) = new Link(path, newTarget)
 }
-private object BlockLink extends Link("", "")
 /** Represents a token at the lexer level with associated type information.
 * 'start' is the offset of the token in the original source file.
 * 'length' is the length of the token in the original source file
@@ -53,6 +53,18 @@ private case class Token(start: Int, length: Int, code: Int) extends NotNull wit
 	/** True if this token has no reference to a definition, has no definitions itself, and
 	* has no type information. */
 	def isPlain = isSimple && tpe.isEmpty
+	def collapseDefinitions(to: Int) = { rawDefinitions = to :: Nil }
+	def remapReference(remap: Int => Int)
+	{
+		rawReference match
+		{
+			case Some(refLink) =>
+				val newID = remap(refLink.target)
+				if(newID != refLink.target)
+					rawReference = Some(refLink.retarget(newID))
+			case None => ()
+		}
+	}
 }
 /** Holds type information.  This class will probably change to accomodate tokeninzing types. */
 private case class TypeAttribute(name: String, definition: Option[Link]) extends NotNull

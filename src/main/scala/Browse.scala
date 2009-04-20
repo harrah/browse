@@ -309,7 +309,7 @@ abstract class Browse extends Plugin
 			{
 				val file = source.file
 				val base = if(file == from) "" else FileUtil.relativePath(from, source.file) + ".html"
-				Some(new Link(base, sym.id.toString))
+				Some(new Link(base, sym.id))
 			}
 		}
 	}

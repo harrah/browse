@@ -21,6 +21,8 @@ object Classes
 }
 private class BasicStyler(tokens: TreeSet[Token], title: String, baseStyle: String, baseJs: String) extends Styler
 {
+	Collapse(tokens)
+	
 	import Classes._
 	def head =
 		("""<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -53,13 +55,8 @@ private class BasicStyler(tokens: TreeSet[Token], title: String, baseStyle: Stri
 		val definitions = Set(token.definitions : _*)
 		val reference = token.reference.filter
 			{ link =>
-				if(link == BlockLink)
-					false
-				else
-				{
-					val refID = link.target.toInt
-					!definitions.contains(refID)
-				}
+				val refID = link.target.toInt
+				!definitions.contains(refID)
 			}
 		val definitionsList = definitions.toList
 		val attributes = reference.map("href=\"" + _ + "\"").toList :::
@@ -101,6 +98,41 @@ private class BasicStyler(tokens: TreeSet[Token], title: String, baseStyle: Stri
 					"keyword" :: Nil
 				else
 					Nil
+		}
+	}
+}
+private object Collapse
+{
+	def apply(tokens: Iterable[Token])
+	{
+		val c = new Collapse(tokens)
+		c()
+	}
+}
+private class Collapse(tokens: Iterable[Token]) extends NotNull
+{
+	private val collapsedIDMap = new scala.collection.jcl.HashMap[Int, Int]
+	private def apply()
+	{
+		tokens.foreach(collapseIDs)
+		tokens.foreach(_.remapReference(remapTarget))
+	}
+	private def collapseIDs(token: Token)
+	{
+		token.definitions match
+		{
+			case singleID :: b :: tail =>
+				token.collapseDefinitions(singleID)
+				(b :: tail).foreach(id => collapsedIDMap(id) = singleID)
+			case _ => ()
+		}
+	}
+	private def remapTarget(oldID: Int): Int =
+	{
+		collapsedIDMap.get(oldID) match
+		{
+			case Some(newID) => newID
+			case None => oldID
 		}
 	}
 }
