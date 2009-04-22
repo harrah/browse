@@ -19,7 +19,7 @@ object Classes
 {
 	val Keyword = "keyword"
 }
-private class BasicStyler(tokens: TreeSet[Token], title: String, baseStyle: String, baseJs: String) extends Styler
+private class BasicStyler(tokens: TreeSet[Token], title: String, baseStyle: String, baseJs: String, baseJQuery: String) extends Styler
 {
 	Collapse(tokens)
 	
@@ -29,10 +29,11 @@ private class BasicStyler(tokens: TreeSet[Token], title: String, baseStyle: Stri
 			|<html xmlns="http://www.w3.org/1999/xhtml">
 			|    <head>
 			|        <title>""" + title + """</title>
+			|        <script type="text/javascript" src=""" + '"' + baseJQuery + '"' + """></script>
 			|        <script type="text/javascript" src=""" + '"' + baseJs + '"' + """></script>
 			|        <link rel="stylesheet" type="text/css" href=""" + '"' + baseStyle + '"' + """ title="Style">
 			|    </head>
-			|    <body onload="initializeLinked()">
+			|    <body>
 			|        <pre>
 			|""").stripMargin
 	def tail =

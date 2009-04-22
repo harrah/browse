@@ -32,8 +32,10 @@ abstract class Browse extends Plugin
 	{
 		val cssFile = new File(outputDirectory, CSSRelativePath)
 		val jsFile = new File(outputDirectory, JSRelativePath)
+		val jQueryFile = new File(outputDirectory, JQueryRelativePath)
 		writeDefaultCSS(cssFile)
 		writeJS(jsFile)
+		writeJQuery(jQueryFile)
 		var outputFiles = List[File]()
 		for(unit <- currentRun.units)
 		{
@@ -43,13 +45,14 @@ abstract class Browse extends Plugin
 			outputFiles ::= outputFile
 			val relativizedCSSPath = FileUtil.relativePath(outputFile, cssFile)
 			val relativizedJSPath = FileUtil.relativePath(outputFile, jsFile)
+			val relativizedJQueryPath = FileUtil.relativePath(outputFile, jQueryFile)
 
 			// generate the tokens
 			val tokens = scan(unit)
 			val traverser = new Traverse(tokens, unit.source)
 			traverser(unit.body)
 
-			val styler = new BasicStyler(tokens, relativeSourcePath, relativizedCSSPath, relativizedJSPath)
+			val styler = new BasicStyler(tokens, relativeSourcePath, relativizedCSSPath, relativizedJSPath, relativizedJQueryPath)
 			Annotate(sourceFile, outputFile, tokens, styler)
 		}
 		val indexFile = new File(outputDirectory, IndexRelativePath)
@@ -337,15 +340,23 @@ object Browse
 	val CSSRelativePath = "style.css"
 	/** The location to store the script relative to the output directory.*/
 	val JSRelativePath = "linked.js"
+
+	val jquery_version = "1.3.2"
+	/** The location to store jQuery relative to the output directory.*/
+	val JQueryRelativePath = "jquery-" + jquery_version + ".min.js"
 	/** The path of the default style sheet resource.*/
 	val DefaultCSS = "/default-style.css"
 	/** The path of the default script resource.*/
 	val LinkedJS = "/linked.js"
+	/** The path of the default script resource.*/
+	val LinkedJQuery = "/" + JQueryRelativePath
 	
 	/** Copies the default style sheet available as a resource on the classpath to the file 'to'.*/
 	def writeDefaultCSS(to: File) { FileUtil.writeResource(DefaultCSS, to) }
 	/** Copies the default script available as a resource on the classpath to the file 'to'.*/
 	def writeJS(to: File) { FileUtil.writeResource(LinkedJS, to) }
+	/** Copies the jQuery script available as a resource on the classpath to the file 'to'.*/
+	def writeJQuery(to: File) { FileUtil.writeResource(LinkedJQuery, to) }
 	
 	def writeIndex(to: File, files: Iterable[File])
 	{
