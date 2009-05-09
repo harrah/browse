@@ -27,7 +27,10 @@ class BrowsePlugin(val global: Global) extends Browse
 	val components = List[PluginComponent](Component)
 	
 	/** The directory to which the annotated sources will be written. */
-	val outputDirectory = (new File(settings.outdir.value, "../browse")).getAbsoluteFile
+	val outputDirectory = {
+	  val f = new File(settings.outdir.value)
+	  new File(f.getParent, f.getName + ".sxr").getAbsoluteFile
+  }
 	outputDirectory.mkdirs()
 
 	/** The directory against which the input source paths will be relativized.*/
