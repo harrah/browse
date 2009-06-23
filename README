@@ -8,10 +8,9 @@ See http://harrah.github.com/browse/samples/index.html for samples.
 
 Still in development.  Bugs are features and features are accidental.
 
-To build with sbt (http://code.google.com/p/simple-build-tool/wiki/Setup):
+To build with sbt (loader version 0.4.7-p11 or higher required, see http://code.google.com/p/simple-build-tool/wiki/Setup for setup instructions):
 
-$ sbt
-> package
+$ sbt "+update" "+package"
 
 This produces a compiler plugin in target/.
 
@@ -21,13 +20,15 @@ Add the following options to your compile command for your project:
   -Xplugin:<path-to-sxr>/sxr-0.1.jar
   -P:sxr:base-directory:<src-dir>
 
-If you are using sbt, substitute the location of the browse jar in the following:
+If you are using sbt, make your project definition extend AutoCompilerPlugins, add sxr as a plugin, and configure the plugin:
 
-  val sxrJarPath =  "<path-to-sxr>/sxr-0.1.jar"
+class YourProject(info: ProjectInfo) extends DefaultProject(info) with AutoCompilerPlugins
+{
+  val sxr = compilerPlugin("sxr" % "sxr" % "0.1")
   override def compileOptions =
-    CompileOption("-Xplugin:" + sxrJarPath) ::
     CompileOption("-P:sxr:base-directory:" + mainScalaSourcePath.asFile.getAbsolutePath) ::
     super.compileOptions.toList
+}
 
 You will get a directory <classes-output>.sxr that mirrors the directory structure of your sources relative
 to the specified base directory with one HTML file for each source file.  You can make simple
