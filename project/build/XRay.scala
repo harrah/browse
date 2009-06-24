@@ -20,8 +20,4 @@ class XRay(info: ProjectInfo) extends DefaultProject(info) {
 
   override def crossScalaVersions = Set("2.7.2", "2.7.3", "2.7.4", "2.7.5")
 
-  override def managedStyle = ManagedStyle.Maven
-  val publishTo = "Scala Tools Nexus" at "http://nexus.scala-tools.org/content/repositories/releases/"
-  Credentials.add("Sonatype Nexus Repository Manager", "nexus.scala-tools.org", "mark.harrah", "y3h0z1p9k5")
-
 }
