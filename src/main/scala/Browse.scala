@@ -343,7 +343,7 @@ object Browse
 
 	val jquery_version = "1.3.2"
 	/** The location to store jQuery relative to the output directory.*/
-	val JQueryRelativePath = "jquery-" + jquery_version + ".min.js"
+	val JQueryRelativePath = "jquery-" + jquery_version + ".js"
 	/** The path of the default style sheet resource.*/
 	val DefaultCSS = "/default-style.css"
 	/** The path of the default script resource.*/

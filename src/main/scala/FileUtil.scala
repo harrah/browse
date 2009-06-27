@@ -5,7 +5,7 @@
 package sxr
 
 import java.io.{FileOutputStream, InputStream, OutputStream}
-import java.io.{BufferedReader, BufferedWriter, File, FileReader, FileWriter}
+import java.io.{BufferedReader, BufferedWriter, File, FileReader, FileWriter, OutputStreamWriter}
 
 /** A collection of utilities for I/O*/
 object FileUtil
@@ -21,8 +21,7 @@ object FileUtil
 	def withWriter(target: File)(f: BufferedWriter => Unit)
 	{
 		target.getParentFile.mkdirs()
-		import java.io.{BufferedWriter, FileWriter}
-		val output = new BufferedWriter(new FileWriter(target))
+		val output = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(target), "UTF-8"))
 		try { f(output) }
 		finally { output.close() }
 	}

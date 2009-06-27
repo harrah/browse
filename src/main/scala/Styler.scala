@@ -25,7 +25,8 @@ private class BasicStyler(tokens: TreeSet[Token], title: String, baseStyle: Stri
 	
 	import Classes._
 	def head =
-		("""<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+		("""<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 			|<html xmlns="http://www.w3.org/1999/xhtml">
 			|    <head>
 			|        <title>""" + title + """</title>
