@@ -63,7 +63,7 @@ private class BasicStyler(tokens: TreeSet[Token], title: String, baseStyle: Stri
 			}
 		val definitionsList = definitions.toList
 		val attributes = reference.map("href=\"" + _ + "\"").toList :::
-			//token.tpe.map(t => "title=\"" + Escape(t.name) + "\"").toList :::
+			token.tpe.map(t => "title=\"" + Escape(t.name) + "\"").toList :::
 			definitionsList.firstOption.map("id=\"" + _ + "\"").toList :::
 			( styleClasses match
 			{
@@ -72,8 +72,8 @@ private class BasicStyler(tokens: TreeSet[Token], title: String, baseStyle: Stri
 			})
 		val extraIDs = if(definitionsList.isEmpty) Nil else definitionsList.tail.map(id => Annotation("<span id=\"" + id + "\">","</span>"))
 		val main = Annotation("<" + tagName + " " + attributes.mkString(" ") + ">", "</" + tagName + ">")
-		//(main :: extraIDs).reverse // ensure that the a is always the most nested
-		addType(token, (main :: extraIDs).reverse)
+		(main :: extraIDs).reverse // ensure that the a is always the most nested
+		//addType(token, (main :: extraIDs).reverse)
 	}
 	private def addType(token: Token, baseAnnotations: List[Annotation]) =
 	{

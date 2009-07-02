@@ -343,12 +343,15 @@ object Browse
 
 	val jquery_version = "1.3.2"
 	/** The location to store jQuery relative to the output directory.*/
-	val JQueryRelativePath = "jquery-" + jquery_version + ".js"
+	val JQueryRelativePath = "jquery-all.js"
+  val jquery_scrollto_version = "1.4.2"
+	/** The location to store jQuery ScrollTo plug-in relative to the output directory.*/
+	val JQueryScrollToRelativePath = "jquery-scrollto-" + jquery_scrollto_version + ".js"
 	/** The path of the default style sheet resource.*/
 	val DefaultCSS = "/default-style.css"
 	/** The path of the default script resource.*/
 	val LinkedJS = "/linked.js"
-	/** The path of the default script resource.*/
+	/** The path of the JQuery resource.*/
 	val LinkedJQuery = "/" + JQueryRelativePath
 	
 	/** Copies the default style sheet available as a resource on the classpath to the file 'to'.*/
