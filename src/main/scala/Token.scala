@@ -40,8 +40,13 @@ private case class Token(start: Int, length: Int, code: Int) extends NotNull wit
 			rawReference = Some(l)
 	}
 	/** Adds an ID for this token.  An ID is used to mark this token as the source of a symbol. */
-	def +=(id: Int)
-		{ rawDefinitions ::= id }
+	def +=(id: Int) { rawDefinitions ::= id }
+	/** Removes the IDs in the given set from this token's definitions and references.*/
+	def --=(ids: Set[Int])
+	{
+		rawDefinitions = rawDefinitions.filter(d => !ids.contains(d))
+		rawReference = rawReference.filter(r => !ids.contains(r.target))
+	}
 	/** Gets the type information. */
 	def tpe = rawType
 	/** Gets the link to the defining location for this token. */

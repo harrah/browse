@@ -54,7 +54,8 @@ private class BasicStyler(tokens: TreeSet[Token], title: String, baseStyle: Stri
 	private def annotateToken(token: Token, styleClasses: List[String]) =
 	{
 		val tagName = if(token.isSimple) "span" else "a"
-		val definitions = Set(token.definitions : _*)
+		val definitions = token.definitions
+		require(definitions.size <= 1, "Definitions were not collapsed for " + token)
 		val reference = token.reference.filter
 			{ link =>
 				val refID = link.target.toInt
@@ -107,8 +108,19 @@ private object Collapse
 {
 	def apply(tokens: Iterable[Token])
 	{
+		eliminateDuplicates(tokens)
 		val c = new Collapse(tokens)
 		c()
+	}
+	private def eliminateDuplicates(tokens: Iterable[Token])
+	{
+		val idOccurrences = new scala.collection.mutable.HashMap[Int, Int] // map from definition ID to number of tokens with that ID
+		for(token <- tokens; definition <- token.definitions)
+			idOccurrences(definition) = idOccurrences.getOrElse(definition, 0) + 1
+		// The set of all definition IDs used by more than one token.  These tokens are generally not significant and it is invalid to have tokens
+		//   with the same ID.
+		val duplicates = Set( idOccurrences.filter(_._2 > 1).map(_._1).toSeq : _*)
+		tokens.foreach( _ --= duplicates)
 	}
 }
 private class Collapse(tokens: Iterable[Token]) extends NotNull
@@ -129,12 +141,5 @@ private class Collapse(tokens: Iterable[Token]) extends NotNull
 			case _ => ()
 		}
 	}
-	private def remapTarget(oldID: Int): Int =
-	{
-		collapsedIDMap.get(oldID) match
-		{
-			case Some(newID) => newID
-			case None => oldID
-		}
-	}
+	private def remapTarget(oldID: Int): Int = collapsedIDMap.getOrElse(oldID, oldID)
 }
