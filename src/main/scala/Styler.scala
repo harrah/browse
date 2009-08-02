@@ -4,7 +4,6 @@
 
 package sxr
 
-import scala.collection.jcl.TreeSet
 import scala.tools.nsc.ast.parser.Tokens
 
 private trait Styler extends NotNull
@@ -19,9 +18,9 @@ object Classes
 {
 	val Keyword = "keyword"
 }
-private class BasicStyler(tokens: TreeSet[Token], title: String, baseStyle: String, baseJs: String, baseJQuery: String) extends Styler
+private class BasicStyler(tokens: wrap.SortedSetWrapper[Token], title: String, baseStyle: String, baseJs: String, baseJQuery: String) extends Styler
 {
-	Collapse(tokens)
+	Collapse(tokens.toList)
 	
 	import Classes._
 	def head =
@@ -125,7 +124,7 @@ private object Collapse
 }
 private class Collapse(tokens: Iterable[Token]) extends NotNull
 {
-	private val collapsedIDMap = new scala.collection.jcl.HashMap[Int, Int]
+	private val collapsedIDMap = wrap.Wrappers.basicMap[Int, Int]
 	private def apply()
 	{
 		tokens.foreach(collapseIDs)

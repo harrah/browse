@@ -9,7 +9,6 @@ import ast.parser.Tokens
 import plugins.Plugin
 import symtab.Flags
 import util.SourceFile
-import scala.collection.jcl.{TreeMap, TreeSet}
 
 import java.io.{File, Reader, Writer}
 
@@ -62,8 +61,27 @@ abstract class Browse extends Plugin
 	* Symbols will be mapped back to these tokens by the offset of the symbol.*/
 	private def scan(unit: CompilationUnit) =
 	{
-		val tokens = new TreeSet[Token]
+		val tokens = wrap.Wrappers.treeSet[Token]
 		val scanner = new syntaxAnalyzer.UnitScanner(unit) { override def init {} }
+		implicit def iterator28(s: syntaxAnalyzer.UnitScanner) = 
+		{
+			class CompatIterator extends Iterator[(Int, Int, Int)]
+			{
+				def next =
+				{
+						type TD = { def offset: Int; def lastOffset: Int; def token: Int }
+						class Compat { def prev: TD = null; def next: TD = null }
+						implicit def keep27SourceCompatibility(a: AnyRef): Compat =  new Compat// won't ever be called
+					s.nextToken
+					val t = s.prev
+					(t.offset, (t.lastOffset - t.offset), t.token)
+				}
+				def hasNext = s.token != Tokens.EMPTY
+			}
+			
+			s.init
+			new { def iterator = new CompatIterator }
+		}
 		for( (offset, length, code) <- scanner.iterator)
 		{
 			if(includeToken(code))
@@ -84,15 +102,11 @@ abstract class Browse extends Plugin
 		}
 	}
 	/** Gets the token for the given offset.*/
-	private def tokenAt(tokens: TreeSet[Token], offset: Int): Option[Token] =
+	private def tokenAt(tokens: wrap.SortedSetWrapper[Token], offset: Int): Option[Token] =
 	{
 		// create artificial tokens to get a subset of the tokens starting at the given offset
-		val inRange = tokens.range(new Token(offset, 1, 0), new Token(offset+1, 1, 0))
 		// then, take the first token in the range
-		if(inRange.isEmpty)
-			None
-		else
-			Some(inRange.firstKey)
+		tokens.range(new Token(offset, 1, 0), new Token(offset+1, 1, 0)).first
 	}
 
 	/** Filters unwanted symbols, such as packages.*/
@@ -105,7 +119,7 @@ abstract class Browse extends Plugin
 		s.isPackage || // nothing done with packages
 		s.isImplClass
 		
-	private class Traverse(tokens: TreeSet[Token], source: SourceFile) extends Traverser
+	private class Traverse(tokens: wrap.SortedSetWrapper[Token], source: SourceFile) extends Traverser
 	{
 		// magic method #1
 		override def traverse(tree: Tree)
@@ -144,7 +158,10 @@ abstract class Browse extends Plugin
 		// magic method #2
 		private def process(t: Tree)
 		{
-			for(tSource <- t.pos.source if tSource == source; offset <- t.pos.offset; token <- tokenAt(tokens, offset))
+			// this implicit exists for 2.7/2.8 compatibility
+			implicit def source2Option(s: SourceFile): Option[SourceFile] = Some(s)
+			def catchToNone[T](f: => T): Option[T] = try { Some(f) } catch { case e: UnsupportedOperationException => None }
+			for(tSource <- catchToNone(t.pos.source) if tSource == source; offset <- t.pos.offset; token <- tokenAt(tokens, offset))
 			{
 				def processDefaultSymbol() =
 				{
@@ -365,7 +382,7 @@ object Browse
 	{
 		val relativizeAgainst = to.getParentFile
 		val rawRelativePaths = files.flatMap(file => FileUtil.relativize(relativizeAgainst, file).toList)
-		val sortedRelativePaths = new TreeSet[String]
+		val sortedRelativePaths = wrap.Wrappers.treeSet[String]
 		sortedRelativePaths ++= rawRelativePaths
 		FileUtil.withWriter(to) { out =>
 			out.write("<html><body>")

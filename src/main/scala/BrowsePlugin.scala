@@ -6,7 +6,6 @@ package sxr
 
 import scala.tools.nsc.{plugins, Global, Phase}
 import plugins.PluginComponent
-import scala.collection.jcl.{TreeMap, TreeSet}
 import java.io.File
 
 object BrowsePlugin
