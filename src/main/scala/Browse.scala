@@ -160,7 +160,7 @@ abstract class Browse extends Plugin
 		{
 			// this implicit exists for 2.7/2.8 compatibility
 			implicit def source2Option(s: SourceFile): Option[SourceFile] = Some(s)
-			def catchToNone[T](f: => T): Option[T] = try { Some(f) } catch { case e: UnsupportedOperationException => None }
+			def catchToNone[T](f: => Option[T]): Option[T] = try { f } catch { case e: UnsupportedOperationException => None }
 			for(tSource <- catchToNone(t.pos.source) if tSource == source; offset <- t.pos.offset; token <- tokenAt(tokens, offset))
 			{
 				def processDefaultSymbol() =
@@ -358,12 +358,8 @@ object Browse
 	/** The location to store the script relative to the output directory.*/
 	val JSRelativePath = "linked.js"
 
-	val jquery_version = "1.3.2"
 	/** The location to store jQuery relative to the output directory.*/
 	val JQueryRelativePath = "jquery-all.js"
-  val jquery_scrollto_version = "1.4.2"
-	/** The location to store jQuery ScrollTo plug-in relative to the output directory.*/
-	val JQueryScrollToRelativePath = "jquery-scrollto-" + jquery_scrollto_version + ".js"
 	/** The path of the default style sheet resource.*/
 	val DefaultCSS = "/default-style.css"
 	/** The path of the default script resource.*/

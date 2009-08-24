@@ -20,7 +20,7 @@ private[sxr] object Wrappers
 	def basicMap[K,V] = new MutableMapWrapper(new java.util.HashMap[K,V])
 	def identityMap[K,V] = new MutableMapWrapper(new java.util.IdentityHashMap[K,V])
 	def weakMap[K,V] = new MutableMapWrapper(new java.util.WeakHashMap[K,V])
-	def treeSet[V] = new SortedSetWrapper(new java.util.TreeSet[V])
+	def treeSet[V <: Comparable[V]] = new SortedSetWrapper(new java.util.TreeSet[V])
 	def toList[K,V](s: java.util.Map[K,V]): List[(K,V)] = toList(s.entrySet).map(e => (e.getKey, e.getValue))
 	def toList[T](s: java.util.Collection[T]): List[T] = toList(s.iterator)
 	def toList[T](s: java.util.Iterator[T]): List[T] =

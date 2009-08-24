@@ -21,7 +21,7 @@ class XRay(info: ProjectInfo) extends DefaultProject(info) {
         appendStream(jqueryAll.asFile, log) { out => transfer(in, out, log) }
       }
     } match {
-      case Seq() => None
+      case Seq() => log.info("Wrote combined js to " + jqueryAll.asFile); None
       case s => Some(s mkString ",")
     }
   }
@@ -29,7 +29,9 @@ class XRay(info: ProjectInfo) extends DefaultProject(info) {
   override def mainResources = super.mainResources +++ jqueryAll
 	override protected def packageAction = super.packageAction dependsOn(combineJquery)
 
-  override def crossScalaVersions = Set("2.7.2", "2.7.3", "2.7.4", "2.7.5")
+  override def crossScalaVersions = Set("2.7.2", "2.7.3", "2.7.4", "2.7.5", "2.8.0-SNAPSHOT")
+  val snapshots = ScalaToolsSnapshots
+  override def managedStyle = ManagedStyle.Maven
   val publishTo = "Scala Tools Nexus" at "http://nexus.scala-tools.org/content/repositories/releases/"
   Credentials(Path.userHome / ".ivy2" / ".credentials", log)
 }
