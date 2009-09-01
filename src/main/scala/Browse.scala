@@ -62,7 +62,7 @@ abstract class Browse extends Plugin
 	private def scan(unit: CompilationUnit) =
 	{
 		val tokens = wrap.Wrappers.treeSet[Token]
-		val scanner = new syntaxAnalyzer.UnitScanner(unit) { override def init {} }
+		val scanner = new syntaxAnalyzer.UnitScanner(unit) { override def init {}; def parentInit = super.init }
 		implicit def iterator28(s: syntaxAnalyzer.UnitScanner) = 
 		{
 			class CompatIterator extends Iterator[(Int, Int, Int)]
@@ -72,14 +72,15 @@ abstract class Browse extends Plugin
 						type TD = { def offset: Int; def lastOffset: Int; def token: Int }
 						class Compat { def prev: TD = null; def next: TD = null }
 						implicit def keep27SourceCompatibility(a: AnyRef): Compat =  new Compat// won't ever be called
+					val offset = s.offset
+					val token = s.token
 					s.nextToken
-					val t = s.prev
-					(t.offset, (t.lastOffset - t.offset), t.token)
+					(offset, (s.lastOffset - offset) max 1, token)
 				}
-				def hasNext = s.token != Tokens.EMPTY
+				def hasNext = s.token != Tokens.EOF
 			}
 			
-			s.init
+			scanner.parentInit
 			new { def iterator = new CompatIterator }
 		}
 		for( (offset, length, code) <- scanner.iterator)
