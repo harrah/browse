@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/xml/dtd/ContentModel.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: ContentModel.scala 18615 2009-08-31 13:21:58Z extempore $
+
+
+<span class="keyword">package</span> scala.xml
+<span class="keyword">package</span> dtd
+
+<span class="keyword">import</span> scala.util.regexp.WordExp
+<span class="keyword">import</span> scala.util.automata.{DetWordAutom, SubsetConstruction, WordBerrySethi}
+<span class="keyword">import</span> scala.collection.mutable.HashSet
+<span class="keyword">import</span> Utility.sbToString
+<span class="keyword">import</span> PartialFunction._
+
+<span class="keyword">object</span> <a title="object scala.xml.dtd.ContentModel" id="11093">ContentModel</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="../../util/regexp/WordExp.scala.html#13325" title="scala.util.regexp.WordExp">WordExp</a> {
+  <span class="keyword">type</span> <a title="scala.xml.dtd.ContentModel.ElemName" id="26782">_labelT</a> = <a href="#56456" title="scala.xml.dtd.ContentModel.ElemName">ElemName</a>
+  <span class="keyword">type</span> <a title="scala.xml.dtd.ContentModel.RegExp" id="26783">_regexpT</a> = <a href="../../util/regexp/Base.scala.html#26757" title="scala.xml.dtd.ContentModel.RegExp">RegExp</a>
+
+  <span class="keyword">object</span> <a title="object scala.xml.dtd.ContentModel.Translator" id="26784">Translator</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="../../util/automata/WordBerrySethi.scala.html#14068" title="scala.util.automata.WordBerrySethi">WordBerrySethi</a> {
+    <span class="keyword">override</span> <span class="keyword">val</span> <a title="scala.xml.dtd.ContentModel.type" id="56351">lang</a>: ContentModel.<span class="keyword">this</span>.<span class="keyword">type</span> = ContentModel.<span class="keyword">this</span>
+  }
+
+  case <span class="keyword">class</span> <a title="class ElemName extends scala.xml.dtd.ContentModel.Label with ScalaObject with Product" id="56456">ElemName</a><a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="String" id="56458">name</a>: <span title="String">String</span>) <span class="keyword">extends</span> <a href="../../util/regexp/WordExp.scala.html#26772" title="scala.xml.dtd.ContentModel.Label">Label</a> {
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="56380">toString</a>() = <a href="../../runtime/RichString.scala.html#18060" title="(args: Any*)String" class="string">&quot;&quot;&quot;ElemName(&quot;%s&quot;)&quot;&quot;&quot;</a> format <a href="#56458" title="=&gt; String">name</a>
+  }
+
+  <span class="keyword">def</span> <a title="(cm: scala.xml.dtd.ContentModel)Boolean" id="26789">isMixed</a>(<a title="scala.xml.dtd.ContentModel" id="238670">cm</a>: <a href="#11092" title="scala.xml.dtd.ContentModel">ContentModel</a>) = <a href="../../PartialFunction.scala.html#22078" title="(x: scala.xml.dtd.ContentModel)(pf: PartialFunction[scala.xml.dtd.ContentModel,Boolean])Boolean">cond</a>(<a href="#238670" title="scala.xml.dtd.ContentModel">cm</a>) <a href="#238683" title="Boolean">{</a> <span title="Boolean(true)" class="keyword">case</span> _: <a href="#57101" title="scala.xml.dtd.MIXED">MIXED</a> =&gt; <span title="Boolean(true)" class="keyword">true</span> }
+  <span class="keyword">def</span> <a title="(cm: scala.xml.dtd.ContentModel)Boolean" id="26790">containsText</a>(<a title="scala.xml.dtd.ContentModel" id="238686">cm</a>: <a href="#11092" title="scala.xml.dtd.ContentModel">ContentModel</a>) = <span title="(x$1: Boolean)Boolean">(</span><a href="#238686" title="(x$1: AnyRef)Boolean">cm</a> == <a href="#239148" title="object scala.xml.dtd.PCDATA">PCDATA</a>) || <a href="#26789" title="(cm: scala.xml.dtd.ContentModel)Boolean">isMixed</a>(<a href="#238686" title="scala.xml.dtd.ContentModel">cm</a>)
+  <span class="keyword">def</span> <a title="(s: String)scala.xml.dtd.ContentModel" id="26791">parse</a>(<a title="String" id="238699">s</a>: <span title="String">String</span>): <a href="#11092" title="scala.xml.dtd.ContentModel">ContentModel</a> = <a href="ContentModelParser.scala.html#11102" title="object scala.xml.dtd.ContentModelParser">ContentModelParser</a>.<a href="ContentModelParser.scala.html#238703" title="(s: String)scala.xml.dtd.ContentModel">parse</a>(<a href="#238699" title="String">s</a>)
+
+  <span class="keyword">def</span> <a title="(r: scala.xml.dtd.ContentModel.RegExp)Set[String]" id="26792">getLabels</a>(<a title="scala.xml.dtd.ContentModel.RegExp" id="238717">r</a>: <a href="../../util/regexp/Base.scala.html#26757" title="scala.xml.dtd.ContentModel.RegExp">RegExp</a>): <a href="../../collection/immutable/Set.scala.html#9171" title="Set[String]">Set</a>[String] = {    
+    <span class="keyword">def</span> <a title="(r: scala.xml.dtd.ContentModel.RegExp)Set[String]" id="238719">traverse</a>(<a title="scala.xml.dtd.ContentModel.RegExp" id="238720">r</a>: <a href="../../util/regexp/Base.scala.html#26757" title="scala.xml.dtd.ContentModel.RegExp">RegExp</a>): <a href="../../collection/immutable/Set.scala.html#9171" title="Set[String]">Set</a>[String] = <a href="#238720" title="scala.xml.dtd.ContentModel.RegExp">r</a> <span title="Set[String]" class="keyword">match</span> { // !!! check for match translation problem
+      <span title="scala.collection.immutable.Set[String]" class="keyword">case</span> Letter(ElemName(<a title="String" id="238722">name</a>)) =&gt; <a href="../../collection/generic/Companion.scala.html#17471" title="(args: String*)scala.collection.immutable.Set[String]">Set</a>(<a href="#238722" title="String">name</a>)
+      <span title="Set[String]" class="keyword">case</span> Star(  <a title="scala.xml.dtd.ContentModel._regexpT" id="238752">x</a> @ _  ) =&gt; <a href="#238719" title="(r: scala.xml.dtd.ContentModel.RegExp)Set[String]">traverse</a>( <a href="#238752" title="scala.xml.dtd.ContentModel._regexpT">x</a> ) // bug if x@_*
+      <span title="scala.collection.immutable.Set[String]" class="keyword">case</span> Sequ( <a title="Sequence[scala.xml.dtd.ContentModel._regexpT]" id="238767">xs</a> @ _* ) =&gt; <a href="../../collection/generic/Companion.scala.html#17471" title="(args: String*)scala.collection.immutable.Set[String]">Set</a>(<a href="../../collection/generic/TraversableTemplate.scala.html#17161" title="(f: (scala.xml.dtd.ContentModel._regexpT) =&gt; Set[String])(implicit bf: scala.collection.generic.BuilderFactory[Set[String],Sequence[Set[String]],Sequence[scala.xml.dtd.ContentModel._regexpT]])Sequence[Set[String]]">xs</a> <a href="../../collection/Sequence.scala.html#22039" title="scala.collection.generic.BuilderFactory[Set[String],Sequence[Set[String]],Sequence#Coll]">map</a> <a href="#238719" title="(r: scala.xml.dtd.ContentModel.RegExp)Set[String]">traverse</a> <a href="../../collection/generic/TraversableClass.scala.html#17276" title="(implicit asTraversable: (Set[String]) =&gt; Traversable[String])Sequence[String]">flatten</a>: _*)
+      <span title="scala.collection.immutable.Set[String]" class="keyword">case</span> Alt(  <a title="Sequence[scala.xml.dtd.ContentModel._regexpT]" id="238846">xs</a> @ _* ) =&gt; <a href="../../collection/generic/Companion.scala.html#17471" title="(args: String*)scala.collection.immutable.Set[String]">Set</a>(<a href="../../collection/generic/TraversableTemplate.scala.html#17161" title="(f: (scala.xml.dtd.ContentModel._regexpT) =&gt; Set[String])(implicit bf: scala.collection.generic.BuilderFactory[Set[String],Sequence[Set[String]],Sequence[scala.xml.dtd.ContentModel._regexpT]])Sequence[Set[String]]">xs</a> <a href="../../collection/Sequence.scala.html#22039" title="scala.collection.generic.BuilderFactory[Set[String],Sequence[Set[String]],Sequence#Coll]">map</a> <a href="#238719" title="(r: scala.xml.dtd.ContentModel.RegExp)Set[String]">traverse</a> <a href="../../collection/generic/TraversableClass.scala.html#17276" title="(implicit asTraversable: (Set[String]) =&gt; Traversable[String])Sequence[String]">flatten</a>: _*)
+    }
+    
+    <a href="#238719" title="(r: scala.xml.dtd.ContentModel.RegExp)Set[String]">traverse</a>(<a href="#238717" title="scala.xml.dtd.ContentModel.RegExp">r</a>)
+  }
+
+  <span class="keyword">def</span> <a title="(r: scala.xml.dtd.ContentModel.RegExp)String" id="26793">buildString</a>(<a title="scala.xml.dtd.ContentModel.RegExp" id="26809">r</a>: <a href="../../util/regexp/Base.scala.html#26757" title="scala.xml.dtd.ContentModel.RegExp">RegExp</a>): <span title="String">String</span> = <a href="../Utility.scala.html#26573" title="(f: (StringBuilder) =&gt; Unit)String">sbToString</a>(<a href="#26796" title="(r: scala.xml.dtd.ContentModel.RegExp,sb: StringBuilder)StringBuilder">buildString</a><span title="Unit">(</span><a href="#26809" title="scala.xml.dtd.ContentModel.RegExp">r</a>, <a href="#238924" title="StringBuilder">_</a>))
+
+  /* precond: rs.length &gt;= 1 */
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(rs: Seq[scala.xml.dtd.ContentModel.RegExp],sb: StringBuilder,sep: Char)Unit" id="26794">buildString</a>(<a title="Seq[scala.xml.dtd.ContentModel.RegExp]" id="238928">rs</a>: <a href="../../collection/Sequence.scala.html#4346" title="Seq[scala.xml.dtd.ContentModel.RegExp]">Seq</a>[RegExp], <a title="StringBuilder" id="238929">sb</a>: <a href="../../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a>, <a title="Char" id="238930">sep</a>: <a title="Char" id="2161">Char</a>) {    
+    <span class="keyword">val</span> <a title="Iterator[scala.xml.dtd.ContentModel.RegExp]" id="238948">it</a> = <a href="#238928" title="Seq[scala.xml.dtd.ContentModel.RegExp]">rs</a>.<a href="../../collection/generic/IterableTemplate.scala.html#17285" title="=&gt; Iterator[scala.xml.dtd.ContentModel.RegExp]">iterator</a>
+    <span class="keyword">val</span> <a title="scala.xml.dtd.ContentModel.RegExp" id="238949">fst</a> = <a href="#238948" title="Iterator[scala.xml.dtd.ContentModel.RegExp]">it</a>.<a href="../../collection/Iterator.scala.html#19185" title="()scala.xml.dtd.ContentModel.RegExp">next</a>
+    <a href="#26796" title="(r: scala.xml.dtd.ContentModel.RegExp,sb: StringBuilder)StringBuilder">buildString</a>(<a href="#238949" title="scala.xml.dtd.ContentModel.RegExp">fst</a>, <a href="#238929" title="StringBuilder">sb</a>)
+    <span class="keyword">for</span> (<a title="scala.xml.dtd.ContentModel.RegExp" id="238967">z</a> &lt;- <a href="../../collection/Iterator.scala.html#19219" title="(f: (scala.xml.dtd.ContentModel.RegExp) =&gt; StringBuilder)Unit">it</a>) {
+      <a href="#238929" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<a href="#238930" title="Char">sep</a>)
+      <a href="#26796" title="(r: scala.xml.dtd.ContentModel.RegExp,sb: StringBuilder)StringBuilder">buildString</a>(<a href="#238967" title="scala.xml.dtd.ContentModel.RegExp">z</a>, <a href="#238929" title="StringBuilder">sb</a>)
+    }
+    <a href="#238929" title="StringBuilder">sb</a>
+  }
+
+  <span class="keyword">def</span> <a title="(c: scala.xml.dtd.ContentModel,sb: StringBuilder)StringBuilder" id="26795">buildString</a>(<a title="scala.xml.dtd.ContentModel" id="26806">c</a>: <a href="#11092" title="scala.xml.dtd.ContentModel">ContentModel</a>, <a title="StringBuilder" id="26807">sb</a>: <a href="../../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a>): <a href="../../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a> = <a href="#26806" title="scala.xml.dtd.ContentModel">c</a> <span title="StringBuilder" class="keyword">match</span> {
+    <span title="StringBuilder" class="keyword">case</span> <a href="#239200" title="object scala.xml.dtd.ANY">ANY</a>                    =&gt; <a href="../../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">sb</a> append <span title="java.lang.String(&quot;ANY&quot;)" class="string">&quot;ANY&quot;</span>
+    <span title="StringBuilder" class="keyword">case</span> <a href="#239174" title="object scala.xml.dtd.EMPTY">EMPTY</a>                  =&gt; <a href="../../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">sb</a> append <span title="java.lang.String(&quot;EMPTY&quot;)" class="string">&quot;EMPTY&quot;</span>
+    <span title="StringBuilder" class="keyword">case</span> <a href="#239148" title="object scala.xml.dtd.PCDATA">PCDATA</a>                 =&gt; <a href="../../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">sb</a> append <span title="java.lang.String(&quot;(#PCDATA)&quot;)" class="string">&quot;(#PCDATA)&quot;</span>
+    <span title="StringBuilder" class="keyword">case</span> ELEMENTS(_) | MIXED(_) =&gt; <a href="#26730" title="(sb: StringBuilder)StringBuilder">c</a> buildString <a href="#26807" title="StringBuilder">sb</a>
+  }
+
+  <span class="keyword">def</span> <a title="(r: scala.xml.dtd.ContentModel.RegExp,sb: StringBuilder)StringBuilder" id="26796">buildString</a>(<a title="scala.xml.dtd.ContentModel.RegExp" id="26799">r</a>: <a href="../../util/regexp/Base.scala.html#26757" title="scala.xml.dtd.ContentModel.RegExp">RegExp</a>, <a title="StringBuilder" id="26800">sb</a>: <a href="../../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a>): <a href="../../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a> =
+    <a href="#26799" title="scala.xml.dtd.ContentModel.RegExp">r</a> <span title="StringBuilder" class="keyword">match</span> {  // !!! check for match translation problem
+      <span title="StringBuilder" class="keyword">case</span> <a href="../../util/regexp/Base.scala.html#26767" title="object scala.xml.dtd.ContentModel.Eps">Eps</a> =&gt; 
+        <a href="#26800" title="StringBuilder">sb</a>
+      <span title="StringBuilder" class="keyword">case</span> Sequ(<a title="Sequence[scala.xml.dtd.ContentModel._regexpT]" id="239015">rs</a> @ _*) =&gt; 
+        <a href="#26800" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>( <span title="Char('(')" class="char">'('</span> ); <a href="#26794" title="(rs: Seq[scala.xml.dtd.ContentModel.RegExp],sb: StringBuilder,sep: Char)Unit">buildString</a>(<a href="#239015" title="Sequence[scala.xml.dtd.ContentModel._regexpT]">rs</a>, <a href="#26800" title="StringBuilder">sb</a>, <span title="Char(',')" class="char">','</span>); <a href="#26800" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>( <span title="Char(')')" class="char">')'</span> )
+      <span title="StringBuilder" class="keyword">case</span> Alt(<a title="Sequence[scala.xml.dtd.ContentModel._regexpT]" id="239046">rs</a> @ _*) =&gt;
+        <a href="#26800" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>( <span title="Char('(')" class="char">'('</span> ); <a href="#26794" title="(rs: Seq[scala.xml.dtd.ContentModel.RegExp],sb: StringBuilder,sep: Char)Unit">buildString</a>(<a href="#239046" title="Sequence[scala.xml.dtd.ContentModel._regexpT]">rs</a>, <a href="#26800" title="StringBuilder">sb</a>, <span title="Char('|')" class="char">'|'</span>);  <a href="#26800" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>( <span title="Char(')')" class="char">')'</span> )
+      <span title="StringBuilder" class="keyword">case</span> Star(<a title="scala.xml.dtd.ContentModel.RegExp" id="239071">r</a>: <a href="../../util/regexp/Base.scala.html#26757" title="scala.xml.dtd.ContentModel.RegExp">RegExp</a>) =&gt; 
+        <a href="#26800" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>( <span title="Char('(')" class="char">'('</span> ); <a href="#26796" title="(r: scala.xml.dtd.ContentModel.RegExp,sb: StringBuilder)StringBuilder">buildString</a>(<a href="#239071" title="scala.xml.dtd.ContentModel.RegExp">r</a>, <a href="#26800" title="StringBuilder">sb</a>); <a href="#26800" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">append</a>( <span title="java.lang.String(&quot;)*&quot;)" class="string">&quot;)*&quot;</span> )
+      <span title="StringBuilder" class="keyword">case</span> Letter(ElemName(<a title="String" id="239098">name</a>)) =&gt;
+        <a href="#26800" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">append</a>(<a href="#239098" title="String">name</a>)
+    }
+
+}
+
+<span class="keyword">sealed</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class ContentModel extends java.lang.Object with ScalaObject" id="11092">ContentModel</a>
+<a href="../../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="26729">toString</a>(): <span title="String">String</span> = <a href="../Utility.scala.html#26573" title="(f: (StringBuilder) =&gt; Unit)String">sbToString</a>(<a href="#26730" title="(sb: StringBuilder)StringBuilder">buildString</a>)
+  <span class="keyword">def</span> <a title="(sb: StringBuilder)StringBuilder" id="26730">buildString</a>(<a title="StringBuilder" id="239010">sb</a>: <a href="../../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a>): <a href="../../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a>
+}
+
+case <span class="keyword">object</span> <a href="#239137" title="object scala.xml.dtd.PCDATA" id="239148">PCDATA</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="#11092" title="scala.xml.dtd.ContentModel">ContentModel</a> {
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(sb: StringBuilder)StringBuilder" id="57097">buildString</a>(<a title="StringBuilder" id="239126">sb</a>: <a href="../../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a>): <a href="../../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a> = <a href="#239126" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">append</a>(<span title="java.lang.String(&quot;(#PCDATA)&quot;)" class="string">&quot;(#PCDATA)&quot;</span>)
+}
+case <span class="keyword">object</span> <a href="#239163" title="object scala.xml.dtd.EMPTY" id="239174">EMPTY</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="#11092" title="scala.xml.dtd.ContentModel">ContentModel</a> {
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(sb: StringBuilder)StringBuilder" id="57093">buildString</a>(<a title="StringBuilder" id="239152">sb</a>: <a href="../../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a>): <a href="../../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a> = <a href="#239152" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">append</a>(<span title="java.lang.String(&quot;EMPTY&quot;)" class="string">&quot;EMPTY&quot;</span>)
+}
+case <span class="keyword">object</span> <a href="#239189" title="object scala.xml.dtd.ANY" id="239200">ANY</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="#11092" title="scala.xml.dtd.ContentModel">ContentModel</a> {
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(sb: StringBuilder)StringBuilder" id="57091">buildString</a>(<a title="StringBuilder" id="239178">sb</a>: <a href="../../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a>): <a href="../../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a> = <a href="#239178" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">append</a>(<span title="java.lang.String(&quot;ANY&quot;)" class="string">&quot;ANY&quot;</span>)
+}
+<span class="keyword">sealed</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class DFAContentModel extends scala.xml.dtd.ContentModel with ScalaObject" id="11221">DFAContentModel</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="#11092" title="scala.xml.dtd.ContentModel">ContentModel</a> {
+  <span class="keyword">import</span> ContentModel.{ ElemName, Translator }
+  <span class="keyword">def</span> <a title="=&gt; scala.xml.dtd.ContentModel.RegExp" id="56272">r</a>: ContentModel.<a href="../../util/regexp/Base.scala.html#26757" title="scala.xml.dtd.ContentModel.RegExp">RegExp</a>
+  
+  <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="scala.util.automata.DetWordAutom[scala.xml.dtd.ContentModel.ElemName]" id="56274">dfa</a>: <a href="../../util/automata/DetWordAutom.scala.html#14056" title="scala.util.automata.DetWordAutom[scala.xml.dtd.ContentModel.ElemName]">DetWordAutom</a>[ElemName] = {
+    <span class="keyword">val</span> <a title="scala.util.automata.NondetWordAutom[scala.xml.dtd.ContentModel.Translator._labelT]" id="239206">nfa</a> = <a href="#26784" title="object scala.xml.dtd.ContentModel.Translator">Translator</a>.<a href="../../util/automata/WordBerrySethi.scala.html#56349" title="(pat: scala.xml.dtd.ContentModel.Translator.lang.RegExp,finalTag: Int)scala.util.automata.NondetWordAutom[scala.xml.dtd.ContentModel.Translator._labelT]">automatonFrom</a>(<a href="#56272" title="=&gt; scala.xml.dtd.ContentModel.RegExp">r</a>, <span title="Int(1)" class="int">1</span>)
+    <span title="scala.util.automata.SubsetConstruction[scala.xml.dtd.ContentModel.Translator._labelT]" class="keyword">new</span> <a href="../../util/automata/SubsetConstruction.scala.html#13996" title="scala.util.automata.SubsetConstruction[scala.xml.dtd.ContentModel.Translator._labelT]">SubsetConstruction</a>(<a href="#239206" title="scala.util.automata.NondetWordAutom[scala.xml.dtd.ContentModel.Translator._labelT]">nfa</a>).<a href="../../util/automata/SubsetConstruction.scala.html#56390" title="=&gt; scala.util.automata.DetWordAutom[scala.xml.dtd.ContentModel.Translator._labelT]">determinize</a>
+  }
+}
+
+case <span class="keyword">class</span> <a title="class MIXED extends scala.xml.dtd.DFAContentModel with ScalaObject with Product" id="57101">MIXED</a><a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="scala.xml.dtd.ContentModel.RegExp" id="239382">r</a>: ContentModel.<a href="../../util/regexp/Base.scala.html#26757" title="scala.xml.dtd.ContentModel.RegExp">RegExp</a>) <span class="keyword">extends</span> <a href="#11221" title="scala.xml.dtd.DFAContentModel">DFAContentModel</a> {
+  <span class="keyword">import</span> ContentModel.{ Alt, RegExp }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(sb: StringBuilder)StringBuilder" id="57107">buildString</a>(<a title="StringBuilder" id="239220">sb</a>: <a href="../../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a>): <a href="../../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a> = {
+    <span class="keyword">val</span> <a title="scala.xml.dtd.ContentModel.Alt" id="239222">newAlt</a> = <a href="#239382" title="=&gt; scala.xml.dtd.ContentModel.RegExp">r</a> <span title="scala.xml.dtd.ContentModel.Alt" class="keyword">match</span> { <span title="scala.xml.dtd.ContentModel.Alt" class="keyword">case</span> Alt(<a title="Sequence[scala.xml.dtd.ContentModel._regexpT]" id="239224">rs</a> @ _*) =&gt; <a href="../../util/regexp/Base.scala.html#57120" title="(rs: scala.xml.dtd.ContentModel._regexpT*)scala.xml.dtd.ContentModel.Alt">Alt</a>(<a href="../../collection/generic/TraversableTemplate.scala.html#17218" title="(n: Int)Sequence[scala.xml.dtd.ContentModel._regexpT]">rs</a> drop <span title="Int(1)" class="int">1</span>: _*) }
+
+    <a href="../../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">sb</a> append <span title="java.lang.String(&quot;(#PCDATA|&quot;)" class="string">&quot;(#PCDATA|&quot;</span>
+    <a href="#11093" title="object scala.xml.dtd.ContentModel">ContentModel</a>.<a href="#26796" title="(r: scala.xml.dtd.ContentModel.RegExp,sb: StringBuilder)StringBuilder">buildString</a>(<a href="#239222" title="scala.xml.dtd.ContentModel.Alt">newAlt</a>: <a href="../../util/regexp/Base.scala.html#26757" title="scala.xml.dtd.ContentModel.RegExp">RegExp</a>, <a href="#239220" title="StringBuilder">sb</a>)
+    <a href="../../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">sb</a> append <span title="java.lang.String(&quot;)*&quot;)" class="string">&quot;)*&quot;</span>
+  }
+}
+
+case <span class="keyword">class</span>  <a title="class ELEMENTS extends scala.xml.dtd.DFAContentModel with ScalaObject with Product" id="56269">ELEMENTS</a><a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="scala.xml.dtd.ContentModel.RegExp" id="239390">r</a>: ContentModel.<a href="../../util/regexp/Base.scala.html#26757" title="scala.xml.dtd.ContentModel.RegExp">RegExp</a>) <span class="keyword">extends</span> <a href="#11221" title="scala.xml.dtd.DFAContentModel">DFAContentModel</a> {
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(sb: StringBuilder)StringBuilder" id="56279">buildString</a>(<a title="StringBuilder" id="239318">sb</a>: <a href="../../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a>): <a href="../../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a> =  
+    <a href="#11093" title="object scala.xml.dtd.ContentModel">ContentModel</a>.<a href="#26796" title="(r: scala.xml.dtd.ContentModel.RegExp,sb: StringBuilder)StringBuilder">buildString</a>(<a href="#239390" title="=&gt; scala.xml.dtd.ContentModel.RegExp">r</a>, <a href="#239318" title="StringBuilder">sb</a>)
+}
+
+        </pre>
+    </body>
+</html>

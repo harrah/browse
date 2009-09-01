@@ -1,25 +1,28 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
         <title>scala/tools/nsc/backend/WorklistAlgorithm.scala</title>
+        <script type="text/javascript" src="../../../../jquery-all.js"></script>
         <script type="text/javascript" src="../../../../linked.js"></script>
         <link rel="stylesheet" type="text/css" href="../../../../style.css" title="Style">
     </head>
-    <body onload="initializeLinked()">
+    <body>
         <pre>
-<span class="comment">/* NSC -- new Scala compiler
+/* NSC -- new Scala compiler
  * Copyright 2005-2009 LAMP/EPFL
  * @author  Martin Odersky
- */</span>
+ */
 
-<span class="comment">// $Id: WorklistAlgorithm.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+// $Id: WorklistAlgorithm.scala 18387 2009-07-24 15:28:37Z odersky $
 
-<span class="keyword">package</span> scala.tools.nsc.backend
+<span class="keyword">package</span> scala.tools.nsc
+<span class="keyword">package</span> backend
 
 <span class="keyword">import</span> scala.tools.nsc.ast._
 <span class="keyword">import</span> scala.collection.mutable.Stack
 
-<span class="comment">/**
+/**
  * Simple implementation of a worklist algorithm. A processing
  * function is applied repeatedly to the first element in the
  * worklist, as long as the stack is not empty.
@@ -32,36 +35,36 @@
  * @author  Martin Odersky
  * @version 1.0
  * @see     &lt;a href=&quot;icode/Linearizers.html&quot; target=&quot;contentFrame&quot;&gt;scala.tools.nsc.backend.icode.Linearizers&lt;/a&gt;
- */</span>
-<span class="keyword">trait</span> <span class="typed"><span class="type">trait WorklistAlgorithm extends java.lang.Object with ScalaObject</span><a id="8511">WorklistAlgorithm</a></span> {
-  <span class="keyword">type</span> <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="108152">Elem</a></span>
-  <span class="keyword">type</span> <span class="typed"><span class="type">scala.collection.mutable.Stack[WorklistAlgorithm.this.Elem]</span><a id="108153">WList</a></span> = <span class="typed"><span class="type">scala.collection.mutable.Stack[WorklistAlgorithm.this.Elem]</span><a id="20063">Stack</a></span>[Elem]
+ */
+<span class="keyword">trait</span> <a title="trait WorklistAlgorithm extends java.lang.Object with ScalaObject" id="14749">WorklistAlgorithm</a> <a title="ScalaObject" id="959">{</a>
+  <span class="keyword">type</span> <a title="&gt;: Nothing &lt;: Any" id="79070">Elem</a>
+  <span class="keyword">type</span> <a title="scala.collection.mutable.Stack[WorklistAlgorithm.this.Elem]" id="79071">WList</a> = <span title="scala.collection.mutable.Stack[WorklistAlgorithm.this.Elem]">Stack</span>[Elem]
 
-  <span class="keyword">val</span> <span class="typed"><span class="type">=&gt; WorklistAlgorithm.this.WList</span><a id="108154">worklist</a></span>: <span class="typed"><span class="type">WorklistAlgorithm.this.WList</span><a id="20063">WList</a></span>
+  <span class="keyword">val</span> <a title="=&gt; WorklistAlgorithm.this.WList" id="79072">worklist</a>: <span title="WorklistAlgorithm.this.WList">WList</span>
 
-  <span class="comment">/**
+  /**
    * Run the iterative algorithm until the worklist
    * remains empty. The initializer is run once before
    * the loop starts and should initialize the worklist.
    *
    * @param initWorklist ...
-   */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(=&gt; Unit)Unit</span><a id="108155">run</a></span>(<span class="typed"><span class="type">=&gt; Unit</span><a id="108652">initWorklist</a></span>: =&gt; Unit) = {
-    <span class="typed"><span class="type">=&gt; Unit</span><a href="#108652">initWorklist</a></span>
+   */
+  <span class="keyword">def</span> <a title="(initWorklist: =&gt; Unit)Unit" id="79073">run</a>(<a title="=&gt; Unit" id="79110">initWorklist</a>: =&gt; Unit) = {
+    <a href="#79110" title="=&gt; Unit">initWorklist</a>
 
-    <span class="typed"><span class="type">Unit</span><a href="#108654" class="keyword">while</a></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2747">!</a></span>(<span class="typed"><span class="type">=&gt; WorklistAlgorithm.this.WList</span><a href="#108154">worklist</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a id="108633">length</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">==</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>))
-      <span class="typed"><span class="type">(WorklistAlgorithm.this.Elem)Unit</span><a href="#108156">processElement</a></span>(<span class="typed"><span class="type">=&gt; WorklistAlgorithm.this.Elem</span><a href="#108157">dequeue</a></span>);
+    <span title="Unit" class="keyword">while</span> (<a title="=&gt; Boolean" id="2205">!</a>(<a href="#79072" title="=&gt; WorklistAlgorithm.this.WList">worklist</a>.<a title="(x$1: Int)Boolean" id="79086">length</a> == <span title="Int(0)" class="int">0</span>))
+      <a href="#79074" title="(e: WorklistAlgorithm.this.Elem)Unit">processElement</a><a href="#79113" title="()Unit">(</a><a href="#79075" title="=&gt; WorklistAlgorithm.this.Elem">dequeue</a>);
   }
 
-  <span class="comment">/**
+  /**
    * Process the current element from the worklist.
-   */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(WorklistAlgorithm.this.Elem)Unit</span><a id="108156">processElement</a></span>(<span class="typed"><span class="type">WorklistAlgorithm.this.Elem</span><a id="108657">e</a></span>: <span class="typed"><span class="type">WorklistAlgorithm.this.Elem</span><a href="#108152">Elem</a></span>): <span class="typed"><span class="type">Unit</span><a id="2169">Unit</a></span>
+   */
+  <span class="keyword">def</span> <a title="(e: WorklistAlgorithm.this.Elem)Unit" id="79074">processElement</a>(<a title="WorklistAlgorithm.this.Elem" id="79121">e</a>: <a href="#79070" title="WorklistAlgorithm.this.Elem">Elem</a>): <a title="Unit" id="1950">Unit</a>
 
-  <span class="comment">/**
+  /**
    * Remove and return the first element to be processed from the worklist.
-   */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; WorklistAlgorithm.this.Elem</span><a id="108157">dequeue</a></span>: <span class="typed"><span class="type">WorklistAlgorithm.this.Elem</span><a href="#108152">Elem</a></span>
+   */
+  <span class="keyword">def</span> <a title="=&gt; WorklistAlgorithm.this.Elem" id="79075">dequeue</a>: <a href="#79070" title="WorklistAlgorithm.this.Elem">Elem</a>
 }
 
         </pre>

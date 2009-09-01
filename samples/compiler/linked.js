@@ -1,115 +1,108 @@
-function initializeLinked()
-{
-	foreachElementWithID("a", addHandlers)
-	foreachLink(null, addHandlers)
+function fullUri(ref, query) {
+	var loc = /^([^\?#]+)/.exec(location.href)[1];
+	return ref ? loc + (query ? "?id=" : "#") + $(ref).attr("id") : loc;
 }
-function addHandlers(element)
-{
-	if(element && !element.onmouseout)
-	{
-		element.onmouseout = outHandler
-		element.onmouseover = overHandler
-	}
+function updateExportUri(ref) {
+	$("#export span.src").text(fullUri(ref, true))
 }
+var last_def = false;
+function scrollTo(def) {
+	$(window).scrollTo( def, 300, { 
+		onAfter: function() {
+			if (location.search.match(/^\?id=/)) {
+				if (last_def)
+					last_def.unhighlight();
+				def.highlight();
+			} else {
+				document.location = "#" + def.attr("id");
+			}
+			last_def = def;
+			updateExportUri(def);
+		}, axis: "y"
+	});
+	return false;
+}
+$(function() {
+	$("pre [id]").live("mouseover",
+		function() { $(this).references().highlight() }
+	).live("mouseout",
+		function() { $(this).references().unhighlight() }
+	).live("click", function() { $(this).attr("href") ? false : scrollTo($(this)) });
+	
+	$("pre a[href^='#']").live("mouseover",
+		function() { $(this).definition().highlight() }
+	).live("mouseout",
+		function() { $(this).definition().unhighlight() }
+	).live("click",
+		function() { return scrollTo($(this).definition()); }
+	);
+	
+	$('[title]').qtip({
+		style: {
+			name: 'dark', 
+			tip: true, 
+			border: { width: 7, radius: 5 }, 
+			width: { max: 500 }
+		},
+		show: { delay: { length: 0 } },
+		position: { corner:	{ tooltip: "bottomLeft", target: "topMiddle" } }
+	});
+});
 
-function overHandler(e)
-{
-	highlight(e, "#FFaaaa")
-}
-function outHandler(e)
-{
-	highlight(e, "transparent")
-}
-function highlight(e, color)
-{
-	var element = getTarget(e)
-	while(element.id || element.href)
-	{
-		var definition = getDefinition(element)
-		if(definition)
-			highlightDefinition(definition, color)
-		else
-		{
-			var referenced = getReference(element)
-			if(referenced)
-				highlightReferences(referenced, color)
-		}
-		element = element.parentNode
+$(window).load(function() {
+	var id = id = /^\?id=(.+)$/.exec(location.search);
+	
+	if(top != window) { // if showing in frame
+		if (id) scrollTo($("#" + id[1]));
+
+		// display info bar when mouse in frame
+		var pop_out = $('<div class="tool" id="pop-out"><input type="submit" value="Pop Out" />Source published by Scala X-Ray</div>')
+		$("body").append(pop_out);
+		$(window.document).hover(
+			function() { pop_out.stop(false, true); pop_out.fadeIn() },
+			function() { pop_out.stop(false, true); pop_out.fadeOut() }
+		);
+		pop_out.find("input").click(function() {
+			window.open(fullUri(last_def));
+			return false;
+		});
+	} else { // if not showing in a frame
+		if (id)	// redirect to #id if given id param
+			window.location = fullUri($("#" + id[1]));
+
+		var exp = $(
+			'<div class="tool" id="export">' +
+			'<code>&lt;iframe src="<span class="src">path-to-source</span>" width="<span class="width">700</span>"' +
+			' height="<span class="height">500</span>" frameborder="0"&gt; &lt;/iframe&gt;</code>' +
+			'</div>'
+		);
+		var exp_control = $('<div class="tool" id="export-control"><a href="#">Export</a></div>');
+		$("body").append(exp).append(exp_control);
+		
+		updateExportUri(location.hash);
+		exp_control.show().click( function() {
+			exp.slideToggle("fast");
+			return false;
+		});
+		$(window).resize(sizeUpdate = function() {
+			exp.find("span.width").text(window.innerWidth || document.documentElement.clientWidth);
+			exp.find("span.height").text(window.innerHeight || document.documentElement.clientWidth);
+		});
+		sizeUpdate();
 	}
-}
-function getReference(element)
-{
-	return element.id
-}
-function getDefinition(element)
-{
-	var href = element.href
-	if(href)
-	{
-		var idIndex = href.lastIndexOf('#')
-		if(idIndex)
-			return href.slice(idIndex+1)
-		else
-			return null
+});
+
+jQuery.fn.extend({
+	definition: function() {
+		return $("#" + /#(\d+)$/.exec(this.attr('href'))[1])
+	},
+	references: function() {
+		return $("a[href$='#" + this.attr('id') +"']")
+	},
+	highlight:	function() {
+		return this.addClass("highlighted");
+	},
+	unhighlight: function() {
+		return this.removeClass("highlighted");
 	}
-	else
-		return null
-}
-function highlightDefinition(id, color)
-{
-	setBackground(document.getElementById(id), color)
-}
-function highlightReferences(id, color)
-{
-	foreachLink(id,
-		function (linkElement) { setBackground(linkElement, color) }
-	)
-}
-function foreachLink(id, f)
-{
-	var linkElement, i, href, links
-	if(id)
-		href = '#' + id
-	else
-		href = null
-	links = document.links
-	for(i = 0; linkElement = links[i]; i++)
-	{
-		if(!href || endsWith(linkElement.href, href))
-			f(linkElement)
-	}
-}
-//base.endsWith(check)
-function endsWith(base, check)
-{
-	var checkLength, baseLength
-	checkLength = check.length
-	baseLength = base.length
-	return checkLength <= baseLength && base.slice(baseLength - checkLength) === check
-}
-function foreachElementWithID(elementName, f)
-{
-	var element, i, elements
-	elements = document.getElementsByTagName(elementName)
-	for(i = 0; element = elements[i]; i++)
-	{
-		if(element.id)
-			f(element)
-	}
-}
-function setBackground(element, color)
-{
-	if(element)
-		element.style.background = color
-}
-// function getTarget from http://www.quirksmode.org !
-function getTarget(e)
-{
-	var targ;
-	if (!e) var e = window.event;
-	if (e.target) targ = e.target;
-	else if (e.srcElement) targ = e.srcElement;
-	if (targ.nodeType == 3) // defeat Safari bug
-		targ = targ.parentNode;
-	return targ;
-}
+})

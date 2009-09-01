@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/xml/parsing/TokenTests.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |                                         **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: TokenTests.scala 18387 2009-07-24 15:28:37Z odersky $
+
+
+<span class="keyword">package</span> scala.xml
+<span class="keyword">package</span> parsing;
+
+
+/**
+ * Helper functions for parsing XML fragments
+ */
+<span class="keyword">trait</span> <a title="trait TokenTests extends java.lang.Object with ScalaObject" id="12152">TokenTests</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+
+  /** (#x20 | #x9 | #xD | #xA) */
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(ch: Char)Boolean" id="26600">isSpace</a>( <a title="Char" id="144567">ch</a>:<span title="Char">Char</span> ): <span title="Boolean">Boolean</span> = <a href="#144567" title="Char">ch</a> <span title="Boolean" class="keyword">match</span> {
+    <span title="Boolean(true)" class="keyword">case</span> <span title="Char('\011')" class="char">'\u0009'</span> | <span title="Char('\012')" class="char">'\u000A'</span> | <span title="Char('\015')" class="char">'\u000D'</span> | <span title="Char(' ')" class="char">'\u0020'</span> =&gt; <span title="Boolean(true)" class="keyword">true</span>
+    <span title="Boolean(false)" class="keyword">case</span> _                                         =&gt; <span title="Boolean(false)" class="keyword">false</span>;
+  }
+
+  /** (#x20 | #x9 | #xD | #xA)+ */
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(cs: Seq[Char])Boolean" id="26601">isSpace</a>(<a title="Seq[Char]" id="144565">cs</a>: <a href="../../collection/Sequence.scala.html#4346" title="Seq[Char]">Seq</a>[Char]): <span title="Boolean">Boolean</span> = {
+    <span class="keyword">val</span> <a title="Iterator[Char]" id="163412">it</a> = <a href="#144565" title="Seq[Char]">cs</a>.<a href="../../collection/generic/IterableTemplate.scala.html#17285" title="=&gt; Iterator[Char]">iterator</a>;
+    <a href="#163412" title="Iterator[Char]">it</a>.<a href="../../collection/Iterator.scala.html#19184" title="(x$1: Boolean)Boolean">hasNext</a> &amp;&amp; <a href="#163412" title="Iterator[Char]">it</a>.<a href="../../collection/Iterator.scala.html#19222" title="(p: (Char) =&gt; Boolean)Boolean">forall</a> { <a href="#26600" title="(ch: Char)Boolean">isSpace</a> };
+  }
+
+  /** NameChar ::= Letter | Digit | '.' | '-' | '_' | ':' 
+   *             | CombiningChar | Extender
+   *
+   * see [4] and Appendix B of XML 1.0 specification
+  */
+  <span class="keyword">def</span> <a title="(ch: Char)Boolean" id="26602">isNameChar</a>(<a title="Char" id="146395">ch</a>: <span title="Char">Char</span>) = <a href="#26603" title="(ch: Char)Boolean">isNameStart</a><span title="(x$1: Boolean)Boolean">(</span><a href="#146395" title="Char">ch</a>) || (<a href="#146395" title="Char">ch</a> <span title="Boolean" class="keyword">match</span> {
+    <span title="Boolean(true)" class="keyword">case</span> <span title="Char('.')" class="char">'.'</span> | <span title="Char('-')" class="char">'-'</span> | <span title="Char(':')" class="char">':'</span> =&gt; <span title="Boolean(true)" class="keyword">true</span>;
+    <span title="Boolean" class="keyword">case</span> _ =&gt; java.lang.<span title="object java.lang.Character">Character</span>.<span title="(x$1: Char)Int">getType</span>( <a href="#146395" title="Char">ch</a> ).<span title="[T0]T0">asInstanceOf</span><span title="Byte">[</span><span title="Byte">Byte</span>] <span title="Boolean" class="keyword">match</span> {
+      <span title="Boolean(true)" class="keyword">case</span> java.lang.Character.<span title="Byte(8)">COMBINING_SPACING_MARK</span> =&gt; <span title="Boolean(true)" class="keyword">true</span>; // Mc
+      <span title="Boolean(true)" class="keyword">case</span> java.lang.Character.<span title="Byte(7)">ENCLOSING_MARK</span> =&gt; <span title="Boolean(true)" class="keyword">true</span>;         // Me
+      <span title="Boolean(true)" class="keyword">case</span> java.lang.Character.<span title="Byte(6)">NON_SPACING_MARK</span> =&gt; <span title="Boolean(true)" class="keyword">true</span>;       // Mn
+      <span title="Boolean(true)" class="keyword">case</span> java.lang.Character.<span title="Byte(4)">MODIFIER_LETTER</span> =&gt; <span title="Boolean(true)" class="keyword">true</span>;        // Lm
+      <span title="Boolean(true)" class="keyword">case</span> java.lang.Character.<span title="Byte(9)">DECIMAL_DIGIT_NUMBER</span> =&gt; <span title="Boolean(true)" class="keyword">true</span>;   // Nd
+      <span title="Boolean(false)" class="keyword">case</span> _ =&gt; <span title="Boolean(false)" class="keyword">false</span>;
+    }
+  });
+
+  /** NameStart ::= ( Letter | '_' )
+   *  where Letter means in one of the Unicode general 
+   *  categories { Ll, Lu, Lo, Lt, Nl }
+   *
+   *  We do not allow a name to start with ':'.
+   *  see [3] and Appendix B of XML 1.0 specification
+   */ 
+  <span class="keyword">def</span> <a title="(ch: Char)Boolean" id="26603">isNameStart</a>(<a title="Char" id="145341">ch</a>: <span title="Char">Char</span>) = 
+    java.lang.<span title="object java.lang.Character">Character</span>.<span title="(x$1: Char)Int">getType</span>(<a href="#145341" title="Char">ch</a>).<span title="[T0]T0">asInstanceOf</span><span title="Byte">[</span><span title="Byte">Byte</span>] <span title="Boolean" class="keyword">match</span> {
+      <span title="Boolean(true)" class="keyword">case</span> java.lang.Character.<span title="Byte(2)">LOWERCASE_LETTER</span> =&gt; <span title="Boolean(true)" class="keyword">true</span>;
+      <span title="Boolean(true)" class="keyword">case</span> java.lang.Character.<span title="Byte(1)">UPPERCASE_LETTER</span> =&gt; <span title="Boolean(true)" class="keyword">true</span>;
+      <span title="Boolean(true)" class="keyword">case</span> java.lang.Character.<span title="Byte(5)">OTHER_LETTER</span>     =&gt; <span title="Boolean(true)" class="keyword">true</span>;
+      <span title="Boolean(true)" class="keyword">case</span> java.lang.Character.<span title="Byte(3)">TITLECASE_LETTER</span> =&gt; <span title="Boolean(true)" class="keyword">true</span>;
+      <span title="Boolean(true)" class="keyword">case</span> java.lang.Character.<span title="Byte(10)">LETTER_NUMBER</span>    =&gt; <span title="Boolean(true)" class="keyword">true</span>;
+      <span title="Boolean" class="keyword">case</span> _ =&gt; <a href="#145341" title="Char">ch</a> <span title="Boolean" class="keyword">match</span> {
+        <span title="Boolean(true)" class="keyword">case</span> <span title="Char('_')" class="char">'_'</span> =&gt; <span title="Boolean(true)" class="keyword">true</span>
+        <span title="Boolean(false)" class="keyword">case</span> _ =&gt; <span title="Boolean(false)" class="keyword">false</span>;
+      }
+    }
+  
+  /** Name ::= ( Letter | '_' ) (NameChar)*
+   *
+   *  see  [5] of XML 1.0 specification
+   */
+  <span class="keyword">def</span> <a title="(s: String)Boolean" id="26604">isName</a>(<a title="String" id="27856">s</a>: <span title="String">String</span>): <span title="Boolean">Boolean</span> = {
+    <span title="Boolean" class="keyword">if</span>( <a href="#27856" title="String">s</a>.<span title="()Int">length</span><span title="(x$1: Int)Boolean">(</span>) &gt; <span title="Int(0)" class="int">0</span> ) {
+      <span class="keyword">val</span> <a title="Iterator[Char]" id="163437">y</a>           = <a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString">s</a>.<a href="../../collection/generic/VectorTemplate.scala.html#17750" title="=&gt; Iterator[Char]">iterator</a>;
+      <span title="Boolean" class="keyword">if</span> (<a href="#26603" title="(ch: Char)Boolean">isNameStart</a>(<a href="#163437" title="Iterator[Char]">y</a>.<a href="../../collection/Iterator.scala.html#19185" title="()Char">next</a>)) {
+        <span title="Unit" class="keyword">while</span> (<a href="#163437" title="Iterator[Char]">y</a>.<a href="../../collection/Iterator.scala.html#19184" title="(x$1: Boolean)Boolean">hasNext</a> &amp;&amp; <a href="#26602" title="(ch: Char)Boolean">isNameChar</a>(<a href="#163437" title="Iterator[Char]">y</a>.<a href="../../collection/Iterator.scala.html#19185" title="()Char">next</a>)) <a href="#163461" title="Unit">{</a>};
+        <span title="=&gt; Boolean">!</span><a href="#163437" title="Iterator[Char]">y</a>.<a href="../../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>
+      } <span class="keyword">else</span> <span title="Boolean(false)" class="keyword">false</span>;
+    } <span class="keyword">else</span> <span title="Boolean(false)" class="keyword">false</span>;
+  }
+
+  <span class="keyword">def</span> <a title="(ch: Char)Boolean" id="26605">isPubIDChar</a>(<a title="Char" id="146621">ch</a>: <span title="Char">Char</span>): <span title="Boolean">Boolean</span> = {
+    //Console.println(&quot;char: '&quot; + ch + &quot;'&quot;);
+    <a href="#146621" title="Char">ch</a> <span title="Boolean" class="keyword">match</span> {
+      <span title="Boolean(true)" class="keyword">case</span> <span title="Char(' ')" class="char">'\u0020'</span> | <span title="Char('\015')" class="char">'\u000D'</span> | <span title="Char('\012')" class="char">'\u000A'</span> =&gt; <span title="Boolean(true)" class="keyword">true</span>;
+      <span title="Boolean(true)" class="keyword">case</span> _ <span class="keyword">if</span>
+        (<span title="(x$1: Boolean)Boolean">(</span><span title="(x$1: Char)Boolean" class="char">'0'</span> <span title="(x$1: Boolean)Boolean">&lt;=</span> <a href="#146621" title="Char">ch</a> &amp;&amp; <a href="#146621" title="(x$1: Char)Boolean">ch</a> &lt;= <span title="Char('9')" class="char">'9'</span>) <span title="(x$1: Boolean)Boolean">||</span> (<span title="(x$1: Char)Boolean" class="char">'a'</span> <span title="(x$1: Boolean)Boolean">&lt;=</span> <a href="#146621" title="Char">ch</a> &amp;&amp; <a href="#146621" title="(x$1: Char)Boolean">ch</a> &lt;= <span title="Char('z')" class="char">'z'</span>) ||
+         (<span title="(x$1: Char)Boolean" class="char">'A'</span> <span title="(x$1: Boolean)Boolean">&lt;=</span> <a href="#146621" title="Char">ch</a> &amp;&amp; <a href="#146621" title="(x$1: Char)Boolean">ch</a> &lt;= <span title="Char('Z')" class="char">'Z'</span>)) =&gt; <span title="Boolean(true)" class="keyword">true</span>;
+      <span title="Boolean(true)" class="keyword">case</span> <span title="Char('-')" class="char">'-'</span> | <span title="Char(''')" class="char">'\''</span>| <span title="Char('(')" class="char">'('</span> | <span title="Char(')')" class="char">')'</span> | <span title="Char('+')" class="char">'+'</span> | <span title="Char(',')" class="char">','</span> | <span title="Char('.')" class="char">'.'</span> |
+           <span title="Char('/')" class="char">'/'</span> | <span title="Char(':')" class="char">':'</span> | <span title="Char('=')" class="char">'='</span> | <span title="Char('?')" class="char">'?'</span> | <span title="Char(';')" class="char">';'</span> | <span title="Char('!')" class="char">'!'</span> | <span title="Char('*')" class="char">'*'</span> |
+           <span title="Char('#')" class="char">'#'</span> | <span title="Char('@')" class="char">'@'</span> | <span title="Char('$')" class="char">'$'</span> | <span title="Char('_')" class="char">'_'</span> | <span title="Char('%')" class="char">'%'</span> =&gt; <span title="Boolean(true)" class="keyword">true</span>
+      <span title="Boolean(false)" class="keyword">case</span> _ =&gt;
+        //Console.println(&quot;false: '&quot; + ch + &quot;'&quot;);
+        <span title="Boolean(false)" class="keyword">false</span>;
+    }
+  }
+
+  /**
+   * Returns true if the encoding name is a valid IANA encoding.
+   * This method does not verify that there is a decoder available
+   * for this encoding, only that the characters are valid for an
+   * IANA encoding name.
+   *
+   * @param ianaEncoding The IANA encoding name.
+   */
+  <span class="keyword">def</span> <a title="(ianaEncoding: Seq[Char])Boolean" id="26606">isValidIANAEncoding</a>(<a title="Seq[Char]" id="144721">ianaEncoding</a>: <a href="../../collection/Sequence.scala.html#4346" title="Seq[Char]">Seq</a>[Char]): <span title="Boolean">Boolean</span> = {
+    <span class="keyword">val</span> <a title="Iterator[Char]" id="163516">it</a> = <a href="#144721" title="Seq[Char]">ianaEncoding</a>.<a href="../../collection/generic/IterableTemplate.scala.html#17285" title="=&gt; Iterator[Char]">iterator</a>;
+    <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#163516" title="Iterator[Char]">it</a>.<a href="../../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>)
+      <span title="Nothing" class="keyword">return</span> <span title="Boolean(false)" class="keyword">false</span>;
+    
+    <span class="keyword">var</span> <a title="Char" id="163517">c</a> = <a href="#163516" title="Iterator[Char]">it</a>.<a href="../../collection/Iterator.scala.html#19185" title="()Char">next</a>;
+    <span title="Boolean" class="keyword">if</span> (<span title="(x$1: Boolean)Boolean">(</span><a href="#163517" title="(x$1: Char)Boolean">c</a> <span title="(x$1: Boolean)Boolean">&gt;=</span> <span title="Char('A')" class="char">'A'</span> &amp;&amp; <a href="#163517" title="(x$1: Char)Boolean">c</a> &lt;= <span title="Char('Z')" class="char">'Z'</span>) || (<a href="#163517" title="(x$1: Char)Boolean">c</a> <span title="(x$1: Boolean)Boolean">&gt;=</span> <span title="Char('a')" class="char">'a'</span> &amp;&amp; <a href="#163517" title="(x$1: Char)Boolean">c</a> &lt;= <span title="Char('z')" class="char">'z'</span>)) {
+      <span title="Unit" class="keyword">while</span> (<a href="#163516" title="Iterator[Char]">it</a>.<a href="../../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>) <a href="#163550" title="()Unit">{</a>
+        <a href="#163517" title="Char">c</a> = <a href="#163516" title="Iterator[Char]">it</a>.<a href="../../collection/Iterator.scala.html#19185" title="()Char">next</a>;
+        <span title="Unit" class="keyword">if</span> (<span title="(x$1: Boolean)Boolean">(</span><a href="#163517" title="(x$1: Char)Boolean">c</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <span title="Char('A')" class="char">'A'</span> || <a href="#163517" title="(x$1: Char)Boolean">c</a> &gt; <span title="Char('Z')" class="char">'Z'</span>) <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> (<a href="#163517" title="(x$1: Char)Boolean">c</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <span title="Char('a')" class="char">'a'</span> || <a href="#163517" title="(x$1: Char)Boolean">c</a> &gt; <span title="Char('z')" class="char">'z'</span>) <span title="(x$1: Boolean)Boolean">&amp;&amp;</span>
+            (<a href="#163517" title="(x$1: Char)Boolean">c</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <span title="Char('0')" class="char">'0'</span> || <a href="#163517" title="(x$1: Char)Boolean">c</a> &gt; <span title="Char('9')" class="char">'9'</span>) <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <a href="#163517" title="(x$1: Char)Boolean">c</a> != <span title="Char('.')" class="char">'.'</span> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <a href="#163517" title="(x$1: Char)Boolean">c</a> != <span title="Char('_')" class="char">'_'</span> &amp;&amp;
+            <a href="#163517" title="(x$1: Char)Boolean">c</a> != <span title="Char('-')" class="char">'-'</span>) {
+              <span title="Nothing" class="keyword">return</span> <span title="Boolean(false)" class="keyword">false</span>;
+            }
+      }
+      <span title="Nothing" class="keyword">return</span> <span title="Boolean(true)" class="keyword">true</span>;
+    } <span class="keyword">else</span> 
+      <span title="Nothing" class="keyword">return</span> <span title="Boolean(false)" class="keyword">false</span>;
+  } // isValidIANAEncoding(String): Boolean
+  
+  <span class="keyword">def</span> <a title="(s: String)Boolean" id="26607">checkSysID</a>( <a title="String" id="163200">s</a>:<span title="String">String</span> ): <span title="Boolean">Boolean</span> = {
+    <a href="#163200" title="String">s</a>.<span title="(x$1: Int)Int">indexOf</span><span title="(x$1: Int)Boolean">(</span><span title="Char('&quot;')" class="char">'&quot;'</span>.<span title="[T0]T0">asInstanceOf</span><span title="Int">[</span><span title="Int">Int</span>]) <span title="(x$1: Boolean)Boolean">==</span> <span title="Int(-1)">-</span><span class="int">1</span> || <a href="#163200" title="String">s</a>.<span title="(x$1: Int)Int">indexOf</span><span title="(x$1: Int)Boolean">(</span><span title="Char(''')" class="char">'\''</span>.<span title="[T0]T0">asInstanceOf</span><span title="Int">[</span><span title="Int">Int</span>]) == <span title="Int(-1)">-</span><span class="int">1</span> 
+  }
+    
+  <span class="keyword">def</span> <a title="(s: String)Boolean" id="26608">checkPubID</a>(<a title="String" id="163268">s</a>: <span title="String">String</span>): <span title="Boolean">Boolean</span> = {
+    //Console.println(&quot;checkPubID of \&quot;&quot;+s+&quot;\&quot;&quot;);
+    <span title="Boolean" class="keyword">if</span> (<a href="#163268" title="String">s</a>.<span title="()Int">length</span><span title="(x$1: Int)Boolean">(</span>) &gt; <span title="Int(0)" class="int">0</span>) {
+      <span class="keyword">val</span> <a title="Iterator[Char]" id="163664">y</a> = <a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString">s</a>.<a href="../../collection/generic/VectorTemplate.scala.html#17750" title="=&gt; Iterator[Char]">iterator</a>;
+      <span class="keyword">var</span> <a title="Char" id="163665">c</a> = <span title="Char(' ')" class="char">' '</span>;
+      <span title="Unit" class="keyword">while</span> (<a href="#163664" title="Iterator[Char]">y</a>.<a href="../../collection/Iterator.scala.html#19184" title="(x$1: Boolean)Boolean">hasNext</a> &amp;&amp; <a href="#26605" title="(ch: Char)Boolean">isPubIDChar</a>(<a href="#163665" title="Char">c</a>)) { 
+        //Console.println(c);
+        <a href="#163665" title="Char">c</a> = <a href="#163664" title="Iterator[Char]">y</a>.<a href="../../collection/Iterator.scala.html#19185" title="()Char">next</a>
+      };
+      <span title="=&gt; Boolean">!</span><a href="#163664" title="Iterator[Char]">y</a>.<a href="../../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>
+    }
+    <span class="keyword">else</span>
+      <span title="Boolean(true)" class="keyword">true</span>
+  }
+
+}
+
+        </pre>
+    </body>
+</html>

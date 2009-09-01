@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/util/automata/BaseBerrySethi.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: BaseBerrySethi.scala 17856 2009-05-27 19:35:02Z dubochet $
+
+
+<span class="keyword">package</span> scala.util.automata
+
+
+<span class="keyword">import</span> scala.util.regexp.Base
+
+<span class="keyword">import</span> scala.collection.mutable
+<span class="keyword">import</span> scala.collection.immutable
+
+/** this turns a regexp over A into a NondetWorkAutom over A using the
+ *  celebrated position automata construction (also called Berry-Sethi or
+ *  Glushkov)
+ */
+<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class BaseBerrySethi extends java.lang.Object with ScalaObject" id="14011">BaseBerrySethi</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  
+  <span class="keyword">val</span> <a title="=&gt; scala.util.regexp.Base" id="56296">lang</a>: <a href="../regexp/Base.scala.html#13319" title="scala.util.regexp.Base">Base</a>
+  <span class="keyword">import</span> lang.{Alt,Eps,Meta,RegExp,Sequ,Star}
+
+  <span class="keyword">protected</span> <span class="keyword">var</span> <a title="Int" id="56299">pos</a> = <span title="Int(0)" class="int">0</span>
+
+  <span class="keyword">protected</span> <span class="keyword">var</span> <a title="scala.collection.immutable.Set[Int]" id="56302">globalFirst</a>: immutable.<a href="../../collection/immutable/Set.scala.html#9171" title="scala.collection.immutable.Set[Int]">Set</a>[Int] = _
+
+  // results which hold all info for the NondetWordAutomaton
+  <span class="keyword">protected</span> <span class="keyword">var</span> <a title="scala.collection.mutable.HashMap[Int,scala.collection.immutable.Set[Int]]" id="56305">follow</a>: mutable.<a href="../../collection/mutable/HashMap.scala.html#7755" title="scala.collection.mutable.HashMap[Int,scala.collection.immutable.Set[Int]]">HashMap</a>[Int, immutable.Set[Int]] = _
+
+  <span class="keyword">protected</span> <span class="keyword">var</span> <a title="Int" id="56308">finalTag</a>: <span title="Int">Int</span> = _
+
+  <span class="keyword">protected</span> <span class="keyword">var</span> <a title="scala.collection.immutable.Map[Int,Int]" id="56311">finals</a>: immutable.<a href="../../collection/immutable/Map.scala.html#8874" title="scala.collection.immutable.Map[Int,Int]">Map</a>[Int, Int] = _     // final states
+
+  // constants --------------------------
+
+  <span class="keyword">final</span> <span class="keyword">val</span> <a title="scala.collection.immutable.Set[Int]" id="56313">emptySet</a>:immutable.<a href="../../collection/immutable/Set.scala.html#9171" title="scala.collection.immutable.Set[Int]">Set</a>[Int] = immutable.<a href="../../collection/generic/Companion.scala.html#17471" title="[A](args: A*)scala.collection.immutable.Set[A]">Set</a><span title="(args: Int*)scala.collection.immutable.Set[Int]">[</span><span title="Int">Int</span>]()
+
+  /** computes first( r ) for the word regexp r */
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(r: BaseBerrySethi.this.lang.RegExp)scala.collection.immutable.Set[Int]" id="56315">compFirst</a>(<a title="BaseBerrySethi.this.lang.RegExp" id="130879">r</a>: <a href="../regexp/Base.scala.html#26757" title="BaseBerrySethi.this.lang.RegExp">RegExp</a>): immutable.<a href="../../collection/immutable/Set.scala.html#9171" title="scala.collection.immutable.Set[Int]">Set</a>[Int] = <a href="#130879" title="BaseBerrySethi.this.lang.RegExp">r</a> <span title="scala.collection.immutable.Set[Int]" class="keyword">match</span> {
+    <span title="scala.collection.immutable.Set[Int]" class="keyword">case</span> <a title="BaseBerrySethi.this.lang.Alt" id="253641">x</a>:<a href="../regexp/Base.scala.html#26758" title="BaseBerrySethi.this.lang.Alt">Alt</a> =&gt; 
+      <span class="keyword">var</span> <a title="scala.collection.immutable.Set[Int]" id="253642">tmp</a> = <a href="#56313" title="=&gt; scala.collection.immutable.Set[Int]">emptySet</a>
+      <span class="keyword">val</span> <a title="Iterator[BaseBerrySethi.this.lang._regexpT]" id="253643">it</a> = <a href="#253641" title="BaseBerrySethi.this.lang.Alt">x</a>.<a href="../regexp/Base.scala.html#57122" title="=&gt; BaseBerrySethi.this.lang._regexpT*">rs</a>.<a href="../../collection/generic/IterableTemplate.scala.html#17285" title="=&gt; Iterator[BaseBerrySethi.this.lang._regexpT]">iterator</a>                       // union
+      <span title="Unit" class="keyword">while</span> (<a href="#253643" title="Iterator[BaseBerrySethi.this.lang._regexpT]">it</a>.<a href="../../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>) { <a href="#253642" title="scala.collection.immutable.Set[Int]">tmp</a> = <a href="../../collection/generic/Addable.scala.html#19972" title="(elems: Traversable[Int])scala.collection.immutable.Set[Int]">tmp</a> ++ <a href="#56315" title="(r: BaseBerrySethi.this.lang.RegExp)scala.collection.immutable.Set[Int]">compFirst</a>(<a href="#253643" title="Iterator[BaseBerrySethi.this.lang._regexpT]">it</a>.<a href="../../collection/Iterator.scala.html#19185" title="()BaseBerrySethi.this.lang._regexpT">next</a>) }
+      <a href="#253642" title="scala.collection.immutable.Set[Int]">tmp</a>
+    <span title="scala.collection.immutable.Set[Int]" class="keyword">case</span> <a href="../regexp/Base.scala.html#26767" title="object BaseBerrySethi.this.lang.Eps">Eps</a> =&gt;
+      <a href="#56313" title="=&gt; scala.collection.immutable.Set[Int]">emptySet</a>
+    //case x:Letter =&gt; emptySet + posMap(x);  // singleton set
+    <span title="scala.collection.immutable.Set[Int]" class="keyword">case</span> <a title="BaseBerrySethi.this.lang.Meta" id="253766">x</a>:<a href="../regexp/Base.scala.html#26769" title="BaseBerrySethi.this.lang.Meta">Meta</a> =&gt;
+      <a href="#56315" title="(r: BaseBerrySethi.this.lang.RegExp)scala.collection.immutable.Set[Int]">compFirst</a>(<a href="#253766" title="BaseBerrySethi.this.lang.Meta">x</a>.<a href="../regexp/Base.scala.html#248973" title="=&gt; BaseBerrySethi.this.lang._regexpT">r</a>)
+    <span title="scala.collection.immutable.Set[Int]" class="keyword">case</span> <a title="BaseBerrySethi.this.lang.Sequ" id="253769">x</a>:<a href="../regexp/Base.scala.html#26761" title="BaseBerrySethi.this.lang.Sequ">Sequ</a> =&gt;
+      <span class="keyword">var</span> <a title="scala.collection.immutable.Set[Int]" id="253770">tmp</a> = <a href="#56313" title="=&gt; scala.collection.immutable.Set[Int]">emptySet</a>;
+      <span class="keyword">val</span> <a title="Iterator[BaseBerrySethi.this.lang._regexpT]" id="253771">it</a> = <a href="#253769" title="BaseBerrySethi.this.lang.Sequ">x</a>.<a href="../regexp/Base.scala.html#131501" title="=&gt; BaseBerrySethi.this.lang._regexpT*">rs</a>.<a href="../../collection/generic/IterableTemplate.scala.html#17285" title="=&gt; Iterator[BaseBerrySethi.this.lang._regexpT]">iterator</a>;                       // union
+      <span title="Unit" class="keyword">while</span> (<a href="#253771" title="Iterator[BaseBerrySethi.this.lang._regexpT]">it</a>.<a href="../../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>) <a href="#253772" title="()Unit">{</a> 
+	<span class="keyword">val</span> <a title="BaseBerrySethi.this.lang._regexpT" id="253773">z</a> = <a href="#253771" title="Iterator[BaseBerrySethi.this.lang._regexpT]">it</a>.<a href="../../collection/Iterator.scala.html#19185" title="()BaseBerrySethi.this.lang._regexpT">next</a>
+	<a href="#253770" title="scala.collection.immutable.Set[Int]">tmp</a> = <a href="../../collection/generic/Addable.scala.html#19972" title="(elems: Traversable[Int])scala.collection.immutable.Set[Int]">tmp</a> ++ <a href="#56315" title="(r: BaseBerrySethi.this.lang.RegExp)scala.collection.immutable.Set[Int]">compFirst</a>(<a href="#253773" title="BaseBerrySethi.this.lang._regexpT">z</a>)
+	<span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#253773" title="BaseBerrySethi.this.lang._regexpT">z</a>.<a href="../regexp/Base.scala.html#26805" title="=&gt; Boolean">isNullable</a>)
+          <span title="Nothing" class="keyword">return</span> <a href="#253770" title="scala.collection.immutable.Set[Int]">tmp</a>
+      }
+      <a href="#253770" title="scala.collection.immutable.Set[Int]">tmp</a>
+    <span title="scala.collection.immutable.Set[Int]" class="keyword">case</span> Star(<a title="BaseBerrySethi.this.lang._regexpT" id="253889">t</a>) =&gt;
+      <a href="#56315" title="(r: BaseBerrySethi.this.lang.RegExp)scala.collection.immutable.Set[Int]">compFirst</a>(<a href="#253889" title="BaseBerrySethi.this.lang._regexpT">t</a>)
+    <span title="Nothing" class="keyword">case</span> _ =&gt;
+      <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.IllegalArgumentException" class="keyword">new</span> <a href="../../Predef.scala.html#16170" title="java.lang.IllegalArgumentException">IllegalArgumentException</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;unexpected pattern &quot;</span> + <a href="#130879" title="BaseBerrySethi.this.lang.RegExp">r</a>.<span title="()java.lang.Class[_]">getClass</span>())
+  }
+
+  /** computes last( r ) for the regexp r */
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(r: BaseBerrySethi.this.lang.RegExp)scala.collection.immutable.Set[Int]" id="56316">compLast</a>(<a title="BaseBerrySethi.this.lang.RegExp" id="130912">r</a>: <a href="../regexp/Base.scala.html#26757" title="BaseBerrySethi.this.lang.RegExp">RegExp</a>): immutable.<a href="../../collection/immutable/Set.scala.html#9171" title="scala.collection.immutable.Set[Int]">Set</a>[Int] = <a href="#130912" title="BaseBerrySethi.this.lang.RegExp">r</a> <span title="scala.collection.immutable.Set[Int]" class="keyword">match</span> {
+    <span title="scala.collection.immutable.Set[Int]" class="keyword">case</span> <a title="BaseBerrySethi.this.lang.Alt" id="253905">x</a>:<a href="../regexp/Base.scala.html#26758" title="BaseBerrySethi.this.lang.Alt">Alt</a> =&gt;
+      <span class="keyword">var</span> <a title="scala.collection.immutable.Set[Int]" id="253906">tmp</a> = <a href="#56313" title="=&gt; scala.collection.immutable.Set[Int]">emptySet</a>
+      <span class="keyword">val</span> <a title="Iterator[BaseBerrySethi.this.lang._regexpT]" id="253907">it</a> = <a href="#253905" title="BaseBerrySethi.this.lang.Alt">x</a>.<a href="../regexp/Base.scala.html#57122" title="=&gt; BaseBerrySethi.this.lang._regexpT*">rs</a>.<a href="../../collection/generic/IterableTemplate.scala.html#17285" title="=&gt; Iterator[BaseBerrySethi.this.lang._regexpT]">iterator</a>                      // union
+      <span title="Unit" class="keyword">while</span> (<a href="#253907" title="Iterator[BaseBerrySethi.this.lang._regexpT]">it</a>.<a href="../../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>) { <a href="#253906" title="scala.collection.immutable.Set[Int]">tmp</a> = <a href="../../collection/generic/Addable.scala.html#19972" title="(elems: Traversable[Int])scala.collection.immutable.Set[Int]">tmp</a> ++ <a href="#56315" title="(r: BaseBerrySethi.this.lang.RegExp)scala.collection.immutable.Set[Int]">compFirst</a>(<a href="#253907" title="Iterator[BaseBerrySethi.this.lang._regexpT]">it</a>.<a href="../../collection/Iterator.scala.html#19185" title="()BaseBerrySethi.this.lang._regexpT">next</a>) }
+      <a href="#253906" title="scala.collection.immutable.Set[Int]">tmp</a>
+    <span title="scala.collection.immutable.Set[Int]" class="keyword">case</span> <a href="../regexp/Base.scala.html#26767" title="object BaseBerrySethi.this.lang.Eps">Eps</a> =&gt;
+      <a href="#56313" title="=&gt; scala.collection.immutable.Set[Int]">emptySet</a>
+    //case x:Letter =&gt; emptySet + posMap(x) // singleton set
+    <span title="scala.collection.immutable.Set[Int]" class="keyword">case</span> <a title="BaseBerrySethi.this.lang.Meta" id="254023">x</a>:<a href="../regexp/Base.scala.html#26769" title="BaseBerrySethi.this.lang.Meta">Meta</a> =&gt;
+      <a href="#56316" title="(r: BaseBerrySethi.this.lang.RegExp)scala.collection.immutable.Set[Int]">compLast</a>(<a href="#254023" title="BaseBerrySethi.this.lang.Meta">x</a>.<a href="../regexp/Base.scala.html#248973" title="=&gt; BaseBerrySethi.this.lang._regexpT">r</a>)
+    <span title="scala.collection.immutable.Set[Int]" class="keyword">case</span> <a title="BaseBerrySethi.this.lang.Sequ" id="254026">x</a>:<a href="../regexp/Base.scala.html#26761" title="BaseBerrySethi.this.lang.Sequ">Sequ</a> =&gt; 
+      <span class="keyword">var</span> <a title="scala.collection.immutable.Set[Int]" id="254027">tmp</a> = <a href="#56313" title="=&gt; scala.collection.immutable.Set[Int]">emptySet</a>
+      <span class="keyword">val</span> <a title="Iterator[BaseBerrySethi.this.lang._regexpT]" id="254028">it</a> = <a href="#254026" title="BaseBerrySethi.this.lang.Sequ">x</a>.<a href="../regexp/Base.scala.html#131501" title="=&gt; BaseBerrySethi.this.lang._regexpT*">rs</a>.<a href="../../collection/generic/IterableTemplate.scala.html#17285" title="=&gt; Iterator[BaseBerrySethi.this.lang._regexpT]">iterator</a>.<a href="../../collection/Iterator.scala.html#19281" title="=&gt; List[BaseBerrySethi.this.lang._regexpT]">toList</a>.<a href="../../collection/immutable/List.scala.html#17664" title="=&gt; List[BaseBerrySethi.this.lang._regexpT]">reverse</a>.<a href="../../collection/generic/LinearSequenceTemplate.scala.html#19401" title="=&gt; Iterator[BaseBerrySethi.this.lang._regexpT]">iterator</a>       // union
+      <span title="Unit" class="keyword">while</span> (<a href="#254028" title="Iterator[BaseBerrySethi.this.lang._regexpT]">it</a>.<a href="../../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>) <a href="#254029" title="()Unit">{</a> 
+        <span class="keyword">val</span> <a title="BaseBerrySethi.this.lang._regexpT" id="254032">z</a> = <a href="#254028" title="Iterator[BaseBerrySethi.this.lang._regexpT]">it</a>.<a href="../../collection/Iterator.scala.html#19185" title="()BaseBerrySethi.this.lang._regexpT">next</a>
+        <a href="#254027" title="scala.collection.immutable.Set[Int]">tmp</a> = <a href="../../collection/generic/Addable.scala.html#19972" title="(elems: Traversable[Int])scala.collection.immutable.Set[Int]">tmp</a> ++ <a href="#56316" title="(r: BaseBerrySethi.this.lang.RegExp)scala.collection.immutable.Set[Int]">compLast</a>(<a href="#254032" title="BaseBerrySethi.this.lang._regexpT">z</a>)
+        <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#254032" title="BaseBerrySethi.this.lang._regexpT">z</a>.<a href="../regexp/Base.scala.html#26805" title="=&gt; Boolean">isNullable</a>)
+          <span title="Nothing" class="keyword">return</span> <a href="#254027" title="scala.collection.immutable.Set[Int]">tmp</a>
+      }
+      <a href="#254027" title="scala.collection.immutable.Set[Int]">tmp</a>
+    <span title="scala.collection.immutable.Set[Int]" class="keyword">case</span> Star(<a title="BaseBerrySethi.this.lang._regexpT" id="254148">t</a>) =&gt;
+      <a href="#56316" title="(r: BaseBerrySethi.this.lang.RegExp)scala.collection.immutable.Set[Int]">compLast</a>(<a href="#254148" title="BaseBerrySethi.this.lang._regexpT">t</a>)
+    <span title="Nothing" class="keyword">case</span> _ =&gt;
+      <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.IllegalArgumentException" class="keyword">new</span> <a href="../../Predef.scala.html#16170" title="java.lang.IllegalArgumentException">IllegalArgumentException</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;unexpected pattern &quot;</span> + <a href="#130912" title="BaseBerrySethi.this.lang.RegExp">r</a>.<span title="()java.lang.Class[_]">getClass</span>())
+  }
+
+  /** Starts from the right-to-left
+   *  precondition: pos is final
+   *               pats are successor patterns of a Sequence node
+   *
+   *  @param r ...
+   *  @return  ...
+   */
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(r: Seq[BaseBerrySethi.this.lang.RegExp])scala.collection.immutable.Set[Int]" id="56317">compFollow</a>(<a title="Seq[BaseBerrySethi.this.lang.RegExp]" id="131541">r</a>: <a href="../../collection/Sequence.scala.html#4346" title="Seq[BaseBerrySethi.this.lang.RegExp]">Seq</a>[RegExp]): immutable.<a href="../../collection/immutable/Set.scala.html#9171" title="scala.collection.immutable.Set[Int]">Set</a>[Int] = {
+    <span class="keyword">var</span> <a title="scala.collection.immutable.Set[Int]" id="254164">first</a> = <a href="#56313" title="=&gt; scala.collection.immutable.Set[Int]">emptySet</a>
+    <span class="keyword">var</span> <a title="scala.collection.immutable.Set[Int]" id="254165">fol</a> = <a href="#56313" title="=&gt; scala.collection.immutable.Set[Int]">emptySet</a>
+    <span title="Unit" class="keyword">if</span> (<a href="#131541" title="Seq[BaseBerrySethi.this.lang.RegExp]">r</a>.<a href="../../collection/generic/SequenceTemplate.scala.html#17338" title="(x$1: Int)Boolean" id="2958">length</a> &gt; <span title="Int(0)" class="int">0</span>) {//non-empty expr
+
+      <span class="keyword">val</span> <a title="Iterator[BaseBerrySethi.this.lang.RegExp]" id="254172">it</a> = <a href="#131541" title="Seq[BaseBerrySethi.this.lang.RegExp]">r</a>.<a href="../../collection/generic/IterableTemplate.scala.html#17285" title="=&gt; Iterator[BaseBerrySethi.this.lang.RegExp]">iterator</a>.<a href="../../collection/Iterator.scala.html#19281" title="=&gt; List[BaseBerrySethi.this.lang.RegExp]">toList</a>.<a href="../../collection/immutable/List.scala.html#17664" title="=&gt; List[BaseBerrySethi.this.lang.RegExp]">reverse</a>.<a href="../../collection/generic/LinearSequenceTemplate.scala.html#19401" title="=&gt; Iterator[BaseBerrySethi.this.lang.RegExp]">iterator</a>
+
+      <a href="#254165" title="scala.collection.immutable.Set[Int]">fol</a> = <a href="../../collection/generic/SetTemplate.scala.html#34277" title="(elem: Int)scala.collection.immutable.Set[Int]">fol</a> + <a href="#56299" title="=&gt; Int">pos</a> // don't modify pos !      
+      <span title="Unit" class="keyword">while</span> (<a href="#254172" title="Iterator[BaseBerrySethi.this.lang.RegExp]">it</a>.<a href="../../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>) <a href="#254195" title="()Unit">{</a> 
+        <span class="keyword">val</span> <a title="BaseBerrySethi.this.lang.RegExp" id="254196">p</a> = <a href="#254172" title="Iterator[BaseBerrySethi.this.lang.RegExp]">it</a>.<a href="../../collection/Iterator.scala.html#19185" title="()BaseBerrySethi.this.lang.RegExp">next</a>
+        <a href="#254164" title="scala.collection.immutable.Set[Int]">first</a> = <a href="#56318" title="(fol1: scala.collection.immutable.Set[Int],r: BaseBerrySethi.this.lang.RegExp)scala.collection.immutable.Set[Int]">compFollow1</a>(<a href="#254165" title="scala.collection.immutable.Set[Int]">fol</a>, <a href="#254196" title="BaseBerrySethi.this.lang.RegExp">p</a>)
+        <a href="#254165" title="scala.collection.immutable.Set[Int]">fol</a> =
+          <span title="scala.collection.immutable.Set[Int]" class="keyword">if</span> (<a href="#254196" title="BaseBerrySethi.this.lang.RegExp">p</a>.<a href="../regexp/Base.scala.html#26805" title="=&gt; Boolean">isNullable</a>) <a href="../../collection/generic/Addable.scala.html#19972" title="(elems: Traversable[Int])scala.collection.immutable.Set[Int]">fol</a> ++ <a href="#254164" title="scala.collection.immutable.Set[Int]">first</a>
+          <span class="keyword">else</span> <a href="#254164" title="scala.collection.immutable.Set[Int]">first</a>
+      }
+    }
+    <a href="#14011" title="BaseBerrySethi.this.type" class="keyword">this</a>.<a href="#56305" title="=&gt; scala.collection.mutable.HashMap[Int,scala.collection.immutable.Set[Int]]">follow</a>.<a href="../../collection/mutable/HashMap.scala.html#91075" title="(key: Int,value: scala.collection.immutable.Set[Int])Unit">update</a>(<span title="Int(0)" class="int">0</span>, <a href="#254165" title="scala.collection.immutable.Set[Int]">fol</a> /*first*/)
+    <a href="#254165" title="scala.collection.immutable.Set[Int]">fol</a>
+  }
+
+  /** returns the first set of an expression, setting the follow set along 
+   *  the way.
+   *
+   *  @param fol1 ...
+   *  @param r    ...
+   *  @return     ...
+   */
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(fol1: scala.collection.immutable.Set[Int],r: BaseBerrySethi.this.lang.RegExp)scala.collection.immutable.Set[Int]" id="56318">compFollow1</a>(<a title="scala.collection.immutable.Set[Int]" id="130942">fol1</a>: immutable.<a href="../../collection/immutable/Set.scala.html#9171" title="scala.collection.immutable.Set[Int]">Set</a>[Int], <a title="BaseBerrySethi.this.lang.RegExp" id="130943">r</a>: <a href="../regexp/Base.scala.html#26757" title="BaseBerrySethi.this.lang.RegExp">RegExp</a>): immutable.<a href="../../collection/immutable/Set.scala.html#9171" title="scala.collection.immutable.Set[Int]">Set</a>[Int] = {
+    <span class="keyword">var</span> <a title="scala.collection.immutable.Set[Int]" id="254320">fol</a> = <a href="#130942" title="scala.collection.immutable.Set[Int]">fol1</a>
+    <a href="#130943" title="BaseBerrySethi.this.lang.RegExp">r</a> <span title="scala.collection.immutable.Set[Int]" class="keyword">match</span> {
+  
+      <span title="scala.collection.immutable.Set[Int]" class="keyword">case</span> <a title="BaseBerrySethi.this.lang.Alt" id="254321">x</a>:<a href="../regexp/Base.scala.html#26758" title="BaseBerrySethi.this.lang.Alt">Alt</a> =&gt; 
+        <span class="keyword">var</span> <a title="scala.collection.immutable.Set[Int]" id="254322">first</a> = <a href="#56313" title="=&gt; scala.collection.immutable.Set[Int]">emptySet</a>
+        <span class="keyword">val</span> <a title="Iterator[BaseBerrySethi.this.lang._regexpT]" id="254323">it</a> = <a href="#254321" title="BaseBerrySethi.this.lang.Alt">x</a>.<a href="../regexp/Base.scala.html#57122" title="=&gt; BaseBerrySethi.this.lang._regexpT*">rs</a>.<a href="../../collection/generic/IterableTemplate.scala.html#17285" title="=&gt; Iterator[BaseBerrySethi.this.lang._regexpT]">iterator</a>.<a href="../../collection/Iterator.scala.html#19281" title="=&gt; List[BaseBerrySethi.this.lang._regexpT]">toList</a>.<a href="../../collection/immutable/List.scala.html#17664" title="=&gt; List[BaseBerrySethi.this.lang._regexpT]">reverse</a>.<a href="../../collection/generic/LinearSequenceTemplate.scala.html#19401" title="=&gt; Iterator[BaseBerrySethi.this.lang._regexpT]">iterator</a>
+        <span title="Unit" class="keyword">while</span> (<a href="#254323" title="Iterator[BaseBerrySethi.this.lang._regexpT]">it</a>.<a href="../../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>)
+          <a href="#254322" title="scala.collection.immutable.Set[Int]">first</a> = <a href="../../collection/generic/Addable.scala.html#19972" title="(elems: Traversable[Int])scala.collection.immutable.Set[Int]">first</a> ++ <a href="#56318" title="(fol1: scala.collection.immutable.Set[Int],r: BaseBerrySethi.this.lang.RegExp)scala.collection.immutable.Set[Int]">compFollow1</a>(<a href="#254320" title="scala.collection.immutable.Set[Int]">fol</a>, <a href="#254323" title="Iterator[BaseBerrySethi.this.lang._regexpT]">it</a>.<a href="../../collection/Iterator.scala.html#19185" title="()BaseBerrySethi.this.lang._regexpT">next</a>);
+        <a href="#254322" title="scala.collection.immutable.Set[Int]">first</a>
+
+      /*
+      case x:Letter =&gt;
+        val i = posMap( x );
+        this.follow.update( i, fol );
+        emptySet + i;
+      */
+      <span title="scala.collection.immutable.Set[Int]" class="keyword">case</span> <a title="BaseBerrySethi.this.lang.Meta" id="254441">x</a>:<a href="../regexp/Base.scala.html#26769" title="BaseBerrySethi.this.lang.Meta">Meta</a> =&gt;
+        <a href="#56318" title="(fol1: scala.collection.immutable.Set[Int],r: BaseBerrySethi.this.lang.RegExp)scala.collection.immutable.Set[Int]">compFollow1</a>(<a href="#130942" title="scala.collection.immutable.Set[Int]">fol1</a>, <a href="#254441" title="BaseBerrySethi.this.lang.Meta">x</a>.<a href="../regexp/Base.scala.html#248973" title="=&gt; BaseBerrySethi.this.lang._regexpT">r</a>)
+
+      <span title="scala.collection.immutable.Set[Int]" class="keyword">case</span> <a title="BaseBerrySethi.this.lang.Star" id="254444">x</a>:<a href="../regexp/Base.scala.html#26764" title="BaseBerrySethi.this.lang.Star">Star</a> =&gt;
+        <a href="#254320" title="scala.collection.immutable.Set[Int]">fol</a> = <a href="../../collection/generic/Addable.scala.html#19972" title="(elems: Traversable[Int])scala.collection.immutable.Set[Int]">fol</a> ++ <a href="#56315" title="(r: BaseBerrySethi.this.lang.RegExp)scala.collection.immutable.Set[Int]">compFirst</a>(<a href="#254444" title="BaseBerrySethi.this.lang.Star">x</a>.<a href="../regexp/Base.scala.html#238735" title="=&gt; BaseBerrySethi.this.lang._regexpT">r</a>)
+        <a href="#56318" title="(fol1: scala.collection.immutable.Set[Int],r: BaseBerrySethi.this.lang.RegExp)scala.collection.immutable.Set[Int]">compFollow1</a>(<a href="#254320" title="scala.collection.immutable.Set[Int]">fol</a>, <a href="#254444" title="BaseBerrySethi.this.lang.Star">x</a>.<a href="../regexp/Base.scala.html#238735" title="=&gt; BaseBerrySethi.this.lang._regexpT">r</a>)
+
+      <span title="scala.collection.immutable.Set[Int]" class="keyword">case</span> <a title="BaseBerrySethi.this.lang.Sequ" id="254557">x</a>:<a href="../regexp/Base.scala.html#26761" title="BaseBerrySethi.this.lang.Sequ">Sequ</a> =&gt;
+        <span class="keyword">var</span> <a title="scala.collection.immutable.Set[Int]" id="254558">first</a> = <a href="#56313" title="=&gt; scala.collection.immutable.Set[Int]">emptySet</a>
+        <span class="keyword">val</span> <a title="Iterator[BaseBerrySethi.this.lang._regexpT]" id="254559">it</a> = <a href="#254557" title="BaseBerrySethi.this.lang.Sequ">x</a>.<a href="../regexp/Base.scala.html#131501" title="=&gt; BaseBerrySethi.this.lang._regexpT*">rs</a>.<a href="../../collection/generic/IterableTemplate.scala.html#17285" title="=&gt; Iterator[BaseBerrySethi.this.lang._regexpT]">iterator</a>.<a href="../../collection/Iterator.scala.html#19281" title="=&gt; List[BaseBerrySethi.this.lang._regexpT]">toList</a>.<a href="../../collection/immutable/List.scala.html#17664" title="=&gt; List[BaseBerrySethi.this.lang._regexpT]">reverse</a>.<a href="../../collection/generic/LinearSequenceTemplate.scala.html#19401" title="=&gt; Iterator[BaseBerrySethi.this.lang._regexpT]">iterator</a>
+        <span title="Unit" class="keyword">while</span> (<a href="#254559" title="Iterator[BaseBerrySethi.this.lang._regexpT]">it</a>.<a href="../../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>) <a href="#254560" title="()Unit">{</a>
+          <span class="keyword">val</span> <a title="BaseBerrySethi.this.lang._regexpT" id="254563">p</a> = <a href="#254559" title="Iterator[BaseBerrySethi.this.lang._regexpT]">it</a>.<a href="../../collection/Iterator.scala.html#19185" title="()BaseBerrySethi.this.lang._regexpT">next</a>
+          <a href="#254558" title="scala.collection.immutable.Set[Int]">first</a> = <a href="#56318" title="(fol1: scala.collection.immutable.Set[Int],r: BaseBerrySethi.this.lang.RegExp)scala.collection.immutable.Set[Int]">compFollow1</a>(<a href="#254320" title="scala.collection.immutable.Set[Int]">fol</a>, <a href="#254563" title="BaseBerrySethi.this.lang._regexpT">p</a>)
+          <a href="#254320" title="scala.collection.immutable.Set[Int]">fol</a> =
+            <span title="scala.collection.immutable.Set[Int]" class="keyword">if</span> (<a href="#254563" title="BaseBerrySethi.this.lang._regexpT">p</a>.<a href="../regexp/Base.scala.html#26805" title="=&gt; Boolean">isNullable</a>) <a href="../../collection/generic/Addable.scala.html#19972" title="(elems: Traversable[Int])scala.collection.immutable.Set[Int]">fol</a> ++ <a href="#254558" title="scala.collection.immutable.Set[Int]">first</a>
+            <span class="keyword">else</span> <a href="#254558" title="scala.collection.immutable.Set[Int]">first</a>
+        }
+        <a href="#254558" title="scala.collection.immutable.Set[Int]">first</a>
+
+      <span title="Nothing" class="keyword">case</span> _ =&gt;
+        <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.IllegalArgumentException" class="keyword">new</span> <a href="../../Predef.scala.html#16170" title="java.lang.IllegalArgumentException">IllegalArgumentException</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;unexpected pattern: &quot;</span> + <a href="#130943" title="BaseBerrySethi.this.lang.RegExp">r</a>.<span title="()java.lang.Class[_]">getClass</span>())
+    }
+  }
+
+  /** returns &quot;Sethi-length&quot; of a pattern, creating the set of position
+   *  along the way.
+   *
+   *  @param r ...
+   */
+  // todo: replace global variable pos with acc
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(r: BaseBerrySethi.this.lang.RegExp)Unit" id="56319">traverse</a>(<a title="BaseBerrySethi.this.lang.RegExp" id="131149">r</a>: <a href="../regexp/Base.scala.html#26757" title="BaseBerrySethi.this.lang.RegExp">RegExp</a>): <a title="Unit" id="1948">Unit</a> = <a href="#131149" title="BaseBerrySethi.this.lang.RegExp">r</a> <span title="Unit" class="keyword">match</span> {
+    // (is tree automaton stuff, more than Berry-Sethi)
+    <span title="Unit" class="keyword">case</span> <a title="BaseBerrySethi.this.lang.Alt" id="254689">x</a>:<a href="../regexp/Base.scala.html#26758" title="BaseBerrySethi.this.lang.Alt">Alt</a> =&gt;  
+      <span class="keyword">val</span> <a title="Iterator[BaseBerrySethi.this.lang._regexpT]" id="254690">it</a> = <a href="#254689" title="BaseBerrySethi.this.lang.Alt">x</a>.<a href="../regexp/Base.scala.html#57122" title="=&gt; BaseBerrySethi.this.lang._regexpT*">rs</a>.<a href="../../collection/generic/IterableTemplate.scala.html#17285" title="=&gt; Iterator[BaseBerrySethi.this.lang._regexpT]">iterator</a>
+      <span title="Unit" class="keyword">while</span> (<a href="#254690" title="Iterator[BaseBerrySethi.this.lang._regexpT]">it</a>.<a href="../../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>) <a href="#56319" title="(r: BaseBerrySethi.this.lang.RegExp)Unit">traverse</a><a href="#254691" title="()Unit">(</a><a href="#254690" title="Iterator[BaseBerrySethi.this.lang._regexpT]">it</a>.<a href="../../collection/Iterator.scala.html#19185" title="()BaseBerrySethi.this.lang._regexpT">next</a>)
+    <span title="Unit" class="keyword">case</span> <a title="BaseBerrySethi.this.lang.Sequ" id="254698">x</a>:<a href="../regexp/Base.scala.html#26761" title="BaseBerrySethi.this.lang.Sequ">Sequ</a> =&gt;
+      <span class="keyword">val</span> <a title="Iterator[BaseBerrySethi.this.lang._regexpT]" id="254699">it</a> = <a href="#254698" title="BaseBerrySethi.this.lang.Sequ">x</a>.<a href="../regexp/Base.scala.html#131501" title="=&gt; BaseBerrySethi.this.lang._regexpT*">rs</a>.<a href="../../collection/generic/IterableTemplate.scala.html#17285" title="=&gt; Iterator[BaseBerrySethi.this.lang._regexpT]">iterator</a>
+      <span title="Unit" class="keyword">while</span> (<a href="#254699" title="Iterator[BaseBerrySethi.this.lang._regexpT]">it</a>.<a href="../../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>) <a href="#56319" title="(r: BaseBerrySethi.this.lang.RegExp)Unit">traverse</a><a href="#254700" title="()Unit">(</a><a href="#254699" title="Iterator[BaseBerrySethi.this.lang._regexpT]">it</a>.<a href="../../collection/Iterator.scala.html#19185" title="()BaseBerrySethi.this.lang._regexpT">next</a>)
+    <span title="Unit" class="keyword">case</span> <a title="BaseBerrySethi.this.lang.Meta" id="254707">x</a>:<a href="../regexp/Base.scala.html#26769" title="BaseBerrySethi.this.lang.Meta">Meta</a> =&gt;
+      <a href="#56319" title="(r: BaseBerrySethi.this.lang.RegExp)Unit">traverse</a>(<a href="#254707" title="BaseBerrySethi.this.lang.Meta">x</a>.<a href="../regexp/Base.scala.html#248973" title="=&gt; BaseBerrySethi.this.lang._regexpT">r</a>)
+    <span title="Unit" class="keyword">case</span> Star(<a title="BaseBerrySethi.this.lang._regexpT" id="254711">t</a>) =&gt;
+      <a href="#56319" title="(r: BaseBerrySethi.this.lang.RegExp)Unit">traverse</a>(<a href="#254711" title="BaseBerrySethi.this.lang._regexpT">t</a>)
+    <span title="Nothing" class="keyword">case</span> _ =&gt;
+      <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.IllegalArgumentException" class="keyword">new</span> <a href="../../Predef.scala.html#16170" title="java.lang.IllegalArgumentException">IllegalArgumentException</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;unexp pattern &quot;</span> + <a href="#131149" title="BaseBerrySethi.this.lang.RegExp">r</a>.<span title="()java.lang.Class[_]">getClass</span>())
+  }
+
+}
+
+        </pre>
+    </body>
+</html>

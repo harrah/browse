@@ -1,105 +1,47 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
         <title>scala/tools/nsc/matching/MatchUtil.scala</title>
+        <script type="text/javascript" src="../../../../jquery-all.js"></script>
         <script type="text/javascript" src="../../../../linked.js"></script>
         <link rel="stylesheet" type="text/css" href="../../../../style.css" title="Style">
     </head>
-    <body onload="initializeLinked()">
+    <body>
         <pre>
-<span class="comment">/* NSC -- new Scala compiler
- */</span>
+/* NSC -- new Scala compiler
+ */
 
-<span class="keyword">package</span> scala.tools.nsc.matching
+<span class="keyword">package</span> scala.tools.nsc
+<span class="keyword">package</span> matching
 
-<span class="comment">/**
+/**
  *  Utility classes, most of which probably belong somewhere else.
- */</span>
-<span class="keyword">object</span> <span class="typed"><span class="type">object scala.tools.nsc.matching.MatchUtil</span><a id="7868">MatchUtil</a></span>
-{
+ */
+<span class="keyword">object</span> <a title="object scala.tools.nsc.matching.MatchUtil" id="19279">MatchUtil</a>
+<a title="ScalaObject" id="959">{</a>
   <span class="keyword">import</span> collection.mutable.ListBuffer
   
-  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Nothing</span><a id="52041">impossible</a></span>:           <span class="typed"><span class="type">Nothing</span><a id="2167">Nothing</a></span> = <span class="typed"><span class="type">(String)Nothing</span><a href="#52042">abort</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;this never happens&quot;)</span><span class="string">&quot;this never happens&quot;</span></span>)
-  <span class="keyword">def</span> <span class="typed"><span class="type">(String)Nothing</span><a id="52042">abort</a></span>(<span class="typed"><span class="type">String</span><a id="115312">msg</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>):   <span class="typed"><span class="type">Nothing</span><a id="2167">Nothing</a></span> = <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.lang.RuntimeException</span><a id="29859" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.RuntimeException</span><span id="5976"><a id="821">RuntimeException</a></span></span>(<span class="typed"><span class="type">String</span><a href="#115312">msg</a></span>)
-  
-  <span class="comment">// def classifyPatString(pat: Tree) = pat match {</span>
-  <span class="comment">//   case _: Alternative                 =&gt; &quot;Alternative&quot;</span>
-  <span class="comment">//   case Typed(Strip2(_: UnApply), _)   =&gt; &quot;Typed&quot;</span>
-  <span class="comment">//   case Ident_Or_Empty()               =&gt; &quot;Ident(_)|EmptyTree&quot;</span>
-  <span class="comment">//   case _: Ident                       =&gt; &quot;Ident&quot;</span>
-  <span class="comment">//   case _: Select                      =&gt; &quot;Select&quot;</span>
-  <span class="comment">//   case UnApply_TypeApply(_, _)        =&gt; &quot;Unapply(...TypeApply...)&quot;</span>
-  <span class="comment">//   case UnApply(_: Apply, _)           =&gt; &quot;Unapply(Apply())&quot;</span>
-  <span class="comment">//   case Apply_Function(_)              =&gt; &quot;Apply !isCaseClass&quot;</span>
-  <span class="comment">//   case Apply_Value(_, _)              =&gt; &quot;Apply_Value&quot;</span>
-  <span class="comment">//   case Apply_CaseClass_NoArgs(_)      =&gt; &quot;Apply_CaseClass_NoArgs&quot;</span>
-  <span class="comment">//   case Apply_CaseClass_WithArgs()     =&gt; &quot;Apply_CaseClass_WithArgs&quot;</span>
-  <span class="comment">//   case _: ArrayValue                  =&gt; &quot;ArrayValue&quot;</span>
-  <span class="comment">//   case _                              =&gt; &quot;Unknown!&quot;        </span>
-  <span class="comment">// }  </span>
-  
-  <span class="keyword">object</span> <span class="typed"><span class="type">object scala.tools.nsc.matching.MatchUtil.Implicits</span><a id="52043">Implicits</a></span> {
-    <span class="keyword">implicit</span> <span class="keyword">def</span> <span class="typed"><span class="type">[T](List[T])scala.tools.nsc.matching.MatchUtil.ListPlus[T]</span><a id="52050">listPlusOps</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="52052">T</a></span>](<span class="typed"><span class="type">List[T]</span><a id="53003">xs</a></span>: <span class="typed"><span class="type">List[T]</span><a id="526">List</a></span>[T]) = <span class="typed"><span class="type">scala.tools.nsc.matching.MatchUtil.ListPlus[T]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.tools.nsc.matching.MatchUtil.ListPlus[T]</span><a href="#52045">ListPlus</a></span>(<span class="typed"><span class="type">List[T]</span><a href="#53003">xs</a></span>)
-  }
-  
-  <span class="comment">// object Flags {</span>
-  <span class="comment">//   import symtab.Flags</span>
-  <span class="comment">//   import symtab.Symbols</span>
-  <span class="comment">// }</span>
-  
-  <span class="keyword">class</span> <span class="typed"><span class="type">class ListPlus[A] extends java.lang.Object with ScalaObject</span><a id="52045">ListPlus</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="52046">A</a></span>](<span class="typed"><span class="type">List[A]</span><span id="53006"><a id="53015">list</a></span></span>: <span class="typed"><span class="type">List[A]</span><a id="526">List</a></span>[A]) {
-    <span class="comment">/** Returns the list without the element at index &lt;code&gt;n&lt;/code&gt;.
-     *  If this list has fewer than &lt;code&gt;n&lt;/code&gt; elements, the same list is returned.
-     *
-     * @param n the index of the element to drop.
-     * @return the list without the &lt;code&gt;n&lt;/code&gt;th element.
-     */</span>
-    <span class="keyword">def</span> <span class="typed"><span class="type">(Int)List[A]</span><a id="53008">dropIndex</a></span>(<span class="typed"><span class="type">Int</span><a id="103828">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>) = <span class="typed"><span class="type">List[A]</span><a href="#53006">list</a></span>.<span class="typed"><span class="type">(Int)List[A]</span><a id="21351">take</a></span>(<span class="typed"><span class="type">Int</span><a href="#103828">n</a></span>) <span class="typed"><span class="type">(List[A])List[A]</span><a href="#103830" id="21339">:::</a></span> <span class="typed"><span class="type">List[A]</span><a href="#53006">list</a></span>.<span class="typed"><span class="type">(Int)List[A]</span><a id="21353">drop</a></span>(<span class="typed"><span class="type">Int</span><a href="#103828">n</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3147">+</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>)
-  
-    <span class="comment">/** Returns a list formed from this list and the specified lists &lt;code&gt;list2&lt;/code&gt; 
-     *  and &lt;code&gt;list3&lt;/code&gt; by associating each element of the first list with
-     *  the elements at the same positions in the other two.
-     *  If any of the lists is shorter than the others, later elements in the other two are ignored.
-     *
-     *  @return     &lt;code&gt;List((a&lt;sub&gt;0&lt;/sub&gt;,b&lt;sub&gt;0&lt;/sub&gt;), ...,
-     *              (a&lt;sub&gt;min(m,n)&lt;/sub&gt;,b&lt;sub&gt;min(m,n)&lt;/sub&gt;))&lt;/code&gt; when
-     *              &lt;code&gt;List(a&lt;sub&gt;0&lt;/sub&gt;, ..., a&lt;sub&gt;m&lt;/sub&gt;)
-     *              zip List(b&lt;sub&gt;0&lt;/sub&gt;, ..., b&lt;sub&gt;n&lt;/sub&gt;)&lt;/code&gt; is invoked.
-     */</span>
-    <span class="keyword">def</span> <span class="typed"><span class="type">[B, C](List[B],List[C])List[(A, B, C)]</span><a id="53009">zip3</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="53012">B</a></span>, <span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="53013">C</a></span>](<span class="typed"><span class="type">List[B]</span><a id="115318">list2</a></span>: <span class="typed"><span class="type">List[B]</span><a id="526">List</a></span>[B], <span class="typed"><span class="type">List[C]</span><a id="115319">list3</a></span>: <span class="typed"><span class="type">List[C]</span><a id="526">List</a></span>[C]): <span class="typed"><span class="type">List[(A, B, C)]</span><a id="526">List</a></span>[(A, B, C)] = {
-      <span class="keyword">val</span> <span class="typed"><span class="type">scala.collection.mutable.ListBuffer[(A, B, C)]</span><a id="115320">b</a></span> = <span class="typed"><span class="type">scala.collection.mutable.ListBuffer[(A, B, C)]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.ListBuffer[(A, B, C)]</span><a id="19925">ListBuffer</a></span>[(A, B, C)]
-      <span class="keyword">var</span> <span class="typed"><span class="type">List[A]</span><a id="115321">xs1</a></span> = <span class="typed"><span class="type">List[A]</span><a href="#53006">list</a></span>
-      <span class="keyword">var</span> <span class="typed"><span class="type">List[B]</span><a id="115322">xs2</a></span> = <span class="typed"><span class="type">List[B]</span><a href="#115318">list2</a></span>
-      <span class="keyword">var</span> <span class="typed"><span class="type">List[C]</span><a id="115323">xs3</a></span> = <span class="typed"><span class="type">List[C]</span><a href="#115319">list3</a></span>
-      <span class="typed"><span class="type">Unit</span><a href="#115324" class="keyword">while</a></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2747">!</a></span><span class="typed"><span class="type">List[A]</span><a href="#115321">xs1</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a id="21645">isEmpty</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2751">&amp;&amp;</a></span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="2747">!</a></span><span class="typed"><span class="type">List[B]</span><a href="#115322">xs2</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a id="21645">isEmpty</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2751">&amp;&amp;</a></span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="2747">!</a></span><span class="typed"><span class="type">List[C]</span><a href="#115323">xs3</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a id="21645">isEmpty</a></span>) {
-        <span class="typed"><span class="type">scala.collection.mutable.ListBuffer[(A, B, C)]</span><a href="#115320">b</a></span> <span class="typed"><span class="type">((A, B, C))Unit</span><a id="33306">+=</a></span> (<span class="typed"><span class="type">(A,B,C)(A, B, C)</span><span id="23590"><a id="449">(</a></span></span><span class="typed"><span class="type">List[A]</span><a href="#115321">xs1</a></span>.<span class="typed"><span class="type">=&gt; A</span><a id="21332">head</a></span>, <span class="typed"><span class="type">List[B]</span><a href="#115322">xs2</a></span>.<span class="typed"><span class="type">=&gt; B</span><a id="21332">head</a></span>, <span class="typed"><span class="type">List[C]</span><a href="#115323">xs3</a></span>.<span class="typed"><span class="type">=&gt; C</span><a id="21332">head</a></span>))
-        <span class="typed"><span class="type">List[A]</span><a href="#115321">xs1</a></span> = <span class="typed"><span class="type">List[A]</span><a href="#115321">xs1</a></span>.<span class="typed"><span class="type">=&gt; List[A]</span><a id="21334">tail</a></span>
-        <span class="typed"><span class="type">List[B]</span><a href="#115322">xs2</a></span> = <span class="typed"><span class="type">List[B]</span><a href="#115322">xs2</a></span>.<span class="typed"><span class="type">=&gt; List[B]</span><a id="21334">tail</a></span>
-        <span class="typed"><span class="type">List[C]</span><a href="#115323">xs3</a></span> = <span class="typed"><span class="type">List[C]</span><a href="#115323">xs3</a></span>.<span class="typed"><span class="type">=&gt; List[C]</span><a id="21334">tail</a></span>
-      }
-      <span class="typed"><span class="type">scala.collection.mutable.ListBuffer[(A, B, C)]</span><a href="#115320">b</a></span>.<span class="typed"><span class="type">=&gt; List[(A, B, C)]</span><a id="33309">toList</a></span>
-    }
-  }
+  <span class="keyword">def</span> <a title="=&gt; Nothing" id="79259">impossible</a>:           <span title="Nothing">Nothing</span> = <a href="#79260" title="(msg: String)Nothing">abort</a>(<span title="java.lang.String(&quot;this never happens&quot;)" class="string">&quot;this never happens&quot;</span>)
+  <span class="keyword">def</span> <a title="(msg: String)Nothing" id="79260">abort</a>(<a title="String" id="783290">msg</a>: <a title="String" id="1605">String</a>):   <span title="Nothing">Nothing</span> = <span title="Nothing" class="keyword">throw</span> <a title="(x$1: java.lang.String)java.lang.RuntimeException" id="29246" class="keyword">new</a> <a title="java.lang.RuntimeException" id="693">RuntimeException</a>(<a href="#783290" title="String">msg</a>)
 
-  <span class="keyword">object</span> <span class="typed"><span class="type">object scala.tools.nsc.matching.MatchUtil.ListPlus</span><a id="52047">ListPlus</a></span> {
-    <span class="comment">/** Transforms a list of triples into a triple of lists.
-     *
-     *  @param xs the list of triples to unzip
-     *  @return a triple of lists.
-     */</span>
-    <span class="keyword">def</span> <span class="typed"><span class="type">[A, B, C](List[(A, B, C)])(List[A], List[B], List[C])</span><a id="52054">unzip3</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="52058">A</a></span>,<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="52059">B</a></span>,<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="52060">C</a></span>](<span class="typed"><span class="type">List[(A, B, C)]</span><a id="52911">xs</a></span>: <span class="typed"><span class="type">List[(A, B, C)]</span><a id="526">List</a></span>[(A,B,C)]): <span class="typed"><span class="type">(List[A], List[B], List[C])</span><a id="448">(</a></span>List[A], List[B], List[C]) = {
-      <span class="keyword">val</span> <span class="typed"><span class="type">scala.collection.mutable.ListBuffer[A]</span><a id="115332">b1</a></span> = <span class="typed"><span class="type">scala.collection.mutable.ListBuffer[A]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.ListBuffer[A]</span><a id="19925">ListBuffer</a></span>[A]
-      <span class="keyword">val</span> <span class="typed"><span class="type">scala.collection.mutable.ListBuffer[B]</span><a id="115333">b2</a></span> = <span class="typed"><span class="type">scala.collection.mutable.ListBuffer[B]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.ListBuffer[B]</span><a id="19925">ListBuffer</a></span>[B]
-      <span class="keyword">val</span> <span class="typed"><span class="type">scala.collection.mutable.ListBuffer[C]</span><a id="115334">b3</a></span> = <span class="typed"><span class="type">scala.collection.mutable.ListBuffer[C]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.ListBuffer[C]</span><a id="19925">ListBuffer</a></span>[C]
-      <span class="keyword">var</span> <span class="typed"><span class="type">List[(A, B, C)]</span><a id="115335">xc</a></span> = <span class="typed"><span class="type">List[(A, B, C)]</span><a href="#52911">xs</a></span>
-      <span class="typed"><span class="type">Unit</span><a href="#115336" class="keyword">while</a></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2747">!</a></span><span class="typed"><span class="type">List[(A, B, C)]</span><a href="#115335">xc</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a id="21645">isEmpty</a></span>) {
-        <span class="typed"><span class="type">scala.collection.mutable.ListBuffer[A]</span><a href="#115332">b1</a></span> <span class="typed"><span class="type">(A)Unit</span><a id="33306">+=</a></span> <span class="typed"><span class="type">List[(A, B, C)]</span><a href="#115335">xc</a></span>.<span class="typed"><span class="type">=&gt; (A, B, C)</span><a id="21332">head</a></span>.<span class="typed"><span class="type">=&gt; A</span><a id="23578">_1</a></span>
-        <span class="typed"><span class="type">scala.collection.mutable.ListBuffer[B]</span><a href="#115333">b2</a></span> <span class="typed"><span class="type">(B)Unit</span><a id="33306">+=</a></span> <span class="typed"><span class="type">List[(A, B, C)]</span><a href="#115335">xc</a></span>.<span class="typed"><span class="type">=&gt; (A, B, C)</span><a id="21332">head</a></span>.<span class="typed"><span class="type">=&gt; B</span><a id="23580">_2</a></span>
-        <span class="typed"><span class="type">scala.collection.mutable.ListBuffer[C]</span><a href="#115334">b3</a></span> <span class="typed"><span class="type">(C)Unit</span><a id="33306">+=</a></span> <span class="typed"><span class="type">List[(A, B, C)]</span><a href="#115335">xc</a></span>.<span class="typed"><span class="type">=&gt; (A, B, C)</span><a id="21332">head</a></span>.<span class="typed"><span class="type">=&gt; C</span><a id="23582">_3</a></span>
-        <span class="typed"><span class="type">List[(A, B, C)]</span><a href="#115335">xc</a></span> = <span class="typed"><span class="type">List[(A, B, C)]</span><a href="#115335">xc</a></span>.<span class="typed"><span class="type">=&gt; List[(A, B, C)]</span><a id="21334">tail</a></span>
-      }
-      <span class="typed"><span class="type">(List[A],List[B],List[C])(List[A], List[B], List[C])</span><span id="23590"><a id="449">(</a></span></span><span class="typed"><span class="type">scala.collection.mutable.ListBuffer[A]</span><a href="#115332">b1</a></span>.<span class="typed"><span class="type">=&gt; List[A]</span><a id="33309">toList</a></span>, <span class="typed"><span class="type">scala.collection.mutable.ListBuffer[B]</span><a href="#115333">b2</a></span>.<span class="typed"><span class="type">=&gt; List[B]</span><a id="33309">toList</a></span>, <span class="typed"><span class="type">scala.collection.mutable.ListBuffer[C]</span><a href="#115334">b3</a></span>.<span class="typed"><span class="type">=&gt; List[C]</span><a id="33309">toList</a></span>)
+  /** Transforms a list of triples into a triple of lists.
+   *
+   *  @param xs the list of triples to unzip
+   *  @return a triple of lists.
+   */
+  <span class="keyword">def</span> <a title="[A, B, C](xs: List[(A, B, C)])(List[A], List[B], List[C])" id="79261">unzip3</a>[<a title="&gt;: Nothing &lt;: Any" id="79265">A</a>,<a title="&gt;: Nothing &lt;: Any" id="79266">B</a>,<a title="&gt;: Nothing &lt;: Any" id="79267">C</a><a id="1">]</a>(<a title="List[(A, B, C)]" id="546986">xs</a>: <a title="List[(A, B, C)]" id="7345">List</a>[(A,B,C)]): <a title="(List[A], List[B], List[C])" id="395">(</a>List[A], List[B], List[C]) = {
+    <span class="keyword">val</span> <a title="scala.collection.mutable.ListBuffer[A]" id="783300">b1</a> = <span title="scala.collection.mutable.ListBuffer[A]" class="keyword">new</span> <span title="scala.collection.mutable.ListBuffer[A]">ListBuffer</span>[A]
+    <span class="keyword">val</span> <a title="scala.collection.mutable.ListBuffer[B]" id="783301">b2</a> = <span title="scala.collection.mutable.ListBuffer[B]" class="keyword">new</span> <span title="scala.collection.mutable.ListBuffer[B]">ListBuffer</span>[B]
+    <span class="keyword">val</span> <a title="scala.collection.mutable.ListBuffer[C]" id="783302">b3</a> = <span title="scala.collection.mutable.ListBuffer[C]" class="keyword">new</span> <span title="scala.collection.mutable.ListBuffer[C]">ListBuffer</span>[C]
+    <span class="keyword">var</span> <a title="List[(A, B, C)]" id="783303">xc</a> = <a href="#546986" title="List[(A, B, C)]">xs</a>
+    <span title="Unit" class="keyword">while</span> (<a title="=&gt; Boolean" id="2205">!</a><a href="#783303" title="List[(A, B, C)]">xc</a>.<a title="=&gt; Boolean" id="25434">isEmpty</a>) <a href="#783304" title="()Unit">{</a>
+      <a href="#783300" title="(x: A)b1.type">b1</a> += <a href="#783303" title="List[(A, B, C)]">xc</a>.<span title="=&gt; (A, B, C)">head</span>.<a title="=&gt; A" id="32686">_1</a>
+      <a href="#783301" title="(x: B)b2.type">b2</a> += <a href="#783303" title="List[(A, B, C)]">xc</a>.<span title="=&gt; (A, B, C)">head</span>.<a title="=&gt; B" id="32688">_2</a>
+      <a href="#783302" title="(x: C)b3.type">b3</a> += <a href="#783303" title="List[(A, B, C)]">xc</a>.<span title="=&gt; (A, B, C)">head</span>.<a title="=&gt; C" id="32690">_3</a>
+      <a href="#783303" title="List[(A, B, C)]">xc</a> = <a href="#783303" title="List[(A, B, C)]">xc</a>.<a title="=&gt; List[(A, B, C)]" id="25318">tail</a>
     }
+    <a title="(_1: List[A],_2: List[B],_3: List[C])(List[A], List[B], List[C])" id="396">(</a><a href="#783300" title="scala.collection.mutable.ListBuffer[A]">b1</a>.<span title="=&gt; List[A]">toList</span>, <a href="#783301" title="scala.collection.mutable.ListBuffer[B]">b2</a>.<span title="=&gt; List[B]">toList</span>, <a href="#783302" title="scala.collection.mutable.ListBuffer[C]">b3</a>.<span title="=&gt; List[C]">toList</span>)
   }
 }
 

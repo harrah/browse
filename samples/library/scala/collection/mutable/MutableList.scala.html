@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/mutable/MutableList.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |                                         **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: MutableList.scala 18387 2009-07-24 15:28:37Z odersky $
+
+
+<span class="keyword">package</span> scala.collection.mutable
+
+<span class="keyword">import</span> scala.collection.generic._
+// import immutable.{List, Nil, ::}
+
+//import Predef.NoSuchElementException
+
+/** This class is used internally to represent mutable lists. It is the
+ *  basis for the implementation of the classes
+ *  &lt;code&gt;Stack&lt;/code&gt;, and &lt;code&gt;Queue&lt;/code&gt;.
+ *  !!! todo: convert to LinkedListBuffer?
+ *  @author  Matthias Zenger
+ *  @author  Martin Odersky
+ *  @version 2.8
+ */
+<span class="keyword">class</span> <a title="class MutableList[A] extends java.lang.Object with scala.collection.mutable.LinearSequence[A] with scala.collection.generic.LinearSequenceTemplate[A,scala.collection.mutable.MutableList[A]] with scala.collection.generic.Builder[A,scala.collection.mutable.MutableList[A]] with ScalaObject" id="7929">MutableList</a>[<a title="&gt;: Nothing &lt;: Any" id="16090">A</a><a id="1">]</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="LinearSequence.scala.html#7668" title="scala.collection.mutable.LinearSequence[A]">LinearSequence</a>[A] <span class="keyword">with</span> <a href="../generic/LinearSequenceTemplate.scala.html#10703" title="scala.collection.generic.LinearSequenceTemplate[A,scala.collection.mutable.MutableList[A]]">LinearSequenceTemplate</a>[A, MutableList[A]] <span class="keyword">with</span> <a href="../generic/Builder.scala.html#10028" title="scala.collection.generic.Builder[A,scala.collection.mutable.MutableList[A]]">Builder</a>[A, MutableList[A]] {
+
+  <span class="keyword">override</span> <span class="keyword">protected</span>[<span class="keyword">this</span>] <span class="keyword">def</span> <a title="=&gt; scala.collection.mutable.MutableList[A]" id="19529">newBuilder</a> = <span title="scala.collection.mutable.MutableList[A]" class="keyword">new</span> <a href="#7929" title="scala.collection.mutable.MutableList[A]">MutableList</a>[A]
+
+  <span class="keyword">protected</span> <span class="keyword">var</span> <a title="scala.collection.mutable.LinkedList[A]" id="19531">first0</a>: <a href="LinkedList.scala.html#7839" title="scala.collection.mutable.LinkedList[A]">LinkedList</a>[A] = <span title="Null(null)" class="keyword">null</span>
+  <span class="keyword">protected</span> <span class="keyword">var</span> <a title="scala.collection.mutable.LinkedList[A]" id="19534">last0</a>: <a href="LinkedList.scala.html#7839" title="scala.collection.mutable.LinkedList[A]">LinkedList</a>[A] = <span title="Null(null)" class="keyword">null</span>
+  <span class="keyword">protected</span> <span class="keyword">var</span> <a title="Int" id="19537">len</a>: <span title="Int">Int</span> = <span title="Int(0)" class="int">0</span>
+
+  /** Is the list empty?
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Boolean" id="19539">isEmpty</a> = <a href="#19537" title="(x$1: Int)Boolean">len</a> == <span title="Int(0)" class="int">0</span>
+
+  /** Returns the first element in this list
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; A" id="19540">head</a>: <a href="#16090" title="A">A</a> = <a href="#19531" title="=&gt; scala.collection.mutable.LinkedList[A]">first0</a>.<a href="../generic/LinkedListTemplate.scala.html#19648" title="=&gt; A">head</a>
+
+  /** Returns the rest of this list
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; scala.collection.mutable.MutableList[A]" id="19541">tail</a>: <a href="#7929" title="scala.collection.mutable.MutableList[A]">MutableList</a>[A] = {
+    <span class="keyword">val</span> <a title="scala.collection.mutable.MutableList[A]" id="230810">tl</a> = <span title="scala.collection.mutable.MutableList[A]" class="keyword">new</span> <a href="#7929" title="scala.collection.mutable.MutableList[A]">MutableList</a>[A]
+    <span title="Unit" class="keyword">if</span> (<a href="#19531" title="(x$1: AnyRef)Boolean" id="6533">first0</a> ne <a href="#19534" title="=&gt; scala.collection.mutable.LinkedList[A]">last0</a>) {
+      <a href="#230810" title="scala.collection.mutable.MutableList[A]">tl</a>.<a href="#19531" title="(x$1: scala.collection.mutable.LinkedList[A])Unit">first0</a> = <a href="#19531" title="=&gt; scala.collection.mutable.LinkedList[A]">first0</a>.<a href="../generic/LinkedListTemplate.scala.html#19649" title="=&gt; scala.collection.mutable.LinkedList[A]">tail</a>
+      <a href="#230810" title="scala.collection.mutable.MutableList[A]">tl</a>.<a href="#19534" title="(x$1: scala.collection.mutable.LinkedList[A])Unit">last0</a> = <a href="#19534" title="=&gt; scala.collection.mutable.LinkedList[A]">last0</a>
+    }
+    <a href="#230810" title="scala.collection.mutable.MutableList[A]">tl</a>.<a href="#19537" title="(x$1: Int)Unit">len</a> = <a href="#19537" title="(x$1: Int)Int" id="2964">len</a> - <span title="Int(1)" class="int">1</span>
+    <a href="#230810" title="scala.collection.mutable.MutableList[A]">tl</a>
+  }
+
+  /** Returns the length of this list.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Int" id="19542">length</a>: <span title="Int">Int</span> = <a href="#19537" title="=&gt; Int">len</a>
+
+  /** Returns the &lt;code&gt;n&lt;/code&gt;th element of this list.
+   *  @throws IndexOutofBoundsException if index does not exist.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(n: Int)A" id="19543">apply</a>(<a title="Int" id="230843">n</a>: <span title="Int">Int</span>): <a href="#16090" title="A">A</a> = <a href="#19531" title="=&gt; scala.collection.mutable.LinkedList[A]">first0</a>.<a href="../generic/LinkedListTemplate.scala.html#19656" title="(n: Int)A">apply</a>(<a href="#230843" title="Int">n</a>)
+
+  /** Updates the &lt;code&gt;n&lt;/code&gt;th element of this list to a new value.
+   *  @throws IndexOutofBoundsException if index does not exist.
+   */
+  <span class="keyword">def</span> <a title="(n: Int,x: A)Unit" id="19544">update</a>(<a title="Int" id="230850">n</a>: <span title="Int">Int</span>, <a title="A" id="230851">x</a>: <a href="#16090" title="A">A</a>): <span title="Unit">Unit</span> = <a href="#19531" title="=&gt; scala.collection.mutable.LinkedList[A]">first0</a>.<a href="../generic/LinkedListTemplate.scala.html#19657" title="(n: Int,x: A)Unit">update</a>(<a href="#230850" title="Int">n</a>, <a href="#230851" title="A">x</a>)
+
+  /** Returns the &lt;code&gt;n&lt;/code&gt;th element of this list or &lt;code&gt;None&lt;/code&gt;
+   *  if index does not exist.
+   */
+  <span class="keyword">def</span> <a title="(n: Int)Option[A]" id="19545">get</a>(<a title="Int" id="230864">n</a>: <span title="Int">Int</span>): <a href="../../Option.scala.html#777" title="Option[A]">Option</a>[A] = <a href="#19531" title="=&gt; scala.collection.mutable.LinkedList[A]">first0</a>.<a href="../generic/LinkedListTemplate.scala.html#19658" title="(n: Int)Option[A]">get</a>(<a href="#230864" title="Int">n</a>)
+
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(elem: A)Unit" id="19546">prependElem</a>(<a title="A" id="230868">elem</a>: <a href="#16090" title="A">A</a>): <span title="Unit">Unit</span> = {
+    <a href="#19531" title="(x$1: scala.collection.mutable.LinkedList[A])Unit">first0</a> = <span title="scala.collection.mutable.LinkedList[A]" class="keyword">new</span> <a href="LinkedList.scala.html#7839" title="scala.collection.mutable.LinkedList[A]">LinkedList</a>[A](<a href="#230868" title="A">elem</a>, <a href="#19531" title="=&gt; scala.collection.mutable.LinkedList[A]">first0</a>)
+    <span title="Unit" class="keyword">if</span> (<a href="#19537" title="(x$1: Int)Boolean">len</a> == <span title="Int(0)" class="int">0</span>)
+      <a href="#19534" title="(x$1: scala.collection.mutable.LinkedList[A])Unit">last0</a> = <a href="#19531" title="=&gt; scala.collection.mutable.LinkedList[A]">first0</a>
+    <a href="#19537" title="(x$1: Int)Unit">len</a> = <a href="#19537" title="(x$1: Int)Int">len</a> + <span title="Int(1)" class="int">1</span>
+  }
+
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(elem: A)Unit" id="19547">appendElem</a>(<a title="A" id="230909">elem</a>: <a href="#16090" title="A">A</a>): <span title="Unit">Unit</span> =
+    <span title="Unit" class="keyword">if</span> (<a href="#19537" title="(x$1: Int)Boolean">len</a> == <span title="Int(0)" class="int">0</span>)
+      <a href="#19546" title="(elem: A)Unit">prependElem</a>(<a href="#230909" title="A">elem</a>)
+    <span class="keyword">else</span> {
+      <a href="#19534" title="=&gt; scala.collection.mutable.LinkedList[A]">last0</a>.<a href="../generic/LinkedListTemplate.scala.html#19644" title="(x$1: scala.collection.mutable.LinkedList[A])Unit">next</a> = <span title="scala.collection.mutable.LinkedList[A]" class="keyword">new</span> <a href="LinkedList.scala.html#7839" title="scala.collection.mutable.LinkedList[A]">LinkedList</a>[A](<a href="#230909" title="A">elem</a>, <span title="Null(null)" class="keyword">null</span>)
+      <a href="#19534" title="(x$1: scala.collection.mutable.LinkedList[A])Unit">last0</a> = <a href="#19534" title="=&gt; scala.collection.mutable.LinkedList[A]">last0</a>.<a href="../generic/LinkedListTemplate.scala.html#19643" title="=&gt; scala.collection.mutable.LinkedList[A]">next</a>
+      <a href="#19537" title="(x$1: Int)Unit">len</a> = <a href="#19537" title="(x$1: Int)Int">len</a> + <span title="Int(1)" class="int">1</span>
+    }
+
+  @deprecated(<span class="string">&quot;use clear instead&quot;</span>) <span class="keyword">def</span> <a title="()Unit" id="19548">reset</a>() { <a href="#19554" title="()Unit">clear</a>() }
+
+  /** Returns an iterator over all elements of this list.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Iterator[A]" id="19549">iterator</a>: <a href="../Iterator.scala.html#4274" title="Iterator[A]">Iterator</a>[A] =
+    <span title="Iterator[A]" class="keyword">if</span> (<a href="#19531" title="(x$1: AnyRef)Boolean">first0</a> eq <span title="Null(null)" class="keyword">null</span>) <a href="../../package.scala.html#14773" title="=&gt; collection.Iterator.type">Iterator</a>.<a href="../Iterator.scala.html#21409" title="=&gt; &lt;refinement&gt; extends java.lang.Object with Iterator[Nothing]">empty</a> <span class="keyword">else</span> <a href="#19531" title="=&gt; scala.collection.mutable.LinkedList[A]">first0</a>.<a href="../generic/LinkedListTemplate.scala.html#19659" title="=&gt; Iterator[A]">iterator</a>
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; A" id="19550">last</a> = <a href="#19534" title="=&gt; scala.collection.mutable.LinkedList[A]">last0</a>.<a href="../generic/LinkedListTemplate.scala.html#19640" title="=&gt; A">elem</a>
+
+  /** Returns an instance of &lt;code&gt;scala.List&lt;/code&gt; containing the same
+   *  sequence of elements.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; List[A]" id="19551">toList</a>: <a href="../immutable/List.scala.html#8973" title="List[A]">List</a>[A] = <span title="List[A]" class="keyword">if</span> (<a href="#19531" title="(x$1: AnyRef)Boolean">first0</a> eq <span title="Null(null)" class="keyword">null</span>) <a href="../immutable/List.scala.html#9259" title="object Nil">Nil</a> <span class="keyword">else</span> <a href="#19531" title="=&gt; scala.collection.mutable.LinkedList[A]">first0</a>.<a href="../generic/TraversableTemplate.scala.html#17236" title="=&gt; List[A]">toList</a>
+
+  /** Returns the current list of elements as a linked List
+   *  sequence of elements.
+   */
+  <span class="keyword">private</span>[mutable] <span class="keyword">def</span> <a title="=&gt; scala.collection.mutable.LinkedList[A]" id="19552">toLinkedList</a>: <a href="LinkedList.scala.html#7839" title="scala.collection.mutable.LinkedList[A]">LinkedList</a>[A] = <a href="#19531" title="=&gt; scala.collection.mutable.LinkedList[A]">first0</a>
+
+  /** Appends a single element to this buffer. This takes constant time.
+   *
+   *  @param elem  the element to append.
+   */
+  <span class="keyword">def</span> <a title="(elem: A)MutableList.this.type" id="19553">+=</a>(<a title="A" id="50456">elem</a>: <a href="#16090" title="A">A</a>): <span class="keyword">this</span>.<span class="keyword">type</span> = { <a href="#19547" title="(elem: A)Unit">appendElem</a>(<a href="#50456" title="A">elem</a>); <a href="#7929" title="MutableList.this.type" class="keyword">this</a> }
+
+  <span class="keyword">def</span> <a title="()Unit" id="19554">clear</a>() {
+    <a href="#19531" title="(x$1: scala.collection.mutable.LinkedList[A])Unit">first0</a> = <span title="Null(null)" class="keyword">null</span>
+    <a href="#19534" title="(x$1: scala.collection.mutable.LinkedList[A])Unit">last0</a> = <span title="Null(null)" class="keyword">null</span>
+    <a href="#19537" title="(x$1: Int)Unit">len</a> = <span title="Int(0)" class="int">0</span>
+  }
+
+  <span class="keyword">def</span> <a title="()scala.collection.mutable.MutableList[A]" id="19555">result</a> = <a href="#7929" title="scala.collection.mutable.MutableList[A]" class="keyword">this</a>
+}
+
+        </pre>
+    </body>
+</html>

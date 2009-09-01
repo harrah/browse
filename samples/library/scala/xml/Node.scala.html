@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/xml/Node.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: Node.scala 18210 2009-07-05 14:46:37Z extempore $
+
+
+<span class="keyword">package</span> scala.xml
+
+/**
+ * This object provides methods ...
+ *
+ * @author  Burak Emir
+ * @version 1.0
+ */
+<span class="keyword">object</span> <a title="object scala.xml.Node" id="8655">Node</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+
+  /** the constant empty attribute sequence */
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; scala.xml.MetaData" id="56498">NoAttributes</a>: <a href="MetaData.scala.html#8585" title="scala.xml.MetaData">MetaData</a> = <a href="Null.scala.html#8526" title="object scala.xml.Null">Null</a>
+
+  /** the empty namespace */
+  <span class="keyword">val</span> <a title="java.lang.String" id="56499">EmptyNamespace</a> = <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>
+
+  <span class="keyword">def</span> <a title="(n: scala.xml.Node)Some[(String, scala.xml.MetaData, Seq[scala.xml.Node])]" id="56501">unapplySeq</a>(<a title="scala.xml.Node" id="242179">n</a>: <a href="#8654" title="scala.xml.Node">Node</a>) = <a href="../Option.scala.html#19800" title="(x: (String, scala.xml.MetaData, Seq[scala.xml.Node]))Some[(String, scala.xml.MetaData, Seq[scala.xml.Node])]">Some</a>(<a href="../Tuple3.scala.html#19124" title="(_1: String,_2: scala.xml.MetaData,_3: Seq[scala.xml.Node])(String, scala.xml.MetaData, Seq[scala.xml.Node])">(</a><a href="#242179" title="scala.xml.Node">n</a>.<a href="#20992" title="=&gt; String">label</a>, <a href="#242179" title="scala.xml.Node">n</a>.<a href="#21001" title="=&gt; scala.xml.MetaData">attributes</a>, <a href="#242179" title="scala.xml.Node">n</a>.<a href="#21002" title="=&gt; Seq[scala.xml.Node]">child</a>))
+
+}
+
+/**
+ * An abstract class representing XML with nodes of a labelled tree.
+ * This class contains an implementation of a subset of XPath for navigation.
+ *
+ * @author  Burak Emir and others
+ * @version 1.1
+ */
+<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class Node extends scala.xml.NodeSeq with ScalaObject" id="8654">Node</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="NodeSeq.scala.html#8522" title="scala.xml.NodeSeq">NodeSeq</a> {
+
+  /** prefix of this node */
+  <span class="keyword">def</span> <a title="=&gt; String" id="20991">prefix</a>: <span title="String">String</span> = <span title="Null(null)" class="keyword">null</span>
+
+  /** label of this node. I.e. &quot;foo&quot; for &amp;lt;foo/&amp;gt;) */
+  <span class="keyword">def</span> <a title="=&gt; String" id="20992">label</a>: <span title="String">String</span>
+
+  /** used internally. Atom/Molecule = -1 PI = -2 Comment = -3 EntityRef = -5
+   */ 
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="20993">isAtom</a> = <a href="#8654" title="Node.this.type" class="keyword">this</a>.<a title="[T0]Boolean" id="3618">isInstanceOf</a><span title="Boolean">[</span><a href="Atom.scala.html#8462" title="scala.xml.Atom[_]">Atom</a>[_]]
+  
+  /** The logic formerly found in typeTag$, as best I could infer it. */
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="20994">doCollectNamespaces</a> = <span title="Boolean(true)" class="keyword">true</span>  // if (tag &gt;= 0) DO collect namespaces
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="20995">doTransform</a>         = <span title="Boolean(true)" class="keyword">true</span>  // if (tag &lt; 0) DO NOT transform
+
+  /**
+   *  method returning the namespace bindings of this node. by default, this
+   *  is TopScope, which means there are no namespace bindings except the
+   *  predefined one for &quot;xml&quot;.
+   */
+  <span class="keyword">def</span> <a title="=&gt; scala.xml.NamespaceBinding" id="20996">scope</a>: <a href="NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a> = <a href="TopScope.scala.html#8562" title="object scala.xml.TopScope">TopScope</a>
+
+  /**
+   *  convenience, same as &lt;code&gt;getNamespace(this.prefix)&lt;/code&gt;
+   */
+  <span class="keyword">def</span> <a title="=&gt; String" id="20997">namespace</a> = <a href="#20998" title="(pre: String)String">getNamespace</a>(<a href="#8654" title="Node.this.type" class="keyword">this</a>.<a href="#20991" title="=&gt; String">prefix</a>)
+
+  /**
+   * Convenience method, same as &lt;code&gt;scope.getURI(pre)&lt;/code&gt; but additionally
+   * checks if scope is &lt;code&gt;null&lt;/code&gt;.
+   *
+   * @param pre the prefix whose namespace name we would like to obtain
+   * @return    the namespace if &lt;code&gt;scope != null&lt;/code&gt; and prefix was
+   *            found, else &lt;code&gt;null&lt;/code&gt;
+   */
+  <span class="keyword">def</span> <a title="(pre: String)String" id="20998">getNamespace</a>(<a title="String" id="56436">pre</a>: <span title="String">String</span>): <span title="String">String</span> = <span title="String" class="keyword">if</span> (<a href="#20996" title="(x$1: AnyRef)Boolean" id="6531">scope</a> eq <span title="Null(null)" class="keyword">null</span>) <span title="Null(null)" class="keyword">null</span> <span class="keyword">else</span> <a href="#20996" title="=&gt; scala.xml.NamespaceBinding">scope</a>.<a href="NamespaceBinding.scala.html#32363" title="(_prefix: String)String">getURI</a>(<a href="#56436" title="String">pre</a>)
+
+  /**
+   * Convenience method, looks up an unprefixed attribute in attributes of this node.
+   * Same as &lt;code&gt;attributes.getValue(key)&lt;/code&gt;
+   *
+   * @param  key of queried attribute.
+   * @return value of &lt;code&gt;UnprefixedAttribute&lt;/code&gt; with given key
+   *         in attributes, if it exists, otherwise &lt;code&gt;null&lt;/code&gt;.
+   */
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(key: String)Option[Seq[scala.xml.Node]]" id="20999">attribute</a>(<a title="String" id="242205">key</a>: <span title="String">String</span>): <a href="../Option.scala.html#777" title="Option[Seq[scala.xml.Node]]">Option</a>[Seq[Node]] = <a href="#21001" title="=&gt; scala.xml.MetaData">attributes</a>.<a href="MetaData.scala.html#31886" title="(key: String)Option[Seq[scala.xml.Node]]">get</a>(<a href="#242205" title="String">key</a>)
+
+  /**
+   * Convenience method, looks up a prefixed attribute in attributes of this node.
+   * Same as &lt;code&gt;attributes.getValue(uri, this, key)&lt;/code&gt;
+   *
+   * @param  uri namespace of queried attribute (may not be null).
+   * @param  key of queried attribute.
+   * @return value of &lt;code&gt;PrefixedAttribute&lt;/code&gt; with given namespace
+   *         and given key, otherwise &lt;code&gt;null&lt;/code&gt;.
+   */
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(uri: String,key: String)Option[Seq[scala.xml.Node]]" id="21000">attribute</a>(<a title="String" id="242211">uri</a>: <span title="String">String</span>, <a title="String" id="242212">key</a>: <span title="String">String</span>): <a href="../Option.scala.html#777" title="Option[Seq[scala.xml.Node]]">Option</a>[Seq[Node]] =
+    <a href="#21001" title="=&gt; scala.xml.MetaData">attributes</a>.<a href="MetaData.scala.html#31887" title="(uri: String,owner: scala.xml.Node,key: String)Option[Seq[scala.xml.Node]]">get</a>(<a href="#242211" title="String">uri</a>, <a href="#8654" title="scala.xml.Node" class="keyword">this</a>, <a href="#242212" title="String">key</a>)
+
+  /**
+   * Returns attribute meaning all attributes of this node, prefixed and
+   * unprefixed, in no particular order. In class &lt;code&gt;Node&lt;/code&gt;, this
+   * defaults to &lt;code&gt;Null&lt;/code&gt; (the empty attribute list).
+   *
+   * @return all attributes of this node
+   */
+  <span class="keyword">def</span> <a title="=&gt; scala.xml.MetaData" id="21001">attributes</a>: <a href="MetaData.scala.html#8585" title="scala.xml.MetaData">MetaData</a> = <a href="Null.scala.html#8526" title="object scala.xml.Null">Null</a>
+
+  /**
+   * Returns child axis i.e. all children of this node.
+   *
+   * @return all children of this node
+   */
+  <span class="keyword">def</span> <a title="=&gt; Seq[scala.xml.Node]" id="21002">child</a>: <a href="../collection/Sequence.scala.html#4346" title="Seq[scala.xml.Node]">Seq</a>[Node]
+
+  /**
+   * Descendant axis (all descendants of this node, not including node itself) 
+   * includes all text nodes, element nodes, comments and processing instructions.
+   */
+  <span class="keyword">def</span> <a title="=&gt; List[scala.xml.Node]" id="21003">descendant</a>: <a href="../collection/immutable/List.scala.html#8973" title="List[scala.xml.Node]">List</a>[Node] =
+    <a href="#21002" title="=&gt; Seq[scala.xml.Node]">child</a>.<a href="../collection/generic/TraversableTemplate.scala.html#17236" title="=&gt; List[scala.xml.Node]">toList</a>.<a href="../collection/generic/TraversableTemplate.scala.html#17166" title="(f: (scala.xml.Node) =&gt; Traversable[scala.xml.Node])(implicit bf: scala.collection.generic.BuilderFactory[scala.xml.Node,List[scala.xml.Node],List[scala.xml.Node]])List[scala.xml.Node]">flatMap</a> <a href="../collection/immutable/List.scala.html#17526" title="scala.collection.generic.BuilderFactory[scala.xml.Node,List[scala.xml.Node],List#Coll]">{</a> <a title="scala.xml.Node" id="242242">x</a> =&gt; <a href="#242242" title="scala.xml.Node">x</a><a href="#242243" title="scala.xml.Node">::</a><a href="#242242" title="scala.xml.Node">x</a>.<a href="../collection/immutable/List.scala.html#17630" title="(x: scala.xml.Node)List[scala.xml.Node]">descendant</a> }
+
+  /**
+   * Descendant axis (all descendants of this node, including thisa node) 
+   * includes all text nodes, element nodes, comments and processing instructions.
+   */
+  <span class="keyword">def</span> <a title="=&gt; List[scala.xml.Node]" id="21004">descendant_or_self</a>: <a href="../collection/immutable/List.scala.html#8973" title="List[scala.xml.Node]">List</a>[Node] = <a href="#8654" title="scala.xml.Node" class="keyword">this</a> <a href="#242279" title="scala.xml.Node">::</a> <a href="../collection/immutable/List.scala.html#17630" title="(x: scala.xml.Node)List[scala.xml.Node]">descendant</a>
+
+  /**
+   * Returns true if x is structurally equal to this node. Compares prefix,
+   * label, attributes and children.
+   *
+   * @param x ...
+   * @return  &lt;code&gt;true&lt;/code&gt; if ..
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(x: Any)Boolean" id="21005">equals</a>(<a title="Any" id="26520">x</a>: <a title="Any" id="47">Any</a>): <span title="Boolean">Boolean</span> = <a href="#26520" title="Any">x</a> <span title="Boolean" class="keyword">match</span> {
+    <span title="Boolean(false)" class="keyword">case</span> <a title="scala.xml.Group" id="242287">g</a>: <a href="Group.scala.html#8435" title="scala.xml.Group">Group</a>   =&gt; <span title="Boolean(false)" class="keyword">false</span>
+    <span title="Boolean" class="keyword">case</span> <a title="scala.xml.Node" id="242288">that</a>: <a href="#8654" title="scala.xml.Node">Node</a> =&gt;
+      <a href="#8654" title="Node.this.type" class="keyword">this</a>.<a href="#20991" title="(x$1: AnyRef)Boolean">prefix</a> <span title="(x$1: Boolean)Boolean">==</span> <a href="#242288" title="scala.xml.Node">that</a>.<a href="#20991" title="=&gt; String">prefix</a> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span>
+      <a href="#8654" title="Node.this.type" class="keyword">this</a>.<a href="#20992" title="(x$1: AnyRef)Boolean">label</a> == <a href="#242288" title="scala.xml.Node">that</a>.<a href="#20992" title="=&gt; String">label</a> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> 
+      <a href="#8654" title="Node.this.type" class="keyword">this</a>.<a href="#21001" title="(x$1: AnyRef)Boolean">attributes</a> == <a href="#242288" title="scala.xml.Node">that</a>.<a href="#21001" title="=&gt; scala.xml.MetaData">attributes</a> &amp;&amp;
+      <a href="#21006" title="(that: scala.xml.Node)Boolean">equalChildren</a>(<a href="#242288" title="scala.xml.Node">that</a>)
+    <span title="Boolean(false)" class="keyword">case</span> _          =&gt; <span title="Boolean(false)" class="keyword">false</span>
+  }
+
+  // children comparison has to be done carefully - see bug #1773.
+  // It would conceivably be a better idea for a scala block which
+  // generates the empty string not to generate a child rather than
+  // our having to filter it later, but that approach would be more
+  // delicate to implement.    
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(that: scala.xml.Node)Boolean" id="21006">equalChildren</a>(<a title="scala.xml.Node" id="242314">that</a>: <a href="#8654" title="scala.xml.Node">Node</a>) = {
+    <span class="keyword">def</span> <a title="(xs: Seq[scala.xml.Node])Sequence[scala.xml.Node]" id="242317">noEmpties</a>(<a title="Seq[scala.xml.Node]" id="242318">xs</a>: <a href="../collection/Sequence.scala.html#4346" title="Seq[scala.xml.Node]">Seq</a>[Node]) = <a href="../collection/generic/TraversableTemplate.scala.html#17171" title="(p: (scala.xml.Node) =&gt; Boolean)Sequence[scala.xml.Node]">xs</a> filter (<a href="#242321" title="scala.xml.Node">_</a>.<a href="#21010" title="()String">toString</a><span title="(x$1: AnyRef)Boolean">(</span>) != <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+    <a href="#242317" title="(xs: Seq[scala.xml.Node])Sequence[scala.xml.Node]">noEmpties</a><a href="../collection/generic/IterableTemplate.scala.html#17321" title="(that: Iterable[scala.xml.Node])Boolean">(</a><a href="#8654" title="Node.this.type" class="keyword">this</a>.<a href="#21002" title="=&gt; Seq[scala.xml.Node]">child</a>) sameElements <a href="#242317" title="(xs: Seq[scala.xml.Node])Sequence[scala.xml.Node]">noEmpties</a>(<a href="#242314" title="scala.xml.Node">that</a>.<a href="#21002" title="=&gt; Seq[scala.xml.Node]">child</a>)
+  }
+
+  /** &lt;p&gt;
+   *    Returns a hashcode. The default implementation here calls only
+   *    super.hashcode (which is the same as for objects). A more useful
+   *    implementation can be invoked by calling 
+   *  &lt;code&gt;Utility.hashCode(pre, label, attributes.hashCode(), child)&lt;/code&gt;.
+   *  &lt;/p&gt;
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Int" id="21007">hashCode</a>(): <a title="Int" id="2175">Int</a> = <span class="keyword">super</span>.<a href="../collection/immutable/Sequence.scala.html#17621" title="()Int">hashCode</a>
+
+  // implementations of NodeSeq methods
+
+  /**
+   *  returns a sequence consisting of only this node
+   */
+  <span class="keyword">def</span> <a title="=&gt; Seq[scala.xml.Node]" id="21008">theSeq</a>: <a href="../collection/Sequence.scala.html#4346" title="Seq[scala.xml.Node]">Seq</a>[Node] = <a href="#8654" title="scala.xml.Node" class="keyword">this</a> <a href="#242351" title="scala.xml.Node">::</a> <a href="../collection/immutable/List.scala.html#17630" title="(x: scala.xml.Node)List[scala.xml.Node]">Nil</a>
+
+  /**
+   * String representation of this node
+   *
+   * @param stripComment if true, strips comment nodes from result
+   * @return ...
+   */
+  <span class="keyword">def</span> <a title="(stripComments: Boolean)String" id="21009">buildString</a>(<a title="Boolean" id="26564">stripComments</a>: <span title="Boolean">Boolean</span>): <span title="String">String</span> =
+    <a href="Utility.scala.html#8724" title="object scala.xml.Utility">Utility</a>.<a href="Utility.scala.html#47585" title="scala.xml.NamespaceBinding" id="242366">toXML</a>(<a href="#8654" title="scala.xml.Node" id="242360" class="keyword">this</a>, stripComments = <a href="#26564" title="Boolean" id="242361">stripComments</a>).<a href="../collection/mutable/StringBuilder.scala.html#23409" title="()String">toString</a>
+
+  /**
+   * Same as &lt;code&gt;toString(false)&lt;/code&gt;.
+   *
+   * @see &lt;code&gt;&lt;a href=&quot;#toString&quot;&gt;toString(Boolean)&lt;/a&gt;&lt;/code&gt;
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="21010">toString</a>(): <span title="String">String</span> = <a href="#21009" title="(stripComments: Boolean)String">buildString</a>(<span title="Boolean(false)" class="keyword">false</span>)
+
+  /**
+   * Appends qualified name of this node to &lt;code&gt;StringBuilder&lt;/code&gt;.
+   *
+   * @param sb ...
+   * @return   ...
+   */
+  <span class="keyword">def</span> <a title="(sb: StringBuilder)StringBuilder" id="21011">nameToString</a>(<a title="StringBuilder" id="133908">sb</a>: <a href="../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a>): <a href="../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a> = {
+    <span title="Any" class="keyword">if</span> (<span title="(x$1: AnyRef)Boolean" class="keyword">null</span> != <a href="#20991" title="=&gt; String">prefix</a>) {
+      <a href="#133908" title="StringBuilder">sb</a>.<a href="../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">append</a>(<a href="#20991" title="=&gt; String">prefix</a>)
+      <a href="#133908" title="StringBuilder">sb</a>.<a href="../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<span title="Char(':')" class="char">':'</span>)
+    }
+    <a href="#133908" title="StringBuilder">sb</a>.<a href="../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">append</a>(<a href="#20992" title="=&gt; String">label</a>)
+  }
+
+  /**
+   * Returns a type symbol (e.g. DTD, XSD), default &lt;code&gt;null&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="()scala.xml.TypeSymbol" id="21012">xmlType</a>(): <a href="TypeSymbol.scala.html#8762" title="scala.xml.TypeSymbol">TypeSymbol</a> = <span title="Null(null)" class="keyword">null</span>
+
+  /**
+   * Returns a text representation of this node. Note that this is not equivalent to
+   * the XPath node-test called text(), it is rather an implementation of the
+   * XPath function string()
+   *  Martin to Burak: to do: if you make this method abstract, the compiler will now
+   *  complain if there's no implementation in a subclass. Is this what we want? Note that
+   *  this would break doc/DocGenator and doc/ModelToXML, with an error message like:
+doc\DocGenerator.scala:1219: error: object creation impossible, since there is a deferred declaration of method text in class Node of type =&gt; String which is not implemented in a subclass
+    new SpecialNode {
+    ^
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; String" id="21013">text</a>: <span title="String">String</span> = <span class="keyword">super</span>.<a href="NodeSeq.scala.html#20989" title="=&gt; String">text</a>
+}
+
+        </pre>
+    </body>
+</html>

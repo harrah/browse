@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/tools/nsc/interactive/REPL.scala</title>
+        <script type="text/javascript" src="../../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+<span class="keyword">package</span> scala.tools.nsc
+<span class="keyword">package</span> interactive
+
+<span class="keyword">import</span> scala.concurrent.SyncVar
+<span class="keyword">import</span> scala.tools.nsc.util._
+<span class="keyword">import</span> scala.tools.nsc.symtab._
+<span class="keyword">import</span> scala.tools.nsc.ast._
+<span class="keyword">import</span> scala.tools.nsc.reporters._
+<span class="keyword">import</span> scala.tools.nsc.io._
+
+/** Interface of interactive compiler to a client such as an IDE
+ */
+<span class="keyword">object</span> <a title="object scala.tools.nsc.interactive.REPL" id="18567">REPL</a> <span title="ScalaObject">{</span>
+
+  <span class="keyword">val</span> <a title="java.lang.String" id="760327">versionMsg</a> = <span title="(x$1: Any)java.lang.String" class="string">&quot;Scala compiler &quot;</span> <span title="(x$1: Any)java.lang.String">+</span>
+    <a href="../Properties.scala.html#9424" title="object scala.tools.nsc.Properties">Properties</a>.<a title="=&gt; java.lang.String" id="38232">versionString</a> <span title="(x$1: Any)java.lang.String">+</span> <span title="java.lang.String(&quot; -- &quot;)" class="string">&quot; -- &quot;</span> +
+    <a href="../Properties.scala.html#9424" title="object scala.tools.nsc.Properties">Properties</a>.<a title="=&gt; String" id="38234">copyrightString</a>
+
+  <span class="keyword">val</span> <a title="java.lang.String" id="760329">prompt</a> = <span title="java.lang.String(&quot;&gt; &quot;)" class="string">&quot;&gt; &quot;</span>
+
+  <span class="keyword">var</span> <a title="scala.tools.nsc.reporters.ConsoleReporter" id="760332">reporter</a>: <a href="../reporters/ConsoleReporter.scala.html#13099" title="scala.tools.nsc.reporters.ConsoleReporter">ConsoleReporter</a> = _
+
+  <span class="keyword">def</span> <a title="(msg: String)Unit" id="760334">error</a>(<a title="String" id="760353">msg</a>: <span title="String">String</span>) {
+    <a href="#760332" title="=&gt; scala.tools.nsc.reporters.ConsoleReporter">reporter</a>.<a href="../reporters/Reporter.scala.html#38784" title="(pos: scala.tools.nsc.util.Position,msg: String)Unit">error</a>(/*new Position */<a href="../util/Position.scala.html#172091" title="(msg: String)scala.tools.nsc.util.FakePos">FakePos</a>(<span title="java.lang.String(&quot;scalac&quot;)" class="string">&quot;scalac&quot;</span>),
+                   <a href="#760353" title="(x$1: Any)java.lang.String">msg</a> + <span title="java.lang.String(&quot;\012  scalac -help  gives more information&quot;)" class="string">&quot;\n  scalac -help  gives more information&quot;</span>)
+  }
+
+  <span class="keyword">def</span> <a title="(args: Array[String])Unit" id="760335">process</a>(<a title="Array[String]" id="760365">args</a>: <span title="Array[String]">Array</span>[String]) {
+    <span class="keyword">val</span> <a title="scala.tools.nsc.Settings" id="760367">settings</a> = <span title="scala.tools.nsc.Settings" class="keyword">new</span> <a href="../Settings.scala.html#8706" title="scala.tools.nsc.Settings">Settings</a>(<a href="#760334" title="(msg: String)Unit">error</a>)
+    <a href="#760332" title="(x$1: scala.tools.nsc.reporters.ConsoleReporter)Unit">reporter</a> = <a href="../reporters/ConsoleReporter.scala.html#38820" title="(settings: scala.tools.nsc.Settings)scala.tools.nsc.reporters.ConsoleReporter" class="keyword">new</a> <a href="../reporters/ConsoleReporter.scala.html#13099" title="scala.tools.nsc.reporters.ConsoleReporter">ConsoleReporter</a>(<a href="#760367" title="scala.tools.nsc.Settings">settings</a>)
+    <span class="keyword">val</span> <a title="scala.tools.nsc.CompilerCommand" id="760368">command</a> = <a href="../CompilerCommand.scala.html#141980" title="(arguments: List[String],settings: scala.tools.nsc.Settings,error: (String) =&gt; Unit,interactive: Boolean)scala.tools.nsc.CompilerCommand" class="keyword">new</a> <a href="../CompilerCommand.scala.html#8898" title="scala.tools.nsc.CompilerCommand">CompilerCommand</a>(<a href="#760365" title="Array[String]">args</a>.<span title="=&gt; List[String]">toList</span>, <a href="#760367" title="scala.tools.nsc.Settings">settings</a>, <a href="#760334" title="(msg: String)Unit">error</a>, <span title="Boolean(false)" class="keyword">false</span>)
+    <span title="Unit" class="keyword">if</span> (<a href="#760368" title="scala.tools.nsc.CompilerCommand">command</a>.<a href="../CompilerCommand.scala.html#141974" title="=&gt; scala.tools.nsc.Settings">settings</a>.<a href="../Settings.scala.html#37072" title="=&gt; scala.tools.nsc.Settings.BooleanSetting">version</a>.<a href="../Settings.scala.html#37759" title="=&gt; command.settings.version.T">value</a>)
+      <a href="#760332" title="=&gt; scala.tools.nsc.reporters.ConsoleReporter">reporter</a>.<a href="../reporters/Reporter.scala.html#38782" title="(pos: scala.tools.nsc.util.Position,msg: String,force: Boolean)Unit">info</a>(<span title="Null(null)" class="keyword">null</span>, <a href="#760327" title="=&gt; java.lang.String">versionMsg</a>, <span title="Boolean(true)" class="keyword">true</span>)
+    <span class="keyword">else</span> {
+      <span class="keyword">try</span> {
+        <span class="keyword">object</span> <a title="object compiler" id="760393">compiler</a> <span title="ScalaObject" class="keyword">extends</span> <a href="Global.scala.html#18716" title="scala.tools.nsc.interactive.Global">Global</a>(<a href="#760368" title="scala.tools.nsc.CompilerCommand">command</a>.<a href="../CompilerCommand.scala.html#141974" title="=&gt; scala.tools.nsc.Settings">settings</a>, <a href="#760332" title="=&gt; scala.tools.nsc.reporters.ConsoleReporter">reporter</a>) {
+//          printTypings = true
+        } 
+        <span title="Unit" class="keyword">if</span> (<a href="#760332" title="=&gt; scala.tools.nsc.reporters.ConsoleReporter">reporter</a>.<a href="../reporters/Reporter.scala.html#38774" title="=&gt; Boolean">hasErrors</a>) {
+          <a href="#760332" title="=&gt; scala.tools.nsc.reporters.ConsoleReporter">reporter</a>.<a href="../reporters/ConsoleReporter.scala.html#38830" title="()Unit">flush</a>()
+          <span title="Nothing" class="keyword">return</span>
+        }
+        <span title="Unit" class="keyword">if</span> (<a href="#760368" title="scala.tools.nsc.CompilerCommand">command</a>.<a href="../CompilerCommand.scala.html#141998" title="=&gt; Boolean">shouldStopWithInfo</a>) {
+          <a href="#760332" title="=&gt; scala.tools.nsc.reporters.ConsoleReporter">reporter</a>.<a href="../reporters/Reporter.scala.html#38782" title="(pos: scala.tools.nsc.util.Position,msg: String,force: Boolean)Unit">info</a>(<span title="Null(null)" class="keyword">null</span>, <a href="#760368" title="scala.tools.nsc.CompilerCommand">command</a>.<a href="../CompilerCommand.scala.html#141999" title="(compiler: scala.tools.nsc.Global)String">getInfoMessage</a>(<a href="#760393" title="object compiler">compiler</a>), <span title="Boolean(true)" class="keyword">true</span>)
+        } <span class="keyword">else</span> {
+          <a href="#760338" title="(comp: scala.tools.nsc.interactive.Global)Unit">run</a>(<a href="#760393" title="object compiler">compiler</a>)
+        }
+      } <span class="keyword">catch</span> {
+        <span title="Unit" class="keyword">case</span> <a title="scala.tools.nsc.FatalError" id="760410">ex</a> @ FatalError(<a title="String" id="760411">msg</a>) =&gt;
+          <span title="Unit" class="keyword">if</span> (<a title="(x$1: Boolean)Boolean" id="2210" class="keyword">true</a> || <a href="#760368" title="scala.tools.nsc.CompilerCommand">command</a>.<a href="../CompilerCommand.scala.html#141974" title="=&gt; scala.tools.nsc.Settings">settings</a>.<a href="../Settings.scala.html#37150" title="=&gt; scala.tools.nsc.Settings.BooleanSetting">debug</a>.<a href="../Settings.scala.html#37759" title="=&gt; command.settings.debug.T">value</a>) // !!!
+            <a href="#760410" title="scala.tools.nsc.FatalError">ex</a>.<span title="()Unit">printStackTrace</span>();
+        <a href="#760332" title="=&gt; scala.tools.nsc.reporters.ConsoleReporter">reporter</a>.<a href="../reporters/Reporter.scala.html#38784" title="(pos: scala.tools.nsc.util.Position,msg: String)Unit">error</a>(<span title="Null(null)" class="keyword">null</span>, <span title="(x$1: Any)java.lang.String" class="string">&quot;fatal error: &quot;</span> + <a href="#760411" title="String">msg</a>)
+      }
+    }
+  }
+
+  <span class="keyword">def</span> <a title="(args: Array[String])Unit" id="760336">main</a>(<a title="Array[String]" id="760435">args</a>: <span title="Array[String]">Array</span>[String]) {
+    <a href="#760335" title="(args: Array[String])Unit">process</a>(<a href="#760435" title="Array[String]">args</a>)
+    <a title="(status: Int)Nothing" id="7872">exit</a>(<span title="Int" class="keyword">if</span> (<a href="#760332" title="=&gt; scala.tools.nsc.reporters.ConsoleReporter">reporter</a>.<a href="../reporters/Reporter.scala.html#38774" title="=&gt; Boolean">hasErrors</a>) <span title="Int(1)" class="int">1</span> <span class="keyword">else</span> <span title="Int(0)" class="int">0</span>)
+  }
+
+  <span class="keyword">def</span> <a title="(action: (String) =&gt; Unit)Unit" id="760337">loop</a>(<a title="(String) =&gt; Unit" id="760443">action</a>: (String) =&gt; Unit) {
+    <span title="object Console">Console</span>.<a title="(obj: Any)Unit" id="51319">print</a>(<a href="#760329" title="=&gt; java.lang.String">prompt</a>)
+    <span class="keyword">try</span> {
+      <span class="keyword">val</span> <a title="String" id="760447">line</a> = <span title="object Console">Console</span>.<a title="()String" id="51331">readLine</a>
+      <span title="Unit" class="keyword">if</span> (<a href="#760447" title="String">line</a>.<a title="()Int" id="6915">length</a><a title="(x$1: Int)Boolean" id="2960">(</a>) &gt; <span title="Int(0)" class="int">0</span>) {
+        <a href="#760443" title="(v1: String)Unit" id="25529">action</a>(<a href="#760447" title="String">line</a>)
+      }
+      <a href="#760337" title="(action: (String) =&gt; Unit)Unit">loop</a>(<a href="#760443" title="(String) =&gt; Unit">action</a>)
+    }
+    <span class="keyword">catch</span> {
+      <span title="Unit" class="keyword">case</span> _: java.io.<a title="java.io.EOFException" id="3912">EOFException</a> =&gt; //nop
+    }
+  }
+
+  /** Commands:
+   *
+   *  reload file1 ... fileN
+   *  typeat file off1 off2?
+   *  complete file off1 off2?
+   */
+  <span class="keyword">def</span> <a title="(comp: scala.tools.nsc.interactive.Global)Unit" id="760338">run</a>(<a title="scala.tools.nsc.interactive.Global" id="760406">comp</a>: <a href="Global.scala.html#18716" title="scala.tools.nsc.interactive.Global">Global</a>) {
+    <span class="keyword">val</span> <a title="scala.concurrent.SyncVar[Either[Unit,Throwable]]" id="760465">reloadResult</a> = <span title="scala.concurrent.SyncVar[Either[Unit,Throwable]]" class="keyword">new</span> comp.<span title="scala.concurrent.SyncVar[Either[Unit,Throwable]]">Response</span>[Unit]
+    <span class="keyword">val</span> <a title="scala.concurrent.SyncVar[Either[comp.Tree,Throwable]]" id="760466">typeatResult</a> = <span title="scala.concurrent.SyncVar[Either[comp.Tree,Throwable]]" class="keyword">new</span> comp.<span title="scala.concurrent.SyncVar[Either[comp.Tree,Throwable]]">Response</span>[comp.Tree]
+    <span class="keyword">val</span> <a title="scala.concurrent.SyncVar[Either[List[comp.Member],Throwable]]" id="760467">completeResult</a> = <span title="scala.concurrent.SyncVar[Either[List[comp.Member],Throwable]]" class="keyword">new</span> comp.<span title="scala.concurrent.SyncVar[Either[List[comp.Member],Throwable]]">Response</span>[List[comp.Member]]
+    <span class="keyword">def</span> <a title="(file: String,off1: String,off2: String)scala.tools.nsc.util.RangePosition" id="760468">makePos</a>(<a title="String" id="760477">file</a>: <span title="String">String</span>, <a title="String" id="760478">off1</a>: <span title="String">String</span>, <a title="String" id="760479">off2</a>: <span title="String">String</span>) = {
+      <span class="keyword">val</span> <a title="scala.tools.nsc.util.BatchSourceFile" id="760480">source</a> = <a href="#760339" title="(name: String)scala.tools.nsc.util.BatchSourceFile">toSourceFile</a>(<a href="#760477" title="String">file</a>)
+      <a href="#760406" title="scala.tools.nsc.interactive.Global">comp</a>.<a href="RangePositions.scala.html#68009" title="(source: scala.tools.nsc.util.SourceFile,start: Int,point: Int,end: Int)scala.tools.nsc.util.RangePosition">rangePos</a>(<a href="#760480" title="scala.tools.nsc.util.BatchSourceFile">source</a>, <a href="#760478" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString">off1</a>.<span title="=&gt; Int">toInt</span>, <a href="#760478" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString">off1</a>.<span title="=&gt; Int">toInt</span>, <a href="#760479" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString">off2</a>.<span title="=&gt; Int">toInt</span>)
+    }
+    <span class="keyword">def</span> <a title="(pos: scala.tools.nsc.util.Position)Unit" id="760469">doTypeAt</a>(<a title="scala.tools.nsc.util.Position" id="760550">pos</a>: <a href="../util/Position.scala.html#14710" title="scala.tools.nsc.util.Position">Position</a>) {
+      <a href="#760406" title="scala.tools.nsc.interactive.Global">comp</a>.<a href="CompilerControl.scala.html#255711" title="(pos: scala.tools.nsc.util.Position,result: comp.Response[comp.Tree])Unit">askTypeAt</a>(<a href="#760550" title="scala.tools.nsc.util.Position">pos</a>, <a href="#760466" title="scala.concurrent.SyncVar[Either[comp.Tree,Throwable]]">typeatResult</a>)
+      <a href="#760340" title="(svar: scala.concurrent.SyncVar[Either[comp.Tree,Throwable]])Unit">show</a>(<a href="#760466" title="scala.concurrent.SyncVar[Either[comp.Tree,Throwable]]">typeatResult</a>)
+    }
+    <span class="keyword">def</span> <a title="(pos: scala.tools.nsc.util.Position)Unit" id="760470">doComplete</a>(<a title="scala.tools.nsc.util.Position" id="760563">pos</a>: <a href="../util/Position.scala.html#14710" title="scala.tools.nsc.util.Position">Position</a>) {
+      <a href="#760406" title="scala.tools.nsc.interactive.Global">comp</a>.<a href="CompilerControl.scala.html#255713" title="(pos: scala.tools.nsc.util.Position,result: comp.Response[List[comp.Member]])Unit">askTypeCompletion</a>(<a href="#760563" title="scala.tools.nsc.util.Position">pos</a>, <a href="#760467" title="scala.concurrent.SyncVar[Either[List[comp.Member],Throwable]]">completeResult</a>)
+      <a href="#760340" title="(svar: scala.concurrent.SyncVar[Either[List[comp.Member],Throwable]])Unit">show</a>(<a href="#760467" title="scala.concurrent.SyncVar[Either[List[comp.Member],Throwable]]">completeResult</a>)
+    }
+    <a href="#760337" title="(action: (String) =&gt; Unit)Unit">loop</a> { <a title="String" id="760574">line</a> =&gt;
+      (<a href="#760574" title="(x$1: java.lang.String)Array[java.lang.String]" id="7043">line</a> split <span title="java.lang.String(&quot; &quot;)" class="string">&quot; &quot;</span>).<span title="=&gt; List[java.lang.String]">toList</span> <span title="Unit" class="keyword">match</span> {
+        <span title="Unit" class="keyword">case</span> <span title="java.lang.String(&quot;reload&quot;)" class="string">&quot;reload&quot;</span> :: <a title="List[java.lang.String]" id="760583">args</a> =&gt; 
+          <a href="#760406" title="scala.tools.nsc.interactive.Global">comp</a>.<a href="CompilerControl.scala.html#255710" title="(sources: List[scala.tools.nsc.util.SourceFile],result: comp.Response[Unit])Unit">askReload</a>(<a href="#760583" title="(f: (java.lang.String) =&gt; scala.tools.nsc.util.BatchSourceFile)(implicit bf: scala.collection.generic.BuilderFactory[scala.tools.nsc.util.BatchSourceFile,List[scala.tools.nsc.util.SourceFile],List[java.lang.String]])List[scala.tools.nsc.util.SourceFile]" id="25243">args</a> <a title="scala.collection.generic.BuilderFactory[scala.tools.nsc.util.BatchSourceFile,List[scala.tools.nsc.util.BatchSourceFile],List#Coll]" id="24313">map</a> <a href="#760339" title="(name: String)scala.tools.nsc.util.BatchSourceFile">toSourceFile</a>, <a href="#760465" title="scala.concurrent.SyncVar[Either[Unit,Throwable]]">reloadResult</a>)
+          <a href="#760340" title="(svar: scala.concurrent.SyncVar[Either[Unit,Throwable]])Unit">show</a>(<a href="#760465" title="scala.concurrent.SyncVar[Either[Unit,Throwable]]">reloadResult</a>)
+        <span title="Unit" class="keyword">case</span> <a href="#760633" title="(x: List[java.lang.String])Some[List[java.lang.String]]">List</a>(<span title="java.lang.String(&quot;typeat&quot;)" class="string">&quot;typeat&quot;</span>, <a title="java.lang.String" id="760642">file</a>, <a title="java.lang.String" id="760643">off1</a>, <a title="java.lang.String" id="760644">off2</a>) =&gt;
+          <a href="#760469" title="(pos: scala.tools.nsc.util.Position)Unit">doTypeAt</a>(<a href="#760468" title="(file: String,off1: String,off2: String)scala.tools.nsc.util.RangePosition">makePos</a>(<a href="#760642" title="java.lang.String">file</a>, <a href="#760643" title="java.lang.String">off1</a>, <a href="#760644" title="java.lang.String">off2</a>))
+        <span title="Unit" class="keyword">case</span> <a href="#760651" title="(x: List[java.lang.String])Some[List[java.lang.String]]">List</a>(<span title="java.lang.String(&quot;typeat&quot;)" class="string">&quot;typeat&quot;</span>, <a title="java.lang.String" id="760660">file</a>, <a title="java.lang.String" id="760661">off1</a>) =&gt;
+          <a href="#760469" title="(pos: scala.tools.nsc.util.Position)Unit">doTypeAt</a>(<a href="#760468" title="(file: String,off1: String,off2: String)scala.tools.nsc.util.RangePosition">makePos</a>(<a href="#760660" title="java.lang.String">file</a>, <a href="#760661" title="java.lang.String">off1</a>, <a href="#760661" title="java.lang.String">off1</a>))
+        <span title="Unit" class="keyword">case</span> <a href="#760668" title="(x: List[java.lang.String])Some[List[java.lang.String]]">List</a>(<span title="java.lang.String(&quot;complete&quot;)" class="string">&quot;complete&quot;</span>, <a title="java.lang.String" id="760677">file</a>, <a title="java.lang.String" id="760678">off1</a>, <a title="java.lang.String" id="760679">off2</a>) =&gt;
+          <a href="#760470" title="(pos: scala.tools.nsc.util.Position)Unit">doComplete</a>(<a href="#760468" title="(file: String,off1: String,off2: String)scala.tools.nsc.util.RangePosition">makePos</a>(<a href="#760677" title="java.lang.String">file</a>, <a href="#760678" title="java.lang.String">off1</a>, <a href="#760679" title="java.lang.String">off2</a>))
+        <span title="Unit" class="keyword">case</span> <a href="#760686" title="(x: List[java.lang.String])Some[List[java.lang.String]]">List</a>(<span title="java.lang.String(&quot;complete&quot;)" class="string">&quot;complete&quot;</span>, <a title="java.lang.String" id="760695">file</a>, <a title="java.lang.String" id="760696">off1</a>) =&gt;
+          <a href="#760470" title="(pos: scala.tools.nsc.util.Position)Unit">doComplete</a>(<a href="#760468" title="(file: String,off1: String,off2: String)scala.tools.nsc.util.RangePosition">makePos</a>(<a href="#760695" title="java.lang.String">file</a>, <a href="#760696" title="java.lang.String">off1</a>, <a href="#760696" title="java.lang.String">off1</a>))
+        <span title="Unit" class="keyword">case</span> <a href="#760703" title="(x: List[java.lang.String])Some[List[java.lang.String]]">List</a>(<span title="java.lang.String(&quot;quit&quot;)" class="string">&quot;quit&quot;</span>) =&gt;
+          <a title="object java.lang.System" id="1630">System</a>.<a title="(x$1: Int)Unit" id="65068">exit</a>(<span title="Int(1)" class="int">1</span>)
+        <span title="Unit" class="keyword">case</span> _ =&gt;
+          <span title="(x: Any)Unit">println</span>(<span title="java.lang.String(&quot;unrecongized command&quot;)" class="string">&quot;unrecongized command&quot;</span>)
+      }
+    }
+  }
+
+  <span class="keyword">def</span> <a title="(name: String)scala.tools.nsc.util.BatchSourceFile" id="760339">toSourceFile</a>(<a title="String" id="760481">name</a>: <span title="String">String</span>) = <a href="../util/SourceFile.scala.html#121006" title="(_file: scala.tools.nsc.io.AbstractFile)scala.tools.nsc.util.BatchSourceFile" class="keyword">new</a> <a href="../util/SourceFile.scala.html#14659" title="scala.tools.nsc.util.BatchSourceFile">BatchSourceFile</a>(<span title="scala.tools.nsc.io.PlainFile" class="keyword">new</span> <a href="../io/PlainFile.scala.html#20566" title="scala.tools.nsc.io.PlainFile">PlainFile</a>(<a title="implicit scala.io.Path.jfile2path : (jfile: java.io.File)scala.io.Path" id="27868" class="keyword">new</a> java.io.<a title="java.io.File" id="3807">File</a>(<a href="#760481" title="String">name</a>)))
+
+  <span class="keyword">def</span> <a title="[T](svar: scala.concurrent.SyncVar[Either[T,Throwable]])Unit" id="760340">show</a>[<a title="&gt;: Nothing &lt;: Any" id="760342">T</a>](<a title="scala.concurrent.SyncVar[Either[T,Throwable]]" id="760555">svar</a>: <span title="scala.concurrent.SyncVar[Either[T,Throwable]]">SyncVar</span>[Either[T, Throwable]]) {
+    <a href="#760555" title="scala.concurrent.SyncVar[Either[T,Throwable]]">svar</a>.<a title="=&gt; Either[T,Throwable]" id="255853">get</a> <span title="Unit" class="keyword">match</span> {
+      <span title="Unit" class="keyword">case</span> Left(<a title="T" id="760724">result</a>) =&gt; <span title="(x: Any)Unit">println</span>(<span title="(x$1: Any)java.lang.String" class="string">&quot;==&gt; &quot;</span>+<a href="#760724" title="T">result</a>)
+      <span title="Unit" class="keyword">case</span> Right(<a title="Throwable" id="760734">exc</a>/*: Throwable ??*/) =&gt; <a href="#760734" title="Throwable">exc</a>.<span title="()Unit">printStackTrace</span>; <span title="(x: Any)Unit">println</span>(<span title="(x$1: Any)java.lang.String" class="string">&quot;ERROR: &quot;</span>+<a href="#760734" title="Throwable">exc</a>)
+    }
+    <a href="#760555" title="scala.concurrent.SyncVar[Either[T,Throwable]]">svar</a>.<a title="()Unit" id="255866">unset</a>()
+  }
+}
+
+        </pre>
+    </body>
+</html>

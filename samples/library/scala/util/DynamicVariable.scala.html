@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/util/DynamicVariable.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2006-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: DynamicVariable.scala 18022 2009-06-10 22:27:43Z extempore $
+
+
+<span class="keyword">package</span> scala.util
+
+
+<span class="keyword">import</span> Predef._
+<span class="keyword">import</span> java.lang.InheritableThreadLocal
+
+/** &lt;p&gt;
+ *    DynamicVariables provide a binding mechanism where the current
+ *    value is found through &lt;em&gt;dynamic scope&lt;/em&gt;, but where
+ *    access to the variable itself is resolved through &lt;em&gt;static
+ *    scope&lt;/em&gt;.
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    The current value can be retrieved with the
+ *    &lt;code&gt;value&lt;/code&gt; method.  New values should be
+ *    pushed using the &lt;code&gt;withValue&lt;/code&gt; method.
+ *    Values pushed via &lt;code&gt;withValue&lt;/code&gt; only
+ *    stay valid while the &lt;code&gt;withValue&lt;/code&gt;'s
+ *    &lt;em&gt;second&lt;/em&gt; argument, a parameterless closure,
+ *    executes.  When the second argument finishes,
+ *    the variable reverts to the previous value.
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    Usage of &lt;code&gt;withValue&lt;/code&gt; looks like this:
+ *  &lt;/p&gt;
+ *  &lt;blockquote&gt;&lt;pre&gt;
+ *  someDynamicVariable.withValue(newValue) {
+ *    // ... code called in here that calls value ...
+ *    // ... will be given back the newValue ...
+ *  }
+ *  &lt;/pre&gt;&lt;/blockquote&gt;
+ *  &lt;p&gt;
+ *    Each thread gets its own stack of bindings.  When a 
+ *    new thread is created, the DynamicVariable gets a copy
+ *    of the stack of bindings from the parent thread, and 
+ *    from then on the bindings for the new thread
+ *    are independent of those for the original thread.
+ *  &lt;/p&gt;
+ *
+ *  @author  Lex Spoon
+ *  @version 1.1, 2007-5-21
+ */
+<span class="keyword">class</span> <a title="class DynamicVariable[T] extends java.lang.Object with ScalaObject" id="8038">DynamicVariable</a>[<a title="&gt;: Nothing &lt;: Any" id="14097">T</a>]<a href="../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="T" id="86401">init</a>: <a href="#14097" title="T">T</a>) {
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="&lt;refinement&gt; extends java.lang.InheritableThreadLocal[T]" id="86393">tl</a> = <a href="#86437" title="java.lang.InheritableThreadLocal[T]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.InheritableThreadLocal[T]" id="86437">InheritableThreadLocal</a>[T] {
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="()T with AnyRef" id="86451">initialValue</a> = <a href="#86401" title="T">init</a>.<span title="[T0]T0">asInstanceOf</span><span title="&lt;refinement&gt; extends T with AnyRef">[</span><a href="#86455" title="&lt;refinement&gt; extends T with AnyRef">T</a> <span class="keyword">with</span> AnyRef]
+  }
+
+  /** Retrieve the current value */
+  <span class="keyword">def</span> <a title="=&gt; T" id="86395">value</a>: <a href="#14097" title="T">T</a> = <a href="#86393" title="=&gt; &lt;refinement&gt; extends java.lang.InheritableThreadLocal[T]">tl</a>.<a title="()T" id="36935">get</a>.<span title="[T0]T0">asInstanceOf</span><span title="T">[</span><a href="#14097" title="T">T</a>]
+  
+   
+  /** Set the value of the variable while executing the specified
+    * thunk.
+    *
+    * @param newval The value to which to set the variable
+    * @param thunk The code to evaluate under the new setting
+    */
+  <span class="keyword">def</span> <a title="[S](newval: T)(thunk: =&gt; S)S" id="86396">withValue</a>[<a title="&gt;: Nothing &lt;: Any" id="86398">S</a>](<a title="T" id="86480">newval</a>: <a href="#14097" title="T">T</a>)(<a title="=&gt; S" id="86481">thunk</a>: =&gt;S): <a href="#86398" title="S">S</a> = {
+    <span class="keyword">val</span> <a title="T" id="132262">oldval</a> = <a href="#86395" title="=&gt; T">value</a>
+    <a href="#86393" title="=&gt; &lt;refinement&gt; extends java.lang.InheritableThreadLocal[T]">tl</a>.<span title="(x$1: T)Unit">set</span>(<a href="#86480" title="T">newval</a>)
+  
+    <span class="keyword">try</span> { <a href="#86481" title="=&gt; S">thunk</a> } <span class="keyword">finally</span> {
+      <a href="#86393" title="=&gt; &lt;refinement&gt; extends java.lang.InheritableThreadLocal[T]">tl</a>.<span title="(x$1: T)Unit">set</span>(<a href="#132262" title="T">oldval</a>)
+    }
+  }
+
+  /** Change the currently bound value, discarding the old value.
+    * Usually &lt;code&gt;withValue()&lt;/code&gt; gives better semantics.
+    */
+  <span class="keyword">def</span> <a title="(newval: T)Unit" id="86399">value_=</a>(<a title="T" id="86434">newval</a>: <a href="#14097" title="T">T</a>) = { <a href="#86393" title="=&gt; &lt;refinement&gt; extends java.lang.InheritableThreadLocal[T]">tl</a>.<span title="(x$1: T)Unit">set</span>(<a href="#86434" title="T">newval</a>) }
+  
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="86400">toString</a>: <a title="String" id="1603">String</a> = <span title="(x$1: Any)java.lang.String" class="string">&quot;DynamicVariable(&quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#86395" title="=&gt; T">value</a>  +<span title="java.lang.String(&quot;)&quot;)" class="string">&quot;)&quot;</span>
+}
+
+        </pre>
+    </body>
+</html>

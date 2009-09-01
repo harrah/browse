@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/xml/dtd/Scanner.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: Scanner.scala 18615 2009-08-31 13:21:58Z extempore $
+
+
+<span class="keyword">package</span> scala.xml
+<span class="keyword">package</span> dtd
+
+
+/** Scanner for regexps (content models in DTD element declarations) 
+ *  todo: cleanup
+ */
+<span class="keyword">class</span> <a title="class Scanner extends scala.xml.dtd.Tokens with scala.xml.parsing.TokenTests with ScalaObject" id="11026">Scanner</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="Tokens.scala.html#11218" title="scala.xml.dtd.Tokens">Tokens</a> <span class="keyword">with</span> parsing.<a href="../parsing/TokenTests.scala.html#12152" title="scala.xml.parsing.TokenTests">TokenTests</a> {
+
+  <span class="keyword">final</span> <span class="keyword">val</span> <a title="Char('\00')" id="231215">ENDCH</a> = <span title="Char('\00')" class="char">'\u0000'</span>
+
+  <span class="keyword">var</span> <a title="Int" id="231218">token</a>:<span title="Int">Int</span> = <span title="Int(10)">END</span>
+  <span class="keyword">var</span> <a title="String" id="231221">value</a>:<span title="String">String</span> = _
+  
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Iterator[Char]" id="231224">it</a>: <a href="../../collection/Iterator.scala.html#4274" title="Iterator[Char]">Iterator</a>[Char] = <span title="Null(null)" class="keyword">null</span>
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Char" id="231227">c</a>: <span title="Char">Char</span> = <span title="Char('z')" class="char">'z'</span>
+
+  /** initializes the scanner on input s */
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String)Unit" id="231229">initScanner</a>(<a title="String" id="231244">s</a>: <span title="String">String</span>) {
+    <a href="#231221" title="(x$1: String)Unit">value</a> = <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>
+    <a href="#231224" title="(x$1: Iterator[Char])Unit">it</a> = (<a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString">s</a>).<a href="../../collection/generic/VectorTemplate.scala.html#17750" title="=&gt; Iterator[Char]">iterator</a>
+    <a href="#231218" title="(x$1: Int)Unit">token</a> = <span class="int">1</span><span title="Int(11)">+</span>END
+    <a href="#231232" title="=&gt; Unit">next</a>
+    <a href="#231230" title="=&gt; Unit">nextToken</a>
+  }
+
+  /** scans the next token */
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; Unit" id="231230">nextToken</a> {
+    <span title="Unit" class="keyword">if</span> (<a href="#231218" title="(x$1: Int)Boolean" id="2952">token</a> != <span title="Int(10)">END</span>) <a href="#231218" title="(x$1: Int)Unit">token</a> = <a href="#231235" title="=&gt; Int">readToken</a>
+  }
+
+  // todo: see XML specification... probably isLetter,isDigit is fine
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; Boolean" id="231231">isIdentChar</a> = ( <a title="(x$1: Boolean)Boolean" id="2208">(</a><span title="(x$1: Char)Boolean" class="char">'a'</span> <span title="(x$1: Boolean)Boolean">&lt;=</span> <a href="#231227" title="=&gt; Char">c</a> &amp;&amp; <a href="#231227" title="(x$1: Char)Boolean">c</a> &lt;= <span title="Char('z')" class="char">'z'</span>) 
+                           || (<span title="(x$1: Char)Boolean" class="char">'A'</span> <span title="(x$1: Boolean)Boolean">&lt;=</span> <a href="#231227" title="=&gt; Char">c</a> &amp;&amp; <a href="#231227" title="(x$1: Char)Boolean">c</a> &lt;= <span title="Char('Z')" class="char">'Z'</span>));
+  
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; Unit" id="231232">next</a> = <span title="Unit" class="keyword">if</span> (<a href="#231224" title="=&gt; Iterator[Char]">it</a>.<a href="../../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>) <a href="#231227" title="(x$1: Char)Unit">c</a> = <a href="#231224" title="=&gt; Iterator[Char]">it</a>.<a href="../../collection/Iterator.scala.html#19185" title="()Char">next</a> <span class="keyword">else</span> <a href="#231227" title="(x$1: Char)Unit">c</a> = <span title="Char('\00')">ENDCH</span>
+
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(d: Char)Unit" id="231233">acc</a>(<a title="Char" id="231348">d</a>: <span title="Char">Char</span>) { 
+    <span title="Unit" class="keyword">if</span> (<a href="#231227" title="(x$1: Char)Boolean" id="2714">c</a> == <a href="#231348" title="Char">d</a>) <a href="#231232" title="=&gt; Unit">next</a> <span class="keyword">else</span> <a href="../../Predef.scala.html#16210" title="(message: String)Nothing">error</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;expected '&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#231348" title="Char">d</a><span title="(x$1: Any)java.lang.String">+</span><span title="java.lang.String(&quot;' found '&quot;)" class="string">&quot;' found '&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#231227" title="=&gt; Char">c</a>+<span title="java.lang.String(&quot;' !&quot;)" class="string">&quot;' !&quot;</span>);
+  }
+
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(ds: Seq[Char])Unit" id="231234">accS</a>(<a title="Seq[Char]" id="231368">ds</a>: <a href="../../collection/Sequence.scala.html#4346" title="Seq[Char]">Seq</a>[Char]) { <a href="../../collection/generic/IterableTemplate.scala.html#17287" title="(f: (Char) =&gt; Unit)Unit">ds</a> foreach <a href="#231233" title="(d: Char)Unit">acc</a> }
+
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; Int" id="231235">readToken</a>: <span title="Int">Int</span> = 
+    <span title="Int" class="keyword">if</span> (<a href="../parsing/TokenTests.scala.html#26600" title="(ch: Char)Boolean">isSpace</a>(<a href="#231227" title="=&gt; Char">c</a>)) {
+      <span title="Unit" class="keyword">while</span> (<a href="../parsing/TokenTests.scala.html#26600" title="(ch: Char)Boolean">isSpace</a>(<a href="#231227" title="=&gt; Char">c</a>)) <a href="#231227" title="(x$1: Char)Unit">c</a> = <a href="#231224" title="=&gt; Iterator[Char]">it</a>.<a href="../../collection/Iterator.scala.html#19185" title="()Char">next</a>
+      <span title="Int(13)">S</span>
+    } <span class="keyword">else</span> <a href="#231227" title="=&gt; Char">c</a> <span title="Int" class="keyword">match</span> {
+      <span title="Int" class="keyword">case</span> <span title="Char('(')" class="char">'('</span>   =&gt; <a href="#231232" title="=&gt; Unit">next</a>; <span title="Int(3)">LPAREN</span>
+      <span title="Int" class="keyword">case</span> <span title="Char(')')" class="char">')'</span>   =&gt; <a href="#231232" title="=&gt; Unit">next</a>; <span title="Int(4)">RPAREN</span>
+      <span title="Int" class="keyword">case</span> <span title="Char(',')" class="char">','</span>   =&gt; <a href="#231232" title="=&gt; Unit">next</a>; <span title="Int(5)">COMMA</span>
+      <span title="Int" class="keyword">case</span> <span title="Char('*')" class="char">'*'</span>   =&gt; <a href="#231232" title="=&gt; Unit">next</a>; <span title="Int(6)">STAR</span>
+      <span title="Int" class="keyword">case</span> <span title="Char('+')" class="char">'+'</span>   =&gt; <a href="#231232" title="=&gt; Unit">next</a>; <span title="Int(7)">PLUS</span>
+      <span title="Int" class="keyword">case</span> <span title="Char('?')" class="char">'?'</span>   =&gt; <a href="#231232" title="=&gt; Unit">next</a>; <span title="Int(8)">OPT</span>
+      <span title="Int" class="keyword">case</span> <span title="Char('|')" class="char">'|'</span>   =&gt; <a href="#231232" title="=&gt; Unit">next</a>; <span title="Int(9)">CHOICE</span>
+      <span title="Int" class="keyword">case</span> <span title="Char('#')" class="char">'#'</span>   =&gt; <a href="#231232" title="=&gt; Unit">next</a>; <a href="#231234" title="(ds: Seq[Char])Unit">accS</a>( <a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;PCDATA&quot;</a> ); <span title="Int(0)">TOKEN_PCDATA</span>
+      <span title="Int(10)" class="keyword">case</span> <span title="Char('\00')">ENDCH</span> =&gt; <span title="Int(10)">END</span>
+      <span title="Int" class="keyword">case</span> _     =&gt; 
+        <span title="Int" class="keyword">if</span> (<a href="../parsing/TokenTests.scala.html#26603" title="(ch: Char)Boolean">isNameStart</a>(<a href="#231227" title="=&gt; Char">c</a>)) <a href="#231236" title="=&gt; Int">name</a>; // NAME 
+        <span class="keyword">else</span> { <a href="../../Predef.scala.html#16210" title="(message: String)Nothing">error</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;unexpected character:&quot;</span>+<a href="#231227" title="=&gt; Char">c</a>); <span title="Int(10)">END</span> }
+    }
+  
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; Int" id="231236">name</a> = {
+    <span class="keyword">val</span> <a title="StringBuilder" id="231421">sb</a> = <a href="../../collection/mutable/StringBuilder.scala.html#23348" title="()StringBuilder" class="keyword">new</a> <a href="../../package.scala.html#14791" title="StringBuilder">StringBuilder</a>()
+    <a href="#231422" title="Unit" class="keyword">do</a> { <a href="#231421" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<a href="#231227" title="=&gt; Char">c</a>); <a href="#231232" title="=&gt; Unit">next</a> } <span class="keyword">while</span> (<a href="../parsing/TokenTests.scala.html#26602" title="(ch: Char)Boolean">isNameChar</a>(<a href="#231227" title="=&gt; Char">c</a>));
+    <a href="#231221" title="(x$1: String)Unit">value</a> = <a href="#231421" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23409" title="()String">toString</a>()
+    <span title="Int(1)">NAME</span>
+  }
+
+}
+
+        </pre>
+    </body>
+</html>

@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/immutable/StringVector.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id$
+
+<span class="keyword">package</span> scala.collection.immutable
+
+<span class="keyword">import</span> util.matching.Regex
+<span class="keyword">import</span> annotation.experimental
+
+/** An incomplete implementation of all the methods on Vector,
+ *  written as static methods which take a String as a faux &quot;this&quot;
+ *  argument and which are all entirely String-specific, with the
+ *  attendant improvements in performance, return types, etc.
+ *  I looked for the fastest way to do these operations so there
+ *  is some unattractiveness.
+ *
+ *  @author Paul Phillips
+ *  @version 2.8
+ */
+
+@experimental
+<span class="keyword">object</span> <a title="object scala.collection.immutable.StringVector" id="9121">StringVector</a>
+<a href="../../ScalaObject.scala.html#957" title="ScalaObject">{</a>  
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(msg: String)Nothing" id="69176">noSuch</a>(<a title="String" id="69210">msg</a>: <span title="String">String</span>) = <span title="Nothing" class="keyword">throw</span> <a title="(x$1: java.lang.String)java.util.NoSuchElementException" id="19666" class="keyword">new</a> <a href="../../Predef.scala.html#16171" title="java.util.NoSuchElementException">NoSuchElementException</a>(<a href="#69210" title="String">msg</a>)
+  
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="[T](s: String,f: (Char) =&gt; T)Unit" id="69177">foreach</a>[<a title="&gt;: Nothing &lt;: Any" id="69179">T</a><a id="1">]</a>(<a title="String" id="69217">s</a>: <span title="String">String</span>, <a title="(Char) =&gt; T" id="69218">f</a>: Char =&gt; T): <a title="Unit" id="1948">Unit</a> = {
+    <span class="keyword">val</span> <a title="Int" id="69222">len</a> = <a href="#69217" title="String">s</a>.<span title="()Int">length</span>
+    <span class="keyword">var</span> <a title="Int" id="69223">i</a> = <span title="Int(0)" class="int">0</span>
+    <span title="Unit" class="keyword">while</span> (<a href="#69223" title="(x$1: Int)Boolean">i</a> &lt; <a href="#69222" title="Int">len</a>) <a href="#69226" title="()Unit">{</a>
+      <a href="../../Function1.scala.html#17119" title="(v1: Char)T">f</a>(<a href="#69217" title="(x$1: Int)Char">s</a> charAt <a href="#69223" title="Int">i</a>)
+      <a href="#69223" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+    }
+  }
+  
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String,f: (Char) =&gt; Boolean)String" id="69180">filter</a>(<a title="String" id="69277">s</a>: <span title="String">String</span>, <a title="(Char) =&gt; Boolean" id="69278">f</a>: Char =&gt; Boolean): <span title="String">String</span> = {
+    <span class="keyword">val</span> <a title="Int" id="69280">len</a> = <a href="#69277" title="String">s</a>.<span title="()Int">length</span>
+    <span class="keyword">val</span> <a title="Array[Char]" id="69281">chars</a> = <span title="Array[Char]" class="keyword">new</span> <a href="../../Array.scala.html#885" title="Array[Char]">Array</a>[Char](<a href="#69280" title="Int">len</a>)
+    <span class="keyword">var</span> <a title="Int" id="69282">index</a>, <a title="Int" id="69283">i</a> = <span title="Int(0)" class="int">0</span>
+    <span title="Unit" class="keyword">while</span> (<a href="#69283" title="(x$1: Int)Boolean">i</a> &lt; <a href="#69280" title="Int">len</a>) <a href="#69284" title="()Unit">{</a>
+      <span class="keyword">val</span> <a title="Char" id="69297">c</a> = <a href="#69277" title="(x$1: Int)Char">s</a> charAt <a href="#69283" title="Int">i</a>
+      <span title="Unit" class="keyword">if</span> (<a href="../../Function1.scala.html#17119" title="(v1: Char)Boolean">f</a>(<a href="#69297" title="Char">c</a>)) {
+        <a href="../../Array.scala.html#17717" title="(i: Int,x: Char)Unit">chars</a>(<a href="#69282" title="Int">index</a>) = <a href="#69297" title="Char">c</a>
+        <a href="#69282" title="Int">index</a> += <span title="Int(1)" class="int">1</span>
+      }
+      <a href="#69283" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+    }
+    <span title="String" class="keyword">if</span> (<a href="#69282" title="(x$1: Int)Boolean" id="2950">index</a> == <a href="#69283" title="Int">i</a>) <a href="#69277" title="String">s</a>
+    <span class="keyword">else</span> <span title="(x$1: Array[Char],x$2: Int,x$3: Int)java.lang.String" class="keyword">new</span> <a href="../../Predef.scala.html#16156" title="java.lang.String">String</a>(<a href="#69281" title="Array[Char]">chars</a>, <span title="Int(0)" class="int">0</span>, <a href="#69282" title="Int">index</a>)
+  }
+  
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String,f: (Char) =&gt; Char)String" id="69181">map</a>(<a title="String" id="69460">s</a>: <span title="String">String</span>, <a title="(Char) =&gt; Char" id="69461">f</a>: Char =&gt; Char): <span title="String">String</span> = {
+    <span class="keyword">val</span> <a title="Int" id="69463">len</a> = <a href="#69460" title="String">s</a>.<span title="()Int">length</span>
+    <span class="keyword">val</span> <a title="Array[Char]" id="69464">chars</a> = <span title="Array[Char]" class="keyword">new</span> <a href="../../Array.scala.html#885" title="Array[Char]">Array</a>[Char](<a href="#69463" title="Int">len</a>)
+    <span class="keyword">var</span> <a title="Int" id="69465">i</a> = <span title="Int(0)" class="int">0</span>
+    <span title="Unit" class="keyword">while</span> (<a href="#69465" title="(x$1: Int)Boolean">i</a> &lt; <a href="#69463" title="Int">len</a>) <a href="#69466" title="()Unit">{</a>
+      <a href="../../Array.scala.html#17717" title="(i: Int,x: Char)Unit">chars</a>(<a href="#69465" title="Int">i</a>) = <a href="../../Function1.scala.html#17119" title="(v1: Char)Char">f</a>(<a href="#69460" title="(x$1: Int)Char">s</a> charAt <a href="#69465" title="Int">i</a>)
+      <a href="#69465" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+    }
+    <span title="(x$1: Array[Char],x$2: Int,x$3: Int)java.lang.String" class="keyword">new</span> <a href="../../Predef.scala.html#16156" title="java.lang.String">String</a>(<a href="#69464" title="Array[Char]">chars</a>, <span title="Int(0)" class="int">0</span>, <a href="#69463" title="Int">len</a>)
+  }
+  
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String,f: (Char) =&gt; String)String" id="69182">flatMap</a>(<a title="String" id="69558">s</a>: <span title="String">String</span>, <a title="(Char) =&gt; String" id="69559">f</a>: Char =&gt; String): <span title="String">String</span> = {
+    <span class="keyword">val</span> <a title="StringBuilder" id="69561">sb</a> = <a href="../mutable/StringBuilder.scala.html#23348" title="()StringBuilder" class="keyword">new</a> <a href="../../package.scala.html#14791" title="StringBuilder">StringBuilder</a>
+    <span class="keyword">val</span> <a title="Int" id="69562">len</a> = <a href="#69558" title="String">s</a>.<span title="()Int">length</span>
+    <span class="keyword">var</span> <a title="Int" id="69563">i</a> = <span title="Int(0)" class="int">0</span>
+    <span title="Unit" class="keyword">while</span> (<a href="#69563" title="(x$1: Int)Boolean">i</a> &lt; <a href="#69562" title="Int">len</a>) <a href="#69564" title="()Unit">{</a>
+      <a href="../mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">sb</a> append <a href="../../Function1.scala.html#17119" title="(v1: Char)String">f</a>(<a href="#69558" title="(x$1: Int)Char">s</a> charAt <a href="#69563" title="Int">i</a>)
+      <a href="#69563" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+    }
+    <a href="#69561" title="StringBuilder">sb</a>.<a href="../mutable/StringBuilder.scala.html#23409" title="()String">toString</a>()
+  }
+  
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String,len: Int)String" id="69183">take</a>(<a title="String" id="69634">s</a>: <span title="String">String</span>, <a title="Int" id="69635">len</a>: <span title="Int">Int</span>): <span title="String">String</span> = 
+    <span title="String" class="keyword">if</span> (<a href="#69635" title="(x$1: Int)Boolean">len</a> &lt;= <span title="Int(0)" class="int">0</span>) <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>
+    <span class="keyword">else</span> <span title="String" class="keyword">if</span> (<a href="#69635" title="(x$1: Int)Boolean">len</a> &gt;= <a href="#69634" title="String">s</a>.<span title="()Int">length</span>) <a href="#69634" title="String">s</a>
+    <span class="keyword">else</span> <a href="#69634" title="String">s</a>.<span title="(x$1: Int,x$2: Int)java.lang.String">substring</span>(<span title="Int(0)" class="int">0</span>, <a href="#69635" title="Int">len</a>)
+    
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String,len: Int)String" id="69184">drop</a>(<a title="String" id="69659">s</a>: <span title="String">String</span>, <a title="Int" id="69660">len</a>: <span title="Int">Int</span>): <span title="String">String</span> = 
+    <span title="String" class="keyword">if</span> (<a href="#69660" title="(x$1: Int)Boolean">len</a> &gt;= <a href="#69659" title="String">s</a>.<span title="()Int">length</span>) <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span> 
+    <span class="keyword">else</span> <span title="String" class="keyword">if</span> (<a href="#69660" title="(x$1: Int)Boolean">len</a> &lt;= <span title="Int(0)" class="int">0</span>) <a href="#69659" title="String">s</a>
+    <span class="keyword">else</span> <a href="#69659" title="String">s</a>.<span title="(x$1: Int,x$2: Int)java.lang.String">substring</span>(<a href="#69660" title="Int">len</a>, <a href="#69659" title="String">s</a>.<span title="()Int">length</span>)
+  
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String,len: Int)String" id="69185">takeRight</a>(<a title="String" id="69686">s</a>: <span title="String">String</span>, <a title="Int" id="69687">len</a>: <span title="Int">Int</span>): <span title="String">String</span> =
+    <span title="String" class="keyword">if</span> (<a href="#69687" title="(x$1: Int)Boolean">len</a> &lt;= <span title="Int(0)" class="int">0</span>) <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>
+    <span class="keyword">else</span> <span title="String" class="keyword">if</span> (<a href="#69687" title="(x$1: Int)Boolean">len</a> &gt;= <a href="#69686" title="String">s</a>.<span title="()Int">length</span>) <a href="#69686" title="String">s</a>
+    <span class="keyword">else</span> <a href="#69686" title="String">s</a>.<span title="(x$1: Int,x$2: Int)java.lang.String">substring</span>(<a href="#69686" title="String">s</a>.<span title="(x$1: Int)Int">length</span> - <a href="#69687" title="Int">len</a>, <a href="#69686" title="String">s</a>.<span title="()Int">length</span>)
+  
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String,len: Int)String" id="69186">dropRight</a>(<a title="String" id="69733">s</a>: <span title="String">String</span>, <a title="Int" id="69734">len</a>: <span title="Int">Int</span>): <span title="String">String</span> =
+    <span title="String" class="keyword">if</span> (<a href="#69734" title="(x$1: Int)Boolean">len</a> &lt;= <span title="Int(0)" class="int">0</span>) <a href="#69733" title="String">s</a>
+    <span class="keyword">else</span> <span title="String" class="keyword">if</span> (<a href="#69734" title="(x$1: Int)Boolean">len</a> &gt;= <a href="#69733" title="String">s</a>.<span title="()Int">length</span>) <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>
+    <span class="keyword">else</span> <a href="#69733" title="String">s</a>.<span title="(x$1: Int,x$2: Int)java.lang.String">substring</span>(<span title="Int(0)" class="int">0</span>, <a href="#69733" title="String">s</a>.<span title="(x$1: Int)Int">length</span> - <a href="#69734" title="Int">len</a>)
+  
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String,index: Int)(String, String)" id="69187">splitAt</a>(<a title="String" id="69778">s</a>: <span title="String">String</span>, <a title="Int" id="69779">index</a>: <span title="Int">Int</span>): <a href="../../Tuple2.scala.html#1152" title="(String, String)">(</a>String, String) =
+    <span title="(String, String)" class="keyword">if</span> (<a href="#69779" title="(x$1: Int)Boolean">index</a> &lt;= <span title="Int(0)" class="int">0</span>) <a href="../../Tuple2.scala.html#20670" title="(_1: java.lang.String,_2: String)(java.lang.String, String)">(</a><span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>, <a href="#69778" title="String">s</a>)
+    <span class="keyword">else</span> <span title="(String, String)" class="keyword">if</span> (<a href="#69779" title="(x$1: Int)Boolean">index</a> &gt;= <a href="#69778" title="String">s</a>.<span title="()Int">length</span>) <a href="../../Tuple2.scala.html#20670" title="(_1: String,_2: java.lang.String)(String, java.lang.String)">(</a><a href="#69778" title="String">s</a>, <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+    <span class="keyword">else</span> <a href="../../Tuple2.scala.html#20670" title="(_1: String,_2: String)(String, String)">(</a><a href="#69183" title="(s: String,len: Int)String">take</a>(<a href="#69778" title="String">s</a>, <a href="#69779" title="Int">index</a>), <a href="#69184" title="(s: String,len: Int)String">drop</a>(<a href="#69778" title="String">s</a>, <a href="#69779" title="Int">index</a>))
+  
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String)Char" id="69188">head</a>(<a title="String" id="69823">s</a>: <span title="String">String</span>): <span title="Char">Char</span> = 
+    <span title="Char" class="keyword">if</span> (<a href="#69823" title="(x$1: AnyRef)Boolean">s</a> == <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>) <a href="#69176" title="(msg: String)Nothing">noSuch</a>(<span title="java.lang.String(&quot;head of empty list&quot;)" class="string">&quot;head of empty list&quot;</span>)
+    <span class="keyword">else</span> <a href="#69823" title="(x$1: Int)Char">s</a> charAt <span title="Int(0)" class="int">0</span>
+  
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String)String" id="69189">tail</a>(<a title="String" id="69835">s</a>: <span title="String">String</span>): <span title="String">String</span> =
+    <span title="String" class="keyword">if</span> (<a href="#69835" title="(x$1: AnyRef)Boolean">s</a> == <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>) <a href="#69176" title="(msg: String)Nothing">noSuch</a>(<span title="java.lang.String(&quot;tail of empty list&quot;)" class="string">&quot;tail of empty list&quot;</span>)
+    <span class="keyword">else</span> <a href="#69184" title="(s: String,len: Int)String">drop</a>(<a href="#69835" title="String">s</a>, <span title="Int(1)" class="int">1</span>)
+  
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String)Char" id="69190">last</a>(<a title="String" id="69847">s</a>: <span title="String">String</span>): <span title="Char">Char</span> =
+    <span title="Char" class="keyword">if</span> (<a href="#69847" title="(x$1: AnyRef)Boolean">s</a> == <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>) <a href="#69176" title="(msg: String)Nothing">noSuch</a>(<span title="java.lang.String(&quot;empty.last&quot;)" class="string">&quot;empty.last&quot;</span>)
+    <span class="keyword">else</span> <a href="#69847" title="(x$1: Int)Char">s</a> charAt (<a href="#69847" title="String">s</a>.<span title="(x$1: Int)Int">length</span> - <span title="Int(1)" class="int">1</span>)
+  
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String)String" id="69191">init</a>(<a title="String" id="69879">s</a>: <span title="String">String</span>): <span title="String">String</span> =
+    <span title="String" class="keyword">if</span> (<a href="#69879" title="(x$1: AnyRef)Boolean">s</a> == <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>) <a href="#69176" title="(msg: String)Nothing">noSuch</a>(<span title="java.lang.String(&quot;empty.init&quot;)" class="string">&quot;empty.init&quot;</span>)
+    <span class="keyword">else</span> <a href="#69186" title="(s: String,len: Int)String">dropRight</a>(<a href="#69879" title="String">s</a>, <span title="Int(1)" class="int">1</span>)
+  
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String,suffix: String)Boolean" id="69192">endsWith</a>(<a title="String" id="69891">s</a>: <span title="String">String</span>, <a title="String" id="69892">suffix</a>: <span title="String">String</span>) =
+    <a href="#69185" title="(s: String,len: Int)String">takeRight</a><span title="(x$1: AnyRef)Boolean">(</span><a href="#69891" title="String">s</a>, <a href="#69892" title="String">suffix</a>.<span title="()Int">length</span>) == <a href="#69892" title="String">suffix</a>
+    
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String,prefix: String,offset: Int)Boolean" id="69193">startsWith</a>(<a title="String" id="69906">s</a>: <span title="String">String</span>, <a title="String" id="69907">prefix</a>: <span title="String">String</span>, <a title="Int" id="69911">offset</a>: <span title="Int">Int</span> = <span title="Int(0)" class="int">0</span>) =
+    <a href="#69183" title="(s: String,len: Int)String">take</a><span title="(x$1: AnyRef)Boolean">(</span><a href="#69184" title="(s: String,len: Int)String">drop</a>(<a href="#69906" title="String">s</a>, <a href="#69911" title="Int">offset</a>), <a href="#69907" title="String">prefix</a>.<span title="()Int">length</span>) == <a href="#69907" title="String">prefix</a>
+  
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String,f: (Char) =&gt; Boolean)String" id="69194">takeWhile</a>(<a title="String" id="69927">s</a>: <span title="String">String</span>, <a title="(Char) =&gt; Boolean" id="69928">f</a>: Char =&gt; Boolean) = {
+    <span class="keyword">val</span> <a title="Int" id="69931">len</a> = <a href="#69927" title="String">s</a>.<span title="()Int">length</span>
+    <span class="keyword">var</span> <a title="Int" id="69932">i</a> = <span title="Int(0)" class="int">0</span>
+    <span title="Unit" class="keyword">while</span> (<a href="#69932" title="(x$1: Int)Boolean">i</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <a href="#69931" title="Int">len</a> &amp;&amp; <a href="../../Function1.scala.html#17119" title="(v1: Char)Boolean">f</a>(<a href="#69927" title="(x$1: Int)Char">s</a> charAt <a href="#69932" title="Int">i</a>)) <a href="#69932" title="Int">i</a> <a href="#69933" title="()Unit">+=</a> <span title="Int(1)" class="int">1</span>
+    
+    <a href="#69183" title="(s: String,len: Int)String">take</a>(<a href="#69927" title="String">s</a>, <a href="#69932" title="Int">i</a>)
+  }
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String,f: (Char) =&gt; Boolean)String" id="69195">dropWhile</a>(<a title="String" id="69990">s</a>: <span title="String">String</span>, <a title="(Char) =&gt; Boolean" id="69991">f</a>: Char =&gt; Boolean) = {
+    <span class="keyword">val</span> <a title="Int" id="69994">len</a> = <a href="#69990" title="String">s</a>.<span title="()Int">length</span>
+    <span class="keyword">var</span> <a title="Int" id="69995">i</a> = <span title="Int(0)" class="int">0</span>
+    <span title="Unit" class="keyword">while</span> (<a href="#69995" title="(x$1: Int)Boolean">i</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <a href="#69994" title="Int">len</a> &amp;&amp; <a href="../../Function1.scala.html#17119" title="(v1: Char)Boolean">f</a>(<a href="#69990" title="(x$1: Int)Char">s</a> charAt <a href="#69995" title="Int">i</a>)) <a href="#69995" title="Int">i</a> <a href="#69996" title="()Unit">+=</a> <span title="Int(1)" class="int">1</span>
+    
+    <a href="#69184" title="(s: String,len: Int)String">drop</a>(<a href="#69990" title="String">s</a>, <a href="#69995" title="Int">i</a>)
+  }
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String,p: (Char) =&gt; Boolean,from: Int)Int" id="69196">indexWhere</a>(<a title="String" id="70050">s</a>: <span title="String">String</span>, <a title="(Char) =&gt; Boolean" id="70051">p</a>: Char =&gt; Boolean, <a title="Int" id="70054">from</a>: <span title="Int">Int</span> = <span title="Int(0)" class="int">0</span>): <span title="Int">Int</span> = {
+    <span class="keyword">val</span> <a title="Int" id="70055">len</a> = <a href="#70050" title="String">s</a>.<span title="()Int">length</span>
+    <span class="keyword">var</span> <a title="Int" id="70056">i</a> = <a href="#70054" title="Int">from</a>
+    <span title="Unit" class="keyword">while</span> (<a href="#70056" title="(x$1: Int)Boolean">i</a> &lt; <a href="#70055" title="Int">len</a>) {
+      <a href="#70057" title="Unit" class="keyword">if</a> (<a href="../../Function1.scala.html#17119" title="(v1: Char)Boolean">p</a>(<a href="#70050" title="(x$1: Int)Char">s</a> charAt <a href="#70056" title="Int">i</a>))
+        <span title="Nothing" class="keyword">return</span> <a href="#70056" title="Int">i</a>
+    }
+    <span title="Int(-1)">-</span><span class="int">1</span>
+  }
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String,p: (Char) =&gt; Boolean)Int" id="69197">lastIndexWhere</a>(<a title="String" id="70075">s</a>: <span title="String">String</span>, <a title="(Char) =&gt; Boolean" id="70076">p</a>: Char =&gt; Boolean): <span title="Int">Int</span> = <a href="#69198" title="(s: String,p: (Char) =&gt; Boolean,end: Int)Int">lastIndexWhere</a>(<a href="#70075" title="String">s</a>, <a href="#70076" title="(Char) =&gt; Boolean">p</a>, <a href="#70075" title="String">s</a>.<span title="(x$1: Int)Int">length</span> - <span title="Int(1)" class="int">1</span>)
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String,p: (Char) =&gt; Boolean,end: Int)Int" id="69198">lastIndexWhere</a>(<a title="String" id="70081">s</a>: <span title="String">String</span>, <a title="(Char) =&gt; Boolean" id="70082">p</a>: Char =&gt; Boolean, <a title="Int" id="70083">end</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = {
+    <span class="keyword">var</span> <a title="Int" id="70107">i</a> = <a href="#70083" title="Int">end</a>
+    <span title="Unit" class="keyword">while</span> (<a href="#70107" title="(x$1: Int)Boolean">i</a> &gt;= <span title="Int(0)" class="int">0</span>) <a href="#70108" title="()Unit">{</a>
+      <span title="Unit" class="keyword">if</span> (<a href="../../Function1.scala.html#17119" title="(v1: Char)Boolean">p</a>(<a href="#70081" title="(x$1: Int)Char">s</a> charAt <a href="#70107" title="Int">i</a>))
+        <span title="Nothing" class="keyword">return</span> <a href="#70107" title="Int">i</a>
+      <a href="#70107" title="Int">i</a> -= <span title="Int(1)" class="int">1</span>
+    }
+    <span title="Int(-1)">-</span><span class="int">1</span>
+  }
+  
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String)String" id="69199">reverse</a>(<a title="String" id="70152">s</a>: <span title="String">String</span>): <span title="String">String</span> = {
+    <span class="keyword">val</span> <a title="StringBuilder" id="70154">sb</a> = <a href="../mutable/StringBuilder.scala.html#23348" title="()StringBuilder" class="keyword">new</a> <a href="../../package.scala.html#14791" title="StringBuilder">StringBuilder</a>
+    <span class="keyword">var</span> <a title="Int" id="70155">i</a> = <a href="#70152" title="String">s</a>.<span title="(x$1: Int)Int">length</span> - <span title="Int(1)" class="int">1</span>
+    <span title="Unit" class="keyword">while</span> (<a href="#70155" title="(x$1: Int)Boolean">i</a> &gt;= <span title="Int(0)" class="int">0</span>) <a href="#70156" title="()Unit">{</a>
+      <a href="../mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">sb</a> append (<a href="#70152" title="(x$1: Int)Char">s</a> charAt <a href="#70155" title="Int">i</a>)
+      <a href="#70155" title="Int">i</a> -= <span title="Int(1)" class="int">1</span>
+    }
+    <a href="#70154" title="StringBuilder">sb</a>.<a href="../mutable/StringBuilder.scala.html#23409" title="()String">toString</a>
+  }
+  
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String,p: (Char) =&gt; Boolean)Option[Char]" id="69200">find</a>(<a title="String" id="70225">s</a>: <span title="String">String</span>, <a title="(Char) =&gt; Boolean" id="70226">p</a>: Char =&gt; Boolean): <a href="../../Option.scala.html#777" title="Option[Char]">Option</a>[Char] = {
+    <span class="keyword">val</span> <a title="Int" id="70228">len</a> = <a href="#70225" title="String">s</a>.<span title="()Int">length</span>
+    <span class="keyword">var</span> <a title="Int" id="70229">i</a> = <span title="Int(0)" class="int">0</span>
+    <span title="Unit" class="keyword">while</span> (<a href="#70229" title="(x$1: Int)Boolean">i</a> &lt; <a href="#70228" title="Int">len</a>) <a href="#70230" title="()Unit">{</a>
+      <span class="keyword">val</span> <a title="Char" id="70239">c</a> = <a href="#70225" title="(x$1: Int)Char">s</a> charAt <a href="#70229" title="Int">i</a>
+      <span title="Unit" class="keyword">if</span> (<a href="../../Function1.scala.html#17119" title="(v1: Char)Boolean">p</a>(<a href="#70239" title="Char">c</a>)) <span title="Nothing" class="keyword">return</span> <a href="../../Option.scala.html#19800" title="(x: Char)Some[Char]">Some</a>(<a href="#70239" title="Char">c</a>)
+    }
+    <a href="../../Option.scala.html#463" title="object None">None</a>
+  }
+    
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String,p: (Char) =&gt; Boolean)Int" id="69201">count</a>(<a title="String" id="70252">s</a>: <span title="String">String</span>, <a title="(Char) =&gt; Boolean" id="70253">p</a>: Char =&gt; Boolean): <span title="Int">Int</span> = {
+    <span class="keyword">val</span> <a title="Int" id="70255">len</a> = <a href="#70252" title="String">s</a>.<span title="()Int">length</span>
+    <span class="keyword">var</span> <a title="Int" id="70256">total</a>, <a title="Int" id="70257">i</a> = <span title="Int(0)" class="int">0</span>
+    <span title="Unit" class="keyword">while</span> (<a href="#70257" title="(x$1: Int)Boolean">i</a> &lt; <a href="#70255" title="Int">len</a>)
+      <a href="#70258" title="Unit" class="keyword">if</a> (<a href="../../Function1.scala.html#17119" title="(v1: Char)Boolean">p</a>(<a href="#70252" title="(x$1: Int)Char">s</a> charAt <a href="#70257" title="Int">i</a>))
+        <a href="#70256" title="Int">total</a> += <span title="Int(1)" class="int">1</span>
+    
+    <a href="#70256" title="Int">total</a>
+  }
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String)Option[Char]" id="69202">headOption</a>(<a title="String" id="70308">s</a>: <span title="String">String</span>): <a href="../../Option.scala.html#777" title="Option[Char]">Option</a>[Char] =
+    <span title="Option[Char]" class="keyword">if</span> (<a href="#70308" title="String">s</a>.<span title="()Boolean">isEmpty</span>) <a href="../../Option.scala.html#463" title="object None">None</a> <span class="keyword">else</span> <a href="../../Option.scala.html#19800" title="(x: Char)Some[Char]">Some</a>(<a href="#70308" title="(x$1: Int)Char">s</a> charAt <span title="Int(0)" class="int">0</span>)
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String)Option[Char]" id="69203">lastOption</a>(<a title="String" id="70319">s</a>: <span title="String">String</span>): <a href="../../Option.scala.html#777" title="Option[Char]">Option</a>[Char] =
+    <span title="Option[Char]" class="keyword">if</span> (<a href="#70319" title="String">s</a>.<span title="()Boolean">isEmpty</span>) <a href="../../Option.scala.html#463" title="object None">None</a> <span class="keyword">else</span> <a href="../../Option.scala.html#19800" title="(x: Char)Some[Char]">Some</a>(<a href="#69190" title="(s: String)Char">last</a>(<a href="#70319" title="String">s</a>))
+  
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String,from: Int,to: Int)java.lang.String" id="69204">slice</a>(<a title="String" id="70330">s</a>: <span title="String">String</span>, <a title="Int" id="70331">from</a>: <span title="Int">Int</span>, <a title="Int" id="70332">to</a>: <span title="Int">Int</span>) =
+    <a href="#70330" title="String">s</a>.<span title="(x$1: Int,x$2: Int)java.lang.String">substring</span>(<a href="#70331" title="Int">from</a>, <a href="#70332" title="Int">to</a>)
+    
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String,p: (Char) =&gt; Boolean)(String, String)" id="69205">span</a>(<a title="String" id="70343">s</a>: <span title="String">String</span>, <a title="(Char) =&gt; Boolean" id="70344">p</a>: Char =&gt; Boolean): <a href="../../Tuple2.scala.html#1152" title="(String, String)">(</a>String, String) = {
+    <span class="keyword">val</span> <a title="Int" id="70346">len</a> = <a href="#70343" title="String">s</a>.<span title="()Int">length</span>
+    <span class="keyword">var</span> <a title="Int" id="70347">i</a> = <span title="Int(0)" class="int">0</span>
+    <span title="Unit" class="keyword">while</span> (<a href="../../Function1.scala.html#17119" title="(v1: Char)Boolean">p</a>(<a href="#70343" title="(x$1: Int)Char">s</a> charAt <a href="#70347" title="Int">i</a>)) <a href="#70347" title="Int">i</a> <a href="#70348" title="()Unit">+=</a> <span title="Int(1)" class="int">1</span>
+    
+    <a href="#69187" title="(s: String,index: Int)(String, String)">splitAt</a>(<a href="#70343" title="String">s</a>, <a href="#70347" title="Int">i</a>)
+  }
+  
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String,p: (Char) =&gt; Boolean)(String, String)" id="69206">partition</a>(<a title="String" id="70394">s</a>: <span title="String">String</span>, <a title="(Char) =&gt; Boolean" id="70395">p</a>: Char =&gt; Boolean): <a href="../../Tuple2.scala.html#1152" title="(String, String)">(</a>String, String) = {
+    <span class="keyword">val</span> <a title="Int" id="70397">len</a> = <a href="#70394" title="String">s</a>.<span title="()Int">length</span>
+    <span class="keyword">val</span> <a title="StringBuilder" id="70398">sb1</a>, <a title="StringBuilder" id="70399">sb2</a> = <a href="../mutable/StringBuilder.scala.html#23348" title="()StringBuilder" class="keyword">new</a> <a href="../../package.scala.html#14791" title="StringBuilder">StringBuilder</a>
+    <span class="keyword">var</span> <a title="Int" id="70400">i</a> = <span title="Int(0)" class="int">0</span>
+    <span title="Unit" class="keyword">while</span> (<a href="#70400" title="(x$1: Int)Boolean">i</a> &lt; <a href="#70397" title="Int">len</a>) <a href="#70401" title="()Unit">{</a>
+      <span class="keyword">val</span> <a title="Char" id="70434">c</a> = <a href="#70394" title="(x$1: Int)Char">s</a> charAt <a href="#70400" title="Int">i</a>
+      <span title="StringBuilder" class="keyword">if</span> (<a href="../../Function1.scala.html#17119" title="(v1: Char)Boolean">p</a>(<a href="#70434" title="Char">c</a>)) <a href="../mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">sb1</a> append <a href="#70434" title="Char">c</a> <span class="keyword">else</span> <a href="../mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">sb2</a> append <a href="#70434" title="Char">c</a>
+      <a href="#70400" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+    }
+    <a href="../../Tuple2.scala.html#20670" title="(_1: String,_2: String)(String, String)">(</a><a href="#70398" title="StringBuilder">sb1</a>.<a href="../mutable/StringBuilder.scala.html#23409" title="()String">toString</a>, <a href="#70399" title="StringBuilder">sb2</a>.<a href="../mutable/StringBuilder.scala.html#23409" title="()String">toString</a>)
+  }
+}
+        </pre>
+    </body>
+</html>

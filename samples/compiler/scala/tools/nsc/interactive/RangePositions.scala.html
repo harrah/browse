@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/tools/nsc/interactive/RangePositions.scala</title>
+        <script type="text/javascript" src="../../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+<span class="keyword">package</span> scala.tools.nsc
+<span class="keyword">package</span> interactive
+
+<span class="keyword">import</span> ast.Trees
+<span class="keyword">import</span> symtab.Positions
+<span class="keyword">import</span> scala.tools.nsc.util.{SourceFile, Position, RangePosition, OffsetPosition, NoPosition, WorkScheduler}
+<span class="keyword">import</span> scala.collection.mutable.ListBuffer
+
+/** Handling range positions
+ *  atPos, the main method in this trait, will add positions to a tree,
+ *  and will ensure the following properties:
+ *
+ *    1. All nodes between the root of the tree and nodes that already have positions
+ *       will be assigned positions.
+ *    2. No node which already has a position will be assigned a different range; however
+ *       a RangePosition might become a TransparentPosition.
+ *    3. The position of each assigned node includes the positions of each of its children.
+ *    4. The positions of all solid descendants of children of an assigned node
+ *       are mutually non-overlapping.
+ *
+ * Here, the solid descendant of a node are:
+ *
+ *   If the node has a TransparentPosition, the solid descendants of all its children
+ *   Otherwise, the singleton consisting of the node itself.
+ */
+<span class="keyword">trait</span> <a title="trait RangePositions extends java.lang.Object with scala.tools.nsc.ast.Trees with scala.tools.nsc.symtab.Positions with ScalaObject" id="18452">RangePositions</a> <span title="ScalaObject" class="keyword">extends</span> <a href="../ast/Trees.scala.html#12072" title="scala.tools.nsc.ast.Trees">Trees</a> <span class="keyword">with</span> <a href="../symtab/Positions.scala.html#9833" title="scala.tools.nsc.symtab.Positions">Positions</a> { 
+self: scala.tools.nsc.Global =&gt;
+
+  case <span class="keyword">class</span> <a title="class Range extends java.lang.Object with ScalaObject with Product" id="68082">Range</a><span title="ScalaObject">(</span><a title="scala.tools.nsc.util.Position" id="69476">pos</a>: <a href="../util/Position.scala.html#14710" title="scala.tools.nsc.util.Position">Position</a>, <a title="RangePositions.this.Tree" id="69477">tree</a>: <a href="../ast/Trees.scala.html#26593" title="RangePositions.this.Tree">Tree</a>) {
+    <span class="keyword">def</span> <a title="=&gt; Boolean" id="68040">isFree</a> = <a href="#69477" title="(x$1: AnyRef)Boolean">tree</a> == <a href="../ast/Trees.scala.html#26602" title="object RangePositions.this.EmptyTree">EmptyTree</a>
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(source: scala.tools.nsc.util.SourceFile,start: Int,point: Int,end: Int)scala.tools.nsc.util.RangePosition" id="68009">rangePos</a>(<a title="scala.tools.nsc.util.SourceFile" id="68136">source</a>: <a href="../util/SourceFile.scala.html#14713" title="scala.tools.nsc.util.SourceFile">SourceFile</a>, <a title="Int" id="68137">start</a>: <span title="Int">Int</span>, <a title="Int" id="68138">point</a>: <span title="Int">Int</span>, <a title="Int" id="68139">end</a>: <span title="Int">Int</span>) = 
+    <span title="scala.tools.nsc.util.RangePosition" class="keyword">new</span> <a href="../util/Position.scala.html#14722" title="scala.tools.nsc.util.RangePosition">RangePosition</a>(<a href="#68136" title="scala.tools.nsc.util.SourceFile">source</a>, <a href="#68137" title="Int">start</a>, <a href="#68138" title="Int">point</a>, <a href="#68139" title="Int">end</a>)
+
+  /** A position that wraps a set of trees.
+   *  The point of the wrapping position is the point of the default position.
+   *  If some of the trees are ranges, returns a range position enclosing all ranges
+   *  Otherwise returns default position.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(default: scala.tools.nsc.util.Position,trees: List[RangePositions.this.Tree])scala.tools.nsc.util.Position" id="68010">wrappingPos</a>(<a title="scala.tools.nsc.util.Position" id="68222">default</a>: <a href="../util/Position.scala.html#14710" title="scala.tools.nsc.util.Position">Position</a>, <a title="List[RangePositions.this.Tree]" id="68223">trees</a>: <span title="List[RangePositions.this.Tree]">List</span>[Tree]): <a href="../util/Position.scala.html#14710" title="scala.tools.nsc.util.Position">Position</a> = {
+    <span class="keyword">val</span> <a title="List[RangePositions.this.Tree]" id="68234">ranged</a> = <a href="#68223" title="(p: (RangePositions.this.Tree) =&gt; Boolean)List[RangePositions.this.Tree]">trees</a> filter (<a href="#68237" title="RangePositions.this.Tree">_</a>.<a href="../ast/Trees.scala.html#29361" title="=&gt; scala.tools.nsc.util.Position">pos</a>.<a href="../util/Position.scala.html#30281" title="=&gt; Boolean">isRange</a>)
+    <span title="scala.tools.nsc.util.Position" class="keyword">if</span> (<a href="#68234" title="List[RangePositions.this.Tree]">ranged</a>.<span title="=&gt; Boolean">isEmpty</span>) <a href="#68222" title="scala.tools.nsc.util.Position">default</a>.<a href="../util/Position.scala.html#30296" title="=&gt; scala.tools.nsc.util.Position">focus</a>
+    <span class="keyword">else</span> <span title="scala.tools.nsc.util.RangePosition" class="keyword">new</span> <a href="../util/Position.scala.html#14722" title="scala.tools.nsc.util.RangePosition">RangePosition</a>(<a href="#68222" title="scala.tools.nsc.util.Position">default</a>.<a href="../util/Position.scala.html#30278" title="=&gt; scala.tools.nsc.util.SourceFile">source</a>, (<a href="#68234" title="(f: (RangePositions.this.Tree) =&gt; Int)(implicit bf: scala.collection.generic.BuilderFactory[Int,List[Int],List[RangePositions.this.Tree]])List[Int]">ranged</a> <span title="scala.collection.generic.BuilderFactory[Int,List[Int],List#Coll]">map</span> (<a href="#68255" title="RangePositions.this.Tree">_</a>.<a href="../ast/Trees.scala.html#29361" title="=&gt; scala.tools.nsc.util.Position">pos</a>.<a href="../util/Position.scala.html#30284" title="=&gt; Int">start</a>)).<a title="(implicit cmp: Ordering[Int])Int" id="25226">min</a>, <a href="#68222" title="scala.tools.nsc.util.Position">default</a>.<a href="../util/Position.scala.html#30286" title="=&gt; Int">point</a>, (<a href="#68234" title="(f: (RangePositions.this.Tree) =&gt; Int)(implicit bf: scala.collection.generic.BuilderFactory[Int,List[Int],List[RangePositions.this.Tree]])List[Int]">ranged</a> <span title="scala.collection.generic.BuilderFactory[Int,List[Int],List#Coll]">map</span> (<a href="#69283" title="RangePositions.this.Tree">_</a>.<a href="../ast/Trees.scala.html#29361" title="=&gt; scala.tools.nsc.util.Position">pos</a>.<a href="../util/Position.scala.html#30288" title="=&gt; Int">end</a>)).<a title="(implicit cmp: Ordering[Int])Int" id="25229">max</a>)
+  }
+
+  /** A position that wraps a non-empty set of trees.
+   *  The point of the wrapping position is the point of the first trees' position.
+   *  If some of the trees are ranges, returns a range position enclosing all ranges
+   *  Otherwise returns first tree's position.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(trees: List[RangePositions.this.Tree])scala.tools.nsc.util.Position" id="68011">wrappingPos</a>(<a title="List[RangePositions.this.Tree]" id="69373">trees</a>: <span title="List[RangePositions.this.Tree]">List</span>[Tree]): <a href="../util/Position.scala.html#14710" title="scala.tools.nsc.util.Position">Position</a> = {
+    <span class="keyword">val</span> <a title="scala.tools.nsc.util.Position" id="69379">headpos</a> = <a href="#69373" title="List[RangePositions.this.Tree]">trees</a>.<span title="=&gt; RangePositions.this.Tree">head</span>.<a href="../ast/Trees.scala.html#29361" title="=&gt; scala.tools.nsc.util.Position">pos</a>
+    <span title="scala.tools.nsc.util.Position" class="keyword">if</span> (<a href="#69379" title="scala.tools.nsc.util.Position">headpos</a>.<a href="../util/Position.scala.html#30279" title="=&gt; Boolean">isDefined</a>) <a href="#68010" title="(default: scala.tools.nsc.util.Position,trees: List[RangePositions.this.Tree])scala.tools.nsc.util.Position">wrappingPos</a>(<a href="#69379" title="scala.tools.nsc.util.Position">headpos</a>, <a href="#69373" title="List[RangePositions.this.Tree]">trees</a>) <span class="keyword">else</span> <a href="#69379" title="scala.tools.nsc.util.Position">headpos</a>
+  }
+
+/*
+  override def integratePos(tree: Tree, pos: Position) = 
+    if (pos.isSynthetic &amp;&amp; !tree.pos.isSynthetic) tree.syntheticDuplicate 
+    else tree
+*/
+
+  // -------------- ensuring no overlaps -------------------------------
+
+  <span class="keyword">def</span> <a title="(tree: RangePositions.this.Tree)List[RangePositions.this.Tree]" id="68012">solidDescendants</a>(<a title="RangePositions.this.Tree" id="69423">tree</a>: <a href="../ast/Trees.scala.html#26593" title="RangePositions.this.Tree">Tree</a>): <span title="List[RangePositions.this.Tree]">List</span>[Tree] = 
+    <span title="List[RangePositions.this.Tree]" class="keyword">if</span> (<a href="#69423" title="RangePositions.this.Tree">tree</a>.<a href="../ast/Trees.scala.html#29361" title="=&gt; scala.tools.nsc.util.Position">pos</a>.<a href="../util/Position.scala.html#30280" title="=&gt; Boolean">isTransparent</a>) <a href="#69423" title="RangePositions.this.Tree">tree</a>.<a href="../ast/Trees.scala.html#29380" title="(f: (RangePositions.this.Tree) =&gt; Traversable[RangePositions.this.Tree])(implicit bf: scala.collection.generic.BuilderFactory[RangePositions.this.Tree,List[RangePositions.this.Tree],List[RangePositions.this.Tree]])List[RangePositions.this.Tree]">children</a> <span title="scala.collection.generic.BuilderFactory[RangePositions.this.Tree,List[RangePositions.this.Tree],List#Coll]">flatMap</span> <a href="#68012" title="(tree: RangePositions.this.Tree)List[RangePositions.this.Tree]">solidDescendants</a> 
+    <span class="keyword">else</span> <span title="(xs: RangePositions.this.Tree*)List[RangePositions.this.Tree]">List</span>(<a href="#69423" title="RangePositions.this.Tree">tree</a>)
+
+  /** A free range from `lo` to `hi` */
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(lo: Int,hi: Int)RangePositions.this.Range" id="68013">free</a>(<a title="Int" id="69473">lo</a>: <span title="Int">Int</span>, <a title="Int" id="69474">hi</a>: <span title="Int">Int</span>): <a href="#68082" title="RangePositions.this.Range">Range</a> = 
+    <a href="#68082" title="(pos: scala.tools.nsc.util.Position,tree: RangePositions.this.Tree)RangePositions.this.Range">Range</a>(<span title="scala.tools.nsc.util.RangePosition" class="keyword">new</span> <a href="../util/Position.scala.html#14722" title="scala.tools.nsc.util.RangePosition">RangePosition</a>(<span title="Null(null)" class="keyword">null</span>, <a href="#69473" title="Int">lo</a>, <a href="#69473" title="Int">lo</a>, <a href="#69474" title="Int">hi</a>), <a href="../ast/Trees.scala.html#26602" title="object RangePositions.this.EmptyTree">EmptyTree</a>)
+
+  /** The maximal free range */
+  <span class="keyword">private</span> <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="RangePositions.this.Range" id="68015">maxFree</a>: <a href="#68082" title="RangePositions.this.Range">Range</a> = <a href="#68013" title="(lo: Int,hi: Int)RangePositions.this.Range">free</a>(<span title="Int(0)" class="int">0</span>, <a title="object Math" id="525">Math</a>.<a title="=&gt; Int" id="69508">MAX_INT</a>)
+
+  /** A singleton list of a non-empty range from `lo` to `hi`, or else the empty List */ 
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(lo: Int,hi: Int)List[RangePositions.this.Range]" id="68016">maybeFree</a>(<a title="Int" id="69754">lo</a>: <span title="Int">Int</span>, <a title="Int" id="69755">hi</a>: <span title="Int">Int</span>) = 
+    <span title="List[RangePositions.this.Range]" class="keyword">if</span> (<a href="#69754" title="(x$1: Int)Boolean" id="2956">lo</a> &lt; <a href="#69755" title="Int">hi</a>) <span title="(xs: RangePositions.this.Range*)List[RangePositions.this.Range]">List</span>(<a href="#68013" title="(lo: Int,hi: Int)RangePositions.this.Range">free</a>(<a href="#69754" title="Int">lo</a>, <a href="#69755" title="Int">hi</a>)) 
+    <span class="keyword">else</span> List<span title="object Nil">(</span>)
+
+  /** Insert `pos` into ranges `rs` if possible;
+   *  otherwise add conflicting trees to `conflicting`.
+   */
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(rs: List[RangePositions.this.Range],t: RangePositions.this.Tree,conflicting: scala.collection.mutable.ListBuffer[RangePositions.this.Tree])List[RangePositions.this.Range]" id="68017">insert</a>(<a title="List[RangePositions.this.Range]" id="69784">rs</a>: <span title="List[RangePositions.this.Range]">List</span>[Range], <a title="RangePositions.this.Tree" id="69785">t</a>: <a href="../ast/Trees.scala.html#26593" title="RangePositions.this.Tree">Tree</a>, <a title="scala.collection.mutable.ListBuffer[RangePositions.this.Tree]" id="69786">conflicting</a>: <span title="scala.collection.mutable.ListBuffer[RangePositions.this.Tree]">ListBuffer</span>[Tree]): <span title="List[RangePositions.this.Range]">List</span>[Range] = <a href="#69784" title="List[RangePositions.this.Range]">rs</a> <span title="List[RangePositions.this.Range]" class="keyword">match</span> {
+    <span title="List[RangePositions.this.Range]" class="keyword">case</span> <a href="#69789" title="(x: List[RangePositions.this.Range])Some[List[RangePositions.this.Range]]">List</a>() =&gt;
+      <span title="(assertion: Boolean)Unit">assert</span>(<a href="#69786" title="scala.collection.mutable.ListBuffer[RangePositions.this.Tree]">conflicting</a>.<span title="=&gt; Boolean">nonEmpty</span>)
+      <a href="#69784" title="List[RangePositions.this.Range]">rs</a>
+    <span title="List[RangePositions.this.Range]" class="keyword">case</span> <a title="RangePositions.this.Range" id="69807">r</a> :: <a title="List[RangePositions.this.Range]" id="69808">rs1</a> =&gt;
+      <span title="(assertion: Boolean)Unit">assert</span>(<span title="=&gt; Boolean">!</span><a href="#69785" title="RangePositions.this.Tree">t</a>.<a href="../ast/Trees.scala.html#29361" title="=&gt; scala.tools.nsc.util.Position">pos</a>.<a href="../util/Position.scala.html#30280" title="=&gt; Boolean">isTransparent</a>)
+      <span title="List[RangePositions.this.Range]" class="keyword">if</span> (<a href="#69807" title="RangePositions.this.Range">r</a>.<a href="#68040" title="(x$1: Boolean)Boolean">isFree</a> &amp;&amp; (<a href="#69807" title="RangePositions.this.Range">r</a>.<a href="../util/Position.scala.html#30298" title="(pos: scala.tools.nsc.util.Position)Boolean">pos</a> includes <a href="#69785" title="RangePositions.this.Tree">t</a>.<a href="../ast/Trees.scala.html#29361" title="=&gt; scala.tools.nsc.util.Position">pos</a>)) {
+//      println(&quot;subdividing &quot;+r+&quot;/&quot;+t.pos)
+        <a href="#68016" title="(lo: Int,hi: Int)List[RangePositions.this.Range]">maybeFree</a>(<a href="#69785" title="RangePositions.this.Tree">t</a>.<a href="../ast/Trees.scala.html#29361" title="=&gt; scala.tools.nsc.util.Position">pos</a>.<a href="../util/Position.scala.html#30288" title="=&gt; Int">end</a>, <a href="#69807" title="RangePositions.this.Range">r</a>.<a href="#69476" title="=&gt; scala.tools.nsc.util.Position">pos</a>.<a href="../util/Position.scala.html#30288" title="=&gt; Int">end</a>) <a href="#69822" title="List[RangePositions.this.Range]">:::</a> <span title="(xs: RangePositions.this.Range*)List[RangePositions.this.Range]">List</span>(<a href="#68082" title="(pos: scala.tools.nsc.util.Position,tree: RangePositions.this.Tree)RangePositions.this.Range">Range</a>(<a href="#69785" title="RangePositions.this.Tree">t</a>.<a href="../ast/Trees.scala.html#29361" title="=&gt; scala.tools.nsc.util.Position">pos</a>, <a href="#69785" title="RangePositions.this.Tree">t</a>)) <a href="#69825" title="(prefix: List[RangePositions.this.Range])List[RangePositions.this.Range]">:::</a> <a href="#68016" title="(lo: Int,hi: Int)List[RangePositions.this.Range]">maybeFree</a>(<a href="#69807" title="RangePositions.this.Range">r</a>.<a href="#69476" title="=&gt; scala.tools.nsc.util.Position">pos</a>.<a href="../util/Position.scala.html#30284" title="=&gt; Int">start</a>, <a href="#69785" title="RangePositions.this.Tree">t</a>.<a href="../ast/Trees.scala.html#29361" title="=&gt; scala.tools.nsc.util.Position">pos</a>.<a href="../util/Position.scala.html#30284" title="=&gt; Int">start</a>) <a href="#69845" title="(prefix: List[RangePositions.this.Range])List[RangePositions.this.Range]">:::</a> <a href="#69808" title="(prefix: List[RangePositions.this.Range])List[RangePositions.this.Range]">rs1</a>
+      } <span class="keyword">else</span> {
+        <span title="Any" class="keyword">if</span> (<span title="(x$1: Boolean)Boolean">!</span><a href="#69807" title="RangePositions.this.Range">r</a>.<a href="#68040" title="=&gt; Boolean">isFree</a> &amp;&amp; (<a href="#69807" title="RangePositions.this.Range">r</a>.<a href="../util/Position.scala.html#30302" title="(pos: scala.tools.nsc.util.Position)Boolean">pos</a> overlaps <a href="#69785" title="RangePositions.this.Tree">t</a>.<a href="../ast/Trees.scala.html#29361" title="=&gt; scala.tools.nsc.util.Position">pos</a>)) <a href="#69786" title="(x: RangePositions.this.Tree)conflicting.type" id="61580">conflicting</a> += <a href="#69807" title="RangePositions.this.Range">r</a>.<a href="#69477" title="=&gt; RangePositions.this.Tree">tree</a> 
+        <a href="#69807" title="RangePositions.this.Range">r</a> <a href="#69965" title="RangePositions.this.Range">::</a> <a href="#68017" title="(rs: List[RangePositions.this.Range],t: RangePositions.this.Tree,conflicting: scala.collection.mutable.ListBuffer[RangePositions.this.Tree])List[RangePositions.this.Range]">insert</a><span title="(x: RangePositions.this.Range)List[RangePositions.this.Range]">(</span><a href="#69808" title="List[RangePositions.this.Range]">rs1</a>, <a href="#69785" title="RangePositions.this.Tree">t</a>, <a href="#69786" title="scala.collection.mutable.ListBuffer[RangePositions.this.Tree]">conflicting</a>)
+      }
+  }
+
+  /** Replace elem `t` of `ts` by `replacement` list. */
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(ts: List[RangePositions.this.Tree],t: RangePositions.this.Tree,replacement: List[RangePositions.this.Tree])List[RangePositions.this.Tree]" id="68018">replace</a>(<a title="List[RangePositions.this.Tree]" id="69975">ts</a>: <span title="List[RangePositions.this.Tree]">List</span>[Tree], <a title="RangePositions.this.Tree" id="69976">t</a>: <a href="../ast/Trees.scala.html#26593" title="RangePositions.this.Tree">Tree</a>, <a title="List[RangePositions.this.Tree]" id="69977">replacement</a>: <span title="List[RangePositions.this.Tree]">List</span>[Tree]): <span title="List[RangePositions.this.Tree]">List</span>[Tree] = 
+    <span title="List[RangePositions.this.Tree]" class="keyword">if</span> (<a href="#69975" title="List[RangePositions.this.Tree]">ts</a>.<span title="(x$1: AnyRef)Boolean">head</span> == <a href="#69976" title="RangePositions.this.Tree">t</a>) <a href="#69977" title="List[RangePositions.this.Tree]">replacement</a> <a href="#69986" title="List[RangePositions.this.Tree]">:::</a> <a href="#69975" title="List[RangePositions.this.Tree]">ts</a>.<span title="(prefix: List[RangePositions.this.Tree])List[RangePositions.this.Tree]">tail</span>
+    <span class="keyword">else</span> <a href="#69975" title="List[RangePositions.this.Tree]">ts</a>.<span title="=&gt; RangePositions.this.Tree">head</span> <a href="#69994" title="RangePositions.this.Tree">::</a> <a href="#68018" title="(ts: List[RangePositions.this.Tree],t: RangePositions.this.Tree,replacement: List[RangePositions.this.Tree])List[RangePositions.this.Tree]">replace</a><span title="(x: RangePositions.this.Tree)List[RangePositions.this.Tree]">(</span><a href="#69975" title="List[RangePositions.this.Tree]">ts</a>.<span title="=&gt; List[RangePositions.this.Tree]">tail</span>, <a href="#69976" title="RangePositions.this.Tree">t</a>, <a href="#69977" title="List[RangePositions.this.Tree]">replacement</a>)
+
+  /** Ensure that given tree has no positions that overlap with
+   *  any of the positions of `others`. This is done by
+   *  shortening the range or assinging TransparentPositions
+   *  to some of the nodes in `tree`.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(tree: RangePositions.this.Tree,others: List[RangePositions.this.Tree])Unit" id="68019">ensureNonOverlapping</a>(<a title="RangePositions.this.Tree" id="70004">tree</a>: <a href="../ast/Trees.scala.html#26593" title="RangePositions.this.Tree">Tree</a>, <a title="List[RangePositions.this.Tree]" id="70005">others</a>: <span title="List[RangePositions.this.Tree]">List</span>[Tree]) {
+    <span class="keyword">def</span> <a title="(pos: scala.tools.nsc.util.Position)Boolean" id="70012">isOverlapping</a>(<a title="scala.tools.nsc.util.Position" id="70013">pos</a>: <a href="../util/Position.scala.html#14710" title="scala.tools.nsc.util.Position">Position</a>) = 
+      <a href="#70013" title="scala.tools.nsc.util.Position">pos</a>.<a href="../util/Position.scala.html#30281" title="(x$1: Boolean)Boolean">isRange</a> &amp;&amp; (<a href="#70005" title="(p: (RangePositions.this.Tree) =&gt; Boolean)Boolean" id="28937">others</a> exists (<a href="../util/Position.scala.html#30302" title="(pos: scala.tools.nsc.util.Position)Boolean">pos</a> overlaps <a href="#70018" title="RangePositions.this.Tree">_</a>.<a href="../ast/Trees.scala.html#29361" title="=&gt; scala.tools.nsc.util.Position">pos</a>))
+    <span title="Unit" class="keyword">if</span> (<a href="#70012" title="(pos: scala.tools.nsc.util.Position)Boolean">isOverlapping</a>(<a href="#70004" title="RangePositions.this.Tree">tree</a>.<a href="../ast/Trees.scala.html#29361" title="=&gt; scala.tools.nsc.util.Position">pos</a>)) {
+      <span class="keyword">val</span> <a title="List[RangePositions.this.Tree]" id="70027">children</a> = <a href="#70004" title="RangePositions.this.Tree">tree</a>.<a href="../ast/Trees.scala.html#29380" title="=&gt; List[RangePositions.this.Tree]">children</a>
+      <a href="#70027" title="(f: (RangePositions.this.Tree) =&gt; Unit)Unit">children</a> foreach (<a href="#68019" title="(tree: RangePositions.this.Tree,others: List[RangePositions.this.Tree])Unit">ensureNonOverlapping</a>(<a href="#70044" title="RangePositions.this.Tree">_</a>, <a href="#70005" title="List[RangePositions.this.Tree]">others</a>))
+      <span title="Unit" class="keyword">if</span> (<a href="#70004" title="RangePositions.this.Tree">tree</a>.<a href="../ast/Trees.scala.html#29361" title="=&gt; scala.tools.nsc.util.Position">pos</a>.<a href="../util/Position.scala.html#30282" title="=&gt; Boolean">isOpaqueRange</a>) {
+        <span class="keyword">val</span> <a title="scala.tools.nsc.util.Position" id="70054">wpos</a> = <a href="#68010" title="(default: scala.tools.nsc.util.Position,trees: List[RangePositions.this.Tree])scala.tools.nsc.util.Position">wrappingPos</a>(<a href="#70004" title="RangePositions.this.Tree">tree</a>.<a href="../ast/Trees.scala.html#29361" title="=&gt; scala.tools.nsc.util.Position">pos</a>.<a href="../util/Position.scala.html#30296" title="=&gt; scala.tools.nsc.util.Position">focus</a>, <a href="#70027" title="List[RangePositions.this.Tree]">children</a>)
+        <a href="../ast/Trees.scala.html#29365" title="(pos: scala.tools.nsc.util.Position)tree.type">tree</a> <span title="Unit">setPos</span> (<span title="scala.tools.nsc.util.Position" class="keyword">if</span> (<a href="#70012" title="(pos: scala.tools.nsc.util.Position)Boolean">isOverlapping</a>(<a href="#70054" title="scala.tools.nsc.util.Position">wpos</a>)) <a href="#70004" title="RangePositions.this.Tree">tree</a>.<a href="../ast/Trees.scala.html#29361" title="=&gt; scala.tools.nsc.util.Position">pos</a>.<a href="../util/Position.scala.html#30283" title="=&gt; scala.tools.nsc.util.Position">makeTransparent</a> <span class="keyword">else</span> <a href="#70054" title="scala.tools.nsc.util.Position">wpos</a>)
+      }
+    }
+  }
+
+  /** Does given list of trees have mutually non-overlapping positions?
+   *  pre: None of the trees is transparent
+   */
+  <span class="keyword">def</span> <a title="(cts: List[RangePositions.this.Tree])List[(RangePositions.this.Tree, RangePositions.this.Tree)]" id="68020">findOverlapping</a>(<a title="List[RangePositions.this.Tree]" id="70074">cts</a>: <span title="List[RangePositions.this.Tree]">List</span>[Tree]): <span title="List[(RangePositions.this.Tree, RangePositions.this.Tree)]">List</span>[(Tree, Tree)] = {
+    <span class="keyword">var</span> <a title="List[RangePositions.this.Range]" id="70076">ranges</a> = <span title="(xs: RangePositions.this.Range*)List[RangePositions.this.Range]">List</span>(<a href="#68014" title="=&gt; RangePositions.this.Range">maxFree</a>)
+    <span class="keyword">for</span> (<a title="RangePositions.this.Tree" id="70102">ct</a> &lt;- <a href="#70074" title="(f: (RangePositions.this.Tree) =&gt; Unit)Unit">cts</a>) {
+      <span title="Unit" class="keyword">if</span> (<a href="#70102" title="RangePositions.this.Tree">ct</a>.<a href="../ast/Trees.scala.html#29361" title="=&gt; scala.tools.nsc.util.Position">pos</a>.<a href="../util/Position.scala.html#30282" title="=&gt; Boolean">isOpaqueRange</a>) {
+        <span class="keyword">val</span> <a title="scala.collection.mutable.ListBuffer[RangePositions.this.Tree]" id="70103">conflicting</a> = <span title="scala.collection.mutable.ListBuffer[RangePositions.this.Tree]" class="keyword">new</span> <span title="scala.collection.mutable.ListBuffer[RangePositions.this.Tree]">ListBuffer</span>[Tree]
+        <a href="#70076" title="List[RangePositions.this.Range]">ranges</a> = <a href="#68017" title="(rs: List[RangePositions.this.Range],t: RangePositions.this.Tree,conflicting: scala.collection.mutable.ListBuffer[RangePositions.this.Tree])List[RangePositions.this.Range]">insert</a>(<a href="#70076" title="List[RangePositions.this.Range]">ranges</a>, <a href="#70102" title="RangePositions.this.Tree">ct</a>, <a href="#70103" title="scala.collection.mutable.ListBuffer[RangePositions.this.Tree]">conflicting</a>)
+        <span title="Unit" class="keyword">if</span> (<a href="#70103" title="scala.collection.mutable.ListBuffer[RangePositions.this.Tree]">conflicting</a>.<span title="=&gt; Boolean">nonEmpty</span>) <span title="Nothing" class="keyword">return</span> <a href="#70103" title="scala.collection.mutable.ListBuffer[RangePositions.this.Tree]">conflicting</a>.<a title="(f: (RangePositions.this.Tree) =&gt; (RangePositions.this.Tree, RangePositions.this.Tree))(implicit bf: scala.collection.generic.BuilderFactory[(RangePositions.this.Tree, RangePositions.this.Tree),List[(RangePositions.this.Tree, RangePositions.this.Tree)],List[RangePositions.this.Tree]])List[(RangePositions.this.Tree, RangePositions.this.Tree)]" id="61592">toList</a> <span title="scala.collection.generic.BuilderFactory[(RangePositions.this.Tree, RangePositions.this.Tree),List[(RangePositions.this.Tree, RangePositions.this.Tree)],List#Coll]">map</span> (<a title="RangePositions.this.Tree" id="70116">t</a> =&gt; <span title="(_1: RangePositions.this.Tree,_2: RangePositions.this.Tree)(RangePositions.this.Tree, RangePositions.this.Tree)">(</span><a href="#70116" title="RangePositions.this.Tree">t</a>, <a href="#70102" title="RangePositions.this.Tree">ct</a>))
+      }
+    }
+    List<span title="object Nil">(</span>)
+  }
+
+  // -------------- setting positions -------------------------------
+
+  /** Set position of all children of a node
+   *  @param  pos   A target position.
+   *                Uses the point of the position as the point of all positions it assigns.
+   *                Uses the start of this position as an Offset position for unpositioed trees
+   *                without children.
+   *  @param  trees  The children to position. All children must be positionable. 
+   */
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(pos: scala.tools.nsc.util.Position,trees: List[RangePositions.this.Tree])Unit" id="68021">setChildrenPos</a>(<a title="scala.tools.nsc.util.Position" id="70163">pos</a>: <a href="../util/Position.scala.html#14710" title="scala.tools.nsc.util.Position">Position</a>, <a title="List[RangePositions.this.Tree]" id="70164">trees</a>: <span title="List[RangePositions.this.Tree]">List</span>[Tree]): <span title="Unit">Unit</span> = <span class="keyword">try</span> {
+    <span class="keyword">for</span> (<a title="RangePositions.this.Tree" id="70182">tree</a> &lt;- <a href="#70164" title="(f: (RangePositions.this.Tree) =&gt; Any)Unit">trees</a>) {
+      <span title="Any" class="keyword">if</span> (<span title="(x$1: Boolean)Boolean">!</span><a href="#70182" title="RangePositions.this.Tree">tree</a>.<a href="../ast/Trees.scala.html#29374" title="=&gt; Boolean">isEmpty</a> &amp;&amp; <a href="#70182" title="RangePositions.this.Tree">tree</a>.<a href="../ast/Trees.scala.html#29361" title="(x$1: AnyRef)Boolean">pos</a> == <a href="../util/Position.scala.html#14540" title="object scala.tools.nsc.util.NoPosition">NoPosition</a>) {
+        <span class="keyword">val</span> <a title="List[RangePositions.this.Tree]" id="70197">children</a> = <a href="#70182" title="RangePositions.this.Tree">tree</a>.<a href="../ast/Trees.scala.html#29380" title="=&gt; List[RangePositions.this.Tree]">children</a>
+        <span title="tree.type" class="keyword">if</span> (<a href="#70197" title="List[RangePositions.this.Tree]">children</a>.<span title="=&gt; Boolean">isEmpty</span>) {
+          <a href="../ast/Trees.scala.html#29365" title="(pos: scala.tools.nsc.util.Position)tree.type">tree</a> setPos <a href="#70163" title="scala.tools.nsc.util.Position">pos</a>.<a href="../util/Position.scala.html#30296" title="=&gt; scala.tools.nsc.util.Position">focus</a>
+        } <span class="keyword">else</span> {
+          <a href="#68021" title="(pos: scala.tools.nsc.util.Position,trees: List[RangePositions.this.Tree])Unit">setChildrenPos</a>(<a href="#70163" title="scala.tools.nsc.util.Position">pos</a>, <a href="#70197" title="List[RangePositions.this.Tree]">children</a>)
+          <a href="../ast/Trees.scala.html#29365" title="(pos: scala.tools.nsc.util.Position)tree.type">tree</a> setPos <a href="#68010" title="(default: scala.tools.nsc.util.Position,trees: List[RangePositions.this.Tree])scala.tools.nsc.util.Position">wrappingPos</a>(<a href="#70163" title="scala.tools.nsc.util.Position">pos</a>, <a href="#70197" title="List[RangePositions.this.Tree]">children</a>)
+        }
+      }
+    }
+  } <span class="keyword">catch</span> {
+    <span title="Nothing" class="keyword">case</span> <a title="Exception" id="70230">ex</a>: <a title="Exception" id="1875">Exception</a> =&gt;
+      <a title="(x: Any)Unit" id="8057">println</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;error while set children pos &quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#70163" title="scala.tools.nsc.util.Position">pos</a><span title="(x$1: Any)java.lang.String">+</span><span title="java.lang.String(&quot; of &quot;)" class="string">&quot; of &quot;</span>+<a href="#70164" title="List[RangePositions.this.Tree]">trees</a>)
+      <span title="Nothing" class="keyword">throw</span> <a href="#70230" title="Exception">ex</a>
+  }
+
+  /** Position a tree.
+   *  This means: Set position of a node and position all its unpositioned children.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[T &lt;: RangePositions.this.Tree](pos: scala.tools.nsc.util.Position)(tree: T)T" id="68022">atPos</a>[<a title="&gt;: Nothing &lt;: RangePositions.this.Tree" id="68024">T</a> &lt;: Tree](<a title="scala.tools.nsc.util.Position" id="70241">pos</a>: <a href="../util/Position.scala.html#14710" title="scala.tools.nsc.util.Position">Position</a>)(<a title="T" id="70242">tree</a>: <a href="#68024" title="T">T</a>): <a href="#68024" title="T">T</a> =
+    <span title="T" class="keyword">if</span> (<a href="#70241" title="scala.tools.nsc.util.Position">pos</a>.<a href="../util/Position.scala.html#30282" title="=&gt; Boolean">isOpaqueRange</a>) {
+      <span title="Any" class="keyword">if</span> (<span title="(x$1: Boolean)Boolean">!</span><a href="#70242" title="T">tree</a>.<a href="../ast/Trees.scala.html#29374" title="=&gt; Boolean">isEmpty</a> &amp;&amp; <a href="#70242" title="T">tree</a>.<a href="../ast/Trees.scala.html#29361" title="(x$1: AnyRef)Boolean">pos</a> == <a href="../util/Position.scala.html#14540" title="object scala.tools.nsc.util.NoPosition">NoPosition</a>) {
+        <a href="#70242" title="T">tree</a>.<a href="../ast/Trees.scala.html#29365" title="(pos: scala.tools.nsc.util.Position)tree.type">setPos</a>(<a href="#70241" title="scala.tools.nsc.util.Position">pos</a>)
+        <span class="keyword">val</span> <a title="List[RangePositions.this.Tree]" id="70258">children</a> = <a href="#70242" title="T">tree</a>.<a href="../ast/Trees.scala.html#29380" title="=&gt; List[RangePositions.this.Tree]">children</a>
+        <span title="Any" class="keyword">if</span> (<a href="#70258" title="List[RangePositions.this.Tree]">children</a>.<a title="=&gt; Boolean" id="25218">nonEmpty</a>) {
+          <span title="Any" class="keyword">if</span> (<a href="#70258" title="List[RangePositions.this.Tree]">children</a>.<span title="=&gt; List[RangePositions.this.Tree]">tail</span>.<span title="=&gt; Boolean">isEmpty</span>) <a href="#68022" title="(pos: scala.tools.nsc.util.Position)(tree: RangePositions.this.Tree)RangePositions.this.Tree">atPos</a>(<a href="#70241" title="scala.tools.nsc.util.Position">pos</a>)(<a href="#70258" title="List[RangePositions.this.Tree]">children</a>.<span title="=&gt; RangePositions.this.Tree">head</span>)
+          <span class="keyword">else</span> <a href="#68021" title="(pos: scala.tools.nsc.util.Position,trees: List[RangePositions.this.Tree])Unit">setChildrenPos</a>(<a href="#70241" title="scala.tools.nsc.util.Position">pos</a>, <a href="#70258" title="List[RangePositions.this.Tree]">children</a>)
+        }
+      }
+      <a href="#70242" title="T">tree</a>
+    } <span class="keyword">else</span> {
+      <a href="#783527" title="[T &lt;: RangePositions.this.Tree](pos: scala.tools.nsc.util.Position)(tree: T)T" class="keyword">super</a>.<a title="[T &lt;: RangePositions.this.Tree](pos: scala.tools.nsc.util.Position)(tree: T)T" id="783527">atPos</a>(<a href="#70241" title="scala.tools.nsc.util.Position">pos</a>)(<a href="#70242" title="T">tree</a>)
+    }
+
+  // ---------------- Validating positions ----------------------------------
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(tree: RangePositions.this.Tree)Unit" id="68025">validatePositions</a>(<a title="RangePositions.this.Tree" id="70296">tree</a>: <a href="../ast/Trees.scala.html#26593" title="RangePositions.this.Tree">Tree</a>) {
+    <span class="keyword">def</span> <a title="(prefix: String,tree: RangePositions.this.Tree)Unit" id="70301">reportTree</a>(<a title="String" id="70304">prefix</a> : <span title="String">String</span>, <a title="RangePositions.this.Tree" id="70305">tree</a> : <a href="../ast/Trees.scala.html#26593" title="RangePositions.this.Tree">Tree</a>) {
+      <span class="keyword">val</span> <a title="java.lang.Object" id="70306">source</a> = <span title="java.lang.Object" class="keyword">if</span> (<a href="#70305" title="RangePositions.this.Tree">tree</a>.<a href="../ast/Trees.scala.html#29361" title="=&gt; scala.tools.nsc.util.Position">pos</a>.<a href="../util/Position.scala.html#30279" title="=&gt; Boolean">isDefined</a>) <a href="#70305" title="RangePositions.this.Tree">tree</a>.<a href="../ast/Trees.scala.html#29361" title="=&gt; scala.tools.nsc.util.Position">pos</a>.<a href="../util/Position.scala.html#30278" title="=&gt; scala.tools.nsc.util.SourceFile">source</a> <span class="keyword">else</span> <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>
+      <a href="../Global.scala.html#39062" title="(msg: String)Unit">inform</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;== &quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#70304" title="String">prefix</a><span title="(x$1: Any)java.lang.String">+</span><span title="java.lang.String(&quot; tree [&quot;)" class="string">&quot; tree [&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#70305" title="RangePositions.this.Tree">tree</a>.<a href="../ast/Trees.scala.html#29356" title="=&gt; Int">id</a><span title="(x$1: Any)java.lang.String">+</span><span title="java.lang.String(&quot;] of type &quot;)" class="string">&quot;] of type &quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#70305" title="RangePositions.this.Tree">tree</a>.<a title="=&gt; java.lang.String" id="29013">productPrefix</a><span title="(x$1: Any)java.lang.String">+</span><span title="java.lang.String(&quot; at &quot;)" class="string">&quot; at &quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#70305" title="RangePositions.this.Tree">tree</a>.<a href="../ast/Trees.scala.html#29361" title="=&gt; scala.tools.nsc.util.Position">pos</a>.<a href="../util/Position.scala.html#30309" title="=&gt; String">show</a>+<a href="#70306" title="java.lang.Object">source</a>)
+      <a href="../Global.scala.html#39062" title="(msg: String)Unit">inform</a>(<span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+      <a href="../Global.scala.html#39062" title="(msg: String)Unit">inform</a>(<a href="#70305" title="RangePositions.this.Tree">tree</a>.<a href="../ast/Trees.scala.html#29381" title="()String">toString</a>)
+      <a href="../Global.scala.html#39062" title="(msg: String)Unit">inform</a>(<span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+    }
+    
+    <span class="keyword">def</span> <a title="(msg: String)(body: =&gt; Unit)Unit" id="70302">error</a>(<a title="String" id="70386">msg</a>: <span title="String">String</span>)(<a title="=&gt; Unit" id="70387">body</a> : =&gt; Unit) {
+      <a href="../Global.scala.html#39062" title="(msg: String)Unit">inform</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;======= Bad positions: &quot;</span>+<a href="#70386" title="String">msg</a>)
+      <a href="../Global.scala.html#39062" title="(msg: String)Unit">inform</a>(<span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+      <a href="#70387" title="=&gt; Unit">body</a>
+      <a href="../Global.scala.html#39062" title="(msg: String)Unit">inform</a>(<span title="java.lang.String(&quot;=== While validating&quot;)" class="string">&quot;=== While validating&quot;</span>)
+      <a href="../Global.scala.html#39062" title="(msg: String)Unit">inform</a>(<span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+      <a href="../Global.scala.html#39062" title="(msg: String)Unit">inform</a>(<a href="#70296" title="RangePositions.this.Tree">tree</a>.<a href="../ast/Trees.scala.html#29381" title="()String">toString</a>)
+      <a href="../Global.scala.html#39062" title="(msg: String)Unit">inform</a>(<span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+      <a href="../Global.scala.html#39062" title="(msg: String)Unit">inform</a>(<span title="java.lang.String(&quot;=======&quot;)" class="string">&quot;=======&quot;</span>)
+      <span title="Nothing" class="keyword">throw</span> <span title="RangePositions.this.ValidateError" class="keyword">new</span> <a href="#68026" title="RangePositions.this.ValidateError">ValidateError</a>(<a href="#70386" title="String">msg</a>)
+    }
+    
+    <span class="keyword">def</span> <a title="(tree: RangePositions.this.Tree,encltree: RangePositions.this.Tree)Unit" id="70303">validate</a>(<a title="RangePositions.this.Tree" id="70454">tree</a>: <a href="../ast/Trees.scala.html#26593" title="RangePositions.this.Tree">Tree</a>, <a title="RangePositions.this.Tree" id="70455">encltree</a>: <a href="../ast/Trees.scala.html#26593" title="RangePositions.this.Tree">Tree</a>): <span title="Unit">Unit</span> = {
+      <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#70454" title="RangePositions.this.Tree">tree</a>.<a href="../ast/Trees.scala.html#29374" title="=&gt; Boolean">isEmpty</a>) {
+        <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#70454" title="RangePositions.this.Tree">tree</a>.<a href="../ast/Trees.scala.html#29361" title="=&gt; scala.tools.nsc.util.Position">pos</a>.<a href="../util/Position.scala.html#30279" title="=&gt; Boolean">isDefined</a>) 
+          <a href="#70302" title="(msg: String)(body: =&gt; Unit)Unit">error</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;Unpositioned tree [&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#70454" title="RangePositions.this.Tree">tree</a>.<a href="../ast/Trees.scala.html#29356" title="=&gt; Int">id</a>+<span title="java.lang.String(&quot;]&quot;)" class="string">&quot;]&quot;</span>) { <a href="#70301" title="(prefix: String,tree: RangePositions.this.Tree)Unit">reportTree</a>(<span title="java.lang.String(&quot;Unpositioned&quot;)" class="string">&quot;Unpositioned&quot;</span>, <a href="#70454" title="RangePositions.this.Tree">tree</a>) }
+        <span title="Unit" class="keyword">if</span> (<a href="#70454" title="RangePositions.this.Tree">tree</a>.<a href="../ast/Trees.scala.html#29361" title="=&gt; scala.tools.nsc.util.Position">pos</a>.<a href="../util/Position.scala.html#30281" title="=&gt; Boolean">isRange</a>) {
+          <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#70455" title="RangePositions.this.Tree">encltree</a>.<a href="../ast/Trees.scala.html#29361" title="=&gt; scala.tools.nsc.util.Position">pos</a>.<a href="../util/Position.scala.html#30281" title="=&gt; Boolean">isRange</a>)
+            <a href="#70302" title="(msg: String)(body: =&gt; Unit)Unit">error</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;Synthetic tree [&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#70455" title="RangePositions.this.Tree">encltree</a>.<a href="../ast/Trees.scala.html#29356" title="=&gt; Int">id</a><span title="(x$1: Any)java.lang.String">+</span><span title="java.lang.String(&quot;] contains nonsynthetic tree [&quot;)" class="string">&quot;] contains nonsynthetic tree [&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#70454" title="RangePositions.this.Tree">tree</a>.<a href="../ast/Trees.scala.html#29356" title="=&gt; Int">id</a>+<span title="java.lang.String(&quot;]&quot;)" class="string">&quot;]&quot;</span>) {
+            <a href="#70301" title="(prefix: String,tree: RangePositions.this.Tree)Unit">reportTree</a>(<span title="java.lang.String(&quot;Enclosing&quot;)" class="string">&quot;Enclosing&quot;</span>, <a href="#70455" title="RangePositions.this.Tree">encltree</a>)
+            <a href="#70301" title="(prefix: String,tree: RangePositions.this.Tree)Unit">reportTree</a>(<span title="java.lang.String(&quot;Enclosed&quot;)" class="string">&quot;Enclosed&quot;</span>, <a href="#70454" title="RangePositions.this.Tree">tree</a>)
+            }
+          <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span>(<a href="#70455" title="RangePositions.this.Tree">encltree</a>.<a href="../util/Position.scala.html#30298" title="(pos: scala.tools.nsc.util.Position)Boolean">pos</a> includes <a href="#70454" title="RangePositions.this.Tree">tree</a>.<a href="../ast/Trees.scala.html#29361" title="=&gt; scala.tools.nsc.util.Position">pos</a>))
+            <a href="#70302" title="(msg: String)(body: =&gt; Unit)Unit">error</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;Enclosing tree [&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#70455" title="RangePositions.this.Tree">encltree</a>.<a href="../ast/Trees.scala.html#29356" title="=&gt; Int">id</a><span title="(x$1: Any)java.lang.String">+</span><span title="java.lang.String(&quot;] does not include tree [&quot;)" class="string">&quot;] does not include tree [&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#70454" title="RangePositions.this.Tree">tree</a>.<a href="../ast/Trees.scala.html#29356" title="=&gt; Int">id</a>+<span title="java.lang.String(&quot;]&quot;)" class="string">&quot;]&quot;</span>) {
+              <a href="#70301" title="(prefix: String,tree: RangePositions.this.Tree)Unit">reportTree</a>(<span title="java.lang.String(&quot;Enclosing&quot;)" class="string">&quot;Enclosing&quot;</span>, <a href="#70455" title="RangePositions.this.Tree">encltree</a>)
+              <a href="#70301" title="(prefix: String,tree: RangePositions.this.Tree)Unit">reportTree</a>(<span title="java.lang.String(&quot;Enclosed&quot;)" class="string">&quot;Enclosed&quot;</span>, <a href="#70454" title="RangePositions.this.Tree">tree</a>)
+            }
+          
+          <a href="#68020" title="(cts: List[RangePositions.this.Tree])List[(RangePositions.this.Tree, RangePositions.this.Tree)]">findOverlapping</a>(<a href="#70454" title="RangePositions.this.Tree">tree</a>.<a href="../ast/Trees.scala.html#29380" title="(f: (RangePositions.this.Tree) =&gt; Traversable[RangePositions.this.Tree])(implicit bf: scala.collection.generic.BuilderFactory[RangePositions.this.Tree,List[RangePositions.this.Tree],List[RangePositions.this.Tree]])List[RangePositions.this.Tree]">children</a> <span title="scala.collection.generic.BuilderFactory[RangePositions.this.Tree,List[RangePositions.this.Tree],List#Coll]">flatMap</span> <a href="#68012" title="(tree: RangePositions.this.Tree)List[RangePositions.this.Tree]">solidDescendants</a>) <span title="Unit" class="keyword">match</span> {
+            <span title="Unit" class="keyword">case</span> <a href="#70524" title="(x: List[(RangePositions.this.Tree, RangePositions.this.Tree)])Some[List[(RangePositions.this.Tree, RangePositions.this.Tree)]]">List</a>() =&gt; ;
+            <span title="Unit" class="keyword">case</span> <a title="List[(RangePositions.this.Tree, RangePositions.this.Tree)]" id="70534">xs</a> =&gt; {
+              <a href="#70302" title="(msg: String)(body: =&gt; Unit)Unit">error</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;Overlapping trees &quot;</span>+<a href="#70534" title="List[(RangePositions.this.Tree, RangePositions.this.Tree)]">xs</a>.<span title="(f: ((RangePositions.this.Tree, RangePositions.this.Tree)) =&gt; (Int, Int))(implicit bf: scala.collection.generic.BuilderFactory[(Int, Int),List[(Int, Int)],List[(RangePositions.this.Tree, RangePositions.this.Tree)]])List[(Int, Int)]">map</span> <a href="#70543" title="(Int, Int)">{</a> <span title="(Int, Int)" class="keyword">case</span> (<a title="RangePositions.this.Tree" id="70546">x</a>, <a title="RangePositions.this.Tree" id="70547">y</a>) =&gt; <span title="(_1: Int,_2: Int)(Int, Int)">(</span><a href="#70546" title="RangePositions.this.Tree">x</a>.<a href="../ast/Trees.scala.html#29356" title="=&gt; Int">id</a>, <a href="#70547" title="RangePositions.this.Tree">y</a>.<a href="../ast/Trees.scala.html#29356" title="=&gt; Int">id</a>) }.<a title="(start: String,sep: String,end: String)String" id="25360">mkString</a>(<span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>, <span title="java.lang.String(&quot;, &quot;)" class="string">&quot;, &quot;</span>, <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)) {
+                <a href="#70301" title="(prefix: String,tree: RangePositions.this.Tree)Unit">reportTree</a>(<span title="java.lang.String(&quot;Ancestor&quot;)" class="string">&quot;Ancestor&quot;</span>, <a href="#70454" title="RangePositions.this.Tree">tree</a>)
+                <span class="keyword">for</span>((<a title="RangePositions.this.Tree" id="70686">x</a>, <a title="RangePositions.this.Tree" id="70687">y</a>) &lt;- <a href="#70534" title="(f: ((RangePositions.this.Tree, RangePositions.this.Tree)) =&gt; Unit)Unit">xs</a>) {
+                  <a href="#70301" title="(prefix: String,tree: RangePositions.this.Tree)Unit">reportTree</a>(<span title="java.lang.String(&quot;First overlapping&quot;)" class="string">&quot;First overlapping&quot;</span>, <a href="#70686" title="RangePositions.this.Tree">x</a>)
+                  <a href="#70301" title="(prefix: String,tree: RangePositions.this.Tree)Unit">reportTree</a>(<span title="java.lang.String(&quot;Second overlapping&quot;)" class="string">&quot;Second overlapping&quot;</span>, <a href="#70687" title="RangePositions.this.Tree">y</a>)
+                }
+              }
+            }
+          }
+        }
+        <span class="keyword">for</span> (<a title="RangePositions.this.Tree" id="70804">ct</a> &lt;- <a href="#70454" title="RangePositions.this.Tree">tree</a>.<a href="../ast/Trees.scala.html#29380" title="(f: (RangePositions.this.Tree) =&gt; Traversable[RangePositions.this.Tree])(implicit bf: scala.collection.generic.BuilderFactory[RangePositions.this.Tree,List[RangePositions.this.Tree],List[RangePositions.this.Tree]])List[RangePositions.this.Tree]">children</a> <span title="(f: (RangePositions.this.Tree) =&gt; Unit)Unit">flatMap</span> <a href="#68012" title="(tree: RangePositions.this.Tree)List[RangePositions.this.Tree]">solidDescendants</a>) <a href="#70303" title="(tree: RangePositions.this.Tree,encltree: RangePositions.this.Tree)Unit">validate</a>(<a href="#70804" title="RangePositions.this.Tree">ct</a>, <a href="#70454" title="RangePositions.this.Tree">tree</a>)
+      }
+    }
+
+    <a href="#70303" title="(tree: RangePositions.this.Tree,encltree: RangePositions.this.Tree)Unit">validate</a>(<a href="#70296" title="RangePositions.this.Tree">tree</a>, <a href="#70296" title="RangePositions.this.Tree">tree</a>)
+  }
+
+  <span class="keyword">class</span> <a title="class ValidateError extends java.lang.Exception with ScalaObject" id="68026">ValidateError</a><a title="ScalaObject" id="29255">(</a><a title="String" id="70451">msg</a> : <span title="String">String</span>) <span class="keyword">extends</span> <a title="java.lang.Exception" id="7820">Exception</a>(<a href="#70451" title="String">msg</a>)
+
+  // ---------------- Locating trees ----------------------------------
+
+  /** A locator for trees with given positions.
+   *  Given a position `pos`, locator.apply returns
+   *  the smallest tree that encloses `pos`.
+   */
+  <span class="keyword">class</span> <a title="class Locator extends RangePositions.this.Traverser with ScalaObject" id="68027">Locator</a><span title="ScalaObject">(</span><a title="scala.tools.nsc.util.Position" id="70844">pos</a>: <a href="../util/Position.scala.html#14710" title="scala.tools.nsc.util.Position">Position</a>) <span class="keyword">extends</span> <a href="../ast/Trees.scala.html#26774" title="RangePositions.this.Traverser">Traverser</a> {
+    <span class="keyword">var</span> <a title="RangePositions.this.Tree" id="70837">last</a>: <a href="../ast/Trees.scala.html#26593" title="RangePositions.this.Tree">Tree</a> = _
+    <span class="keyword">def</span> <a title="(root: RangePositions.this.Tree)RangePositions.this.Tree" id="70839">locateIn</a>(<a title="RangePositions.this.Tree" id="70847">root</a>: <a href="../ast/Trees.scala.html#26593" title="RangePositions.this.Tree">Tree</a>): <a href="../ast/Trees.scala.html#26593" title="RangePositions.this.Tree">Tree</a> = {
+      <a href="#68027" title="Locator.this.type" class="keyword">this</a>.<a href="#70837" title="(x$1: RangePositions.this.Tree)Unit">last</a> = <a href="../ast/Trees.scala.html#26602" title="object RangePositions.this.EmptyTree">EmptyTree</a>
+      <a href="#70840" title="(t: RangePositions.this.Tree)Unit">traverse</a>(<a href="#70847" title="RangePositions.this.Tree">root</a>)
+      <a href="#68027" title="Locator.this.type" class="keyword">this</a>.<a href="#70837" title="=&gt; RangePositions.this.Tree">last</a>
+    }
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="(t: RangePositions.this.Tree)Unit" id="70840">traverse</a>(<a title="RangePositions.this.Tree" id="70851">t</a>: <a href="../ast/Trees.scala.html#26593" title="RangePositions.this.Tree">Tree</a>) {
+      <span title="Unit" class="keyword">if</span> (<a href="#70851" title="RangePositions.this.Tree">t</a>.<a href="../util/Position.scala.html#30298" title="(pos: scala.tools.nsc.util.Position)Boolean">pos</a> includes <a href="#70844" title="scala.tools.nsc.util.Position">pos</a>) {
+        <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#70851" title="RangePositions.this.Tree">t</a>.<a href="../ast/Trees.scala.html#29361" title="=&gt; scala.tools.nsc.util.Position">pos</a>.<a href="../util/Position.scala.html#30280" title="=&gt; Boolean">isTransparent</a>) <a href="#70837" title="(x$1: RangePositions.this.Tree)Unit">last</a> = <a href="#70851" title="RangePositions.this.Tree">t</a>
+        <span class="keyword">super</span>.<a href="../ast/Trees.scala.html#70825" title="(tree: RangePositions.this.Tree)Unit">traverse</a>(<a href="#70851" title="RangePositions.this.Tree">t</a>)
+      }
+    }
+  }
+}
+
+        </pre>
+    </body>
+</html>

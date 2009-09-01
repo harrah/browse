@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/reflect/ClassManifest.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2007-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: ClassManifest.scala 18534 2009-08-21 13:44:04Z odersky $
+
+
+<span class="keyword">package</span> scala.reflect
+
+<span class="keyword">import</span> scala.runtime._
+<span class="keyword">import</span> scala.collection.immutable.Nil
+
+/** &lt;p&gt;
+  *   A &lt;code&gt;ClassManifest[T]&lt;/code&gt; is an opaque descriptor for type &lt;code&gt;T&lt;/code&gt;.
+  *   Currently, its only use is to give access to the erasure of the type as a
+  *   &lt;code&gt;Class&lt;/code&gt; instance.
+  * &lt;/p&gt;
+  * &lt;p&gt;
+  *   &lt;b&gt;BE AWARE&lt;/b&gt;: The different type-relation operators are all forwarded 
+  *   to the erased type as an approximation of the final semantics where
+  *   these operators should be on the unerased type.
+  * &lt;/p&gt;
+  */
+@serializable
+<span class="keyword">trait</span> <a title="trait ClassManifest[T] extends java.lang.Object with scala.reflect.OptManifest[T] with ScalaObject" id="11503">ClassManifest</a>[<a title="&gt;: Nothing &lt;: Any" id="14103">T</a>] <a href="../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="OptManifest.scala.html#11788" title="scala.reflect.OptManifest[T]">OptManifest</a>[T] {
+
+  /** A class representing the type U to which T would be erased. Note
+    * that there is no subtyping relationship between T and U. */
+  <span class="keyword">def</span> <a title="=&gt; Class[_]" id="20447">erasure</a>: Predef.<span title="Class[_]">Class</span>[_]
+
+  /** Tests whether the type represented by this manifest is a subtype of
+    * the type represented by `that' manifest. BE AWARE: the current
+    * implementation is an approximation, as the test is done on the
+    * erasure of the type. */
+  <span class="keyword">def</span> <a title="(that: scala.reflect.ClassManifest[_])Boolean" id="20448">&lt;:&lt;</a>(<a title="scala.reflect.ClassManifest[_]" id="132281">that</a>: <a href="#11503" title="scala.reflect.ClassManifest[_]">ClassManifest</a>[_]): <span title="Boolean">Boolean</span> = {
+    <span class="keyword">def</span> <a title="(sub: Class[_],sup: Class[_])Boolean" id="132286">subtype</a>(<a title="Class[_]" id="132288">sub</a>: Predef.<span title="Class[_]">Class</span>[_], <a title="Class[_]" id="132289">sup</a>: Predef.<span title="Class[_]">Class</span>[_]): <span title="Boolean">Boolean</span> = {
+      <span class="keyword">val</span> <a title="java.lang.Class[_ &gt;: _$3]" id="132296">subSuperClass</a> = <a href="#132288" title="Class[_]">sub</a>.<a title="(()java.lang.Class[_ &gt;: _$3]) forSome { type _$3; type _$3 }" id="4111">getSuperclass</a>
+      <span class="keyword">val</span> <a title="List[java.lang.Class[_]]" id="132297">subSuperInterfaces</a> = <a href="#132288" title="Class[_]">sub</a>.<a title="()Array[java.lang.Class[_]]" id="4116">getInterfaces</a>.<a href="../collection/generic/TraversableTemplate.scala.html#17236" title="=&gt; List[java.lang.Class[_]]">toList</a>
+      <span class="keyword">val</span> <a title="List[java.lang.Class[_]]" id="132298">subSuper</a> =
+        (<span title="List[java.lang.Class[?0]]" class="keyword">if</span> (<a href="#132296" title="(x$1: AnyRef)Boolean">subSuperClass</a> == <span title="Null(null)" class="keyword">null</span>) <a href="../collection/immutable/List.scala.html#9259" title="object Nil">Nil</a> <span class="keyword">else</span> <a href="../collection/immutable/List.scala.html#17535" title="(xs: java.lang.Class[?0]*)List[java.lang.Class[?0]]">List</a>(<a href="#132296" title="java.lang.Class[_ &gt;: _$3]">subSuperClass</a>)) <a href="#132310" title="List[java.lang.Class[?0]] forSome { type ?0 &gt;: _$3; type _$3 }">:::</a> <a href="../collection/immutable/List.scala.html#17633" title="(prefix: List[java.lang.Class[_]])List[java.lang.Class[_]]">subSuperInterfaces</a>
+      <span title="(x$1: Boolean)Boolean">(</span><a href="../collection/generic/SequenceTemplate.scala.html#17386" title="(elem: Any)Boolean">subSuper</a> contains <a href="#132289" title="Class[_]">sup</a>) || (<a href="../collection/generic/LinearSequenceTemplate.scala.html#19406" title="(p: (java.lang.Class[_]) =&gt; Boolean)Boolean">subSuper</a> exists (<a href="#132286" title="(sub: Class[_],sup: Class[_])Boolean">subtype</a>(<a href="#132347" title="java.lang.Class[_]">_</a>, <a href="#132289" title="Class[_]">sup</a>)))
+    }
+    <span class="keyword">def</span> <a title="(args1: List[scala.reflect.OptManifest[_]],args2: List[scala.reflect.OptManifest[_]])Boolean" id="132287">subargs</a>(<a title="List[scala.reflect.OptManifest[_]]" id="132356">args1</a>: <a href="../collection/immutable/List.scala.html#8973" title="List[scala.reflect.OptManifest[_]]">List</a>[OptManifest[_]], <a title="List[scala.reflect.OptManifest[_]]" id="132357">args2</a>: <a href="../collection/immutable/List.scala.html#8973" title="List[scala.reflect.OptManifest[_]]">List</a>[OptManifest[_]]): <span title="Boolean">Boolean</span> = {
+      <a href="../collection/generic/LinearSequenceTemplate.scala.html#19405" title="(p: ((scala.reflect.OptManifest[_], scala.reflect.OptManifest[_])) =&gt; Boolean)Boolean">(</a><a href="../collection/generic/IterableTemplate.scala.html#17301" title="(that: Iterable[scala.reflect.OptManifest[_]])(implicit bf: scala.collection.generic.BuilderFactory[(scala.reflect.OptManifest[_], scala.reflect.OptManifest[_]),List[(scala.reflect.OptManifest[_], scala.reflect.OptManifest[_])],List[scala.reflect.OptManifest[_]]])List[(scala.reflect.OptManifest[_], scala.reflect.OptManifest[_])]">args1</a> <a href="../collection/immutable/List.scala.html#17526" title="scala.collection.generic.BuilderFactory[(scala.reflect.OptManifest[_], scala.reflect.OptManifest[_]),List[(scala.reflect.OptManifest[_], scala.reflect.OptManifest[_])],List#Coll]">zip</a> <a href="#132357" title="List[scala.reflect.OptManifest[_]]">args2</a>) forall <a href="#132892" title="Boolean">{</a> 
+        <span title="Boolean" class="keyword">case</span> (<a title="scala.reflect.ClassManifest[_]" id="132895">x</a>: <a href="#11503" title="scala.reflect.ClassManifest[_]">ClassManifest</a>[_], <a title="scala.reflect.ClassManifest[_]" id="132898">y</a>: <a href="#11503" title="scala.reflect.ClassManifest[_]">ClassManifest</a>[_]) =&gt; <a href="#20448" title="(that: scala.reflect.ClassManifest[_])Boolean">x</a> &lt;:&lt; <a href="#132898" title="scala.reflect.ClassManifest[_]">y</a> // !!! [Martin] this is wrong, need to take variance into account
+        <span title="Boolean(true)" class="keyword">case</span> (<a href="NoManifest.scala.html#11372" title="object scala.reflect.NoManifest">NoManifest</a>, <a href="NoManifest.scala.html#11372" title="object scala.reflect.NoManifest">NoManifest</a>) =&gt; <span title="Boolean(true)" class="keyword">true</span>
+        <span title="Boolean(false)" class="keyword">case</span> _ =&gt; <span title="Boolean(false)" class="keyword">false</span>
+      }
+    }
+    <a title="(x$1: Boolean)Boolean" id="2210">(</a><a href="#11503" title="ClassManifest.this.type" class="keyword">this</a>.<a href="#20447" title="(x$1: AnyRef)Boolean">erasure</a> <span title="(x$1: Boolean)Boolean">==</span> <a href="#132281" title="scala.reflect.ClassManifest[_]">that</a>.<a href="#20447" title="=&gt; Class[_]">erasure</a> || <a href="#132286" title="(sub: Class[_],sup: Class[_])Boolean">subtype</a>(<a href="#11503" title="ClassManifest.this.type" class="keyword">this</a>.<a href="#20447" title="=&gt; Class[_]">erasure</a>, <a href="#132281" title="scala.reflect.ClassManifest[_]">that</a>.<a href="#20447" title="=&gt; Class[_]">erasure</a>)) &amp;&amp;
+    <a href="#132287" title="(args1: List[scala.reflect.OptManifest[_]],args2: List[scala.reflect.OptManifest[_]])Boolean">subargs</a>(<a href="#11503" title="ClassManifest.this.type" class="keyword">this</a>.<a href="#20452" title="=&gt; List[scala.reflect.OptManifest[_]]">typeArguments</a>, <a href="#132281" title="scala.reflect.ClassManifest[_]">that</a>.<a href="#20452" title="=&gt; List[scala.reflect.OptManifest[_]]">typeArguments</a>)
+  }
+  
+  /** Tests whether the type represented by this manifest is a supertype 
+    * of the type represented by `that' manifest. BE AWARE: the current
+    * implementation is an approximation, as the test is done on the
+    * erasure of the type. */
+  <span class="keyword">def</span> <a title="(that: scala.reflect.ClassManifest[_])Boolean" id="20449">&gt;:&gt;</a>(<a title="scala.reflect.ClassManifest[_]" id="132939">that</a>: <a href="#11503" title="scala.reflect.ClassManifest[_]">ClassManifest</a>[_]): <span title="Boolean">Boolean</span> =
+    <a href="#20448" title="(that: scala.reflect.ClassManifest[_])Boolean">that</a> &lt;:&lt; <a href="#11503" title="scala.reflect.ClassManifest[T]" class="keyword">this</a>
+    
+  /** Tests whether the type represented by this manifest is equal to the
+    * type represented by `that' manifest. BE AWARE: the current
+    * implementation is an approximation, as the test is done on the
+    * erasure of the type. */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(that: Any)Boolean" id="20450">equals</a>(<a title="Any" id="132946">that</a>: <span title="Any">Any</span>): <span title="Boolean">Boolean</span> = <a href="#132946" title="Any">that</a> <span title="Boolean" class="keyword">match</span> {
+    <span title="Boolean" class="keyword">case</span> <a title="scala.reflect.ClassManifest[_]" id="132948">m</a>: <a href="#11503" title="scala.reflect.ClassManifest[_]">ClassManifest</a>[_] =&gt; <a href="#11503" title="ClassManifest.this.type" class="keyword">this</a>.<a href="#20447" title="(x$1: AnyRef)Boolean">erasure</a> == <a href="#132948" title="scala.reflect.ClassManifest[_]">m</a>.<a href="#20447" title="=&gt; Class[_]">erasure</a>
+    <span title="Boolean(false)" class="keyword">case</span> _ =&gt; <span title="Boolean(false)" class="keyword">false</span>
+  }
+
+  <span class="keyword">def</span> <a title="(len: Int)scala.runtime.BoxedArray[T]" id="20451">newArray</a>(<a title="Int" id="26336">len</a>: <a title="Int" id="2175">Int</a>): <a href="../runtime/BoxedArray.scala.html#2034" title="scala.runtime.BoxedArray[T]">BoxedArray</a>[T] = {
+    // it's safe to assume T &lt;: AnyRef here because the method is overridden for all value type manifests
+    <a href="../runtime/BoxedObjectArray.scala.html#118957" title="(value: Array[AnyRef])scala.runtime.BoxedObjectArray[Nothing]" class="keyword">new</a> <a href="../runtime/BoxedObjectArray.scala.html#2100" title="scala.runtime.BoxedObjectArray[Nothing]">BoxedObjectArray</a>(java.lang.reflect.<a title="object java.lang.reflect.Array" id="4037">Array</a>.<a title="(x$1: java.lang.Class[_],x$2: Int)java.lang.Object" id="132964">newInstance</a>(<a href="#20447" title="=&gt; Class[_]">erasure</a>, <a href="#26336" title="Int">len</a>).<span title="[T0]T0">asInstanceOf</span><span title="Array[AnyRef]">[</span><a href="../Array.scala.html#885" title="Array[AnyRef]">Array</a>[AnyRef]])
+      .<span title="[T0]T0">asInstanceOf</span><span title="scala.runtime.BoxedArray[T]">[</span><a href="../runtime/BoxedArray.scala.html#2034" title="scala.runtime.BoxedArray[T]">BoxedArray</a>[T]]
+  }
+  
+  <span class="keyword">def</span> <a title="=&gt; List[scala.reflect.OptManifest[_]]" id="20452">typeArguments</a>: <a href="../collection/immutable/List.scala.html#8973" title="List[scala.reflect.OptManifest[_]]">List</a>[OptManifest[_]] = List<a href="../collection/immutable/List.scala.html#9259" title="object Nil">(</a>)
+
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="20453">argString</a> = <span title="java.lang.String" class="keyword">if</span> (<a href="#20452" title="=&gt; List[scala.reflect.OptManifest[_]]">typeArguments</a>.<a href="../collection/generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span> <span class="keyword">else</span> <a href="#20452" title="=&gt; List[scala.reflect.OptManifest[_]]">typeArguments</a>.<a href="../collection/generic/TraversableTemplate.scala.html#17246" title="(start: String,sep: String,end: String)String">mkString</a>(<span title="java.lang.String(&quot;[&quot;)" class="string">&quot;[&quot;</span>, <span title="java.lang.String(&quot;, &quot;)" class="string">&quot;, &quot;</span>, <span title="java.lang.String(&quot;]&quot;)" class="string">&quot;]&quot;</span>)
+
+}
+
+/** &lt;p&gt;
+  *   This object is used by the compiler and &lt;b&gt;should not be used in client
+  *   code&lt;/b&gt;. The object &lt;code&gt;Manifest&lt;/code&gt; defines factory methods for
+  *   manifests.
+  * &lt;/p&gt;
+  * &lt;p&gt;
+  *   &lt;b&gt;BE AWARE&lt;/b&gt;: The factory for refinement types is missing and
+  *   will be implemented in a later version of this class.
+  * &lt;/p&gt;
+  */
+<span class="keyword">object</span> <a title="object scala.reflect.ClassManifest" id="11504">ClassManifest</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+
+  <span class="keyword">val</span> <a title="&lt;refinement&gt; extends java.lang.Object with scala.reflect.Manifest[Byte]" id="26207">Byte</a> = <a href="Manifest.scala.html#11774" title="object scala.reflect.Manifest">Manifest</a>.<a href="Manifest.scala.html#26254" title="=&gt; &lt;refinement&gt; extends java.lang.Object with scala.reflect.Manifest[Byte]">Byte</a>
+  <span class="keyword">val</span> <a title="&lt;refinement&gt; extends java.lang.Object with scala.reflect.Manifest[Short]" id="26209">Short</a> = <a href="Manifest.scala.html#11774" title="object scala.reflect.Manifest">Manifest</a>.<a href="Manifest.scala.html#26256" title="=&gt; &lt;refinement&gt; extends java.lang.Object with scala.reflect.Manifest[Short]">Short</a>
+  <span class="keyword">val</span> <a title="&lt;refinement&gt; extends java.lang.Object with scala.reflect.Manifest[Char]" id="26211">Char</a> = <a href="Manifest.scala.html#11774" title="object scala.reflect.Manifest">Manifest</a>.<a href="Manifest.scala.html#26258" title="=&gt; &lt;refinement&gt; extends java.lang.Object with scala.reflect.Manifest[Char]">Char</a>
+  <span class="keyword">val</span> <a title="&lt;refinement&gt; extends java.lang.Object with scala.reflect.Manifest[Int]" id="26213">Int</a> = <a href="Manifest.scala.html#11774" title="object scala.reflect.Manifest">Manifest</a>.<a href="Manifest.scala.html#26260" title="=&gt; &lt;refinement&gt; extends java.lang.Object with scala.reflect.Manifest[Int]">Int</a>
+  <span class="keyword">val</span> <a title="&lt;refinement&gt; extends java.lang.Object with scala.reflect.Manifest[Long]" id="26215">Long</a> = <a href="Manifest.scala.html#11774" title="object scala.reflect.Manifest">Manifest</a>.<a href="Manifest.scala.html#26262" title="=&gt; &lt;refinement&gt; extends java.lang.Object with scala.reflect.Manifest[Long]">Long</a>
+  <span class="keyword">val</span> <a title="&lt;refinement&gt; extends java.lang.Object with scala.reflect.Manifest[Float]" id="26217">Float</a> = <a href="Manifest.scala.html#11774" title="object scala.reflect.Manifest">Manifest</a>.<a href="Manifest.scala.html#26264" title="=&gt; &lt;refinement&gt; extends java.lang.Object with scala.reflect.Manifest[Float]">Float</a>
+  <span class="keyword">val</span> <a title="&lt;refinement&gt; extends java.lang.Object with scala.reflect.Manifest[Double]" id="26219">Double</a> = <a href="Manifest.scala.html#11774" title="object scala.reflect.Manifest">Manifest</a>.<a href="Manifest.scala.html#26266" title="=&gt; &lt;refinement&gt; extends java.lang.Object with scala.reflect.Manifest[Double]">Double</a>
+  <span class="keyword">val</span> <a title="&lt;refinement&gt; extends java.lang.Object with scala.reflect.Manifest[Boolean]" id="26221">Boolean</a> = <a href="Manifest.scala.html#11774" title="object scala.reflect.Manifest">Manifest</a>.<a href="Manifest.scala.html#26268" title="=&gt; &lt;refinement&gt; extends java.lang.Object with scala.reflect.Manifest[Boolean]">Boolean</a>
+  <span class="keyword">val</span> <a title="&lt;refinement&gt; extends java.lang.Object with scala.reflect.Manifest[Unit]" id="26223">Unit</a> = <a href="Manifest.scala.html#11774" title="object scala.reflect.Manifest">Manifest</a>.<a href="Manifest.scala.html#26270" title="=&gt; &lt;refinement&gt; extends java.lang.Object with scala.reflect.Manifest[Unit]">Unit</a>
+  <span class="keyword">val</span> <a title="scala.reflect.Manifest[Any]" id="26225">Any</a> = <a href="Manifest.scala.html#11774" title="object scala.reflect.Manifest">Manifest</a>.<a href="Manifest.scala.html#26272" title="=&gt; scala.reflect.Manifest[Any]">Any</a>
+  <span class="keyword">val</span> <a title="scala.reflect.Manifest[AnyVal]" id="26227">AnyVal</a> = <a href="Manifest.scala.html#11774" title="object scala.reflect.Manifest">Manifest</a>.<a href="Manifest.scala.html#26274" title="=&gt; scala.reflect.Manifest[AnyVal]">AnyVal</a>
+  <span class="keyword">val</span> <a title="scala.reflect.Manifest[Nothing]" id="26229">Nothing</a> = <a href="Manifest.scala.html#11774" title="object scala.reflect.Manifest">Manifest</a>.<a href="Manifest.scala.html#26278" title="=&gt; scala.reflect.Manifest[Nothing]">Nothing</a>
+  <span class="keyword">val</span> <a title="scala.reflect.Manifest[Null]" id="26231">Null</a> = <a href="Manifest.scala.html#11774" title="object scala.reflect.Manifest">Manifest</a>.<a href="Manifest.scala.html#26276" title="=&gt; scala.reflect.Manifest[Null]">Null</a>
+    
+  <span class="keyword">def</span> <a title="[T](value: Any)scala.reflect.Manifest[T]" id="26233">singleType</a>[<a title="&gt;: Nothing &lt;: Any" id="26235">T</a>](<a title="Any" id="133330">value</a>: <span title="Any">Any</span>): <a href="Manifest.scala.html#11773" title="scala.reflect.Manifest[T]">Manifest</a>[T] = <a href="Manifest.scala.html#11774" title="object scala.reflect.Manifest">Manifest</a>.<a href="Manifest.scala.html#26280" title="(value: Any)scala.reflect.Manifest[T]">singleType</a>(<a href="#133330" title="Any">value</a>)
+
+  /** ClassManifest for the class type `clazz', where `clazz' is
+    * a top-level or static class.
+    * @note This no-prefix, no-arguments case is separate because we
+    *       it's called from ScalaRunTime.boxArray itself. If we
+    *       pass varargs as arrays into this, we get an infinitely recursive call
+    *       to boxArray. (Besides, having a separate case is more efficient)
+    */
+  <span class="keyword">def</span> <a title="[T](clazz: Class[_])scala.reflect.ClassManifest[T]" id="26236">classType</a>[<a title="&gt;: Nothing &lt;: Any" id="26238">T</a>](<a title="Class[_]" id="62549">clazz</a>: Predef.<span title="Class[_]">Class</span>[_]): <a href="#11503" title="scala.reflect.ClassManifest[T]">ClassManifest</a>[T] =
+    <span title="scala.reflect.ClassManifest.ClassTypeManifest[T]" class="keyword">new</span> <a href="#26245" title="scala.reflect.ClassManifest.ClassTypeManifest[T]">ClassTypeManifest</a>[T](<a href="../Option.scala.html#463" title="object None">None</a>, <a href="#62549" title="Class[_]">clazz</a>, <a href="../collection/immutable/List.scala.html#9259" title="object Nil">Nil</a>)
+
+  /** ClassManifest for the class type `clazz[args]', where `clazz' is
+    * a top-level or static class and `args` are its type arguments */
+  <span class="keyword">def</span> <a title="[T](clazz: Class[_],arg1: scala.reflect.OptManifest[_],args: scala.reflect.OptManifest[_]*)scala.reflect.ClassManifest[T]" id="26239">classType</a>[<a title="&gt;: Nothing &lt;: Any" id="26241">T</a>](<a title="Class[_]" id="62539">clazz</a>: Predef.<span title="Class[_]">Class</span>[_], <a title="scala.reflect.OptManifest[_]" id="62540">arg1</a>: <a href="OptManifest.scala.html#11788" title="scala.reflect.OptManifest[_]">OptManifest</a>[_], <a title="scala.reflect.OptManifest[_]*" id="62541">args</a>: <span title="scala.reflect.OptManifest[_]*">OptManifest</span>[_]*): <a href="#11503" title="scala.reflect.ClassManifest[T]">ClassManifest</a>[T] =
+    <span title="scala.reflect.ClassManifest.ClassTypeManifest[T]" class="keyword">new</span> <a href="#26245" title="scala.reflect.ClassManifest.ClassTypeManifest[T]">ClassTypeManifest</a>[T](<a href="../Option.scala.html#463" title="object None">None</a>, <a href="#62539" title="Class[_]">clazz</a>, <a href="#62540" title="scala.reflect.OptManifest[_]">arg1</a> <a href="#133364" title="scala.reflect.OptManifest[Any]">::</a> <a href="#62541" title="scala.reflect.OptManifest[_]*">args</a>.<a href="../collection/immutable/List.scala.html#17630" title="(x: scala.reflect.OptManifest[_])List[scala.reflect.OptManifest[_]]">toList</a>)
+
+  /** ClassManifest for the class type `clazz[args]', where `clazz' is
+    * a class with non-package prefix type `prefix` and type arguments `args`.
+    */
+  <span class="keyword">def</span> <a title="[T](prefix: scala.reflect.OptManifest[_],clazz: Class[_],args: scala.reflect.OptManifest[_]*)scala.reflect.ClassManifest[T]" id="26242">classType</a>[<a title="&gt;: Nothing &lt;: Any" id="26244">T</a>](<a title="scala.reflect.OptManifest[_]" id="62529">prefix</a>: <a href="OptManifest.scala.html#11788" title="scala.reflect.OptManifest[_]">OptManifest</a>[_], <a title="Class[_]" id="62530">clazz</a>: Predef.<span title="Class[_]">Class</span>[_], <a title="scala.reflect.OptManifest[_]*" id="62531">args</a>: <span title="scala.reflect.OptManifest[_]*">OptManifest</span>[_]*): <a href="#11503" title="scala.reflect.ClassManifest[T]">ClassManifest</a>[T] =
+    <span title="scala.reflect.ClassManifest.ClassTypeManifest[T]" class="keyword">new</span> <a href="#26245" title="scala.reflect.ClassManifest.ClassTypeManifest[T]">ClassTypeManifest</a>[T](<a href="../Option.scala.html#19800" title="(x: scala.reflect.OptManifest[_$13])Some[scala.reflect.OptManifest[_$13]]">Some</a>(<a href="#62529" title="scala.reflect.OptManifest[_]">prefix</a>), <a href="#62530" title="Class[_]">clazz</a>, <a href="#62531" title="scala.reflect.OptManifest[_]*">args</a>.<a href="../collection/generic/TraversableTemplate.scala.html#17236" title="=&gt; List[scala.reflect.OptManifest[_]]">toList</a>)
+
+  /** Manifest for the class type `clazz[args]', where `clazz' is
+    * a top-level or static class. */
+  @serializable
+  <span class="keyword">private</span> <span class="keyword">class</span> <a title="class ClassTypeManifest[T] extends java.lang.Object with scala.reflect.ClassManifest[T] with ScalaObject" id="26245">ClassTypeManifest</a>[<a title="&gt;: Nothing &lt;: Any" id="26246">T</a>]<a href="../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="Option[scala.reflect.OptManifest[_]]" id="133348">prefix</a>: <a href="../Option.scala.html#777" title="Option[scala.reflect.OptManifest[_]]">Option</a>[OptManifest[_]], 
+                                     <span class="keyword">val</span> <a title="Class[_]" id="133349">erasure</a>: Predef.<span title="Class[_]">Class</span>[_], 
+                                     <span class="keyword">override</span> <span class="keyword">val</span> <a title="List[scala.reflect.OptManifest[_]]" id="133350">typeArguments</a>: <a href="../collection/immutable/List.scala.html#8973" title="List[scala.reflect.OptManifest[_]]">List</a>[OptManifest[_]]) <span class="keyword">extends</span> <a href="#11503" title="scala.reflect.ClassManifest[T]">ClassManifest</a>[T] {
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="()java.lang.String" id="133347">toString</a> = 
+      <span title="(x$1: Any)java.lang.String">(</span><span title="java.lang.String" class="keyword">if</span> (<a href="#133348" title="Option[scala.reflect.OptManifest[_]]">prefix</a>.<a href="../Option.scala.html#19757" title="=&gt; Boolean">isEmpty</a>) <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span> <span class="keyword">else</span> <a href="#133348" title="Option[scala.reflect.OptManifest[_]]">prefix</a>.<a href="../Option.scala.html#19759" title="=&gt; scala.reflect.OptManifest[_]">get</a>.<span title="(x$1: Any)java.lang.String">toString</span>+<span title="java.lang.String(&quot;#&quot;)" class="string">&quot;#&quot;</span>) <span title="(x$1: Any)java.lang.String">+</span>
+      (<span title="Any" class="keyword">if</span> (<a href="#133349" title="=&gt; Class[_]">erasure</a>.<a title="()Boolean" id="4103">isArray</a>) <span title="java.lang.String(&quot;Array&quot;)" class="string">&quot;Array&quot;</span> <span class="keyword">else</span> <a href="#133349" title="=&gt; Class[_]">erasure</a>.<a title="()java.lang.String" id="4107">getName</a>) +
+      <a href="#20453" title="=&gt; java.lang.String">argString</a>
+   }
+  
+  /** ClassManifest for the abstract type `prefix # name'. `upperBound' is not
+    * strictly necessary as it could be obtained by reflection. It was
+    * added so that erasure can be calculated without reflection. */
+  <span class="keyword">def</span> <a title="[T](prefix: scala.reflect.OptManifest[_],name: String,upperBound: scala.reflect.ClassManifest[_],args: scala.reflect.OptManifest[_]*)scala.reflect.ClassManifest[T]" id="26247">abstractType</a>[<a title="&gt;: Nothing &lt;: Any" id="26249">T</a>](<a title="scala.reflect.OptManifest[_]" id="133440">prefix</a>: <a href="OptManifest.scala.html#11788" title="scala.reflect.OptManifest[_]">OptManifest</a>[_], <a title="String" id="133441">name</a>: <a title="String" id="1603">String</a>, <a title="scala.reflect.ClassManifest[_]" id="133442">upperBound</a>: <a href="#11503" title="scala.reflect.ClassManifest[_]">ClassManifest</a>[_], <a title="scala.reflect.OptManifest[_]*" id="133443">args</a>: <span title="scala.reflect.OptManifest[_]*">OptManifest</span>[_]*): <a href="#11503" title="scala.reflect.ClassManifest[T]">ClassManifest</a>[T] =
+    <a href="#133454" title="java.lang.Object with scala.reflect.ClassManifest[T] @serializable{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with scala.reflect.ClassManifest[T] @serializable" id="133454">(</a>ClassManifest[T] @<a href="#11503" title="scala.reflect.ClassManifest[T] @serializable">serializable</a>) {
+      <span class="keyword">def</span> <a title="=&gt; java.lang.Class[_]" id="133464">erasure</a> = <a href="#133442" title="scala.reflect.ClassManifest[_]">upperBound</a>.<a href="#20447" title="=&gt; Class[_]">erasure</a>
+      <span class="keyword">override</span> <span class="keyword">val</span> <a title="List[scala.reflect.OptManifest[_]]" id="133465">typeArguments</a> = <a href="#133443" title="scala.reflect.OptManifest[_]*">args</a>.<a href="../collection/generic/TraversableTemplate.scala.html#17236" title="=&gt; List[scala.reflect.OptManifest[_]]">toList</a>
+      <span class="keyword">override</span> <span class="keyword">def</span> <a title="()java.lang.String" id="133467">toString</a> = <a href="#133440" title="scala.reflect.OptManifest[_]">prefix</a>.<span title="(x$1: Any)java.lang.String">toString</span><span title="(x$1: Any)java.lang.String">+</span><span title="java.lang.String(&quot;#&quot;)" class="string">&quot;#&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#133441" title="String">name</a>+<a href="#20453" title="=&gt; java.lang.String">argString</a>
+    }
+
+  /** ClassManifest for the intersection type `parents_0 with ... with parents_n'. */
+  <span class="keyword">def</span> <a title="[T](parents: scala.reflect.ClassManifest[_]*)scala.reflect.ClassManifest[T]" id="26250">intersectionType</a>[<a title="&gt;: Nothing &lt;: Any" id="26252">T</a>](<a title="scala.reflect.ClassManifest[_]*" id="133491">parents</a>: <span title="scala.reflect.ClassManifest[_]*">ClassManifest</span>[_]*): <a href="#11503" title="scala.reflect.ClassManifest[T]">ClassManifest</a>[T] =
+    <a href="#133496" title="java.lang.Object with scala.reflect.ClassManifest[T] @serializable{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with scala.reflect.ClassManifest[T] @serializable" id="133496">(</a>ClassManifest[T] @<a href="#11503" title="scala.reflect.ClassManifest[T] @serializable">serializable</a>) {
+      <span class="keyword">def</span> <a title="=&gt; java.lang.Class[_]" id="133506">erasure</a> = <a href="#133491" title="scala.reflect.ClassManifest[_]*">parents</a>.<a href="../collection/generic/IterableTemplate.scala.html#17298" title="=&gt; scala.reflect.ClassManifest[_]">head</a>.<a href="#20447" title="=&gt; Class[_]">erasure</a>
+      <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="133507">toString</a> = <a href="#133491" title="scala.reflect.ClassManifest[_]*">parents</a>.<a href="../collection/generic/TraversableTemplate.scala.html#17247" title="(sep: String)String">mkString</a>(<span title="java.lang.String(&quot; with &quot;)" class="string">&quot; with &quot;</span>)
+    }
+}
+
+        </pre>
+    </body>
+</html>

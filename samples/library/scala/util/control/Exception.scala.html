@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/util/control/Exception.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+<span class="keyword">package</span> scala.util.control
+
+/** Classes representing the components of exception handling.
+ *  Each class is independently composable.  Some common uses:
+ *  
+ *  &lt;pre&gt;
+ *  &lt;b&gt;import&lt;/b&gt; scala.util.control.Exception._
+ *  &lt;b&gt;import&lt;/b&gt; java.net._
+ *
+ *  &lt;b&gt;val&lt;/b&gt; s = &quot;http://www.scala-lang.org/&quot;
+ *  &lt;b&gt;val&lt;/b&gt; x1 = catching(classOf[MalformedURLException]) opt new URL(s)
+ *  &lt;b&gt;val&lt;/b&gt; x2 = catching(classOf[MalformedURLException], classOf[NullPointerException]) either new URL(s)
+ *  &lt;/pre&gt;
+ *  @author Paul Phillips
+ */
+
+<span class="keyword">import</span> java.lang.reflect.InvocationTargetException
+
+<span class="keyword">object</span> <a title="object scala.util.control.Exception" id="12338">Exception</a>
+<a href="../../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  // We get lots of crashes using this, so for now we just use Class[_]
+  // type ExClass = Class[_ &lt;: Throwable]
+  
+  <span class="keyword">type</span> <a title="[+T]PartialFunction[Throwable,T]" id="31220">Catcher</a>[+<a title="&gt;: Nothing &lt;: Any" id="31221">T</a>] = <a href="../../PartialFunction.scala.html#1083" title="PartialFunction[Throwable,T]">PartialFunction</a>[Throwable, T]
+  <span class="keyword">type</span> <a title="[+T]PartialFunction[Exception,T]" id="31222">ExceptionCatcher</a>[+<a title="&gt;: Nothing &lt;: Any" id="31223">T</a>] = <a href="../../PartialFunction.scala.html#1083" title="PartialFunction[Exception,T]">PartialFunction</a>[Exception, T]
+  
+  // due to the magic of contravariance, Throwable =&gt; T is a subtype of 
+  // Exception =&gt; T, not the other way around.  So we manually construct
+  // a Throwable =&gt; T and simply rethrow the non-Exceptions.
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="[T](pf: scala.util.control.Exception.ExceptionCatcher[T])scala.util.control.Exception.Catcher[T]" id="31224">fromExceptionCatcher</a>[<a title="&gt;: Nothing &lt;: Any" id="31226">T</a>](<a title="scala.util.control.Exception.ExceptionCatcher[T]" id="120026">pf</a>: <a href="../../PartialFunction.scala.html#1083" title="scala.util.control.Exception.ExceptionCatcher[T]">ExceptionCatcher</a>[T]): <a href="../../PartialFunction.scala.html#1083" title="scala.util.control.Exception.Catcher[T]">Catcher</a>[T] = {
+    <a href="#120029" title="java.lang.Object with PartialFunction[Throwable,T]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with PartialFunction[Throwable,T]" id="120029">PartialFunction</a>[Throwable, T] {
+      <span class="keyword">def</span> <a title="(x: Throwable)Boolean" id="120031">isDefinedAt</a>(<a title="Throwable" id="120037">x</a>: <span title="Throwable">Throwable</span>) = <a href="#120037" title="Throwable">x</a> <span title="Boolean" class="keyword">match</span> {
+        <span title="Boolean(true)" class="keyword">case</span> <a title="Exception" id="120043">e</a>: <span title="Exception">Exception</span> <span class="keyword">if</span> <a href="#120026" title="scala.util.control.Exception.ExceptionCatcher[T]">pf</a>.<a href="../../PartialFunction.scala.html#17071" title="(x: Exception)Boolean">isDefinedAt</a>(<a href="#120043" title="Exception">e</a>)  =&gt; <span title="Boolean(true)" class="keyword">true</span>
+        <span title="Boolean(false)" class="keyword">case</span> _                                  =&gt; <span title="Boolean(false)" class="keyword">false</span>
+      }      
+      <span class="keyword">def</span> <a title="(x: Throwable)T" id="120032">apply</a>(<a title="Throwable" id="120047">x</a>: <span title="Throwable">Throwable</span>) = <a href="#120047" title="Throwable">x</a> <span title="T" class="keyword">match</span> {
+        <span title="T" class="keyword">case</span> <a title="Exception" id="120053">e</a>: <span title="Exception">Exception</span> <span class="keyword">if</span> <a href="#120026" title="scala.util.control.Exception.ExceptionCatcher[T]">pf</a>.<a href="../../PartialFunction.scala.html#17071" title="(x: Exception)Boolean">isDefinedAt</a>(<a href="#120053" title="Exception">e</a>)  =&gt; <a href="../../Function1.scala.html#17119" title="(v1: Exception)T">pf</a>(<a href="#120053" title="Exception">e</a>)
+        <span title="Nothing" class="keyword">case</span> <a title="Throwable" id="120060">e</a>                                  =&gt; <span title="Nothing" class="keyword">throw</span> <a href="#120060" title="Throwable">e</a>
+      }
+    }
+  }
+
+  <span class="keyword">trait</span> <a title="trait Described extends java.lang.Object with ScalaObject" id="31227">Described</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject">{</a> 
+    <span class="keyword">protected</span> <span class="keyword">val</span> <a title="=&gt; String" id="47455">name</a>: <span title="String">String</span>
+    <span class="keyword">private</span> <span class="keyword">var</span> <a title="String" id="47457">_desc</a>: <span title="String">String</span> = <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>
+    <span class="keyword">def</span> <a title="=&gt; String" id="47459">desc</a> = <a href="#47457" title="=&gt; String">_desc</a>
+    <span class="keyword">def</span> <a title="(s: String)Described.this.type" id="47460">withDesc</a>(<a title="String" id="120069">s</a>: <span title="String">String</span>): <span class="keyword">this</span>.<span class="keyword">type</span> = {
+      <a href="#47457" title="(x$1: String)Unit">_desc</a> = <a href="#120069" title="String">s</a>
+      <a href="#31227" title="Described.this.type" class="keyword">this</a>
+    }
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="()java.lang.String" id="47461">toString</a>() = <a href="#47455" title="(x$1: Any)java.lang.String">name</a> <span title="(x$1: Any)java.lang.String">+</span> <span title="java.lang.String(&quot;(&quot;)" class="string">&quot;(&quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#47459" title="=&gt; String">desc</a> + <span title="java.lang.String(&quot;)&quot;)" class="string">&quot;)&quot;</span>
+  }
+  
+  /** A container class for finally code. */
+  <span class="keyword">class</span> <a title="class Finally extends java.lang.Object with scala.util.control.Exception.Described with ScalaObject" id="31228">Finally</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">private</a>[Exception](<a title="=&gt; Unit" id="120090">body</a>: =&gt; Unit) <span class="keyword">extends</span> <a href="#31227" title="scala.util.control.Exception.Described">Described</a> {
+    <span class="keyword">protected</span> <span class="keyword">val</span> <a title="java.lang.String" id="120084">name</a> = <span title="java.lang.String(&quot;Finally&quot;)" class="string">&quot;Finally&quot;</span>
+    
+    <span class="keyword">def</span> <a title="(other: =&gt; Unit)scala.util.control.Exception.Finally" id="120086">and</a>(<a title="=&gt; Unit" id="120093">other</a>: =&gt; Unit): <a href="#31228" title="scala.util.control.Exception.Finally">Finally</a> = <span title="scala.util.control.Exception.Finally" class="keyword">new</span> <a href="#31228" title="scala.util.control.Exception.Finally">Finally</a>({ <a href="#120090" title="=&gt; Unit">body</a> ; <a href="#120093" title="=&gt; Unit">other</a> })
+    <span class="keyword">def</span> <a title="()Unit" id="120087">invoke</a>(): <a title="Unit" id="1948">Unit</a> = { <a href="#120090" title="=&gt; Unit">body</a> }
+  }
+  
+  /** A container class for catch/finally logic. */
+  <span class="keyword">class</span> <a title="class Catch[+T] extends java.lang.Object with scala.util.control.Exception.Described with ScalaObject" id="31229">Catch</a>[+<a title="&gt;: Nothing &lt;: Any" id="31230">T</a>] <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">private</a>[Exception](
+    <span class="keyword">private</span>[Exception] <span class="keyword">val</span> <a title="scala.util.control.Exception.Catcher[T]" id="120101">pf</a>: <a href="../../PartialFunction.scala.html#1083" title="scala.util.control.Exception.Catcher[T]">Catcher</a>[T],
+    <span class="keyword">private</span>[Exception] <span class="keyword">val</span> <a title="Option[scala.util.control.Exception.Finally]" id="120102">fin</a>: <a href="../../Option.scala.html#777" title="Option[scala.util.control.Exception.Finally]">Option</a>[Finally])
+  <span class="keyword">extends</span> <a href="#31227" title="scala.util.control.Exception.Described">Described</a>
+  {
+    <span class="keyword">def</span> <a title="(pf: scala.util.control.Exception.Catcher[T])scala.util.control.Exception.Catch[T]" id="47469" class="keyword">this</a>(<a title="scala.util.control.Exception.Catcher[T]" id="120107">pf</a>: <a href="../../PartialFunction.scala.html#1083" title="scala.util.control.Exception.Catcher[T]">Catcher</a>[T]) = <a href="#31229" title="Catch.this.type" class="keyword">this</a>(<a href="#120107" title="scala.util.control.Exception.Catcher[T]">pf</a>, <a href="../../Option.scala.html#463" title="object None">None</a>)
+    <span class="keyword">protected</span> <span class="keyword">val</span> <a title="java.lang.String" id="47470">name</a> = <span title="java.lang.String(&quot;Catch&quot;)" class="string">&quot;Catch&quot;</span>
+    
+    /** Create a new Catch with additional exception handling logic. */
+    <span class="keyword">def</span> <a title="[U &gt;: T](pf2: scala.util.control.Exception.Catcher[U])scala.util.control.Exception.Catch[U]" id="47472">or</a>[<a title="&gt;: T &lt;: Any" id="47474">U</a> &gt;: T](<a title="scala.util.control.Exception.Catcher[U]" id="120128">pf2</a>: <a href="../../PartialFunction.scala.html#1083" title="scala.util.control.Exception.Catcher[U]">Catcher</a>[U]): <a href="#31229" title="scala.util.control.Exception.Catch[U]">Catch</a>[U] = <span title="scala.util.control.Exception.Catch[U]" class="keyword">new</span> <a href="#31229" title="scala.util.control.Exception.Catch[U]">Catch</a>(<a href="../../PartialFunction.scala.html#17072" title="(that: PartialFunction[Throwable,U])PartialFunction[Throwable,U]">pf</a> orElse <a href="#120128" title="scala.util.control.Exception.Catcher[U]">pf2</a>, <a href="#120102" title="=&gt; Option[scala.util.control.Exception.Finally]">fin</a>)
+    <span class="keyword">def</span> <a title="[U &gt;: T](other: scala.util.control.Exception.Catch[U])scala.util.control.Exception.Catch[U]" id="47475">or</a>[<a title="&gt;: T &lt;: Any" id="47477">U</a> &gt;: T](<a title="scala.util.control.Exception.Catch[U]" id="120165">other</a>: <a href="#31229" title="scala.util.control.Exception.Catch[U]">Catch</a>[U]): <a href="#31229" title="scala.util.control.Exception.Catch[U]">Catch</a>[U] = <a href="#47472" title="(pf2: scala.util.control.Exception.Catcher[U])scala.util.control.Exception.Catch[U]">or</a>(<a href="#120165" title="scala.util.control.Exception.Catch[U]">other</a>.<a href="#120101" title="=&gt; scala.util.control.Exception.Catcher[U]">pf</a>)
+    
+    /** Apply this catch logic to the supplied body. */
+    <span class="keyword">def</span> <a title="[U &gt;: T](body: =&gt; U)U" id="47478">apply</a>[<a title="&gt;: T &lt;: Any" id="47480">U</a> &gt;: T](<a title="=&gt; U" id="47493">body</a>: =&gt; U): <a href="#47480" title="U">U</a> = {      
+      <span class="keyword">try</span>     { <a href="#47493" title="=&gt; U">body</a> }
+      <span class="keyword">catch</span>   { <span title="T" class="keyword">case</span> <a title="java.lang.Throwable" id="120186">e</a> <span class="keyword">if</span> <a href="#120101" title="=&gt; scala.util.control.Exception.Catcher[T]">pf</a>.<a href="../../PartialFunction.scala.html#17071" title="(x: Throwable)Boolean">isDefinedAt</a>(<a href="#120186" title="java.lang.Throwable">e</a>) =&gt; <a href="../../Function1.scala.html#17119" title="(v1: Throwable)T">pf</a>(<a href="#120186" title="java.lang.Throwable">e</a>) }
+      <span class="keyword">finally</span> { <a href="#120102" title="=&gt; Option[scala.util.control.Exception.Finally]">fin</a>.<a href="../../Option.scala.html#19766" title="(f: (scala.util.control.Exception.Finally) =&gt; Unit)Option[Unit]">map</a><span title="Unit">(</span><a href="#120197" title="scala.util.control.Exception.Finally">_</a>.<a href="#120087" title="()Unit">invoke</a>()) }
+    }
+    
+    /* Create an empty Try container with this Catch and the supplied Finally */
+    <span class="keyword">def</span> <a title="(body: =&gt; Unit)scala.util.control.Exception.Catch[T]" id="47481">andFinally</a>(<a title="=&gt; Unit" id="120203">body</a>: =&gt; Unit): <a href="#31229" title="scala.util.control.Exception.Catch[T]">Catch</a>[T] = <a href="#120102" title="=&gt; Option[scala.util.control.Exception.Finally]">fin</a> <span title="scala.util.control.Exception.Catch[T]" class="keyword">match</span> {
+      <span title="scala.util.control.Exception.Catch[T]" class="keyword">case</span> <a href="../../Option.scala.html#463" title="object None">None</a>     =&gt; <span title="scala.util.control.Exception.Catch[T]" class="keyword">new</span> <a href="#31229" title="scala.util.control.Exception.Catch[T]">Catch</a>(<a href="#120101" title="=&gt; scala.util.control.Exception.Catcher[T]">pf</a>, <a href="../../Option.scala.html#19800" title="(x: scala.util.control.Exception.Finally)Some[scala.util.control.Exception.Finally]">Some</a>(<span title="scala.util.control.Exception.Finally" class="keyword">new</span> <a href="#31228" title="scala.util.control.Exception.Finally">Finally</a>(<a href="#120203" title="=&gt; Unit">body</a>)))
+      <span title="scala.util.control.Exception.Catch[T]" class="keyword">case</span> Some(<a title="scala.util.control.Exception.Finally" id="120235">f</a>)  =&gt; <span title="scala.util.control.Exception.Catch[T]" class="keyword">new</span> <a href="#31229" title="scala.util.control.Exception.Catch[T]">Catch</a>(<a href="#120101" title="=&gt; scala.util.control.Exception.Catcher[T]">pf</a>, <a href="../../Option.scala.html#19800" title="(x: scala.util.control.Exception.Finally)Some[scala.util.control.Exception.Finally]">Some</a>(<a href="#120086" title="(other: =&gt; Unit)scala.util.control.Exception.Finally">f</a> and <a href="#120203" title="=&gt; Unit">body</a>))
+    }
+    
+    /** Apply this catch logic to the supplied body, mapping the result
+     *  into Option[T] - None if any exception was caught, Some(T) otherwise.
+     */
+    <span class="keyword">def</span> <a title="[U &gt;: T](body: =&gt; U)Option[U]" id="47482">opt</a>[<a title="&gt;: T &lt;: Any" id="47484">U</a> &gt;: T](<a title="=&gt; U" id="74688">body</a>: =&gt; U): <a href="../../Option.scala.html#777" title="Option[U]">Option</a>[U] = <a href="#47478" title="(body: =&gt; Option[U])Option[U]">toOption</a>(<a href="../../Option.scala.html#19800" title="(x: U)Some[U]">Some</a>(<a href="#74688" title="=&gt; U">body</a>))
+    
+    /** Apply this catch logic to the supplied body, mapping the result
+     *  into Either[Throwable, T] - Left(exception) if an exception was caught,
+     *  Right(T) otherwise.
+     */
+    <span class="keyword">def</span> <a title="[U &gt;: T](body: =&gt; U)Either[Throwable,U]" id="47485">either</a>[<a title="&gt;: T &lt;: Any" id="47487">U</a> &gt;: T](<a title="=&gt; U" id="71388">body</a>: =&gt; U): <a href="../../Either.scala.html#306" title="Either[Throwable,U]">Either</a>[Throwable, U] = <a href="#47478" title="(body: =&gt; Either[Throwable,U])Either[Throwable,U]">toEither</a>(<a href="../../Either.scala.html#71402" title="(b: U)Right[Nothing,U]">Right</a>(<a href="#71388" title="=&gt; U">body</a>))
+    
+    /** Create a new Catch with the same isDefinedAt logic as this one,
+      * but with the supplied apply method replacing the current one. */
+    <span class="keyword">def</span> <a title="[U](f: (Throwable) =&gt; U)scala.util.control.Exception.Catch[U]" id="47488">withApply</a>[<a title="&gt;: Nothing &lt;: Any" id="47490">U</a>](<a title="(Throwable) =&gt; U" id="120324">f</a>: (Throwable) =&gt; U): <a href="#31229" title="scala.util.control.Exception.Catch[U]">Catch</a>[U] = {
+      <span class="keyword">val</span> <a title="&lt;refinement&gt; extends java.lang.Object with PartialFunction[Throwable,U]" id="120327">pf2</a> = <a href="#120328" title="java.lang.Object with PartialFunction[Throwable,U]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with PartialFunction[Throwable,U]" id="120328">PartialFunction</a>[Throwable, U] {
+        <span class="keyword">def</span> <a title="(x: Throwable)Boolean" id="120330">isDefinedAt</a>(<a title="Throwable" id="120336">x</a>: <span title="Throwable">Throwable</span>) = <a href="../../PartialFunction.scala.html#17071" title="(x: Throwable)Boolean">pf</a> isDefinedAt <a href="#120336" title="Throwable">x</a>
+        <span class="keyword">def</span> <a title="(x: Throwable)U" id="120331">apply</a>(<a title="Throwable" id="120345">x</a>: <span title="Throwable">Throwable</span>) = <a href="../../Function1.scala.html#17119" title="(v1: Throwable)U">f</a>(<a href="#120345" title="Throwable">x</a>)
+      }
+      <span title="scala.util.control.Exception.Catch[U]" class="keyword">new</span> <a href="#31229" title="scala.util.control.Exception.Catch[U]">Catch</a>(<a href="#120327" title="&lt;refinement&gt; extends java.lang.Object with PartialFunction[Throwable,U]">pf2</a>, <a href="#120102" title="=&gt; Option[scala.util.control.Exception.Finally]">fin</a>)
+    }
+
+    /** Convenience methods. */
+    <span class="keyword">def</span> <a title="=&gt; scala.util.control.Exception.Catch[Option[T]]" id="47491">toOption</a>: <a href="#31229" title="scala.util.control.Exception.Catch[Option[T]]">Catch</a>[Option[T]] = <a href="#47488" title="(f: (Throwable) =&gt; object None)scala.util.control.Exception.Catch[object None]">withApply</a>(<a title="Throwable" id="120397">_</a> =&gt; <a href="../../Option.scala.html#463" title="object None">None</a>)
+    <span class="keyword">def</span> <a title="=&gt; scala.util.control.Exception.Catch[Either[Throwable,T]]" id="47492">toEither</a>: <a href="#31229" title="scala.util.control.Exception.Catch[Either[Throwable,T]]">Catch</a>[Either[Throwable, T]] = <a href="#47488" title="(f: (Throwable) =&gt; Left[Throwable,Nothing])scala.util.control.Exception.Catch[Left[Throwable,Nothing]]">withApply</a>(<a href="../../Either.scala.html#71433" title="(a: Throwable)Left[Throwable,Nothing]">Left</a>(<a href="#120404" title="Throwable">_</a>))
+  }
+  
+  /** A container class for Try logic */
+  <span class="keyword">class</span> <a title="class Try[+T] extends java.lang.Object with ScalaObject" id="31231">Try</a>[+<a title="&gt;: Nothing &lt;: Any" id="31232">T</a>] <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">private</a>[Exception](<a title="=&gt; T" id="120444">body</a>: =&gt; T, <span class="keyword">val</span> <a title="scala.util.control.Exception.Catch[T]" id="120445">catcher</a>: <a href="#31229" title="scala.util.control.Exception.Catch[T]">Catch</a>[T]) {    
+    /** Execute &quot;body&quot; using catch/finally logic &quot;catcher&quot; */
+    <span class="keyword">def</span> <a title="()T" id="120421">apply</a>(): <a href="#31232" title="T">T</a>                    = <a href="#47478" title="(body: =&gt; T)T">catcher</a>(<a href="#120444" title="=&gt; T">body</a>)
+    <span class="keyword">def</span> <a title="[U &gt;: T](other: =&gt; U)U" id="120422">apply</a>[<a title="&gt;: T &lt;: Any" id="120424">U</a> &gt;: T](<a title="=&gt; U" id="120456">other</a>: =&gt; U): <a href="#120424" title="U">U</a> = <a href="#47478" title="(body: =&gt; U)U">catcher</a>(<a href="#120456" title="=&gt; U">other</a>)
+        
+    /** As apply, but map caught exceptions to None and success to Some(T) */
+    <span class="keyword">def</span> <a title="()Option[T]" id="120425">opt</a>(): <a href="../../Option.scala.html#777" title="Option[T]">Option</a>[T]                      = <a href="#47482" title="(body: =&gt; T)Option[T]">catcher</a> opt <a href="#120444" title="=&gt; T">body</a>
+    <span class="keyword">def</span> <a title="[U &gt;: T](other: =&gt; U)Option[U]" id="120426">opt</a>[<a title="&gt;: T &lt;: Any" id="120428">U</a> &gt;: T](<a title="=&gt; U" id="120474">other</a>: =&gt; U): <a href="../../Option.scala.html#777" title="Option[U]">Option</a>[U]   = <a href="#47482" title="(body: =&gt; U)Option[U]">catcher</a> opt <a href="#120474" title="=&gt; U">other</a>
+    
+    /** As apply, but map caught exceptions to Left(ex) and success to Right(x) */
+    <span class="keyword">def</span> <a title="()Either[Throwable,T]" id="120429">either</a>(): <a href="../../Either.scala.html#306" title="Either[Throwable,T]">Either</a>[Throwable, T]                    = <a href="#47485" title="(body: =&gt; T)Either[Throwable,T]">catcher</a> either <a href="#120444" title="=&gt; T">body</a>
+    <span class="keyword">def</span> <a title="[U &gt;: T](other: =&gt; U)Either[Throwable,U]" id="120430">either</a>[<a title="&gt;: T &lt;: Any" id="120432">U</a> &gt;: T](<a title="=&gt; U" id="120492">other</a>: =&gt; U): <a href="../../Either.scala.html#306" title="Either[Throwable,U]">Either</a>[Throwable, U] = <a href="#47485" title="(body: =&gt; U)Either[Throwable,U]">catcher</a> either <a href="#120492" title="=&gt; U">other</a>
+    
+    /** Create a new Try with the supplied body replacing the current body */
+    <span class="keyword">def</span> <a title="[U &gt;: T](other: =&gt; U)scala.util.control.Exception.Try[U]" id="120433">tryInstead</a>[<a title="&gt;: T &lt;: Any" id="120435">U</a> &gt;: T](<a title="=&gt; U" id="120502">other</a>: =&gt; U) = <span title="scala.util.control.Exception.Try[U]" class="keyword">new</span> <a href="#31231" title="scala.util.control.Exception.Try[U]">Try</a>(<a href="#120502" title="=&gt; U">other</a>, <a href="#120445" title="=&gt; scala.util.control.Exception.Catch[T]">catcher</a>)
+    
+    /** Create a new Try with the supplied logic appended to the existing Catch logic. */
+    <span class="keyword">def</span> <a title="[U &gt;: T](pf: scala.util.control.Exception.Catcher[U])scala.util.control.Exception.Try[U]" id="120436">or</a>[<a title="&gt;: T &lt;: Any" id="120438">U</a> &gt;: T](<a title="scala.util.control.Exception.Catcher[U]" id="120513">pf</a>: <a href="../../PartialFunction.scala.html#1083" title="scala.util.control.Exception.Catcher[U]">Catcher</a>[U]) = <span title="scala.util.control.Exception.Try[U]" class="keyword">new</span> <a href="#31231" title="scala.util.control.Exception.Try[U]">Try</a>(<a href="#120444" title="=&gt; T">body</a>, <a href="#47472" title="(pf2: scala.util.control.Exception.Catcher[U])scala.util.control.Exception.Catch[U]">catcher</a> or <a href="#120513" title="scala.util.control.Exception.Catcher[U]">pf</a>)
+
+    /** Create a new Try with the supplied code appended to the existing Finally. */
+    <span class="keyword">def</span> <a title="(fin: =&gt; Unit)scala.util.control.Exception.Try[T]" id="120439">andFinally</a>(<a title="=&gt; Unit" id="120551">fin</a>: =&gt; Unit) = <span title="scala.util.control.Exception.Try[T]" class="keyword">new</span> <a href="#31231" title="scala.util.control.Exception.Try[T]">Try</a>(<a href="#120444" title="=&gt; T">body</a>, <a href="#47481" title="(body: =&gt; Unit)scala.util.control.Exception.Catch[T]">catcher</a> andFinally <a href="#120551" title="=&gt; Unit">fin</a>)
+    
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="120440">toString</a>() = <a href="../../collection/immutable/List.scala.html#17535" title="(xs: java.lang.String*)List[java.lang.String]">List</a><a href="../../collection/generic/TraversableTemplate.scala.html#17247" title="(sep: String)String">(</a><span title="java.lang.String(&quot;Try(&lt;body&gt;)&quot;)" class="string">&quot;Try(&lt;body&gt;)&quot;</span>, <a href="#120445" title="=&gt; scala.util.control.Exception.Catch[T]">catcher</a>.<a href="#47461" title="()java.lang.String">toString</a>) mkString <span title="java.lang.String(&quot; &quot;)" class="string">&quot; &quot;</span>
+  }
+  
+  <span class="keyword">final</span> <span class="keyword">val</span> <a title="PartialFunction[Throwable,Nothing]" id="31233">nothingCatcher</a>: <a href="../../PartialFunction.scala.html#1083" title="PartialFunction[Throwable,Nothing]">PartialFunction</a>[Throwable, Nothing] =
+    <a href="#120580" title="java.lang.Object with PartialFunction[Throwable,Nothing]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with PartialFunction[Throwable,Nothing]" id="120580">PartialFunction</a>[Throwable, Nothing] {
+      <span class="keyword">def</span> <a title="(x: Throwable)Boolean" id="120582">isDefinedAt</a>(<a title="Throwable" id="120588">x</a>: <span title="Throwable">Throwable</span>) = <span title="Boolean(false)" class="keyword">false</span>
+      <span class="keyword">def</span> <a title="(x: Throwable)Nothing" id="120583">apply</a>(<a title="Throwable" id="120594">x</a>: <span title="Throwable">Throwable</span>) = <span title="Nothing" class="keyword">throw</span> <a href="#120594" title="Throwable">x</a>
+    }
+
+  /** A Catch object which catches everything. */
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="[T]scala.util.control.Exception.Catch[T]" id="31235">allCatch</a>[<a title="&gt;: Nothing &lt;: Any" id="31237">T</a>]: <a href="#31229" title="scala.util.control.Exception.Catch[T]">Catch</a>[T] = <a href="#47460" title="(s: java.lang.String)scala.util.control.Exception.Catch[T]" class="keyword">new</a> <a href="#31229" title="scala.util.control.Exception.Catch[T]">Catch</a>[T](<a href="#120609" title="T">{</a> <span title="Nothing" class="keyword">case</span> <a title="Throwable" id="120610">x</a> =&gt; <span title="Nothing" class="keyword">throw</span> <a href="#120610" title="Throwable">x</a> }) withDesc <span title="java.lang.String(&quot;&lt;everything&gt;&quot;)" class="string">&quot;&lt;everything&gt;&quot;</span>
+  
+  /** The empty Catch object. */
+  <span class="keyword">final</span> <span class="keyword">val</span> <a title="scala.util.control.Exception.Catch[Nothing]" id="31238">noCatch</a>: <a href="#31229" title="scala.util.control.Exception.Catch[Nothing]">Catch</a>[Nothing] = <a href="#47460" title="(s: java.lang.String)scala.util.control.Exception.Catch[Nothing]" class="keyword">new</a> <a href="#31229" title="scala.util.control.Exception.Catch[Nothing]">Catch</a>(<a href="#31233" title="=&gt; PartialFunction[Throwable,Nothing]">nothingCatcher</a>) withDesc <span title="java.lang.String(&quot;&lt;nothing&gt;&quot;)" class="string">&quot;&lt;nothing&gt;&quot;</span>
+  
+  /** Creates a Catch object which will catch any of the supplied exceptions.
+    * Since the returned Catch object has no specific logic defined and will simply
+    * rethrow the exceptions it catches, you will typically want to call &quot;opt&quot; or
+    * &quot;either&quot; on the return value, or assign custom logic by calling &quot;withApply&quot;.
+    */
+  <span class="keyword">def</span> <a title="[T](exceptions: Class[_]*)scala.util.control.Exception.Catch[T]" id="31240">catching</a>[<a title="&gt;: Nothing &lt;: Any" id="31242">T</a>](<a title="Class[_]*" id="74671">exceptions</a>: <span title="Class[_]*">Class</span>[_]*): <a href="#31229" title="scala.util.control.Exception.Catch[T]">Catch</a>[T] =
+    <a href="#47460" title="(s: java.lang.String)scala.util.control.Exception.Catch[Nothing]" class="keyword">new</a> <a href="#31229" title="scala.util.control.Exception.Catch[Nothing]">Catch</a>(<a href="#31266" title="(exceptions: Class[_]*)java.lang.Object with PartialFunction[Throwable,Nothing]">pfFromExceptions</a>(<a href="#74671" title="Class[_]*">exceptions</a> : _*)) withDesc <a href="#74671" title="Class[_]*">exceptions</a>.<a href="../../collection/generic/TraversableTemplate.scala.html#17161" title="(f: (Class[_]) =&gt; java.lang.String)(implicit bf: scala.collection.generic.BuilderFactory[java.lang.String,Sequence[java.lang.String],Sequence[Class[_]]])Sequence[java.lang.String]">map</a><a href="../../collection/Sequence.scala.html#22039" title="scala.collection.generic.BuilderFactory[java.lang.String,Sequence[java.lang.String],Sequence#Coll]">(</a><a href="#120710" title="Class[_]">_</a>.<a title="()java.lang.String" id="4107">getName</a>).<a href="../../collection/generic/TraversableTemplate.scala.html#17247" title="(sep: String)String">mkString</a>(<span title="java.lang.String(&quot;, &quot;)" class="string">&quot;, &quot;</span>)
+  <span class="keyword">def</span> <a title="[T](c: scala.util.control.Exception.Catcher[T])scala.util.control.Exception.Catch[T]" id="31243">catching</a>[<a title="&gt;: Nothing &lt;: Any" id="31245">T</a>](<a title="scala.util.control.Exception.Catcher[T]" id="74665">c</a>: <a href="../../PartialFunction.scala.html#1083" title="scala.util.control.Exception.Catcher[T]">Catcher</a>[T]): <a href="#31229" title="scala.util.control.Exception.Catch[T]">Catch</a>[T] = <a href="#47469" title="(pf: scala.util.control.Exception.Catcher[T])scala.util.control.Exception.Catch[T]" class="keyword">new</a> <a href="#31229" title="scala.util.control.Exception.Catch[T]">Catch</a>(<a href="#74665" title="scala.util.control.Exception.Catcher[T]">c</a>)
+  
+  /** Creates a Catch object which catches and ignores any of the supplied exceptions. */
+  <span class="keyword">def</span> <a title="(exceptions: Class[_]*)scala.util.control.Exception.Catch[Unit]" id="31246">ignoring</a>(<a title="Class[_]*" id="120800">exceptions</a>: <span title="Class[_]*">Class</span>[_]*): <a href="#31229" title="scala.util.control.Exception.Catch[Unit]">Catch</a>[Unit] =
+    <a href="#31240" title="(exceptions: Class[_]*)scala.util.control.Exception.Catch[Nothing]">catching</a><a href="#47488" title="(f: (Throwable) =&gt; Unit)scala.util.control.Exception.Catch[Unit]">(</a><a href="#120800" title="Class[_]*">exceptions</a>: _*) withApply (<a title="Throwable" id="120823">_</a> =&gt; <span title="Unit">(</span>))
+  
+  /** Creates a Catch object which maps all the supplied exceptions to 'None'. */
+  <span class="keyword">def</span> <a title="[T](exceptions: Class[_]*)scala.util.control.Exception.Catch[Option[T]]" id="31247">failing</a>[<a title="&gt;: Nothing &lt;: Any" id="31249">T</a>](<a title="Class[_]*" id="120827">exceptions</a>: <span title="Class[_]*">Class</span>[_]*): <a href="#31229" title="scala.util.control.Exception.Catch[Option[T]]">Catch</a>[Option[T]] =
+    <a href="#31240" title="(exceptions: Class[_]*)scala.util.control.Exception.Catch[Nothing]">catching</a><a href="#47488" title="(f: (Throwable) =&gt; object None)scala.util.control.Exception.Catch[object None]">(</a><a href="#120827" title="Class[_]*">exceptions</a>: _*) withApply (<a title="Throwable" id="120850">_</a> =&gt; <a href="../../Option.scala.html#463" title="object None">None</a>)
+  
+  /** Returns a partially constructed Catch object, which you must give
+    * an exception handler function as an argument to &quot;by&quot;.  Example:
+    * handling(ex1, ex2) by (_.printStackTrace)
+    */
+  <span class="keyword">class</span> <a title="class By[T, R] extends java.lang.Object with ScalaObject" id="31250">By</a>[<a title="&gt;: Nothing &lt;: Any" id="31251">T</a>,<a title="&gt;: Nothing &lt;: Any" id="31252">R</a>]<a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="(T) =&gt; R" id="120860">f</a>: T =&gt; R) {
+    <span class="keyword">def</span> <a title="(x: T)R" id="120857">by</a>(<a title="T" id="120863">x</a>: <a href="#31251" title="T">T</a>): <a href="#31252" title="R">R</a> = <a href="../../Function1.scala.html#17119" title="(v1: T)R">f</a>(<a href="#120863" title="T">x</a>)
+  }
+  <span class="keyword">def</span> <a title="[T](exceptions: Class[_]*)scala.util.control.Exception.By[(Throwable) =&gt; T,scala.util.control.Exception.Catch[T]]" id="31253">handling</a>[<a title="&gt;: Nothing &lt;: Any" id="31255">T</a>](<a title="Class[_]*" id="120868">exceptions</a>: <span title="Class[_]*">Class</span>[_]*) = {
+    <span class="keyword">def</span> <a title="(f: (Throwable) =&gt; T)scala.util.control.Exception.Catch[T]" id="120871">fun</a>(<a title="(Throwable) =&gt; T" id="120872">f</a>: Throwable =&gt; T) = <a href="#31240" title="(exceptions: Class[_]*)scala.util.control.Exception.Catch[Nothing]">catching</a><a href="#47488" title="(f: (Throwable) =&gt; T)scala.util.control.Exception.Catch[T]">(</a><a href="#120868" title="Class[_]*">exceptions</a>: _*) withApply <a href="#120872" title="(Throwable) =&gt; T">f</a>    
+    <span title="scala.util.control.Exception.By[(Throwable) =&gt; T,scala.util.control.Exception.Catch[T]]" class="keyword">new</span> <a href="#31250" title="scala.util.control.Exception.By[(Throwable) =&gt; T,scala.util.control.Exception.Catch[T]]">By</a>[Throwable =&gt; T, Catch[T]](<a href="#120871" title="(f: (Throwable) =&gt; T)scala.util.control.Exception.Catch[T]">fun</a> _)
+  }
+  
+  /** Returns a Catch object with no catch logic and the argument as Finally. */
+  <span class="keyword">def</span> <a title="[T](body: =&gt; Unit)scala.util.control.Exception.Catch[T]" id="31256">ultimately</a>[<a title="&gt;: Nothing &lt;: Any" id="31258">T</a>](<a title="=&gt; Unit" id="47445">body</a>: =&gt; Unit): <a href="#31229" title="scala.util.control.Exception.Catch[T]">Catch</a>[T] = <a href="#47481" title="(body: =&gt; Unit)scala.util.control.Exception.Catch[Nothing]">noCatch</a> andFinally <a href="#47445" title="=&gt; Unit">body</a>
+  
+  /** Experimental */
+  <span class="keyword">def</span> <a title="[A](oldVal: A,newVal: A,setter: (A) =&gt; Unit)scala.util.control.Exception.Catch[Nothing]" id="31259">saving</a>[<a title="&gt;: Nothing &lt;: Any" id="31261">A</a>](<a title="A" id="120905">oldVal</a>: <a href="#31261" title="A">A</a>, <a title="A" id="120906">newVal</a>: <a href="#31261" title="A">A</a>, <a title="(A) =&gt; Unit" id="120907">setter</a>: (A) =&gt; Unit): <a href="#31229" title="scala.util.control.Exception.Catch[Nothing]">Catch</a>[Nothing] = {
+    <a href="#120912" title="scala.util.control.Exception.Catch[Nothing]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends scala.util.control.Exception.Catch[Nothing]" id="120912">Catch</a>(<a href="#31233" title="=&gt; PartialFunction[Throwable,Nothing]">nothingCatcher</a>, <a href="../../Option.scala.html#19800" title="(x: scala.util.control.Exception.Finally)Some[scala.util.control.Exception.Finally]">Some</a>(<span title="scala.util.control.Exception.Finally" class="keyword">new</span> <a href="#31228" title="scala.util.control.Exception.Finally">Finally</a>(<a href="../../Function1.scala.html#17119" title="(v1: A)Unit">setter</a>(<a href="#120905" title="A">oldVal</a>)))) {
+      <span class="keyword">override</span> <span class="keyword">def</span> <a title="[U](body: =&gt; U)U" id="120946">apply</a>[<a title="&gt;: Nothing &lt;: Any" id="120948">U</a>](<a title="=&gt; U" id="121012">body</a>: =&gt; U): <a href="#120948" title="U">U</a> = {
+        <a href="../../Function1.scala.html#17119" title="(v1: A)Unit">setter</a>(<a href="#120906" title="A">newVal</a>)
+        <span class="keyword">super</span>.<a href="#47478" title="(body: =&gt; U)U">apply</a>(<a href="#121012" title="=&gt; U">body</a>)
+      }
+    }
+  }
+
+  /** Creates a Catch object which unwraps any of the supplied exceptions. */
+  <span class="keyword">def</span> <a title="[T](exceptions: Class[_]*)scala.util.control.Exception.Catch[T]" id="31262">unwrapping</a>[<a title="&gt;: Nothing &lt;: Any" id="31264">T</a>](<a title="Class[_]*" id="121030">exceptions</a>: <span title="Class[_]*">Class</span>[_]*): <a href="#31229" title="scala.util.control.Exception.Catch[T]">Catch</a>[T] = {
+    <span class="keyword">def</span> <a title="(x: Throwable)Throwable" id="121035">unwrap</a>(<a title="Throwable" id="121036">x</a>: <span title="Throwable">Throwable</span>): <span title="Throwable">Throwable</span> =
+      <span title="Throwable" class="keyword">if</span> (<a href="#31265" title="(x: Throwable,classes: Sequence[Class[_]])Boolean">wouldMatch</a><a title="(x$1: Boolean)Boolean" id="2210">(</a><a href="#121036" title="Throwable">x</a>, <a href="#121030" title="Class[_]*">exceptions</a>) &amp;&amp; <a href="#121036" title="Throwable">x</a>.<a title="(x$1: AnyRef)Boolean" id="6529">getCause</a> != <span title="Null(null)" class="keyword">null</span>) <a href="#121035" title="(x: Throwable)Throwable">unwrap</a>(<a href="#121036" title="Throwable">x</a>.<span title="()java.lang.Throwable">getCause</span>)
+      <span class="keyword">else</span> <a href="#121036" title="Throwable">x</a>
+    
+    <a href="#31240" title="(exceptions: Class[_]*)scala.util.control.Exception.Catch[Nothing]">catching</a><a href="#47488" title="(f: (Throwable) =&gt; Nothing)scala.util.control.Exception.Catch[Nothing]">(</a><a href="#121030" title="Class[_]*">exceptions</a>: _*) withApply (<a title="Throwable" id="121073">x</a> =&gt; <span title="Nothing" class="keyword">throw</span> <a href="#121035" title="(x: Throwable)Throwable">unwrap</a>(<a href="#121073" title="Throwable">x</a>))
+  }
+  
+  /** Private **/
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(x: Throwable,classes: Sequence[Class[_]])Boolean" id="31265">wouldMatch</a>(<a title="Throwable" id="120664">x</a>: <span title="Throwable">Throwable</span>, <a title="Sequence[Class[_]]" id="120665">classes</a>: collection.<a href="../../collection/Sequence.scala.html#4346" title="Sequence[Class[_]]">Sequence</a>[Class[_]]): <a title="Boolean" id="1949">Boolean</a> = 
+    <a href="../../collection/generic/TraversableTemplate.scala.html#17184" title="(p: (Class[_]) =&gt; Boolean)Boolean">classes</a> exists (<a href="#121082" title="(x$1: java.lang.Class[_])Boolean" id="4097">_</a> isAssignableFrom <a href="#120664" title="Throwable">x</a>.<a title="()java.lang.Class[_]" id="3626">getClass</a>)
+  
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(exceptions: Class[_]*)java.lang.Object with PartialFunction[Throwable,Nothing]" id="31266">pfFromExceptions</a>(<a title="Class[_]*" id="120641">exceptions</a>: <span title="Class[_]*">Class</span>[_]*) = 
+    <a href="#120644" title="java.lang.Object with PartialFunction[Throwable,Nothing]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with PartialFunction[Throwable,Nothing]" id="120644">PartialFunction</a>[Throwable, Nothing] {
+      <span class="keyword">def</span> <a title="(x: Throwable)Nothing" id="120646">apply</a>(<a title="Throwable" id="120652">x</a>: <span title="Throwable">Throwable</span>) = <span title="Nothing" class="keyword">throw</span> <a href="#120652" title="Throwable">x</a>
+      <span class="keyword">def</span> <a title="(x: Throwable)Boolean" id="120647">isDefinedAt</a>(<a title="Throwable" id="120658">x</a>: <span title="Throwable">Throwable</span>) = <a href="#31265" title="(x: Throwable,classes: Sequence[Class[_]])Boolean">wouldMatch</a>(<a href="#120658" title="Throwable">x</a>, <a href="#120641" title="Class[_]*">exceptions</a>)
+    }  
+}
+
+        </pre>
+    </body>
+</html>

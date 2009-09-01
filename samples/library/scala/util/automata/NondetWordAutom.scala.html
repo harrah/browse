@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/util/automata/NondetWordAutom.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: NondetWordAutom.scala 17757 2009-05-18 16:02:09Z extempore $
+
+
+<span class="keyword">package</span> scala.util.automata
+
+<span class="keyword">import</span> scala.collection.{immutable, mutable, Set, Map}
+
+/** A nondeterministic automaton. States are integers, where
+ *  0 is always the only initial state. Transitions are represented
+ *  in the delta function. Default transitions are transitions that
+ *  are taken when no other transitions can be applied.
+ *  All states are reachable. Accepting states are those for which
+ *  the partial function 'finals' is defined.
+ */
+<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class NondetWordAutom[T &lt;: AnyRef] extends java.lang.Object with ScalaObject" id="14065">NondetWordAutom</a>[<a title="&gt;: Nothing &lt;: AnyRef" id="16968">T</a> &lt;: <a id="1">AnyRef</a>]
+<a href="../../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  <span class="keyword">val</span> <a title="=&gt; Int" id="56358">nstates</a>: <span title="Int">Int</span>
+  <span class="keyword">val</span> <a title="=&gt; Seq[T]" id="56359">labels</a>: <a href="../../collection/Sequence.scala.html#4346" title="Seq[T]">Seq</a>[T]
+
+  <span class="keyword">val</span> <a title="=&gt; Array[Int]" id="56360">finals</a>: <a href="../../Array.scala.html#885" title="Array[Int]">Array</a>[Int] // 0 means not final
+  <span class="keyword">val</span> <a title="=&gt; Array[scala.collection.Map[T,scala.collection.immutable.BitSet]]" id="56361">delta</a>: <a href="../../Array.scala.html#885" title="Array[scala.collection.Map[T,scala.collection.immutable.BitSet]]">Array</a>[Map[T, immutable.BitSet]]
+  <span class="keyword">val</span> <a title="=&gt; Array[scala.collection.immutable.BitSet]" id="56362">default</a>: <a href="../../Array.scala.html#885" title="Array[scala.collection.immutable.BitSet]">Array</a>[immutable.BitSet]
+
+  /** returns true if the state is final */
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(state: Int)Boolean" id="56363">isFinal</a>(<a title="Int" id="263739">state</a>: <span title="Int">Int</span>) = <a href="../../Array.scala.html#17716" title="(i: Int)Int">finals</a><a title="(x$1: Int)Boolean" id="2958">(</a><a href="#263739" title="Int">state</a>) &gt; <span title="Int(0)" class="int">0</span>
+
+  /** returns tag of final state */
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(state: Int)Int" id="56364">finalTag</a>(<a title="Int" id="263757">state</a>: <span title="Int">Int</span>) = <a href="../../Array.scala.html#17716" title="(i: Int)Int">finals</a>(<a href="#263757" title="Int">state</a>)
+  
+  /** returns true if the set of states contains at least one final state */
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(Q: scala.collection.immutable.BitSet)Boolean" id="56365">containsFinal</a>(<a title="scala.collection.immutable.BitSet" id="263769">Q</a>: immutable.<a href="../../collection/immutable/BitSet.scala.html#8916" title="scala.collection.immutable.BitSet">BitSet</a>): <a title="Boolean" id="1949">Boolean</a> = <a href="../../collection/generic/TraversableTemplate.scala.html#17184" title="(p: (Int) =&gt; Boolean)Boolean">Q</a> exists <a href="#56363" title="(state: Int)Boolean">isFinal</a>
+  
+  /** returns true if there are no accepting states */
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; Boolean" id="56366">isEmpty</a> = <a href="../../collection/generic/VectorTemplate.scala.html#17755" title="(p: (Int) =&gt; Boolean)Boolean">(</a><a href="../../runtime/RichInt.scala.html#19060" title="(end: Int)Range" class="int">0</a> until <a href="#56358" title="=&gt; Int">nstates</a>) forall (<a title="Int" id="263807">x</a> =&gt; <a title="=&gt; Boolean" id="2203">!</a><a href="#56363" title="(state: Int)Boolean">isFinal</a>(<a href="#263807" title="Int">x</a>))
+
+  /** returns a bitset with the next states for given state and label */
+  <span class="keyword">def</span> <a title="(q: Int,a: T)scala.collection.immutable.BitSet" id="56367">next</a>(<a title="Int" id="263812">q</a>: <span title="Int">Int</span>, <a title="T" id="263813">a</a>: <a href="#16968" title="T">T</a>): immutable.<a href="../../collection/immutable/BitSet.scala.html#8916" title="scala.collection.immutable.BitSet">BitSet</a> = <a href="../../Array.scala.html#17716" title="(i: Int)scala.collection.Map[T,scala.collection.immutable.BitSet]">delta</a>(<a href="#263812" title="Int">q</a>).<a href="../../collection/generic/MapTemplate.scala.html#35273" title="(key: T)Option[scala.collection.immutable.BitSet]">get</a><a href="../../Option.scala.html#19763" title="(default: =&gt; scala.collection.immutable.BitSet)scala.collection.immutable.BitSet">(</a><a href="#263813" title="T">a</a>) getOrElse <a href="../../Array.scala.html#17716" title="(i: Int)scala.collection.immutable.BitSet">default</a>(<a href="#263812" title="Int">q</a>)
+
+  /** returns a bitset with the next states for given state and label */
+  <span class="keyword">def</span> <a title="(Q: scala.collection.immutable.BitSet,a: T)scala.collection.immutable.BitSet" id="56368">next</a>(<a title="scala.collection.immutable.BitSet" id="263843">Q</a>: immutable.<a href="../../collection/immutable/BitSet.scala.html#8916" title="scala.collection.immutable.BitSet">BitSet</a>, <a title="T" id="263844">a</a>: <a href="#16968" title="T">T</a>): immutable.<a href="../../collection/immutable/BitSet.scala.html#8916" title="scala.collection.immutable.BitSet">BitSet</a> = <a href="#56370" title="(Q: scala.collection.immutable.BitSet,f: (Int) =&gt; scala.collection.immutable.BitSet)scala.collection.immutable.BitSet">next</a>(<a href="#263843" title="scala.collection.immutable.BitSet">Q</a>, <a href="#56367" title="(q: Int,a: T)scala.collection.immutable.BitSet">next</a>(<a href="#263872" title="Int">_</a>, <a href="#263844" title="T">a</a>))
+  <span class="keyword">def</span> <a title="(Q: scala.collection.immutable.BitSet)scala.collection.immutable.BitSet" id="56369">nextDefault</a>(<a title="scala.collection.immutable.BitSet" id="263882">Q</a>: immutable.<a href="../../collection/immutable/BitSet.scala.html#8916" title="scala.collection.immutable.BitSet">BitSet</a>): immutable.<a href="../../collection/immutable/BitSet.scala.html#8916" title="scala.collection.immutable.BitSet">BitSet</a> = <a href="#56370" title="(Q: scala.collection.immutable.BitSet,f: (Int) =&gt; scala.collection.immutable.BitSet)scala.collection.immutable.BitSet">next</a>(<a href="#263882" title="scala.collection.immutable.BitSet">Q</a>, <a href="#56362" title="=&gt; Array[scala.collection.immutable.BitSet]">default</a>)
+  
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(Q: scala.collection.immutable.BitSet,f: (Int) =&gt; scala.collection.immutable.BitSet)scala.collection.immutable.BitSet" id="56370">next</a>(<a title="scala.collection.immutable.BitSet" id="263849">Q</a>: immutable.<a href="../../collection/immutable/BitSet.scala.html#8916" title="scala.collection.immutable.BitSet">BitSet</a>, <a title="(Int) =&gt; scala.collection.immutable.BitSet" id="263850">f</a>: (Int) =&gt; immutable.BitSet): immutable.<a href="../../collection/immutable/BitSet.scala.html#8916" title="scala.collection.immutable.BitSet">BitSet</a> =
+    (<a href="../../collection/generic/TraversableTemplate.scala.html#17161" title="(f: (Int) =&gt; scala.collection.immutable.BitSet)(implicit bf: scala.collection.generic.BuilderFactory[scala.collection.immutable.BitSet,scala.collection.immutable.Set[scala.collection.immutable.BitSet],scala.collection.immutable.BitSet])scala.collection.immutable.Set[scala.collection.immutable.BitSet]">Q</a> <a href="../../collection/immutable/Set.scala.html#56970" title="scala.collection.generic.BuilderFactory[scala.collection.immutable.BitSet,scala.collection.immutable.Set[scala.collection.immutable.BitSet],scala.collection.immutable.Set#Coll]">map</a> <a href="#263850" title="(Int) =&gt; scala.collection.immutable.BitSet">f</a>).<a href="../../collection/generic/TraversableTemplate.scala.html#17187" title="(z: scala.collection.immutable.BitSet)(op: (scala.collection.immutable.BitSet, scala.collection.immutable.BitSet) =&gt; scala.collection.immutable.BitSet)scala.collection.immutable.BitSet">foldLeft</a>(immutable.<a href="../../collection/immutable/BitSet.scala.html#8917" title="object scala.collection.immutable.BitSet">BitSet</a>.<a href="../../collection/immutable/BitSet.scala.html#56064" title="=&gt; scala.collection.immutable.BitSet">empty</a>)(<a href="../../collection/generic/Addable.scala.html#19972" title="(elems: Traversable[Int])scala.collection.immutable.BitSet">_</a> ++ <a href="#263965" title="scala.collection.immutable.BitSet">_</a>)
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="56371">toString</a> = {
+    <span class="keyword">val</span> <a title="String" id="264078">finalString</a> = <a href="../../collection/generic/MapFactory.scala.html#35181" title="(elems: (Int, Int)*)scala.collection.immutable.Map[Int,Int]">Map</a>(<a href="../../runtime/RichInt.scala.html#19060" title="(end: Int)Range" class="int">0</a> <a href="../../collection/generic/TraversableViewTemplate.scala.html#25978" title="(p: (Int) =&gt; Boolean)scala.collection.generic.VectorView[Int,scala.collection.immutable.Vector[Int]]">until</a> <a href="#56358" title="=&gt; Int">nstates</a> <a href="../../collection/generic/TraversableViewTemplate.scala.html#25968" title="(f: (Int) =&gt; (Int, Int))(implicit bf: scala.collection.generic.BuilderFactory[(Int, Int),scala.collection.generic.VectorView[(Int, Int),Vector[_]],scala.collection.generic.VectorView[Int,scala.collection.immutable.Vector[Int]]])scala.collection.generic.VectorView[(Int, Int),Vector[_]]">filter</a> <a href="#56363" title="(state: Int)Boolean">isFinal</a> <a href="../../collection/generic/VectorView.scala.html#26085" title="scala.collection.generic.BuilderFactory[(Int, Int),scala.collection.generic.VectorView[(Int, Int),Vector[_]],scala.collection.generic.VectorView#Coll]">map</a> (<a title="Int" id="264134">j</a> =&gt; <a href="../../Predef.scala.html#19103" title="(y: Int)(Int, Int)">j</a> -&gt; <a href="../../Array.scala.html#17716" title="(i: Int)Int">finals</a>(<a href="#264134" title="Int">j</a>)) : _*).<a href="../../collection/generic/MapTemplate.scala.html#35317" title="()String">toString</a>
+    <span class="keyword">val</span> <a title="String" id="264079">deltaString</a> = (<a href="../../runtime/RichInt.scala.html#19060" title="(end: Int)Range" class="int">0</a> until <a href="#56358" title="=&gt; Int">nstates</a>) .
+      <a href="../../collection/generic/TraversableViewTemplate.scala.html#25968" title="(f: (Int) =&gt; String)(implicit bf: scala.collection.generic.BuilderFactory[String,scala.collection.generic.VectorView[String,Vector[_]],scala.collection.generic.VectorView[Int,scala.collection.immutable.Vector[Int]]])scala.collection.generic.VectorView[String,Vector[_]]">map</a> <a href="../../collection/generic/VectorView.scala.html#26085" title="scala.collection.generic.BuilderFactory[String,scala.collection.generic.VectorView[String,Vector[_]],scala.collection.generic.VectorView#Coll]">(</a><a title="Int" id="264311">i</a> =&gt; <a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;   %d-&gt;%s\n    _&gt;%s\n&quot;</a>.<a href="../../runtime/RichString.scala.html#18060" title="(args: Any*)String">format</a>(<a href="#264311" title="Int">i</a>, <a href="../../Array.scala.html#17716" title="(i: Int)scala.collection.Map[T,scala.collection.immutable.BitSet]">delta</a>(<a href="#264311" title="Int">i</a>).<a href="../../collection/generic/MapTemplate.scala.html#35317" title="()String">toString</a>, <a href="../../Array.scala.html#17716" title="(i: Int)scala.collection.immutable.BitSet">default</a>(<a href="#264311" title="Int">i</a>).<a href="../../collection/generic/SetTemplate.scala.html#34291" title="()String">toString</a>)) <a href="../../collection/generic/TraversableTemplate.scala.html#17248" title="=&gt; String">mkString</a>
+    
+    <a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;[NondetWordAutom  nstates=%d  finals=%s  delta=\n%s&quot;</a>.<a href="../../runtime/RichString.scala.html#18060" title="(args: Any*)String">format</a>(<a href="#56358" title="=&gt; Int">nstates</a>, <a href="#264078" title="String">finalString</a>, <a href="#264079" title="String">deltaString</a>)
+  }
+}
+
+        </pre>
+    </body>
+</html>

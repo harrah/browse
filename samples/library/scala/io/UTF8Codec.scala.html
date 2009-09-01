@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/io/UTF8Codec.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: UTF8Codec.scala 18568 2009-08-25 08:07:06Z rytz $
+
+
+<span class="keyword">package</span> scala.io
+
+/**
+ *  @author  Martin Odersky
+ *  @version 1.0, 04/10/2004
+ */
+<span class="keyword">object</span> <a title="object scala.io.UTF8Codec" id="9671">UTF8Codec</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+
+  <span class="keyword">final</span> <span class="keyword">val</span> <a title="Int" id="141619">UNI_REPLACEMENT_CHAR</a>: <span title="Int">Int</span> = <span title="Int(65533)" class="int">0x0000FFFD</span>
+
+  /** convert a codepoint to utf-8 bytes
+   * @author buraq
+   * @param ch codepoint
+   */
+  <span class="keyword">def</span> <a title="(ch1: Int)Array[Byte]" id="141621">encode</a>(<a title="Int" id="141641">ch1</a>: <span title="Int">Int</span>): <a href="../Array.scala.html#885" title="Array[Byte]">Array</a>[Byte] = {
+    <span class="keyword">var</span> <a title="Int" id="149342">ch</a> = <a href="#141641" title="Int">ch1</a>
+    <span class="keyword">val</span> <a title="Int" id="149343">byteMask</a> = <span title="Int(191)" class="int">0xBF</span>
+    <span class="keyword">val</span> <a title="Int" id="149344">byteMark</a> = <span title="Int(128)" class="int">0x80</span> 
+    <span class="keyword">var</span> <a title="Int" id="149345">bytesToWrite</a> = <span title="Int(0)" class="int">0</span>
+    <span class="keyword">val</span> <a title="List[Byte]" id="149346">firstByteMark</a> = <a href="../collection/immutable/List.scala.html#17535" title="[A](xs: A*)List[A]">List</a><span title="(xs: Byte*)List[Byte]">[</span><a title="Byte" id="2154">Byte</a>](<span title="Int(0)" class="int">0x00</span>.<span title="=&gt; Byte">toByte</span>, <span title="Int(0)" class="int">0x00</span>.<span title="=&gt; Byte">toByte</span>, <span title="Int(192)" class="int">0xC0</span>.<span title="=&gt; Byte">toByte</span>, <span title="Int(224)" class="int">0xE0</span>.<span title="=&gt; Byte">toByte</span>, <span title="Int(240)" class="int">0xF0</span>.<span title="=&gt; Byte">toByte</span>, <span title="Int(248)" class="int">0xF8</span>.<span title="=&gt; Byte">toByte</span>, <span title="Int(252)" class="int">0xFC</span>.<span title="=&gt; Byte">toByte</span>)
+
+    <span title="Unit" class="keyword">if</span>      (<a href="#149342" title="(x$1: Int)Boolean">ch</a> &lt; <span title="Int(128)" class="int">0x80</span>)        { <a href="#149345" title="Int">bytesToWrite</a> = <span title="Int(1)" class="int">1</span> }
+    <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#149342" title="(x$1: Int)Boolean">ch</a> &lt; <span title="Int(2048)" class="int">0x800</span>)       { <a href="#149345" title="Int">bytesToWrite</a> = <span title="Int(2)" class="int">2</span> }
+    <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#149342" title="(x$1: Int)Boolean">ch</a> &lt; <span title="Int(65536)" class="int">0x10000</span>)     { <a href="#149345" title="Int">bytesToWrite</a> = <span title="Int(3)" class="int">3</span> }
+    <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#149342" title="(x$1: Int)Boolean" id="2956">ch</a> &lt;= <span title="Int(1114111)" class="int">0x0010FFFF</span>) { <a href="#149345" title="Int">bytesToWrite</a> = <span title="Int(4)" class="int">4</span> }
+    <span class="keyword">else</span> <span title="Nothing" class="keyword">return</span> <a href="#141621" title="(ch1: Int)Array[Byte]">encode</a>(<a href="#141619" title="=&gt; Int">UNI_REPLACEMENT_CHAR</a>)
+    
+    <span class="keyword">val</span> <a title="Array[Byte]" id="149347">res</a> = <span title="Array[Byte]" class="keyword">new</span> <a href="../Array.scala.html#885" title="Array[Byte]">Array</a>[Byte](<a href="#149345" title="Int">bytesToWrite</a>)
+
+    <span class="keyword">var</span> <a title="Int" id="149348">bw</a> = <a href="#149345" title="Int">bytesToWrite</a>
+    <span title="Unit" class="keyword">if</span> (<a href="#149348" title="(x$1: Int)Boolean">bw</a> &gt;= <span title="Int(4)" class="int">4</span>) { 
+      <a href="../Array.scala.html#17717" title="(i: Int,x: Byte)Unit">res</a>(<span title="Int(3)" class="int">3</span>) = (<span title="(x$1: Int)Int">(</span><a href="#149342" title="(x$1: Int)Int">ch</a> | <a href="#149344" title="Int">byteMark</a>) &amp; <a href="#149343" title="Int">byteMask</a>).<span title="=&gt; Byte">toByte</span>; <a href="#149342" title="Int">ch</a> = <a href="#149342" title="(x$1: Int)Int">ch</a> &gt;&gt; <span title="Int(6)" class="int">6</span>; <a href="#149348" title="Int">bw</a> -= <span title="Int(1)" class="int">1</span>
+    }
+    <span title="Unit" class="keyword">if</span> (<a href="#149348" title="(x$1: Int)Boolean">bw</a> &gt;= <span title="Int(3)" class="int">3</span>) { 
+      <a href="../Array.scala.html#17717" title="(i: Int,x: Byte)Unit">res</a>(<span title="Int(2)" class="int">2</span>) = (<span title="(x$1: Int)Int">(</span><a href="#149342" title="(x$1: Int)Int">ch</a> | <a href="#149344" title="Int">byteMark</a>) &amp; <a href="#149343" title="Int">byteMask</a>).<span title="=&gt; Byte">toByte</span>; <a href="#149342" title="Int">ch</a> = <a href="#149342" title="(x$1: Int)Int">ch</a> &gt;&gt; <span title="Int(6)" class="int">6</span>; <a href="#149348" title="Int">bw</a> -= <span title="Int(1)" class="int">1</span>
+    }
+    <span title="Unit" class="keyword">if</span> (<a href="#149348" title="(x$1: Int)Boolean">bw</a> &gt;= <span title="Int(2)" class="int">2</span>) { 
+      <a href="../Array.scala.html#17717" title="(i: Int,x: Byte)Unit">res</a>(<span title="Int(1)" class="int">1</span>) = (<span title="(x$1: Int)Int">(</span><a href="#149342" title="(x$1: Int)Int">ch</a> | <a href="#149344" title="Int">byteMark</a>) &amp; <a href="#149343" title="Int">byteMask</a>).<span title="=&gt; Byte">toByte</span>; <a href="#149342" title="Int">ch</a> = <a href="#149342" title="(x$1: Int)Int">ch</a> &gt;&gt; <span title="Int(6)" class="int">6</span>; <a href="#149348" title="Int">bw</a> -= <span title="Int(1)" class="int">1</span>
+    }
+    <span title="Unit" class="keyword">if</span> (<a href="#149348" title="(x$1: Int)Boolean">bw</a> &gt;= <span title="Int(1)" class="int">1</span>) { 
+      <a href="../Array.scala.html#17717" title="(i: Int,x: Byte)Unit">res</a>(<span title="Int(0)" class="int">0</span>) = (<a href="#149342" title="(x$1: Byte)Int" id="2888">ch</a> | <a href="../collection/generic/LinearSequenceTemplate.scala.html#19400" title="(n: Int)Byte">firstByteMark</a>(<a href="#149345" title="Int">bytesToWrite</a>)).<span title="=&gt; Byte">toByte</span>
+    }
+    <a href="#149347" title="Array[Byte]">res</a>
+  }
+
+  <span class="keyword">def</span> <a title="(src: Array[Char],from: Int,dst: Array[Byte],to: Int,len: Int)Int" id="141622">encode</a>(<a title="Array[Char]" id="141635">src</a>: <a href="../Array.scala.html#885" title="Array[Char]">Array</a>[Char], <a title="Int" id="141636">from</a>: <span title="Int">Int</span>, <a title="Array[Byte]" id="141637">dst</a>: <a href="../Array.scala.html#885" title="Array[Byte]">Array</a>[Byte], <a title="Int" id="141638">to</a>: <span title="Int">Int</span>, <a title="Int" id="141639">len</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = {
+    <span class="keyword">var</span> <a title="Int" id="149625">i</a> = <a href="#141636" title="Int">from</a>
+    <span class="keyword">var</span> <a title="Int" id="149626">j</a> = <a href="#141638" title="Int">to</a>
+    <span class="keyword">val</span> <a title="Int" id="149627">end</a> = <a href="#141636" title="(x$1: Int)Int">from</a> + <a href="#141639" title="Int">len</a>
+    <span title="Unit" class="keyword">while</span> (<a href="#149625" title="(x$1: Int)Boolean">i</a> &lt; <a href="#149627" title="Int">end</a>) <a href="#149628" title="()Unit">{</a>
+      <span class="keyword">val</span> <a title="Char" id="149641">ch</a> = <a href="../Array.scala.html#17716" title="(i: Int)Char">src</a>(<a href="#149625" title="Int">i</a>)
+      <a href="#149625" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+      <span title="Unit" class="keyword">if</span> (<a href="#149641" title="(x$1: Int)Boolean" id="2746">ch</a> &lt; <span title="Int(128)" class="int">128</span>) {
+        <a href="../Array.scala.html#17717" title="(i: Int,x: Byte)Unit">dst</a>(<a href="#149626" title="Int">j</a>) = <a href="#149641" title="Char">ch</a>.<a title="=&gt; Byte" id="2634">toByte</a>
+        <a href="#149626" title="Int">j</a> += <span title="Int(1)" class="int">1</span>
+      }
+      <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#149641" title="(x$1: Int)Boolean" id="2748">ch</a> &lt;= <span title="Int(1023)" class="int">0x3FF</span>) {
+        <a href="../Array.scala.html#17717" title="(i: Int,x: Byte)Unit">dst</a>(<a href="#149626" title="Int">j</a>)   = (<span title="(x$1: Int)Int" class="int">0xC0</span> | (<a href="#149641" title="(x$1: Int)Int">ch</a> &gt;&gt; <span title="Int(6)" class="int">6</span>)).<span title="=&gt; Byte">toByte</span>
+        <a href="../Array.scala.html#17717" title="(i: Int,x: Byte)Unit">dst</a>(<a href="#149626" title="(x$1: Int)Int">j</a>+<span title="Int(1)" class="int">1</span>) = (<span title="(x$1: Int)Int" class="int">0x80</span> | (<a href="#149641" title="(x$1: Int)Int">ch</a> &amp; <span title="Int(63)" class="int">0x3F</span>)).<span title="=&gt; Byte">toByte</span>
+        <a href="#149626" title="Int">j</a> += <span title="Int(2)" class="int">2</span>
+      } <span class="keyword">else</span> {
+        <a href="../Array.scala.html#17717" title="(i: Int,x: Byte)Unit">dst</a>(<a href="#149626" title="Int">j</a>)   = (<span title="(x$1: Int)Int" class="int">0xE0</span> | (<a href="#149641" title="(x$1: Int)Int">ch</a> &gt;&gt; <span title="Int(12)" class="int">12</span>)).<span title="=&gt; Byte">toByte</span>
+        <a href="../Array.scala.html#17717" title="(i: Int,x: Byte)Unit">dst</a>(<a href="#149626" title="(x$1: Int)Int">j</a>+<span title="Int(1)" class="int">1</span>) = (<span title="(x$1: Int)Int" class="int">0x80</span> | (<span title="(x$1: Int)Int">(</span><a href="#149641" title="(x$1: Int)Int">ch</a> &gt;&gt; <span title="Int(6)" class="int">6</span>) &amp; <span title="Int(63)" class="int">0x3F</span>)).<span title="=&gt; Byte">toByte</span>
+        <a href="../Array.scala.html#17717" title="(i: Int,x: Byte)Unit">dst</a>(<a href="#149626" title="(x$1: Int)Int">j</a>+<span title="Int(2)" class="int">2</span>) = (<span title="(x$1: Int)Int" class="int">0x80</span> | (<a href="#149641" title="(x$1: Int)Int">ch</a> &amp; <span title="Int(63)" class="int">0x3F</span>)).<span title="=&gt; Byte">toByte</span>
+        <a href="#149626" title="Int">j</a> += <span title="Int(3)" class="int">3</span>
+      }
+    }
+    <a href="#149626" title="Int">j</a>
+  }
+
+  <span class="keyword">def</span> <a title="(s: String,dst: Array[Byte],to: Int)Int" id="141623">encode</a>(<a title="String" id="141631">s</a>: <span title="String">String</span>, <a title="Array[Byte]" id="141632">dst</a>: <a href="../Array.scala.html#885" title="Array[Byte]">Array</a>[Byte], <a title="Int" id="141633">to</a>: <span title="Int">Int</span>): <span title="Int">Int</span> =
+    <a href="#141622" title="(src: Array[Char],from: Int,dst: Array[Byte],to: Int,len: Int)Int">encode</a>(<a href="#141631" title="String">s</a>.<a title="()Array[Char]" id="7042">toCharArray</a>(), <span title="Int(0)" class="int">0</span>, <a href="#141632" title="Array[Byte]">dst</a>, <a href="#141633" title="Int">to</a>, <a href="#141631" title="String">s</a>.<span title="()Int">length</span>())
+
+  <span class="keyword">def</span> <a title="(s: String)Array[Byte]" id="141624">encode</a>(<a title="String" id="141629">s</a>: <span title="String">String</span>): <a href="../Array.scala.html#885" title="Array[Byte]">Array</a>[Byte] = {
+    <span class="keyword">val</span> <a title="Array[Byte]" id="150034">dst</a> = <span title="Array[Byte]" class="keyword">new</span> <a href="../Array.scala.html#885" title="Array[Byte]">Array</a>[Byte](<a href="#141629" title="String">s</a>.<span title="()Int">length</span><a title="(x$1: Int)Int" id="2966">(</a>) * <span title="Int(3)" class="int">3</span>)
+    <span class="keyword">val</span> <a title="Int" id="150035">len</a> = <a href="#141623" title="(s: String,dst: Array[Byte],to: Int)Int">encode</a>(<a href="#141629" title="String">s</a>, <a href="#150034" title="Array[Byte]">dst</a>, <span title="Int(0)" class="int">0</span>)
+    <a href="#150034" title="Array[Byte]">dst</a>.<a href="../collection/generic/VectorTemplate.scala.html#17788" title="(from: Int,until: Int)Array[Byte]">slice</a>(<span title="Int(0)" class="int">0</span>, <a href="#150035" title="Int">len</a>)
+  }
+
+  <span class="keyword">def</span> <a title="(src: Array[Byte],from: Int,dst: Array[Char],to: Int,len: Int)Int" id="141625">decode</a>(<a title="Array[Byte]" id="150081">src</a>: <a href="../Array.scala.html#885" title="Array[Byte]">Array</a>[Byte], <a title="Int" id="150082">from</a>: <span title="Int">Int</span>,
+             <a title="Array[Char]" id="150083">dst</a>: <a href="../Array.scala.html#885" title="Array[Char]">Array</a>[Char], <a title="Int" id="150084">to</a>: <span title="Int">Int</span>, <a title="Int" id="150085">len</a>: <span title="Int">Int</span>): <span title="Int">Int</span> =
+  {
+    <span class="keyword">var</span> <a title="Int" id="150087">i</a> = <a href="#150082" title="Int">from</a>
+    <span class="keyword">var</span> <a title="Int" id="150088">j</a> = <a href="#150084" title="Int">to</a>
+    <span class="keyword">val</span> <a title="Int" id="150089">end</a> = <a href="#150082" title="(x$1: Int)Int">from</a> + <a href="#150085" title="Int">len</a>
+    <span title="Unit" class="keyword">while</span> (<a href="#150087" title="(x$1: Int)Boolean">i</a> &lt; <a href="#150089" title="Int">end</a>) <a href="#150090" title="()Unit">{</a>
+      <span class="keyword">var</span> <a title="Int" id="150103">b</a> = <a href="../Array.scala.html#17716" title="(i: Int)Byte">src</a><span title="(x$1: Int)Int">(</span><a href="#150087" title="Int">i</a>) &amp; <span title="Int(255)" class="int">0xFF</span>
+      <a href="#150087" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+      <span title="Unit" class="keyword">if</span> (<a href="#150103" title="(x$1: Int)Boolean">b</a> &gt;= <span title="Int(224)" class="int">0xE0</span>) {
+        <a href="#150103" title="Int">b</a> = <span title="(x$1: Int)Int">(</span><span title="(x$1: Int)Int">(</span><a href="#150103" title="(x$1: Int)Int">b</a> &amp; <span title="Int(15)" class="int">0x0F</span>) &lt;&lt; <span title="Int(12)" class="int">12</span>) | <span title="(x$1: Int)Int">(</span><a href="../Array.scala.html#17716" title="(i: Int)Byte">src</a><span title="(x$1: Int)Int">(</span><a href="#150087" title="Int">i</a>) &amp; <span title="Int(63)" class="int">0x3F</span>) &lt;&lt; <span title="Int(6)" class="int">6</span>
+        <a href="#150103" title="Int">b</a> = <a href="#150103" title="(x$1: Int)Int">b</a> | (<a href="../Array.scala.html#17716" title="(i: Int)Byte">src</a><span title="(x$1: Int)Int">(</span><a href="#150087" title="(x$1: Int)Int">i</a>+<span title="Int(1)" class="int">1</span>) &amp; <span title="Int(63)" class="int">0x3F</span>)
+        <a href="#150087" title="Int">i</a> += <span title="Int(2)" class="int">2</span>
+      } <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#150103" title="(x$1: Int)Boolean">b</a> &gt;= <span title="Int(192)" class="int">0xC0</span>) {
+        <a href="#150103" title="Int">b</a> = <span title="(x$1: Int)Int">(</span><span title="(x$1: Int)Int">(</span><a href="#150103" title="(x$1: Int)Int">b</a> &amp; <span title="Int(31)" class="int">0x1F</span>) &lt;&lt; <span title="Int(6)" class="int">6</span>) | (<a href="../Array.scala.html#17716" title="(i: Int)Byte">src</a><span title="(x$1: Int)Int">(</span><a href="#150087" title="Int">i</a>) &amp; <span title="Int(63)" class="int">0x3F</span>)
+        <a href="#150087" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+      }
+      <a href="../Array.scala.html#17717" title="(i: Int,x: Char)Unit">dst</a>(<a href="#150088" title="Int">j</a>) = <a href="#150103" title="Int">b</a>.<a title="=&gt; Char" id="2844">toChar</a>
+      <a href="#150088" title="Int">j</a> += <span title="Int(1)" class="int">1</span>
+    }
+    <a href="#150088" title="Int">j</a>
+  }
+
+  <span class="keyword">def</span> <a title="(src: Array[Byte],from: Int,len: Int)String" id="141626">decode</a>(<a title="Array[Byte]" id="150408">src</a>: <a href="../Array.scala.html#885" title="Array[Byte]">Array</a>[Byte], <a title="Int" id="150409">from</a>: <span title="Int">Int</span>, <a title="Int" id="150410">len</a>: <span title="Int">Int</span>): <span title="String">String</span> = {
+    <span class="keyword">val</span> <a title="Array[Char]" id="150412">cs</a> = <span title="Array[Char]" class="keyword">new</span> <a href="../Array.scala.html#885" title="Array[Char]">Array</a>[Char](<a href="#150410" title="Int">len</a>)
+    <a title="(x$1: Array[Char],x$2: Int,x$3: Int)java.lang.String" id="6552" class="keyword">new</a> <a href="../Predef.scala.html#16156" title="java.lang.String">String</a>(<a href="#150412" title="Array[Char]">cs</a>, <span title="Int(0)" class="int">0</span>, <a href="#141625" title="(src: Array[Byte],from: Int,dst: Array[Char],to: Int,len: Int)Int">decode</a>(<a href="#150408" title="Array[Byte]">src</a>, <a href="#150409" title="Int">from</a>, <a href="#150412" title="Array[Char]">cs</a>, <span title="Int(0)" class="int">0</span>, <a href="#150410" title="Int">len</a>))
+  }
+
+}
+
+        </pre>
+    </body>
+</html>

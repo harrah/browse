@@ -1,0 +1,864 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/generic/TraversableTemplate.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: TraversableTemplate.scala 18589 2009-08-27 14:45:35Z odersky $
+
+
+<span class="keyword">package</span> scala.collection.generic
+<span class="keyword">import</span> scala.collection._
+<span class="keyword">import</span> scala.reflect.ClassManifest
+
+// import immutable.{List, Stream, Nil} //!!!
+<span class="keyword">import</span> mutable.{Buffer, ArrayBuffer, ListBuffer}
+<span class="keyword">import</span> annotation.experimental
+
+/** &lt;p&gt;
+ *    A template trait for traversable collections.
+ *    This is a base trait of all kinds of Scala collections. It implements
+ *    the behavior common to all collections, in terms of a method
+ *    &lt;code&gt;foreach&lt;/code&gt; with signature:
+ *  &lt;/p&gt;&lt;pre&gt;
+ *   &lt;b&gt;def&lt;/b&gt; foreach[U](f: Elem =&gt; U): Unit&lt;/pre&gt;
+ *  &lt;p&gt;
+ *    Collection classes mixing in this trait provide a concrete 
+ *    &lt;code&gt;foreach&lt;/code&gt; method which traverses all the
+ *    elements contained in the collection, applying a given function to each.
+ *    They also need to provide a method &lt;code&gt;newBuilder&lt;/code&gt;
+ *    which creates a builder for collections of the same kind.
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    A traversable class might or might not have two properties: strictness
+ *    and orderedness. Neither is represented as a type.
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    The instances of a strict collection class have all their elements
+ *    computed before they can be used as values. By contrast, instances of
+ *    a non-strict collection class may defer computation of some of their
+ *    elements until after the instance is available as a value.
+ *    A typical example of a non-strict collection class is a
+ *    &lt;a href=&quot;../immutable/Stream.html&quot; target=&quot;ContentFrame&quot;&gt;
+ *    &lt;code&gt;scala.collection.immutable.Stream&lt;/code&gt;&lt;/a&gt;.
+ *    A more general class of examples are &lt;code&gt;TraversableViews&lt;/code&gt;.
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    If a collection is an instance of an ordered collection class, traversing
+ *    its elements with &lt;code&gt;foreach&lt;/code&gt; will always visit elements in the
+ *    same order, even for different runs of the program. If the class is not
+ *    ordered, &lt;code&gt;foreach&lt;/code&gt; can visit elements in different orders for
+ *    different runs (but it will keep the same order in the same run).&lt;br/&gt;
+ *    A typical example of a collection class which is not ordered is a
+ *    &lt;code&gt;HashMap&lt;/code&gt; of objects. The traversal order for hash maps will
+ *    depend on the hash codes of its elements, and these hash codes might
+ *    differ from one run to the next. By contrast, a &lt;code&gt;LinkedHashMap&lt;/code&gt;
+ *    is odered because it's &lt;code&gt;foreach&lt;/code&gt; method visits elements in the
+ *    order they were inserted into the &lt;code&gt;HashMap&lt;/code&gt;.
+ *  &lt;/p&gt;
+ * 
+ *  @author Martin Odersky
+ *  @version 2.8
+ */
+<span class="keyword">trait</span> <a title="trait TraversableTemplate[+A, +This &lt;: scala.collection.generic.TraversableTemplate[A,This] with Traversable[A]] extends java.lang.Object with ScalaObject" id="10391">TraversableTemplate</a>[+<a title="&gt;: Nothing &lt;: Any" id="15047">A</a>, +<a title="&gt;: Nothing &lt;: scala.collection.generic.TraversableTemplate[A,This] with Traversable[A]" id="15048">This</a> &lt;: TraversableTemplate[A, This] <span class="keyword">with</span> Traversable[A]] <a href="../../ScalaObject.scala.html#957" title="ScalaObject">{</a> 
+self =&gt;
+
+  <span class="keyword">import</span> Traversable.breaks._
+
+  /** &lt;p&gt;
+   *    The proper way to do this would be to make &lt;code&gt;self&lt;/code&gt; of type
+   *    &lt;code&gt;This&lt;/code&gt;. But unfortunately this makes &lt;b&gt;&lt;code&gt;this&lt;/code&gt;&lt;/b&gt;
+   *    to be of type &lt;code&gt;Traversable[A]&lt;/code&gt;. Since &lt;code&gt;Traversable&lt;/code&gt;
+   *    is a subtype of &lt;code&gt;TraversableTemplate&lt;/code&gt;, all methods of
+   *    &lt;b&gt;&lt;code&gt;this&lt;/code&gt;&lt;/b&gt; are taken from &lt;code&gt;Traversable&lt;/code&gt;. In
+   *    particular the &lt;code&gt;newBuilder&lt;/code&gt; method is taken from
+   *    &lt;code&gt;Traversable&lt;/code&gt;, which means it yields a &lt;code&gt;Traversable[A]&lt;/code&gt;
+   *    instead of a &lt;code&gt;This&lt;/code&gt;.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The right way out of this is to change Scala's member selection rules,
+   *    so that always the most specific type will be selected, no matter
+   *    whether a member is abstract or concrete. I tried to fake this by
+   *    having a method &lt;code&gt;thisTemplate&lt;/code&gt; which returns this at the
+   *    &lt;code&gt;Template&lt;/code&gt; type. But unfortunately that does not work,
+   *    because we need to call &lt;code&gt;newBuilder&lt;/code&gt; on this at the
+   *    &lt;code&gt;Template&lt;/code&gt; type (so that we get back a &lt;code&gt;This&lt;/code&gt;)
+   *    and &lt;code&gt;newBuilder&lt;/code&gt; has to be a &lt;b&gt;&lt;code&gt;protected[this]&lt;/code&gt;&lt;/b&gt;
+   *    because of variance.&lt;br/&gt;
+   *    The less appealing alternative is implemented now: Forget the self type
+   *    and introduce a &lt;code&gt;thisCollection&lt;/code&gt; which is this seen as an
+   *    instance of &lt;code&gt;This&lt;/code&gt;. We should go back to this once we have
+   *    ameliorated Scala's member selection rules.
+   *  &lt;/p&gt;
+   */
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; This" id="17130">thisCollection</a>: <a href="#15048" title="This">This</a> = <a href="#10391" title="TraversableTemplate.this.type" class="keyword">this</a>.<a title="[T0]T0" id="3621">asInstanceOf</a><span title="This">[</span><a href="#15048" title="This">This</a>]
+
+  /** Create a new builder for this collection type.
+   */
+  <span class="keyword">protected</span>[<span class="keyword">this</span>] <span class="keyword">def</span> <a title="=&gt; scala.collection.generic.Builder[A,This]" id="17131">newBuilder</a>: <a href="Builder.scala.html#10028" title="scala.collection.generic.Builder[A,This]">Builder</a>[A, This]
+
+  /** Apply a function &lt;code&gt;f&lt;/code&gt; to all elements of this
+   *  traversable object.
+   *
+   *  @param  f   A function that is applied for its side-effect to every element.
+   *              The result (of arbitrary type U) of function `f` is discarded.
+   *              
+   *  @note This method underlies the implementation of most other bulk operations.
+   *        It's important to implement this method in an efficient way.
+   */
+  <span class="keyword">def</span> <a title="[U](f: (A) =&gt; U)Unit" id="17132">foreach</a>[<a title="&gt;: Nothing &lt;: Any" id="17134">U</a>](<a title="(A) =&gt; U" id="34059">f</a>: A =&gt; U): <a title="Unit" id="1948">Unit</a>
+
+  /** Does this collection contain no elements? 
+   */
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="17135">isEmpty</a>: <span title="Boolean">Boolean</span> = {
+    <span class="keyword">var</span> <a title="Boolean" id="177223">result</a> = <span title="Boolean(true)" class="keyword">true</span>
+    <a href="../../util/control/Breaks.scala.html#17067" title="(op: =&gt; Unit)Unit">breakable</a> {
+      <span class="keyword">for</span> (<a title="A" id="177227">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; Unit)Unit" class="keyword">this</a>) {
+        <a href="#177223" title="Boolean">result</a> = <span title="Boolean(false)" class="keyword">false</span>
+        <a href="../../util/control/Breaks.scala.html#17068" title="=&gt; Unit">break</a>
+      }
+    }
+    <a href="#177223" title="Boolean">result</a>
+  }
+  
+  /** Does this collection contain some elements? 
+   */
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="17136">nonEmpty</a>: <span title="Boolean">Boolean</span> = <span title="=&gt; Boolean">!</span><a href="#17135" title="=&gt; Boolean">isEmpty</a>
+
+  /** The number of elements in this collection
+   */
+  <span class="keyword">def</span> <a title="=&gt; Int" id="17137">size</a>: <span title="Int">Int</span> = {
+    <span class="keyword">var</span> <a title="Int" id="177233">result</a> = <span title="Int(0)" class="int">0</span>	
+    <span class="keyword">for</span> (<a title="A" id="177237">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; Unit)Unit" class="keyword">this</a>) <a href="#177233" title="Int">result</a> += <span title="Int(1)" class="int">1</span>
+    <a href="#177233" title="Int">result</a>
+  }	
+
+  /** Returns the sum of all elements with respect to the numeric operations in `num` */
+  <span class="keyword">def</span> <a title="[B &gt;: A](implicit num: Numeric[B])B" id="17138">sum</a>[<a title="&gt;: A &lt;: Any" id="17140">B</a> &gt;: A](<span class="keyword">implicit</span> <a title="Numeric[B]" id="62937">num</a>: <a href="../../Numeric.scala.html#162" title="Numeric[B]">Numeric</a>[B]): <a href="#17140" title="B">B</a> = {
+    <span class="keyword">var</span> <a title="B" id="177278">acc</a> = <a href="#62937" title="Numeric[B]">num</a>.<a href="../../Numeric.scala.html#31415" title="=&gt; B">zero</a>
+    <span class="keyword">for</span> (<a title="A" id="177282">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; Unit)Unit">self</a>) <a href="#177278" title="B">acc</a> = <a href="#62937" title="Numeric[B]">num</a>.<a href="../../Numeric.scala.html#31406" title="(x: B,y: B)B">plus</a>(<a href="#177278" title="B">acc</a>, <a href="#177282" title="A">x</a>)
+    <a href="#177278" title="B">acc</a>
+  }
+    
+  /** Returns the product of all elements with respect to the numeric operations in `num` */
+  <span class="keyword">def</span> <a title="[B &gt;: A](implicit num: Numeric[B])B" id="17141">product</a>[<a title="&gt;: A &lt;: Any" id="17143">B</a> &gt;: A](<span class="keyword">implicit</span> <a title="Numeric[B]" id="177290">num</a>: <a href="../../Numeric.scala.html#162" title="Numeric[B]">Numeric</a>[B]): <a href="#17143" title="B">B</a> = {
+    <span class="keyword">var</span> <a title="B" id="177293">acc</a> = <a href="#177290" title="Numeric[B]">num</a>.<a href="../../Numeric.scala.html#31416" title="=&gt; B">one</a>
+    <span class="keyword">for</span> (<a title="A" id="177302">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; Unit)Unit">self</a>) <a href="#177293" title="B">acc</a> = <a href="#177290" title="Numeric[B]">num</a>.<a href="../../Numeric.scala.html#31408" title="(x: B,y: B)B">times</a>(<a href="#177293" title="B">acc</a>, <a href="#177302" title="A">x</a>)
+    <a href="#177293" title="B">acc</a>
+  }
+  
+  /** Returns the minimal element with respect to the given ordering `cmp` */
+  <span class="keyword">def</span> <a title="[B &gt;: A](implicit cmp: Ordering[B])A" id="17144">min</a>[<a title="&gt;: A &lt;: Any" id="17146">B</a> &gt;: A](<span class="keyword">implicit</span> <a title="Ordering[B]" id="132227">cmp</a>: <a href="../../Ordering.scala.html#807" title="Ordering[B]">Ordering</a>[B]): <a href="#15047" title="A">A</a> = {
+    <a href="../../Predef.scala.html#16218" title="(requirement: Boolean,message: =&gt; Any)Unit">require</a>(<span title="=&gt; Boolean">!</span><a href="#10391" title="TraversableTemplate.this.type">self</a>.<a href="#17135" title="=&gt; Boolean">isEmpty</a>, <span title="java.lang.String(&quot;min(&lt;empty&gt;)&quot;)" class="string">&quot;min(&lt;empty&gt;)&quot;</span>)
+    <span class="keyword">var</span> <a title="A" id="177310">acc</a> = <a href="#10391" title="TraversableTemplate.this.type">self</a>.<a href="#17211" title="=&gt; A">head</a>
+    <span class="keyword">for</span> (<a title="A" id="177322">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; Unit)Unit">self</a>) 
+      <span title="Unit" class="keyword">if</span> (<a href="#132227" title="Ordering[B]">cmp</a>.<a href="../../Ordering.scala.html#31397" title="(x: B,y: B)Boolean">lt</a>(<a href="#177322" title="A">x</a>, <a href="#177310" title="A">acc</a>)) <a href="#177310" title="A">acc</a> = <a href="#177322" title="A">x</a>
+    <a href="#177310" title="A">acc</a>
+  }
+
+  /** Returns the maximal element with respect to the given ordering `cmp` */
+  <span class="keyword">def</span> <a title="[B &gt;: A](implicit cmp: Ordering[B])A" id="17147">max</a>[<a title="&gt;: A &lt;: Any" id="17149">B</a> &gt;: A](<span class="keyword">implicit</span> <a title="Ordering[B]" id="85938">cmp</a>: <a href="../../Ordering.scala.html#807" title="Ordering[B]">Ordering</a>[B]): <a href="#15047" title="A">A</a> = {
+    <a href="../../Predef.scala.html#16218" title="(requirement: Boolean,message: =&gt; Any)Unit">require</a>(<span title="=&gt; Boolean">!</span><a href="#10391" title="TraversableTemplate.this.type">self</a>.<a href="#17135" title="=&gt; Boolean">isEmpty</a>, <span title="java.lang.String(&quot;max(&lt;empty&gt;)&quot;)" class="string">&quot;max(&lt;empty&gt;)&quot;</span>)
+    <span class="keyword">var</span> <a title="A" id="177334">acc</a> = <a href="#10391" title="TraversableTemplate.this.type">self</a>.<a href="#17211" title="=&gt; A">head</a>
+    <span class="keyword">for</span> (<a title="A" id="177346">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; Unit)Unit">self</a>) 
+      <span title="Unit" class="keyword">if</span> (<a href="#85938" title="Ordering[B]">cmp</a>.<a href="../../Ordering.scala.html#31398" title="(x: B,y: B)Boolean">gt</a>(<a href="#177346" title="A">x</a>, <a href="#177334" title="A">acc</a>)) <a href="#177334" title="A">acc</a> = <a href="#177346" title="A">x</a>
+    <a href="#177334" title="A">acc</a>
+  }
+
+  /** Returns true if this collection is known to have finite size.
+   *  This is the case if the collection type is strict, or if the
+   *  collection type is non-strict (e.g. it's a Stream), but all
+   *  collection elements have been computed.
+   *  Many methods in this trait will not work on collections of 
+   *  infinite sizes. 
+   */
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="17150">hasDefiniteSize</a> = <span title="Boolean(true)" class="keyword">true</span>
+
+  /** Creates a new traversable of type `That` which contains all elements of this traversable
+   *  followed by all elements of another traversable.
+   * 
+   *  @param that   The traversable to append
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A, That](that: Traversable[B])(implicit bf: scala.collection.generic.BuilderFactory[B,That,This])That" id="17151">++</a>[<a title="&gt;: A &lt;: Any" id="17154">B</a> &gt;: A, <a title="&gt;: Nothing &lt;: Any" id="17155">That</a>](<a title="Traversable[B]" id="36181">that</a>: <a href="../Traversable.scala.html#4436" title="Traversable[B]">Traversable</a>[B])(<span class="keyword">implicit</span> <a title="scala.collection.generic.BuilderFactory[B,That,This]" id="36182">bf</a>: <a href="BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[B,That,This]">BuilderFactory</a>[B, That, This]): <a href="#17155" title="That">That</a> = {
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[B,That]" id="177358">b</a> = <a href="BuilderFactory.scala.html#20484" title="(from: This)scala.collection.generic.Builder[B,That]">bf</a>(<a href="#17130" title="=&gt; This">thisCollection</a>)
+    <a href="Growable.scala.html#19586" title="(iter: Traversable[B])b.type">b</a> ++= <a href="#17130" title="=&gt; This">thisCollection</a>
+    <a href="Growable.scala.html#19586" title="(iter: Traversable[B])b.type">b</a> ++= <a href="#36181" title="Traversable[B]">that</a>
+    <a href="#177358" title="scala.collection.generic.Builder[B,That]">b</a>.<a href="Builder.scala.html#19591" title="()That">result</a>
+  }
+
+  /** Creates a new traversable of type `That` which contains all elements of this traversable
+   *  followed by all elements of an iterator.
+   * 
+   *  @param that  The iterator to append
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A, That](that: Iterator[B])(implicit bf: scala.collection.generic.BuilderFactory[B,That,This])That" id="17156">++</a>[<a title="&gt;: A &lt;: Any" id="17159">B</a> &gt;: A, <a title="&gt;: Nothing &lt;: Any" id="17160">That</a>](<a title="Iterator[B]" id="36170">that</a>: <a href="../Iterator.scala.html#4274" title="Iterator[B]">Iterator</a>[B])(<span class="keyword">implicit</span> <a title="scala.collection.generic.BuilderFactory[B,That,This]" id="36171">bf</a>: <a href="BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[B,That,This]">BuilderFactory</a>[B, That, This]): <a href="#17160" title="That">That</a> = {
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[B,That]" id="177386">b</a> = <a href="BuilderFactory.scala.html#20484" title="(from: This)scala.collection.generic.Builder[B,That]">bf</a>(<a href="#17130" title="=&gt; This">thisCollection</a>)
+    <a href="Growable.scala.html#19586" title="(iter: Traversable[B])b.type">b</a> ++= <a href="#17130" title="=&gt; This">thisCollection</a>
+    <a href="Growable.scala.html#19585" title="(iter: Iterator[B])b.type">b</a> ++= <a href="#36170" title="Iterator[B]">that</a>
+    <a href="#177386" title="scala.collection.generic.Builder[B,That]">b</a>.<a href="Builder.scala.html#19591" title="()That">result</a>
+  }
+
+  /** Returns the traversable that results from applying the given function
+   *  &lt;code&gt;f&lt;/code&gt; to each element of this traversable and collecting the results
+   *  in an traversable of type `That`.
+   *
+   *  @param f function to apply to each element.
+   */
+  <span class="keyword">def</span> <a title="[B, That](f: (A) =&gt; B)(implicit bf: scala.collection.generic.BuilderFactory[B,That,This])That" id="17161">map</a>[<a title="&gt;: Nothing &lt;: Any" id="17164">B</a>, <a title="&gt;: Nothing &lt;: Any" id="17165">That</a>](<a title="(A) =&gt; B" id="29148">f</a>: A =&gt; B)(<span class="keyword">implicit</span> <a title="scala.collection.generic.BuilderFactory[B,That,This]" id="29149">bf</a>: <a href="BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[B,That,This]">BuilderFactory</a>[B, That, This]): <a href="#17165" title="That">That</a> = {
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[B,That]" id="177414">b</a> = <a href="BuilderFactory.scala.html#20484" title="(from: This)scala.collection.generic.Builder[B,That]">bf</a>(<a href="#17130" title="=&gt; This">thisCollection</a>)
+    <span class="keyword">for</span> (<a title="A" id="177421">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; scala.collection.generic.Builder[B,That])Unit" class="keyword">this</a>) <a href="Builder.scala.html#19589" title="(elem: B)b.type">b</a> += <a href="../../Function1.scala.html#17119" title="(v1: A)B">f</a>(<a href="#177421" title="A">x</a>)
+    <a href="#177414" title="scala.collection.generic.Builder[B,That]">b</a>.<a href="Builder.scala.html#19591" title="()That">result</a>
+  }
+
+  /** Applies the given function &lt;code&gt;f&lt;/code&gt; to each element of
+   *  this traversable, then concatenates the results in an traversable of type That.
+   *
+   *  @param f the function to apply on each element.
+   */
+  <span class="keyword">def</span> <a title="[B, That](f: (A) =&gt; Traversable[B])(implicit bf: scala.collection.generic.BuilderFactory[B,That,This])That" id="17166">flatMap</a>[<a title="&gt;: Nothing &lt;: Any" id="17169">B</a>, <a title="&gt;: Nothing &lt;: Any" id="17170">That</a>](<a title="(A) =&gt; Traversable[B]" id="49227">f</a>: A =&gt; Traversable[B])(<span class="keyword">implicit</span> <a title="scala.collection.generic.BuilderFactory[B,That,This]" id="49228">bf</a>: <a href="BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[B,That,This]">BuilderFactory</a>[B, That, This]): <a href="#17170" title="That">That</a> = {
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[B,That]" id="177449">b</a> = <a href="BuilderFactory.scala.html#20484" title="(from: This)scala.collection.generic.Builder[B,That]">bf</a>(<a href="#17130" title="=&gt; This">thisCollection</a>)
+    <span class="keyword">for</span> (<a title="A" id="177456">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; scala.collection.generic.Builder[B,That])Unit" class="keyword">this</a>) <a href="Growable.scala.html#19586" title="(iter: Traversable[B])b.type">b</a> ++= <a href="../../Function1.scala.html#17119" title="(v1: A)Traversable[B]">f</a>(<a href="#177456" title="A">x</a>)
+    <a href="#177449" title="scala.collection.generic.Builder[B,That]">b</a>.<a href="Builder.scala.html#19591" title="()That">result</a>
+  }
+
+  /** Returns all the elements of this traversable that satisfy the
+   *  predicate &lt;code&gt;p&lt;/code&gt;. The order of the elements is preserved.
+   *  @param p the predicate used to filter the traversable.
+   *  @return the elements of this traversable satisfying &lt;code&gt;p&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)This" id="17171">filter</a>(<a title="(A) =&gt; Boolean" id="49258">p</a>: A =&gt; Boolean): <a href="#15048" title="This">This</a> = {
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[A,This]" id="177476">b</a> = <a href="#17131" title="=&gt; scala.collection.generic.Builder[A,This]">newBuilder</a>
+    <span class="keyword">for</span> (<a title="A" id="177480">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; Any)Unit" class="keyword">this</a>) 
+      <span title="Any" class="keyword">if</span> (<a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#177480" title="A">x</a>)) <a href="Builder.scala.html#19589" title="(elem: A)b.type">b</a> += <a href="#177480" title="A">x</a>
+    <a href="#177476" title="scala.collection.generic.Builder[A,This]">b</a>.<a href="Builder.scala.html#19591" title="()This">result</a>
+  }
+  
+  /** Returns a new traversable based on the partial function &lt;code&gt;pf&lt;/code&gt;,  
+  *  containing pf(x) for all the elements which are defined on pf.
+  *  The order of the elements is preserved.
+  *  @param pf the partial function which filters and maps the traversable.
+  *  @return the new traversable.
+  */
+  @experimental
+  <span class="keyword">def</span> <a title="[B, That](pf: PartialFunction[Any,B])(implicit bf: scala.collection.generic.BuilderFactory[B,That,This])That" id="17172">filterMap</a>[<a title="&gt;: Nothing &lt;: Any" id="17175">B</a>, <a title="&gt;: Nothing &lt;: Any" id="17176">That</a>](<a title="PartialFunction[Any,B]" id="177514">pf</a>: <a href="../../PartialFunction.scala.html#1083" title="PartialFunction[Any,B]">PartialFunction</a>[Any, B])(<span class="keyword">implicit</span> <a title="scala.collection.generic.BuilderFactory[B,That,This]" id="177515">bf</a>: <a href="BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[B,That,This]">BuilderFactory</a>[B, That, This]): <a href="#17176" title="That">That</a> = {
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[B,That]" id="177519">b</a> = <a href="BuilderFactory.scala.html#20484" title="(from: This)scala.collection.generic.Builder[B,That]">bf</a>(<a href="#17130" title="=&gt; This">thisCollection</a>)
+    <span class="keyword">for</span> (<a title="A" id="177526">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; Any)Unit" class="keyword">this</a>) <span title="Any" class="keyword">if</span> (<a href="#177514" title="PartialFunction[Any,B]">pf</a>.<a href="../../PartialFunction.scala.html#17071" title="(x: Any)Boolean">isDefinedAt</a>(<a href="#177526" title="A">x</a>)) <a href="Builder.scala.html#19589" title="(elem: B)b.type">b</a> += <a href="../../Function1.scala.html#17119" title="(v1: Any)B">pf</a>(<a href="#177526" title="A">x</a>)
+    <a href="#177519" title="scala.collection.generic.Builder[B,That]">b</a>.<a href="Builder.scala.html#19591" title="()That">result</a>
+  }
+
+  /** Returns a traversable with all elements of this traversable which do not satisfy the predicate
+   *  &lt;code&gt;p&lt;/code&gt;. 
+   *
+   *  @param p the predicate used to test elements
+   *  @return  the traversable without all elements that satisfy &lt;code&gt;p&lt;/code&gt;
+   */
+  <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)This" id="17177">filterNot</a>(<a title="(A) =&gt; Boolean" id="49266">p</a>: A =&gt; Boolean): <a href="#15048" title="This">This</a> = <a href="#17171" title="(p: (A) =&gt; Boolean)This">filter</a>(<span title="=&gt; Boolean">!</span><a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#177564" title="A">_</a>))
+
+  /** Returns a traversable with all elements of this traversable which do not satisfy the predicate
+   *  &lt;code&gt;p&lt;/code&gt;. 
+   *
+   *  @param p the predicate used to test elements
+   *  @return  the traversable without all elements that satisfy &lt;code&gt;p&lt;/code&gt;
+   */
+  @deprecated(<span class="string">&quot;use `filterNot' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)This" id="17178">remove</a>(<a title="(A) =&gt; Boolean" id="32118">p</a>: A =&gt; Boolean): <a href="#15048" title="This">This</a> = <a href="#17177" title="(p: (A) =&gt; Boolean)This">filterNot</a>(<a href="#32118" title="(A) =&gt; Boolean">p</a>)
+
+  /** Partitions this traversable in two traversables according to a predicate.
+   *
+   *  @param p the predicate on which to partition
+   *  @return  a pair of traversables: the traversable that satisfies the predicate
+   *           &lt;code&gt;p&lt;/code&gt; and the traversable that does not.
+   *           The relative order of the elements in the resulting traversables
+   *           is the same as in the original traversable.
+   */
+  <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)(This, This)" id="17179">partition</a>(<a title="(A) =&gt; Boolean" id="49280">p</a>: A =&gt; Boolean): <a href="../../Tuple2.scala.html#1152" title="(This, This)">(</a>This, This) = {
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[A,This]" id="177572">l</a>, <a title="scala.collection.generic.Builder[A,This]" id="177573">r</a> = <a href="#17131" title="=&gt; scala.collection.generic.Builder[A,This]">newBuilder</a>
+    <span class="keyword">for</span> (<a title="A" id="177577">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; scala.collection.generic.Builder[A,This])Unit" class="keyword">this</a>) <a href="Builder.scala.html#19589" title="(elem: A)scala.collection.generic.Builder[A,This]">(</a><span title="scala.collection.generic.Builder[A,This]" class="keyword">if</span> (<a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#177577" title="A">x</a>)) <a href="#177572" title="scala.collection.generic.Builder[A,This]">l</a> <span class="keyword">else</span> <a href="#177573" title="scala.collection.generic.Builder[A,This]">r</a>) += <a href="#177577" title="A">x</a>
+    <a href="../../Tuple2.scala.html#20670" title="(_1: This,_2: This)(This, This)">(</a><a href="#177572" title="scala.collection.generic.Builder[A,This]">l</a>.<a href="Builder.scala.html#19591" title="()This">result</a>, <a href="#177573" title="scala.collection.generic.Builder[A,This]">r</a>.<a href="Builder.scala.html#19591" title="()This">result</a>)
+  }
+
+  /** Partition this traversable into a map of traversables
+   *  according to some discriminator function.
+   *  @invariant   (xs partition f)(k) = xs filter (x =&gt; f(x) == k)
+   *
+   *  @note This method is not re-implemented by views. This means
+   *        when applied to a view it will always force the view and
+   *        return a new collection.
+   */
+  <span class="keyword">def</span> <a title="[K](f: (A) =&gt; K)scala.collection.Map[K,This]" id="17180">groupBy</a>[<a title="&gt;: Nothing &lt;: Any" id="17182">K</a>](<a title="(A) =&gt; K" id="49288">f</a>: A =&gt; K): <a href="../Map.scala.html#4202" title="scala.collection.Map[K,This]">Map</a>[K, This] = {
+    <span class="keyword">var</span> <a title="scala.collection.immutable.Map[K,scala.collection.generic.Builder[A,This]]" id="177622">m</a> = <a href="MapFactory.scala.html#35181" title="[A, B](elems: (A, B)*)scala.collection.immutable.Map[A,B]">Map</a><span title="(elems: (K, scala.collection.generic.Builder[A,This])*)scala.collection.immutable.Map[K,scala.collection.generic.Builder[A,This]]">[</span><a href="#17182" title="K">K</a>, <a href="Builder.scala.html#10028" title="scala.collection.generic.Builder[A,This]">Builder</a>[A, This]]()
+    <span class="keyword">for</span> (<a title="A" id="177629">elem</a> &lt;- <a href="#17132" title="(f: (A) =&gt; scala.collection.generic.Builder[A,This])Unit" class="keyword">this</a>) {
+      <span class="keyword">val</span> <a title="K" id="177630">key</a> = <a href="../../Function1.scala.html#17119" title="(v1: A)K">f</a>(<a href="#177629" title="A">elem</a>)
+      <span class="keyword">val</span> <a title="scala.collection.generic.Builder[A,This]" id="177631">bldr</a> = <a href="MapTemplate.scala.html#35273" title="(key: K)Option[scala.collection.generic.Builder[A,This]]">m</a> get <a href="#177630" title="K">key</a> <span title="scala.collection.generic.Builder[A,This]" class="keyword">match</span> {
+        <span title="scala.collection.generic.Builder[A,This]" class="keyword">case</span> <a href="../../Option.scala.html#463" title="object None">None</a> =&gt; <span class="keyword">val</span> <a title="scala.collection.generic.Builder[A,This]" id="177638">b</a> = <a href="#17131" title="=&gt; scala.collection.generic.Builder[A,This]">newBuilder</a>; <a href="#177622" title="scala.collection.immutable.Map[K,scala.collection.generic.Builder[A,This]]">m</a> = <a href="ImmutableMapTemplate.scala.html#35322" title="(key: K,value: scala.collection.generic.Builder[A,This])scala.collection.immutable.Map[K,scala.collection.generic.Builder[A,This]]">m</a> updated (<a href="#177630" title="K">key</a>, <a href="#177638" title="scala.collection.generic.Builder[A,This]">b</a>); <a href="#177638" title="scala.collection.generic.Builder[A,This]">b</a>
+        <span title="scala.collection.generic.Builder[A,This]" class="keyword">case</span> Some(<a title="scala.collection.generic.Builder[A,This]" id="177689">b</a>) =&gt; <a href="#177689" title="scala.collection.generic.Builder[A,This]">b</a>
+      }
+      <a href="Builder.scala.html#19589" title="(elem: A)bldr.type">bldr</a> += <a href="#177629" title="A">elem</a>
+    }
+    <a href="MapTemplate.scala.html#35296" title="(f: (scala.collection.generic.Builder[A,This]) =&gt; This)java.lang.Object with scala.collection.DefaultMap[K,This]">m</a> mapValues (<a href="#177724" title="scala.collection.generic.Builder[A,This]">_</a>.<a href="Builder.scala.html#19591" title="()This">result</a>)
+  }
+
+  /** Return true iff the given predicate `p` yields true for all elements
+   *  of this traversable. 
+   *
+   *  @note May not terminate for infinite-sized collections.
+   *  @param   p     the predicate
+   */
+  <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)Boolean" id="17183">forall</a>(<a title="(A) =&gt; Boolean" id="45679">p</a>: A =&gt; Boolean): <span title="Boolean">Boolean</span> = {
+    <span class="keyword">var</span> <a title="Boolean" id="177732">result</a> = <span title="Boolean(true)" class="keyword">true</span>
+    <a href="../../util/control/Breaks.scala.html#17067" title="(op: =&gt; Unit)Unit">breakable</a> {
+      <span class="keyword">for</span> (<a title="A" id="177736">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; Unit)Unit" class="keyword">this</a>)
+        <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#177736" title="A">x</a>)) { <a href="#177732" title="Boolean">result</a> = <span title="Boolean(false)" class="keyword">false</span>; <a href="../../util/control/Breaks.scala.html#17068" title="=&gt; Unit">break</a> }
+    }
+    <a href="#177732" title="Boolean">result</a>
+  }
+
+  /** Return true iff there is an element in this traversable for which the
+   *  given predicate `p` yields true.
+   *
+   *  @note May not terminate for infinite-sized collections.
+   *  @param   p     the predicate
+   */
+  <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)Boolean" id="17184">exists</a>(<a title="(A) =&gt; Boolean" id="45694">p</a>: A =&gt; Boolean): <span title="Boolean">Boolean</span> = {
+    <span class="keyword">var</span> <a title="Boolean" id="177745">result</a> = <span title="Boolean(false)" class="keyword">false</span>
+    <a href="../../util/control/Breaks.scala.html#17067" title="(op: =&gt; Unit)Unit">breakable</a> {
+      <span class="keyword">for</span> (<a title="A" id="177749">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; Unit)Unit" class="keyword">this</a>)
+        <span title="Unit" class="keyword">if</span> (<a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#177749" title="A">x</a>)) { <a href="#177745" title="Boolean">result</a> = <span title="Boolean(true)" class="keyword">true</span>; <a href="../../util/control/Breaks.scala.html#17068" title="=&gt; Unit">break</a> }
+    }
+    <a href="#177745" title="Boolean">result</a>
+  }
+
+  /** Count the number of elements in the traversable which satisfy a predicate.
+   *
+   *  @note Will not terminate for infinite-sized collections.
+   *  @param p the predicate for which to count
+   *  @return  the number of elements satisfying the predicate &lt;code&gt;p&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)Int" id="17185">count</a>(<a title="(A) =&gt; Boolean" id="45709">p</a>: A =&gt; Boolean): <span title="Int">Int</span> = {
+    <span class="keyword">var</span> <a title="Int" id="177758">cnt</a> = <span title="Int(0)" class="int">0</span>
+    <span class="keyword">for</span> (<a title="A" id="177762">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; Unit)Unit" class="keyword">this</a>) {
+      <span title="Unit" class="keyword">if</span> (<a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#177762" title="A">x</a>)) <a href="#177758" title="Int">cnt</a> += <span title="Int(1)" class="int">1</span>
+    }
+    <a href="#177758" title="Int">cnt</a>
+  }
+
+  /** Find and return the first element of the traversable object satisfying a
+   *  predicate, if any.
+   *
+   *  @note may not terminate for infinite-sized collections.
+   *  @note Might return different results for different runs, unless this traversable is ordered.
+   *  @param p the predicate
+   *  @return an option containing the first element in the traversable object
+   *  satisfying &lt;code&gt;p&lt;/code&gt;, or &lt;code&gt;None&lt;/code&gt; if none exists.
+   */
+  <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)Option[A]" id="17186">find</a>(<a title="(A) =&gt; Boolean" id="45759">p</a>: A =&gt; Boolean): <a href="../../Option.scala.html#777" title="Option[A]">Option</a>[A] = {
+    <span class="keyword">var</span> <a title="Option[A]" id="177803">result</a>: <a href="../../Option.scala.html#777" title="Option[A]">Option</a>[A] = <a href="../../Option.scala.html#463" title="object None">None</a>
+    <a href="../../util/control/Breaks.scala.html#17067" title="(op: =&gt; Unit)Unit">breakable</a> {
+      <span class="keyword">for</span> (<a title="A" id="177807">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; Unit)Unit" class="keyword">this</a>)
+        <span title="Unit" class="keyword">if</span> (<a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#177807" title="A">x</a>)) { <a href="#177803" title="Option[A]">result</a> = <a href="../../Option.scala.html#19800" title="(x: A)Some[A]">Some</a>(<a href="#177807" title="A">x</a>); <a href="../../util/control/Breaks.scala.html#17068" title="=&gt; Unit">break</a> }
+    }
+    <a href="#177803" title="Option[A]">result</a>
+  }
+
+  /** Combines the elements of this traversable object together using the binary
+   *  function &lt;code&gt;f&lt;/code&gt;, from left to right, and starting with
+   *  the value &lt;code&gt;z&lt;/code&gt;.
+   *
+   *  @note Will not terminate for infinite-sized collections.
+   *  @note Might return different results for different runs, unless this traversable is ordered, or
+   *        the operator is associative and commutative.
+   *  @return &lt;code&gt;f(... (f(f(z, a&lt;sub&gt;0&lt;/sub&gt;), a&lt;sub&gt;1&lt;/sub&gt;) ...),
+   *          a&lt;sub&gt;n&lt;/sub&gt;)&lt;/code&gt; if the traversable is
+   *          &lt;code&gt;[a&lt;sub&gt;0&lt;/sub&gt;, a&lt;sub&gt;1&lt;/sub&gt;, ..., a&lt;sub&gt;n&lt;/sub&gt;]&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="[B](z: B)(op: (B, A) =&gt; B)B" id="17187">foldLeft</a>[<a title="&gt;: Nothing &lt;: Any" id="17189">B</a>](<a title="B" id="21014">z</a>: <a href="#17189" title="B">B</a>)(<a title="(B, A) =&gt; B" id="21015">op</a>: (B, A) =&gt; B): <a href="#17189" title="B">B</a> = {
+    <span class="keyword">var</span> <a title="B" id="177821">result</a> = <a href="#21014" title="B">z</a>
+    <span class="keyword">for</span> (<a title="A" id="177825">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; Unit)Unit" class="keyword">this</a>)
+      <a href="#177821" title="B">result</a> = <a href="../../Function2.scala.html#20443" title="(v1: B,v2: A)B">op</a>(<a href="#177821" title="B">result</a>, <a href="#177825" title="A">x</a>)
+    <a href="#177821" title="B">result</a>
+  }
+
+  /** Similar to &lt;code&gt;foldLeft&lt;/code&gt; but can be used as
+   *  an operator with the order of traversable and zero arguments reversed.
+   *  That is, &lt;code&gt;z /: xs&lt;/code&gt; is the same as &lt;code&gt;xs foldLeft z&lt;/code&gt;
+   *  @note Will not terminate for infinite-sized collections.
+   *  @note Might return different results for different runs, unless this traversable is ordered, or
+   *        the operator is associative and commutative.
+   */
+  <span class="keyword">def</span> <a title="[B](z: B)(op: (B, A) =&gt; B)B" id="17190">/:</a> [<a title="&gt;: Nothing &lt;: Any" id="17192">B</a>](<a title="B" id="21756">z</a>: <a href="#17192" title="B">B</a>)(<a title="(B, A) =&gt; B" id="21757">op</a>: (B, A) =&gt; B): <a href="#17192" title="B">B</a> = <a href="#17187" title="(z: B)(op: (B, A) =&gt; B)B">foldLeft</a>(<a href="#21756" title="B">z</a>)(<a href="#21757" title="(B, A) =&gt; B">op</a>)
+
+  /** Combines the elements of this iterable together using the binary
+   *  function &lt;code&gt;f&lt;/code&gt;, from right to left, and starting with
+   *  the value &lt;code&gt;z&lt;/code&gt;.
+   *
+   *  @note Will not terminate for infinite-sized collections.
+   *  @note Might return different results for different runs, unless this iterable is ordered, or
+   *        the operator is associative and commutative.
+   *  @return &lt;code&gt;f(a&lt;sub&gt;0&lt;/sub&gt;, f(a&lt;sub&gt;1&lt;/sub&gt;, f(..., f(a&lt;sub&gt;n&lt;/sub&gt;, z)...)))&lt;/code&gt;
+   *          if the iterable is &lt;code&gt;[a&lt;sub&gt;0&lt;/sub&gt;, a1, ..., a&lt;sub&gt;n&lt;/sub&gt;]&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="[B](z: B)(op: (A, B) =&gt; B)B" id="17193">foldRight</a>[<a title="&gt;: Nothing &lt;: Any" id="17195">B</a>](<a title="B" id="45806">z</a>: <a href="#17195" title="B">B</a>)(<a title="(A, B) =&gt; B" id="45807">op</a>: (A, B) =&gt; B): <a href="#17195" title="B">B</a> = {
+    <span class="keyword">var</span> <a title="List[A]" id="177844">elems</a>: <a href="../immutable/List.scala.html#8973" title="List[A]">List</a>[A] = <a href="../immutable/List.scala.html#9259" title="object Nil">Nil</a>
+    <span class="keyword">for</span> (<a title="A" id="177848">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; Unit)Unit" class="keyword">this</a>) <a href="#177844" title="List[A]">elems</a> = <a href="#177848" title="A">x</a> <a href="#177849" title="A">::</a> <a href="../immutable/List.scala.html#17630" title="(x: A)List[A]">elems</a>
+    <a href="#177844" title="List[A]">elems</a>.<a href="LinearSequenceTemplate.scala.html#19409" title="(z: B)(f: (B, A) =&gt; B)B">foldLeft</a>(<a href="#45806" title="B">z</a>)((<a title="B" id="177875">x</a>, <a title="A" id="177876">y</a>) =&gt; <a href="../../Function2.scala.html#20443" title="(v1: A,v2: B)B">op</a>(<a href="#177876" title="A">y</a>, <a href="#177875" title="B">x</a>))
+  }
+
+  /** An alias for &lt;code&gt;foldRight&lt;/code&gt;.
+   *  That is, &lt;code&gt;xs :\ z&lt;/code&gt; is the same as &lt;code&gt;xs foldRight z&lt;/code&gt;
+   *  @note Will not terminate for infinite-sized collections.
+   *  @note Might return different results for different runs, unless this iterable is ordered, or
+   *        the operator is associative and commutative.
+   */
+  <span class="keyword">def</span> <a title="[B](z: B)(op: (A, B) =&gt; B)B" id="17196">:\</a> [<a title="&gt;: Nothing &lt;: Any" id="17198">B</a>](<a title="B" id="49394">z</a>: <a href="#17198" title="B">B</a>)(<a title="(A, B) =&gt; B" id="49395">op</a>: (A, B) =&gt; B): <a href="#17198" title="B">B</a> = <a href="#17193" title="(z: B)(op: (A, B) =&gt; B)B">foldRight</a>(<a href="#49394" title="B">z</a>)(<a href="#49395" title="(A, B) =&gt; B">op</a>)
+
+  /** Combines the elements of this traversable object together using the binary
+   *  operator &lt;code&gt;op&lt;/code&gt;, from left to right
+   *  @note Will not terminate for infinite-sized collections.
+   *  @note Might return different results for different runs, unless this traversable is ordered, or
+   *        the operator is associative and commutative.
+   *  @param op  The operator to apply
+   *  @return &lt;code&gt;op(... op(a&lt;sub&gt;0&lt;/sub&gt;,a&lt;sub&gt;1&lt;/sub&gt;), ..., a&lt;sub&gt;n&lt;/sub&gt;)&lt;/code&gt; 
+      if the traversable object has elements
+   *          &lt;code&gt;a&lt;sub&gt;0&lt;/sub&gt;, a&lt;sub&gt;1&lt;/sub&gt;, ..., a&lt;sub&gt;n&lt;/sub&gt;&lt;/code&gt;.
+   *  @throws Predef.UnsupportedOperationException if the traversable object is empty.
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A](op: (B, A) =&gt; B)B" id="17199">reduceLeft</a>[<a title="&gt;: A &lt;: Any" id="17201">B</a> &gt;: A](<a title="(B, A) =&gt; B" id="45853">op</a>: (B, A) =&gt; B): <a href="#17201" title="B">B</a> = {
+    <span title="Unit" class="keyword">if</span> (<a href="#17135" title="=&gt; Boolean">isEmpty</a>) <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.UnsupportedOperationException" class="keyword">new</span> <a href="../../Predef.scala.html#16169" title="java.lang.UnsupportedOperationException">UnsupportedOperationException</a>(<span title="java.lang.String(&quot;empty.reduceLeft&quot;)" class="string">&quot;empty.reduceLeft&quot;</span>)
+    <span class="keyword">var</span> <a title="B" id="177894">result</a>: <a href="#17201" title="B">B</a> = <a href="#17211" title="=&gt; A">head</a>
+    <span class="keyword">var</span> <a title="Boolean" id="177895">first</a> = <span title="Boolean(true)" class="keyword">true</span>
+    <span class="keyword">for</span> (<a title="A" id="177905">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; Unit)Unit" class="keyword">this</a>)
+      <span title="Unit" class="keyword">if</span> (<a href="#177895" title="Boolean">first</a>) <a href="#177895" title="Boolean">first</a> = <span title="Boolean(false)" class="keyword">false</span>
+      <span class="keyword">else</span> <a href="#177894" title="B">result</a> = <a href="../../Function2.scala.html#20443" title="(v1: B,v2: A)B">op</a>(<a href="#177894" title="B">result</a>, <a href="#177905" title="A">x</a>)
+    <a href="#177894" title="B">result</a>
+  }
+  
+  /** Combines the elements of this traversable object together using the binary
+   *  operator &lt;code&gt;op&lt;/code&gt;, from left to right
+   *  @note Will not terminate for infinite-sized collections.
+   *  @note Might return different results for different runs, unless this traversable is ordered, or
+   *        the operator is associative and commutative.
+   *  @param op  The operator to apply
+   *  @return  If the traversable is non-empty, the result of the operations as an Option, otherwise None.
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A](op: (B, A) =&gt; B)Option[B]" id="17202">reduceLeftOption</a>[<a title="&gt;: A &lt;: Any" id="17204">B</a> &gt;: A](<a title="(B, A) =&gt; B" id="49436">op</a>: (B, A) =&gt; B): <a href="../../Option.scala.html#777" title="Option[B]">Option</a>[B] = {
+    <span title="Option[B]" class="keyword">if</span> (<a href="#17135" title="=&gt; Boolean">isEmpty</a>) <a href="../../Option.scala.html#463" title="object None">None</a> <span class="keyword">else</span> <a href="../../Option.scala.html#19800" title="(x: B)Some[B]">Some</a>(<a href="#17199" title="(op: (B, A) =&gt; B)B">reduceLeft</a>(<a href="#49436" title="(B, A) =&gt; B">op</a>))
+  }
+
+  /** Combines the elements of this iterable object together using the binary
+   *  operator &lt;code&gt;op&lt;/code&gt;, from right to left
+   *  @note Will not terminate for infinite-sized collections.
+   *  @note Might return different results for different runs, unless this iterable is ordered, or
+   *        the operator is associative and commutative.
+   *  @param op  The operator to apply
+   *
+   *  @return &lt;code&gt;a&lt;sub&gt;0&lt;/sub&gt; op (... op (a&lt;sub&gt;n-1&lt;/sub&gt; op a&lt;sub&gt;n&lt;/sub&gt;)...)&lt;/code&gt;
+   *          if the iterable object has elements &lt;code&gt;a&lt;sub&gt;0&lt;/sub&gt;, a&lt;sub&gt;1&lt;/sub&gt;, ...,
+   *          a&lt;sub&gt;n&lt;/sub&gt;&lt;/code&gt;.
+   *
+   *  @throws Predef.UnsupportedOperationException if the iterator is empty.
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A](op: (A, B) =&gt; B)B" id="17205">reduceRight</a>[<a title="&gt;: A &lt;: Any" id="17207">B</a> &gt;: A](<a title="(A, B) =&gt; B" id="45891">op</a>: (A, B) =&gt; B): <a href="#17207" title="B">B</a> = {
+    <span title="Unit" class="keyword">if</span> (<a href="#17135" title="=&gt; Boolean">isEmpty</a>) <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.UnsupportedOperationException" class="keyword">new</span> <a href="../../Predef.scala.html#16169" title="java.lang.UnsupportedOperationException">UnsupportedOperationException</a>(<span title="java.lang.String(&quot;empty.reduceRight&quot;)" class="string">&quot;empty.reduceRight&quot;</span>)
+    <span class="keyword">var</span> <a title="List[A]" id="177923">elems</a>: <a href="../immutable/List.scala.html#8973" title="List[A]">List</a>[A] = <a href="../immutable/List.scala.html#9259" title="object Nil">Nil</a>
+    <span class="keyword">for</span> (<a title="A" id="177933">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; Unit)Unit" class="keyword">this</a>) <a href="#177923" title="List[A]">elems</a> = <a href="#177933" title="A">x</a> <a href="#177934" title="A">::</a> <a href="../immutable/List.scala.html#17630" title="(x: A)List[A]">elems</a>
+    <a href="#177923" title="List[A]">elems</a>.<a href="LinearSequenceTemplate.scala.html#19415" title="[B &gt;: A](f: (B, A) =&gt; B)B">reduceLeft</a><span title="(f: (B, A) =&gt; B)B">[</span><a href="#17207" title="B">B</a>]((<a title="B" id="177955">x</a>, <a title="A" id="177956">y</a>) =&gt; <a href="../../Function2.scala.html#20443" title="(v1: A,v2: B)B">op</a>(<a href="#177956" title="A">y</a>, <a href="#177955" title="B">x</a>))
+  }
+
+ /** Combines the elements of this iterable object together using the binary
+   *  operator &lt;code&gt;op&lt;/code&gt;, from right to left.
+   *  @note Will not terminate for infinite-sized collections.
+   *  @note Might return different results for different runs, unless this iterable is ordered, or
+   *        the operator is associative and commutative.
+   *  @param op  The operator to apply
+   *  @return  If the iterable is non-empty, the result of the operations as an Option, otherwise None.
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A](op: (A, B) =&gt; B)Option[B]" id="17208">reduceRightOption</a>[<a title="&gt;: A &lt;: Any" id="17210">B</a> &gt;: A](<a title="(A, B) =&gt; B" id="49471">op</a>: (A, B) =&gt; B): <a href="../../Option.scala.html#777" title="Option[B]">Option</a>[B] = {
+    <span title="Option[B]" class="keyword">if</span> (<a href="#17135" title="=&gt; Boolean">isEmpty</a>) <a href="../../Option.scala.html#463" title="object None">None</a> <span class="keyword">else</span> <a href="../../Option.scala.html#19800" title="(x: B)Some[B]">Some</a>(<a href="#17205" title="(op: (A, B) =&gt; B)B">reduceRight</a>(<a href="#49471" title="(A, B) =&gt; B">op</a>))
+  }
+  
+  /** The first element of this traversable.
+   *
+   *  @note  Might return different results for different runs, unless this traversable is ordered
+   *  @throws Predef.NoSuchElementException if the traversable is empty.
+   */
+  <span class="keyword">def</span> <a title="=&gt; A" id="17211">head</a>: <a href="#15047" title="A">A</a> = {
+    <span class="keyword">var</span> <a title="() =&gt; A" id="177973">result</a>: () =&gt; A = () =&gt; <span title="Nothing" class="keyword">throw</span> <span title="java.util.NoSuchElementException" class="keyword">new</span> <a href="../../Predef.scala.html#16171" title="java.util.NoSuchElementException">NoSuchElementException</a>
+    <a href="../../util/control/Breaks.scala.html#17067" title="(op: =&gt; Unit)Unit">breakable</a> {
+      <span class="keyword">for</span> (<a title="A" id="177986">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; Unit)Unit" class="keyword">this</a>) {
+        <a href="#177973" title="() =&gt; A">result</a> = () =&gt; <a href="#177986" title="A">x</a>
+        <a href="../../util/control/Breaks.scala.html#17068" title="=&gt; Unit">break</a>
+      }
+    }
+    <a href="../../Function0.scala.html#34096" title="()A">result</a>()
+  }
+
+  /** Returns as an option the first element of this traversable
+   *  or &lt;code&gt;None&lt;/code&gt; if traversable is empty.
+   *  @note  Might return different results for different runs, unless this traversable is ordered
+   */
+  <span class="keyword">def</span> <a title="=&gt; Option[A]" id="17212">headOption</a>: <a href="../../Option.scala.html#777" title="Option[A]">Option</a>[A] = <span title="Option[A]" class="keyword">if</span> (<a href="#17135" title="=&gt; Boolean">isEmpty</a>) <a href="../../Option.scala.html#463" title="object None">None</a> <span class="keyword">else</span> <a href="../../Option.scala.html#19800" title="(x: A)Some[A]">Some</a>(<a href="#17211" title="=&gt; A">head</a>)
+
+  /** An traversable consisting of all elements of this traversable
+   *  except the first one.
+   *  @note  Might return different results for different runs, unless this traversable is ordered
+   */ 
+  <span class="keyword">def</span> <a title="=&gt; This" id="17213">tail</a>: <a href="#15048" title="This">This</a> = <a href="#17218" title="(n: Int)This">drop</a>(<span title="Int(1)" class="int">1</span>)
+
+  /** The last element of this traversable.
+   *
+   *  @throws Predef.NoSuchElementException if the traversable is empty.
+   *  @note  Might return different results for different runs, unless this traversable is ordered
+   */
+  <span class="keyword">def</span> <a title="=&gt; A" id="17214">last</a>: <a href="#15047" title="A">A</a> = {
+    <span class="keyword">var</span> <a title="A" id="178002">lst</a> = <a href="#17211" title="=&gt; A">head</a>
+    <span class="keyword">for</span> (<a title="A" id="178006">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; Unit)Unit" class="keyword">this</a>)
+      <a href="#178002" title="A">lst</a> = <a href="#178006" title="A">x</a>
+    <a href="#178002" title="A">lst</a>
+  }
+
+  /** Returns as an option the last element of this traversable or
+   *  &lt;code&gt;None&lt;/code&gt; if traversable is empty.
+   *
+   *  @return the last element as an option.
+   *  @note  Might return different results for different runs, unless this traversable is ordered
+   */
+  <span class="keyword">def</span> <a title="=&gt; Option[A]" id="17215">lastOption</a>: <a href="../../Option.scala.html#777" title="Option[A]">Option</a>[A] = <span title="Option[A]" class="keyword">if</span> (<a href="#17135" title="=&gt; Boolean">isEmpty</a>) <a href="../../Option.scala.html#463" title="object None">None</a> <span class="keyword">else</span> <a href="../../Option.scala.html#19800" title="(x: A)Some[A]">Some</a>(<a href="#17214" title="=&gt; A">last</a>)
+
+  /** An traversable consisting of all elements of this traversable except the last one.
+   *  @throws Predef.UnsupportedOperationException if the stream is empty.
+   *  @note  Might return different results for different runs, unless this traversable is ordered
+   */
+  <span class="keyword">def</span> <a title="=&gt; This" id="17216">init</a>: <a href="#15048" title="This">This</a> = {
+    <span title="Unit" class="keyword">if</span> (<a href="#17135" title="=&gt; Boolean">isEmpty</a>) <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.UnsupportedOperationException" class="keyword">new</span> <a href="../../Predef.scala.html#16169" title="java.lang.UnsupportedOperationException">UnsupportedOperationException</a>(<span title="java.lang.String(&quot;empty.init&quot;)" class="string">&quot;empty.init&quot;</span>)
+    <span class="keyword">var</span> <a title="A" id="178015">lst</a> = <a href="#17211" title="=&gt; A">head</a>
+    <span class="keyword">var</span> <a title="Boolean" id="178016">follow</a> = <span title="Boolean(false)" class="keyword">false</span>
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[A,This]" id="178017">b</a> = <a href="#17131" title="=&gt; scala.collection.generic.Builder[A,This]">newBuilder</a>
+    <span class="keyword">for</span> (<a title="A" id="178027">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; Unit)Unit" class="keyword">this</a>) {
+      <span title="Any" class="keyword">if</span> (<a href="#178016" title="Boolean">follow</a>) <a href="Builder.scala.html#19589" title="(elem: A)b.type">b</a> += <a href="#178015" title="A">lst</a>
+      <span class="keyword">else</span> <a href="#178016" title="Boolean">follow</a> = <span title="Boolean(true)" class="keyword">true</span>
+      <a href="#178015" title="A">lst</a> = <a href="#178027" title="A">x</a>
+    }
+    <a href="#178017" title="scala.collection.generic.Builder[A,This]">b</a>.<a href="Builder.scala.html#19591" title="()This">result</a>
+  }
+
+  /** Return an traversable consisting only of the first &lt;code&gt;n&lt;/code&gt;
+   *  elements of this traversable, or else the whole traversable, if it has less
+   *  than &lt;code&gt;n&lt;/code&gt; elements.
+   *
+   *  @param n the number of elements to take
+   *  @note  Might return different results for different runs, unless this traversable is ordered
+   */
+  <span class="keyword">def</span> <a title="(n: Int)This" id="17217">take</a>(<a title="Int" id="38880">n</a>: <span title="Int">Int</span>): <a href="#15048" title="This">This</a> = {
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[A,This]" id="178058">b</a> = <a href="#17131" title="=&gt; scala.collection.generic.Builder[A,This]">newBuilder</a>
+    <span class="keyword">var</span> <a title="Int" id="178059">i</a> = <span title="Int(0)" class="int">0</span>
+    <a href="../../util/control/Breaks.scala.html#17067" title="(op: =&gt; Unit)Unit">breakable</a> {
+      <span class="keyword">for</span> (<a title="A" id="178063">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; Unit)Unit" class="keyword">this</a>) {
+        <span title="Unit" class="keyword">if</span> (<a href="#178059" title="(x$1: Int)Boolean">i</a> &gt;= <a href="#38880" title="Int">n</a>) <a href="../../util/control/Breaks.scala.html#17068" title="=&gt; Unit">break</a>
+        <a href="Builder.scala.html#19589" title="(elem: A)b.type">b</a> += <a href="#178063" title="A">x</a>
+        <a href="#178059" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+      }
+    } 
+    <a href="#178058" title="scala.collection.generic.Builder[A,This]">b</a>.<a href="Builder.scala.html#19591" title="()This">result</a>
+  }
+
+  /** Returns this traversable without its &lt;code&gt;n&lt;/code&gt; first elements
+   *  If this traversable has less than &lt;code&gt;n&lt;/code&gt; elements, the empty
+   *  traversable is returned. 
+   *
+   *  @param n the number of elements to drop
+   *  @return  the new traversable 
+   *  @note  Might return different results for different runs, unless this traversable is ordered
+   */
+  <span class="keyword">def</span> <a title="(n: Int)This" id="17218">drop</a>(<a title="Int" id="45621">n</a>: <span title="Int">Int</span>): <a href="#15048" title="This">This</a> = {
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[A,This]" id="178130">b</a> = <a href="#17131" title="=&gt; scala.collection.generic.Builder[A,This]">newBuilder</a>
+    <span class="keyword">var</span> <a title="Int" id="178131">i</a> = <span title="Int(0)" class="int">0</span>
+    <span class="keyword">for</span> (<a title="A" id="178135">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; Unit)Unit" class="keyword">this</a>) {
+      <span title="Any" class="keyword">if</span> (<a href="#178131" title="(x$1: Int)Boolean">i</a> &gt;= <a href="#45621" title="Int">n</a>) <a href="Builder.scala.html#19589" title="(elem: A)b.type">b</a> += <a href="#178135" title="A">x</a>
+      <a href="#178131" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+    }
+    <a href="#178130" title="scala.collection.generic.Builder[A,This]">b</a>.<a href="Builder.scala.html#19591" title="()This">result</a>
+  }
+
+  /** A sub-traversable starting at index `from`
+   *  and extending up to (but not including) index `until`.
+   *
+   *  @note c.slice(from, to)  is equivalent to (but possibly more efficient than)
+   *  c.drop(from).take(to - from)
+   *
+   *  @param from   The index of the first element of the returned subsequence
+   *  @param until  The index of the element following the returned subsequence
+   *  @note  Might return different results for different runs, unless this traversable is ordered
+   */
+  <span class="keyword">def</span> <a title="(from: Int,until: Int)This" id="17219">slice</a>(<a title="Int" id="22506">from</a>: <span title="Int">Int</span>, <a title="Int" id="22507">until</a>: <span title="Int">Int</span>): <a href="#15048" title="This">This</a> = {
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[A,This]" id="178206">b</a> = <a href="#17131" title="=&gt; scala.collection.generic.Builder[A,This]">newBuilder</a>
+    <span class="keyword">var</span> <a title="Int" id="178207">i</a> = <span title="Int(0)" class="int">0</span>
+    <a href="../../util/control/Breaks.scala.html#17067" title="(op: =&gt; Unit)Unit">breakable</a> {
+      <span class="keyword">for</span> (<a title="A" id="178211">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; Unit)Unit" class="keyword">this</a>) {
+        <span title="Any" class="keyword">if</span> (<a href="#178207" title="(x$1: Int)Boolean">i</a> &gt;= <a href="#22506" title="Int">from</a>) <a href="Builder.scala.html#19589" title="(elem: A)b.type">b</a> += <a href="#178211" title="A">x</a>
+        <a href="#178207" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+        <span title="Unit" class="keyword">if</span> (<a href="#178207" title="(x$1: Int)Boolean" id="2950">i</a> == <a href="#22507" title="Int">until</a>) <a href="../../util/control/Breaks.scala.html#17068" title="=&gt; Unit">break</a>
+      }
+    } 
+    <a href="#178206" title="scala.collection.generic.Builder[A,This]">b</a>.<a href="Builder.scala.html#19591" title="()This">result</a>
+  }
+
+  /** Returns the longest prefix of this traversable whose elements satisfy
+   *  the predicate &lt;code&gt;p&lt;/code&gt;.
+   *
+   *  @param p the test predicate.
+   *  @note  Might return different results for different runs, unless this traversable is ordered
+   */
+  <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)This" id="17220">takeWhile</a>(<a title="(A) =&gt; Boolean" id="49522">p</a>: A =&gt; Boolean): <a href="#15048" title="This">This</a> = {
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[A,This]" id="178291">b</a> = <a href="#17131" title="=&gt; scala.collection.generic.Builder[A,This]">newBuilder</a>
+    <a href="../../util/control/Breaks.scala.html#17067" title="(op: =&gt; Unit)Unit">breakable</a> {
+      <span class="keyword">for</span> (<a title="A" id="178295">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; scala.collection.generic.Builder[A,This])Unit" class="keyword">this</a>) {
+        <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#178295" title="A">x</a>)) <a href="../../util/control/Breaks.scala.html#17068" title="=&gt; Unit">break</a>
+        <a href="Builder.scala.html#19589" title="(elem: A)b.type">b</a> += <a href="#178295" title="A">x</a>
+      }
+    }
+    <a href="#178291" title="scala.collection.generic.Builder[A,This]">b</a>.<a href="Builder.scala.html#19591" title="()This">result</a>
+  }
+
+  /** Returns the longest suffix of this traversable whose first element
+   *  does not satisfy the predicate &lt;code&gt;p&lt;/code&gt;.
+   *
+   *  @param p the test predicate.
+   *  @note  Might return different results for different runs, unless this traversable is ordered
+   */
+  <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)This" id="17221">dropWhile</a>(<a title="(A) =&gt; Boolean" id="49530">p</a>: A =&gt; Boolean): <a href="#15048" title="This">This</a> = {
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[A,This]" id="178325">b</a> = <a href="#17131" title="=&gt; scala.collection.generic.Builder[A,This]">newBuilder</a>
+    <span class="keyword">var</span> <a title="Boolean" id="178326">go</a> = <span title="Boolean(false)" class="keyword">false</span>
+    <span class="keyword">for</span> (<a title="A" id="178330">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; Any)Unit" class="keyword">this</a>) {
+      <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#178330" title="A">x</a>)) <a href="#178326" title="Boolean">go</a> = <span title="Boolean(true)" class="keyword">true</span>
+      <span title="Any" class="keyword">if</span> (<a href="#178326" title="Boolean">go</a>) <a href="Builder.scala.html#19589" title="(elem: A)b.type">b</a> += <a href="#178330" title="A">x</a>
+    }
+    <a href="#178325" title="scala.collection.generic.Builder[A,This]">b</a>.<a href="Builder.scala.html#19591" title="()This">result</a>
+  }
+
+ /** Returns a pair consisting of the longest prefix of the traversable whose
+   *  elements all satisfy the given predicate, and the rest of the traversable.
+   *
+   *  @param p the test predicate
+   *  @return  a pair consisting of the longest prefix of the traversable whose
+   *           elements all satisfy &lt;code&gt;p&lt;/code&gt;, and the rest of the traversable.
+   *  @note  Might return different results for different runs, unless this traversable is ordered
+   */
+  <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)(This, This)" id="17222">span</a>(<a title="(A) =&gt; Boolean" id="46118">p</a>: A =&gt; Boolean): <a href="../../Tuple2.scala.html#1152" title="(This, This)">(</a>This, This) = {
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[A,This]" id="178364">l</a>, <a title="scala.collection.generic.Builder[A,This]" id="178365">r</a> = <a href="#17131" title="=&gt; scala.collection.generic.Builder[A,This]">newBuilder</a>
+    <span class="keyword">var</span> <a title="Boolean" id="178366">toLeft</a> = <span title="Boolean(true)" class="keyword">true</span>
+    <span class="keyword">for</span> (<a title="A" id="178370">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; scala.collection.generic.Builder[A,This])Unit" class="keyword">this</a>) {
+      <a href="#178366" title="Boolean">toLeft</a> = <a href="#178366" title="(x$1: Boolean)Boolean" id="2210">toLeft</a> &amp;&amp; <a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#178370" title="A">x</a>)
+      <a href="Builder.scala.html#19589" title="(elem: A)scala.collection.generic.Builder[A,This]">(</a><span title="scala.collection.generic.Builder[A,This]" class="keyword">if</span> (<a href="#178366" title="Boolean">toLeft</a>) <a href="#178364" title="scala.collection.generic.Builder[A,This]">l</a> <span class="keyword">else</span> <a href="#178365" title="scala.collection.generic.Builder[A,This]">r</a>) += <a href="#178370" title="A">x</a>
+    }
+    <a href="../../Tuple2.scala.html#20670" title="(_1: This,_2: This)(This, This)">(</a><a href="#178364" title="scala.collection.generic.Builder[A,This]">l</a>.<a href="Builder.scala.html#19591" title="()This">result</a>, <a href="#178365" title="scala.collection.generic.Builder[A,This]">r</a>.<a href="Builder.scala.html#19591" title="()This">result</a>)
+  }
+
+  /** Split the traversable at a given point and return the two parts thus
+   *  created.
+   *
+   *  @param n the position at which to split
+   *  @return  a pair of traversables composed of the first &lt;code&gt;n&lt;/code&gt;
+   *           elements, and the other elements.
+   *  @note  Might return different results for different runs, unless this traversable is ordered
+   */
+  <span class="keyword">def</span> <a title="(n: Int)(This, This)" id="17223">splitAt</a>(<a title="Int" id="49544">n</a>: <span title="Int">Int</span>): <a href="../../Tuple2.scala.html#1152" title="(This, This)">(</a>This, This) = {
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[A,This]" id="178417">l</a>, <a title="scala.collection.generic.Builder[A,This]" id="178418">r</a> = <a href="#17131" title="=&gt; scala.collection.generic.Builder[A,This]">newBuilder</a>
+    <span class="keyword">var</span> <a title="Int" id="178419">i</a> = <span title="Int(0)" class="int">0</span>
+    <span class="keyword">for</span> (<a title="A" id="178423">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; Unit)Unit" class="keyword">this</a>) {
+      <a href="Builder.scala.html#19589" title="(elem: A)scala.collection.generic.Builder[A,This]">(</a><span title="scala.collection.generic.Builder[A,This]" class="keyword">if</span> (<a href="#178419" title="(x$1: Int)Boolean" id="2954">i</a> &lt; <a href="#49544" title="Int">n</a>) <a href="#178417" title="scala.collection.generic.Builder[A,This]">l</a> <span class="keyword">else</span> <a href="#178418" title="scala.collection.generic.Builder[A,This]">r</a>) += <a href="#178423" title="A">x</a>
+      <a href="#178419" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+    }
+    <a href="../../Tuple2.scala.html#20670" title="(_1: This,_2: This)(This, This)">(</a><a href="#178417" title="scala.collection.generic.Builder[A,This]">l</a>.<a href="Builder.scala.html#19591" title="()This">result</a>, <a href="#178418" title="scala.collection.generic.Builder[A,This]">r</a>.<a href="Builder.scala.html#19591" title="()This">result</a>)
+  }
+
+  /** Copy all elements of this traversable to a given buffer 
+   *  @note Will not terminate for infinite-sized collections.
+   *  @param  dest   The buffer to which elements are copied
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A](dest: scala.collection.mutable.Buffer[B])Unit" id="17224">copyToBuffer</a>[<a title="&gt;: A &lt;: Any" id="17226">B</a> &gt;: A](<a title="scala.collection.mutable.Buffer[B]" id="49550">dest</a>: <a href="../mutable/Buffer.scala.html#7641" title="scala.collection.mutable.Buffer[B]">Buffer</a>[B]) {
+    <span class="keyword">for</span> (<a title="A" id="178508">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; scala.collection.mutable.Buffer[B])Unit" class="keyword">this</a>) <a href="BufferTemplate.scala.html#19933" title="(elem: B)dest.type">dest</a> += <a href="#178508" title="A">x</a>
+  }
+
+  /** Fills the given array &lt;code&gt;xs&lt;/code&gt; with at most `len` elements of
+   *  this traversable starting at position `start`.
+   *  Copying will stop once either the end of the current traversable is reached or
+   *  `len` elements have been copied or the end of the array is reached.
+   *
+   *  @note Will not terminate for infinite-sized collections.
+   *  @param  xs the array to fill.
+   *  @param  start starting index.
+   *  @param  len number of elements to copy
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A](xs: Array[B],start: Int,len: Int)Unit" id="17227">copyToArray</a>[<a title="&gt;: A &lt;: Any" id="17229">B</a> &gt;: A](<a title="Array[B]" id="49598">xs</a>: <a href="../../Array.scala.html#885" title="Array[B]">Array</a>[B], <a title="Int" id="49599">start</a>: <span title="Int">Int</span>, <a title="Int" id="49600">len</a>: <span title="Int">Int</span>) {
+    <span class="keyword">var</span> <a title="Int" id="178531">i</a> = <a href="#49599" title="Int">start</a>
+    <span class="keyword">val</span> <a title="Int" id="178532">end</a> = <a href="../../runtime/RichInt.scala.html#19064" title="(that: Int)Int">(</a><a href="#49599" title="(x$1: Int)Int">start</a> <a href="../../Predef.scala.html#16360" title="implicit scala.Predef.intWrapper : (x: Int)scala.runtime.RichInt">+</a> <a href="#49600" title="Int">len</a>) min <a href="#49598" title="Array[B]">xs</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>
+    <a href="../../util/control/Breaks.scala.html#17067" title="(op: =&gt; Unit)Unit">breakable</a> {
+      <span class="keyword">for</span> (<a title="A" id="178556">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; Unit)Unit" class="keyword">this</a>) {
+        <span title="Unit" class="keyword">if</span> (<a href="#178531" title="(x$1: Int)Boolean">i</a> &gt;= <a href="#178532" title="Int">end</a>) <a href="../../util/control/Breaks.scala.html#17068" title="=&gt; Unit">break</a>
+        <a href="../../Array.scala.html#17717" title="(i: Int,x: B)Unit">xs</a>(<a href="#178531" title="Int">i</a>) = <a href="#178556" title="A">x</a>
+        <a href="#178531" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+      }
+    }
+  }
+
+  /** Fills the given array &lt;code&gt;xs&lt;/code&gt; with the elements of
+   *  this traversable starting at position &lt;code&gt;start&lt;/code&gt;
+   *  until either the end of the current traversable or the end of array `xs` is reached.
+   *
+   *  @note Will not terminate for infinite-sized collections.
+   *  @param  xs the array to fill.
+   *  @param  start starting index.
+   *  @pre    the array must be large enough to hold all elements.
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A](xs: Array[B],start: Int)Unit" id="17230">copyToArray</a>[<a title="&gt;: A &lt;: Any" id="17232">B</a> &gt;: A](<a title="Array[B]" id="49584">xs</a>: <a href="../../Array.scala.html#885" title="Array[B]">Array</a>[B], <a title="Int" id="49585">start</a>: <span title="Int">Int</span>) { 
+    <a href="#17227" title="(xs: Array[B],start: Int,len: Int)Unit">copyToArray</a>(<a href="#49584" title="Array[B]">xs</a>, <a href="#49585" title="Int">start</a>, <a href="#49584" title="Array[B]">xs</a>.<a href="../../Array.scala.html#17715" title="(x$1: Int)Int" id="2964">length</a> - <a href="#49585" title="Int">start</a>)
+  }
+
+  /** Converts this traversable to a fresh Array containing all elements.
+   *  @note  Will not terminate for infinite-sized collections.
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A](implicit evidence$1: scala.reflect.ClassManifest[B])Array[B]" id="49746">toArray</a>[<a title="&gt;: A &lt;: Any" id="17235">B</a> &gt;: A : ClassManifest]: <a href="../../Array.scala.html#885" title="Array[B]">Array</a>[B] = {
+    <span class="keyword">val</span> <a title="Array[B]" id="178651">result</a> = <span title="Array[B]" class="keyword">new</span> <a href="../../Array.scala.html#885" title="Array[B]">Array</a>[B](<a href="#17137" title="=&gt; Int">size</a>)
+    <a href="#17230" title="(xs: Array[B],start: Int)Unit">copyToArray</a>(<a href="#178651" title="Array[B]">result</a>, <span title="Int(0)" class="int">0</span>)
+    <a href="#178651" title="Array[B]">result</a>
+  }
+
+  /** Returns a list with all elements of this traversable object.
+   *  @note Will not terminate for infinite-sized collections.
+   */
+  <span class="keyword">def</span> <a title="=&gt; List[A]" id="17236">toList</a>: <a href="../immutable/List.scala.html#8973" title="List[A]">List</a>[A] = (<a href="Growable.scala.html#19586" title="(iter: Traversable[A])scala.collection.mutable.ListBuffer[A]" class="keyword">new</a> <a href="../mutable/ListBuffer.scala.html#7620" title="scala.collection.mutable.ListBuffer[A]">ListBuffer</a>[A] ++= <a href="#17130" title="=&gt; This">thisCollection</a>).<a href="../mutable/ListBuffer.scala.html#46548" title="=&gt; List[A]">toList</a>
+
+  /** Returns an iterable with all elements in this traversable object.
+   *  @note Will not terminate for infinite-sized collections.
+   */	
+  <span class="keyword">def</span> <a title="=&gt; Iterable[A]" id="17237">toIterable</a>: <a href="../Iterable.scala.html#4460" title="Iterable[A]">Iterable</a>[A] = <a href="#17242" title="=&gt; Stream[A]">toStream</a>
+ 
+  /** Returns a sequence with all elements in this traversable object.
+   *  @note Will not terminate for infinite-sized collections.
+   */	
+  <span class="keyword">def</span> <a title="=&gt; Sequence[A]" id="17238">toSequence</a>: <a href="../Sequence.scala.html#4346" title="Sequence[A]">Sequence</a>[A] = <a href="#17236" title="=&gt; List[A]">toList</a>
+ 
+  /** Returns a vector with all elements in this traversable object.
+   *  @note Will not terminate for infinite-sized collections.
+   */	
+  <span class="keyword">def</span> <a title="[B &gt;: A]scala.collection.mutable.Vector[B]" id="17239">toVector</a>[<a title="&gt;: A &lt;: Any" id="17241">B</a> &gt;: A]: mutable.<a href="../mutable/Vector.scala.html#7818" title="scala.collection.mutable.Vector[B]">Vector</a>[B] = (<a href="../mutable/ArrayBuffer.scala.html#19918" title="(iter: Traversable[B])scala.collection.mutable.ArrayBuffer[B]" class="keyword">new</a> <a href="../mutable/ArrayBuffer.scala.html#7797" title="scala.collection.mutable.ArrayBuffer[B]">ArrayBuffer</a>[B] ++= <a href="#17130" title="=&gt; This">thisCollection</a>)
+ 
+  /** Returns a stream with all elements in this traversable object.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Stream[A]" id="17242">toStream</a>: <a href="../immutable/Stream.scala.html#9156" title="Stream[A]">Stream</a>[A] = <a href="#17236" title="=&gt; List[A]">toList</a>.<a href="../immutable/List.scala.html#17666" title="=&gt; scala.collection.immutable.Stream[A]">toStream</a>
+  
+  /** Returns a set with all unique elements in this traversable object.
+   */
+  @experimental
+  <span class="keyword">def</span> <a title="[B &gt;: A]scala.collection.immutable.Set[B]" id="17243">toSet</a>[<a title="&gt;: A &lt;: Any" id="17245">B</a> &gt;: A]: immutable.<a href="../immutable/Set.scala.html#9171" title="scala.collection.immutable.Set[B]">Set</a>[B] = immutable.<a href="Companion.scala.html#17471" title="(args: B*)scala.collection.immutable.Set[B]">Set</a><a href="Addable.scala.html#19972" title="(elems: Traversable[B])scala.collection.immutable.Set[B]">(</a>) ++ <a href="#17130" title="=&gt; This">thisCollection</a>
+
+  /** Returns a string representation of this traversable object. The resulting string
+   *  begins with the string &lt;code&gt;start&lt;/code&gt; and is finished by the string
+   *  &lt;code&gt;end&lt;/code&gt;. Inside, the string representations of elements (w.r.t.
+   *  the method &lt;code&gt;toString()&lt;/code&gt;) are separated by the string
+   *  &lt;code&gt;sep&lt;/code&gt;.
+   *
+   *  @ex  &lt;code&gt;List(1, 2, 3).mkString(&quot;(&quot;, &quot;; &quot;, &quot;)&quot;) = &quot;(1; 2; 3)&quot;&lt;/code&gt;
+   *  @param start starting string.
+   *  @param sep separator string.
+   *  @param end ending string.
+   *  @return a string representation of this traversable object.
+   */
+  <span class="keyword">def</span> <a title="(start: String,sep: String,end: String)String" id="17246">mkString</a>(<a title="String" id="19497">start</a>: <span title="String">String</span>, <a title="String" id="19498">sep</a>: <span title="String">String</span>, <a title="String" id="19499">end</a>: <span title="String">String</span>): <span title="String">String</span> =
+    <a href="#17249" title="(b: StringBuilder,start: String,sep: String,end: String)StringBuilder">addString</a>(<a href="../mutable/StringBuilder.scala.html#23348" title="()StringBuilder" class="keyword">new</a> <a href="../../package.scala.html#14791" title="StringBuilder">StringBuilder</a>(), <a href="#19497" title="String">start</a>, <a href="#19498" title="String">sep</a>, <a href="#19499" title="String">end</a>).<a href="../mutable/StringBuilder.scala.html#23409" title="()String">toString</a>
+
+  /** Returns a string representation of this traversable object. The string
+   *  representations of elements (w.r.t. the method &lt;code&gt;toString()&lt;/code&gt;)
+   *  are separated by the string &lt;code&gt;sep&lt;/code&gt;.
+   *
+   *  @param sep separator string.
+   *  @return a string representation of this traversable object.
+   */
+  <span class="keyword">def</span> <a title="(sep: String)String" id="17247">mkString</a>(<a title="String" id="19482">sep</a>: <span title="String">String</span>): <span title="String">String</span> =
+    <a href="#17250" title="(b: StringBuilder,sep: String)StringBuilder">addString</a>(<a href="../mutable/StringBuilder.scala.html#23348" title="()StringBuilder" class="keyword">new</a> <a href="../../package.scala.html#14791" title="StringBuilder">StringBuilder</a>(), <a href="#19482" title="String">sep</a>).<a href="../mutable/StringBuilder.scala.html#23409" title="()String">toString</a>
+
+  /** Returns a string representation of this traversable object. The string
+   *  representations of elements (w.r.t. the method &lt;code&gt;toString()&lt;/code&gt;)
+   *  follow each other without any separator string.
+   */
+  <span class="keyword">def</span> <a title="=&gt; String" id="17248">mkString</a>: <span title="String">String</span> =
+    <a href="#17251" title="(b: StringBuilder)StringBuilder">addString</a>(<a href="../mutable/StringBuilder.scala.html#23348" title="()StringBuilder" class="keyword">new</a> <a href="../../package.scala.html#14791" title="StringBuilder">StringBuilder</a>()).<a href="../mutable/StringBuilder.scala.html#23409" title="()String">toString</a>
+
+  /** Write all elements of this traversable into given string builder.
+   *  The written text begins with the string &lt;code&gt;start&lt;/code&gt; and is finished by the string
+   *  &lt;code&gt;end&lt;/code&gt;. Inside, the string representations of elements (w.r.t.
+   *  the method &lt;code&gt;toString()&lt;/code&gt;) are separated by the string
+   *  &lt;code&gt;sep&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="(b: StringBuilder,start: String,sep: String,end: String)StringBuilder" id="17249">addString</a>(<a title="StringBuilder" id="49834">b</a>: <a href="../mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a>, <a title="String" id="49835">start</a>: <span title="String">String</span>, <a title="String" id="49836">sep</a>: <span title="String">String</span>, <a title="String" id="49837">end</a>: <span title="String">String</span>): <a href="../mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a> = {
+    <a href="../mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">b</a> append <a href="#49835" title="String">start</a>
+    <span class="keyword">var</span> <a title="Boolean" id="178903">first</a> = <span title="Boolean(true)" class="keyword">true</span>
+    <span class="keyword">for</span> (<a title="A" id="178913">x</a> &lt;- <a href="#17132" title="(f: (A) =&gt; StringBuilder)Unit" class="keyword">this</a>) {
+      <span title="Any" class="keyword">if</span> (<a href="#178903" title="Boolean">first</a>) <a href="#178903" title="Boolean">first</a> = <span title="Boolean(false)" class="keyword">false</span>
+      <span class="keyword">else</span> <a href="../mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">b</a> append <a href="#49836" title="String">sep</a>
+      <a href="../mutable/StringBuilder.scala.html#23369" title="(x: Any)StringBuilder">b</a> append <a href="#178913" title="A">x</a>
+    }
+    <a href="../mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">b</a> append <a href="#49837" title="String">end</a>
+  }
+
+  /** Write all elements of this string into given string builder.
+   *  The string representations of elements (w.r.t. the method &lt;code&gt;toString()&lt;/code&gt;)
+   *  are separated by the string &lt;code&gt;sep&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="(b: StringBuilder,sep: String)StringBuilder" id="17250">addString</a>(<a title="StringBuilder" id="49831">b</a>: <a href="../mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a>, <a title="String" id="49832">sep</a>: <span title="String">String</span>): <a href="../mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a> = <a href="#17249" title="(b: StringBuilder,start: String,sep: String,end: String)StringBuilder">addString</a>(<a href="#49831" title="StringBuilder">b</a>, <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>, <a href="#49832" title="String">sep</a>, <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+
+  /** Write all elements of this string into given string builder without using
+   *  any separator between consecutive elements.
+   */
+  <span class="keyword">def</span> <a title="(b: StringBuilder)StringBuilder" id="17251">addString</a>(<a title="StringBuilder" id="49829">b</a>: <a href="../mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a>): <a href="../mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a> = <a href="#17250" title="(b: StringBuilder,sep: String)StringBuilder">addString</a>(<a href="#49829" title="StringBuilder">b</a>, <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="17252">toString</a> = <a href="#17246" title="(start: String,sep: String,end: String)String">mkString</a>(<a href="#17253" title="(x$1: Any)java.lang.String" id="6542">stringPrefix</a> + <span title="java.lang.String(&quot;(&quot;)" class="string">&quot;(&quot;</span>, <span title="java.lang.String(&quot;, &quot;)" class="string">&quot;, &quot;</span>, <span title="java.lang.String(&quot;)&quot;)" class="string">&quot;)&quot;</span>)
+
+  /** Defines the prefix of this object's &lt;code&gt;toString&lt;/code&gt; representation.
+   */
+  <span class="keyword">def</span> <a title="=&gt; String" id="17253">stringPrefix</a> : <span title="String">String</span> = {
+    <span class="keyword">var</span> <a title="java.lang.String" id="178957">string</a> = <a href="#17130" title="=&gt; This">thisCollection</a>.<a title="()java.lang.Class[_]" id="3626">getClass</a>.<a title="()java.lang.String" id="4107">getName</a>
+    <span class="keyword">val</span> <a title="Int" id="178958">idx1</a> = <a href="#178957" title="java.lang.String">string</a>.<a title="(x$1: Int)Int" id="6972">lastIndexOf</a>(<span title="Int(46)" class="char">'.'</span> : <span title="Int">Int</span>)
+    <span title="Unit" class="keyword">if</span> (<a href="#178958" title="(x$1: Int)Boolean">idx1</a> != <span title="Int(-1)">-</span><span class="int">1</span>) <a href="#178957" title="java.lang.String">string</a> = <a href="#178957" title="java.lang.String">string</a>.<a title="(x$1: Int)java.lang.String" id="7003">substring</a>(<a href="#178958" title="(x$1: Int)Int">idx1</a> + <span title="Int(1)" class="int">1</span>)
+    <span class="keyword">val</span> <a title="Int" id="178959">idx2</a> = <a href="#178957" title="java.lang.String">string</a>.<a title="(x$1: Int)Int" id="6967">indexOf</a>(<span title="Int(36)" class="char">'$'</span>)
+    <span title="Unit" class="keyword">if</span> (<a href="#178959" title="(x$1: Int)Boolean">idx2</a> != <span title="Int(-1)">-</span><span class="int">1</span>) <a href="#178957" title="java.lang.String">string</a> = <a href="#178957" title="java.lang.String">string</a>.<a title="(x$1: Int,x$2: Int)java.lang.String" id="7005">substring</a>(<span title="Int(0)" class="int">0</span>, <a href="#178959" title="Int">idx2</a>)
+    <a href="#178957" title="java.lang.String">string</a>
+  }
+
+  /** Creates a view of this traversable @see TraversableView
+   */
+  <span class="keyword">def</span> <a title="=&gt; &lt;refinement&gt; extends java.lang.Object with scala.collection.generic.TraversableView[A,This]" id="17254">view</a> = <a href="#49950" title="java.lang.Object with scala.collection.generic.TraversableView[A,This]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with scala.collection.generic.TraversableView[A,This]" id="49950">TraversableView</a>[A, This] {
+    <span class="keyword">protected</span> <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="This" id="49953">underlying</a> = <a href="#10391" title="TraversableTemplate.this.type">self</a>.<a href="#17130" title="=&gt; This">thisCollection</a>
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="[B](f: (A) =&gt; B)Unit" id="49954">foreach</a>[<a title="&gt;: Nothing &lt;: Any" id="49956">B</a>](<a title="(A) =&gt; B" id="49964">f</a>: A =&gt; B) = <a href="#17132" title="(f: (A) =&gt; B)Unit">self</a> foreach <a href="#49964" title="(A) =&gt; B">f</a>
+  }
+
+  /** A sub-traversable  starting at index `from`
+   *  and extending up to (but not including) index `until`.
+   *
+   *  @param from   The index of the first element of the slice
+   *  @param until  The index of the element following the slice
+   *  @note  The difference between `view` and `slice` is that `view` produces
+   *         a view of the current iterable, whereas `slice` produces a new iterable.
+   *
+   *  @note  Might return different results for different runs, unless this iterable is ordered
+   *  @note view(from, to)  is equivalent to view.slice(from, to)
+   */
+  <span class="keyword">def</span> <a title="(from: Int,until: Int)scala.collection.generic.TraversableView[A,This]" id="17255">view</a>(<a title="Int" id="49944">from</a>: <span title="Int">Int</span>, <a title="Int" id="49945">until</a>: <span title="Int">Int</span>): <a href="TraversableView.scala.html#10847" title="scala.collection.generic.TraversableView[A,This]">TraversableView</a>[A, This] = <a href="#17254" title="=&gt; &lt;refinement&gt; extends java.lang.Object with scala.collection.generic.TraversableView[A,This]">view</a>.<a href="TraversableViewTemplate.scala.html#25982" title="(from: Int,until: Int)scala.collection.generic.TraversableView[A,This]">slice</a>(<a href="#49944" title="Int">from</a>, <a href="#49945" title="Int">until</a>)
+}
+
+        </pre>
+    </body>
+</html>

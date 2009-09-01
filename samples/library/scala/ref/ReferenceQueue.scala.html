@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/ref/ReferenceQueue.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2006-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: ReferenceQueue.scala 18377 2009-07-22 17:08:35Z phaller $
+
+<span class="keyword">package</span> scala.ref
+
+<span class="keyword">import</span> scala.collection.mutable.HashMap
+
+/**
+ *  @author Sean McDirmid, Philipp Haller
+ */
+<span class="keyword">class</span> <a title="class ReferenceQueue[+T &lt;: AnyRef] extends java.lang.Object with ScalaObject" id="12861">ReferenceQueue</a>[+<a title="&gt;: Nothing &lt;: AnyRef" id="14917">T</a> &lt;: <a id="1">AnyRef</a>] <a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  <span class="keyword">private</span>[ref] <span class="keyword">val</span> <a title="java.lang.ref.ReferenceQueue[_ &lt;: T]" id="88703">underlying</a>: java.lang.ref.<span title="java.lang.ref.ReferenceQueue[_ &lt;: T]">ReferenceQueue</span>[_ &lt;: T] = <span title="java.lang.ref.ReferenceQueue[T]" class="keyword">new</span> java.lang.ref.<span title="java.lang.ref.ReferenceQueue[T]">ReferenceQueue</span>[T]
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()java.lang.String" id="88705">toString</a> = <a href="#88703" title="=&gt; java.lang.ref.ReferenceQueue[_ &lt;: T]">underlying</a>.<a title="()java.lang.String" id="6517">toString</a>
+
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(jref: java.lang.ref.Reference[_])Option[scala.ref.Reference[T]]" id="88706">Wrapper</a>(<a title="java.lang.ref.Reference[_]" id="167792">jref</a>: java.lang.ref.<a title="java.lang.ref.Reference[_]" id="44415">Reference</a>[_]) = <a href="#167792" title="java.lang.ref.Reference[_]">jref</a> <span title="Option[scala.ref.Reference[T]]" class="keyword">match</span> {
+    <span title="None.type" class="keyword">case</span> <span title="Null(null)" class="keyword">null</span> =&gt; <a href="../Option.scala.html#463" title="object None">None</a>
+    <span title="Some[scala.ref.Reference[T]]" class="keyword">case</span> <a title="java.lang.ref.Reference[_$2]" id="167798">ref</a> =&gt;
+      <span class="keyword">val</span> <a title="scala.ref.ReferenceWrapper[AnyRef]" id="167799">refWrapper</a> = <a href="../collection/generic/MapTemplate.scala.html#35283" title="(key: java.lang.ref.Reference[_])scala.ref.ReferenceWrapper[_ &lt;: AnyRef]">wrappers</a>(<a href="#167798" title="java.lang.ref.Reference[_$2]">ref</a>)
+      <a href="../collection/mutable/HashMap.scala.html#91078" title="(key: java.lang.ref.Reference[_])ReferenceQueue.this.wrappers.type">wrappers</a> -= <a href="#167798" title="java.lang.ref.Reference[_$2]">ref</a>
+      <a href="../Option.scala.html#19800" title="(x: scala.ref.Reference[T])Some[scala.ref.Reference[T]]">Some</a>(<a href="#167799" title="scala.ref.ReferenceWrapper[AnyRef]">refWrapper</a>.<a title="[T0]T0" id="3621">asInstanceOf</a><span title="scala.ref.Reference[T]">[</span><a href="Reference.scala.html#12876" title="scala.ref.Reference[T]">Reference</a>[T]])
+  }
+
+  <span class="keyword">def</span> <a title="=&gt; Option[scala.ref.Reference[T]]" id="88707">poll</a>: <a href="../Option.scala.html#777" title="Option[scala.ref.Reference[T]]">Option</a>[Reference[T]] = <a href="#88706" title="(jref: java.lang.ref.Reference[_])Option[scala.ref.Reference[T]]">Wrapper</a>(<a href="#88703" title="=&gt; java.lang.ref.ReferenceQueue[_ &lt;: T]">underlying</a>.<a title="()java.lang.ref.Reference[_ &lt;: T]" id="45007">poll</a>)
+  <span class="keyword">def</span> <a title="=&gt; Option[scala.ref.Reference[T]]" id="88708">remove</a>: <a href="../Option.scala.html#777" title="Option[scala.ref.Reference[T]]">Option</a>[Reference[T]] = <a href="#88706" title="(jref: java.lang.ref.Reference[_])Option[scala.ref.Reference[T]]">Wrapper</a>(<a href="#88703" title="=&gt; java.lang.ref.ReferenceQueue[_ &lt;: T]">underlying</a>.<a title="()java.lang.ref.Reference[_ &lt;: T]" id="45015">remove</a>)
+  <span class="keyword">def</span> <a title="(timeout: Long)Option[scala.ref.Reference[T]]" id="88709">remove</a>(<a title="Long" id="167933">timeout</a>: <a title="Long" id="2182">Long</a>): <a href="../Option.scala.html#777" title="Option[scala.ref.Reference[T]]">Option</a>[Reference[T]] = <a href="#88706" title="(jref: java.lang.ref.Reference[_])Option[scala.ref.Reference[T]]">Wrapper</a>(<a href="#88703" title="=&gt; java.lang.ref.ReferenceQueue[_ &lt;: T]">underlying</a>.<a title="(x$1: Long)java.lang.ref.Reference[_ &lt;: T]" id="45010">remove</a>(<a href="#167933" title="Long">timeout</a>))
+
+  <span class="keyword">protected</span> <span class="keyword">val</span> <a title="scala.collection.mutable.HashMap[java.lang.ref.Reference[_],scala.ref.ReferenceWrapper[_ &lt;: AnyRef]]" id="88710">wrappers</a> = <span title="scala.collection.mutable.HashMap[java.lang.ref.Reference[_],scala.ref.ReferenceWrapper[_ &lt;: AnyRef]]" class="keyword">new</span> <a href="../collection/mutable/HashMap.scala.html#7755" title="scala.collection.mutable.HashMap[java.lang.ref.Reference[_],scala.ref.ReferenceWrapper[_ &lt;: AnyRef]]">HashMap</a>[java.lang.ref.Reference[_],
+                                       ReferenceWrapper[_ &lt;: AnyRef]]
+  <span class="keyword">def</span> <a title="(ref: scala.ref.ReferenceWrapper[_ &lt;: AnyRef])Unit" id="88712">register</a>(<a title="scala.ref.ReferenceWrapper[_ &lt;: AnyRef]" id="88790">ref</a>: <a href="ReferenceWrapper.scala.html#12867" title="scala.ref.ReferenceWrapper[_ &lt;: AnyRef]">ReferenceWrapper</a>[_ &lt;: AnyRef]) {
+    <a href="../collection/mutable/HashMap.scala.html#91077" title="(kv: (java.lang.ref.Reference[_], scala.ref.ReferenceWrapper[_ &lt;: AnyRef]))ReferenceQueue.this.wrappers.type">wrappers</a> <span title="Unit">+=</span> (<a href="../Tuple2.scala.html#20670" title="(_1: java.lang.ref.Reference[_$1],_2: scala.ref.ReferenceWrapper[_$5])(java.lang.ref.Reference[_$1], scala.ref.ReferenceWrapper[_$5])">(</a><a href="#88790" title="scala.ref.ReferenceWrapper[_ &lt;: AnyRef]">ref</a>.<a href="ReferenceWrapper.scala.html#88667" title="=&gt; java.lang.ref.Reference[_ &lt;: AnyRef]">underlying</a>, <a href="#88790" title="scala.ref.ReferenceWrapper[_ &lt;: AnyRef]">ref</a>))
+  }
+}
+
+        </pre>
+    </body>
+</html>

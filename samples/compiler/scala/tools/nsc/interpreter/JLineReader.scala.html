@@ -1,55 +1,58 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
         <title>scala/tools/nsc/interpreter/JLineReader.scala</title>
+        <script type="text/javascript" src="../../../../jquery-all.js"></script>
         <script type="text/javascript" src="../../../../linked.js"></script>
         <link rel="stylesheet" type="text/css" href="../../../../style.css" title="Style">
     </head>
-    <body onload="initializeLinked()">
+    <body>
         <pre>
-<span class="comment">/* NSC -- new Scala compiler
+/* NSC -- new Scala compiler
  * Copyright 2005-2009 LAMP/EPFL
  * @author Stepan Koltsov
- */</span>
-<span class="comment">// $Id: JLineReader.scala 17460 2009-04-08 13:21:43Z extempore $</span>
+ */
+// $Id: JLineReader.scala 18387 2009-07-24 15:28:37Z odersky $
 
-<span class="keyword">package</span> scala.tools.nsc.interpreter
+<span class="keyword">package</span> scala.tools.nsc
+<span class="keyword">package</span> interpreter
 
 <span class="keyword">import</span> java.io.File
 <span class="keyword">import</span> jline.{ History, ConsoleReader, ArgumentCompletor }
 
-<span class="comment">/** Reads from the console using JLine */</span>
-<span class="keyword">class</span> <span class="typed"><span class="type">class JLineReader extends java.lang.Object with scala.tools.nsc.interpreter.InteractiveReader with ScalaObject</span><a id="17666">JLineReader</a></span>(<span class="typed"><span class="type">scala.tools.nsc.Interpreter</span><span id="75139"><a id="75901">interpreter</a></span></span>: <span class="typed"><span class="type">scala.tools.nsc.Interpreter</span><a href="../Interpreter.scala.html#6405">Interpreter</a></span>) <span class="keyword">extends</span> <span class="typed"><span class="type">scala.tools.nsc.interpreter.InteractiveReader</span><a href="InteractiveReader.scala.html#17669">InteractiveReader</a></span> {
-  <span class="keyword">def</span> <span class="typed"><span class="type">()scala.tools.nsc.interpreter.JLineReader</span><a id="75141" class="keyword">this</a></span>() = <span class="typed"><span class="type">JLineReader.this.type</span><a href="#17666" class="keyword">this</a></span>(<span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>)
-  <span class="keyword">val</span> <span class="typed"><span class="type">jline.ConsoleReader</span><span id="75143"><a id="75142">consoleReader</a></span></span> = {
-    <span class="keyword">val</span> <span class="typed"><span class="type">jline.History</span><a id="75149">history</a></span> = <span class="keyword">try</span> {
-      <span class="typed"><span class="type">(java.io.File)jline.History</span><a id="75152" class="keyword">new</a></span> jline.<span class="typed"><span class="type">jline.History</span><a id="75092">History</a></span>(<span class="typed"><span class="type">(java.lang.String,java.lang.String)java.io.File</span><a id="40681" class="keyword">new</a></span> <span class="typed"><span class="type">java.io.File</span><a id="3669">File</a></span>(<span class="typed"><span class="type">object java.lang.System</span><a id="1886">System</a></span>.<span class="typed"><span class="type">(java.lang.String)java.lang.String</span><a id="47450">getProperty</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;user.home&quot;)</span><span class="string">&quot;user.home&quot;</span></span>), <span class="typed"><span class="type">java.lang.String(&quot;.scala_history&quot;)</span><span class="string">&quot;.scala_history&quot;</span></span>))
+/** Reads from the console using JLine */
+<span class="keyword">class</span> <a title="class JLineReader extends java.lang.Object with scala.tools.nsc.interpreter.InteractiveReader with ScalaObject" id="22147">JLineReader</a><a title="ScalaObject" id="959">(</a><a title="scala.tools.nsc.Interpreter" id="591712">interpreter</a>: <a href="../Interpreter.scala.html#8370" title="scala.tools.nsc.Interpreter">Interpreter</a>) <span class="keyword">extends</span> <a href="InteractiveReader.scala.html#22132" title="scala.tools.nsc.interpreter.InteractiveReader">InteractiveReader</a> {
+  <span class="keyword">def</span> <a title="()scala.tools.nsc.interpreter.JLineReader" id="591206" class="keyword">this</a>() = <a href="#22147" title="JLineReader.this.type" class="keyword">this</a>(<span title="Null(null)" class="keyword">null</span>)
+  <span class="keyword">val</span> <a title="jline.ConsoleReader" id="591207">consoleReader</a> = {
+    <span class="keyword">val</span> <a title="jline.History" id="591214">history</a> = <span class="keyword">try</span> {
+      <a title="(x$1: java.io.File)jline.History" id="591217" class="keyword">new</a> jline.<span title="jline.History">History</span>(<a title="(x$1: java.lang.String,x$2: java.lang.String)java.io.File" id="35171" class="keyword">new</a> <a title="java.io.File" id="3807">File</a>(<a title="object java.lang.System" id="1630">System</a>.<a title="(x$1: java.lang.String)java.lang.String" id="65055">getProperty</a>(<span title="java.lang.String(&quot;user.home&quot;)" class="string">&quot;user.home&quot;</span>), <span title="java.lang.String(&quot;.scala_history&quot;)" class="string">&quot;.scala_history&quot;</span>))
     } <span class="keyword">catch</span> {
-      <span class="comment">// do not store history if error</span>
-      <span class="typed"><span class="type">jline.History</span><span class="keyword">case</span></span> _ =&gt; <span class="typed"><span class="type">jline.History</span><span class="keyword">new</span></span> jline.<span class="typed"><span class="type">jline.History</span><a id="75092">History</a></span>()
+      // do not store history if error
+      <span title="jline.History" class="keyword">case</span> _ =&gt; <span title="jline.History" class="keyword">new</span> jline.<span title="jline.History">History</span>()
     }
-    <span class="keyword">val</span> <span class="typed"><span class="type">jline.ConsoleReader</span><a id="75150">r</a></span> = <span class="typed"><span class="type">jline.ConsoleReader</span><span class="keyword">new</span></span> jline.<span class="typed"><span class="type">jline.ConsoleReader</span><a id="75077">ConsoleReader</a></span>()
-    <span class="typed"><span class="type">jline.ConsoleReader</span><a href="#75150">r</a></span> <span class="typed"><span class="type">(jline.History)Unit</span><a id="75253">setHistory</a></span> <span class="typed"><span class="type">jline.History</span><a href="#75149">history</a></span>
-    <span class="typed"><span class="type">jline.ConsoleReader</span><a href="#75150">r</a></span> <span class="typed"><span class="type">(Boolean)Unit</span><a id="75214">setBellEnabled</a></span> <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+    <span class="keyword">val</span> <a title="jline.ConsoleReader" id="591215">r</a> = <span title="jline.ConsoleReader" class="keyword">new</span> jline.<a title="jline.ConsoleReader" id="126023">ConsoleReader</a>()
+    <a href="#591215" title="(x$1: jline.History)Unit" id="591382">r</a> setHistory <a href="#591214" title="jline.History">history</a>
+    <a href="#591215" title="(x$1: Boolean)Unit" id="591319">r</a> setBellEnabled <span title="Boolean(false)" class="keyword">false</span>
     
-    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">scala.tools.nsc.Interpreter</span><a href="#75139">interpreter</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5793">!=</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) {
-      <span class="comment">// have to specify all delimiters for completion to work nicely</span>
-      <span class="keyword">val</span> <span class="typed"><span class="type">&lt;refinement&gt; extends jline.ArgumentCompletor.AbstractArgumentDelimiter</span><a id="75451">delims</a></span> = <span class="typed"><span class="type">template $anon extends jline.ArgumentCompletor.AbstractArgumentDelimiter</span><a id="75453" class="keyword">new</a></span> <span class="typed"><span class="type">object jline.ArgumentCompletor</span><a id="75120">ArgumentCompletor</a></span>.<span class="typed"><span class="type">jline.ArgumentCompletor.AbstractArgumentDelimiter</span><a id="75454">AbstractArgumentDelimiter</a></span> {
-        <span class="keyword">val</span> <span class="typed"><span class="type">Array[Char]</span><span id="75489"><a id="75488">delimChars</a></span></span> = <span class="typed"><span class="type">implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString</span><span id="6140"><a id="821" class="string">&quot;(){}[],`;'\&quot; \t&quot;</a></span></span>.<span class="typed"><span class="type">=&gt; Array[Char]</span><a id="23118">toArray</a></span>
-        <span class="keyword">def</span> <span class="typed"><span class="type">(String,Int)Boolean</span><a id="75490">isDelimiterChar</a></span>(<span class="typed"><span class="type">String</span><a id="75518">s</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>, <span class="typed"><span class="type">Int</span><a id="75519">pos</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>) = <span class="typed"><span class="type">=&gt; Array[Char]</span><a href="#75488">delimChars</a></span> <span class="typed"><span class="type">(Any)Boolean</span><a id="21673">contains</a></span> <span class="typed"><span class="type">String</span><a href="#75518">s</a></span>.<span class="typed"><span class="type">(Int)Char</span><a id="5822">charAt</a></span>(<span class="typed"><span class="type">Int</span><a href="#75519">pos</a></span>)
+    <span title="Unit" class="keyword">if</span> (<a href="#591712" title="(x$1: AnyRef)Boolean" id="6540">interpreter</a> != <span title="Null(null)" class="keyword">null</span>) {
+      // have to specify all delimiters for completion to work nicely
+      <span class="keyword">val</span> <a title="&lt;refinement&gt; extends jline.ArgumentCompletor.AbstractArgumentDelimiter" id="591503">delims</a> = <a href="#126066" title="jline.ArgumentCompletor.AbstractArgumentDelimiter{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends jline.ArgumentCompletor.AbstractArgumentDelimiter" id="126066">ArgumentCompletor</a>.<a title="jline.ArgumentCompletor.AbstractArgumentDelimiter" id="591512">AbstractArgumentDelimiter</a> {
+        <span class="keyword">val</span> <a title="Array[Char]" id="591569">delimChars</a> = <a title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" id="693" class="string">&quot;(){}[],`;'\&quot; \t&quot;</a>.<a title="(implicit evidence$1: scala.reflect.ClassManifest[Char])Array[Char]" id="27603">toArray</a>
+        <span class="keyword">def</span> <a title="(s: String,pos: Int)Boolean" id="591571">isDelimiterChar</a>(<a title="String" id="591608">s</a>: <span title="String">String</span>, <a title="Int" id="591609">pos</a>: <a title="Int" id="2177">Int</a>) = <a href="#591569" title="(elem: Any)Boolean" id="25609">delimChars</a> contains <a href="#591608" title="String">s</a>.<a title="(x$1: Int)Char" id="6917">charAt</a>(<a href="#591609" title="Int">pos</a>)
       }
-      <span class="keyword">val</span> <span class="typed"><span class="type">jline.ArgumentCompletor</span><a id="75452">comp</a></span> = <span class="typed"><span class="type">(jline.Completor,jline.ArgumentCompletor.ArgumentDelimiter)jline.ArgumentCompletor</span><a id="75472" class="keyword">new</a></span> <span class="typed"><span class="type">jline.ArgumentCompletor</span><a id="75119">ArgumentCompletor</a></span>(<span class="typed"><span class="type">scala.tools.nsc.interpreter.Completion</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.tools.nsc.interpreter.Completion</span><a href="Completion.scala.html#17675">Completion</a></span>(<span class="typed"><span class="type">scala.tools.nsc.Interpreter</span><a href="#75139">interpreter</a></span>), <span class="typed"><span class="type">&lt;refinement&gt; extends jline.ArgumentCompletor.AbstractArgumentDelimiter</span><a href="#75451">delims</a></span>)
-      <span class="typed"><span class="type">jline.ArgumentCompletor</span><a href="#75452">comp</a></span> <span class="typed"><span class="type">(Boolean)Unit</span><a id="75474">setStrict</a></span> <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
-      <span class="typed"><span class="type">jline.ConsoleReader</span><a href="#75150">r</a></span> <span class="typed"><span class="type">(jline.Completor)Boolean</span><a id="75235">addCompletor</a></span> <span class="typed"><span class="type">jline.ArgumentCompletor</span><a href="#75452">comp</a></span>
-      <span class="comment">// XXX make this use a setting</span>
-      <span class="typed"><span class="type">jline.ConsoleReader</span><a href="#75150">r</a></span> <span class="typed"><span class="type">(Int)Unit</span><a id="75218">setAutoprintThreshhold</a></span> <span class="typed"><span class="type">Int(250)</span><span class="int">250</span></span>
+      <span class="keyword">val</span> <a title="jline.ArgumentCompletor" id="591504">comp</a> = <a title="(x$1: jline.Completor,x$2: jline.ArgumentCompletor.ArgumentDelimiter)jline.ArgumentCompletor" id="591529" class="keyword">new</a> <a title="jline.ArgumentCompletor" id="126065">ArgumentCompletor</a>(<span title="scala.tools.nsc.interpreter.Completion" class="keyword">new</span> <a href="Completion.scala.html#22210" title="scala.tools.nsc.interpreter.Completion">Completion</a>(<a href="#591712" title="scala.tools.nsc.Interpreter">interpreter</a>), <a href="#591503" title="&lt;refinement&gt; extends jline.ArgumentCompletor.AbstractArgumentDelimiter">delims</a>)
+      <a href="#591504" title="(x$1: Boolean)Unit" id="591535">comp</a> setStrict <span title="Boolean(false)" class="keyword">false</span>
+      <a href="#591215" title="(x$1: jline.Completor)Boolean" id="591351">r</a> addCompletor <a href="#591504" title="jline.ArgumentCompletor">comp</a>
+      // XXX make this use a setting
+      <a href="#591215" title="(x$1: Int)Unit" id="591324">r</a> setAutoprintThreshhold <span title="Int(250)" class="int">250</span>
     }
        
-    <span class="typed"><span class="type">jline.ConsoleReader</span><a href="#75150">r</a></span>
+    <a href="#591215" title="jline.ConsoleReader">r</a>
   }
   
-  <span class="keyword">def</span> <span class="typed"><span class="type">(String)java.lang.String</span><a id="75144">readOneLine</a></span>(<span class="typed"><span class="type">String</span><a id="75907">prompt</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>) = <span class="typed"><span class="type">=&gt; jline.ConsoleReader</span><a href="#75142">consoleReader</a></span> <span class="typed"><span class="type">(java.lang.String)java.lang.String</span><a id="75225">readLine</a></span> <span class="typed"><span class="type">String</span><a href="#75907">prompt</a></span>
-  <span class="keyword">val</span> <span class="typed"><span class="type">Boolean</span><span id="75146"><a id="75145">interactive</a></span></span> = <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+  <span class="keyword">def</span> <a title="(prompt: String)java.lang.String" id="591209">readOneLine</a>(<a title="String" id="591724">prompt</a>: <span title="String">String</span>) = <a href="#591207" title="(x$1: java.lang.String)java.lang.String" id="591336">consoleReader</a> readLine <a href="#591724" title="String">prompt</a>
+  <span class="keyword">val</span> <a title="Boolean" id="591210">interactive</a> = <span title="Boolean(true)" class="keyword">true</span>
 }
 
 

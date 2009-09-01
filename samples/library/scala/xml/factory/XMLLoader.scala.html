@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/xml/factory/XMLLoader.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |                                         **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id$
+
+<span class="keyword">package</span> scala.xml
+<span class="keyword">package</span> factory
+
+<span class="keyword">import</span> parsing.{ FactoryAdapter, NoBindingFactoryAdapter }
+<span class="keyword">import</span> org.xml.sax.InputSource
+<span class="keyword">import</span> java.io.{ InputStream, Reader, StringReader, File, FileDescriptor, FileInputStream }
+<span class="keyword">import</span> javax.xml.parsers.{ SAXParser, SAXParserFactory }
+
+/** Presents collection of XML loading methods which use the parser
+ *  created by &quot;def parser&quot;.
+ */ 
+<span class="keyword">trait</span> <a title="trait XMLLoader[T &lt;: scala.xml.Node] extends java.lang.Object with ScalaObject" id="15299">XMLLoader</a>[<a title="&gt;: Nothing &lt;: scala.xml.Node" id="16555">T</a> &lt;: <a id="1">Node</a>]
+<a href="../../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  <span class="keyword">import</span> scala.xml.Source._
+  <span class="keyword">def</span> <a title="=&gt; scala.xml.parsing.FactoryAdapter" id="47018">adapter</a>: <a href="../parsing/FactoryAdapter.scala.html#12134" title="scala.xml.parsing.FactoryAdapter">FactoryAdapter</a> = <span title="scala.xml.parsing.NoBindingFactoryAdapter" class="keyword">new</span> <a href="../parsing/NoBindingFactoryAdapter.scala.html#12104" title="scala.xml.parsing.NoBindingFactoryAdapter">NoBindingFactoryAdapter</a>()
+  
+  /* Override this to use a different SAXParser. */
+  <span class="keyword">def</span> <a title="=&gt; javax.xml.parsers.SAXParser" id="47019">parser</a>: <span title="javax.xml.parsers.SAXParser">SAXParser</span> = {
+    <span class="keyword">val</span> <a title="javax.xml.parsers.SAXParserFactory" id="244941">f</a> = <a title="object javax.xml.parsers.SAXParserFactory" id="46863">SAXParserFactory</a>.<a title="()javax.xml.parsers.SAXParserFactory" id="244943">newInstance</a>()
+    <a href="#244941" title="javax.xml.parsers.SAXParserFactory">f</a>.<a title="(x$1: Boolean)Unit" id="244948">setNamespaceAware</a>(<span title="Boolean(false)" class="keyword">false</span>)
+    <a href="#244941" title="javax.xml.parsers.SAXParserFactory">f</a>.<a title="()javax.xml.parsers.SAXParser" id="244947">newSAXParser</a>()
+  }
+  
+  /** Loads XML from the given InputSource, using the supplied parser.
+   *  The methods available in scala.xml.XML use the XML parser in the JDK.
+   */
+  <span class="keyword">def</span> <a title="(source: org.xml.sax.InputSource,parser: javax.xml.parsers.SAXParser)T" id="47020">loadXML</a>(<a title="org.xml.sax.InputSource" id="244973">source</a>: <span title="org.xml.sax.InputSource">InputSource</span>, <a title="javax.xml.parsers.SAXParser" id="244974">parser</a>: <span title="javax.xml.parsers.SAXParser">SAXParser</span>): <a href="#16555" title="T">T</a> = {
+    <span class="keyword">val</span> <a title="scala.xml.parsing.FactoryAdapter" id="244976">newAdapter</a> = <a href="#47018" title="=&gt; scala.xml.parsing.FactoryAdapter">adapter</a>
+    <span class="keyword">import</span> newAdapter._
+    
+    <a href="../../collection/mutable/Stack.scala.html#17091" title="(elem: scala.xml.NamespaceBinding)scala.collection.mutable.Stack[scala.xml.NamespaceBinding]">scopeStack</a> push <a href="../TopScope.scala.html#8562" title="object scala.xml.TopScope">TopScope</a>
+    <a href="#244974" title="javax.xml.parsers.SAXParser">parser</a>.<a title="(x$1: org.xml.sax.InputSource,x$2: org.xml.sax.helpers.DefaultHandler)Unit" id="47085">parse</a>(<a href="#244973" title="org.xml.sax.InputSource">source</a>, <a href="#244976" title="scala.xml.parsing.FactoryAdapter">newAdapter</a>)
+    <a href="../parsing/FactoryAdapter.scala.html#242675" title="=&gt; scala.collection.mutable.Stack[scala.xml.NamespaceBinding]">scopeStack</a>.<a href="../../collection/mutable/Stack.scala.html#17098" title="()scala.xml.NamespaceBinding">pop</a>
+    
+    <a href="../parsing/FactoryAdapter.scala.html#242664" title="=&gt; scala.xml.Node">rootElem</a>.<a title="[T0]T0" id="3621">asInstanceOf</a><span title="T">[</span><a href="#16555" title="T">T</a>]
+  }
+
+  /** Loads XML from the given file, file descriptor, or filename. */
+  <span class="keyword">def</span> <a title="(file: java.io.File)T" id="47021">loadFile</a>(<a title="java.io.File" id="245060">file</a>: <a title="java.io.File" id="3805">File</a>): <a href="#16555" title="T">T</a>          = <a href="#47020" title="(source: org.xml.sax.InputSource,parser: javax.xml.parsers.SAXParser)T">loadXML</a>(<a href="../XML.scala.html#46866" title="(file: java.io.File)org.xml.sax.InputSource">fromFile</a>(<a href="#245060" title="java.io.File">file</a>), <a href="#47019" title="=&gt; javax.xml.parsers.SAXParser">parser</a>)
+  <span class="keyword">def</span> <a title="(fd: java.io.FileDescriptor)T" id="47022">loadFile</a>(<a title="java.io.FileDescriptor" id="245070">fd</a>: <a title="java.io.FileDescriptor" id="3895">FileDescriptor</a>): <a href="#16555" title="T">T</a>  = <a href="#47020" title="(source: org.xml.sax.InputSource,parser: javax.xml.parsers.SAXParser)T">loadXML</a>(<a href="../XML.scala.html#46867" title="(fd: java.io.FileDescriptor)org.xml.sax.InputSource">fromFile</a>(<a href="#245070" title="java.io.FileDescriptor">fd</a>), <a href="#47019" title="=&gt; javax.xml.parsers.SAXParser">parser</a>)
+  <span class="keyword">def</span> <a title="(name: String)T" id="47023">loadFile</a>(<a title="String" id="245080">name</a>: <span title="String">String</span>): <a href="#16555" title="T">T</a>        = <a href="#47020" title="(source: org.xml.sax.InputSource,parser: javax.xml.parsers.SAXParser)T">loadXML</a>(<a href="../XML.scala.html#46868" title="(name: String)org.xml.sax.InputSource">fromFile</a>(<a href="#245080" title="String">name</a>), <a href="#47019" title="=&gt; javax.xml.parsers.SAXParser">parser</a>)
+  
+  /** loads XML from given InputStream, Reader, sysID, or InputSource. */
+  <span class="keyword">def</span> <a title="(is: java.io.InputStream)T" id="47024">load</a>(<a title="java.io.InputStream" id="245090">is</a>: <a title="java.io.InputStream" id="3892">InputStream</a>): <a href="#16555" title="T">T</a>         = <a href="#47020" title="(source: org.xml.sax.InputSource,parser: javax.xml.parsers.SAXParser)T">loadXML</a>(<a href="../XML.scala.html#46869" title="(is: java.io.InputStream)org.xml.sax.InputSource">fromInputStream</a>(<a href="#245090" title="java.io.InputStream">is</a>), <a href="#47019" title="=&gt; javax.xml.parsers.SAXParser">parser</a>)
+  <span class="keyword">def</span> <a title="(reader: java.io.Reader)T" id="47025">load</a>(<a title="java.io.Reader" id="245096">reader</a>: <a title="java.io.Reader" id="3676">Reader</a>): <a href="#16555" title="T">T</a>          = <a href="#47020" title="(source: org.xml.sax.InputSource,parser: javax.xml.parsers.SAXParser)T">loadXML</a>(<a href="../XML.scala.html#46870" title="(reader: java.io.Reader)org.xml.sax.InputSource">fromReader</a>(<a href="#245096" title="java.io.Reader">reader</a>), <a href="#47019" title="=&gt; javax.xml.parsers.SAXParser">parser</a>)
+  <span class="keyword">def</span> <a title="(sysID: String)T" id="47026">load</a>(<a title="String" id="245102">sysID</a>: <span title="String">String</span>): <a href="#16555" title="T">T</a>           = <a href="#47020" title="(source: org.xml.sax.InputSource,parser: javax.xml.parsers.SAXParser)T">loadXML</a>(<a href="../XML.scala.html#46871" title="(sysID: String)org.xml.sax.InputSource">fromSysId</a>(<a href="#245102" title="String">sysID</a>), <a href="#47019" title="=&gt; javax.xml.parsers.SAXParser">parser</a>)
+  <span class="keyword">def</span> <a title="(source: org.xml.sax.InputSource)T" id="47027">load</a>(<a title="org.xml.sax.InputSource" id="245108">source</a>: <span title="org.xml.sax.InputSource">InputSource</span>): <a href="#16555" title="T">T</a>     = <a href="#47020" title="(source: org.xml.sax.InputSource,parser: javax.xml.parsers.SAXParser)T">loadXML</a>(<a href="#245108" title="org.xml.sax.InputSource">source</a>, <a href="#47019" title="=&gt; javax.xml.parsers.SAXParser">parser</a>)
+  
+  /** Loads XML from the given String. */
+  <span class="keyword">def</span> <a title="(string: String)T" id="47028">loadString</a>(<a title="String" id="245112">string</a>: <span title="String">String</span>): <a href="#16555" title="T">T</a>    = <a href="#47020" title="(source: org.xml.sax.InputSource,parser: javax.xml.parsers.SAXParser)T">loadXML</a>(<a href="../XML.scala.html#46872" title="(string: String)org.xml.sax.InputSource">fromString</a>(<a href="#245112" title="String">string</a>), <a href="#47019" title="=&gt; javax.xml.parsers.SAXParser">parser</a>)
+}
+
+        </pre>
+    </body>
+</html>

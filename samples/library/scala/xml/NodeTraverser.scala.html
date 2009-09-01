@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/xml/NodeTraverser.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: NodeTraverser.scala 16893 2009-01-13 13:09:22Z cunei $
+
+
+<span class="keyword">package</span> scala.xml
+
+/** This class ...
+ *
+ *  @author  Burak Emir
+ *  @version 1.0
+ */
+<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class NodeTraverser extends scala.xml.parsing.MarkupHandler with ScalaObject" id="8798">NodeTraverser</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> parsing.<a href="parsing/MarkupHandler.scala.html#12125" title="scala.xml.parsing.MarkupHandler">MarkupHandler</a> {
+
+  <span class="keyword">def</span> <a title="(n: scala.xml.Node)Unit" id="252461">traverse</a>(<a title="scala.xml.Node" id="252465">n</a>: <a href="Node.scala.html#8654" title="scala.xml.Node">Node</a>): <a title="Unit" id="1948">Unit</a> = <a href="#252465" title="scala.xml.Node">n</a> <span title="Unit" class="keyword">match</span> {
+    <span title="Unit" class="keyword">case</span> <a title="scala.xml.ProcInstr" id="252467">x</a>:<a href="ProcInstr.scala.html#8732" title="scala.xml.ProcInstr">ProcInstr</a> =&gt;
+      <a href="parsing/MarkupHandler.scala.html#50196" title="(pos: Int,target: String,txt: String)scala.xml.NodeSeq">procInstr</a><span title="Unit">(</span><span title="Int(0)" class="int">0</span>, <a href="#252467" title="scala.xml.ProcInstr">x</a>.<a href="ProcInstr.scala.html#50290" title="=&gt; String">target</a>, <a href="#252467" title="scala.xml.ProcInstr">x</a>.<a href="ProcInstr.scala.html#50300" title="=&gt; java.lang.String">text</a>)
+    <span title="Unit" class="keyword">case</span> <a title="scala.xml.Comment" id="252470">x</a>:<a href="Comment.scala.html#8408" title="scala.xml.Comment">Comment</a> =&gt;
+      <a href="parsing/MarkupHandler.scala.html#50197" title="(pos: Int,comment: String)scala.xml.NodeSeq">comment</a><span title="Unit">(</span><span title="Int(0)" class="int">0</span>, <a href="#252470" title="scala.xml.Comment">x</a>.<a href="Comment.scala.html#50337" title="=&gt; java.lang.String">text</a>)
+    <span title="Unit" class="keyword">case</span> <a title="scala.xml.Text" id="252473">x</a>:<a href="Text.scala.html#8633" title="scala.xml.Text">Text</a> =&gt;
+      <a href="parsing/MarkupHandler.scala.html#50199" title="(pos: Int,txt: String)scala.xml.NodeSeq">text</a><span title="Unit">(</span><span title="Int(0)" class="int">0</span>, <a href="#252473" title="scala.xml.Text">x</a>.<a href="Atom.scala.html#26459" title="=&gt; String">data</a>)
+    <span title="Unit" class="keyword">case</span> <a title="scala.xml.EntityRef" id="252476">x</a>:<a href="EntityRef.scala.html#8495" title="scala.xml.EntityRef">EntityRef</a> =&gt;
+      <a href="parsing/MarkupHandler.scala.html#50198" title="(pos: Int,n: String)scala.xml.NodeSeq">entityRef</a><span title="Unit">(</span><span title="Int(0)" class="int">0</span>, <a href="#252476" title="scala.xml.EntityRef">x</a>.<a href="EntityRef.scala.html#50362" title="=&gt; String">entityName</a>)
+    <span title="Unit" class="keyword">case</span> _ =&gt;
+      <a href="parsing/MarkupHandler.scala.html#50193" title="(pos: Int,pre: String,label: String,attrs: scala.xml.MetaData,scope: scala.xml.NamespaceBinding)Unit">elemStart</a>(<span title="Int(0)" class="int">0</span>, <a href="#252465" title="scala.xml.Node">n</a>.<a href="Node.scala.html#20991" title="=&gt; String">prefix</a>, <a href="#252465" title="scala.xml.Node">n</a>.<a href="Node.scala.html#20992" title="=&gt; String">label</a>, <a href="#252465" title="scala.xml.Node">n</a>.<a href="Node.scala.html#21001" title="=&gt; scala.xml.MetaData">attributes</a>, <a href="#252465" title="scala.xml.Node">n</a>.<a href="Node.scala.html#20996" title="=&gt; scala.xml.NamespaceBinding">scope</a>)
+      <span class="keyword">for</span> (<a title="scala.xml.Node" id="252492">m</a> &lt;- <a href="#252465" title="scala.xml.Node">n</a>.<a href="../collection/generic/IterableTemplate.scala.html#17287" title="(f: (scala.xml.Node) =&gt; Unit)Unit">child</a>) <a href="#252461" title="(n: scala.xml.Node)Unit">traverse</a>(<a href="#252492" title="scala.xml.Node">m</a>)
+      <a href="parsing/MarkupHandler.scala.html#50195" title="(pos: Int,pre: String,label: String,attrs: scala.xml.MetaData,scope: scala.xml.NamespaceBinding,args: scala.xml.NodeSeq)scala.xml.NodeSeq">elem</a>(<span title="Int(0)" class="int">0</span>, <a href="#252465" title="scala.xml.Node">n</a>.<a href="Node.scala.html#20991" title="=&gt; String">prefix</a>, <a href="#252465" title="scala.xml.Node">n</a>.<a href="Node.scala.html#20992" title="=&gt; String">label</a>, <a href="#252465" title="scala.xml.Node">n</a>.<a href="Node.scala.html#21001" title="=&gt; scala.xml.MetaData">attributes</a>, <a href="#252465" title="scala.xml.Node">n</a>.<a href="Node.scala.html#20996" title="=&gt; scala.xml.NamespaceBinding">scope</a>, <a href="NodeSeq.scala.html#8523" title="object scala.xml.NodeSeq">NodeSeq</a>.<a href="NodeSeq.scala.html#26526" title="(s: Seq[scala.xml.Node])scala.xml.NodeSeq">fromSeq</a>(<a href="#252465" title="scala.xml.Node">n</a>.<a href="Node.scala.html#21002" title="=&gt; Seq[scala.xml.Node]">child</a>))
+      <a href="parsing/MarkupHandler.scala.html#50194" title="(pos: Int,pre: String,label: String)Unit">elemEnd</a>(<span title="Int(0)" class="int">0</span>, <a href="#252465" title="scala.xml.Node">n</a>.<a href="Node.scala.html#20991" title="=&gt; String">prefix</a>, <a href="#252465" title="scala.xml.Node">n</a>.<a href="Node.scala.html#20992" title="=&gt; String">label</a>)
+  }
+
+}
+
+        </pre>
+    </body>
+</html>

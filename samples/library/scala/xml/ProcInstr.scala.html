@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/xml/ProcInstr.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: ProcInstr.scala 18210 2009-07-05 14:46:37Z extempore $
+
+
+<span class="keyword">package</span> scala.xml
+
+/** an XML node for processing instructions (PI)
+ *
+ * @author Burak Emir
+ * @param  target target name of this PI
+ * @param  text   text contained in this node, may not contain &quot;?&gt;&quot;
+ */
+case <span class="keyword">class</span> <a title="class ProcInstr extends scala.xml.SpecialNode with ScalaObject with Product" id="50287">ProcInstr</a><a href="../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="String" id="50304">target</a>:<span title="String">String</span>, <a title="String" id="50305">proctext</a>:<span title="String">String</span>) <span class="keyword">extends</span> <a href="SpecialNode.scala.html#8711" title="scala.xml.SpecialNode">SpecialNode</a>
+{  
+
+  <span title="Unit" class="keyword">if</span> (<a title="=&gt; Boolean" id="2203">!</a><a href="Utility.scala.html#8724" title="object scala.xml.Utility">Utility</a>.<a href="parsing/TokenTests.scala.html#26604" title="(s: String)Boolean">isName</a>(<a href="#50304" title="=&gt; String">target</a>))
+    <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.IllegalArgumentException" class="keyword">new</span> <a href="../Predef.scala.html#16170" title="java.lang.IllegalArgumentException">IllegalArgumentException</a>(<a href="#50304" title="(x$1: Any)java.lang.String">target</a>+<span title="java.lang.String(&quot; must be an XML Name&quot;)" class="string">&quot; must be an XML Name&quot;</span>)
+  <span title="Unit" class="keyword">if</span> (<a href="#50300" title="=&gt; java.lang.String">text</a>.<a title="(x$1: java.lang.String)Int" id="6977">indexOf</a><a title="(x$1: Int)Boolean" id="2952">(</a><span title="java.lang.String(&quot;?&gt;&quot;)" class="string">&quot;?&gt;&quot;</span>) != <span title="Int(-1)">-</span><span class="int">1</span>)
+    <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.IllegalArgumentException" class="keyword">new</span> <a href="../Predef.scala.html#16170" title="java.lang.IllegalArgumentException">IllegalArgumentException</a>(<a href="#50305" title="(x$1: Any)java.lang.String">proctext</a>+<span title="java.lang.String(&quot; may not contain &quot;?&gt;&quot;&quot;)" class="string">&quot; may not contain \&quot;?&gt;\&quot;&quot;</span>)
+
+  <span class="keyword">final</span> <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Boolean" id="50295">doCollectNamespaces</a> = <span title="Boolean(false)" class="keyword">false</span>
+  <span class="keyword">final</span> <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Boolean" id="50296">doTransform</a>         = <span title="Boolean(false)" class="keyword">false</span>
+
+  (<a href="../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString">target</a>: <a href="../collection/Sequence.scala.html#4346" title="Seq[Char]">Seq</a>[Char]) <span title="Unit" class="keyword">match</span> {
+    <span title="Nothing" class="keyword">case</span> <a href="../collection/generic/SequenceFactory.scala.html#17519" title="(x: Sequence[Char])Some[Sequence[Char]]">Seq</a>(<span title="Char('X')" class="char">'X'</span>|<span title="Char('x')" class="char">'x'</span>,<span title="Char('M')" class="char">'M'</span>|<span title="Char('m')" class="char">'m'</span>,<span title="Char('L')" class="char">'L'</span>|<span title="Char('l')" class="char">'l'</span>) =&gt;
+      <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.IllegalArgumentException" class="keyword">new</span> <a href="../Predef.scala.html#16170" title="java.lang.IllegalArgumentException">IllegalArgumentException</a>(<a href="#50304" title="(x$1: Any)java.lang.String">target</a>+<span title="java.lang.String(&quot; is reserved&quot;)" class="string">&quot; is reserved&quot;</span>)
+    <span title="Unit" class="keyword">case</span> _ =&gt;
+  }
+  
+  /** structural equality */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(x: Any)Boolean" id="50297">equals</a>(<a title="Any" id="119148">x</a>: <a title="Any" id="47">Any</a>): <a title="Boolean" id="1949">Boolean</a> = <a href="#119148" title="Any">x</a> <span title="Boolean" class="keyword">match</span> {
+    <span title="Boolean" class="keyword">case</span> <a id="1">ProcInstr</a>(<a title="String" id="119166">x</a>, <a title="String" id="119167">y</a>) =&gt; <a href="#119166" title="String">x</a>.<span title="(x$1: Any)Boolean">equals</span><a title="(x$1: Boolean)Boolean" id="2210">(</a><a href="#50304" title="=&gt; String">target</a>) &amp;&amp; <a href="#119167" title="String">y</a>.<span title="(x$1: Any)Boolean">equals</span>(<a href="#50305" title="=&gt; String">proctext</a>)
+    <span title="Boolean(false)" class="keyword">case</span> _ =&gt; <span title="Boolean(false)" class="keyword">false</span>
+  }
+
+  /** the constant &quot;#PI&quot; */
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="50298">label</a> = <span title="java.lang.String(&quot;#PI&quot;)" class="string">&quot;#PI&quot;</span>
+
+  /** hashcode for this PI */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Int" id="50299">hashCode</a>() = <a href="#50304" title="=&gt; String">target</a>.<span title="()Int">hashCode</span><a title="(x$1: Int)Int" id="2966">(</a>) <a title="(x$1: Int)Int" id="2962">*</a> <span title="Int(7)" class="int">7</span> + <a href="#50305" title="=&gt; String">proctext</a>.<span title="()Int">hashCode</span>()
+
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="50300">text</a> = <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>
+
+  /** appends &amp;quot;&amp;lt;?&amp;quot; target (&amp;quot; &amp;quot;+text)?+&amp;quot;?&amp;gt;&amp;quot; 
+   *  to this stringbuffer.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(sb: StringBuilder)StringBuilder" id="50301">buildString</a>(<a title="StringBuilder" id="119216">sb</a>: <a href="../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a>) = {
+    <a href="#119216" title="StringBuilder">sb</a>
+    .<a href="../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">append</a>(<span title="java.lang.String(&quot;&lt;?&quot;)" class="string">&quot;&lt;?&quot;</span>)
+    .<a href="../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">append</a>(<a href="#50304" title="=&gt; String">target</a>);
+    <span title="Any" class="keyword">if</span> (<a href="#50305" title="=&gt; String">proctext</a>.<a title="()Int" id="6904">length</a><a title="(x$1: Int)Boolean" id="2958">(</a>) &gt; <span title="Int(0)" class="int">0</span>) {
+      <a href="#119216" title="StringBuilder">sb</a>
+      .<a href="../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<span title="Char(' ')" class="char">' '</span>)
+      .<a href="../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">append</a>(<a href="#50305" title="=&gt; String">proctext</a>);
+    }
+    <a href="#119216" title="StringBuilder">sb</a>.<a href="../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">append</a>(<span title="java.lang.String(&quot;?&gt;&quot;)" class="string">&quot;?&gt;&quot;</span>)
+  }
+}
+
+        </pre>
+    </body>
+</html>

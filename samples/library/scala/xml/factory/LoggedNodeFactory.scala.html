@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/xml/factory/LoggedNodeFactory.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |                                         **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: LoggedNodeFactory.scala 18387 2009-07-24 15:28:37Z odersky $
+
+
+<span class="keyword">package</span> scala.xml
+<span class="keyword">package</span> factory
+
+
+/** &lt;p&gt;
+ *    This class logs what the nodefactory is actually doing.
+ *    If you want to see what happens during loading, use it like this:
+ *  &lt;/p&gt;&lt;pre&gt;
+ *  &lt;b&gt;object&lt;/b&gt; testLogged &lt;b&gt;extends&lt;/b&gt; Application {
+ *
+ *    &lt;b&gt;val&lt;/b&gt; x = &lt;b&gt;new&lt;/b&gt; scala.xml.nobinding.NoBindingFactoryAdapter 
+ *          &lt;b&gt;with&lt;/b&gt; scala.xml.LoggedNodeFactory[scala.xml.Elem]()
+ *          &lt;b&gt;with&lt;/b&gt; scala.util.logging.ConsoleLogger;
+ *
+ *    Console.println(&quot;Start&quot;);
+ *
+ *    &lt;b&gt;val&lt;/b&gt; doc = x.loadXML(new org.xml.sax.InputSource(&quot;http://lamp.epfl.ch/~buraq&quot;));
+ *
+ *    Console.println(&quot;End&quot;);
+ *
+ *    Console.println(doc);
+ *  }&lt;/pre&gt;
+ *
+ *  @author  Burak Emir
+ *  @version 1.0
+ */
+<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class LoggedNodeFactory[A &lt;: scala.xml.Node] extends java.lang.Object with scala.xml.factory.NodeFactory[A] with scala.util.logging.Logged with ScalaObject" id="15305">LoggedNodeFactory</a>[<a title="&gt;: Nothing &lt;: scala.xml.Node" id="16855">A</a> &lt;: <a id="1">Node</a>] 
+<a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="NodeFactory.scala.html#15293" title="scala.xml.factory.NodeFactory[A]">NodeFactory</a>[A]
+<span class="keyword">with</span> scala.util.logging.<a href="../../util/logging/Logged.scala.html#13208" title="scala.util.logging.Logged">Logged</a> {
+
+  // configuration values;
+  <span class="keyword">val</span> <a title="Boolean" id="259189">logNode</a>      = <span title="Boolean(true)" class="keyword">true</span>
+  <span class="keyword">val</span> <a title="Boolean" id="259191">logText</a>      = <span title="Boolean(false)" class="keyword">false</span>
+  <span class="keyword">val</span> <a title="Boolean" id="259193">logComment</a>   = <span title="Boolean(false)" class="keyword">false</span>
+  <span class="keyword">val</span> <a title="Boolean" id="259195">logProcInstr</a> = <span title="Boolean(false)" class="keyword">false</span>
+
+  <span class="keyword">final</span> <span class="keyword">val</span> <a title="Int(0)" id="259197">NONE</a>  = <span title="Int(0)" class="int">0</span>
+  <span class="keyword">final</span> <span class="keyword">val</span> <a title="Int(1)" id="259199">CACHE</a> = <span title="Int(1)" class="int">1</span>
+  <span class="keyword">final</span> <span class="keyword">val</span> <a title="Int(2)" id="259201">FULL</a>  = <span title="Int(2)" class="int">2</span>
+  /** 0 = no loggging, 1 = cache hits, 2 = detail */
+  <span class="keyword">val</span> <a title="Int" id="259203">logCompressLevel</a>  = <span title="Int(1)" class="int">1</span>
+  
+  // methods of NodeFactory
+
+  /** logged version of makeNode method */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(pre: String,label: String,attrSeq: scala.xml.MetaData,scope: scala.xml.NamespaceBinding,children: Seq[scala.xml.Node])A" id="259205">makeNode</a>(<a title="String" id="259212">pre</a>: <span title="String">String</span>, <a title="String" id="259213">label</a>: <span title="String">String</span>, <a title="scala.xml.MetaData" id="259214">attrSeq</a>: <a href="../MetaData.scala.html#8585" title="scala.xml.MetaData">MetaData</a>,
+                        <a title="scala.xml.NamespaceBinding" id="259215">scope</a>: <a href="../NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>, <a title="Seq[scala.xml.Node]" id="259216">children</a>: <a href="../../collection/Sequence.scala.html#4346" title="Seq[scala.xml.Node]">Seq</a>[Node]): <a href="#16855" title="A">A</a> = {
+    <span title="Unit" class="keyword">if</span> (<a href="#259189" title="=&gt; Boolean">logNode</a>)
+      <a href="../../util/logging/Logged.scala.html#37332" title="(msg: String)Unit">log</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;[makeNode for &quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#259213" title="String">label</a>+<span title="java.lang.String(&quot;]&quot;)" class="string">&quot;]&quot;</span>);
+
+    <span class="keyword">val</span> <a title="Int" id="259218">hash</a> = <a href="../Utility.scala.html#8724" title="object scala.xml.Utility">Utility</a>.<a href="../Utility.scala.html#26591" title="(pre: String,label: String,attribHashCode: Int,scpeHash: Int,children: Seq[scala.xml.Node])Int">hashCode</a>(<a href="#259212" title="String">pre</a>, <a href="#259213" title="String">label</a>, <a href="#259214" title="scala.xml.MetaData">attrSeq</a>.<a title="()Int" id="6513">hashCode</a>(), <a href="#259215" title="scala.xml.NamespaceBinding">scope</a>.<a href="../NamespaceBinding.scala.html#55923" title="()Int">hashCode</a>(), <a href="#259216" title="Seq[scala.xml.Node]">children</a>)
+
+    /*
+    if(logCompressLevel &gt;= FULL) {
+      log(&quot;[hashcode total:&quot;+hash);
+      log(&quot; elem name &quot;+uname+&quot; hash &quot;+ ? ));
+      log(&quot; attrs     &quot;+attrSeq+&quot; hash &quot;+attrSeq.hashCode());
+      log(&quot; children :&quot;+children+&quot; hash &quot;+children.hashCode());
+    }
+    */
+    <span title="Unit" class="keyword">if</span> (<a title="(x$1: Boolean)Boolean" id="2203">!</a><a href="NodeFactory.scala.html#243352" title="=&gt; scala.collection.mutable.HashMap[Int,List[A]]">cache</a>.<a href="../../collection/mutable/HashMap.scala.html#91073" title="(key: Int)Option[List[A]]">get</a>( <a href="#259218" title="Int">hash</a> ).<a href="../../Option.scala.html#19757" title="=&gt; Boolean">isEmpty</a> &amp;&amp; (<a href="#259203" title="(x$1: Int)Boolean" id="2960">logCompressLevel</a> &gt;= <span title="Int(1)">CACHE</span>))
+      <a href="../../util/logging/Logged.scala.html#37332" title="(msg: String)Unit">log</a>(<span title="java.lang.String(&quot;[cache hit !]&quot;)" class="string">&quot;[cache hit !]&quot;</span>);
+
+    <span class="keyword">super</span>.<a href="NodeFactory.scala.html#243358" title="(pre: String,name: String,attrSeq: scala.xml.MetaData,scope: scala.xml.NamespaceBinding,children: Seq[scala.xml.Node])A">makeNode</a>(<a href="#259212" title="String">pre</a>, <a href="#259213" title="String">label</a>, <a href="#259214" title="scala.xml.MetaData">attrSeq</a>, <a href="#259215" title="scala.xml.NamespaceBinding">scope</a>, <a href="#259216" title="Seq[scala.xml.Node]">children</a>)
+  }
+  
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(s: String)scala.xml.Text" id="259206">makeText</a>(<a title="String" id="259251">s</a>: <span title="String">String</span>) = {
+    <span title="Unit" class="keyword">if</span> (<a href="#259191" title="=&gt; Boolean">logText</a>)
+      <a href="../../util/logging/Logged.scala.html#37332" title="(msg: String)Unit">log</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;[makeText:\&quot;&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#259251" title="String">s</a>+<span title="java.lang.String(&quot;&quot;]&quot;)" class="string">&quot;\&quot;]&quot;</span>);
+    <span class="keyword">super</span>.<a href="NodeFactory.scala.html#243359" title="(s: String)scala.xml.Text">makeText</a>(<a href="#259251" title="String">s</a>)
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(s: String)Seq[scala.xml.Comment]" id="259207">makeComment</a>(<a title="String" id="259263">s</a>: <span title="String">String</span>): <a href="../../collection/Sequence.scala.html#4346" title="Seq[scala.xml.Comment]">Seq</a>[Comment] = {
+    <span title="Unit" class="keyword">if</span> (<a href="#259193" title="=&gt; Boolean">logComment</a>)
+      <a href="../../util/logging/Logged.scala.html#37332" title="(msg: String)Unit">log</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;[makeComment:\&quot;&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#259263" title="String">s</a>+<span title="java.lang.String(&quot;&quot;]&quot;)" class="string">&quot;\&quot;]&quot;</span>);
+    <span class="keyword">super</span>.<a href="NodeFactory.scala.html#243360" title="(s: String)Seq[scala.xml.Comment]">makeComment</a>(<a href="#259263" title="String">s</a>)
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(t: String,s: String)Seq[scala.xml.ProcInstr]" id="259208">makeProcInstr</a>(<a title="String" id="259274">t</a>: <span title="String">String</span>, <a title="String" id="259275">s</a>: <span title="String">String</span>): <a href="../../collection/Sequence.scala.html#4346" title="Seq[scala.xml.ProcInstr]">Seq</a>[ProcInstr] = {
+    <span title="Unit" class="keyword">if</span> (<a href="#259195" title="=&gt; Boolean">logProcInstr</a>)
+      <a href="../../util/logging/Logged.scala.html#37332" title="(msg: String)Unit">log</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;[makeProcInstr:\&quot;&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#259274" title="String">t</a><span title="(x$1: Any)java.lang.String">+</span><span title="java.lang.String(&quot; &quot;)" class="string">&quot; &quot;</span><span title="(x$1: Any)java.lang.String">+</span> <a href="#259275" title="String">s</a>+<span title="java.lang.String(&quot;&quot;]&quot;)" class="string">&quot;\&quot;]&quot;</span>);
+    <span class="keyword">super</span>.<a href="NodeFactory.scala.html#243361" title="(t: String,s: String)Seq[scala.xml.ProcInstr]">makeProcInstr</a>(<a href="#259274" title="String">t</a>, <a href="#259275" title="String">s</a>)
+  }
+
+}
+
+        </pre>
+    </body>
+</html>

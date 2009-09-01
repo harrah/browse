@@ -1,0 +1,869 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/immutable/List.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: List.scala 16287 2008-10-18 13:41:36Z nielsen $
+
+
+<span class="keyword">package</span> scala.collection.immutable
+
+<span class="keyword">import</span> scala.collection.mutable.ListBuffer
+<span class="keyword">import</span> scala.collection.generic._
+<span class="keyword">import</span> annotation.tailrec
+
+/** A class representing an ordered collection of elements of type
+ *  &lt;code&gt;a&lt;/code&gt;. This class comes with two implementing case
+ *  classes &lt;code&gt;scala.Nil&lt;/code&gt; and &lt;code&gt;scala.::&lt;/code&gt; that
+ *  implement the abstract members &lt;code&gt;isEmpty&lt;/code&gt;,
+ *  &lt;code&gt;head&lt;/code&gt; and &lt;code&gt;tail&lt;/code&gt;.
+ *
+ *  @author  Martin Odersky and others
+ *  @version 2.8
+ */
+<span class="keyword">sealed</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class List[+A] extends java.lang.Object with scala.collection.immutable.LinearSequence[A] with Product with scala.collection.generic.TraversableClass[A,List] with scala.collection.generic.LinearSequenceTemplate[A,List[A]] with ScalaObject" id="8973">List</a>[+<a title="&gt;: Nothing &lt;: Any" id="13988">A</a>] <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="LinearSequence.scala.html#8979" title="scala.collection.immutable.LinearSequence[A]">LinearSequence</a>[A] 
+                                  <span class="keyword">with</span> <a href="../../Product.scala.html#675" title="Product">Product</a> 
+                                  <span class="keyword">with</span> <a href="../generic/TraversableClass.scala.html#10655" title="scala.collection.generic.TraversableClass[A,List]">TraversableClass</a>[A, List]
+                                  <span class="keyword">with</span> <a href="../generic/LinearSequenceTemplate.scala.html#10703" title="scala.collection.generic.LinearSequenceTemplate[A,List[A]]">LinearSequenceTemplate</a>[A, List[A]] {
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; scala.collection.generic.Companion[List]" id="17625">companion</a>: <a href="../generic/Companion.scala.html#10781" title="scala.collection.generic.Companion[List]">Companion</a>[List] = <a href="#8974" title="object List">List</a>
+
+  <span class="keyword">import</span> collection.{Iterable, Traversable, Sequence, Vector}
+
+  /** Returns true if the list does not contain any elements.
+   *  @return &lt;code&gt;true&lt;/code&gt;, iff the list is empty.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="17627">isEmpty</a>: <span title="Boolean">Boolean</span>
+
+  /** Returns this first element of the list.
+   *
+   *  @return the first element of this list.
+   *  @throws Predef.NoSuchElementException if the list is empty.
+   */
+  <span class="keyword">def</span> <a title="=&gt; A" id="17628">head</a>: <a href="#13988" title="A">A</a>
+
+  /** Returns this list without its first element.
+   *
+   *  @return this list without its first element.
+   *  @throws Predef.NoSuchElementException if the list is empty.
+   */
+  <span class="keyword">def</span> <a title="=&gt; List[A]" id="17629">tail</a>: <a href="#8973" title="List[A]">List</a>[A]
+
+  // New methods in List
+
+  /** &lt;p&gt;
+   *    Add an element &lt;code&gt;x&lt;/code&gt; at the beginning of this list.
+   *  &lt;/p&gt;
+   *
+   *  @param x the element to prepend.
+   *  @return  the list with &lt;code&gt;x&lt;/code&gt; added at the beginning.
+   *  @ex &lt;code&gt;1 :: List(2, 3) = List(2, 3).::(1) = List(1, 2, 3)&lt;/code&gt;
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A](x: B)List[B]" id="17630">::</a>[<a title="&gt;: A &lt;: Any" id="17632">B</a> &gt;: A] (<a title="B" id="21483">x</a>: <a href="#17632" title="B">B</a>): <a href="#8973" title="List[B]">List</a>[B] =
+    <span title="scala.collection.immutable.::[B]" class="keyword">new</span> scala.collection.immutable.<a href="#21593" title="scala.collection.immutable.::[B]">::</a>(<a href="#21483" title="B">x</a>, <a href="#8973" title="List[A]" class="keyword">this</a>)
+
+  /** &lt;p&gt;
+   *    Returns a list resulting from the concatenation of the given
+   *    list &lt;code&gt;prefix&lt;/code&gt; and this list. 
+   *  &lt;/p&gt;
+   *
+   *  @param prefix the list to concatenate at the beginning of this list.
+   *  @return the concatenation of the two lists.
+   *  @ex &lt;code&gt;List(1, 2) ::: List(3, 4) = List(3, 4).:::(List(1, 2)) = List(1, 2, 3, 4)&lt;/code&gt;
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A](prefix: List[B])List[B]" id="17633">:::</a>[<a title="&gt;: A &lt;: Any" id="17635">B</a> &gt;: A](<a title="List[B]" id="21342">prefix</a>: <a href="#8973" title="List[B]">List</a>[B]): <a href="#8973" title="List[B]">List</a>[B] =
+    <span title="List[B]" class="keyword">if</span> (<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#21342" title="List[B]">prefix</a>
+    <span class="keyword">else</span> (<a href="../generic/Growable.scala.html#19586" title="(iter: Traversable[B])scala.collection.mutable.ListBuffer[B]" class="keyword">new</a> <a href="../mutable/ListBuffer.scala.html#7620" title="scala.collection.mutable.ListBuffer[B]">ListBuffer</a>[B] ++= <a href="#21342" title="List[B]">prefix</a>).<a href="../mutable/ListBuffer.scala.html#46549" title="(xs: List[B])List[B]">prependToList</a>(<a href="#8973" title="List[A]" class="keyword">this</a>)
+
+  /** Reverse the given prefix and append the current list to that.
+   *  This function is equivalent to an application of &lt;code&gt;reverse&lt;/code&gt;
+   *  on the prefix followed by a call to &lt;code&gt;:::&lt;/code&gt;, but is more
+   *  efficient.
+   *
+   *  @param prefix the prefix to reverse and then prepend
+   *  @return       the concatenation of the reversed prefix and the current list.
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A](prefix: List[B])List[B]" id="17636">reverse_:::</a>[<a title="&gt;: A &lt;: Any" id="17638">B</a> &gt;: A](<a title="List[B]" id="127951">prefix</a>: <a href="#8973" title="List[B]">List</a>[B]): <a href="#8973" title="List[B]">List</a>[B] = {
+    <span class="keyword">var</span> <a title="List[B]" id="127954">these</a>: <a href="#8973" title="List[B]">List</a>[B] = <a href="#8973" title="List[A]" class="keyword">this</a>
+    <span class="keyword">var</span> <a title="List[B]" id="127955">pres</a> = <a href="#127951" title="List[B]">prefix</a>
+    <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span><a href="#127955" title="List[B]">pres</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#127956" title="()Unit">{</a>
+      <a href="#127954" title="List[B]">these</a> = <a href="#127955" title="List[B]">pres</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; B">head</a> <a href="#127958" title="B">::</a> <a href="#17630" title="(x: B)List[B]">these</a>
+      <a href="#127955" title="List[B]">pres</a> = <a href="#127955" title="List[B]">pres</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[B]">tail</a>
+    }
+    <a href="#127954" title="List[B]">these</a>
+  }
+
+  /** Apply a function to all the elements of the list, and return the
+   *  reversed list of results. This is equivalent to a call to &lt;code&gt;map&lt;/code&gt;
+   *  followed by a call to &lt;code&gt;reverse&lt;/code&gt;, but more efficient.
+   *  !!! should we deprecate this? Why have reverseMap, but not filterMap or reverseFilter, say?
+   *  @param f the function to apply to each elements.
+   *  @return  the reversed list of results.
+   */
+  <span class="keyword">def</span> <a title="[B](f: (A) =&gt; B)List[B]" id="17639">reverseMap</a>[<a title="&gt;: Nothing &lt;: Any" id="17641">B</a>](<a title="(A) =&gt; B" id="127970">f</a>: A =&gt; B): <a href="#8973" title="List[B]">List</a>[B] = {
+    @tailrec
+    <span class="keyword">def</span> <a title="(l: List[A],res: List[B])List[B]" id="127973">loop</a>(<a title="List[A]" id="127974">l</a>: <a href="#8973" title="List[A]">List</a>[A], <a title="List[B]" id="127975">res</a>: <a href="#8973" title="List[B]">List</a>[B]): <a href="#8973" title="List[B]">List</a>[B] = <a href="#127974" title="List[A]">l</a> <span title="List[B]" class="keyword">match</span> {
+      <span title="List[B]" class="keyword">case</span> <a href="#129215" title="object Nil">Nil</a> =&gt; <a href="#127975" title="List[B]">res</a>
+      <span title="List[B]" class="keyword">case</span> <a title="A" id="127978">head</a> :: <a title="List[A]" id="127979">tail</a> =&gt; <a href="#127973" title="(l: List[A],res: List[B])List[B]">loop</a>(<a href="#127979" title="List[A]">tail</a>, <a href="../../Function1.scala.html#17119" title="(v1: A)B">f</a>(<a href="#127978" title="A">head</a>) <a href="#127982" title="B">::</a> <a href="#17630" title="(x: B)List[B]">res</a>)
+    }
+    <a href="#127973" title="(l: List[A],res: List[B])List[B]">loop</a>(<a href="#8973" title="List[A]" class="keyword">this</a>, <a href="#129215" title="object Nil">Nil</a>)
+  }
+
+  /** Like xs map f, but returns &lt;code&gt;xs&lt;/code&gt; unchanged if function
+   *  &lt;code&gt;f&lt;/code&gt; maps all elements to themselves (wrt ==).
+   *  @note Unlike `map`, `mapConserve` is not tail-recursive.
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A](f: (A) =&gt; B)List[B]" id="17642">mapConserve</a>[<a title="&gt;: A &lt;: Any" id="17644">B</a> &gt;: A] (<a title="(A) =&gt; B" id="127997">f</a>: A =&gt; B): <a href="#8973" title="List[B]">List</a>[B] = {
+    <span class="keyword">def</span> <a title="(ys: List[A])List[B]" id="128000">loop</a>(<a title="List[A]" id="128001">ys</a>: <a href="#8973" title="List[A]">List</a>[A]): <a href="#8973" title="List[B]">List</a>[B] =
+      <span title="List[B]" class="keyword">if</span> (<a href="#128001" title="List[A]">ys</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#8973" title="List[A]" class="keyword">this</a>
+      <span class="keyword">else</span> {
+        <span class="keyword">val</span> <a title="A" id="128002">head0</a> = <a href="#128001" title="List[A]">ys</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>
+        <span class="keyword">val</span> <a title="B" id="128003">head1</a> = <a href="../../Function1.scala.html#17119" title="(v1: A)B">f</a>(<a href="#128002" title="A">head0</a>)
+        <span title="List[B]" class="keyword">if</span> (<a href="#128003" title="(x$1: Any)Boolean" id="3610">head1</a> == <a href="#128002" title="A">head0</a>) {
+          <a href="#128000" title="(ys: List[A])List[B]">loop</a>(<a href="#128001" title="List[A]">ys</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>)
+        } <span class="keyword">else</span> {
+          <span class="keyword">val</span> <a title="List[B]" id="128011">ys1</a> = <a href="#128003" title="B">head1</a> <a href="#128012" title="B">::</a> <a href="#128001" title="List[A]">ys</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>.<a href="#17642" title="(f: (A) =&gt; B)List[B]">mapConserve</a><a href="#17630" title="(x: B)List[B]">(</a><a href="#127997" title="(A) =&gt; B">f</a>)
+          <span title="List[B]" class="keyword">if</span> (<a href="#8973" title="(x$1: AnyRef)Boolean" class="keyword">this</a> eq <a href="#128001" title="List[A]">ys</a>) <a href="#128011" title="List[B]">ys1</a>
+          <span class="keyword">else</span> {
+            <span class="keyword">val</span> <a title="scala.collection.mutable.ListBuffer[B]" id="128027">b</a> = <span title="scala.collection.mutable.ListBuffer[B]" class="keyword">new</span> <a href="../mutable/ListBuffer.scala.html#7620" title="scala.collection.mutable.ListBuffer[B]">ListBuffer</a>[B]
+            <span class="keyword">var</span> <a title="List[A]" id="128028">xc</a> = <a href="#8973" title="List[A]" class="keyword">this</a>
+            <span title="Unit" class="keyword">while</span> (<a href="#128028" title="(x$1: AnyRef)Boolean">xc</a> ne <a href="#128001" title="List[A]">ys</a>) <a href="#128029" title="()Unit">{</a>
+              <a href="../mutable/ListBuffer.scala.html#46542" title="(x: B)b.type">b</a> += <a href="#128028" title="List[A]">xc</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>
+              <a href="#128028" title="List[A]">xc</a> = <a href="#128028" title="List[A]">xc</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>
+            }
+            <a href="#128027" title="scala.collection.mutable.ListBuffer[B]">b</a>.<a href="../mutable/ListBuffer.scala.html#46549" title="(xs: List[B])List[B]">prependToList</a>(<a href="#128011" title="List[B]">ys1</a>)
+          }
+        }
+      }
+    <a href="#128000" title="(ys: List[A])List[B]">loop</a>(<a href="#8973" title="List[A]" class="keyword">this</a>)
+  }
+
+  // Overridden methods from IterableTemplate or overloaded variants of such methods
+  
+  /** Create a new list which contains all elements of this list
+   *  followed by all elements of Traversable `that'
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[B &gt;: A, That](that: Traversable[B])(implicit bf: scala.collection.generic.BuilderFactory[B,That,List[A]])That" id="17645">++</a>[<a title="&gt;: A &lt;: Any" id="17648">B</a> &gt;: A, <a title="&gt;: Nothing &lt;: Any" id="17649">That</a>](<a title="Traversable[B]" id="128074">that</a>: <a href="../Traversable.scala.html#4436" title="Traversable[B]">Traversable</a>[B])(<span class="keyword">implicit</span> <a title="scala.collection.generic.BuilderFactory[B,That,List[A]]" id="128075">bf</a>: <a href="../generic/BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[B,That,List[A]]">BuilderFactory</a>[B, That, List[A]]): <a href="#17649" title="That">That</a> = {
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[B,That]" id="128098">b</a> = <a href="../generic/BuilderFactory.scala.html#20484" title="(from: List[A])scala.collection.generic.Builder[B,That]">bf</a>(<a href="#8973" title="List[A]" class="keyword">this</a>)
+    <span title="That" class="keyword">if</span> (<a href="#128098" title="scala.collection.generic.Builder[B,That]">b</a>.<a title="[T0]Boolean" id="3618">isInstanceOf</a><span title="Boolean">[</span><a href="../mutable/ListBuffer.scala.html#7620" title="scala.collection.mutable.ListBuffer[_]">ListBuffer</a>[_]]) (<a href="#8973" title="List[A]" class="keyword">this</a> <a href="#128105" title="List[A]">:::</a> <a href="#128074" title="Traversable[B]">that</a>.<a href="#17633" title="(prefix: List[B])List[B]">toList</a>).<span title="[T0]T0">asInstanceOf</span><span title="That">[</span><a href="#17649" title="That">That</a>]
+    <span class="keyword">else</span> <span class="keyword">super</span>.<a href="../generic/TraversableTemplate.scala.html#17151" title="(that: Traversable[B])(implicit bf: scala.collection.generic.BuilderFactory[B,That,List[A]])That">++</a><a href="#128075" title="scala.collection.generic.BuilderFactory[B,That,List[A]]">(</a><a href="#128074" title="Traversable[B]">that</a>)
+  }
+
+  /** Create a new list which contains all elements of this list
+   *  followed by all elements of Iterator `that'
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[B &gt;: A, That](that: Iterator[B])(implicit bf: scala.collection.generic.BuilderFactory[B,That,List[A]])That" id="17650">++</a>[<a title="&gt;: A &lt;: Any" id="17653">B</a> &gt;: A, <a title="&gt;: Nothing &lt;: Any" id="17654">That</a>](<a title="Iterator[B]" id="128187">that</a>: <a href="../Iterator.scala.html#4274" title="Iterator[B]">Iterator</a>[B])(<span class="keyword">implicit</span> <a title="scala.collection.generic.BuilderFactory[B,That,List[A]]" id="128188">bf</a>: <a href="../generic/BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[B,That,List[A]]">BuilderFactory</a>[B, That, List[A]]): <a href="#17654" title="That">That</a> =
+    <a href="#17645" title="(that: Traversable[B])(implicit bf: scala.collection.generic.BuilderFactory[B,That,List[A]])That" class="keyword">this</a> <a href="#128188" title="scala.collection.generic.BuilderFactory[B,That,List[A]]">++</a> <a href="#128187" title="Iterator[B]">that</a>.<a href="../Iterator.scala.html#19281" title="=&gt; List[B]">toList</a>
+
+  /** Overrides the method in Iterable for efficiency.
+   *
+   *  @return  the list itself
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; List[A]" id="17655">toList</a>: <a href="#8973" title="List[A]">List</a>[A] = <a href="#8973" title="List[A]" class="keyword">this</a>
+
+  /** Returns the &lt;code&gt;n&lt;/code&gt; first elements of this list, or else the whole 
+   *  list, if it has less than &lt;code&gt;n&lt;/code&gt; elements.
+
+   *  @param n the number of elements to take.
+   *  @return the &lt;code&gt;n&lt;/code&gt; first elements of this list.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(n: Int)List[A]" id="17656">take</a>(<a title="Int" id="128284">n</a>: <span title="Int">Int</span>): <a href="#8973" title="List[A]">List</a>[A] = {
+    <span class="keyword">val</span> <a title="scala.collection.mutable.ListBuffer[A]" id="128286">b</a> = <span title="scala.collection.mutable.ListBuffer[A]" class="keyword">new</span> <a href="../mutable/ListBuffer.scala.html#7620" title="scala.collection.mutable.ListBuffer[A]">ListBuffer</a>[A]
+    <span class="keyword">var</span> <a title="Int" id="128287">i</a> = <span title="Int(0)" class="int">0</span>
+    <span class="keyword">var</span> <a title="List[A]" id="128288">these</a> = <a href="#8973" title="List[A]" class="keyword">this</a>
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">!</span><a href="#128288" title="List[A]">these</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a> &amp;&amp; <a href="#128287" title="(x$1: Int)Boolean">i</a> &lt; <a href="#128284" title="Int">n</a>) <a href="#128289" title="()Unit">{</a>
+      <a href="#128287" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+      <a href="../mutable/ListBuffer.scala.html#46542" title="(x: A)b.type">b</a> += <a href="#128288" title="List[A]">these</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>
+      <a href="#128288" title="List[A]">these</a> = <a href="#128288" title="List[A]">these</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>
+    }
+    <span title="List[A]" class="keyword">if</span> (<a href="#128288" title="List[A]">these</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#8973" title="List[A]" class="keyword">this</a>
+    <span class="keyword">else</span> <a href="#128286" title="scala.collection.mutable.ListBuffer[A]">b</a>.<a href="../mutable/ListBuffer.scala.html#46548" title="=&gt; List[A]">toList</a>
+  }
+
+  /** Returns the list without its &lt;code&gt;n&lt;/code&gt; first elements.
+   *  If this list has less than &lt;code&gt;n&lt;/code&gt; elements, the empty list is returned.
+   *
+   *  @param n the number of elements to drop.
+   *  @return the list without its &lt;code&gt;n&lt;/code&gt; first elements.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(n: Int)List[A]" id="17657">drop</a>(<a title="Int" id="128371">n</a>: <span title="Int">Int</span>): <a href="#8973" title="List[A]">List</a>[A] = {
+    <span class="keyword">var</span> <a title="List[A]" id="128373">these</a> = <a href="#8973" title="List[A]" class="keyword">this</a>
+    <span class="keyword">var</span> <a title="Int" id="128374">count</a> = <a href="#128371" title="Int">n</a>
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">!</span><a href="#128373" title="List[A]">these</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a> &amp;&amp; <a href="#128374" title="(x$1: Int)Boolean">count</a> &gt; <span title="Int(0)" class="int">0</span>) <a href="#128375" title="()Unit">{</a>
+      <a href="#128373" title="List[A]">these</a> = <a href="#128373" title="List[A]">these</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>
+      <a href="#128374" title="Int">count</a> -= <span title="Int(1)" class="int">1</span>
+    }
+    <a href="#128373" title="List[A]">these</a>
+  }
+
+  /** Returns the list with elements belonging to the given index range.
+   *
+   *  @param start the start position of the list slice.
+   *  @param end   the end position (exclusive) of the list slice.
+   *  @return the list with elements belonging to the given index range.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(start: Int,end: Int)List[A]" id="17658">slice</a>(<a title="Int" id="128418">start</a>: <span title="Int">Int</span>, <a title="Int" id="128419">end</a>: <span title="Int">Int</span>): <a href="#8973" title="List[A]">List</a>[A] = {
+    <span class="keyword">var</span> <a title="Int" id="128422">len</a> = <a href="#128419" title="Int">end</a>
+    <span title="Unit" class="keyword">if</span> (<a href="#128418" title="(x$1: Int)Boolean">start</a> &gt; <span title="Int(0)" class="int">0</span>) <a href="#128422" title="Int">len</a> -= <a href="#128418" title="Int">start</a>
+    <a href="#17657" title="(n: Int)List[A]">drop</a><a href="#17656" title="(n: Int)List[A]">(</a><a href="#128418" title="Int">start</a>) take <a href="#128422" title="Int">len</a>
+  }
+
+  /** Returns the rightmost &lt;code&gt;n&lt;/code&gt; elements from this list.
+   *
+   *  @param n the number of elements to take
+   *  @return the suffix of length &lt;code&gt;n&lt;/code&gt; of the list
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(n: Int)List[A]" id="17659">takeRight</a>(<a title="Int" id="128464">n</a>: <span title="Int">Int</span>): <a href="#8973" title="List[A]">List</a>[A] = {
+    @tailrec
+    <span class="keyword">def</span> <a title="(lead: List[A],lag: List[A])List[A]" id="128466">loop</a>(<a title="List[A]" id="128467">lead</a>: <a href="#8973" title="List[A]">List</a>[A], <a title="List[A]" id="128468">lag</a>: <a href="#8973" title="List[A]">List</a>[A]): <a href="#8973" title="List[A]">List</a>[A] = <a href="#128467" title="List[A]">lead</a> <span title="List[A]" class="keyword">match</span> {
+      <span title="List[A]" class="keyword">case</span> <a href="#129215" title="object Nil">Nil</a> =&gt; <a href="#128468" title="List[A]">lag</a>
+      <span title="List[A]" class="keyword">case</span> _ :: <a title="List[A]" id="128471">tail</a> =&gt; <a href="#128466" title="(lead: List[A],lag: List[A])List[A]">loop</a>(<a href="#128471" title="List[A]">tail</a>, <a href="#128468" title="List[A]">lag</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>)
+    }
+    <a href="#128466" title="(lead: List[A],lag: List[A])List[A]">loop</a>(<a href="#17657" title="(n: Int)List[A]">drop</a>(<a href="#128464" title="Int">n</a>), <a href="#8973" title="List[A]" class="keyword">this</a>)
+  }
+  
+  /** Split the list at a given point and return the two parts thus
+   *  created.
+   *
+   *  @param n the position at which to split
+   *  @return  a pair of lists composed of the first &lt;code&gt;n&lt;/code&gt;
+   *           elements, and the other elements.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(n: Int)(List[A], List[A])" id="17660">splitAt</a>(<a title="Int" id="128480">n</a>: <span title="Int">Int</span>): <a href="../../Tuple2.scala.html#1152" title="(List[A], List[A])">(</a>List[A], List[A]) = {
+    <span class="keyword">val</span> <a title="scala.collection.mutable.ListBuffer[A]" id="128482">b</a> = <span title="scala.collection.mutable.ListBuffer[A]" class="keyword">new</span> <a href="../mutable/ListBuffer.scala.html#7620" title="scala.collection.mutable.ListBuffer[A]">ListBuffer</a>[A]
+    <span class="keyword">var</span> <a title="Int" id="128483">i</a> = <span title="Int(0)" class="int">0</span>
+    <span class="keyword">var</span> <a title="List[A]" id="128484">these</a> = <a href="#8973" title="List[A]" class="keyword">this</a>
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">!</span><a href="#128484" title="List[A]">these</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a> &amp;&amp; <a href="#128483" title="(x$1: Int)Boolean">i</a> &lt; <a href="#128480" title="Int">n</a>) <a href="#128485" title="()Unit">{</a>
+      <a href="#128483" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+      <a href="../mutable/ListBuffer.scala.html#46542" title="(x: A)b.type">b</a> += <a href="#128484" title="List[A]">these</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>
+      <a href="#128484" title="List[A]">these</a> = <a href="#128484" title="List[A]">these</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>
+    }
+    <a href="../../Tuple2.scala.html#20670" title="(_1: List[A],_2: List[A])(List[A], List[A])">(</a><a href="#128482" title="scala.collection.mutable.ListBuffer[A]">b</a>.<a href="../mutable/ListBuffer.scala.html#46548" title="=&gt; List[A]">toList</a>, <a href="#128484" title="List[A]">these</a>)
+  }
+
+  /** Returns the longest prefix of this list whose elements satisfy
+   *  the predicate &lt;code&gt;p&lt;/code&gt;.
+   *
+   *  @param p the test predicate.
+   *  @return  the longest prefix of this list whose elements satisfy
+   *           the predicate &lt;code&gt;p&lt;/code&gt;.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)List[A]" id="17661">takeWhile</a>(<a title="(A) =&gt; Boolean" id="128579">p</a>: A =&gt; Boolean): <a href="#8973" title="List[A]">List</a>[A] = {
+    <span class="keyword">val</span> <a title="scala.collection.mutable.ListBuffer[A]" id="128582">b</a> = <span title="scala.collection.mutable.ListBuffer[A]" class="keyword">new</span> <a href="../mutable/ListBuffer.scala.html#7620" title="scala.collection.mutable.ListBuffer[A]">ListBuffer</a>[A]
+    <span class="keyword">var</span> <a title="List[A]" id="128583">these</a> = <a href="#8973" title="List[A]" class="keyword">this</a>
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">!</span><a href="#128583" title="List[A]">these</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a> &amp;&amp; <a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#128583" title="List[A]">these</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>)) <a href="#128584" title="()Unit">{</a>
+      <a href="../mutable/ListBuffer.scala.html#46542" title="(x: A)b.type">b</a> += <a href="#128583" title="List[A]">these</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>
+      <a href="#128583" title="List[A]">these</a> = <a href="#128583" title="List[A]">these</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>
+    }
+    <a href="#128582" title="scala.collection.mutable.ListBuffer[A]">b</a>.<a href="../mutable/ListBuffer.scala.html#46548" title="=&gt; List[A]">toList</a>
+  }
+
+  /** Returns the longest suffix of this list whose first element
+   *  does not satisfy the predicate &lt;code&gt;p&lt;/code&gt;.
+   *
+   *  @param p the test predicate.
+   *  @return  the longest suffix of the list whose first element
+   *           does not satisfy the predicate &lt;code&gt;p&lt;/code&gt;.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)List[A]" id="17662">dropWhile</a>(<a title="(A) =&gt; Boolean" id="128629">p</a>: A =&gt; Boolean): <a href="#8973" title="List[A]">List</a>[A] = {
+    @tailrec
+    <span class="keyword">def</span> <a title="(xs: List[A])List[A]" id="128632">loop</a>(<a title="List[A]" id="128633">xs</a>: <a href="#8973" title="List[A]">List</a>[A]): <a href="#8973" title="List[A]">List</a>[A] =
+      <span title="List[A]" class="keyword">if</span> (<a href="#128633" title="List[A]">xs</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="(x$1: Boolean)Boolean">isEmpty</a> || <span title="=&gt; Boolean">!</span><a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#128633" title="List[A]">xs</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>)) <a href="#128633" title="List[A]">xs</a>
+      <span class="keyword">else</span> <a href="#128632" title="(xs: List[A])List[A]">loop</a>(<a href="#128633" title="List[A]">xs</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>)
+
+    <a href="#128632" title="(xs: List[A])List[A]">loop</a>(<a href="#8973" title="List[A]" class="keyword">this</a>)
+  }
+
+  /** Returns the longest prefix of the list whose elements all satisfy
+   *  the given predicate, and the rest of the list.
+   *
+   *  @param p the test predicate
+   *  @return  a pair consisting of the longest prefix of the list whose
+   *           elements all satisfy &lt;code&gt;p&lt;/code&gt;, and the rest of the list.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)(List[A], List[A])" id="17663">span</a>(<a title="(A) =&gt; Boolean" id="128643">p</a>: A =&gt; Boolean): <a href="../../Tuple2.scala.html#1152" title="(List[A], List[A])">(</a>List[A], List[A]) = {
+    <span class="keyword">val</span> <a title="scala.collection.mutable.ListBuffer[A]" id="128648">b</a> = <span title="scala.collection.mutable.ListBuffer[A]" class="keyword">new</span> <a href="../mutable/ListBuffer.scala.html#7620" title="scala.collection.mutable.ListBuffer[A]">ListBuffer</a>[A]
+    <span class="keyword">var</span> <a title="List[A]" id="128649">these</a> = <a href="#8973" title="List[A]" class="keyword">this</a>
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">!</span><a href="#128649" title="List[A]">these</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a> &amp;&amp; <a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#128649" title="List[A]">these</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>)) <a href="#128650" title="()Unit">{</a>
+      <a href="../mutable/ListBuffer.scala.html#46542" title="(x: A)b.type">b</a> += <a href="#128649" title="List[A]">these</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>
+      <a href="#128649" title="List[A]">these</a> = <a href="#128649" title="List[A]">these</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>
+    }
+    <a href="../../Tuple2.scala.html#20670" title="(_1: List[A],_2: List[A])(List[A], List[A])">(</a><a href="#128648" title="scala.collection.mutable.ListBuffer[A]">b</a>.<a href="../mutable/ListBuffer.scala.html#46548" title="=&gt; List[A]">toList</a>, <a href="#128649" title="List[A]">these</a>)
+  }
+
+  /** A list consisting of all elements of this list in reverse order.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; List[A]" id="17664">reverse</a>: <a href="#8973" title="List[A]">List</a>[A] = {
+    <span class="keyword">var</span> <a title="List[A]" id="128703">result</a>: <a href="#8973" title="List[A]">List</a>[A] = <a href="#129215" title="object Nil">Nil</a>
+    <span class="keyword">var</span> <a title="List[A]" id="128704">these</a> = <a href="#8973" title="List[A]" class="keyword">this</a>
+    <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span><a href="#128704" title="List[A]">these</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#128705" title="()Unit">{</a>
+      <a href="#128703" title="List[A]">result</a> = <a href="#128704" title="List[A]">these</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a> <a href="#128707" title="A">::</a> <a href="#17630" title="(x: A)List[A]">result</a>
+      <a href="#128704" title="List[A]">these</a> = <a href="#128704" title="List[A]">these</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>
+    }
+    <a href="#128703" title="List[A]">result</a>
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="17665">stringPrefix</a> = <span title="java.lang.String(&quot;List&quot;)" class="string">&quot;List&quot;</span>
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; scala.collection.immutable.Stream[A]" id="17666">toStream</a> : <a href="Stream.scala.html#9156" title="scala.collection.immutable.Stream[A]">Stream</a>[A] = 
+    <span title="scala.collection.immutable.Stream[A]" class="keyword">if</span> (<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="Stream.scala.html#9157" title="object scala.collection.immutable.Stream">Stream</a>.<a href="Stream.scala.html#40815" title="object scala.collection.immutable.Stream.Empty">Empty</a>
+    <span class="keyword">else</span> <span title="scala.collection.immutable.Stream.Cons[A]" class="keyword">new</span> Stream.<a href="Stream.scala.html#40834" title="scala.collection.immutable.Stream.Cons[A]">Cons</a>(<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>, <a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>.<a href="#17666" title="=&gt; scala.collection.immutable.Stream[A]">toStream</a>)
+
+  // !!! todo: work in patch
+
+  /** Computes the difference between this list and the given list
+   *  &lt;code&gt;that&lt;/code&gt;.
+   *
+   *  @param that the list of elements to remove from this list.
+   *  @return     this list without the elements of the given list
+   *              &lt;code&gt;that&lt;/code&gt;.
+   */
+  @deprecated(<span class="string">&quot;use `diff' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="[B &gt;: A](that: List[B])List[B]" id="17667">--</a> [<a title="&gt;: A &lt;: Any" id="17669">B</a> &gt;: A](<a title="List[B]" id="128735">that</a>: <a href="#8973" title="List[B]">List</a>[B]): <a href="#8973" title="List[B]">List</a>[B] = {
+    <span class="keyword">val</span> <a title="scala.collection.mutable.ListBuffer[B]" id="128738">b</a> = <span title="scala.collection.mutable.ListBuffer[B]" class="keyword">new</span> <a href="../mutable/ListBuffer.scala.html#7620" title="scala.collection.mutable.ListBuffer[B]">ListBuffer</a>[B]
+    <span class="keyword">var</span> <a title="List[A]" id="128739">these</a> = <a href="#8973" title="List[A]" class="keyword">this</a>
+    <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span><a href="#128739" title="List[A]">these</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#128740" title="()Unit">{</a>
+      <span title="Any" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#128735" title="List[B]">that</a>.<a href="../generic/SequenceTemplate.scala.html#17386" title="(elem: Any)Boolean">contains</a>(<a href="#128739" title="List[A]">these</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>)) <a href="../mutable/ListBuffer.scala.html#46542" title="(x: B)b.type">b</a> += <a href="#128739" title="List[A]">these</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>
+      <a href="#128739" title="List[A]">these</a> = <a href="#128739" title="List[A]">these</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>
+    }
+    <a href="#128738" title="scala.collection.mutable.ListBuffer[B]">b</a>.<a href="../mutable/ListBuffer.scala.html#46548" title="=&gt; List[B]">toList</a>
+  }
+
+  /** Computes the difference between this list and the given object
+   *  &lt;code&gt;x&lt;/code&gt;.
+   *
+   *  @param x    the object to remove from this list.
+   *  @return     this list without occurrences of the given object
+   *              &lt;code&gt;x&lt;/code&gt;.
+   */
+  @deprecated(<span class="string">&quot;use `diff' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="[B &gt;: A](x: B)List[B]" id="17670">-</a> [<a title="&gt;: A &lt;: Any" id="17672">B</a> &gt;: A](<a title="B" id="128794">x</a>: <a href="#17672" title="B">B</a>): <a href="#8973" title="List[B]">List</a>[B] = {
+    <span class="keyword">val</span> <a title="scala.collection.mutable.ListBuffer[B]" id="128797">b</a> = <span title="scala.collection.mutable.ListBuffer[B]" class="keyword">new</span> <a href="../mutable/ListBuffer.scala.html#7620" title="scala.collection.mutable.ListBuffer[B]">ListBuffer</a>[B]
+    <span class="keyword">var</span> <a title="List[A]" id="128798">these</a> = <a href="#8973" title="List[A]" class="keyword">this</a>
+    <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span><a href="#128798" title="List[A]">these</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#128799" title="()Unit">{</a>
+      <span title="Any" class="keyword">if</span> (<a href="#128798" title="List[A]">these</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="(x$1: Any)Boolean">head</a> != <a href="#128794" title="B">x</a>) <a href="../mutable/ListBuffer.scala.html#46542" title="(x: B)b.type">b</a> += <a href="#128798" title="List[A]">these</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>
+      <a href="#128798" title="List[A]">these</a> = <a href="#128798" title="List[A]">these</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>
+    }
+    <a href="#128797" title="scala.collection.mutable.ListBuffer[B]">b</a>.<a href="../mutable/ListBuffer.scala.html#46548" title="=&gt; List[B]">toList</a>
+  }
+
+  /** &lt;p&gt;
+   *    Sort the list according to the comparison function
+   *    &lt;code&gt;&amp;lt;(e1: a, e2: a) =&amp;gt; Boolean&lt;/code&gt;,
+   *    which should be true iff &lt;code&gt;e1&lt;/code&gt; is smaller than
+   *    &lt;code&gt;e2&lt;/code&gt;.
+   *  !!! todo: move sorting to IterableTemplate
+   *  &lt;/p&gt;
+   *
+   *  @param lt the comparison function
+   *  @return   a list sorted according to the comparison function
+   *            &lt;code&gt;&amp;lt;(e1: a, e2: a) =&amp;gt; Boolean&lt;/code&gt;.
+   *  @ex &lt;pre&gt;
+   *    List(&quot;Steve&quot;, &quot;Tom&quot;, &quot;John&quot;, &quot;Bob&quot;)
+   *      .sort((e1, e2) =&gt; (e1 compareTo e2) &amp;lt; 0) =
+   *    List(&quot;Bob&quot;, &quot;John&quot;, &quot;Steve&quot;, &quot;Tom&quot;)&lt;/pre&gt;
+   */
+  @deprecated(<span class="string">&quot;use `sortWith' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="(lt: (A, A) =&gt; Boolean)List[A]" id="17673">sort</a>(<a title="(A, A) =&gt; Boolean" id="128853">lt</a> : (A,A) =&gt; Boolean): <a href="#8973" title="List[A]">List</a>[A] = {
+    /** Merge two already-sorted lists */
+    <span class="keyword">def</span> <a title="(l1: List[A],l2: List[A])List[A]" id="128855">merge</a>(<a title="List[A]" id="128858">l1</a>: <a href="#8973" title="List[A]">List</a>[A], <a title="List[A]" id="128859">l2</a>: <a href="#8973" title="List[A]">List</a>[A]): <a href="#8973" title="List[A]">List</a>[A] = {
+      <span class="keyword">val</span> <a title="scala.collection.mutable.ListBuffer[A]" id="128860">res</a> = <span title="scala.collection.mutable.ListBuffer[A]" class="keyword">new</span> <a href="../mutable/ListBuffer.scala.html#7620" title="scala.collection.mutable.ListBuffer[A]">ListBuffer</a>[A]
+      <span class="keyword">var</span> <a title="List[A]" id="128861">left1</a> = <a href="#128858" title="List[A]">l1</a>
+      <span class="keyword">var</span> <a title="List[A]" id="128862">left2</a> = <a href="#128859" title="List[A]">l2</a>
+
+      <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">!</span><a href="#128861" title="List[A]">left1</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a> &amp;&amp; <span title="=&gt; Boolean">!</span><a href="#128862" title="List[A]">left2</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) {
+	<a href="#128863" title="Unit" class="keyword">if</a>(<a href="../../Function2.scala.html#20443" title="(v1: A,v2: A)Boolean">lt</a>(<a href="#128861" title="List[A]">left1</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>, <a href="#128862" title="List[A]">left2</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>)) {
+	  <a href="../mutable/ListBuffer.scala.html#46542" title="(x: A)res.type">res</a> += <a href="#128861" title="List[A]">left1</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>
+	  <a href="#128861" title="List[A]">left1</a> = <a href="#128861" title="List[A]">left1</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>
+	} <span class="keyword">else</span> {
+	  <a href="../mutable/ListBuffer.scala.html#46542" title="(x: A)res.type">res</a> += <a href="#128862" title="List[A]">left2</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>
+	  <a href="#128862" title="List[A]">left2</a> = <a href="#128862" title="List[A]">left2</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>
+	}
+      }
+
+      <a href="../generic/Growable.scala.html#19586" title="(iter: Traversable[A])res.type">res</a> ++= <a href="#128861" title="List[A]">left1</a>
+      <a href="../generic/Growable.scala.html#19586" title="(iter: Traversable[A])res.type">res</a> ++= <a href="#128862" title="List[A]">left2</a>
+
+      <a href="#128860" title="scala.collection.mutable.ListBuffer[A]">res</a>.<a href="../mutable/ListBuffer.scala.html#46548" title="=&gt; List[A]">toList</a>
+    }
+
+    /** Split a list into two lists of about the same size */
+    <span class="keyword">def</span> <a title="(lst: List[A])(List[A], List[A])" id="128856">split</a>(<a title="List[A]" id="128988">lst</a>: <a href="#8973" title="List[A]">List</a>[A]) = {
+      <span class="keyword">val</span> <a title="scala.collection.mutable.ListBuffer[A]" id="128989">res1</a> = <span title="scala.collection.mutable.ListBuffer[A]" class="keyword">new</span> <a href="../mutable/ListBuffer.scala.html#7620" title="scala.collection.mutable.ListBuffer[A]">ListBuffer</a>[A]
+      <span class="keyword">val</span> <a title="scala.collection.mutable.ListBuffer[A]" id="128990">res2</a> = <span title="scala.collection.mutable.ListBuffer[A]" class="keyword">new</span> <a href="../mutable/ListBuffer.scala.html#7620" title="scala.collection.mutable.ListBuffer[A]">ListBuffer</a>[A]
+      <span class="keyword">var</span> <a title="List[A]" id="128991">left</a> = <a href="#128988" title="List[A]">lst</a>
+
+      <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span><a href="#128991" title="List[A]">left</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#128992" title="()Unit">{</a>
+	<a href="../mutable/ListBuffer.scala.html#46542" title="(x: A)res1.type">res1</a> += <a href="#128991" title="List[A]">left</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>
+	<a href="#128991" title="List[A]">left</a> = <a href="#128991" title="List[A]">left</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>
+	<span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#128991" title="List[A]">left</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) {
+	  <a href="../mutable/ListBuffer.scala.html#46542" title="(x: A)res2.type">res2</a> += <a href="#128991" title="List[A]">left</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>
+	  <a href="#128991" title="List[A]">left</a> = <a href="#128991" title="List[A]">left</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>
+	}
+      }
+
+      <a href="../../Tuple2.scala.html#20670" title="(_1: List[A],_2: List[A])(List[A], List[A])">(</a><a href="#128989" title="scala.collection.mutable.ListBuffer[A]">res1</a>.<a href="../mutable/ListBuffer.scala.html#46548" title="=&gt; List[A]">toList</a>, <a href="#128990" title="scala.collection.mutable.ListBuffer[A]">res2</a>.<a href="../mutable/ListBuffer.scala.html#46548" title="=&gt; List[A]">toList</a>)
+    }
+
+
+    /** Merge-sort the specified list */
+    <span class="keyword">def</span> <a title="(lst: List[A])List[A]" id="128857">ms</a>(<a title="List[A]" id="129075">lst</a>: <a href="#8973" title="List[A]">List</a>[A]): <a href="#8973" title="List[A]">List</a>[A] =
+      <a href="#129075" title="List[A]">lst</a> <span title="List[A]" class="keyword">match</span> {
+	<span title="List[A]" class="keyword">case</span> <a href="#129215" title="object Nil">Nil</a> =&gt; <a href="#129075" title="List[A]">lst</a>
+	<span title="List[A]" class="keyword">case</span> <a title="A" id="129078">x</a> :: <a href="#129215" title="object Nil">Nil</a> =&gt; <a href="#129075" title="List[A]">lst</a>
+	<span title="List[A]" class="keyword">case</span> <a title="A" id="129083">x</a> :: <a title="A" id="129086">y</a> :: <a href="#129215" title="object Nil">Nil</a> =&gt;
+	  <span title="List[A]" class="keyword">if</span> (<a href="../../Function2.scala.html#20443" title="(v1: A,v2: A)Boolean">lt</a>(<a href="#129083" title="A">x</a>,<a href="#129086" title="A">y</a>))
+	    <a href="#129075" title="List[A]">lst</a>
+	  <span class="keyword">else</span>
+	    <a href="#129086" title="A">y</a> <a href="#129095" title="A">::</a> <a href="#129083" title="A">x</a> <a href="#17630" title="(x: A)List[A]">::</a> <a href="#17630" title="(x: A)List[A]">Nil</a>
+
+	<span title="List[A]" class="keyword">case</span> <a title="List[A]" id="129109">lst</a> =&gt;
+          <span class="keyword">val</span> <a href="../../Tuple2.scala.html#20670" title="(List[A], List[A])">(</a><a href="../../Tuple2.scala.html#20472" title="List[A]" id="129111">l1</a>, <a href="../../Tuple2.scala.html#20474" title="List[A]" id="129112">l2</a>) = <a href="#128856" title="(lst: List[A])(List[A], List[A])">split</a><a href="../../Tuple2.scala.html#1152" title="(List[A], List[A]) @unchecked">(</a><a href="#129109" title="List[A]">lst</a>)
+          <span class="keyword">val</span> <a title="List[A]" id="129113">l1s</a> = <a href="#128857" title="(lst: List[A])List[A]">ms</a>(<a href="#129111" title="List[A]">l1</a>)
+          <span class="keyword">val</span> <a title="List[A]" id="129114">l2s</a> = <a href="#128857" title="(lst: List[A])List[A]">ms</a>(<a href="#129112" title="List[A]">l2</a>)
+          <a href="#128855" title="(l1: List[A],l2: List[A])List[A]">merge</a>(<a href="#129113" title="List[A]">l1s</a>, <a href="#129114" title="List[A]">l2s</a>)
+      }
+
+    <a href="#128857" title="(lst: List[A])List[A]">ms</a>(<a href="#8973" title="List[A]" class="keyword">this</a>)
+  }
+  
+  // !!! The above sort could be replaced by:
+  //   def sort(lt: (A, A) =&gt; Boolean): List[A] = super.sortWith(lt)
+  // except that it fails to find a ClassManifest.
+}
+
+/** The empty list.
+ *
+ *  @author  Martin Odersky
+ *  @version 1.0, 15/07/2003
+ */
+@SerialVersionUID(<span class="int">0</span> - <span class="long">8256821097970055419L</span>)
+case <span class="keyword">object</span> <a href="#129169" title="object Nil" id="129215">Nil</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="#8973" title="List[Nothing]">List</a>[Nothing] {
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Boolean" id="21135">isEmpty</a> = <span title="Boolean(true)" class="keyword">true</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Nothing" id="21136">head</a>: <a title="Nothing" id="3620">Nothing</a> =
+    <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.util.NoSuchElementException" class="keyword">new</span> <a href="../../Predef.scala.html#16171" title="java.util.NoSuchElementException">NoSuchElementException</a>(<span title="java.lang.String(&quot;head of empty list&quot;)" class="string">&quot;head of empty list&quot;</span>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; List[Nothing]" id="21137">tail</a>: <a href="#8973" title="List[Nothing]">List</a>[Nothing] =
+    <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.util.NoSuchElementException" class="keyword">new</span> <a href="../../Predef.scala.html#16171" title="java.util.NoSuchElementException">NoSuchElementException</a>(<span title="java.lang.String(&quot;tail of empty list&quot;)" class="string">&quot;tail of empty list&quot;</span>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(that: Any)Boolean" id="21138">equals</a>(<a title="Any" id="129161">that</a>: <span title="Any">Any</span>) = <a href="#129161" title="Any">that</a> <span title="Boolean" class="keyword">match</span> {
+    <span title="Boolean" class="keyword">case</span> <a title="scala.collection.immutable.Sequence[_]" id="129164">that1</a>: <a href="Sequence.scala.html#9150" title="scala.collection.immutable.Sequence[_]">Sequence</a>[_] =&gt; <a href="#129164" title="scala.collection.immutable.Sequence[_]">that1</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>
+    <span title="Boolean(false)" class="keyword">case</span> _ =&gt; <span title="Boolean(false)" class="keyword">false</span>
+  }
+}
+
+/** A non empty list characterized by a head and a tail.
+ *
+ *  @author  Martin Odersky
+ *  @version 1.0, 15/07/2003
+ */
+@SerialVersionUID(<span class="long">0L</span> - <span class="long">8476791151983527571L</span>)
+<span class="keyword">final</span> case <span class="keyword">class</span> <a title="class ::[B] extends List[B] with ScalaObject with Product" id="21593">::</a>[<a title="&gt;: Nothing &lt;: Any" id="21595">B</a>]<a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><span class="keyword">private</span> <span class="keyword">var</span> <a title="B" id="130857">hd</a>: <a href="#21595" title="B">B</a>, <span class="keyword">private</span>[scala] <span class="keyword">var</span> <a title="List[B]" id="130858">tl</a>: <a href="#8973" title="List[B]">List</a>[B]) <span class="keyword">extends</span> <a href="#8973" title="List[B]">List</a>[B] {
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; B" id="21605">head</a> : <a href="#21595" title="B">B</a> = <a href="#130857" title="=&gt; B">hd</a>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; List[B]" id="21606">tail</a> : <a href="#8973" title="List[B]">List</a>[B] = <a href="#130858" title="=&gt; List[B]">tl</a>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Boolean" id="21607">isEmpty</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>
+
+  <span class="keyword">import</span> java.io._
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(out: java.io.ObjectOutputStream)Unit" id="21609">writeObject</a>(<a title="java.io.ObjectOutputStream" id="129226">out</a>: <a title="java.io.ObjectOutputStream" id="3796">ObjectOutputStream</a>) {
+    <span class="keyword">var</span> <a title="List[B]" id="129339">xs</a>: <a href="#8973" title="List[B]">List</a>[B] = <a href="#21593" title="scala.collection.immutable.::[B]" class="keyword">this</a>
+    <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span><a href="#129339" title="List[B]">xs</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#129340" title="()Unit">{</a> <a href="#129226" title="java.io.ObjectOutputStream">out</a>.<span title="(x$1: Any)Unit">writeObject</span>(<a href="#129339" title="List[B]">xs</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; B">head</a>); <a href="#129339" title="List[B]">xs</a> = <a href="#129339" title="List[B]">xs</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[B]">tail</a> }
+    <a href="#129226" title="java.io.ObjectOutputStream">out</a>.<span title="(x$1: Any)Unit">writeObject</span>(<a href="#130853" title="object scala.collection.immutable.ListSerializeEnd">ListSerializeEnd</a>)
+  }
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(in: java.io.ObjectInputStream)Unit" id="21610">readObject</a>(<a title="java.io.ObjectInputStream" id="129423">in</a>: <a title="java.io.ObjectInputStream" id="3982">ObjectInputStream</a>) {
+    <a href="#130857" title="(x$1: B)Unit">hd</a> = <a href="#129423" title="java.io.ObjectInputStream">in</a>.<span title="()java.lang.Object">readObject</span>.<span title="[T0]T0">asInstanceOf</span><span title="B">[</span><a href="#21595" title="B">B</a>]
+    <a href="../../Predef.scala.html#16213" title="(assertion: Boolean)Unit">assert</a>(<a href="#130857" title="(x$1: Any)Boolean">hd</a> != <a href="#130853" title="object scala.collection.immutable.ListSerializeEnd">ListSerializeEnd</a>)
+    <span class="keyword">var</span> <a title="scala.collection.immutable.::[B]" id="129565">current</a>: <a href="#21593" title="scala.collection.immutable.::[B]">::</a>[B] = <a href="#21593" title="scala.collection.immutable.::[B]" class="keyword">this</a>
+    <span title="Unit" class="keyword">while</span> (<span title="Boolean(true)" class="keyword">true</span>) <a href="#129423" title="java.io.ObjectInputStream">in</a>.<span title="()java.lang.Object">readObject</span> <a href="#129576" title="Unit" class="keyword">match</a> {
+      <span title="Nothing" class="keyword">case</span> <a href="#130853" title="object scala.collection.immutable.ListSerializeEnd">ListSerializeEnd</a> =&gt;
+        <a href="#129565" title="scala.collection.immutable.::[B]">current</a>.<a href="#130858" title="(x$1: List[B])Unit">tl</a> = <a href="#129215" title="object Nil">Nil</a>
+        <span title="Nothing" class="keyword">return</span>
+      <span title="Unit" class="keyword">case</span> <a title="java.lang.Object" id="129581">a</a> : <span title="Any">Any</span> =&gt;
+        <span class="keyword">val</span> <a title="scala.collection.immutable.::[B]" id="129582">list</a> : <a href="#21593" title="scala.collection.immutable.::[B]">::</a>[B] = <span title="scala.collection.immutable.::[B]" class="keyword">new</span> <a href="#21593" title="scala.collection.immutable.::[B]">::</a>(<a href="#129581" title="java.lang.Object">a</a>.<span title="[T0]T0">asInstanceOf</span><span title="B">[</span><a href="#21595" title="B">B</a>], <a href="#129215" title="object Nil">Nil</a>)
+        <a href="#129565" title="scala.collection.immutable.::[B]">current</a>.<a href="#130858" title="(x$1: List[B])Unit">tl</a> = <a href="#129582" title="scala.collection.immutable.::[B]">list</a>
+        <a href="#129565" title="scala.collection.immutable.::[B]">current</a> = <a href="#129582" title="scala.collection.immutable.::[B]">list</a>
+    }
+  }
+}
+
+/** This object provides methods for creating specialized lists, and for
+ *  transforming special kinds of lists (e.g. lists of lists).
+ *
+ *  @author  Martin Odersky
+ *  @version 2.8
+ */
+<span class="keyword">object</span> <a title="object List" id="8974">List</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="../generic/SequenceFactory.scala.html#10295" title="scala.collection.generic.SequenceFactory[List]">SequenceFactory</a>[List] {
+  
+  <span class="keyword">import</span> collection.{Iterable, Sequence, Vector}
+
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="[A]scala.collection.generic.BuilderFactory[A,List[A],scala.collection.immutable.List.Coll]" id="17526">builderFactory</a>[<a title="&gt;: Nothing &lt;: Any" id="17528">A</a>]: <a href="../generic/BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[A,List[A],scala.collection.immutable.List.Coll]">BuilderFactory</a>[A, List[A], Coll] = <span title="scala.collection.immutable.List.VirtualBuilderFactory[A]" class="keyword">new</span> <a href="../generic/TraversableFactory.scala.html#17476" title="scala.collection.immutable.List.VirtualBuilderFactory[A]">VirtualBuilderFactory</a>[A]
+  <span class="keyword">def</span> <a title="[A]scala.collection.generic.Builder[A,List[A]]" id="17529">newBuilder</a>[<a title="&gt;: Nothing &lt;: Any" id="17531">A</a>]: <a href="../generic/Builder.scala.html#10028" title="scala.collection.generic.Builder[A,List[A]]">Builder</a>[A, List[A]] = <span title="scala.collection.mutable.ListBuffer[A]" class="keyword">new</span> <a href="../mutable/ListBuffer.scala.html#7620" title="scala.collection.mutable.ListBuffer[A]">ListBuffer</a>[A]
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[A]List[A]" id="17532">empty</a>[<a title="&gt;: Nothing &lt;: Any" id="17534">A</a>]: <a href="#8973" title="List[A]">List</a>[A] = <a href="#129215" title="object Nil">Nil</a>
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[A](xs: A*)List[A]" id="17535">apply</a>[<a title="&gt;: Nothing &lt;: Any" id="17537">A</a>](<a title="A*" id="17614">xs</a>: <a title="A*" id="4176">A</a>*): <a href="#8973" title="List[A]">List</a>[A] = <a href="#17614" title="A*">xs</a>.<a href="../generic/TraversableTemplate.scala.html#17236" title="=&gt; List[A]">toList</a>
+
+  /** Create a sorted list with element values
+   * &lt;code&gt;v&lt;sub&gt;n+1&lt;/sub&gt; = step(v&lt;sub&gt;n&lt;/sub&gt;)&lt;/code&gt;
+   * where &lt;code&gt;v&lt;sub&gt;0&lt;/sub&gt; = start&lt;/code&gt;
+   * and elements are in the range between &lt;code&gt;start&lt;/code&gt; (inclusive)
+   * and &lt;code&gt;end&lt;/code&gt; (exclusive)
+   *
+   *  @param start the start value of the list
+   *  @param end  the end value of the list
+   *  @param step the increment function of the list, which given &lt;code&gt;v&lt;sub&gt;n&lt;/sub&gt;&lt;/code&gt;,
+   *              computes &lt;code&gt;v&lt;sub&gt;n+1&lt;/sub&gt;&lt;/code&gt;. Must be monotonically increasing
+   *              or decreasing.
+   *  @return     the sorted list of all integers in range [start;end).
+   */
+  @deprecated(<span class="string">&quot;use `iterate' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="(start: Int,end: Int,step: (Int) =&gt; Int)List[Int]" id="17538">range</a>(<a title="Int" id="56481">start</a>: <span title="Int">Int</span>, <a title="Int" id="56482">end</a>: <span title="Int">Int</span>, <a title="(Int) =&gt; Int" id="56483">step</a>: Int =&gt; Int): <a href="#8973" title="List[Int]">List</a>[Int] = {
+    <span class="keyword">val</span> <a title="Boolean" id="129641">up</a> = <a href="../../Function1.scala.html#17119" title="(v1: Int)Int">step</a><span title="(x$1: Int)Boolean">(</span><a href="#56481" title="Int">start</a>) &gt; <a href="#56481" title="Int">start</a>
+    <span class="keyword">val</span> <a title="Boolean" id="129642">down</a> = <a href="../../Function1.scala.html#17119" title="(v1: Int)Int">step</a><span title="(x$1: Int)Boolean">(</span><a href="#56481" title="Int">start</a>) &lt; <a href="#56481" title="Int">start</a>
+    <span class="keyword">val</span> <a title="scala.collection.mutable.ListBuffer[Int]" id="129643">b</a> = <span title="scala.collection.mutable.ListBuffer[Int]" class="keyword">new</span> <a href="../mutable/ListBuffer.scala.html#7620" title="scala.collection.mutable.ListBuffer[Int]">ListBuffer</a>[Int]
+    <span class="keyword">var</span> <a title="Int" id="129644">i</a> = <a href="#56481" title="Int">start</a>
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">(</span><span title="(x$1: Boolean)Boolean">!</span><a href="#129641" title="Boolean">up</a> || <a href="#129644" title="(x$1: Int)Boolean">i</a> &lt; <a href="#56482" title="Int">end</a>) &amp;&amp; (<span title="(x$1: Boolean)Boolean">!</span><a href="#129642" title="Boolean">down</a> || <a href="#129644" title="(x$1: Int)Boolean">i</a> &gt; <a href="#56482" title="Int">end</a>)) <a href="#129645" title="()Unit">{</a>
+      <a href="../mutable/ListBuffer.scala.html#46542" title="(x: Int)b.type">b</a> += <a href="#129644" title="Int">i</a>
+      <span class="keyword">val</span> <a title="Int" id="129684">next</a> = <a href="../../Function1.scala.html#17119" title="(v1: Int)Int">step</a>(<a href="#129644" title="Int">i</a>)
+      <span title="Unit" class="keyword">if</span> (<a href="#129644" title="(x$1: Int)Boolean" id="2950">i</a> == <a href="#129684" title="Int">next</a>)
+        <span title="Nothing" class="keyword">throw</span> <a title="(x$1: java.lang.String)java.lang.IllegalArgumentException" id="26503" class="keyword">new</a> <a href="../../Predef.scala.html#16170" title="java.lang.IllegalArgumentException">IllegalArgumentException</a>(<a title="(x$1: Any)java.lang.String" id="6542" class="string">&quot;the step function did not make any progress on &quot;</a>+ <a href="#129644" title="Int">i</a>)
+      <a href="#129644" title="Int">i</a> = <a href="#129684" title="Int">next</a>
+    }
+    <a href="#129643" title="scala.collection.mutable.ListBuffer[Int]">b</a>.<a href="../mutable/ListBuffer.scala.html#46548" title="=&gt; List[Int]">toList</a>
+  }
+
+  /** Create a list containing several copies of an element.
+   *
+   *  @param n    the length of the resulting list
+   *  @param elem the element composing the resulting list
+   *  @return     a list composed of n elements all equal to elem
+   */
+  @deprecated(<span class="string">&quot;use `fill' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="[A](n: Int,elem: A)List[A]" id="17539">make</a>[<a title="&gt;: Nothing &lt;: Any" id="17541">A</a>](<a title="Int" id="129736">n</a>: <span title="Int">Int</span>, <a title="A" id="129737">elem</a>: <a href="#17541" title="A">A</a>): <a href="#8973" title="List[A]">List</a>[A] = {
+    <span class="keyword">val</span> <a title="scala.collection.mutable.ListBuffer[A]" id="129741">b</a> = <span title="scala.collection.mutable.ListBuffer[A]" class="keyword">new</span> <a href="../mutable/ListBuffer.scala.html#7620" title="scala.collection.mutable.ListBuffer[A]">ListBuffer</a>[A]
+    <span class="keyword">var</span> <a title="Int" id="129742">i</a> = <span title="Int(0)" class="int">0</span>
+    <span title="Unit" class="keyword">while</span> (<a href="#129742" title="(x$1: Int)Boolean">i</a> &lt; <a href="#129736" title="Int">n</a>) <a href="#129743" title="()Unit">{</a>
+      <a href="../mutable/ListBuffer.scala.html#46542" title="(x: A)b.type">b</a> += <a href="#129737" title="A">elem</a>
+      <a href="#129742" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+    }
+    <a href="#129741" title="scala.collection.mutable.ListBuffer[A]">b</a>.<a href="../mutable/ListBuffer.scala.html#46548" title="=&gt; List[A]">toList</a>
+  }
+
+  /** Concatenate all the elements of a given list of lists.
+   *
+   *  @param xss the list of lists that are to be concatenated
+   *  @return    the concatenation of all the lists
+   */
+  @deprecated(<span class="string">&quot;use `xss.flatten' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="[A](xss: List[List[A]])List[A]" id="17542">flatten</a>[<a title="&gt;: Nothing &lt;: Any" id="17544">A</a>](<a title="List[List[A]]" id="129819">xss</a>: <a href="#8973" title="List[List[A]]">List</a>[List[A]]): <a href="#8973" title="List[A]">List</a>[A] = { 
+    <span class="keyword">val</span> <a title="scala.collection.mutable.ListBuffer[A]" id="129822">b</a> = <span title="scala.collection.mutable.ListBuffer[A]" class="keyword">new</span> <a href="../mutable/ListBuffer.scala.html#7620" title="scala.collection.mutable.ListBuffer[A]">ListBuffer</a>[A] 
+    <span class="keyword">for</span> (<a title="List[A]" id="129841">xs</a> &lt;- <a href="../generic/LinearSequenceTemplate.scala.html#19402" title="(f: (List[A]) =&gt; Unit)Unit">xss</a>) {
+      <span class="keyword">var</span> <a title="List[A]" id="129842">xc</a> = <a href="#129841" title="List[A]">xs</a>
+      <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span><a href="#129842" title="List[A]">xc</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#129843" title="()Unit">{</a>
+        <a href="../mutable/ListBuffer.scala.html#46542" title="(x: A)b.type">b</a> += <a href="#129842" title="List[A]">xc</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>
+        <a href="#129842" title="List[A]">xc</a> = <a href="#129842" title="List[A]">xc</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>
+      }
+    }
+    <a href="#129822" title="scala.collection.mutable.ListBuffer[A]">b</a>.<a href="../mutable/ListBuffer.scala.html#46548" title="=&gt; List[A]">toList</a>
+  }
+
+  /** Transforms a list of pairs into a pair of lists.
+   *
+   *  @param xs the list of pairs to unzip
+   *  @return a pair of lists.
+   */
+  @deprecated(<span class="string">&quot;use `xs.unzip' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="[A, B](xs: List[(A, B)])(List[A], List[B])" id="17545">unzip</a>[<a title="&gt;: Nothing &lt;: Any" id="17548">A</a>,<a title="&gt;: Nothing &lt;: Any" id="17549">B</a>](<a title="List[(A, B)]" id="129883">xs</a>: <a href="#8973" title="List[(A, B)]">List</a>[(A,B)]): <a href="../../Tuple2.scala.html#1152" title="(List[A], List[B])">(</a>List[A], List[B]) = {
+    <span class="keyword">val</span> <a title="scala.collection.mutable.ListBuffer[A]" id="129886">b1</a> = <span title="scala.collection.mutable.ListBuffer[A]" class="keyword">new</span> <a href="../mutable/ListBuffer.scala.html#7620" title="scala.collection.mutable.ListBuffer[A]">ListBuffer</a>[A]
+    <span class="keyword">val</span> <a title="scala.collection.mutable.ListBuffer[B]" id="129887">b2</a> = <span title="scala.collection.mutable.ListBuffer[B]" class="keyword">new</span> <a href="../mutable/ListBuffer.scala.html#7620" title="scala.collection.mutable.ListBuffer[B]">ListBuffer</a>[B]
+    <span class="keyword">var</span> <a title="List[(A, B)]" id="129888">xc</a> = <a href="#129883" title="List[(A, B)]">xs</a>
+    <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span><a href="#129888" title="List[(A, B)]">xc</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#129889" title="()Unit">{</a>
+      <a href="../mutable/ListBuffer.scala.html#46542" title="(x: A)b1.type">b1</a> += <a href="#129888" title="List[(A, B)]">xc</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; (A, B)">head</a>.<a href="../../Tuple2.scala.html#20472" title="=&gt; A">_1</a>
+      <a href="../mutable/ListBuffer.scala.html#46542" title="(x: B)b2.type">b2</a> += <a href="#129888" title="List[(A, B)]">xc</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; (A, B)">head</a>.<a href="../../Tuple2.scala.html#20474" title="=&gt; B">_2</a>
+      <a href="#129888" title="List[(A, B)]">xc</a> = <a href="#129888" title="List[(A, B)]">xc</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[(A, B)]">tail</a>
+    }
+    <a href="../../Tuple2.scala.html#20670" title="(_1: List[A],_2: List[B])(List[A], List[B])">(</a><a href="#129886" title="scala.collection.mutable.ListBuffer[A]">b1</a>.<a href="../mutable/ListBuffer.scala.html#46548" title="=&gt; List[A]">toList</a>, <a href="#129887" title="scala.collection.mutable.ListBuffer[B]">b2</a>.<a href="../mutable/ListBuffer.scala.html#46548" title="=&gt; List[B]">toList</a>)
+  }
+
+  /** Transforms an iterable of pairs into a pair of lists.
+   *
+   *  @param xs the iterable of pairs to unzip
+   *  @return a pair of lists.
+   */
+  @deprecated(<span class="string">&quot;use `xs.unzip' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="[A, B](xs: Iterable[(A, B)])(List[A], List[B])" id="17550">unzip</a>[<a title="&gt;: Nothing &lt;: Any" id="17553">A</a>,<a title="&gt;: Nothing &lt;: Any" id="17554">B</a>](<a title="Iterable[(A, B)]" id="129982">xs</a>: <a href="../Iterable.scala.html#4460" title="Iterable[(A, B)]">Iterable</a>[(A,B)]): <a href="../../Tuple2.scala.html#1152" title="(List[A], List[B])">(</a>List[A], List[B]) = 
+      <a href="#129982" title="Iterable[(A, B)]">xs</a>.<a href="../generic/IterableTemplate.scala.html#17291" title="[B](z: B)(op: ((A, B), B) =&gt; B)B">foldRight</a><span title="(z: (List[A], List[B]))(op: ((A, B), (List[A], List[B])) =&gt; (List[A], List[B]))(List[A], List[B])">[</span><a href="../../Tuple2.scala.html#1152" title="(List[A], List[B])">(</a>List[A], List[B])](<a href="../../Tuple2.scala.html#20670" title="(_1: object Nil,_2: object Nil)(object Nil, object Nil)">(</a><a href="#129215" title="object Nil">Nil</a>, <a href="#129215" title="object Nil">Nil</a>)) <a href="../../Tuple2.scala.html#20670" title="(List[A], List[B])">{</a>
+        <span title="(List[A], List[B])" class="keyword">case</span> ((<a title="A" id="130017">x</a>, <a title="B" id="130018">y</a>), (<a title="List[A]" id="130023">xs</a>, <a title="List[B]" id="130024">ys</a>)) =&gt; <a href="../../Tuple2.scala.html#20670" title="(_1: List[A],_2: List[B])(List[A], List[B])">(</a><a href="#130017" title="A">x</a> <a href="#130033" title="A">::</a> <a href="#17630" title="(x: A)List[A]">xs</a>, <a href="#130018" title="B">y</a> <a href="#130041" title="B">::</a> <a href="#17630" title="(x: B)List[B]">ys</a>)
+      }
+
+  /**
+   * Returns the &lt;code&gt;Left&lt;/code&gt; values in the given &lt;code&gt;Iterable&lt;/code&gt;
+   * of &lt;code&gt;Either&lt;/code&gt;s.
+   */
+  @deprecated(<span class="string">&quot;use `Either.lefts' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="[A, B](es: Iterable[Either[A,B]])List[A]" id="17555">lefts</a>[<a title="&gt;: Nothing &lt;: Any" id="17558">A</a>, <a title="&gt;: Nothing &lt;: Any" id="17559">B</a>](<a title="Iterable[Either[A,B]]" id="130055">es</a>: <a href="../Iterable.scala.html#4460" title="Iterable[Either[A,B]]">Iterable</a>[Either[A, B]]) = 
+    <a href="#130055" title="Iterable[Either[A,B]]">es</a>.<a href="../generic/IterableTemplate.scala.html#17291" title="[B](z: B)(op: (Either[A,B], B) =&gt; B)B">foldRight</a><span title="(z: List[A])(op: (Either[A,B], List[A]) =&gt; List[A])List[A]">[</span><a href="#8973" title="List[A]">List</a>[A]](<a href="#129215" title="object Nil">Nil</a>)((<a title="Either[A,B]" id="130068">e</a>, <a title="List[A]" id="130069">as</a>) =&gt; <a href="#130068" title="Either[A,B]">e</a> <span title="List[A]" class="keyword">match</span> {
+      <span title="List[A]" class="keyword">case</span> Left(<a title="A" id="130071">a</a>) =&gt; <a href="#130071" title="A">a</a> <a href="#130074" title="A">::</a> <a href="#17630" title="(x: A)List[A]">as</a>
+      <span title="List[A]" class="keyword">case</span> Right(_) =&gt; <a href="#130069" title="List[A]">as</a>
+    })     
+ 
+  /**
+   * Returns the &lt;code&gt;Right&lt;/code&gt; values in the given&lt;code&gt;Iterable&lt;/code&gt; of  &lt;code&gt;Either&lt;/code&gt;s.
+   */
+  @deprecated(<span class="string">&quot;use `Either.rights' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="[A, B](es: Iterable[Either[A,B]])List[B]" id="17560">rights</a>[<a title="&gt;: Nothing &lt;: Any" id="17563">A</a>, <a title="&gt;: Nothing &lt;: Any" id="17564">B</a>](<a title="Iterable[Either[A,B]]" id="130088">es</a>: <a href="../Iterable.scala.html#4460" title="Iterable[Either[A,B]]">Iterable</a>[Either[A, B]]) = 
+    <a href="#130088" title="Iterable[Either[A,B]]">es</a>.<a href="../generic/IterableTemplate.scala.html#17291" title="[B](z: B)(op: (Either[A,B], B) =&gt; B)B">foldRight</a><span title="(z: List[B])(op: (Either[A,B], List[B]) =&gt; List[B])List[B]">[</span><a href="#8973" title="List[B]">List</a>[B]](<a href="#129215" title="object Nil">Nil</a>)((<a title="Either[A,B]" id="130101">e</a>, <a title="List[B]" id="130102">bs</a>) =&gt; <a href="#130101" title="Either[A,B]">e</a> <span title="List[B]" class="keyword">match</span> {
+      <span title="List[B]" class="keyword">case</span> Left(_) =&gt; <a href="#130102" title="List[B]">bs</a>
+      <span title="List[B]" class="keyword">case</span> Right(<a title="B" id="130107">b</a>) =&gt; <a href="#130107" title="B">b</a> <a href="#130110" title="B">::</a> <a href="#17630" title="(x: B)List[B]">bs</a>
+    })
+
+  /** Transforms an Iterable of Eithers into a pair of lists.
+   *
+   *  @param xs the iterable of Eithers to separate
+   *  @return a pair of lists.
+   */
+  @deprecated(<span class="string">&quot;use `Either.separate' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="[A, B](es: Iterable[Either[A,B]])(List[A], List[B])" id="17565">separate</a>[<a title="&gt;: Nothing &lt;: Any" id="17568">A</a>,<a title="&gt;: Nothing &lt;: Any" id="17569">B</a>](<a title="Iterable[Either[A,B]]" id="130121">es</a>: <a href="../Iterable.scala.html#4460" title="Iterable[Either[A,B]]">Iterable</a>[Either[A,B]]): <a href="../../Tuple2.scala.html#1152" title="(List[A], List[B])">(</a>List[A], List[B]) =
+      <a href="#130121" title="Iterable[Either[A,B]]">es</a>.<a href="../generic/IterableTemplate.scala.html#17291" title="[B](z: B)(op: (Either[A,B], B) =&gt; B)B">foldRight</a><span title="(z: (List[A], List[B]))(op: (Either[A,B], (List[A], List[B])) =&gt; (List[A], List[B]))(List[A], List[B])">[</span><a href="../../Tuple2.scala.html#1152" title="(List[A], List[B])">(</a>List[A], List[B])](<a href="../../Tuple2.scala.html#20670" title="(_1: object Nil,_2: object Nil)(object Nil, object Nil)">(</a><a href="#129215" title="object Nil">Nil</a>, <a href="#129215" title="object Nil">Nil</a>)) <a href="../../Tuple2.scala.html#20670" title="(List[A], List[B])">{</a>
+      <span title="(List[A], List[B])" class="keyword">case</span> (Left(<a title="A" id="130155">a</a>), (<a title="List[A]" id="130160">lefts</a>, <a title="List[B]" id="130161">rights</a>)) =&gt; <a href="../../Tuple2.scala.html#20670" title="(_1: List[A],_2: List[B])(List[A], List[B])">(</a><a href="#130155" title="A">a</a> <a href="#130170" title="A">::</a> <a href="#17630" title="(x: A)List[A]">lefts</a>, <a href="#130161" title="List[B]">rights</a>)
+      <span title="(List[A], List[B])" class="keyword">case</span> (Right(<a title="B" id="130185">b</a>), (<a title="List[A]" id="130190">lefts</a>, <a title="List[B]" id="130191">rights</a>)) =&gt; <a href="../../Tuple2.scala.html#20670" title="(_1: List[A],_2: List[B])(List[A], List[B])">(</a><a href="#130190" title="List[A]">lefts</a>, <a href="#130185" title="B">b</a> <a href="#130200" title="B">::</a> <a href="#17630" title="(x: B)List[B]">rights</a>)
+    }
+
+  /** Converts an iterator to a list.
+   *
+   *  @param it the iterator to convert
+   *  @return   a list that contains the elements returned by successive
+   *            calls to &lt;code&gt;it.next&lt;/code&gt;
+   */
+  @deprecated(<span class="string">&quot;use `it.toList' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="[A](it: Iterator[A])List[A]" id="17570">fromIterator</a>[<a title="&gt;: Nothing &lt;: Any" id="17572">A</a>](<a title="Iterator[A]" id="130214">it</a>: <a href="../Iterator.scala.html#4274" title="Iterator[A]">Iterator</a>[A]): <a href="#8973" title="List[A]">List</a>[A] = <a href="#130214" title="Iterator[A]">it</a>.<a href="../Iterator.scala.html#19281" title="=&gt; List[A]">toList</a>
+
+  /** Converts an array into a list.
+   *
+   *  @param arr the array to convert
+   *  @return    a list that contains the same elements than &lt;code&gt;arr&lt;/code&gt;
+   *             in the same order
+   */
+  @deprecated(<span class="string">&quot;use `array.toList' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="[A](arr: Array[A])List[A]" id="17573">fromArray</a>[<a title="&gt;: Nothing &lt;: Any" id="17575">A</a>](<a title="Array[A]" id="130217">arr</a>: <a href="../../Array.scala.html#885" title="Array[A]">Array</a>[A]): <a href="#8973" title="List[A]">List</a>[A] = <a href="#17576" title="(arr: Array[A],start: Int,len: Int)List[A]">fromArray</a>(<a href="#130217" title="Array[A]">arr</a>, <span title="Int(0)" class="int">0</span>, <a href="#130217" title="Array[A]">arr</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>)
+
+  /** Converts a range of an array into a list.
+   *
+   *  @param arr   the array to convert
+   *  @param start the first index to consider
+   *  @param len   the lenght of the range to convert
+   *  @return      a list that contains the same elements than &lt;code&gt;arr&lt;/code&gt;
+   *               in the same order
+   */
+  @deprecated(<span class="string">&quot;use `array.view(start, end).toList' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="[A](arr: Array[A],start: Int,len: Int)List[A]" id="17576">fromArray</a>[<a title="&gt;: Nothing &lt;: Any" id="17578">A</a>](<a title="Array[A]" id="130223">arr</a>: <a href="../../Array.scala.html#885" title="Array[A]">Array</a>[A], <a title="Int" id="130224">start</a>: <span title="Int">Int</span>, <a title="Int" id="130225">len</a>: <span title="Int">Int</span>): <a href="#8973" title="List[A]">List</a>[A] = {
+    <span class="keyword">var</span> <a title="List[A]" id="130275">res</a>: <a href="#8973" title="List[A]">List</a>[A] = <a href="#129215" title="object Nil">Nil</a>
+    <span class="keyword">var</span> <a title="Int" id="130276">i</a> = <a href="#130224" title="(x$1: Int)Int">start</a> + <a href="#130225" title="Int">len</a>
+    <span title="Unit" class="keyword">while</span> (<a href="#130276" title="(x$1: Int)Boolean">i</a> &gt; <a href="#130224" title="Int">start</a>) <a href="#130277" title="()Unit">{</a>
+      <a href="#130276" title="Int">i</a> -= <span title="Int(1)" class="int">1</span>
+      <a href="#130275" title="List[A]">res</a> = <a href="../../Array.scala.html#17716" title="(i: Int)A">arr</a>(<a href="#130276" title="Int">i</a>) <a href="#130320" title="A">::</a> <a href="#17630" title="(x: A)List[A]">res</a>
+    }
+    <a href="#130275" title="List[A]">res</a>
+  }
+
+  /** Parses a string which contains substrings separated by a
+   *  separator character and returns a list of all substrings.
+   *
+   *  @param str       the string to parse
+   *  @param separator the separator character
+   *  @return          the list of substrings
+   */
+  @deprecated(<span class="string">&quot;use `str.split(separator).toList' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="(str: String,separator: Char)List[String]" id="17579">fromString</a>(<a title="String" id="130339">str</a>: <span title="String">String</span>, <a title="Char" id="130340">separator</a>: <a title="Char" id="2161">Char</a>): <a href="#8973" title="List[String]">List</a>[String] = {
+    <span class="keyword">var</span> <a title="List[String]" id="130342">words</a>: <a href="#8973" title="List[String]">List</a>[String] = <a href="#129215" title="object Nil">Nil</a>
+    <span class="keyword">var</span> <a title="Int" id="130343">pos</a> = <a href="#130339" title="String">str</a>.<a title="()Int" id="6904">length</a>()
+    <span title="Unit" class="keyword">while</span> (<a href="#130343" title="(x$1: Int)Boolean">pos</a> &gt; <span title="Int(0)" class="int">0</span>) <a href="#130344" title="()Unit">{</a>
+      <span class="keyword">val</span> <a title="Int" id="130353">pos1</a> = <a href="#130339" title="String">str</a>.<a title="(x$1: Int,x$2: Int)Int" id="6974">lastIndexOf</a>(<a href="../../Predef.scala.html#16381" title="implicit scala.Predef.char2int : (x: Char)Int">separator</a>, <a href="#130343" title="(x$1: Int)Int">pos</a> - <span title="Int(1)" class="int">1</span>)
+      <span title="Unit" class="keyword">if</span> (<a href="#130353" title="(x$1: Int)Int">pos1</a> <span title="(x$1: Int)Boolean">+</span> <span title="Int(1)" class="int">1</span> &lt; <a href="#130343" title="Int">pos</a>)
+        <a href="#130342" title="List[String]">words</a> = <a href="#130339" title="String">str</a>.<a title="(x$1: Int,x$2: Int)java.lang.String" id="7005">substring</a>(<a href="#130353" title="(x$1: Int)Int">pos1</a> + <span title="Int(1)" class="int">1</span>, <a href="#130343" title="Int">pos</a>) <a href="#130400" title="java.lang.String">::</a> <a href="#17630" title="(x: String)List[String]">words</a>
+      <a href="#130343" title="Int">pos</a> = <a href="#130353" title="Int">pos1</a>
+    }
+    <a href="#130342" title="List[String]">words</a>
+  }
+
+  /** Returns the given string as a list of characters.
+   *
+   *  @param str the string to convert.
+   *  @return    the string as a list of characters.
+   */
+  @deprecated(<span class="string">&quot;use `str.toList' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="(str: String)List[Char]" id="17580">fromString</a>(<a title="String" id="130440">str</a>: <span title="String">String</span>): <a href="#8973" title="List[Char]">List</a>[Char] = <a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString">str</a>.<a href="../generic/TraversableTemplate.scala.html#17236" title="=&gt; List[Char]">toList</a>
+
+  /** Returns the given list of characters as a string.
+   *
+   *  @param xs the list to convert.
+   *  @return   the list in form of a string.
+   */
+  @deprecated(<span class="string">&quot;use `xs.mkString' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="(xs: List[Char])String" id="17581">toString</a>(<a title="List[Char]" id="56489">xs</a>: <a href="#8973" title="List[Char]">List</a>[Char]): <span title="String">String</span> = {
+    <span class="keyword">val</span> <a title="StringBuilder" id="130455">sb</a> = <a href="../mutable/StringBuilder.scala.html#23348" title="()StringBuilder" class="keyword">new</a> <a href="../../package.scala.html#14791" title="StringBuilder">StringBuilder</a>()
+    <span class="keyword">var</span> <a title="List[Char]" id="130456">xc</a> = <a href="#56489" title="List[Char]">xs</a>
+    <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span><a href="#130456" title="List[Char]">xc</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#130457" title="()Unit">{</a>
+      <a href="#130455" title="StringBuilder">sb</a>.<a href="../mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<a href="#130456" title="List[Char]">xc</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; Char">head</a>)
+      <a href="#130456" title="List[Char]">xc</a> = <a href="#130456" title="List[Char]">xc</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[Char]">tail</a>
+    }
+    <a href="#130455" title="StringBuilder">sb</a>.<a href="../mutable/StringBuilder.scala.html#23409" title="()String">toString</a>()
+  }
+
+  /** Like xs map f, but returns &lt;code&gt;xs&lt;/code&gt; unchanged if function
+   *  &lt;code&gt;f&lt;/code&gt; maps all elements to themselves.
+   */
+  @deprecated(<span class="string">&quot;use `xs.mapConserve(f)' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="[A &lt;: AnyRef](xs: List[A])(f: (A) =&gt; A)List[A]" id="17582">mapConserve</a>[<a title="&gt;: Nothing &lt;: AnyRef" id="17584">A</a> &lt;: AnyRef](<a title="List[A]" id="130483">xs</a>: <a href="#8973" title="List[A]">List</a>[A])(<a title="(A) =&gt; A" id="130484">f</a>: A =&gt; A): <a href="#8973" title="List[A]">List</a>[A] = {
+    <span class="keyword">def</span> <a title="(ys: List[A])List[A]" id="130488">loop</a>(<a title="List[A]" id="130489">ys</a>: <a href="#8973" title="List[A]">List</a>[A]): <a href="#8973" title="List[A]">List</a>[A] =
+      <span title="List[A]" class="keyword">if</span> (<a href="#130489" title="List[A]">ys</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#130483" title="List[A]">xs</a>
+      <span class="keyword">else</span> {
+        <span class="keyword">val</span> <a title="A" id="130490">head0</a> = <a href="#130489" title="List[A]">ys</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>
+        <span class="keyword">val</span> <a title="A" id="130491">head1</a> = <a href="../../Function1.scala.html#17119" title="(v1: A)A">f</a>(<a href="#130490" title="A">head0</a>)
+        <span title="List[A]" class="keyword">if</span> (<a href="#130491" title="(x$1: AnyRef)Boolean">head1</a> eq <a href="#130490" title="A">head0</a>) {
+          <a href="#130488" title="(ys: List[A])List[A]">loop</a>(<a href="#130489" title="List[A]">ys</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>)
+        } <span class="keyword">else</span> {
+          <span class="keyword">val</span> <a title="List[A]" id="130499">ys1</a> = <a href="#130491" title="A">head1</a> <a href="#130500" title="A">::</a> <a href="#17582" title="(xs: List[A])(f: (A) =&gt; A)List[A]">mapConserve</a>(<a href="#130489" title="List[A]">ys</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>)<a href="#17630" title="(x: A)List[A]">(</a><a href="#130484" title="(A) =&gt; A">f</a>)
+          <span title="List[A]" class="keyword">if</span> (<a href="#130483" title="(x$1: AnyRef)Boolean">xs</a> eq <a href="#130489" title="List[A]">ys</a>) <a href="#130499" title="List[A]">ys1</a>
+          <span class="keyword">else</span> {
+            <span class="keyword">val</span> <a title="scala.collection.mutable.ListBuffer[A]" id="130521">b</a> = <span title="scala.collection.mutable.ListBuffer[A]" class="keyword">new</span> <a href="../mutable/ListBuffer.scala.html#7620" title="scala.collection.mutable.ListBuffer[A]">ListBuffer</a>[A]
+            <span class="keyword">var</span> <a title="List[A]" id="130522">xc</a> = <a href="#130483" title="List[A]">xs</a>
+            <span title="Unit" class="keyword">while</span> (<a href="#130522" title="(x$1: AnyRef)Boolean">xc</a> ne <a href="#130489" title="List[A]">ys</a>) <a href="#130523" title="()Unit">{</a>
+              <a href="../mutable/ListBuffer.scala.html#46542" title="(x: A)b.type">b</a> += <a href="#130522" title="List[A]">xc</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>
+              <a href="#130522" title="List[A]">xc</a> = <a href="#130522" title="List[A]">xc</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>
+            }
+            <a href="#130521" title="scala.collection.mutable.ListBuffer[A]">b</a>.<a href="../mutable/ListBuffer.scala.html#46549" title="(xs: List[A])List[A]">prependToList</a>(<a href="#130499" title="List[A]">ys1</a>)
+          }
+        }
+      }
+    <a href="#130488" title="(ys: List[A])List[A]">loop</a>(<a href="#130483" title="List[A]">xs</a>)
+  }
+
+  /** Returns the list resulting from applying the given function &lt;code&gt;f&lt;/code&gt;
+   *  to corresponding elements of the argument lists.
+   *  @param f function to apply to each pair of elements.
+   *  @return &lt;code&gt;[f(a0,b0), ..., f(an,bn)]&lt;/code&gt; if the lists are 
+   *          &lt;code&gt;[a0, ..., ak]&lt;/code&gt;, &lt;code&gt;[b0, ..., bl]&lt;/code&gt; and
+   *          &lt;code&gt;n = min(k,l)&lt;/code&gt;
+   */
+  @deprecated(<span class="string">&quot;use `(xs, ys).map(f)' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="[A, B, C](xs: List[A],ys: List[B])(f: (A, B) =&gt; C)List[C]" id="17585">map2</a>[<a title="&gt;: Nothing &lt;: Any" id="17589">A</a>,<a title="&gt;: Nothing &lt;: Any" id="17590">B</a>,<a title="&gt;: Nothing &lt;: Any" id="17591">C</a>](<a title="List[A]" id="118216">xs</a>: <a href="#8973" title="List[A]">List</a>[A], <a title="List[B]" id="118217">ys</a>: <a href="#8973" title="List[B]">List</a>[B])(<a title="(A, B) =&gt; C" id="118218">f</a>: (A, B) =&gt; C): <a href="#8973" title="List[C]">List</a>[C] = {
+    <span class="keyword">val</span> <a title="scala.collection.mutable.ListBuffer[C]" id="130568">b</a> = <span title="scala.collection.mutable.ListBuffer[C]" class="keyword">new</span> <a href="../mutable/ListBuffer.scala.html#7620" title="scala.collection.mutable.ListBuffer[C]">ListBuffer</a>[C]
+    <span class="keyword">var</span> <a title="List[A]" id="130569">xc</a> = <a href="#118216" title="List[A]">xs</a>
+    <span class="keyword">var</span> <a title="List[B]" id="130570">yc</a> = <a href="#118217" title="List[B]">ys</a>
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">!</span><a href="#130569" title="List[A]">xc</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a> &amp;&amp; <span title="=&gt; Boolean">!</span><a href="#130570" title="List[B]">yc</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#130571" title="()Unit">{</a>
+      <a href="../mutable/ListBuffer.scala.html#46542" title="(x: C)b.type">b</a> += <a href="../../Function2.scala.html#20443" title="(v1: A,v2: B)C">f</a>(<a href="#130569" title="List[A]">xc</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>, <a href="#130570" title="List[B]">yc</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; B">head</a>)
+      <a href="#130569" title="List[A]">xc</a> = <a href="#130569" title="List[A]">xc</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>
+      <a href="#130570" title="List[B]">yc</a> = <a href="#130570" title="List[B]">yc</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[B]">tail</a>
+    }
+    <a href="#130568" title="scala.collection.mutable.ListBuffer[C]">b</a>.<a href="../mutable/ListBuffer.scala.html#46548" title="=&gt; List[C]">toList</a>
+  }
+
+  /** Returns the list resulting from applying the given function
+   *  &lt;code&gt;f&lt;/code&gt; to corresponding elements of the argument lists.
+   *
+   *  @param f function to apply to each pair of elements.
+   *  @return  &lt;code&gt;[f(a&lt;sub&gt;0&lt;/sub&gt;,b&lt;sub&gt;0&lt;/sub&gt;,c&lt;sub&gt;0&lt;/sub&gt;),
+   *           ..., f(a&lt;sub&gt;n&lt;/sub&gt;,b&lt;sub&gt;n&lt;/sub&gt;,c&lt;sub&gt;n&lt;/sub&gt;)]&lt;/code&gt;
+   *           if the lists are &lt;code&gt;[a&lt;sub&gt;0&lt;/sub&gt;, ..., a&lt;sub&gt;k&lt;/sub&gt;]&lt;/code&gt;,
+   *           &lt;code&gt;[b&lt;sub&gt;0&lt;/sub&gt;, ..., b&lt;sub&gt;l&lt;/sub&gt;]&lt;/code&gt;,
+   *           &lt;code&gt;[c&lt;sub&gt;0&lt;/sub&gt;, ..., c&lt;sub&gt;m&lt;/sub&gt;]&lt;/code&gt; and
+   *           &lt;code&gt;n = min(k,l,m)&lt;/code&gt;
+   */
+  @deprecated(<span class="string">&quot;use `(xs, ys, zs).map(f)' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="[A, B, C, D](xs: List[A],ys: List[B],zs: List[C])(f: (A, B, C) =&gt; D)List[D]" id="17592">map3</a>[<a title="&gt;: Nothing &lt;: Any" id="17597">A</a>,<a title="&gt;: Nothing &lt;: Any" id="17598">B</a>,<a title="&gt;: Nothing &lt;: Any" id="17599">C</a>,<a title="&gt;: Nothing &lt;: Any" id="17600">D</a>](<a title="List[A]" id="130619">xs</a>: <a href="#8973" title="List[A]">List</a>[A], <a title="List[B]" id="130620">ys</a>: <a href="#8973" title="List[B]">List</a>[B], <a title="List[C]" id="130621">zs</a>: <a href="#8973" title="List[C]">List</a>[C])(<a title="(A, B, C) =&gt; D" id="130622">f</a>: (A, B, C) =&gt; D): <a href="#8973" title="List[D]">List</a>[D] = {
+    <span class="keyword">val</span> <a title="scala.collection.mutable.ListBuffer[D]" id="130628">b</a> = <span title="scala.collection.mutable.ListBuffer[D]" class="keyword">new</span> <a href="../mutable/ListBuffer.scala.html#7620" title="scala.collection.mutable.ListBuffer[D]">ListBuffer</a>[D]
+    <span class="keyword">var</span> <a title="List[A]" id="130629">xc</a> = <a href="#130619" title="List[A]">xs</a>
+    <span class="keyword">var</span> <a title="List[B]" id="130630">yc</a> = <a href="#130620" title="List[B]">ys</a>
+    <span class="keyword">var</span> <a title="List[C]" id="130631">zc</a> = <a href="#130621" title="List[C]">zs</a>
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">!</span><a href="#130629" title="List[A]">xc</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <span title="=&gt; Boolean">!</span><a href="#130630" title="List[B]">yc</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a> &amp;&amp; <span title="=&gt; Boolean">!</span><a href="#130631" title="List[C]">zc</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#130632" title="()Unit">{</a>
+      <a href="../mutable/ListBuffer.scala.html#46542" title="(x: D)b.type">b</a> += <a href="../../Function3.scala.html#27146" title="(v1: A,v2: B,v3: C)D">f</a>(<a href="#130629" title="List[A]">xc</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>, <a href="#130630" title="List[B]">yc</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; B">head</a>, <a href="#130631" title="List[C]">zc</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; C">head</a>)
+      <a href="#130629" title="List[A]">xc</a> = <a href="#130629" title="List[A]">xc</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>
+      <a href="#130630" title="List[B]">yc</a> = <a href="#130630" title="List[B]">yc</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[B]">tail</a>
+      <a href="#130631" title="List[C]">zc</a> = <a href="#130631" title="List[C]">zc</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[C]">tail</a>
+    }
+    <a href="#130628" title="scala.collection.mutable.ListBuffer[D]">b</a>.<a href="../mutable/ListBuffer.scala.html#46548" title="=&gt; List[D]">toList</a>
+  }
+
+  /** Tests whether the given predicate &lt;code&gt;p&lt;/code&gt; holds 
+   *  for all corresponding elements of the argument lists.
+   *
+   *  @param p function to apply to each pair of elements.
+   *  @return  &lt;code&gt;(p(a&lt;sub&gt;0&lt;/sub&gt;,b&lt;sub&gt;0&lt;/sub&gt;) &amp;amp;&amp;amp;
+   *           ... &amp;amp;&amp;amp; p(a&lt;sub&gt;n&lt;/sub&gt;,b&lt;sub&gt;n&lt;/sub&gt;))]&lt;/code&gt;
+   *           if the lists are &lt;code&gt;[a&lt;sub&gt;0&lt;/sub&gt;, ..., a&lt;sub&gt;k&lt;/sub&gt;]&lt;/code&gt;;
+   *           &lt;code&gt;[b&lt;sub&gt;0&lt;/sub&gt;, ..., b&lt;sub&gt;l&lt;/sub&gt;]&lt;/code&gt;
+   *           and &lt;code&gt;n = min(k,l)&lt;/code&gt;
+   */
+  @deprecated(<span class="string">&quot;use `(xs, ys).forall(f)' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="[A, B](xs: List[A],ys: List[B])(f: (A, B) =&gt; Boolean)Boolean" id="17601">forall2</a>[<a title="&gt;: Nothing &lt;: Any" id="17604">A</a>,<a title="&gt;: Nothing &lt;: Any" id="17605">B</a>](<a title="List[A]" id="130686">xs</a>: <a href="#8973" title="List[A]">List</a>[A], <a title="List[B]" id="130687">ys</a>: <a href="#8973" title="List[B]">List</a>[B])(<a title="(A, B) =&gt; Boolean" id="130688">f</a>: (A, B) =&gt; Boolean): <span title="Boolean">Boolean</span> = {
+    <span class="keyword">var</span> <a title="List[A]" id="130693">xc</a> = <a href="#130686" title="List[A]">xs</a>
+    <span class="keyword">var</span> <a title="List[B]" id="130694">yc</a> = <a href="#130687" title="List[B]">ys</a>
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">!</span><a href="#130693" title="List[A]">xc</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a> &amp;&amp; <span title="=&gt; Boolean">!</span><a href="#130694" title="List[B]">yc</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#130695" title="()Unit">{</a>
+      <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="../../Function2.scala.html#20443" title="(v1: A,v2: B)Boolean">f</a>(<a href="#130693" title="List[A]">xc</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>, <a href="#130694" title="List[B]">yc</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; B">head</a>)) <span title="Nothing" class="keyword">return</span> <span title="Boolean(false)" class="keyword">false</span>
+      <a href="#130693" title="List[A]">xc</a> = <a href="#130693" title="List[A]">xc</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>
+      <a href="#130694" title="List[B]">yc</a> = <a href="#130694" title="List[B]">yc</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[B]">tail</a>
+    }
+    <span title="Boolean(true)" class="keyword">true</span>
+  }
+
+  /** Tests whether the given predicate &lt;code&gt;p&lt;/code&gt; holds
+   *  for some corresponding elements of the argument lists.
+   *
+   *  @param p function to apply to each pair of elements.
+   *  @return  &lt;code&gt;n != 0 &amp;amp;&amp;amp; (p(a&lt;sub&gt;0&lt;/sub&gt;,b&lt;sub&gt;0&lt;/sub&gt;) ||
+   *           ... || p(a&lt;sub&gt;n&lt;/sub&gt;,b&lt;sub&gt;n&lt;/sub&gt;))]&lt;/code&gt; if the lists are
+   *           &lt;code&gt;[a&lt;sub&gt;0&lt;/sub&gt;, ..., a&lt;sub&gt;k&lt;/sub&gt;]&lt;/code&gt;,
+   *           &lt;code&gt;[b&lt;sub&gt;0&lt;/sub&gt;, ..., b&lt;sub&gt;l&lt;/sub&gt;]&lt;/code&gt; and
+   *           &lt;code&gt;n = min(k,l)&lt;/code&gt;
+   */
+  @deprecated(<span class="string">&quot;use `(xs, ys).exists(f)' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="[A, B](xs: List[A],ys: List[B])(f: (A, B) =&gt; Boolean)Boolean" id="17606">exists2</a>[<a title="&gt;: Nothing &lt;: Any" id="17609">A</a>,<a title="&gt;: Nothing &lt;: Any" id="17610">B</a>](<a title="List[A]" id="130710">xs</a>: <a href="#8973" title="List[A]">List</a>[A], <a title="List[B]" id="130711">ys</a>: <a href="#8973" title="List[B]">List</a>[B])(<a title="(A, B) =&gt; Boolean" id="130712">f</a>: (A, B) =&gt; Boolean): <span title="Boolean">Boolean</span> = {
+    <span class="keyword">var</span> <a title="List[A]" id="130717">xc</a> = <a href="#130710" title="List[A]">xs</a>
+    <span class="keyword">var</span> <a title="List[B]" id="130718">yc</a> = <a href="#130711" title="List[B]">ys</a>
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">!</span><a href="#130717" title="List[A]">xc</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a> &amp;&amp; <span title="=&gt; Boolean">!</span><a href="#130718" title="List[B]">yc</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#130719" title="()Unit">{</a>
+      <span title="Unit" class="keyword">if</span> (<a href="../../Function2.scala.html#20443" title="(v1: A,v2: B)Boolean">f</a>(<a href="#130717" title="List[A]">xc</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>, <a href="#130718" title="List[B]">yc</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; B">head</a>)) <span title="Nothing" class="keyword">return</span> <span title="Boolean(true)" class="keyword">true</span>
+      <a href="#130717" title="List[A]">xc</a> = <a href="#130717" title="List[A]">xc</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>
+      <a href="#130718" title="List[B]">yc</a> = <a href="#130718" title="List[B]">yc</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[B]">tail</a>
+    }
+    <span title="Boolean(false)" class="keyword">false</span>
+  }
+
+  /** Transposes a list of lists.
+   *  pre: All element lists have the same length.
+   *
+   *  @param xss the list of lists
+   *  @return    the transposed list of lists
+   */
+  @deprecated(<span class="string">&quot;use p`xss.transpose' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="[A](xss: List[List[A]])List[List[A]]" id="17611">transpose</a>[<a title="&gt;: Nothing &lt;: Any" id="17613">A</a>](<a title="List[List[A]]" id="130734">xss</a>: <a href="#8973" title="List[List[A]]">List</a>[List[A]]): <a href="#8973" title="List[List[A]]">List</a>[List[A]] = {
+    <span class="keyword">val</span> <a title="scala.collection.mutable.ListBuffer[List[A]]" id="130737">buf</a> = <span title="scala.collection.mutable.ListBuffer[List[A]]" class="keyword">new</span> <a href="../mutable/ListBuffer.scala.html#7620" title="scala.collection.mutable.ListBuffer[List[A]]">ListBuffer</a>[List[A]]
+    <span class="keyword">var</span> <a title="List[List[A]]" id="130738">yss</a> = <a href="#130734" title="List[List[A]]">xss</a>
+    <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span><a href="#130738" title="List[List[A]]">yss</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; List[A]">head</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#130739" title="()Unit">{</a>
+      <a href="../mutable/ListBuffer.scala.html#46542" title="(x: List[A])buf.type">buf</a> += (<a href="../generic/TraversableTemplate.scala.html#17161" title="(f: (List[A]) =&gt; A)(implicit bf: scala.collection.generic.BuilderFactory[A,List[A],List[List[A]]])List[A]">yss</a> <a href="#17526" title="scala.collection.generic.BuilderFactory[A,List[A],scala.collection.immutable.List.Coll]">map</a> (<a href="#130781" title="List[A]">_</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>))
+      <a href="#130738" title="List[List[A]]">yss</a> = (<a href="../generic/TraversableTemplate.scala.html#17161" title="(f: (List[A]) =&gt; List[A])(implicit bf: scala.collection.generic.BuilderFactory[List[A],List[List[A]],List[List[A]]])List[List[A]]">yss</a> <a href="#17526" title="scala.collection.generic.BuilderFactory[List[A],List[List[A]],scala.collection.immutable.List.Coll]">map</a> (<a href="#130803" title="List[A]">_</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>))
+    }
+    <a href="#130737" title="scala.collection.mutable.ListBuffer[List[A]]">buf</a>.<a href="../mutable/ListBuffer.scala.html#46548" title="=&gt; List[List[A]]">toList</a>
+  }
+}
+
+/** Only used for list serialization */
+@SerialVersionUID(<span class="long">0L</span> - <span class="long">8476791151975527571L</span>)
+<span class="keyword">private</span>[scala] case <span class="keyword">object</span> <a href="#130826" title="object scala.collection.immutable.ListSerializeEnd" id="130853">ListSerializeEnd</a>
+
+
+        </pre>
+    </body>
+</html>

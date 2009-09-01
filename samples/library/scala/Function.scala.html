@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/Function.scala</title>
+        <script type="text/javascript" src="../jquery-all.js"></script>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |                                         **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: Function.scala 16893 2009-01-13 13:09:22Z cunei $
+
+
+<span class="keyword">package</span> scala
+
+/** A module defining utility methods for higher-order functional programming.
+ *
+ *  @author  Martin Odersky
+ *  @version 1.0, 29/11/2006
+ */
+<span class="keyword">object</span> <a title="object Function" id="955">Function</a> <a href="ScalaObject.scala.html#957" title="ScalaObject">{</a>
+
+  /** Given a sequence of functions &lt;code&gt;f&lt;sub&gt;1&lt;/sub&gt;&lt;/code&gt;, ...,
+   *  &lt;code&gt;f&lt;sub&gt;n&lt;/sub&gt;&lt;/code&gt;, return the function &lt;code&gt;f&lt;sub&gt;1&lt;/sub&gt;
+   *  andThen ... andThen f&lt;sub&gt;n&lt;/sub&gt;&lt;/code&gt;.
+   *
+   *  @param fs The given sequence of functions
+   *  @return   ...
+   */
+  <span class="keyword">def</span> <a title="[a](fs: Seq[(a) =&gt; a])(a) =&gt; a" id="233475">chain</a>[<a title="&gt;: Nothing &lt;: Any" id="233477">a</a>](<a title="Seq[(a) =&gt; a]" id="233646">fs</a>: <a href="collection/Sequence.scala.html#4346" title="Seq[(a) =&gt; a]">Seq</a>[a =&gt; a]): a =&gt; a = { <a title="a" id="233650">x</a> =&gt; (<a href="#233650" title="a">x</a> <a href="#233651" title="a">/:</a> <a href="collection/generic/TraversableTemplate.scala.html#17190" title="(z: a)(op: (a, (a) =&gt; a) =&gt; a)a">fs</a>) ((<a title="a" id="233663">x</a>, <a title="(a) =&gt; a" id="233664">f</a>) =&gt; <a href="Function1.scala.html#17119" title="(v1: a)a">f</a>(<a href="#233663" title="a">x</a>)) }
+
+  /** The constant function */
+  <span class="keyword">def</span> <a title="[T, U](x: T)(y: U)T" id="233478">const</a>[<a title="&gt;: Nothing &lt;: Any" id="233481">T</a>, <a title="&gt;: Nothing &lt;: Any" id="233482">U</a>](<a title="T" id="233670">x</a>: <a href="#233481" title="T">T</a>)(<a title="U" id="233671">y</a>: <a href="#233482" title="U">U</a>): <a href="#233481" title="T">T</a> = <a href="#233670" title="T">x</a>
+
+  /** Currying for functions of arity 2. This transforms a function
+   *  of arity 2 into a a unary function returning another unary function.
+   *
+   *  @param f  ...
+   *  @return   ...
+   */
+  <span class="keyword">def</span> <a title="[a1, a2, b](f: (a1, a2) =&gt; b)(a1) =&gt; (a2) =&gt; b" id="233483">curried</a>[<a title="&gt;: Nothing &lt;: Any" id="233487">a1</a>, <a title="&gt;: Nothing &lt;: Any" id="233488">a2</a>, <a title="&gt;: Nothing &lt;: Any" id="233489">b</a>](<a title="(a1, a2) =&gt; b" id="233675">f</a>: (a1, a2) =&gt; b): a1 =&gt; a2 =&gt; b = {
+    <a title="a1" id="233679">x1</a> =&gt; <a title="a2" id="233681">x2</a> =&gt; <a href="Function2.scala.html#20443" title="(v1: a1,v2: a2)b">f</a>(<a href="#233679" title="a1">x1</a>, <a href="#233681" title="a2">x2</a>)
+  }
+
+  /** Currying for functions of arity 3.
+   *
+   *  @param f  ...
+   *  @return   ...
+   */
+  <span class="keyword">def</span> <a title="[a1, a2, a3, b](f: (a1, a2, a3) =&gt; b)(a1) =&gt; (a2) =&gt; (a3) =&gt; b" id="233490">curried</a>[<a title="&gt;: Nothing &lt;: Any" id="233495">a1</a>, <a title="&gt;: Nothing &lt;: Any" id="233496">a2</a>, <a title="&gt;: Nothing &lt;: Any" id="233497">a3</a>, <a title="&gt;: Nothing &lt;: Any" id="233498">b</a>](<a title="(a1, a2, a3) =&gt; b" id="233686">f</a>: (a1, a2, a3) =&gt; b): a1 =&gt; a2 =&gt; a3 =&gt; b = {
+    <a title="a1" id="233690">x1</a> =&gt; <a title="a2" id="233692">x2</a> =&gt; <a title="a3" id="233694">x3</a> =&gt; <a href="Function3.scala.html#27146" title="(v1: a1,v2: a2,v3: a3)b">f</a>(<a href="#233690" title="a1">x1</a>, <a href="#233692" title="a2">x2</a>, <a href="#233694" title="a3">x3</a>)
+  }
+
+  /** Currying for functions of arity 4.
+   */
+  <span class="keyword">def</span> <a title="[a1, a2, a3, a4, b](f: (a1, a2, a3, a4) =&gt; b)(a1) =&gt; (a2) =&gt; (a3) =&gt; (a4) =&gt; b" id="233499">curried</a>[<a title="&gt;: Nothing &lt;: Any" id="233505">a1</a>, <a title="&gt;: Nothing &lt;: Any" id="233506">a2</a>, <a title="&gt;: Nothing &lt;: Any" id="233507">a3</a>, <a title="&gt;: Nothing &lt;: Any" id="233508">a4</a>, <a title="&gt;: Nothing &lt;: Any" id="233509">b</a>](<a title="(a1, a2, a3, a4) =&gt; b" id="233700">f</a>: (a1, a2, a3, a4) =&gt; b): a1 =&gt; a2 =&gt; a3 =&gt; a4 =&gt; b = {
+    <a title="a1" id="233704">x1</a> =&gt; <a title="a2" id="233706">x2</a> =&gt; <a title="a3" id="233708">x3</a> =&gt; <a title="a4" id="233710">x4</a> =&gt; <a href="Function4.scala.html#25799" title="(v1: a1,v2: a2,v3: a3,v4: a4)b">f</a>(<a href="#233704" title="a1">x1</a>, <a href="#233706" title="a2">x2</a>, <a href="#233708" title="a3">x3</a>, <a href="#233710" title="a4">x4</a>)
+  }
+
+  /** Currying for functions of arity 5.
+   */
+  <span class="keyword">def</span> <a title="[a1, a2, a3, a4, a5, b](f: (a1, a2, a3, a4, a5) =&gt; b)(a1) =&gt; (a2) =&gt; (a3) =&gt; (a4) =&gt; (a5) =&gt; b" id="233510">curried</a>[<a title="&gt;: Nothing &lt;: Any" id="233517">a1</a>, <a title="&gt;: Nothing &lt;: Any" id="233518">a2</a>, <a title="&gt;: Nothing &lt;: Any" id="233519">a3</a>, <a title="&gt;: Nothing &lt;: Any" id="233520">a4</a>, <a title="&gt;: Nothing &lt;: Any" id="233521">a5</a>, <a title="&gt;: Nothing &lt;: Any" id="233522">b</a>](<a title="(a1, a2, a3, a4, a5) =&gt; b" id="233717">f</a>: (a1, a2, a3, a4, a5) =&gt; b): a1 =&gt; a2 =&gt; a3 =&gt; a4 =&gt; a5 =&gt; b = {
+    <a title="a1" id="233721">x1</a> =&gt; <a title="a2" id="233723">x2</a> =&gt; <a title="a3" id="233725">x3</a> =&gt; <a title="a4" id="233727">x4</a> =&gt; <a title="a5" id="233729">x5</a> =&gt; <a href="Function5.scala.html#64096" title="(v1: a1,v2: a2,v3: a3,v4: a4,v5: a5)b">f</a>(<a href="#233721" title="a1">x1</a>, <a href="#233723" title="a2">x2</a>, <a href="#233725" title="a3">x3</a>, <a href="#233727" title="a4">x4</a>, <a href="#233729" title="a5">x5</a>)
+  }
+
+  /** Uncurrying for functions of arity 2. This transforms a unary function
+   *  returning another unary function into a function of arity 2.
+   */
+  <span class="keyword">def</span> <a title="[a1, a2, b](f: (a1) =&gt; (a2) =&gt; b)(a1, a2) =&gt; b" id="233523">uncurried</a>[<a title="&gt;: Nothing &lt;: Any" id="233527">a1</a>, <a title="&gt;: Nothing &lt;: Any" id="233528">a2</a>, <a title="&gt;: Nothing &lt;: Any" id="233529">b</a>](<a title="(a1) =&gt; (a2) =&gt; b" id="233737">f</a>: a1 =&gt; a2 =&gt; b): (a1, a2) =&gt; b = {
+    (<a title="a1" id="233741">x1</a>, <a title="a2" id="233742">x2</a>) =&gt; <a href="Function1.scala.html#17119" title="(v1: a1)(a2) =&gt; b">f</a><a href="Function1.scala.html#17119" title="(v1: a2)b">(</a><a href="#233741" title="a1">x1</a>)(<a href="#233742" title="a2">x2</a>)
+  }
+
+  /** Uncurrying for functions of arity 3.
+   */
+  <span class="keyword">def</span> <a title="[a1, a2, a3, b](f: (a1) =&gt; (a2) =&gt; (a3) =&gt; b)(a1, a2, a3) =&gt; b" id="233530">uncurried</a>[<a title="&gt;: Nothing &lt;: Any" id="233535">a1</a>, <a title="&gt;: Nothing &lt;: Any" id="233536">a2</a>, <a title="&gt;: Nothing &lt;: Any" id="233537">a3</a>, <a title="&gt;: Nothing &lt;: Any" id="233538">b</a>](<a title="(a1) =&gt; (a2) =&gt; (a3) =&gt; b" id="233749">f</a>: a1 =&gt; a2 =&gt; a3 =&gt; b): (a1, a2, a3) =&gt; b = {
+    (<a title="a1" id="233753">x1</a>, <a title="a2" id="233754">x2</a>, <a title="a3" id="233755">x3</a>) =&gt; <a href="Function1.scala.html#17119" title="(v1: a1)(a2) =&gt; (a3) =&gt; b">f</a><a href="Function1.scala.html#17119" title="(v1: a2)(a3) =&gt; b">(</a><a href="#233753" title="a1">x1</a>)<a href="Function1.scala.html#17119" title="(v1: a3)b">(</a><a href="#233754" title="a2">x2</a>)(<a href="#233755" title="a3">x3</a>)
+  }
+
+  /** Uncurrying for functions of arity 4.
+   */
+  <span class="keyword">def</span> <a title="[a1, a2, a3, a4, b](f: (a1) =&gt; (a2) =&gt; (a3) =&gt; (a4) =&gt; b)(a1, a2, a3, a4) =&gt; b" id="233539">uncurried</a>[<a title="&gt;: Nothing &lt;: Any" id="233545">a1</a>, <a title="&gt;: Nothing &lt;: Any" id="233546">a2</a>, <a title="&gt;: Nothing &lt;: Any" id="233547">a3</a>, <a title="&gt;: Nothing &lt;: Any" id="233548">a4</a>, <a title="&gt;: Nothing &lt;: Any" id="233549">b</a>](<a title="(a1) =&gt; (a2) =&gt; (a3) =&gt; (a4) =&gt; b" id="233765">f</a>: a1 =&gt; a2 =&gt; a3 =&gt; a4 =&gt; b): (a1, a2, a3, a4) =&gt; b = {
+    (<a title="a1" id="233769">x1</a>, <a title="a2" id="233770">x2</a>, <a title="a3" id="233771">x3</a>, <a title="a4" id="233772">x4</a>) =&gt; <a href="Function1.scala.html#17119" title="(v1: a1)(a2) =&gt; (a3) =&gt; (a4) =&gt; b">f</a><a href="Function1.scala.html#17119" title="(v1: a2)(a3) =&gt; (a4) =&gt; b">(</a><a href="#233769" title="a1">x1</a>)<a href="Function1.scala.html#17119" title="(v1: a3)(a4) =&gt; b">(</a><a href="#233770" title="a2">x2</a>)<a href="Function1.scala.html#17119" title="(v1: a4)b">(</a><a href="#233771" title="a3">x3</a>)(<a href="#233772" title="a4">x4</a>)
+  }
+
+  /** Uncurrying for functions of arity 5.
+   */
+  <span class="keyword">def</span> <a title="[a1, a2, a3, a4, a5, b](f: (a1) =&gt; (a2) =&gt; (a3) =&gt; (a4) =&gt; (a5) =&gt; b)(a1, a2, a3, a4, a5) =&gt; b" id="233550">uncurried</a>[<a title="&gt;: Nothing &lt;: Any" id="233557">a1</a>, <a title="&gt;: Nothing &lt;: Any" id="233558">a2</a>, <a title="&gt;: Nothing &lt;: Any" id="233559">a3</a>, <a title="&gt;: Nothing &lt;: Any" id="233560">a4</a>, <a title="&gt;: Nothing &lt;: Any" id="233561">a5</a>, <a title="&gt;: Nothing &lt;: Any" id="233562">b</a>](<a title="(a1) =&gt; (a2) =&gt; (a3) =&gt; (a4) =&gt; (a5) =&gt; b" id="233785">f</a>: a1 =&gt; a2 =&gt; a3 =&gt; a4 =&gt; a5 =&gt; b): (a1, a2, a3, a4, a5) =&gt; b  =  {
+    (<a title="a1" id="233789">x1</a>, <a title="a2" id="233790">x2</a>, <a title="a3" id="233791">x3</a>, <a title="a4" id="233792">x4</a>, <a title="a5" id="233793">x5</a>) =&gt; <a href="Function1.scala.html#17119" title="(v1: a1)(a2) =&gt; (a3) =&gt; (a4) =&gt; (a5) =&gt; b">f</a><a href="Function1.scala.html#17119" title="(v1: a2)(a3) =&gt; (a4) =&gt; (a5) =&gt; b">(</a><a href="#233789" title="a1">x1</a>)<a href="Function1.scala.html#17119" title="(v1: a3)(a4) =&gt; (a5) =&gt; b">(</a><a href="#233790" title="a2">x2</a>)<a href="Function1.scala.html#17119" title="(v1: a4)(a5) =&gt; b">(</a><a href="#233791" title="a3">x3</a>)<a href="Function1.scala.html#17119" title="(v1: a5)b">(</a><a href="#233792" title="a4">x4</a>)(<a href="#233793" title="a5">x5</a>)
+  }
+
+  /** Tupling for functions of arity 2. This transforms a function
+   *  of arity 2 into a unary function that takes a pair of arguments.
+   *
+   *  @param f  ...
+   *  @return   ...
+   */
+  <span class="keyword">def</span> <a title="[a1, a2, b](f: (a1, a2) =&gt; b)((a1, a2)) =&gt; b" id="233563">tupled</a>[<a title="&gt;: Nothing &lt;: Any" id="233567">a1</a>, <a title="&gt;: Nothing &lt;: Any" id="233568">a2</a>, <a title="&gt;: Nothing &lt;: Any" id="233569">b</a>](<a title="(a1, a2) =&gt; b" id="233809">f</a>: (a1, a2) =&gt; b): Tuple2[a1, a2] =&gt; b = <a href="#233813" title="b">{</a>
+    <span title="b" class="keyword">case</span> Tuple2(<a title="a1" id="233816">x1</a>, <a title="a2" id="233817">x2</a>) =&gt; <a href="Function2.scala.html#20443" title="(v1: a1,v2: a2)b">f</a>(<a href="#233816" title="a1">x1</a>, <a href="#233817" title="a2">x2</a>)
+  }
+
+  /** Tupling for functions of arity 3. This transforms a function
+   *  of arity 3 into a unary function that takes a triple of arguments.
+   */
+  <span class="keyword">def</span> <a title="[a1, a2, a3, b](f: (a1, a2, a3) =&gt; b)((a1, a2, a3)) =&gt; b" id="233570">tupled</a>[<a title="&gt;: Nothing &lt;: Any" id="233575">a1</a>, <a title="&gt;: Nothing &lt;: Any" id="233576">a2</a>, <a title="&gt;: Nothing &lt;: Any" id="233577">a3</a>, <a title="&gt;: Nothing &lt;: Any" id="233578">b</a>](<a title="(a1, a2, a3) =&gt; b" id="233824">f</a>: (a1, a2, a3) =&gt; b): Tuple3[a1, a2, a3] =&gt; b = <a href="#233828" title="b">{</a>
+    <span title="b" class="keyword">case</span> Tuple3(<a title="a1" id="233832">x1</a>, <a title="a2" id="233833">x2</a>, <a title="a3" id="233834">x3</a>) =&gt; <a href="Function3.scala.html#27146" title="(v1: a1,v2: a2,v3: a3)b">f</a>(<a href="#233832" title="a1">x1</a>, <a href="#233833" title="a2">x2</a>, <a href="#233834" title="a3">x3</a>)
+  }
+
+  /** Tupling for functions of arity 4. This transforms a function
+   *  of arity 4 into a unary function that takes a 4-tuple of arguments.
+   */
+  <span class="keyword">def</span> <a title="[a1, a2, a3, a4, b](f: (a1, a2, a3, a4) =&gt; b)((a1, a2, a3, a4)) =&gt; b" id="233579">tupled</a>[<a title="&gt;: Nothing &lt;: Any" id="233585">a1</a>, <a title="&gt;: Nothing &lt;: Any" id="233586">a2</a>, <a title="&gt;: Nothing &lt;: Any" id="233587">a3</a>, <a title="&gt;: Nothing &lt;: Any" id="233588">a4</a>, <a title="&gt;: Nothing &lt;: Any" id="233589">b</a>](<a title="(a1, a2, a3, a4) =&gt; b" id="233842">f</a>: (a1, a2, a3, a4) =&gt; b): Tuple4[a1, a2, a3, a4] =&gt; b = <a href="#233846" title="b">{</a>
+    <span title="b" class="keyword">case</span> Tuple4(<a title="a1" id="233851">x1</a>, <a title="a2" id="233852">x2</a>, <a title="a3" id="233853">x3</a>, <a title="a4" id="233854">x4</a>) =&gt; <a href="Function4.scala.html#25799" title="(v1: a1,v2: a2,v3: a3,v4: a4)b">f</a>(<a href="#233851" title="a1">x1</a>, <a href="#233852" title="a2">x2</a>, <a href="#233853" title="a3">x3</a>, <a href="#233854" title="a4">x4</a>)
+  }
+
+  /** Tupling for functions of arity 5. This transforms a function
+   *  of arity 5 into a unary function that takes a 5-tuple of arguments.
+   */
+  <span class="keyword">def</span> <a title="[a1, a2, a3, a4, a5, b](f: (a1, a2, a3, a4, a5) =&gt; b)((a1, a2, a3, a4, a5)) =&gt; b" id="233590">tupled</a>[<a title="&gt;: Nothing &lt;: Any" id="233597">a1</a>, <a title="&gt;: Nothing &lt;: Any" id="233598">a2</a>, <a title="&gt;: Nothing &lt;: Any" id="233599">a3</a>, <a title="&gt;: Nothing &lt;: Any" id="233600">a4</a>, <a title="&gt;: Nothing &lt;: Any" id="233601">a5</a>, <a title="&gt;: Nothing &lt;: Any" id="233602">b</a>](<a title="(a1, a2, a3, a4, a5) =&gt; b" id="233863">f</a>: (a1, a2, a3, a4, a5) =&gt; b): Tuple5[a1, a2, a3, a4, a5] =&gt; b = <a href="#233867" title="b">{</a>
+    <span title="b" class="keyword">case</span> Tuple5(<a title="a1" id="233873">x1</a>, <a title="a2" id="233874">x2</a>, <a title="a3" id="233875">x3</a>, <a title="a4" id="233876">x4</a>, <a title="a5" id="233877">x5</a>) =&gt; <a href="Function5.scala.html#64096" title="(v1: a1,v2: a2,v3: a3,v4: a4,v5: a5)b">f</a>(<a href="#233873" title="a1">x1</a>, <a href="#233874" title="a2">x2</a>, <a href="#233875" title="a3">x3</a>, <a href="#233876" title="a4">x4</a>, <a href="#233877" title="a5">x5</a>)
+  }
+
+  /** Un-tupling for functions of arity 2. This transforms a function taking
+   *  a pair of arguments into a binary function which takes each argument separately.
+   */
+  <span class="keyword">def</span> <a title="[a1, a2, b](f: ((a1, a2)) =&gt; b)(a1, a2) =&gt; b" id="233603">untupled</a>[<a title="&gt;: Nothing &lt;: Any" id="233607">a1</a>, <a title="&gt;: Nothing &lt;: Any" id="233608">a2</a>, <a title="&gt;: Nothing &lt;: Any" id="233609">b</a>](<a title="((a1, a2)) =&gt; b" id="233887">f</a>: Tuple2[a1, a2] =&gt; b): (a1, a2) =&gt; b = {
+    (<a title="a1" id="233891">x1</a>, <a title="a2" id="233892">x2</a>) =&gt; <a href="Function1.scala.html#17119" title="(v1: (a1, a2))b">f</a>(<a href="Tuple2.scala.html#20670" title="(_1: a1,_2: a2)(a1, a2)">Tuple2</a>(<a href="#233891" title="a1">x1</a>, <a href="#233892" title="a2">x2</a>))
+  }
+
+  /** Un-tupling for functions of arity 3. This transforms a function taking
+   *  a triple of arguments into a ternary function which takes each argument separately.
+   */
+  <span class="keyword">def</span> <a title="[a1, a2, a3, b](f: ((a1, a2, a3)) =&gt; b)(a1, a2, a3) =&gt; b" id="233610">untupled</a>[<a title="&gt;: Nothing &lt;: Any" id="233615">a1</a>, <a title="&gt;: Nothing &lt;: Any" id="233616">a2</a>, <a title="&gt;: Nothing &lt;: Any" id="233617">a3</a>, <a title="&gt;: Nothing &lt;: Any" id="233618">b</a>](<a title="((a1, a2, a3)) =&gt; b" id="233904">f</a>: Tuple3[a1, a2, a3] =&gt; b): (a1, a2, a3) =&gt; b = {
+    (<a title="a1" id="233908">x1</a>, <a title="a2" id="233909">x2</a>, <a title="a3" id="233910">x3</a>) =&gt; <a href="Function1.scala.html#17119" title="(v1: (a1, a2, a3))b">f</a>(<a href="Tuple3.scala.html#19124" title="(_1: a1,_2: a2,_3: a3)(a1, a2, a3)">Tuple3</a>(<a href="#233908" title="a1">x1</a>, <a href="#233909" title="a2">x2</a>, <a href="#233910" title="a3">x3</a>))
+  }
+
+  /** Un-tupling for functions of arity 4. This transforms a function taking
+   *  a 4-tuple of arguments into a function of arity 4 which takes each argument separately.
+   */
+  <span class="keyword">def</span> <a title="[a1, a2, a3, a4, b](f: ((a1, a2, a3, a4)) =&gt; b)(a1, a2, a3, a4) =&gt; b" id="233619">untupled</a>[<a title="&gt;: Nothing &lt;: Any" id="233625">a1</a>, <a title="&gt;: Nothing &lt;: Any" id="233626">a2</a>, <a title="&gt;: Nothing &lt;: Any" id="233627">a3</a>, <a title="&gt;: Nothing &lt;: Any" id="233628">a4</a>, <a title="&gt;: Nothing &lt;: Any" id="233629">b</a>](<a title="((a1, a2, a3, a4)) =&gt; b" id="233925">f</a>: Tuple4[a1, a2, a3, a4] =&gt; b): (a1, a2, a3, a4) =&gt; b = {
+    (<a title="a1" id="233929">x1</a>, <a title="a2" id="233930">x2</a>, <a title="a3" id="233931">x3</a>, <a title="a4" id="233932">x4</a>) =&gt; <a href="Function1.scala.html#17119" title="(v1: (a1, a2, a3, a4))b">f</a>(<a href="Tuple4.scala.html#31955" title="(_1: a1,_2: a2,_3: a3,_4: a4)(a1, a2, a3, a4)">Tuple4</a>(<a href="#233929" title="a1">x1</a>, <a href="#233930" title="a2">x2</a>, <a href="#233931" title="a3">x3</a>, <a href="#233932" title="a4">x4</a>))
+  }
+
+  /** Un-tupling for functions of arity 5. This transforms a function taking
+   *  a 5-tuple of arguments into a function of arity 5 which takes each argument separately.
+   */
+  <span class="keyword">def</span> <a title="[a1, a2, a3, a4, a5, b](f: ((a1, a2, a3, a4, a5)) =&gt; b)(a1, a2, a3, a4, a5) =&gt; b" id="233630">untupled</a>[<a title="&gt;: Nothing &lt;: Any" id="233637">a1</a>, <a title="&gt;: Nothing &lt;: Any" id="233638">a2</a>, <a title="&gt;: Nothing &lt;: Any" id="233639">a3</a>, <a title="&gt;: Nothing &lt;: Any" id="233640">a4</a>, <a title="&gt;: Nothing &lt;: Any" id="233641">a5</a>, <a title="&gt;: Nothing &lt;: Any" id="233642">b</a>](<a title="((a1, a2, a3, a4, a5)) =&gt; b" id="233950">f</a>: Tuple5[a1, a2, a3, a4, a5] =&gt; b): (a1, a2, a3, a4, a5) =&gt; b = {
+    (<a title="a1" id="233954">x1</a>, <a title="a2" id="233955">x2</a>, <a title="a3" id="233956">x3</a>, <a title="a4" id="233957">x4</a>, <a title="a5" id="233958">x5</a>) =&gt; <a href="Function1.scala.html#17119" title="(v1: (a1, a2, a3, a4, a5))b">f</a>(<a href="Tuple5.scala.html#43805" title="(_1: a1,_2: a2,_3: a3,_4: a4,_5: a5)(a1, a2, a3, a4, a5)">Tuple5</a>(<a href="#233954" title="a1">x1</a>, <a href="#233955" title="a2">x2</a>, <a href="#233956" title="a3">x3</a>, <a href="#233957" title="a4">x4</a>, <a href="#233958" title="a5">x5</a>))
+  }
+}
+
+        </pre>
+    </body>
+</html>

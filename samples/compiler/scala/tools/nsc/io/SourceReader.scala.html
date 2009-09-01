@@ -1,20 +1,23 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
         <title>scala/tools/nsc/io/SourceReader.scala</title>
+        <script type="text/javascript" src="../../../../jquery-all.js"></script>
         <script type="text/javascript" src="../../../../linked.js"></script>
         <link rel="stylesheet" type="text/css" href="../../../../style.css" title="Style">
     </head>
-    <body onload="initializeLinked()">
+    <body>
         <pre>
-<span class="comment">/* NSC -- new Scala compiler
+/* NSC -- new Scala compiler
  * Copyright 2005-2009 LAMP/EPFL
  * @author  Martin Odersky
- */</span>
-<span class="comment">// $Id: SourceReader.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+ */
+// $Id: SourceReader.scala 18387 2009-07-24 15:28:37Z odersky $
 
 
-<span class="keyword">package</span> scala.tools.nsc.io
+<span class="keyword">package</span> scala.tools.nsc
+<span class="keyword">package</span> io
 
 <span class="keyword">import</span> java.io.{File, FileInputStream, InputStream, IOException}
 <span class="keyword">import</span> java.nio.{ByteBuffer, CharBuffer}
@@ -22,155 +25,158 @@
 <span class="keyword">import</span> java.nio.charset.{CharsetDecoder, CoderResult}
 <span class="keyword">import</span> scala.tools.nsc.reporters._
 
-<span class="comment">/** This class implements methods to read and decode source files. */</span>
-<span class="keyword">class</span> <span class="typed"><span class="type">class SourceReader extends java.lang.Object with ScalaObject</span><a id="12735">SourceReader</a></span>(<span class="typed"><span class="type">java.nio.charset.CharsetDecoder</span><span id="82324"><a id="82394">decoder</a></span></span>: <span class="typed"><span class="type">java.nio.charset.CharsetDecoder</span><a id="20989">CharsetDecoder</a></span>, <span class="typed"><span class="type">scala.tools.nsc.reporters.Reporter</span><span id="82325"><a id="82395">reporter</a></span></span>: <span class="typed"><span class="type">scala.tools.nsc.reporters.Reporter</span><a href="../reporters/Reporter.scala.html#15905">Reporter</a></span>) {
+/** This class implements methods to read and decode source files. */
+<span class="keyword">class</span> <a title="class SourceReader extends java.lang.Object with ScalaObject" id="20581">SourceReader</a><span title="ScalaObject">(</span><a title="java.nio.charset.CharsetDecoder" id="111150">decoder</a>: <span title="java.nio.charset.CharsetDecoder">CharsetDecoder</span>, <a title="scala.tools.nsc.reporters.Reporter" id="111151">reporter</a>: <a href="../reporters/Reporter.scala.html#13075" title="scala.tools.nsc.reporters.Reporter">Reporter</a>) {
 
   <span class="keyword">import</span> SourceReader.{decode, flush}
 
-  <span class="comment">//########################################################################</span>
-  <span class="comment">// Private Fields</span>
+  //########################################################################
+  // Private Fields
 
-  <span class="comment">/** The input byte buffer (small enough to fit in cache) */</span>
-  <span class="keyword">private</span> <span class="keyword">val</span> <span class="typed"><span class="type">java.nio.ByteBuffer</span><span id="82329"><a id="82328">bytes</a></span></span>: <span class="typed"><span class="type">java.nio.ByteBuffer</span><a id="20895">ByteBuffer</a></span> = <span class="typed"><span class="type">object java.nio.ByteBuffer</span><a id="20896">ByteBuffer</a></span>.<span class="typed"><span class="type">(Int)java.nio.ByteBuffer</span><a id="70027">allocate</a></span>(<span class="typed"><span class="type">Int(16384)</span><span class="int">0x4000</span></span>)
+  /** The input byte buffer (small enough to fit in cache) */
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="java.nio.ByteBuffer" id="110986">bytes</a>: <span title="java.nio.ByteBuffer">ByteBuffer</span> = <span title="object java.nio.ByteBuffer">ByteBuffer</span>.<a title="(x$1: Int)java.nio.ByteBuffer" id="86088">allocate</a>(<span title="Int(16384)" class="int">0x4000</span>)
 
-  <span class="comment">/** The output character buffer */</span>
-  <span class="keyword">private</span> <span class="keyword">var</span> <span class="typed"><span class="type">java.nio.CharBuffer</span><span id="82332"><span id="82330"><span id="82331"><a id="169392">chars</a></span></span></span></span>: <span class="typed"><span class="type">java.nio.CharBuffer</span><a id="20976">CharBuffer</a></span> = <span class="typed"><span class="type">object java.nio.CharBuffer</span><a id="20977">CharBuffer</a></span>.<span class="typed"><span class="type">(Int)java.nio.CharBuffer</span><a id="114242">allocate</a></span>(<span class="typed"><span class="type">Int(16384)</span><span class="int">0x4000</span></span>)
+  /** The output character buffer */
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="java.nio.CharBuffer" id="110989">chars</a>: <span title="java.nio.CharBuffer">CharBuffer</span> = <span title="object java.nio.CharBuffer">CharBuffer</span>.<span title="(x$1: Int)java.nio.CharBuffer">allocate</span>(<span title="Int(16384)" class="int">0x4000</span>)
 
-  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">(String)Unit</span><a id="82333">reportEncodingError</a></span>(<span class="typed"><span class="type">String</span><a id="169393">filename</a></span>:<span class="typed"><span class="type">String</span><a id="1861">String</a></span>) = {
-    <span class="typed"><span class="type">scala.tools.nsc.reporters.Reporter</span><a href="#82325">reporter</a></span>.<span class="typed"><span class="type">(scala.tools.nsc.util.Position,String)Unit</span><a href="../reporters/Reporter.scala.html#34470">error</a></span>(nsc.util.<span class="typed"><span class="type">object scala.tools.nsc.util.NoPosition</span><a href="../util/Position.scala.html#8304">NoPosition</a></span>, 
-                   <span class="typed"><span class="type">java.lang.String(&quot;IO error while decoding &quot;)</span><span class="string">&quot;IO error while decoding &quot;</span></span><span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span><span class="typed"><span class="type">String</span><a href="#169393">filename</a></span><span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span><span class="typed"><span class="type">java.lang.String(&quot; with &quot;)</span><span class="string">&quot; with &quot;</span></span><span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span><span class="typed"><span class="type">java.nio.charset.CharsetDecoder</span><a href="#82324">decoder</a></span>.<span class="typed"><span class="type">()java.nio.charset.Charset</span><a id="47591">charset</a></span>()<span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span><span class="typed"><span class="type">java.lang.String(&quot;\012&quot;)</span><span class="string">&quot;\n&quot;</span></span><span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span>
-                   <span class="typed"><span class="type">java.lang.String(&quot;Please try specifying another one using the -encoding option&quot;)</span><span class="string">&quot;Please try specifying another one using the -encoding option&quot;</span></span>)
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(filename: String)Unit" id="110991">reportEncodingError</a>(<a title="String" id="111158">filename</a>:<span title="String">String</span>) = {
+    <a href="#111151" title="scala.tools.nsc.reporters.Reporter">reporter</a>.<a href="../reporters/Reporter.scala.html#38784" title="(pos: scala.tools.nsc.util.Position,msg: String)Unit">error</a>(util.<a href="../util/Position.scala.html#14540" title="object scala.tools.nsc.util.NoPosition">NoPosition</a>, 
+                   <span title="(x$1: Any)java.lang.String" class="string">&quot;IO error while decoding &quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#111158" title="String">filename</a><span title="(x$1: Any)java.lang.String">+</span><span title="java.lang.String(&quot; with &quot;)" class="string">&quot; with &quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#111150" title="java.nio.charset.CharsetDecoder">decoder</a>.<a title="()java.nio.charset.Charset" id="111113">charset</a>()<span title="(x$1: Any)java.lang.String">+</span><span title="java.lang.String(&quot;\012&quot;)" class="string">&quot;\n&quot;</span>+
+                   <span title="java.lang.String(&quot;Please try specifying another one using the -encoding option&quot;)" class="string">&quot;Please try specifying another one using the -encoding option&quot;</span>)
   }
 
-  <span class="comment">//########################################################################</span>
-  <span class="comment">// Public Methods</span>
+  //########################################################################
+  // Public Methods
 
-  <span class="comment">/** Reads the file with the specified name. */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(String)Array[Char]</span><a id="82334">read</a></span>(<span class="typed"><span class="type">String</span><a id="82430">filename</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>): <span class="typed"><span class="type">Array[Char]</span><a id="1072">Array</a></span>[Char]= <span class="typed"><span class="type">(java.io.File)Array[Char]</span><a href="#82335">read</a></span>(<span class="typed"><span class="type">java.io.File</span><span class="keyword">new</span></span> <span class="typed"><span class="type">java.io.File</span><a id="3669">File</a></span>(<span class="typed"><span class="type">String</span><a href="#82430">filename</a></span>))
+  /** Reads the file with the specified name. */
+  <span class="keyword">def</span> <a title="(filename: String)Array[Char]" id="110992">read</a>(<a title="String" id="111222">filename</a>: <span title="String">String</span>): <span title="Array[Char]">Array</span>[Char]= <a href="#110993" title="(file: java.io.File)Array[Char]">read</a>(<span title="java.io.File" class="keyword">new</span> <span title="java.io.File">File</span>(<a href="#111222" title="String">filename</a>))
 
-  <span class="comment">/** Reads the specified file. */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(java.io.File)Array[Char]</span><a id="82335">read</a></span>(<span class="typed"><span class="type">java.io.File</span><a id="82429">file</a></span>: <span class="typed"><span class="type">java.io.File</span><a id="3669">File</a></span>): <span class="typed"><span class="type">Array[Char]</span><a id="1072">Array</a></span>[Char] = {
-    <span class="keyword">val</span> <span class="typed"><span class="type">java.nio.channels.FileChannel</span><a id="169402">c</a></span> = <span class="typed"><span class="type">(java.io.File)java.io.FileInputStream</span><a id="48679" class="keyword">new</a></span> <span class="typed"><span class="type">java.io.FileInputStream</span><a id="3810">FileInputStream</a></span>(<span class="typed"><span class="type">java.io.File</span><a href="#82429">file</a></span>).<span class="typed"><span class="type">()java.nio.channels.FileChannel</span><a id="48688">getChannel</a></span>
+  /** Reads the specified file. */
+  <span class="keyword">def</span> <a title="(file: java.io.File)Array[Char]" id="110993">read</a>(<a title="java.io.File" id="111237">file</a>: <span title="java.io.File">File</span>): <span title="Array[Char]">Array</span>[Char] = {
+    <span class="keyword">val</span> <a title="java.nio.channels.FileChannel" id="111375">c</a> = <a title="(x$1: java.io.File)java.io.FileInputStream" id="111378" class="keyword">new</a> <a title="java.io.FileInputStream" id="3960">FileInputStream</a>(<a href="#111237" title="java.io.File">file</a>).<a title="()java.nio.channels.FileChannel" id="111394">getChannel</a>
     <span class="keyword">try</span> {
-      <span class="typed"><span class="type">(java.nio.channels.ReadableByteChannel)Array[Char]</span><a href="#82337">read</a></span>(<span class="typed"><span class="type">java.nio.channels.FileChannel</span><a href="#169402">c</a></span>)
+      <a href="#110995" title="(input: java.nio.channels.ReadableByteChannel)Array[Char]">read</a>(<a href="#111375" title="java.nio.channels.FileChannel">c</a>)
     } <span class="keyword">catch</span> {
-      <span class="typed"><span class="type">Array[Char]</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Exception</span><a id="169470">e</a></span>:<span class="typed"><span class="type">Exception</span><a id="2131">Exception</a></span> =&gt;
-        <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>) <span class="typed"><span class="type">Exception</span><a href="#169470">e</a></span>.<span class="typed"><span class="type">()Unit</span><a id="23651">printStackTrace</a></span>
-        <span class="typed"><span class="type">(String)Unit</span><a href="#82333">reportEncodingError</a></span>(<span class="typed"><span class="type">java.io.File</span><a href="#82429">file</a></span>.<span class="typed"><span class="type">()java.lang.String</span><a id="40722">toString</a></span>())
-        <span class="typed"><span class="type">Array[Char]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">Array[Char]</span><a id="1072">Array</a></span>[Char](<span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>)
+      <span title="Array[Char]" class="keyword">case</span> <a title="Exception" id="111783">e</a>:<span title="Exception">Exception</span> =&gt;
+        <span title="Unit" class="keyword">if</span> (<span title="Boolean(true)" class="keyword">true</span>) <a href="#111783" title="Exception">e</a>.<span title="()Unit">printStackTrace</span>
+        <a href="#110991" title="(filename: String)Unit">reportEncodingError</a>(<a href="#111237" title="java.io.File">file</a>.<a title="()java.lang.String" id="35248">toString</a>())
+        <span title="Array[Char]" class="keyword">new</span> <span title="Array[Char]">Array</span>[Char](<span title="Int(0)" class="int">0</span>)
     } <span class="keyword">finally</span> {
-      <span class="typed"><span class="type">java.nio.channels.FileChannel</span><a href="#169402">c</a></span>.<span class="typed"><span class="type">()Unit</span><a id="169454">close</a></span>()
+      <a href="#111375" title="java.nio.channels.FileChannel">c</a>.<a title="()Unit" id="111498">close</a>()
     }
   }
 
-  <span class="comment">/** Reads the specified file.
+  /** Reads the specified file.
    *
    *  @param file ...
    *  @return     ...
-   */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(scala.tools.nsc.io.AbstractFile)Array[Char]</span><a id="82336">read</a></span>(<span class="typed"><span class="type">scala.tools.nsc.io.AbstractFile</span><a id="82424">file</a></span>: <span class="typed"><span class="type">scala.tools.nsc.io.AbstractFile</span><a href="AbstractFile.scala.html#12693">AbstractFile</a></span>): <span class="typed"><span class="type">Array[Char]</span><a id="1072">Array</a></span>[Char] = {
-    <span class="typed"><span class="type">scala.tools.nsc.io.AbstractFile</span><a href="#82424">file</a></span> <span class="typed"><span class="type">Array[Char]</span><span class="keyword">match</span></span> {
-      <span class="typed"><span class="type">Array[Char]</span><span class="keyword">case</span></span> <span class="typed"><span class="type">scala.tools.nsc.io.PlainFile</span><a id="169473">p</a></span>:<span class="typed"><span class="type">scala.tools.nsc.io.PlainFile</span><a href="PlainFile.scala.html#12720">PlainFile</a></span> =&gt;
-        <span class="typed"><span class="type">(java.io.File)Array[Char]</span><a href="#82335">read</a></span>(<span class="typed"><span class="type">scala.tools.nsc.io.PlainFile</span><a href="#169473">p</a></span>.<span class="typed"><span class="type">=&gt; java.io.File</span><a href="PlainFile.scala.html#40804">file</a></span>)                                                     <span class="comment">// bq: (!!!)</span>
-      <span class="typed"><span class="type">Array[Char]</span><span class="keyword">case</span></span> <span class="typed"><span class="type">scala.tools.nsc.io.ZipArchive#FileEntry</span><a id="169475">z</a></span>:ZipArchive#<span class="typed"><span class="type">scala.tools.nsc.io.ZipArchive#FileEntry</span><a href="ZipArchive.scala.html#40837">FileEntry</a></span> =&gt; 
-        <span class="keyword">val</span> <span class="typed"><span class="type">java.nio.channels.ReadableByteChannel</span><a id="169478">c</a></span> = <span class="typed"><span class="type">object java.nio.channels.Channels</span><a id="47163">Channels</a></span>.<span class="typed"><span class="type">(java.io.InputStream)java.nio.channels.ReadableByteChannel</span><a id="169487">newChannel</a></span>(<span class="typed"><span class="type">scala.tools.nsc.io.ZipArchive#FileEntry</span><a href="#169475">z</a></span>.<span class="typed"><span class="type">=&gt; java.util.zip.ZipFile</span><a href="ZipArchive.scala.html#41032">getArchive</a></span>.<span class="typed"><span class="type">(java.util.zip.ZipEntry)java.io.InputStream</span><a id="40855">getInputStream</a></span>(<span class="typed"><span class="type">scala.tools.nsc.io.ZipArchive#FileEntry</span><a href="#169475">z</a></span>.<span class="typed"><span class="type">=&gt; java.util.zip.ZipEntry</span><a href="ZipArchive.scala.html#41196">entry</a></span>))
-        <span class="typed"><span class="type">(java.nio.channels.ReadableByteChannel)Array[Char]</span><a href="#82337">read</a></span>(<span class="typed"><span class="type">java.nio.channels.ReadableByteChannel</span><a href="#169478">c</a></span>)
-      <span class="typed"><span class="type">Nothing</span><span class="keyword">case</span></span> _ =&gt;
-        <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.io.IOException</span><a id="34438" class="keyword">new</a></span> <span class="typed"><span class="type">java.io.IOException</span><a id="3519">IOException</a></span>(<span class="typed"><span class="type">scala.tools.nsc.io.AbstractFile</span><a href="#82424">file</a></span>.<span class="typed"><span class="type">()String</span><a href="AbstractFile.scala.html#25455">toString</a></span>()<span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span><span class="typed"><span class="type">java.lang.String(&quot; is neither plain file nor ZipArchive#FileEntry&quot;)</span><span class="string">&quot; is neither plain file nor ZipArchive#FileEntry&quot;</span></span>)
+   */
+  <span class="keyword">def</span> <a title="(file: scala.tools.nsc.io.AbstractFile)Array[Char]" id="110994">read</a>(<a title="scala.tools.nsc.io.AbstractFile" id="111235">file</a>: <a href="AbstractFile.scala.html#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a>): <span title="Array[Char]">Array</span>[Char] = {
+    <a href="#111235" title="scala.tools.nsc.io.AbstractFile">file</a> <span title="Array[Char]" class="keyword">match</span> {
+      <span title="Array[Char]" class="keyword">case</span> <a title="scala.tools.nsc.io.PlainFile" id="111798">p</a>:<a href="PlainFile.scala.html#20566" title="scala.tools.nsc.io.PlainFile">PlainFile</a> =&gt;
+        <a href="#110993" title="(file: java.io.File)Array[Char]">read</a>(<a href="#111798" title="scala.tools.nsc.io.PlainFile">p</a>.<a href="PlainFile.scala.html#111803" title="=&gt; java.io.File">file</a>)                                                     // bq: (!!!)
+      <span title="Array[Char]" class="keyword">case</span> <a title="scala.tools.nsc.io.ZipArchive#FileEntry" id="111902">z</a>:ZipArchive#<a href="ZipArchive.scala.html#111918" title="scala.tools.nsc.io.ZipArchive#FileEntry">FileEntry</a> =&gt; 
+        <span class="keyword">val</span> <a title="java.nio.channels.ReadableByteChannel" id="111953">c</a> = <a title="object java.nio.channels.Channels" id="64933">Channels</a>.<a title="(x$1: java.io.InputStream)java.nio.channels.ReadableByteChannel" id="111964">newChannel</a>(<a href="#111902" title="scala.tools.nsc.io.ZipArchive#FileEntry">z</a>.<a href="ZipArchive.scala.html#111935" title="=&gt; java.util.zip.ZipFile">getArchive</a>.<a title="(x$1: java.util.zip.ZipEntry)java.io.InputStream" id="112512">getInputStream</a>(<a href="#111902" title="scala.tools.nsc.io.ZipArchive#FileEntry">z</a>.<a href="ZipArchive.scala.html#111946" title="=&gt; java.util.zip.ZipEntry">entry</a>))
+        <a href="#110995" title="(input: java.nio.channels.ReadableByteChannel)Array[Char]">read</a>(<a href="#111953" title="java.nio.channels.ReadableByteChannel">c</a>)
+      <span title="Array[Char]" class="keyword">case</span> _ =&gt;
+        <span class="keyword">val</span> <a title="java.nio.ByteBuffer" id="112657">b</a> = <span title="object java.nio.ByteBuffer">ByteBuffer</span>.<a title="(x$1: Array[Byte])java.nio.ByteBuffer" id="86094">wrap</a>(<a href="#111235" title="scala.tools.nsc.io.AbstractFile">file</a>.<a href="AbstractFile.scala.html#51397" title="=&gt; Array[Byte]">toByteArray</a>)
+        <span class="keyword">try</span> {
+          <a href="#110996" title="(bytes: java.nio.ByteBuffer)Array[Char]">read</a>(<a href="#112657" title="java.nio.ByteBuffer">b</a>)
+        } <span class="keyword">catch</span> {
+          <span title="Array[Char]" class="keyword">case</span> <a title="Exception" id="112671">e</a>:<span title="Exception">Exception</span> =&gt;
+            <span title="Unit" class="keyword">if</span> (<span title="Boolean(true)" class="keyword">true</span>) <a href="#112671" title="Exception">e</a>.<span title="()Unit">printStackTrace</span>
+            <a href="#110991" title="(filename: String)Unit">reportEncodingError</a>(<a href="#111235" title="scala.tools.nsc.io.AbstractFile">file</a>.<a href="AbstractFile.scala.html#51406" title="()String">toString</a>())
+            <span title="Array[Char]" class="keyword">new</span> <span title="Array[Char]">Array</span>[Char](<span title="Int(0)" class="int">0</span>)
+        }
     }
-    <span class="comment">/*
-    val decoder: CharsetDecoder = this.decoder.reset();
-    val bytes: ByteBuffer = ByteBuffer.wrap(file.read);
-    val chars: CharBuffer = this.chars; chars.clear();
-    try {
-      terminate(flush(decoder, decode(decoder, bytes, chars, true)));
-    } catch {
-      case e:Exception =&gt; 
-        reportEncodingError(file.toString())
-        new Array[Char](0)
-    }
-    */</span>
   }
 
-  <span class="comment">/** Reads the specified byte channel. */</span>
-  <span class="keyword">protected</span> <span class="keyword">def</span> <span class="typed"><span class="type">(java.nio.channels.ReadableByteChannel)Array[Char]</span><a id="82337">read</a></span>(<span class="typed"><span class="type">java.nio.channels.ReadableByteChannel</span><a id="169396">input</a></span>: <span class="typed"><span class="type">java.nio.channels.ReadableByteChannel</span><a id="47213">ReadableByteChannel</a></span>): <span class="typed"><span class="type">Array[Char]</span><a id="1072">Array</a></span>[Char] = {
-    <span class="keyword">val</span> <span class="typed"><span class="type">java.nio.charset.CharsetDecoder</span><a id="169499">decoder</a></span>: <span class="typed"><span class="type">java.nio.charset.CharsetDecoder</span><a id="20989">CharsetDecoder</a></span> = <span class="typed"><span class="type">SourceReader.this.type</span><a href="#12735" class="keyword">this</a></span>.<span class="typed"><span class="type">java.nio.charset.CharsetDecoder</span><a href="#82324">decoder</a></span>.<span class="typed"><span class="type">()java.nio.charset.CharsetDecoder</span><a id="47606">reset</a></span>()
-    <span class="keyword">val</span> <span class="typed"><span class="type">java.nio.ByteBuffer</span><a id="169500">bytes</a></span>: <span class="typed"><span class="type">java.nio.ByteBuffer</span><a id="20895">ByteBuffer</a></span> = <span class="typed"><span class="type">SourceReader.this.type</span><a href="#12735" class="keyword">this</a></span>.<span class="typed"><span class="type">=&gt; java.nio.ByteBuffer</span><a href="#82328">bytes</a></span>; <span class="typed"><span class="type">java.nio.ByteBuffer</span><a href="#169500">bytes</a></span>.<span class="typed"><span class="type">()java.nio.Buffer</span><a id="70095">clear</a></span>()
-    <span class="keyword">var</span> <span class="typed"><span class="type">java.nio.CharBuffer</span><a id="169501">chars</a></span>: <span class="typed"><span class="type">java.nio.CharBuffer</span><a id="20976">CharBuffer</a></span> = <span class="typed"><span class="type">SourceReader.this.type</span><a href="#12735" class="keyword">this</a></span>.<span class="typed"><span class="type">=&gt; java.nio.CharBuffer</span><a href="#82330">chars</a></span>; <span class="typed"><span class="type">java.nio.CharBuffer</span><a href="#169501">chars</a></span>.<span class="typed"><span class="type">()java.nio.Buffer</span><a id="70095">clear</a></span>()
-    <span class="keyword">var</span> <span class="typed"><span class="type">Boolean</span><a id="169502">endOfInput</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2170">Boolean</a></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
-    <span class="typed"><span class="type">Unit</span><a href="#169503" class="keyword">while</a></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2747">!</a></span><span class="typed"><span class="type">Boolean</span><a href="#169502">endOfInput</a></span> ) {
-      <span class="typed"><span class="type">Boolean</span><a href="#169502">endOfInput</a></span> = <span class="typed"><span class="type">java.nio.channels.ReadableByteChannel</span><a href="#169396">input</a></span>.<span class="typed"><span class="type">(java.nio.ByteBuffer)Int</span><a id="169397">read</a></span>(<span class="typed"><span class="type">java.nio.ByteBuffer</span><a href="#169500">bytes</a></span>) <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&lt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>
-      <span class="typed"><span class="type">java.nio.ByteBuffer</span><a href="#169500">bytes</a></span>.<span class="typed"><span class="type">()java.nio.Buffer</span><a id="70096">flip</a></span>()
-      <span class="typed"><span class="type">java.nio.CharBuffer</span><a href="#169501">chars</a></span> = <span class="typed"><span class="type">(java.nio.charset.CharsetDecoder,java.nio.ByteBuffer,java.nio.CharBuffer,Boolean)java.nio.CharBuffer</span><a href="#82426">decode</a></span>(<span class="typed"><span class="type">java.nio.charset.CharsetDecoder</span><a href="#169499">decoder</a></span>, <span class="typed"><span class="type">java.nio.ByteBuffer</span><a href="#169500">bytes</a></span>, <span class="typed"><span class="type">java.nio.CharBuffer</span><a href="#169501">chars</a></span>, <span class="typed"><span class="type">Boolean</span><a href="#169502">endOfInput</a></span>)
+  /** Reads the specified byte channel. */
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(input: java.nio.channels.ReadableByteChannel)Array[Char]" id="110995">read</a>(<a title="java.nio.channels.ReadableByteChannel" id="111229">input</a>: <a title="java.nio.channels.ReadableByteChannel" id="64983">ReadableByteChannel</a>): <span title="Array[Char]">Array</span>[Char] = {
+    <span class="keyword">val</span> <a title="java.nio.charset.CharsetDecoder" id="112684">decoder</a>: <span title="java.nio.charset.CharsetDecoder">CharsetDecoder</span> = <a href="#20581" title="SourceReader.this.type" class="keyword">this</a>.<a href="#111150" title="java.nio.charset.CharsetDecoder">decoder</a>.<span title="()java.nio.charset.CharsetDecoder">reset</span>()
+    <span class="keyword">val</span> <a title="java.nio.ByteBuffer" id="112685">bytes</a>: <span title="java.nio.ByteBuffer">ByteBuffer</span> = <a href="#20581" title="SourceReader.this.type" class="keyword">this</a>.<a href="#110986" title="=&gt; java.nio.ByteBuffer">bytes</a>; <a href="#112685" title="java.nio.ByteBuffer">bytes</a>.<span title="()java.nio.Buffer">clear</span>()
+    <span class="keyword">var</span> <a title="java.nio.CharBuffer" id="112686">chars</a>: <span title="java.nio.CharBuffer">CharBuffer</span> = <a href="#20581" title="SourceReader.this.type" class="keyword">this</a>.<a href="#110989" title="=&gt; java.nio.CharBuffer">chars</a>; <a href="#112686" title="java.nio.CharBuffer">chars</a>.<span title="()java.nio.Buffer">clear</span>()
+    <span class="keyword">var</span> <a title="Boolean" id="112687">endOfInput</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>
+    <span title="Unit" class="keyword">while</span> (<a title="=&gt; Boolean" id="2205">!</a><a href="#112687" title="Boolean">endOfInput</a> ) <a href="#112688" title="()Unit">{</a>
+      <a href="#112687" title="Boolean">endOfInput</a> = <a href="#111229" title="java.nio.channels.ReadableByteChannel">input</a>.<a title="(x$1: java.nio.ByteBuffer)Int" id="111231">read</a><a title="(x$1: Int)Boolean" id="2956">(</a><a href="#112685" title="java.nio.ByteBuffer">bytes</a>) &lt; <span title="Int(0)" class="int">0</span>
+      <a href="#112685" title="java.nio.ByteBuffer">bytes</a>.<span title="()java.nio.Buffer">flip</span>()
+      <a href="#112686" title="java.nio.CharBuffer">chars</a> = <a href="#111002" title="(decoder: java.nio.charset.CharsetDecoder,bytes: java.nio.ByteBuffer,chars: java.nio.CharBuffer,endOfInput: Boolean)java.nio.CharBuffer">decode</a>(<a href="#112684" title="java.nio.charset.CharsetDecoder">decoder</a>, <a href="#112685" title="java.nio.ByteBuffer">bytes</a>, <a href="#112686" title="java.nio.CharBuffer">chars</a>, <a href="#112687" title="Boolean">endOfInput</a>)
     }
-    <span class="typed"><span class="type">(java.nio.CharBuffer)Array[Char]</span><a href="#82338">terminate</a></span>(<span class="typed"><span class="type">(java.nio.charset.CharsetDecoder,java.nio.CharBuffer)java.nio.CharBuffer</span><a href="#82427">flush</a></span>(<span class="typed"><span class="type">java.nio.charset.CharsetDecoder</span><a href="#169499">decoder</a></span>, <span class="typed"><span class="type">java.nio.CharBuffer</span><a href="#169501">chars</a></span>))
+    <a href="#110997" title="(chars: java.nio.CharBuffer)Array[Char]">terminate</a>(<a href="#111003" title="(decoder: java.nio.charset.CharsetDecoder,chars: java.nio.CharBuffer)java.nio.CharBuffer">flush</a>(<a href="#112684" title="java.nio.charset.CharsetDecoder">decoder</a>, <a href="#112686" title="java.nio.CharBuffer">chars</a>))
   }
 
-  <span class="comment">//########################################################################</span>
-  <span class="comment">// Private Methods</span>
+  /** Reads the specified byte buffer. */
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(bytes: java.nio.ByteBuffer)Array[Char]" id="110996">read</a>(<a title="java.nio.ByteBuffer" id="111227">bytes</a>: <span title="java.nio.ByteBuffer">ByteBuffer</span>): <span title="Array[Char]">Array</span>[Char] = {
+    <span class="keyword">val</span> <a title="java.nio.charset.CharsetDecoder" id="112725">decoder</a>: <span title="java.nio.charset.CharsetDecoder">CharsetDecoder</span> = <a href="#20581" title="SourceReader.this.type" class="keyword">this</a>.<a href="#111150" title="java.nio.charset.CharsetDecoder">decoder</a>.<span title="()java.nio.charset.CharsetDecoder">reset</span>()
+    <span class="keyword">val</span> <a title="java.nio.CharBuffer" id="112726">chars</a>: <span title="java.nio.CharBuffer">CharBuffer</span> = <a href="#20581" title="SourceReader.this.type" class="keyword">this</a>.<a href="#110989" title="=&gt; java.nio.CharBuffer">chars</a>; <a href="#112726" title="java.nio.CharBuffer">chars</a>.<span title="()java.nio.Buffer">clear</span>()
+    <a href="#110997" title="(chars: java.nio.CharBuffer)Array[Char]">terminate</a>(<a href="#111003" title="(decoder: java.nio.charset.CharsetDecoder,chars: java.nio.CharBuffer)java.nio.CharBuffer">flush</a>(<a href="#112725" title="java.nio.charset.CharsetDecoder">decoder</a>, <a href="#111002" title="(decoder: java.nio.charset.CharsetDecoder,bytes: java.nio.ByteBuffer,chars: java.nio.CharBuffer,endOfInput: Boolean)java.nio.CharBuffer">decode</a>(<a href="#112725" title="java.nio.charset.CharsetDecoder">decoder</a>, <a href="#111227" title="java.nio.ByteBuffer">bytes</a>, <a href="#112726" title="java.nio.CharBuffer">chars</a>, <span title="Boolean(true)" class="keyword">true</span>)))
+  }
 
-  <span class="comment">/**
+  //########################################################################
+  // Private Methods
+
+  /**
    * Sets the specified char buffer as the new output buffer and
    * reads and returns its content.
-   */</span>
-  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">(java.nio.CharBuffer)Array[Char]</span><a id="82338">terminate</a></span>(<span class="typed"><span class="type">java.nio.CharBuffer</span><a id="169509">chars</a></span>: <span class="typed"><span class="type">java.nio.CharBuffer</span><a id="20976">CharBuffer</a></span>): <span class="typed"><span class="type">Array[Char]</span><a id="1072">Array</a></span>[Char] = {
-    <span class="keyword">val</span> <span class="typed"><span class="type">Array[Char]</span><a id="169512">result</a></span> = <span class="typed"><span class="type">Array[Char]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">Array[Char]</span><a id="1072">Array</a></span>[Char](<span class="typed"><span class="type">java.nio.CharBuffer</span><a href="#169509">chars</a></span>.<span class="typed"><span class="type">()Int</span><a id="114272">length</a></span>())
-    <span class="typed"><span class="type">java.nio.CharBuffer</span><a href="#169509">chars</a></span>.<span class="typed"><span class="type">(Array[Char])java.nio.CharBuffer</span><a id="114256">get</a></span>(<span class="typed"><span class="type">Array[Char]</span><a href="#169512">result</a></span>)
-    <span class="typed"><span class="type">SourceReader.this.type</span><a href="#12735" class="keyword">this</a></span>.<span class="typed"><span class="type">(java.nio.CharBuffer)Unit</span><a href="#82331">chars</a></span> = <span class="typed"><span class="type">java.nio.CharBuffer</span><a href="#169509">chars</a></span>
-    <span class="typed"><span class="type">Array[Char]</span><a href="#169512">result</a></span>
+   */
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(chars: java.nio.CharBuffer)Array[Char]" id="110997">terminate</a>(<a title="java.nio.CharBuffer" id="112716">chars</a>: <span title="java.nio.CharBuffer">CharBuffer</span>): <span title="Array[Char]">Array</span>[Char] = {
+    <span class="keyword">val</span> <a title="Array[Char]" id="112737">result</a> = <span title="Array[Char]" class="keyword">new</span> <span title="Array[Char]">Array</span>[Char](<a href="#112716" title="java.nio.CharBuffer">chars</a>.<a title="()Int" id="111081">length</a>())
+    <a href="#112716" title="java.nio.CharBuffer">chars</a>.<a title="(x$1: Array[Char])java.nio.CharBuffer" id="111051">get</a>(<a href="#112737" title="Array[Char]">result</a>)
+    <a href="#20581" title="SourceReader.this.type" class="keyword">this</a>.<a href="#110989" title="(x$1: java.nio.CharBuffer)Unit">chars</a> = <a href="#112716" title="java.nio.CharBuffer">chars</a>
+    <a href="#112737" title="Array[Char]">result</a>
   }
 
 }
 
-<span class="keyword">object</span> <span class="typed"><span class="type">object scala.tools.nsc.io.SourceReader</span><a id="12736">SourceReader</a></span> {
+<span class="keyword">object</span> <a title="object scala.tools.nsc.io.SourceReader" id="20582">SourceReader</a> <span title="ScalaObject">{</span>
 
-  <span class="comment">/**
+  /**
    * Decodes the content of the specified byte buffer with the
    * specified decoder into the specified char buffer, allocating
    * bigger ones if necessary, then compacts the byte buffer and
    * returns the last allocated char buffer. The &quot;endOfInput&quot;
    * argument indicates whether the byte buffer contains the last
    * chunk of the input file.
-   */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(java.nio.charset.CharsetDecoder,java.nio.ByteBuffer,java.nio.CharBuffer,Boolean)java.nio.CharBuffer</span><a id="82426">decode</a></span>(<span class="typed"><span class="type">java.nio.charset.CharsetDecoder</span><a id="169505">decoder</a></span>: <span class="typed"><span class="type">java.nio.charset.CharsetDecoder</span><a id="20989">CharsetDecoder</a></span>, <span class="typed"><span class="type">java.nio.ByteBuffer</span><a id="169506">bytes</a></span>: <span class="typed"><span class="type">java.nio.ByteBuffer</span><a id="20895">ByteBuffer</a></span>, <span class="typed"><span class="type">java.nio.CharBuffer</span><a id="169507">chars</a></span>: <span class="typed"><span class="type">java.nio.CharBuffer</span><a id="20976">CharBuffer</a></span>,
-             <span class="typed"><span class="type">Boolean</span><a id="169508">endOfInput</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2170">Boolean</a></span>): <span class="typed"><span class="type">java.nio.CharBuffer</span><a id="20976">CharBuffer</a></span> =
+   */
+  <span class="keyword">def</span> <a title="(decoder: java.nio.charset.CharsetDecoder,bytes: java.nio.ByteBuffer,chars: java.nio.CharBuffer,endOfInput: Boolean)java.nio.CharBuffer" id="111002">decode</a>(<a title="java.nio.charset.CharsetDecoder" id="112707">decoder</a>: <span title="java.nio.charset.CharsetDecoder">CharsetDecoder</span>, <a title="java.nio.ByteBuffer" id="112708">bytes</a>: <span title="java.nio.ByteBuffer">ByteBuffer</span>, <a title="java.nio.CharBuffer" id="112709">chars</a>: <span title="java.nio.CharBuffer">CharBuffer</span>,
+             <a title="Boolean" id="112710">endOfInput</a>: <span title="Boolean">Boolean</span>): <span title="java.nio.CharBuffer">CharBuffer</span> =
   {
-    <span class="keyword">val</span> <span class="typed"><span class="type">java.nio.charset.CoderResult</span><a id="169517">result</a></span>: <span class="typed"><span class="type">java.nio.charset.CoderResult</span><a id="21037">CoderResult</a></span> = <span class="typed"><span class="type">java.nio.charset.CharsetDecoder</span><a href="#169505">decoder</a></span>.<span class="typed"><span class="type">(java.nio.ByteBuffer,java.nio.CharBuffer,Boolean)java.nio.charset.CoderResult</span><a id="47603">decode</a></span>(<span class="typed"><span class="type">java.nio.ByteBuffer</span><a href="#169506">bytes</a></span>, <span class="typed"><span class="type">java.nio.CharBuffer</span><a href="#169507">chars</a></span>, <span class="typed"><span class="type">Boolean</span><a href="#169508">endOfInput</a></span>)
-    <span class="typed"><span class="type">java.nio.CharBuffer</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">java.nio.charset.CoderResult</span><a href="#169517">result</a></span>.<span class="typed"><span class="type">()Boolean</span><a id="169525">isUnderflow</a></span>()) {
-      <span class="typed"><span class="type">java.nio.ByteBuffer</span><a href="#169506">bytes</a></span>.<span class="typed"><span class="type">()java.nio.ByteBuffer</span><a id="70045">compact</a></span>()
-      <span class="typed"><span class="type">java.nio.CharBuffer</span><a href="#169507">chars</a></span>
+    <span class="keyword">val</span> <a title="java.nio.charset.CoderResult" id="112755">result</a>: <span title="java.nio.charset.CoderResult">CoderResult</span> = <a href="#112707" title="java.nio.charset.CharsetDecoder">decoder</a>.<a title="(x$1: java.nio.ByteBuffer,x$2: java.nio.CharBuffer,x$3: Boolean)java.nio.charset.CoderResult" id="111131">decode</a>(<a href="#112708" title="java.nio.ByteBuffer">bytes</a>, <a href="#112709" title="java.nio.CharBuffer">chars</a>, <a href="#112710" title="Boolean">endOfInput</a>)
+    <span title="java.nio.CharBuffer" class="keyword">if</span> (<a href="#112755" title="java.nio.charset.CoderResult">result</a>.<span title="()Boolean">isUnderflow</span>()) {
+      <a href="#112708" title="java.nio.ByteBuffer">bytes</a>.<a title="()java.nio.ByteBuffer" id="86124">compact</a>()
+      <a href="#112709" title="java.nio.CharBuffer">chars</a>
     } <span class="keyword">else</span> {
-      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">java.nio.charset.CoderResult</span><a href="#169517">result</a></span>.<span class="typed"><span class="type">()Boolean</span><a id="169527">isError</a></span>()) <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.io.IOException</span><a id="34438" class="keyword">new</a></span> <span class="typed"><span class="type">java.io.IOException</span><a id="3519">IOException</a></span>(<span class="typed"><span class="type">java.nio.charset.CoderResult</span><a href="#169517">result</a></span>.<span class="typed"><span class="type">()java.lang.String</span><a id="169524">toString</a></span>())
-      <span class="typed"><span class="type">(Boolean)Unit</span><span id="6003"><a id="821">assert</a></span></span>(<span class="typed"><span class="type">java.nio.charset.CoderResult</span><a href="#169517">result</a></span>.<span class="typed"><span class="type">()Boolean</span><a id="169526">isOverflow</a></span>())
-      <span class="typed"><span class="type">(java.nio.charset.CharsetDecoder,java.nio.ByteBuffer,java.nio.CharBuffer,Boolean)java.nio.CharBuffer</span><a href="#82426">decode</a></span>(<span class="typed"><span class="type">java.nio.charset.CharsetDecoder</span><a href="#169505">decoder</a></span>, <span class="typed"><span class="type">java.nio.ByteBuffer</span><a href="#169506">bytes</a></span>, <span class="typed"><span class="type">(java.nio.CharBuffer)java.nio.CharBuffer</span><a href="#82428">increaseCapacity</a></span>(<span class="typed"><span class="type">java.nio.CharBuffer</span><a href="#169507">chars</a></span>), <span class="typed"><span class="type">Boolean</span><a href="#169508">endOfInput</a></span>)
+      <span title="Unit" class="keyword">if</span> (<a href="#112755" title="java.nio.charset.CoderResult">result</a>.<span title="()Boolean">isError</span>()) <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.io.IOException" class="keyword">new</span> <span title="java.io.IOException">IOException</span>(<a href="#112755" title="java.nio.charset.CoderResult">result</a>.<span title="()java.lang.String">toString</span>())
+      <span title="(assertion: Boolean)Unit">assert</span>(<a href="#112755" title="java.nio.charset.CoderResult">result</a>.<span title="()Boolean">isOverflow</span>())
+      <a href="#111002" title="(decoder: java.nio.charset.CharsetDecoder,bytes: java.nio.ByteBuffer,chars: java.nio.CharBuffer,endOfInput: Boolean)java.nio.CharBuffer">decode</a>(<a href="#112707" title="java.nio.charset.CharsetDecoder">decoder</a>, <a href="#112708" title="java.nio.ByteBuffer">bytes</a>, <a href="#111004" title="(buffer: java.nio.CharBuffer)java.nio.CharBuffer">increaseCapacity</a>(<a href="#112709" title="java.nio.CharBuffer">chars</a>), <a href="#112710" title="Boolean">endOfInput</a>)
     }
   }
 
-  <span class="comment">/**
+  /**
    * Flushes the specified decoder into the specified char buffer,
    * allocating bigger ones if necessary and then flips and returns
    * the last allocated char buffer.
-   */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(java.nio.charset.CharsetDecoder,java.nio.CharBuffer)java.nio.CharBuffer</span><a id="82427">flush</a></span>(<span class="typed"><span class="type">java.nio.charset.CharsetDecoder</span><a id="169510">decoder</a></span>: <span class="typed"><span class="type">java.nio.charset.CharsetDecoder</span><a id="20989">CharsetDecoder</a></span>, <span class="typed"><span class="type">java.nio.CharBuffer</span><a id="169511">chars</a></span>: <span class="typed"><span class="type">java.nio.CharBuffer</span><a id="20976">CharBuffer</a></span>): <span class="typed"><span class="type">java.nio.CharBuffer</span><a id="20976">CharBuffer</a></span> = {
-    <span class="keyword">val</span> <span class="typed"><span class="type">java.nio.charset.CoderResult</span><a id="169547">result</a></span>: <span class="typed"><span class="type">java.nio.charset.CoderResult</span><a id="21037">CoderResult</a></span> = <span class="typed"><span class="type">java.nio.charset.CharsetDecoder</span><a href="#169510">decoder</a></span>.<span class="typed"><span class="type">(java.nio.CharBuffer)java.nio.charset.CoderResult</span><a id="47604">flush</a></span>(<span class="typed"><span class="type">java.nio.CharBuffer</span><a href="#169511">chars</a></span>)
-    <span class="typed"><span class="type">java.nio.CharBuffer</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">java.nio.charset.CoderResult</span><a href="#169547">result</a></span>.<span class="typed"><span class="type">()Boolean</span><a id="169525">isUnderflow</a></span>()) {
-      <span class="typed"><span class="type">java.nio.CharBuffer</span><a href="#169511">chars</a></span>.<span class="typed"><span class="type">()java.nio.Buffer</span><a id="70096">flip</a></span>()
-      <span class="typed"><span class="type">java.nio.CharBuffer</span><a href="#169511">chars</a></span>
+   */
+  <span class="keyword">def</span> <a title="(decoder: java.nio.charset.CharsetDecoder,chars: java.nio.CharBuffer)java.nio.CharBuffer" id="111003">flush</a>(<a title="java.nio.charset.CharsetDecoder" id="112718">decoder</a>: <span title="java.nio.charset.CharsetDecoder">CharsetDecoder</span>, <a title="java.nio.CharBuffer" id="112719">chars</a>: <span title="java.nio.CharBuffer">CharBuffer</span>): <span title="java.nio.CharBuffer">CharBuffer</span> = {
+    <span class="keyword">val</span> <a title="java.nio.charset.CoderResult" id="112822">result</a>: <span title="java.nio.charset.CoderResult">CoderResult</span> = <a href="#112718" title="java.nio.charset.CharsetDecoder">decoder</a>.<a title="(x$1: java.nio.CharBuffer)java.nio.charset.CoderResult" id="111135">flush</a>(<a href="#112719" title="java.nio.CharBuffer">chars</a>)
+    <span title="java.nio.CharBuffer" class="keyword">if</span> (<a href="#112822" title="java.nio.charset.CoderResult">result</a>.<span title="()Boolean">isUnderflow</span>()) {
+      <a href="#112719" title="java.nio.CharBuffer">chars</a>.<span title="()java.nio.Buffer">flip</span>()
+      <a href="#112719" title="java.nio.CharBuffer">chars</a>
     } <span class="keyword">else</span> {
-      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">java.nio.charset.CoderResult</span><a href="#169547">result</a></span>.<span class="typed"><span class="type">()Boolean</span><a id="169527">isError</a></span>()) <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.io.IOException</span><a id="34438" class="keyword">new</a></span> <span class="typed"><span class="type">java.io.IOException</span><a id="3519">IOException</a></span>(<span class="typed"><span class="type">java.nio.charset.CoderResult</span><a href="#169547">result</a></span>.<span class="typed"><span class="type">()java.lang.String</span><a id="169524">toString</a></span>())
-      <span class="typed"><span class="type">(Boolean)Unit</span><span id="6003"><a id="821">assert</a></span></span>(<span class="typed"><span class="type">java.nio.charset.CoderResult</span><a href="#169547">result</a></span>.<span class="typed"><span class="type">()Boolean</span><a id="169526">isOverflow</a></span>())
-      <span class="typed"><span class="type">(java.nio.charset.CharsetDecoder,java.nio.CharBuffer)java.nio.CharBuffer</span><a href="#82427">flush</a></span>(<span class="typed"><span class="type">java.nio.charset.CharsetDecoder</span><a href="#169510">decoder</a></span>, <span class="typed"><span class="type">(java.nio.CharBuffer)java.nio.CharBuffer</span><a href="#82428">increaseCapacity</a></span>(<span class="typed"><span class="type">java.nio.CharBuffer</span><a href="#169511">chars</a></span>))
+      <span title="Unit" class="keyword">if</span> (<a href="#112822" title="java.nio.charset.CoderResult">result</a>.<span title="()Boolean">isError</span>()) <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.io.IOException" class="keyword">new</span> <span title="java.io.IOException">IOException</span>(<a href="#112822" title="java.nio.charset.CoderResult">result</a>.<span title="()java.lang.String">toString</span>())
+      <span title="(assertion: Boolean)Unit">assert</span>(<a href="#112822" title="java.nio.charset.CoderResult">result</a>.<span title="()Boolean">isOverflow</span>())
+      <a href="#111003" title="(decoder: java.nio.charset.CharsetDecoder,chars: java.nio.CharBuffer)java.nio.CharBuffer">flush</a>(<a href="#112718" title="java.nio.charset.CharsetDecoder">decoder</a>, <a href="#111004" title="(buffer: java.nio.CharBuffer)java.nio.CharBuffer">increaseCapacity</a>(<a href="#112719" title="java.nio.CharBuffer">chars</a>))
     }
   }
 
-  <span class="comment">/**
+  /**
    * Flips the specified buffer and returns a new one with the same
    * content but with an increased capacity.
-   */</span>
-  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">(java.nio.CharBuffer)java.nio.CharBuffer</span><a id="82428">increaseCapacity</a></span>(<span class="typed"><span class="type">java.nio.CharBuffer</span><a id="169546">buffer</a></span>: <span class="typed"><span class="type">java.nio.CharBuffer</span><a id="20976">CharBuffer</a></span>): <span class="typed"><span class="type">java.nio.CharBuffer</span><a id="20976">CharBuffer</a></span> = {
-    <span class="typed"><span class="type">java.nio.CharBuffer</span><a href="#169546">buffer</a></span>.<span class="typed"><span class="type">()java.nio.Buffer</span><a id="70096">flip</a></span>()
-    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="169550">capacity</a></span> = <span class="typed"><span class="type">Int(2)</span><span class="int">2</span></span> <span class="typed"><span class="type">(Int)Int</span><a id="3149">*</a></span> <span class="typed"><span class="type">java.nio.CharBuffer</span><a href="#169546">buffer</a></span>.<span class="typed"><span class="type">()Int</span><a id="70088">capacity</a></span>()
-    <span class="typed"><span class="type">object java.nio.CharBuffer</span><a id="20977">CharBuffer</a></span>.<span class="typed"><span class="type">(Int)java.nio.CharBuffer</span><a id="114242">allocate</a></span>(<span class="typed"><span class="type">Int</span><a href="#169550">capacity</a></span>).<span class="typed"><span class="type">(java.nio.CharBuffer)java.nio.CharBuffer</span><a id="114257">put</a></span>(<span class="typed"><span class="type">java.nio.CharBuffer</span><a href="#169546">buffer</a></span>)
+   */
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(buffer: java.nio.CharBuffer)java.nio.CharBuffer" id="111004">increaseCapacity</a>(<a title="java.nio.CharBuffer" id="112816">buffer</a>: <span title="java.nio.CharBuffer">CharBuffer</span>): <span title="java.nio.CharBuffer">CharBuffer</span> = {
+    <a href="#112816" title="java.nio.CharBuffer">buffer</a>.<span title="()java.nio.Buffer">flip</span>()
+    <span class="keyword">val</span> <a title="Int" id="112849">capacity</a> = <a title="(x$1: Int)Int" id="2968" class="int">2</a> * <a href="#112816" title="java.nio.CharBuffer">buffer</a>.<a title="()Int" id="86205">capacity</a>()
+    <span title="object java.nio.CharBuffer">CharBuffer</span>.<span title="(x$1: Int)java.nio.CharBuffer">allocate</span>(<a href="#112849" title="Int">capacity</a>).<a title="(x$1: java.nio.CharBuffer)java.nio.CharBuffer" id="111053">put</a>(<a href="#112816" title="java.nio.CharBuffer">buffer</a>)
   }
 
 }

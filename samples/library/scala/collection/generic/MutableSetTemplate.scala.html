@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/generic/MutableSetTemplate.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: MutableSetTemplate.scala 18545 2009-08-22 14:10:22Z extempore $
+
+
+<span class="keyword">package</span> scala.collection.generic
+<span class="keyword">import</span> scala.collection._
+
+<span class="keyword">import</span> script._
+
+/** &lt;p&gt;
+ *    A generic template for mutable sets of elements of type &lt;code&gt;A&lt;/code&gt;.
+ *    To implement a concrete mutable set, you need to provide implementations
+ *    of the following methods:
+ *  &lt;/p&gt;&lt;pre&gt;
+ *    &lt;b&gt;def&lt;/b&gt; contains(elem: A): Boolean
+ *    &lt;b&gt;def&lt;/b&gt; iterator: Iterator[A]
+ *    &lt;b&gt;def&lt;/b&gt; += (elem: A): &lt;b&gt;this.type&lt;/b&gt;
+ *    &lt;b&gt;def&lt;/b&gt; -= (elem: A): &lt;b&gt;this.type&lt;/b&gt;&lt;/pre&gt;
+ *  &lt;p&gt;
+ *    If you wish that methods &lt;code&gt;like&lt;/code&gt;, &lt;code&gt;take&lt;/code&gt;,
+ *    &lt;code&gt;drop&lt;/code&gt;, &lt;code&gt;filter&lt;/code&gt; return the same kind of map,
+ *    you should also override:
+ *  &lt;/p&gt;&lt;pre&gt;
+ *    &lt;b&gt;def&lt;/b&gt; empty: This&lt;/pre&gt;
+ *  &lt;p&gt;
+ *    It is also good idea to override methods &lt;code&gt;foreach&lt;/code&gt; and
+ *    &lt;code&gt;size&lt;/code&gt; for efficiency.
+ *  &lt;/p&gt;
+ * 
+ */
+<span class="keyword">trait</span> <a title="trait MutableSetTemplate[A, +This &lt;: scala.collection.generic.MutableSetTemplate[A,This] with scala.collection.mutable.Set[A]] extends java.lang.Object with scala.collection.generic.SetTemplate[A,This] with scala.collection.script.Scriptable[A] with scala.collection.generic.Builder[A,This] with scala.collection.generic.Growable[A] with scala.collection.generic.Shrinkable[A] with scala.collection.generic.Cloneable[scala.collection.mutable.Set[A]] with ScalaObject" id="10103">MutableSetTemplate</a>[<a title="&gt;: Nothing &lt;: Any" id="15933">A</a>, +<a title="&gt;: Nothing &lt;: scala.collection.generic.MutableSetTemplate[A,This] with scala.collection.mutable.Set[A]" id="15934">This</a> &lt;: MutableSetTemplate[A, This] <span class="keyword">with</span> mutable.Set[A]] 
+  <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="SetTemplate.scala.html#10160" title="scala.collection.generic.SetTemplate[A,This]">SetTemplate</a>[A, This]
+     <span class="keyword">with</span> <a href="../script/Scriptable.scala.html#15324" title="scala.collection.script.Scriptable[A]">Scriptable</a>[A]
+     <span class="keyword">with</span> <a href="Builder.scala.html#10028" title="scala.collection.generic.Builder[A,This]">Builder</a>[A, This]
+     <span class="keyword">with</span> <a href="Growable.scala.html#9941" title="scala.collection.generic.Growable[A]">Growable</a>[A]
+     <span class="keyword">with</span> <a href="Shrinkable.scala.html#10565" title="scala.collection.generic.Shrinkable[A]">Shrinkable</a>[A] 
+     <span class="keyword">with</span> <a href="Cloneable.scala.html#10166" title="scala.collection.generic.Cloneable[scala.collection.mutable.Set[A]]">Cloneable</a>[mutable.Set[A]] 
+{ self =&gt;
+  
+  /** A common implementation of &lt;code&gt;newBuilder&lt;/code&gt; for all mutable sets
+   *  in terms of &lt;code&gt;empty&lt;/code&gt;. Overrides &lt;code&gt;SetTemplate&lt;/code&gt;
+   *  implementation for better efficiency.
+   */
+  <span class="keyword">override</span> <span class="keyword">protected</span>[<span class="keyword">this</span>] <span class="keyword">def</span> <a title="=&gt; scala.collection.generic.Builder[A,This]" id="37366">newBuilder</a>: <a href="Builder.scala.html#10028" title="scala.collection.generic.Builder[A,This]">Builder</a>[A, This] = <a href="SetTemplate.scala.html#34274" title="=&gt; This">empty</a>
+
+  /** Adds a new element to the set.
+   *
+   *  @param elem the element to be added
+   *  @return true if the element was not yet present in the set.
+   */
+  <span class="keyword">def</span> <a title="(elem: A)Boolean" id="37367">add</a>(<a title="A" id="119379">elem</a>: <a href="#15933" title="A">A</a>): <span title="Boolean">Boolean</span> = {
+    <span class="keyword">val</span> <a title="Boolean" id="224437">r</a> = <a href="SetTemplate.scala.html#34276" title="(elem: A)Boolean">contains</a>(<a href="#119379" title="A">elem</a>)
+    <a href="#37370" title="(elem: A)MutableSetTemplate.this.type" class="keyword">this</a> += <a href="#119379" title="A">elem</a>
+    <a href="#224437" title="Boolean">r</a>
+  }
+
+  /** Removes a single element from a set.
+   *
+   *  @param elem  The element to be removed.
+   *  @return  true if the element was already present in the set.
+   */
+  <span class="keyword">def</span> <a title="(elem: A)Boolean" id="37368">remove</a>(<a title="A" id="119404">elem</a>: <a href="#15933" title="A">A</a>): <span title="Boolean">Boolean</span> = {
+    <span class="keyword">val</span> <a title="Boolean" id="224456">r</a> = <a href="SetTemplate.scala.html#34276" title="(elem: A)Boolean">contains</a>(<a href="#119404" title="A">elem</a>)
+    <a href="#37371" title="(elem: A)MutableSetTemplate.this.type" class="keyword">this</a> -= <a href="#119404" title="A">elem</a>
+    <a href="#224456" title="Boolean">r</a>
+  }
+
+  /** This method allows one to add or remove an element &lt;code&gt;elem&lt;/code&gt;
+   *  from this set depending on the value of parameter &lt;code&gt;included&lt;/code&gt;.
+   *  Typically, one would use the following syntax:
+   *  &lt;pre&gt;set(elem) = true&lt;/pre&gt;
+   *
+   */
+  <span class="keyword">def</span> <a title="(elem: A,included: Boolean)Unit" id="37369">update</a>(<a title="A" id="224474">elem</a>: <a href="#15933" title="A">A</a>, <a title="Boolean" id="224475">included</a>: <span title="Boolean">Boolean</span>) {
+    <span title="Unit" class="keyword">if</span> (<a href="#224475" title="Boolean">included</a>) <a href="#37370" title="(elem: A)MutableSetTemplate.this.type" class="keyword">this</a> <span title="Unit">+=</span> <a href="#224474" title="A">elem</a> <span class="keyword">else</span> <a href="#37371" title="(elem: A)MutableSetTemplate.this.type" class="keyword">this</a> <span title="Unit">-=</span> <a href="#224474" title="A">elem</a>
+  }
+
+  /** Adds a new element to the set.
+   *
+   *  @param elem the element to be added
+   */
+  <span class="keyword">def</span> <a title="(elem: A)MutableSetTemplate.this.type" id="37370">+=</a>(<a title="A" id="37606">elem</a>: <a href="#15933" title="A">A</a>): <span class="keyword">this</span>.<span class="keyword">type</span>
+
+  /** Removes a single element from a set. 
+   *  @param elem  The element to be removed.
+   */
+  <span class="keyword">def</span> <a title="(elem: A)MutableSetTemplate.this.type" id="37371">-=</a>(<a title="A" id="37703">elem</a>: <a href="#15933" title="A">A</a>): <span class="keyword">this</span>.<span class="keyword">type</span>
+
+  /** Removes all elements from the set for which the predicate &lt;code&gt;p&lt;/code&gt;
+   *  yields the value &lt;code&gt;false&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)Unit" id="37372">retain</a>(<a title="(A) =&gt; Boolean" id="224506">p</a>: A =&gt; Boolean): <span title="Unit">Unit</span> = <span class="keyword">for</span> (<a title="A" id="224525">elem</a> &lt;- <a href="#10103" title="MutableSetTemplate.this.type" class="keyword">this</a>.<a href="LinearSequenceTemplate.scala.html#19402" title="(f: (A) =&gt; Any)Unit">toList</a>) <span title="Any" class="keyword">if</span> (<a title="=&gt; Boolean" id="2203">!</a><a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#224525" title="A">elem</a>)) <a href="#37371" title="(elem: A)MutableSetTemplate.this.type" class="keyword">this</a> -= <a href="#224525" title="A">elem</a>
+
+  /** Removes all elements from the set. After this operation is completed,
+   *  the set will be empty.
+   */
+  <span class="keyword">def</span> <a title="()Unit" id="37373">clear</a>() { <a href="IterableTemplate.scala.html#17287" title="(f: (A) =&gt; scala.collection.generic.MutableSetTemplate[A,This])Unit">foreach</a>(<a href="#37371" title="(elem: A)MutableSetTemplate.this.type">-=</a>) }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()scala.collection.mutable.Set[A]" id="37374">clone</a>(): mutable.<a href="../mutable/Set.scala.html#7812" title="scala.collection.mutable.Set[A]">Set</a>[A] = <a href="Growable.scala.html#19586" title="(iter: Traversable[A])This">empty</a> ++= <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+
+  <span class="keyword">def</span> <a title="()This" id="37375">result</a>: <a href="#15934" title="This">This</a> = <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+
+  /** Adds a single element to this collection and returns 
+   *  the collection itself.
+   *
+   *  @param elem  the element to add.
+   */
+  @deprecated(<span class="string">&quot;Use += instead if you intend to add by side effect to an existing collection.\n&quot;</span>+
+              <span class="string">&quot;Use `clone() +=' if you intend to create a new collection.&quot;</span>)
+ <span class="keyword">override</span> <span class="keyword">def</span> <a title="(elem: A)This" id="37376">+</a> (<a title="A" id="121157">elem</a>: <a href="#15933" title="A">A</a>): <a href="#15934" title="This">This</a> = { <a href="#37370" title="(elem: A)MutableSetTemplate.this.type">+=</a>(<a href="#121157" title="A">elem</a>); <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a> }
+
+  /** Adds two or more elements to this collection and returns
+   *  the collection itself.
+   *
+   *  @param elem1 the first element to add.
+   *  @param elem2 the second element to add.
+   *  @param elems the remaining elements to add.
+   */
+  @deprecated(<span class="string">&quot;Use += instead if you intend to add by side effect to an existing collection.\n&quot;</span>+
+              <span class="string">&quot;Use `clone() +=' if you intend to create a new collection.&quot;</span>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(elem1: A,elem2: A,elems: A*)This" id="37377">+</a> (<a title="A" id="121178">elem1</a>: <a href="#15933" title="A">A</a>, <a title="A" id="121179">elem2</a>: <a href="#15933" title="A">A</a>, <a title="A*" id="121180">elems</a>: <span title="A*">A</span>*): <a href="#15934" title="This">This</a> = {
+    <a href="#37370" title="(elem: A)MutableSetTemplate.this.type" class="keyword">this</a> <a href="#37370" title="(elem: A)MutableSetTemplate.this.type">+=</a> <a href="#121178" title="A">elem1</a> <a href="Growable.scala.html#19586" title="(iter: Traversable[A])MutableSetTemplate.this.type">+=</a> <a href="#121179" title="A">elem2</a> ++= <a href="#121180" title="A*">elems</a>
+    <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+  }
+
+  /** Adds a number of elements provided by a traversable object and returns
+   *  either the collection itself.
+   *
+   *  @param iter     the iterable object.
+   */
+  @deprecated(<span class="string">&quot;Use ++= instead if you intend to add by side effect to an existing collection.\n&quot;</span>+
+              <span class="string">&quot;Use `clone() ++=' if you intend to create a new collection.&quot;</span>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(iter: Traversable[A])This" id="37378">++</a>(<a title="Traversable[A]" id="37396">iter</a>: <a href="../Traversable.scala.html#4436" title="Traversable[A]">Traversable</a>[A]): <a href="#15934" title="This">This</a> = { 
+    <span class="keyword">for</span> (<a title="A" id="224677">elem</a> &lt;- <a href="TraversableClass.scala.html#17261" title="(f: (A) =&gt; scala.collection.generic.MutableSetTemplate[A,This])Unit">iter</a>) <a href="#37370" title="(elem: A)MutableSetTemplate.this.type">+=</a>(<a href="#224677" title="A">elem</a>)
+    <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+  }
+
+
+  /** Adds a number of elements provided by an iterator and returns
+   *  the collection itself.
+   *
+   *  @param iter   the iterator
+   */
+  @deprecated(<span class="string">&quot;Use ++= instead if you intend to add by side effect to an existing collection.\n&quot;</span>+
+              <span class="string">&quot;Use `clone() ++=' if you intend to create a new collection.&quot;</span>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(iter: Iterator[A])This" id="37379">++</a> (<a title="Iterator[A]" id="37475">iter</a>: <a href="../Iterator.scala.html#4274" title="Iterator[A]">Iterator</a>[A]): <a href="#15934" title="This">This</a> = {
+    <span class="keyword">for</span> (<a title="A" id="224701">elem</a> &lt;- <a href="../Iterator.scala.html#19219" title="(f: (A) =&gt; scala.collection.generic.MutableSetTemplate[A,This])Unit">iter</a>) <a href="#37370" title="(elem: A)MutableSetTemplate.this.type">+=</a>(<a href="#224701" title="A">elem</a>)
+    <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+  }
+
+  /** Removes a single element from this collection and returns 
+   *  the collection itself.
+   *
+   *  @param elem  the element to remove.
+   */
+  @deprecated(<span class="string">&quot;Use -= instead if you intend to remove by side effect from an existing collection.\n&quot;</span>+
+              <span class="string">&quot;Use `clone() -=' if you intend to create a new collection.&quot;</span>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(elem: A)This" id="37380">-</a>(<a title="A" id="121283">elem</a>: <a href="#15933" title="A">A</a>): <a href="#15934" title="This">This</a> = { <a href="#37371" title="(elem: A)MutableSetTemplate.this.type">-=</a>(<a href="#121283" title="A">elem</a>); <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a> }
+
+  /** Removes two or more elements from this collection and returns
+   *  the collection itself.
+   *
+   *  @param elem1 the first element to remove.
+   *  @param elem2 the second element to remove.
+   *  @param elems the remaining elements to remove.
+   */
+  @deprecated(<span class="string">&quot;Use -= instead if you intend to remove by side effect from an existing collection.\n&quot;</span>+
+              <span class="string">&quot;Use `clone() -=' if you intend to create a new collection.&quot;</span>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(elem1: A,elem2: A,elems: A*)This" id="37381">-</a>(<a title="A" id="121304">elem1</a>: <a href="#15933" title="A">A</a>, <a title="A" id="121305">elem2</a>: <a href="#15933" title="A">A</a>, <a title="A*" id="121306">elems</a>: <span title="A*">A</span>*): <a href="#15934" title="This">This</a> = {
+    <a href="#37371" title="(elem: A)MutableSetTemplate.this.type" class="keyword">this</a> <a href="#37371" title="(elem: A)MutableSetTemplate.this.type">-=</a> <a href="#121304" title="A">elem1</a> <a href="Shrinkable.scala.html#19965" title="(iter: Traversable[A])MutableSetTemplate.this.type">-=</a> <a href="#121305" title="A">elem2</a> --= <a href="#121306" title="A*">elems</a>
+    <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+  }
+
+  /** Removes a number of elements provided by a Traversable object and returns
+   *  the collection itself.
+   *
+   *  @param iter     the Traversable object.
+   */
+  @deprecated(<span class="string">&quot;Use --= instead if you intend to remove by side effect from an existing collection.\n&quot;</span>+
+              <span class="string">&quot;Use `clone() --=' if you intend to create a new collection.&quot;</span>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(iter: Traversable[A])This" id="37382">--</a>(<a title="Traversable[A]" id="224775">iter</a>: <a href="../Traversable.scala.html#4436" title="Traversable[A]">Traversable</a>[A]): <a href="#15934" title="This">This</a> = { 
+    <span class="keyword">for</span> (<a title="A" id="224787">elem</a> &lt;- <a href="TraversableClass.scala.html#17261" title="(f: (A) =&gt; scala.collection.generic.MutableSetTemplate[A,This])Unit">iter</a>) <a href="#37371" title="(elem: A)MutableSetTemplate.this.type">-=</a>(<a href="#224787" title="A">elem</a>)
+    <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+  }
+
+  /** Removes a number of elements provided by an iterator and returns
+   *  the collection itself.
+   *
+   *  @param iter   the iterator
+   */
+  @deprecated(<span class="string">&quot;Use --= instead if you intend to remove by side effect from an existing collection.\n&quot;</span>+
+              <span class="string">&quot;Use `clone() --=' if you intend to create a new collection.&quot;</span>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(iter: Iterator[A])This" id="37383">--</a>(<a title="Iterator[A]" id="224806">iter</a>: <a href="../Iterator.scala.html#4274" title="Iterator[A]">Iterator</a>[A]): <a href="#15934" title="This">This</a> = { 
+    <span class="keyword">for</span> (<a title="A" id="224815">elem</a> &lt;- <a href="../Iterator.scala.html#19219" title="(f: (A) =&gt; scala.collection.generic.MutableSetTemplate[A,This])Unit">iter</a>) <a href="#37371" title="(elem: A)MutableSetTemplate.this.type">-=</a>(<a href="#224815" title="A">elem</a>)
+    <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+  }
+
+  /** Send a message to this scriptable object.
+   *
+   *  @param cmd  the message to send.
+   *  @throws &lt;code&gt;Predef.UnsupportedOperationException&lt;/code&gt;
+   *  if the message was not understood.
+   */
+   <span class="keyword">def</span> <a title="(cmd: scala.collection.script.Message[A])Unit" id="37384">&lt;&lt;</a>(<a title="scala.collection.script.Message[A]" id="224834">cmd</a>: <a href="../script/Message.scala.html#15333" title="scala.collection.script.Message[A]">Message</a>[A]): <span title="Unit">Unit</span> = <a href="#224834" title="scala.collection.script.Message[A]">cmd</a> <span title="Unit" class="keyword">match</span> {
+     <span title="Unit" class="keyword">case</span> Include(_, <a title="A" id="224840">x</a>)     =&gt; <a href="#37370" title="(elem: A)MutableSetTemplate.this.type" class="keyword">this</a> <span title="Unit">+=</span> <a href="#224840" title="A">x</a>
+     <span title="Unit" class="keyword">case</span> Remove(_, <a title="A" id="224861">x</a>)      =&gt; <a href="#37371" title="(elem: A)MutableSetTemplate.this.type" class="keyword">this</a> <span title="Unit">-=</span> <a href="#224861" title="A">x</a>
+     <span title="Unit" class="keyword">case</span> Reset()           =&gt; <a href="#37373" title="()Unit">clear</a>
+     <span title="Unit" class="keyword">case</span> <a title="scala.collection.script.Script[_]" id="224882">s</a>: <a href="../script/Message.scala.html#15342" title="scala.collection.script.Script[_]">Script</a>[_]      =&gt; <a href="#224882" title="scala.collection.script.Script[_]">s</a>.<a href="../Iterator.scala.html#19219" title="(f: (scala.collection.script.Message[_]) =&gt; Unit)Unit">iterator</a> foreach <a href="#37384" title="(cmd: scala.collection.script.Message[A])Unit">&lt;&lt;</a>
+     <span title="Nothing" class="keyword">case</span> _                 =&gt; <span title="Nothing" class="keyword">throw</span> <a title="(x$1: java.lang.String)java.lang.UnsupportedOperationException" id="45864" class="keyword">new</a> <a href="../../Predef.scala.html#16169" title="java.lang.UnsupportedOperationException">UnsupportedOperationException</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;message &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#224834" title="scala.collection.script.Message[A]">cmd</a> + <span title="java.lang.String(&quot; not understood&quot;)" class="string">&quot; not understood&quot;</span>)
+   }
+}
+
+        </pre>
+    </body>
+</html>

@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/immutable/Set.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: Set.scala 18387 2009-07-24 15:28:37Z odersky $
+
+
+<span class="keyword">package</span> scala.collection.immutable
+
+<span class="keyword">import</span> scala.collection.generic._
+
+/** &lt;p&gt;
+ *    A generic trait for immutable sets. Concrete set implementations have
+ *    to provide functionality for the abstract methods in &lt;code&gt;Set&lt;/code&gt;:
+ *  &lt;/p&gt;
+ *  &lt;pre&gt;
+ *    &lt;b&gt;def&lt;/b&gt; contains(elem: A): Boolean
+ *    &lt;b&gt;def&lt;/b&gt; iterator: Iterator[A]
+ *    &lt;b&gt;def&lt;/b&gt; + (elem: A): This
+ *    &lt;b&gt;def&lt;/b&gt; - (elem: A): This&lt;/pre&gt;
+ *  &lt;p&gt;
+ *    where &lt;code&gt;This&lt;/code&gt; is the type of the set.
+ *  &lt;/p&gt;
+ *
+ *  @author Matthias Zenger
+ *  @author Martin Odersky
+ *  @version 2.8
+ */
+<span class="keyword">trait</span> <a title="trait Set[A] extends java.lang.Object with scala.collection.immutable.Iterable[A] with scala.collection.Set[A] with scala.collection.generic.SetClass[A,scala.collection.immutable.Set] with scala.collection.generic.SetTemplate[A,scala.collection.immutable.Set[A]] with ScalaObject" id="9171">Set</a>[<a title="&gt;: Nothing &lt;: Any" id="14938">A</a>] <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="Iterable.scala.html#9402" title="scala.collection.immutable.Iterable[A]">Iterable</a>[A] 
+                <span class="keyword">with</span> collection.<a href="../Set.scala.html#4358" title="scala.collection.Set[A]">Set</a>[A] 
+                <span class="keyword">with</span> <a href="../generic/SetClass.scala.html#10820" title="scala.collection.generic.SetClass[A,scala.collection.immutable.Set]">SetClass</a>[A, Set]
+                <span class="keyword">with</span> <a href="../generic/SetTemplate.scala.html#10160" title="scala.collection.generic.SetTemplate[A,scala.collection.immutable.Set[A]]">SetTemplate</a>[A, Set[A]] { 
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; scala.collection.generic.Companion[scala.collection.immutable.Set]" id="34242">companion</a>: <a href="../generic/Companion.scala.html#10781" title="scala.collection.generic.Companion[scala.collection.immutable.Set]">Companion</a>[Set] = <a href="#9172" title="object scala.collection.immutable.Set">Set</a>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Int" id="34243">hashCode</a> = (<a href="#9172" title="object scala.collection.immutable.Set">Set</a>.<a href="#56976" title="=&gt; Int">hashSeed</a> <a href="#168423" title="Int">/:</a> <a href="../generic/TraversableTemplate.scala.html#17190" title="(z: Int)(op: (Int, A) =&gt; Int)Int" class="keyword">this</a>)(<a href="#168438" title="(x$1: Int)Int" id="2966">_</a> <a title="(x$1: Int)Int" id="2962">*</a> <span title="Int(41)" class="int">41</span> + <a href="#168439" title="A">_</a>.<a title="()Int" id="3616">hashCode</a>)
+}
+
+<span class="keyword">object</span> <a title="object scala.collection.immutable.Set" id="9172">Set</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="../generic/SetFactory.scala.html#10757" title="scala.collection.generic.SetFactory[scala.collection.immutable.Set]">SetFactory</a>[Set] {
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="[A]scala.collection.generic.BuilderFactory[A,scala.collection.immutable.Set[A],scala.collection.immutable.Set.Coll]" id="56970">builderFactory</a>[<a title="&gt;: Nothing &lt;: Any" id="56972">A</a>]: <a href="../generic/BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[A,scala.collection.immutable.Set[A],scala.collection.immutable.Set.Coll]">BuilderFactory</a>[A, Set[A], Coll] = <a href="../generic/SetFactory.scala.html#34373" title="&lt;refinement&gt;[A] extends java.lang.Object with scala.collection.generic.BuilderFactory[A,scala.collection.immutable.Set[A],scala.collection.immutable.Set[_]]">setBuilderFactory</a><span title="&lt;refinement&gt; extends java.lang.Object with scala.collection.generic.BuilderFactory[A,scala.collection.immutable.Set[A],scala.collection.immutable.Set[_]]">[</span><a href="#56972" title="A">A</a>]
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[A]scala.collection.immutable.Set[A]" id="56973">empty</a>[<a title="&gt;: Nothing &lt;: Any" id="56975">A</a>]: <a href="#9171" title="scala.collection.immutable.Set[A]">Set</a>[A] = <span title="scala.collection.immutable.Set.EmptySet[A]" class="keyword">new</span> <a href="#56978" title="scala.collection.immutable.Set.EmptySet[A]">EmptySet</a>[A]
+
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="Int" id="56976">hashSeed</a> = <span title="java.lang.String(&quot;Set&quot;)" class="string">&quot;Set&quot;</span>.<a title="()Int" id="6966">hashCode</a> 
+
+  /** An optimized representation for immutable empty sets */
+  @serializable
+  <span class="keyword">class</span> <a title="class EmptySet[A] extends java.lang.Object with scala.collection.immutable.Set[A] with ScalaObject" id="56978">EmptySet</a>[<a title="&gt;: Nothing &lt;: Any" id="56979">A</a>] <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="#9171" title="scala.collection.immutable.Set[A]">Set</a>[A] {
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Int" id="168484">size</a>: <span title="Int">Int</span> = <span title="Int(0)" class="int">0</span>
+    <span class="keyword">def</span> <a title="(elem: A)Boolean" id="168485">contains</a>(<a title="A" id="168499">elem</a>: <a href="#56979" title="A">A</a>): <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>
+    <span class="keyword">def</span> <a title="(elem: A)scala.collection.immutable.Set[A]" id="168486">+</a> (<a title="A" id="168502">elem</a>: <a href="#56979" title="A">A</a>): <a href="#9171" title="scala.collection.immutable.Set[A]">Set</a>[A] = <span title="scala.collection.immutable.Set.Set1[A]" class="keyword">new</span> <a href="#56980" title="scala.collection.immutable.Set.Set1[A]">Set1</a>(<a href="#168502" title="A">elem</a>)
+    <span class="keyword">def</span> <a title="(elem: A)scala.collection.immutable.Set[A]" id="168487">-</a> (<a title="A" id="168536">elem</a>: <a href="#56979" title="A">A</a>): <a href="#9171" title="scala.collection.immutable.Set[A]">Set</a>[A] = <a href="#56978" title="scala.collection.immutable.Set.EmptySet[A]" class="keyword">this</a>
+    <span class="keyword">def</span> <a title="=&gt; Iterator[A]" id="168488">iterator</a>: <a href="../Iterator.scala.html#4274" title="Iterator[A]">Iterator</a>[A] = <a href="../../package.scala.html#14773" title="=&gt; collection.Iterator.type">Iterator</a>.<a href="../Iterator.scala.html#21409" title="=&gt; &lt;refinement&gt; extends java.lang.Object with Iterator[Nothing]">empty</a>
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="[U](f: (A) =&gt; U)Unit" id="168489">foreach</a>[<a title="&gt;: Nothing &lt;: Any" id="168491">U</a>](<a title="(A) =&gt; U" id="168555">f</a>: A =&gt;  U): <span title="Unit">Unit</span> = <span title="Unit">{</span>}
+  }
+  
+  /** An optimized representation for immutable sets of size 1 */
+  @serializable
+  <span class="keyword">class</span> <a title="class Set1[A] extends java.lang.Object with scala.collection.immutable.Set[A] with ScalaObject" id="56980">Set1</a>[<a title="&gt;: Nothing &lt;: Any" id="56981">A</a>]<a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="A" id="168531">elem1</a>: <a href="#56981" title="A">A</a>) <span class="keyword">extends</span> <a href="#9171" title="scala.collection.immutable.Set[A]">Set</a>[A] {
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Int" id="168522">size</a>: <span title="Int">Int</span> = <span title="Int(1)" class="int">1</span>
+    <span class="keyword">def</span> <a title="(elem: A)Boolean" id="168523">contains</a>(<a title="A" id="168573">elem</a>: <a href="#56981" title="A">A</a>): <span title="Boolean">Boolean</span> = 
+      <a href="#168573" title="(x$1: Any)Boolean">elem</a> == <a href="#168531" title="A">elem1</a>
+    <span class="keyword">def</span> <a title="(elem: A)scala.collection.immutable.Set[A]" id="168524">+</a> (<a title="A" id="168578">elem</a>: <a href="#56981" title="A">A</a>): <a href="#9171" title="scala.collection.immutable.Set[A]">Set</a>[A] = 
+      <span title="scala.collection.immutable.Set[A]" class="keyword">if</span> (<a href="#168523" title="(elem: A)Boolean">contains</a>(<a href="#168578" title="A">elem</a>)) <a href="#56980" title="scala.collection.immutable.Set.Set1[A]" class="keyword">this</a>
+      <span class="keyword">else</span> <span title="scala.collection.immutable.Set.Set2[A]" class="keyword">new</span> <a href="#56982" title="scala.collection.immutable.Set.Set2[A]">Set2</a>(<a href="#168531" title="A">elem1</a>, <a href="#168578" title="A">elem</a>)
+    <span class="keyword">def</span> <a title="(elem: A)scala.collection.immutable.Set[A]" id="168525">-</a> (<a title="A" id="168620">elem</a>: <a href="#56981" title="A">A</a>): <a href="#9171" title="scala.collection.immutable.Set[A]">Set</a>[A] = 
+      <span title="scala.collection.immutable.Set[A]" class="keyword">if</span> (<a href="#168620" title="(x$1: Any)Boolean">elem</a> == <a href="#168531" title="A">elem1</a>) <span title="scala.collection.immutable.Set.EmptySet[A]" class="keyword">new</span> <a href="#56978" title="scala.collection.immutable.Set.EmptySet[A]">EmptySet</a>[A] 
+      <span class="keyword">else</span> <a href="#56980" title="scala.collection.immutable.Set.Set1[A]" class="keyword">this</a>
+    <span class="keyword">def</span> <a title="=&gt; Iterator[A]" id="168526">iterator</a>: <a href="../Iterator.scala.html#4274" title="Iterator[A]">Iterator</a>[A] = 
+      <a href="../Iterator.scala.html#21414" title="(elems: A*)Iterator[A]">Iterator</a>(<a href="#168531" title="A">elem1</a>)
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="[U](f: (A) =&gt; U)Unit" id="168527">foreach</a>[<a title="&gt;: Nothing &lt;: Any" id="168529">U</a>](<a title="(A) =&gt; U" id="168648">f</a>: A =&gt;  U): <span title="Unit">Unit</span> = {
+      <a href="../../Function1.scala.html#17119" title="(v1: A)U">f</a><span title="Unit">(</span><a href="#168531" title="A">elem1</a>)
+    }
+  }
+
+  /** An optimized representation for immutable sets of size 2 */
+  @serializable
+  <span class="keyword">class</span> <a title="class Set2[A] extends java.lang.Object with scala.collection.immutable.Set[A] with ScalaObject" id="56982">Set2</a>[<a title="&gt;: Nothing &lt;: Any" id="56983">A</a>]<a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="A" id="168612">elem1</a>: <a href="#56983" title="A">A</a>, <a title="A" id="168613">elem2</a>: <a href="#56983" title="A">A</a>) <span class="keyword">extends</span> <a href="#9171" title="scala.collection.immutable.Set[A]">Set</a>[A] {
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Int" id="168603">size</a>: <span title="Int">Int</span> = <span title="Int(2)" class="int">2</span>
+    <span class="keyword">def</span> <a title="(elem: A)Boolean" id="168604">contains</a>(<a title="A" id="168670">elem</a>: <a href="#56983" title="A">A</a>): <span title="Boolean">Boolean</span> = 
+      <a href="#168670" title="(x$1: Any)Boolean">elem</a> <span title="(x$1: Boolean)Boolean">==</span> <a href="#168612" title="A">elem1</a> || <a href="#168670" title="(x$1: Any)Boolean">elem</a> == <a href="#168613" title="A">elem2</a>
+    <span class="keyword">def</span> <a title="(elem: A)scala.collection.immutable.Set[A]" id="168605">+</a> (<a title="A" id="168679">elem</a>: <a href="#56983" title="A">A</a>): <a href="#9171" title="scala.collection.immutable.Set[A]">Set</a>[A] = 
+      <span title="scala.collection.immutable.Set[A]" class="keyword">if</span> (<a href="#168604" title="(elem: A)Boolean">contains</a>(<a href="#168679" title="A">elem</a>)) <a href="#56982" title="scala.collection.immutable.Set.Set2[A]" class="keyword">this</a>
+      <span class="keyword">else</span> <span title="scala.collection.immutable.Set.Set3[A]" class="keyword">new</span> <a href="#56984" title="scala.collection.immutable.Set.Set3[A]">Set3</a>(<a href="#168612" title="A">elem1</a>, <a href="#168613" title="A">elem2</a>, <a href="#168679" title="A">elem</a>)
+    <span class="keyword">def</span> <a title="(elem: A)scala.collection.immutable.Set[A]" id="168606">-</a> (<a title="A" id="168726">elem</a>: <a href="#56983" title="A">A</a>): <a href="#9171" title="scala.collection.immutable.Set[A]">Set</a>[A] = 
+      <span title="scala.collection.immutable.Set[A]" class="keyword">if</span> (<a href="#168726" title="(x$1: Any)Boolean">elem</a> == <a href="#168612" title="A">elem1</a>) <span title="scala.collection.immutable.Set.Set1[A]" class="keyword">new</span> <a href="#56980" title="scala.collection.immutable.Set.Set1[A]">Set1</a>(<a href="#168613" title="A">elem2</a>)
+      <span class="keyword">else</span> <span title="scala.collection.immutable.Set[A]" class="keyword">if</span> (<a href="#168726" title="(x$1: Any)Boolean">elem</a> == <a href="#168613" title="A">elem2</a>) <span title="scala.collection.immutable.Set.Set1[A]" class="keyword">new</span> <a href="#56980" title="scala.collection.immutable.Set.Set1[A]">Set1</a>(<a href="#168612" title="A">elem1</a>)
+      <span class="keyword">else</span> <a href="#56982" title="scala.collection.immutable.Set.Set2[A]" class="keyword">this</a>
+    <span class="keyword">def</span> <a title="=&gt; Iterator[A]" id="168607">iterator</a>: <a href="../Iterator.scala.html#4274" title="Iterator[A]">Iterator</a>[A] = 
+      <a href="../Iterator.scala.html#21414" title="(elems: A*)Iterator[A]">Iterator</a>(<a href="#168612" title="A">elem1</a>, <a href="#168613" title="A">elem2</a>)
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="[U](f: (A) =&gt; U)Unit" id="168608">foreach</a>[<a title="&gt;: Nothing &lt;: Any" id="168610">U</a>](<a title="(A) =&gt; U" id="168764">f</a>: A =&gt;  U): <span title="Unit">Unit</span> = {
+      <a href="../../Function1.scala.html#17119" title="(v1: A)U">f</a>(<a href="#168612" title="A">elem1</a>); <a href="../../Function1.scala.html#17119" title="(v1: A)U">f</a><span title="Unit">(</span><a href="#168613" title="A">elem2</a>)
+    }
+  }
+
+  /** An optimized representation for immutable sets of size 3 */
+  @serializable
+  <span class="keyword">class</span> <a title="class Set3[A] extends java.lang.Object with scala.collection.immutable.Set[A] with ScalaObject" id="56984">Set3</a>[<a title="&gt;: Nothing &lt;: Any" id="56985">A</a>]<a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="A" id="168715">elem1</a>: <a href="#56985" title="A">A</a>, <a title="A" id="168716">elem2</a>: <a href="#56985" title="A">A</a>, <a title="A" id="168717">elem3</a>: <a href="#56985" title="A">A</a>) <span class="keyword">extends</span> <a href="#9171" title="scala.collection.immutable.Set[A]">Set</a>[A] {
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Int" id="168706">size</a>: <span title="Int">Int</span> = <span title="Int(3)" class="int">3</span>
+    <span class="keyword">def</span> <a title="(elem: A)Boolean" id="168707">contains</a>(<a title="A" id="168790">elem</a>: <a href="#56985" title="A">A</a>): <span title="Boolean">Boolean</span> = 
+      <a href="#168790" title="(x$1: Any)Boolean">elem</a> <span title="(x$1: Boolean)Boolean">==</span> <a href="#168715" title="A">elem1</a> <span title="(x$1: Boolean)Boolean">||</span> <a href="#168790" title="(x$1: Any)Boolean">elem</a> == <a href="#168716" title="A">elem2</a> || <a href="#168790" title="(x$1: Any)Boolean">elem</a> == <a href="#168717" title="A">elem3</a>
+    <span class="keyword">def</span> <a title="(elem: A)scala.collection.immutable.Set[A]" id="168708">+</a> (<a title="A" id="168803">elem</a>: <a href="#56985" title="A">A</a>): <a href="#9171" title="scala.collection.immutable.Set[A]">Set</a>[A] = 
+      <span title="scala.collection.immutable.Set[A]" class="keyword">if</span> (<a href="#168707" title="(elem: A)Boolean">contains</a>(<a href="#168803" title="A">elem</a>)) <a href="#56984" title="scala.collection.immutable.Set.Set3[A]" class="keyword">this</a>
+      <span class="keyword">else</span> <span title="scala.collection.immutable.Set.Set4[A]" class="keyword">new</span> <a href="#56986" title="scala.collection.immutable.Set.Set4[A]">Set4</a>(<a href="#168715" title="A">elem1</a>, <a href="#168716" title="A">elem2</a>, <a href="#168717" title="A">elem3</a>, <a href="#168803" title="A">elem</a>)
+    <span class="keyword">def</span> <a title="(elem: A)scala.collection.immutable.Set[A]" id="168709">-</a> (<a title="A" id="168855">elem</a>: <a href="#56985" title="A">A</a>): <a href="#9171" title="scala.collection.immutable.Set[A]">Set</a>[A] = 
+      <span title="scala.collection.immutable.Set[A]" class="keyword">if</span> (<a href="#168855" title="(x$1: Any)Boolean">elem</a> == <a href="#168715" title="A">elem1</a>) <span title="scala.collection.immutable.Set.Set2[A]" class="keyword">new</span> <a href="#56982" title="scala.collection.immutable.Set.Set2[A]">Set2</a>(<a href="#168716" title="A">elem2</a>, <a href="#168717" title="A">elem3</a>)
+      <span class="keyword">else</span> <span title="scala.collection.immutable.Set[A]" class="keyword">if</span> (<a href="#168855" title="(x$1: Any)Boolean">elem</a> == <a href="#168716" title="A">elem2</a>) <span title="scala.collection.immutable.Set.Set2[A]" class="keyword">new</span> <a href="#56982" title="scala.collection.immutable.Set.Set2[A]">Set2</a>(<a href="#168715" title="A">elem1</a>, <a href="#168717" title="A">elem3</a>)
+      <span class="keyword">else</span> <span title="scala.collection.immutable.Set[A]" class="keyword">if</span> (<a href="#168855" title="(x$1: Any)Boolean">elem</a> == <a href="#168717" title="A">elem3</a>) <span title="scala.collection.immutable.Set.Set2[A]" class="keyword">new</span> <a href="#56982" title="scala.collection.immutable.Set.Set2[A]">Set2</a>(<a href="#168715" title="A">elem1</a>, <a href="#168716" title="A">elem2</a>)
+      <span class="keyword">else</span> <a href="#56984" title="scala.collection.immutable.Set.Set3[A]" class="keyword">this</a>
+    <span class="keyword">def</span> <a title="=&gt; Iterator[A]" id="168710">iterator</a>: <a href="../Iterator.scala.html#4274" title="Iterator[A]">Iterator</a>[A] = 
+      <a href="../Iterator.scala.html#21414" title="(elems: A*)Iterator[A]">Iterator</a>(<a href="#168715" title="A">elem1</a>, <a href="#168716" title="A">elem2</a>, <a href="#168717" title="A">elem3</a>)
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="[U](f: (A) =&gt; U)Unit" id="168711">foreach</a>[<a title="&gt;: Nothing &lt;: Any" id="168713">U</a>](<a title="(A) =&gt; U" id="168906">f</a>: A =&gt;  U): <span title="Unit">Unit</span> = {
+      <a href="../../Function1.scala.html#17119" title="(v1: A)U">f</a>(<a href="#168715" title="A">elem1</a>); <a href="../../Function1.scala.html#17119" title="(v1: A)U">f</a>(<a href="#168716" title="A">elem2</a>); <a href="../../Function1.scala.html#17119" title="(v1: A)U">f</a><span title="Unit">(</span><a href="#168717" title="A">elem3</a>)
+    }
+  }
+
+  /** An optimized representation for immutable sets of size 4 */
+  @serializable
+  <span class="keyword">class</span> <a title="class Set4[A] extends java.lang.Object with scala.collection.immutable.Set[A] with ScalaObject" id="56986">Set4</a>[<a title="&gt;: Nothing &lt;: Any" id="56987">A</a>]<a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="A" id="168841">elem1</a>: <a href="#56987" title="A">A</a>, <a title="A" id="168842">elem2</a>: <a href="#56987" title="A">A</a>, <a title="A" id="168843">elem3</a>: <a href="#56987" title="A">A</a>, <a title="A" id="168844">elem4</a>: <a href="#56987" title="A">A</a>) <span class="keyword">extends</span> <a href="#9171" title="scala.collection.immutable.Set[A]">Set</a>[A] {
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Int" id="168832">size</a>: <span title="Int">Int</span> = <span title="Int(4)" class="int">4</span>
+    <span class="keyword">def</span> <a title="(elem: A)Boolean" id="168833">contains</a>(<a title="A" id="168936">elem</a>: <a href="#56987" title="A">A</a>): <span title="Boolean">Boolean</span> = 
+      <a href="#168936" title="(x$1: Any)Boolean">elem</a> <span title="(x$1: Boolean)Boolean">==</span> <a href="#168841" title="A">elem1</a> <span title="(x$1: Boolean)Boolean">||</span> <a href="#168936" title="(x$1: Any)Boolean">elem</a> == <a href="#168842" title="A">elem2</a> <span title="(x$1: Boolean)Boolean">||</span> <a href="#168936" title="(x$1: Any)Boolean">elem</a> == <a href="#168843" title="A">elem3</a> || <a href="#168936" title="(x$1: Any)Boolean">elem</a> == <a href="#168844" title="A">elem4</a>
+    <span class="keyword">def</span> <a title="(elem: A)scala.collection.immutable.Set[A]" id="168834">+</a> (<a title="A" id="168953">elem</a>: <a href="#56987" title="A">A</a>): <a href="#9171" title="scala.collection.immutable.Set[A]">Set</a>[A] = 
+      <span title="scala.collection.immutable.Set[A]" class="keyword">if</span> (<a href="#168833" title="(elem: A)Boolean">contains</a>(<a href="#168953" title="A">elem</a>)) <a href="#56986" title="scala.collection.immutable.Set.Set4[A]" class="keyword">this</a>
+      <span class="keyword">else</span> <a href="../generic/Addable.scala.html#19971" title="(elem1: A,elem2: A,elems: A*)scala.collection.immutable.HashSet[A]" class="keyword">new</a> <a href="HashSet.scala.html#8889" title="scala.collection.immutable.HashSet[A]">HashSet</a>[A] + (<a href="#168841" title="A">elem1</a>, <a href="#168842" title="A">elem2</a>, <a href="#168843" title="A">elem3</a>, <a href="#168844" title="A">elem4</a>, <a href="#168953" title="A">elem</a>)
+    <span class="keyword">def</span> <a title="(elem: A)scala.collection.immutable.Set[A]" id="168835">-</a> (<a title="A" id="169022">elem</a>: <a href="#56987" title="A">A</a>): <a href="#9171" title="scala.collection.immutable.Set[A]">Set</a>[A] = 
+      <span title="scala.collection.immutable.Set[A]" class="keyword">if</span> (<a href="#169022" title="(x$1: Any)Boolean">elem</a> == <a href="#168841" title="A">elem1</a>) <span title="scala.collection.immutable.Set.Set3[A]" class="keyword">new</span> <a href="#56984" title="scala.collection.immutable.Set.Set3[A]">Set3</a>(<a href="#168842" title="A">elem2</a>, <a href="#168843" title="A">elem3</a>, <a href="#168844" title="A">elem4</a>)
+      <span class="keyword">else</span> <span title="scala.collection.immutable.Set[A]" class="keyword">if</span> (<a href="#169022" title="(x$1: Any)Boolean">elem</a> == <a href="#168842" title="A">elem2</a>) <span title="scala.collection.immutable.Set.Set3[A]" class="keyword">new</span> <a href="#56984" title="scala.collection.immutable.Set.Set3[A]">Set3</a>(<a href="#168841" title="A">elem1</a>, <a href="#168843" title="A">elem3</a>, <a href="#168844" title="A">elem4</a>)
+      <span class="keyword">else</span> <span title="scala.collection.immutable.Set[A]" class="keyword">if</span> (<a href="#169022" title="(x$1: Any)Boolean">elem</a> == <a href="#168843" title="A">elem3</a>) <span title="scala.collection.immutable.Set.Set3[A]" class="keyword">new</span> <a href="#56984" title="scala.collection.immutable.Set.Set3[A]">Set3</a>(<a href="#168841" title="A">elem1</a>, <a href="#168842" title="A">elem2</a>, <a href="#168844" title="A">elem4</a>)
+      <span class="keyword">else</span> <span title="scala.collection.immutable.Set[A]" class="keyword">if</span> (<a href="#169022" title="(x$1: Any)Boolean">elem</a> == <a href="#168844" title="A">elem4</a>) <span title="scala.collection.immutable.Set.Set3[A]" class="keyword">new</span> <a href="#56984" title="scala.collection.immutable.Set.Set3[A]">Set3</a>(<a href="#168841" title="A">elem1</a>, <a href="#168842" title="A">elem2</a>, <a href="#168843" title="A">elem3</a>)
+      <span class="keyword">else</span> <a href="#56986" title="scala.collection.immutable.Set.Set4[A]" class="keyword">this</a>
+    <span class="keyword">def</span> <a title="=&gt; Iterator[A]" id="168836">iterator</a>: <a href="../Iterator.scala.html#4274" title="Iterator[A]">Iterator</a>[A] = 
+      <a href="../Iterator.scala.html#21414" title="(elems: A*)Iterator[A]">Iterator</a>(<a href="#168841" title="A">elem1</a>, <a href="#168842" title="A">elem2</a>, <a href="#168843" title="A">elem3</a>, <a href="#168844" title="A">elem4</a>)
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="[U](f: (A) =&gt; U)Unit" id="168837">foreach</a>[<a title="&gt;: Nothing &lt;: Any" id="168839">U</a>](<a title="(A) =&gt; U" id="169090">f</a>: A =&gt;  U): <span title="Unit">Unit</span> = {
+      <a href="../../Function1.scala.html#17119" title="(v1: A)U">f</a>(<a href="#168841" title="A">elem1</a>); <a href="../../Function1.scala.html#17119" title="(v1: A)U">f</a>(<a href="#168842" title="A">elem2</a>); <a href="../../Function1.scala.html#17119" title="(v1: A)U">f</a>(<a href="#168843" title="A">elem3</a>); <a href="../../Function1.scala.html#17119" title="(v1: A)U">f</a><span title="Unit">(</span><a href="#168844" title="A">elem4</a>)
+    }
+  }
+}
+
+
+        </pre>
+    </body>
+</html>

@@ -1,110 +1,284 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
         <title>scala/tools/nsc/util/Position.scala</title>
+        <script type="text/javascript" src="../../../../jquery-all.js"></script>
         <script type="text/javascript" src="../../../../linked.js"></script>
         <link rel="stylesheet" type="text/css" href="../../../../style.css" title="Style">
     </head>
-    <body onload="initializeLinked()">
+    <body>
         <pre>
-<span class="comment">/* NSC -- new Scala compiler
+/* NSC -- new Scala compiler
  * Copyright 2005-2009 LAMP/EPFL
  * @author  Martin Odersky
- */</span>
-<span class="comment">// $Id: Position.scala 16884 2009-01-09 16:52:09Z cunei $</span>
+ *
+ */
+// $Id: Position.scala 18421 2009-07-31 11:17:16Z rytz $
 
-<span class="keyword">package</span> scala.tools.nsc.util
+<span class="keyword">package</span> scala.tools.nsc
+<span class="keyword">package</span> util
 
-<span class="keyword">object</span> <span class="typed"><span class="type">object scala.tools.nsc.util.Position</span><a id="8481">Position</a></span> {
-  <span class="comment">// a static field</span>
-  <span class="keyword">private</span> <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><span id="25429"><a id="25428">tabInc</a></span></span> = <span class="typed"><span class="type">Int(8)</span><span class="int">8</span></span>
+<span class="keyword">object</span> <a title="object scala.tools.nsc.util.Position" id="14711">Position</a> <span title="ScalaObject">{</span>
+  <span class="keyword">val</span> <a title="Int" id="74008">tabInc</a> = <span title="Int(8)" class="int">8</span>
 }
+/** The Position class and its subclasses represent positions of ASTs and symbols.
+ *  Except for NoPosition and FakePos, every position refers to a SourceFile
+ *  and to an offset in the sourcefile (its `point'). For batch compilation,
+ *  that's all. For interactive IDE's there are also RangePositions
+ *  and TransparentPositions. A RangePosition indicates a start and an end
+ *  in addition to its point. TransparentPositions are a subclass of RangePositions.
+ *  Range positions that are not transparent are called opaque.
+ *  Trees with RangePositions need to satisfy the following invariants.
+ *
+ *  INV1: A tree with an offset position never contains a child
+ *        with a range position
+ *  INV2: If the child of a tree with a range position also has a range position,
+ *        then the child's range is contained in the parent's range.
+ *  INV3: Opaque range positions of children of the same node are non-overlapping
+ *        (this means their overlap is at most a single point).
+ *
+ *  The following tests are useful on positions:
+ *
+ *  pos.isDefined     true if position is not a NoPosition nor a FakePosition
+ *  pos.isRange       true if position is a range
+ *  pos.isOpaqueRange true if position is an opaque range
+ *
+ *  The following accessor methods are provided:
+ *
+ *  pos.source        The source file of the position, which must be defined
+ *  pos.point         The offset of the position's point, which must be defined
+ *  pos.start         The start of the position, which must be a range
+ *  pos.end           The end of the position, which must be a range
+ *
+ *  There are also convenience methods, such as
+ *
+ *  pos.startOrPoint
+ *  pos.endOrPoint
+ *  pos.pointOrElse(default)
+ *
+ *  These are less strict about the kind of position on which they can be applied.
+ *
+ *  The following conversion methods are often used:
+ *
+ *  pos.focus           converts a range position to an offset position, keeping its point;
+ *                      returns all other positions unchanged.
+ *  pos.makeTransparent converts an opaque range position into a transparent one.
+ *                      returns all other positions unchanged.
+ */
+<span class="keyword">trait</span> <a title="trait Position extends java.lang.Object with ScalaObject" id="14710">Position</a> <span title="ScalaObject">{</span>
 
-<span class="keyword">trait</span> <span class="typed"><span class="type">trait Position extends java.lang.Object with ScalaObject</span><a id="8480">Position</a></span> {
-  <span class="keyword">import</span> Position.tabInc
-  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Option[Int]</span><a id="25341">offset</a></span>: <span class="typed"><span class="type">Option[Int]</span><a id="934">Option</a></span>[Int] = <span class="typed"><span class="type">object None</span><a id="536">None</a></span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Option[scala.tools.nsc.util.SourceFile]</span><a id="25342">source</a></span>: <span class="typed"><span class="type">Option[scala.tools.nsc.util.SourceFile]</span><a id="934">Option</a></span>[SourceFile] = <span class="typed"><span class="type">object None</span><a id="536">None</a></span>
+  /** An optional value containing the source file referred to by this position, or
+   *  None if not defined.
+   */
+  <span class="keyword">def</span> <a title="=&gt; scala.tools.nsc.util.SourceFile" id="30278">source</a>: <a href="SourceFile.scala.html#14713" title="scala.tools.nsc.util.SourceFile">SourceFile</a> = <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.UnsupportedOperationException" class="keyword">new</span> <span title="java.lang.UnsupportedOperationException">UnsupportedOperationException</span>(<span title="java.lang.String(&quot;Position.source&quot;)" class="string">&quot;Position.source&quot;</span>)
 
-  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Option[Int]</span><a id="25343">line</a></span>: <span class="typed"><span class="type">Option[Int]</span><a id="934">Option</a></span>[Int] = 
-    <span class="typed"><span class="type">Option[Int]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Option[Int]</span><a href="#25341">offset</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a id="25406">isEmpty</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2750">||</a></span> <span class="typed"><span class="type">=&gt; Option[scala.tools.nsc.util.SourceFile]</span><a href="#25342">source</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a id="25406">isEmpty</a></span>) <span class="typed"><span class="type">object None</span><a id="536">None</a></span>
-    <span class="keyword">else</span> <span class="typed"><span class="type">(Int)Some[Int]</span><span id="29737"><a id="308">Some</a></span></span>(<span class="typed"><span class="type">=&gt; Option[scala.tools.nsc.util.SourceFile]</span><a href="#25342">source</a></span>.<span class="typed"><span class="type">=&gt; scala.tools.nsc.util.SourceFile</span><a id="25408">get</a></span>.<span class="typed"><span class="type">(Int)Int</span><a href="SourceFile.scala.html#22655">offsetToLine</a></span>(<span class="typed"><span class="type">=&gt; Option[Int]</span><a href="#25341">offset</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a id="25408">get</a></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3147">+</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>)
+  /** Is this position neither a NoPosition nor a FakePosition?
+   *  If isDefined is true, offset and source are both defined.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="30279">isDefined</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>
 
-  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Option[Int]</span><a id="25344">column</a></span>: <span class="typed"><span class="type">Option[Int]</span><a id="934">Option</a></span>[Int] =
-    <span class="typed"><span class="type">Option[Int]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Option[Int]</span><a href="#25341">offset</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a id="25406">isEmpty</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2750">||</a></span> <span class="typed"><span class="type">=&gt; Option[scala.tools.nsc.util.SourceFile]</span><a href="#25342">source</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a id="25406">isEmpty</a></span>)
-      <span class="typed"><span class="type">object None</span><a id="536">None</a></span>
-    <span class="keyword">else</span> {
-      <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="139510">column</a></span> = <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
-      <span class="comment">// find beginning offset for line</span>
-      <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="139511">line</a></span> = <span class="typed"><span class="type">=&gt; Option[scala.tools.nsc.util.SourceFile]</span><a href="#25342">source</a></span>.<span class="typed"><span class="type">=&gt; scala.tools.nsc.util.SourceFile</span><a id="25408">get</a></span>.<span class="typed"><span class="type">(Int)Int</span><a href="SourceFile.scala.html#22655">offsetToLine</a></span>(<span class="typed"><span class="type">=&gt; Option[Int]</span><a href="#25341">offset</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a id="25408">get</a></span>)
-      <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="139512">coffset</a></span> = <span class="typed"><span class="type">=&gt; Option[scala.tools.nsc.util.SourceFile]</span><a href="#25342">source</a></span>.<span class="typed"><span class="type">=&gt; scala.tools.nsc.util.SourceFile</span><a id="25408">get</a></span>.<span class="typed"><span class="type">(Int)Int</span><a href="SourceFile.scala.html#22656">lineToOffset</a></span>(<span class="typed"><span class="type">Int</span><a href="#139511">line</a></span>)
-      <span class="keyword">var</span> <span class="typed"><span class="type">Boolean</span><a id="139513">continue</a></span> = <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
-      <span class="typed"><span class="type">Unit</span><a href="#139514" class="keyword">while</a></span> (<span class="typed"><span class="type">Boolean</span><a href="#139513">continue</a></span>) {
-        <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#139512">coffset</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">==</a></span> <span class="typed"><span class="type">=&gt; Option[Int]</span><a href="#25341">offset</a></span>.<span class="typed"><span class="type">(=&gt; Int)Int</span><a id="25411">getOrElse</a></span>(-<span class="typed"><span class="type">Int(-1)</span><span class="int">1</span></span>)) <span class="typed"><span class="type">Boolean</span><a href="#139513">continue</a></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
-        <span class="keyword">else</span> <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Option[scala.tools.nsc.util.SourceFile]</span><a href="#25342">source</a></span>.<span class="typed"><span class="type">=&gt; scala.tools.nsc.util.SourceFile</span><a id="25408">get</a></span>.<span class="typed"><span class="type">scala.tools.nsc.util.BatchSourceFile</span><a id="3503">asInstanceOf</a></span>[<span class="typed"><span class="type">scala.tools.nsc.util.BatchSourceFile</span><a href="SourceFile.scala.html#8435">BatchSourceFile</a></span>].<span class="typed"><span class="type">(Int)Char</span><a href="SourceFile.scala.html#22677" id="21509">content</a></span>(<span class="typed"><span class="type">Int</span><a href="#139512">coffset</a></span>) <span class="typed"><span class="type">(Char)Boolean</span><a id="3018">==</a></span> <span class="typed"><span class="type">Char('\011')</span><span class="char">'\t'</span></span>) 
-          <span class="typed"><span class="type">Int</span><a href="#139510">column</a></span> = ((<span class="typed"><span class="type">Int</span><a href="#139510">column</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3148">-</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3150">/</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#25428">tabInc</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3149">*</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#25428">tabInc</a></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3147">+</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#25428">tabInc</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3147">+</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
-        <span class="keyword">else</span> <span class="typed"><span class="type">Int</span><a href="#139510">column</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3147">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
-        <span class="typed"><span class="type">Int</span><a href="#139512">coffset</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3147">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
-      }
-      <span class="typed"><span class="type">(Int)Some[Int]</span><span id="29737"><a id="308">Some</a></span></span>(<span class="typed"><span class="type">Int</span><a href="#139510">column</a></span>)
-    }
+  /** Is this position a transparent position? */
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="30280">isTransparent</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>
 
-  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; String</span><a id="25345">lineContent</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span> = {
-    <span class="keyword">val</span> <span class="typed"><span class="type">Option[Int]</span><a id="139608">line</a></span> = <span class="typed"><span class="type">Position.this.type</span><a href="#8480" class="keyword">this</a></span>.<span class="typed"><span class="type">=&gt; Option[Int]</span><a href="#25343">line</a></span>
-    <span class="typed"><span class="type">String</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2747">!</a></span><span class="typed"><span class="type">Option[Int]</span><a href="#139608">line</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a id="25406">isEmpty</a></span>) <span class="typed"><span class="type">=&gt; Option[scala.tools.nsc.util.SourceFile]</span><a href="#25342">source</a></span>.<span class="typed"><span class="type">=&gt; scala.tools.nsc.util.SourceFile</span><a id="25408">get</a></span>.<span class="typed"><span class="type">(Int)String</span><a href="SourceFile.scala.html#22663">lineToString</a></span>(<span class="typed"><span class="type">Option[Int]</span><a href="#139608">line</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a id="25408">get</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3148">-</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>)
-    <span class="keyword">else</span> <span class="typed"><span class="type">java.lang.String(&quot;NO_LINE&quot;)</span><span class="string">&quot;NO_LINE&quot;</span></span>
-  }
+  /** Is this position a range position? */
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="30281">isRange</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>
+  
+  /** Is this position a non-transparent range position? */
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="30282">isOpaqueRange</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>
+
+  /** if opaque range, make this position transparent */
+  <span class="keyword">def</span> <a title="=&gt; scala.tools.nsc.util.Position" id="30283">makeTransparent</a>: <a href="#14710" title="scala.tools.nsc.util.Position">Position</a> = <a href="#14710" title="scala.tools.nsc.util.Position" class="keyword">this</a>
+  
+  /** The start of the position's range, error if not a range position */
+  <span class="keyword">def</span> <a title="=&gt; Int" id="30284">start</a>: <span title="Int">Int</span> = <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.UnsupportedOperationException" class="keyword">new</span> <span title="java.lang.UnsupportedOperationException">UnsupportedOperationException</span>(<span title="java.lang.String(&quot;Position.start&quot;)" class="string">&quot;Position.start&quot;</span>)
+
+  /** The start of the position's range, or point if not a range position */
+  <span class="keyword">def</span> <a title="=&gt; Int" id="30285">startOrPoint</a>: <span title="Int">Int</span> = <a href="#30286" title="=&gt; Int">point</a>
+
+  /**  The point (where the ^ is) of the position */
+  <span class="keyword">def</span> <a title="=&gt; Int" id="30286">point</a>: <span title="Int">Int</span> = <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.UnsupportedOperationException" class="keyword">new</span> <span title="java.lang.UnsupportedOperationException">UnsupportedOperationException</span>(<span title="java.lang.String(&quot;Position.point&quot;)" class="string">&quot;Position.point&quot;</span>)
+
+  /**  The point (where the ^ is) of the position, or else `default' if undefined */
+  <span class="keyword">def</span> <a title="(default: Int)Int" id="30287">pointOrElse</a>(<a title="Int" id="689801">default</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = <a href="#689801" title="Int">default</a>
+
+  /** The end of the position's range, error if not a range position */
+  <span class="keyword">def</span> <a title="=&gt; Int" id="30288">end</a>: <span title="Int">Int</span> = <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.UnsupportedOperationException" class="keyword">new</span> <span title="java.lang.UnsupportedOperationException">UnsupportedOperationException</span>(<span title="java.lang.String(&quot;Position.end&quot;)" class="string">&quot;Position.end&quot;</span>)
+
+  /** The end of the position's range, or point if not a range position */
+  <span class="keyword">def</span> <a title="=&gt; Int" id="30289">endOrPoint</a>: <span title="Int">Int</span> = <a href="#30286" title="=&gt; Int">point</a>
+
+  @deprecated(<span class="string">&quot;use point instead&quot;</span>)
+  <span class="keyword">def</span> <a title="=&gt; Option[Int]" id="30290">offset</a>: <a title="Option[Int]" id="782">Option</a>[Int] = <span title="Option[Int]" class="keyword">if</span> (<a href="#30279" title="=&gt; Boolean">isDefined</a>) <a title="(x: Int)Some[Int]" id="258">Some</a>(<a href="#30286" title="=&gt; Int">point</a>) <span class="keyword">else</span> <a title="object None" id="465">None</a>
+
+  /** The same position with a different start value (if a range) */
+  <span class="keyword">def</span> <a title="(off: Int)scala.tools.nsc.util.Position" id="30291">withStart</a>(<a title="Int" id="585288">off</a>: <span title="Int">Int</span>) = <a href="#14710" title="scala.tools.nsc.util.Position" class="keyword">this</a>
+
+  /** The same position with a different end value (if a range) */
+  <span class="keyword">def</span> <a title="(off: Int)scala.tools.nsc.util.Position" id="30292">withEnd</a>(<a title="Int" id="764821">off</a>: <span title="Int">Int</span>) = <a href="#14710" title="scala.tools.nsc.util.Position" class="keyword">this</a>
+
+  /** The same position with a different point value (if a range or offset) */
+  <span class="keyword">def</span> <a title="(off: Int)scala.tools.nsc.util.Position" id="30293">withPoint</a>(<a title="Int" id="585261">off</a>: <span title="Int">Int</span>) = <a href="#14710" title="scala.tools.nsc.util.Position" class="keyword">this</a>
+
+  /** If this is a range, the union with the other range, with the point of this position.
+   *  Otherwise, this position
+   */
+  <span class="keyword">def</span> <a title="(pos: scala.tools.nsc.util.Position)scala.tools.nsc.util.Position" id="30294">union</a>(<a title="scala.tools.nsc.util.Position" id="74166">pos</a>: <a href="#14710" title="scala.tools.nsc.util.Position">Position</a>) = <a href="#14710" title="scala.tools.nsc.util.Position" class="keyword">this</a>
+
+  /** If this is a range position, the offset position of its start.
+   *  Otherwise the position itself
+   */
+  <span class="keyword">def</span> <a title="=&gt; scala.tools.nsc.util.Position" id="30295">focusStart</a> = <a href="#14710" title="scala.tools.nsc.util.Position" class="keyword">this</a>
+  
+  /** If this is a range position, the offset position of its point.
+   *  Otherwise the position itself
+   */
+  <span class="keyword">def</span> <a title="=&gt; scala.tools.nsc.util.Position" id="30296">focus</a> = <a href="#14710" title="scala.tools.nsc.util.Position" class="keyword">this</a>
+  
+  /** If this is a range position, the offset position of its end.
+   *  Otherwise the position itself
+   */
+  <span class="keyword">def</span> <a title="=&gt; scala.tools.nsc.util.Position" id="30297">focusEnd</a> = <a href="#14710" title="scala.tools.nsc.util.Position" class="keyword">this</a>
+  
+  /** Does this position include the given position `pos`.
+   *  This holds this is a range position and its range [start..end] 
+   *  is the same or covers the range of the given position.
+   */
+  <span class="keyword">def</span> <a title="(pos: scala.tools.nsc.util.Position)Boolean" id="30298">includes</a>(<a title="scala.tools.nsc.util.Position" id="69815">pos</a>: <a href="#14710" title="scala.tools.nsc.util.Position">Position</a>) = <span title="Boolean(false)" class="keyword">false</span>
+
+  /** Does this position properly include the given position `pos` (&quot;properly&quot; meaning their
+   *  ranges are not the same)?
+   */
+  <span class="keyword">def</span> <a title="(pos: scala.tools.nsc.util.Position)Boolean" id="30299">properlyIncludes</a>(<a title="scala.tools.nsc.util.Position" id="755484">pos</a>: <a href="#14710" title="scala.tools.nsc.util.Position">Position</a>) = 
+    <a href="#30298" title="(pos: scala.tools.nsc.util.Position)Boolean">includes</a><span title="(x$1: Boolean)Boolean">(</span><a href="#755484" title="scala.tools.nsc.util.Position">pos</a>) &amp;&amp; (<a href="#30284" title="(x$1: Int)Boolean">start</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <a href="#755484" title="scala.tools.nsc.util.Position">pos</a>.<a href="#30285" title="=&gt; Int">startOrPoint</a> || <a href="#755484" title="scala.tools.nsc.util.Position">pos</a>.<a href="#30289" title="(x$1: Int)Boolean">endOrPoint</a> &lt; <a href="#30288" title="=&gt; Int">end</a>)
+  
+  /** Does this position precede that position?
+   *  This holds if both positions are defined and the end point of this position
+   *  is not larger than the start point of the given position.
+   */
+  <span class="keyword">def</span> <a title="(pos: scala.tools.nsc.util.Position)Boolean" id="30300">precedes</a>(<a title="scala.tools.nsc.util.Position" id="755087">pos</a>: <a href="#14710" title="scala.tools.nsc.util.Position">Position</a>) = 
+    <a href="#30279" title="(x$1: Boolean)Boolean">isDefined</a> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <a href="#755087" title="scala.tools.nsc.util.Position">pos</a>.<a href="#30279" title="=&gt; Boolean">isDefined</a> &amp;&amp; <a href="#30289" title="(x$1: Int)Boolean">endOrPoint</a> &lt;= <a href="#755087" title="scala.tools.nsc.util.Position">pos</a>.<a href="#30285" title="=&gt; Int">startOrPoint</a>
+
+  /** Does this position properly precede the given position `pos` (&quot;properly&quot; meaning their ranges
+   *  do not share a common point).
+   */
+  <span class="keyword">def</span> <a title="(pos: scala.tools.nsc.util.Position)Boolean" id="30301">properlyPrecedes</a>(<a title="scala.tools.nsc.util.Position" id="755425">pos</a>: <a href="#14710" title="scala.tools.nsc.util.Position">Position</a>) = 
+    <a href="#30279" title="(x$1: Boolean)Boolean">isDefined</a> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <a href="#755425" title="scala.tools.nsc.util.Position">pos</a>.<a href="#30279" title="=&gt; Boolean">isDefined</a> &amp;&amp; <a href="#30285" title="(x$1: Int)Boolean">startOrPoint</a> &lt; <a href="#755425" title="scala.tools.nsc.util.Position">pos</a>.<a href="#30289" title="=&gt; Int">endOrPoint</a>
+
+  /** Does this position overlap with that position?
+   *  This holds if both positions are ranges and there is an interval of
+   *  non-zero length that is shared by both position ranges.
+   */
+  <span class="keyword">def</span> <a title="(pos: scala.tools.nsc.util.Position)Boolean" id="30302">overlaps</a>(<a title="scala.tools.nsc.util.Position" id="69872">pos</a>: <a href="#14710" title="scala.tools.nsc.util.Position">Position</a>) = 
+    <a href="#30281" title="(x$1: Boolean)Boolean">isRange</a> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <a href="#69872" title="scala.tools.nsc.util.Position">pos</a>.<a href="#30281" title="=&gt; Boolean">isRange</a> &amp;&amp; 
+    (<span title="(x$1: Boolean)Boolean">(</span><a href="#69872" title="scala.tools.nsc.util.Position">pos</a>.<a href="#30284" title="(x$1: Int)Boolean">start</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <a href="#30288" title="=&gt; Int">end</a> &amp;&amp; <a href="#30284" title="(x$1: Int)Boolean">start</a> &lt; <a href="#69872" title="scala.tools.nsc.util.Position">pos</a>.<a href="#30288" title="=&gt; Int">end</a>) || (<a href="#30284" title="(x$1: Int)Boolean">start</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <a href="#69872" title="scala.tools.nsc.util.Position">pos</a>.<a href="#30288" title="=&gt; Int">end</a> &amp;&amp; <a href="#69872" title="scala.tools.nsc.util.Position">pos</a>.<a href="#30284" title="(x$1: Int)Boolean">start</a> &lt; <a href="#30288" title="=&gt; Int">end</a>))
+  
+  /** Does this position cover the same range as that position?
+   *  Holds only if both position are ranges
+   */
+  <span class="keyword">def</span> <a title="(pos: scala.tools.nsc.util.Position)Boolean" id="30303">sameRange</a>(<a title="scala.tools.nsc.util.Position" id="755555">pos</a>: <a href="#14710" title="scala.tools.nsc.util.Position">Position</a>) = 
+    <a href="#30281" title="(x$1: Boolean)Boolean">isRange</a> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <a href="#755555" title="scala.tools.nsc.util.Position">pos</a>.<a href="#30281" title="=&gt; Boolean">isRange</a> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <a href="#30284" title="(x$1: Int)Boolean">start</a> == <a href="#755555" title="scala.tools.nsc.util.Position">pos</a>.<a href="#30284" title="=&gt; Int">start</a> &amp;&amp; <a href="#30288" title="(x$1: Int)Boolean">end</a> == <a href="#755555" title="scala.tools.nsc.util.Position">pos</a>.<a href="#30288" title="=&gt; Int">end</a>
+
+  <span class="keyword">def</span> <a title="=&gt; Int" id="30304">line</a>: <span title="Int">Int</span> = <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.UnsupportedOperationException" class="keyword">new</span> <span title="java.lang.UnsupportedOperationException">UnsupportedOperationException</span>(<span title="java.lang.String(&quot;Position.line&quot;)" class="string">&quot;Position.line&quot;</span>)
+
+  <span class="keyword">def</span> <a title="=&gt; Int" id="30305">column</a>: <span title="Int">Int</span> = <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.UnsupportedOperationException" class="keyword">new</span> <span title="java.lang.UnsupportedOperationException">UnsupportedOperationException</span>(<span title="java.lang.String(&quot;Position.column&quot;)" class="string">&quot;Position.column&quot;</span>)
+
+  <span class="keyword">def</span> <a title="=&gt; String" id="30306">lineContent</a>: <span title="String">String</span> =
+    <span title="String" class="keyword">if</span> (<a href="#30279" title="=&gt; Boolean">isDefined</a>) <a href="#30278" title="=&gt; scala.tools.nsc.util.SourceFile">source</a>.<a href="SourceFile.scala.html#68219" title="(index: Int)String">lineToString</a>(<a href="#30304" title="(x$1: Int)Int">line</a> - <span title="Int(1)" class="int">1</span>)
+    <span class="keyword">else</span> <span title="java.lang.String(&quot;NO_LINE&quot;)" class="string">&quot;NO_LINE&quot;</span>
    
-  <span class="comment">/** Map this position to a position in an original source
+  /** Map this position to a position in an original source
    * file.  If the SourceFile is a normal SourceFile, simply
    * return this.
-   */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(scala.tools.nsc.util.SourceFile)scala.tools.nsc.util.Position</span><a id="25346">inUltimateSource</a></span>(<span class="typed"><span class="type">scala.tools.nsc.util.SourceFile</span><a id="60060">source</a></span> : <span class="typed"><span class="type">scala.tools.nsc.util.SourceFile</span><a href="SourceFile.scala.html#8483">SourceFile</a></span>) = 
-    <span class="typed"><span class="type">scala.tools.nsc.util.Position</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">scala.tools.nsc.util.SourceFile</span><a href="#60060">source</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="3509">==</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) <span class="typed"><span class="type">scala.tools.nsc.util.Position</span><a href="#8480" class="keyword">this</a></span> <span class="keyword">else</span> <span class="typed"><span class="type">scala.tools.nsc.util.SourceFile</span><a href="#60060">source</a></span>.<span class="typed"><span class="type">(scala.tools.nsc.util.Position)scala.tools.nsc.util.Position</span><a href="SourceFile.scala.html#22657">positionInUltimateSource</a></span>(<span class="typed"><span class="type">scala.tools.nsc.util.Position</span><a href="#8480" class="keyword">this</a></span>)
+   */
+  <span class="keyword">def</span> <a title="(source: scala.tools.nsc.util.SourceFile)scala.tools.nsc.util.Position" id="30307">inUltimateSource</a>(<a title="scala.tools.nsc.util.SourceFile" id="172074">source</a> : <a href="SourceFile.scala.html#14713" title="scala.tools.nsc.util.SourceFile">SourceFile</a>) = 
+    <span title="scala.tools.nsc.util.Position" class="keyword">if</span> (<a href="#172074" title="(x$1: AnyRef)Boolean">source</a> == <span title="Null(null)" class="keyword">null</span>) <a href="#14710" title="scala.tools.nsc.util.Position" class="keyword">this</a> <span class="keyword">else</span> <a href="#172074" title="scala.tools.nsc.util.SourceFile">source</a>.<a href="SourceFile.scala.html#68214" title="(position: scala.tools.nsc.util.Position)scala.tools.nsc.util.Position">positionInUltimateSource</a>(<a href="#14710" title="scala.tools.nsc.util.Position" class="keyword">this</a>)
   
-  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; java.lang.String</span><a id="25347">dbgString</a></span> = {
-    (<span class="typed"><span class="type">java.lang.String</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Option[scala.tools.nsc.util.SourceFile]</span><a href="#25342">source</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a id="25406">isEmpty</a></span>) <span class="typed"><span class="type">java.lang.String(&quot;&quot;)</span><span class="string">&quot;&quot;</span></span> <span class="keyword">else</span> <span class="typed"><span class="type">java.lang.String(&quot;source-&quot;)</span><span class="string">&quot;source-&quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">=&gt; Option[scala.tools.nsc.util.SourceFile]</span><a href="#25342">source</a></span>.<span class="typed"><span class="type">=&gt; scala.tools.nsc.util.SourceFile</span><a id="25408">get</a></span>.<span class="typed"><span class="type">=&gt; String</span><a href="SourceFile.scala.html#22660">path</a></span>) <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span>
-      (<span class="typed"><span class="type">Any</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Option[Int]</span><a href="#25343">line</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a id="25406">isEmpty</a></span>) <span class="typed"><span class="type">java.lang.String(&quot;&quot;)</span><span class="string">&quot;&quot;</span></span> <span class="keyword">else</span> <span class="typed"><span class="type">java.lang.String(&quot;line-&quot;)</span><span class="string">&quot;line-&quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">=&gt; Option[Int]</span><a href="#25343">line</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a id="25408">get</a></span>) <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span>
-        (<span class="typed"><span class="type">Any</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Option[Int]</span><a href="#25341">offset</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a id="25406">isEmpty</a></span>) <span class="typed"><span class="type">java.lang.String(&quot;&quot;)</span><span class="string">&quot;&quot;</span></span> 
-         <span class="keyword">else</span> <span class="typed"><span class="type">Any</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Option[Int]</span><a href="#25341">offset</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a id="25408">get</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3146">&gt;=</a></span> <span class="typed"><span class="type">=&gt; Option[scala.tools.nsc.util.SourceFile]</span><a href="#25342">source</a></span>.<span class="typed"><span class="type">=&gt; scala.tools.nsc.util.SourceFile</span><a id="25408">get</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="SourceFile.scala.html#22652">length</a></span>) <span class="typed"><span class="type">java.lang.String(&quot;out-of-bounds-&quot;)</span><span class="string">&quot;out-of-bounds-&quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">=&gt; Option[Int]</span><a href="#25341">offset</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a id="25408">get</a></span> 
-         <span class="keyword">else</span> {
-           <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.String</span><a id="25476">ret</a></span> = <span class="typed"><span class="type">java.lang.String(&quot;offset=&quot;)</span><span class="string">&quot;offset=&quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">=&gt; Option[Int]</span><a href="#25341">offset</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a id="25408">get</a></span>;
-           <span class="keyword">var</span> <span class="typed"><span class="type">java.lang.String</span><a id="25477">add</a></span> = <span class="typed"><span class="type">java.lang.String(&quot;&quot;)</span><span class="string">&quot;&quot;</span></span>;
-           <span class="comment">/*
-           while (offset.get + add.length &lt; source.get.length &amp;&amp;
-                  add.length &lt; 10) add = add + source.get.content(offset.get + add.length());
-           */</span>
-           <span class="typed"><span class="type">java.lang.String</span><a href="#25476">ret</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot; c[0..9]=&quot;&quot;)</span><span class="string">&quot; c[0..9]=\&quot;&quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">java.lang.String</span><a href="#25477">add</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot;&quot;&quot;)</span><span class="string">&quot;\&quot;&quot;</span></span>;
-         })
-  }
+  <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="30308">dbgString</a> = <a href="#14710" title="()java.lang.String">toString</a>
+
+  <span class="keyword">def</span> <a title="=&gt; String" id="30309">show</a>: <span title="String">String</span> = <span title="(x$1: Any)java.lang.String" class="string">&quot;[&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#14710" title="()java.lang.String">toString</a>+<span title="java.lang.String(&quot;]&quot;)" class="string">&quot;]&quot;</span>
+}
+
+case <span class="keyword">object</span> <a href="#764880" title="object scala.tools.nsc.util.NoPosition" id="764891">NoPosition</a> <span title="ScalaObject" class="keyword">extends</span> <a href="#14710" title="scala.tools.nsc.util.Position">Position</a> {
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="70192">dbgString</a> = <span title="()java.lang.String">toString</span>
+}
+
+case <span class="keyword">class</span> <a title="class FakePos extends java.lang.Object with scala.tools.nsc.util.Position with ScalaObject with Product" id="172091">FakePos</a><span title="ScalaObject">(</span><a title="String" id="173821">msg</a>: <span title="String">String</span>) <span class="keyword">extends</span> <a href="#14710" title="scala.tools.nsc.util.Position">Position</a> {
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="172096">toString</a> = <a href="#173821" title="=&gt; String">msg</a>
+}
+
+<span class="keyword">class</span> <a title="class OffsetPosition extends java.lang.Object with scala.tools.nsc.util.Position with ScalaObject" id="14563">OffsetPosition</a><span title="ScalaObject">(</span><span class="keyword">override</span> <span class="keyword">val</span> <a title="scala.tools.nsc.util.SourceFile" id="68164">source</a>: <a href="SourceFile.scala.html#14713" title="scala.tools.nsc.util.SourceFile">SourceFile</a>, <span class="keyword">override</span> <span class="keyword">val</span> <a title="Int" id="68165">point</a>: <span title="Int">Int</span>) <span class="keyword">extends</span> <a href="#14710" title="scala.tools.nsc.util.Position">Position</a> {
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Boolean" id="68154">isDefined</a> = <span title="Boolean(true)" class="keyword">true</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(default: Int)Int" id="68155">pointOrElse</a>(<a title="Int" id="764949">default</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = <a href="#68165" title="=&gt; Int">point</a>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(off: Int)scala.tools.nsc.util.OffsetPosition" id="68156">withPoint</a>(<a title="Int" id="764951">off</a>: <span title="Int">Int</span>) = <span title="scala.tools.nsc.util.OffsetPosition" class="keyword">new</span> <a href="#14563" title="scala.tools.nsc.util.OffsetPosition">OffsetPosition</a>(<a href="#68164" title="=&gt; scala.tools.nsc.util.SourceFile">source</a>, <a href="#764951" title="Int">off</a>)
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Int" id="68157">line</a>: <span title="Int">Int</span> = <a href="#68164" title="=&gt; scala.tools.nsc.util.SourceFile">source</a>.<a href="SourceFile.scala.html#68212" title="(offset: Int)Int">offsetToLine</a><span title="(x$1: Int)Int">(</span><a href="#68165" title="=&gt; Int">point</a>) + <span title="Int(1)" class="int">1</span>
   
-}
-
-<span class="keyword">case</span> <span class="keyword">object</span> <span class="typed"><span class="type">object scala.tools.nsc.util.NoPosition</span><span id="139634"><span id="8304"><span id="139633"><span id="139637"><span id="3500"><span id="139636"><span id="139639"><span id="29856"><a id="139635">NoPosition</a></span></span></span></span></span></span></span></span></span> <span class="keyword">extends</span> <span class="typed"><span class="type">scala.tools.nsc.util.Position</span><a href="#8480">Position</a></span>
-<span class="keyword">case</span> <span class="keyword">class</span> <span class="typed"><span class="type">class FakePos extends java.lang.Object with scala.tools.nsc.util.Position with ScalaObject with Product</span><span id="139649"><span id="2751"><span id="139644"><span id="29737"><span id="139652"><span id="3500"><span id="139646"><span id="29815"><span id="53133"><span id="2750"><span id="29856"><span id="308"><span id="3501"><span id="139645"><span id="60088"><span id="8376"><span id="139651"><span id="139647"><span id="5794"><span id="8375"><span id="139650"><span id="3509"><a id="53139">FakePos</a></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span>(<span class="typed"><span class="type">String</span><span id="53136"><span id="53135"><span id="60091"><a id="53140">msg</a></span></span></span></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>) <span class="keyword">extends</span> <span class="typed"><span class="type">scala.tools.nsc.util.Position</span><a href="#8480">Position</a></span> {
-  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()String</span><a id="53138">toString</a></span>=<span class="typed"><span class="type">=&gt; String</span><a href="#53135">msg</a></span>
-}
-
-<span class="keyword">case</span> <span class="keyword">class</span> <span class="typed"><span class="type">class LinePosition extends java.lang.Object with scala.tools.nsc.util.Position with ScalaObject with Product</span><span id="2751"><span id="139685"><span id="139684"><span id="3141"><span id="139700"><span id="139687"><span id="139699"><span id="139682"><span id="139698"><span id="139688"><span id="139694"><span id="139689"><span id="139683"><span id="3509"><span id="29737"><span id="29814"><span id="3500"><span id="29815"><span id="23625"><span id="2750"><span id="139695"><span id="29856"><span id="1379"><span id="308"><span id="3501"><span id="139701"><span id="8381"><span id="5794"><a id="8382">LinePosition</a></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span>(<span class="typed"><span class="type">scala.tools.nsc.util.SourceFile</span><span id="139657"><span id="139656"><span id="139668"><a id="139766">source0</a></span></span></span></span>: <span class="typed"><span class="type">scala.tools.nsc.util.SourceFile</span><a href="SourceFile.scala.html#8483">SourceFile</a></span>, <span class="typed"><span class="type">Int</span><span id="139659"><span id="139658"><span id="139669"><a id="139767">line0</a></span></span></span></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>) <span class="keyword">extends</span> <span class="typed"><span class="type">scala.tools.nsc.util.Position</span><a href="#8480">Position</a></span> {
-  <span class="typed"><span class="type">(Boolean)Unit</span><span id="6003"><a id="821">assert</a></span></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="#139658">line0</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3146">&gt;=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>)
-  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; object None</span><a id="139661">offset</a></span> = <span class="typed"><span class="type">object None</span><a id="536">None</a></span>
-  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; object None</span><a id="139662">column</a></span> = <span class="typed"><span class="type">object None</span><a id="536">None</a></span>
-  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Some[Int]</span><a id="139663">line</a></span> = <span class="typed"><span class="type">(Int)Some[Int]</span><span id="29737"><a id="308">Some</a></span></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="#139658">line0</a></span>)
-  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Some[scala.tools.nsc.util.SourceFile]</span><a id="139664">source</a></span> = <span class="typed"><span class="type">(scala.tools.nsc.util.SourceFile)Some[scala.tools.nsc.util.SourceFile]</span><span id="29737"><a id="308">Some</a></span></span>(<span class="typed"><span class="type">=&gt; scala.tools.nsc.util.SourceFile</span><a href="#139656">source0</a></span>)
-}
-
-<span class="keyword">case</span> <span class="keyword">class</span> <span class="typed"><span class="type">class OffsetPosition extends java.lang.Object with scala.tools.nsc.util.Position with ScalaObject with Product</span><span id="87886"><span id="29737"><span id="8327"><span id="29814"><span id="139741"><span id="3500"><span id="139770"><span id="23625"><span id="139742"><span id="139744"><span id="29856"><span id="1379"><span id="308"><span id="8328"><span id="139745"><span id="87885"><a id="139743">OffsetPosition</a></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span>(<span class="typed"><span class="type">scala.tools.nsc.util.SourceFile</span><span id="40570"><span id="40569"><span id="40578"><a id="87887">source0</a></span></span></span></span>: <span class="typed"><span class="type">scala.tools.nsc.util.SourceFile</span><a href="SourceFile.scala.html#8483">SourceFile</a></span>, <span class="typed"><span class="type">Int</span><span id="40572"><span id="40571"><span id="40579"><a id="87888">offset0</a></span></span></span></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>) <span class="keyword">extends</span> <span class="typed"><span class="type">scala.tools.nsc.util.Position</span><a href="#8480">Position</a></span> {
-  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Some[scala.tools.nsc.util.SourceFile]</span><a id="40574">source</a></span> = <span class="typed"><span class="type">(scala.tools.nsc.util.SourceFile)Some[scala.tools.nsc.util.SourceFile]</span><span id="29737"><a id="308">Some</a></span></span>(<span class="typed"><span class="type">=&gt; scala.tools.nsc.util.SourceFile</span><a href="#40569">source0</a></span>)
-  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Some[Int]</span><a id="40575">offset</a></span> = <span class="typed"><span class="type">(Int)Some[Int]</span><span id="29737"><a id="308">Some</a></span></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="#40571">offset0</a></span>)
-  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Any)Boolean</span><a id="40576">equals</a></span>(<span class="typed"><span class="type">Any</span><a id="139712">that</a></span> : <span class="typed"><span class="type">Any</span><a id="51">Any</a></span>) = <span class="typed"><span class="type">Any</span><a href="#139712">that</a></span> <span class="typed"><span class="type">Boolean</span><span class="keyword">match</span></span> {
-  <span class="typed"><span class="type">Boolean</span><span class="keyword">case</span></span> <span class="typed"><span class="type">scala.tools.nsc.util.OffsetPosition</span><a id="139714">that</a></span> : <span class="typed"><span class="type">scala.tools.nsc.util.OffsetPosition</span><a href="#8327">OffsetPosition</a></span> =&gt; <span class="typed"><span class="type">=&gt; Int</span><a href="#40571">offset0</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">==</a></span> <span class="typed"><span class="type">scala.tools.nsc.util.OffsetPosition</span><a href="#139714">that</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a href="#40571">offset0</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2751">&amp;&amp;</a></span> <span class="typed"><span class="type">=&gt; scala.tools.nsc.util.SourceFile</span><a href="#40569">source0</a></span>.<span class="typed"><span class="type">=&gt; scala.tools.nsc.io.AbstractFile</span><a href="SourceFile.scala.html#22650">file</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="3509">==</a></span> <span class="typed"><span class="type">scala.tools.nsc.util.OffsetPosition</span><a href="#139714">that</a></span>.<span class="typed"><span class="type">=&gt; scala.tools.nsc.util.SourceFile</span><a href="#40569">source0</a></span>.<span class="typed"><span class="type">=&gt; scala.tools.nsc.io.AbstractFile</span><a href="SourceFile.scala.html#22650">file</a></span> 
-  <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Any</span><a id="139718">that</a></span> =&gt; <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Int" id="68158">column</a>: <span title="Int">Int</span> = {
+    <span class="keyword">var</span> <a title="Int" id="764982">idx</a> = <a href="#68164" title="=&gt; scala.tools.nsc.util.SourceFile">source</a>.<a href="SourceFile.scala.html#68213" title="(index: Int)Int">lineToOffset</a>(<a href="#68164" title="=&gt; scala.tools.nsc.util.SourceFile">source</a>.<a href="SourceFile.scala.html#68212" title="(offset: Int)Int">offsetToLine</a>(<a href="#68165" title="=&gt; Int">point</a>))
+    <span class="keyword">var</span> <a title="Int" id="764983">col</a> = <span title="Int(0)" class="int">0</span>
+    <span title="Unit" class="keyword">while</span> (<a href="#764982" title="(x$1: Int)Boolean" id="2954">idx</a> != <a href="#68165" title="=&gt; Int">point</a>) <a href="#764984" title="()Unit">{</a>
+      <a href="#764983" title="Int">col</a> += (<span title="Int" class="keyword">if</span> (<a href="#68164" title="=&gt; scala.tools.nsc.util.SourceFile">source</a>.<a href="SourceFile.scala.html#68206" title="(i: Int)Char" id="24570">content</a><a title="(x$1: Char)Boolean" id="2716">(</a><a href="#764982" title="Int">idx</a>) == <span title="Char('\011')" class="char">'\t'</span>) <a href="#14711" title="object scala.tools.nsc.util.Position">Position</a>.<a href="#74008" title="(x$1: Int)Int">tabInc</a> - <a href="#764983" title="(x$1: Int)Int" id="2972">col</a> % <a href="#14711" title="object scala.tools.nsc.util.Position">Position</a>.<a href="#74008" title="=&gt; Int">tabInc</a> <span class="keyword">else</span> <span title="Int(1)" class="int">1</span>)
+      <a href="#764982" title="Int">idx</a> += <span title="Int(1)" class="int">1</span>
+    }
+    <a href="#764983" title="(x$1: Int)Int">col</a> + <span title="Int(1)" class="int">1</span>
   }
-  <span class="keyword">override</span> <span class="keyword">def</span> <span class="typed"><span class="type">()Int</span><a id="40577">hashCode</a></span> = <span class="typed"><span class="type">=&gt; Int</span><a href="#40571">offset0</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3147">+</a></span> <span class="typed"><span class="type">=&gt; scala.tools.nsc.util.SourceFile</span><a href="#40569">source0</a></span>.<span class="typed"><span class="type">=&gt; scala.tools.nsc.io.AbstractFile</span><a href="SourceFile.scala.html#22650">file</a></span>.<span class="typed"><span class="type">()Int</span><a id="5782">hashCode</a></span>
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(pos: scala.tools.nsc.util.Position)scala.tools.nsc.util.Position" id="68159">union</a>(<a title="scala.tools.nsc.util.Position" id="765117">pos</a>: <a href="#14710" title="scala.tools.nsc.util.Position">Position</a>) = 
+    <span title="scala.tools.nsc.util.Position" class="keyword">if</span> (<a href="#765117" title="scala.tools.nsc.util.Position">pos</a>.<a href="#30281" title="=&gt; Boolean">isRange</a>) <a href="#765117" title="scala.tools.nsc.util.Position">pos</a> <span class="keyword">else</span> <a href="#14563" title="scala.tools.nsc.util.OffsetPosition" class="keyword">this</a>
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(that: Any)Boolean" id="68160">equals</a>(<a title="Any" id="765120">that</a> : <a title="Any" id="49">Any</a>) = <a href="#765120" title="Any">that</a> <span title="Boolean" class="keyword">match</span> {
+    <span title="Boolean" class="keyword">case</span> <a title="scala.tools.nsc.util.OffsetPosition" id="765123">that</a> : <a href="#14563" title="scala.tools.nsc.util.OffsetPosition">OffsetPosition</a> =&gt; <a href="#68165" title="(x$1: Int)Boolean">point</a> <span title="(x$1: Boolean)Boolean">==</span> <a href="#765123" title="scala.tools.nsc.util.OffsetPosition">that</a>.<a href="#68165" title="=&gt; Int">point</a> &amp;&amp; <a href="#68164" title="=&gt; scala.tools.nsc.util.SourceFile">source</a>.<a href="SourceFile.scala.html#68207" title="(x$1: AnyRef)Boolean">file</a> == <a href="#765123" title="scala.tools.nsc.util.OffsetPosition">that</a>.<a href="#68164" title="=&gt; scala.tools.nsc.util.SourceFile">source</a>.<a href="SourceFile.scala.html#68207" title="=&gt; scala.tools.nsc.io.AbstractFile">file</a> 
+    <span title="Boolean(false)" class="keyword">case</span> <a title="Any" id="765139">that</a> =&gt; <span title="Boolean(false)" class="keyword">false</span>
+  }
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Int" id="68161">hashCode</a> = <a href="#68165" title="(x$1: Int)Int" id="2968">point</a> <span title="(x$1: Int)Int">*</span> <span title="Int(37)" class="int">37</span> + <a href="#68164" title="=&gt; scala.tools.nsc.util.SourceFile">source</a>.<a href="SourceFile.scala.html#68207" title="=&gt; scala.tools.nsc.io.AbstractFile">file</a>.<a title="()Int" id="6524">hashCode</a>
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="68162">dbgString</a> =
+    <span title="(x$1: Any)java.lang.String" class="string">&quot;source-&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#68164" title="=&gt; scala.tools.nsc.util.SourceFile">source</a>.<a href="SourceFile.scala.html#68217" title="=&gt; String">path</a><span title="(x$1: Any)java.lang.String">+</span>
+    <span title="java.lang.String(&quot;,line-&quot;)" class="string">&quot;,line-&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#68157" title="=&gt; Int">line</a>+
+    (<span title="Any" class="keyword">if</span> (<a href="#68165" title="(x$1: Int)Boolean" id="2962">point</a> &gt;= <a href="#68164" title="=&gt; scala.tools.nsc.util.SourceFile">source</a>.<a href="SourceFile.scala.html#68209" title="=&gt; Int">length</a>) <span title="(x$1: Any)java.lang.String" class="string">&quot;,out-of-bounds-&quot;</span>+<a href="#68165" title="=&gt; Int">point</a>
+     <span class="keyword">else</span> <span title="(x$1: Any)java.lang.String" class="string">&quot;,offset=&quot;</span>+<a href="#68165" title="=&gt; Int">point</a>)
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="68163">show</a> = <span title="(x$1: Any)java.lang.String" class="string">&quot;[&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#68165" title="=&gt; Int">point</a>+<span title="java.lang.String(&quot;]&quot;)" class="string">&quot;]&quot;</span>
 }
 
-<span class="comment">/** new for position ranges */</span>
-<span class="keyword">class</span> <span class="typed"><span class="type">class RangePosition extends scala.tools.nsc.util.OffsetPosition with ScalaObject</span><a id="8492">RangePosition</a></span>(<span class="typed"><span class="type">scala.tools.nsc.util.SourceFile</span><span id="139751"><a id="139761">source0</a></span></span>: <span class="typed"><span class="type">scala.tools.nsc.util.SourceFile</span><a href="SourceFile.scala.html#8483">SourceFile</a></span>, <span class="typed"><span class="type">Int</span><span id="139752"><a id="139762">offset0</a></span></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>, <span class="typed"><span class="type">Int</span><span id="139753"><a id="139763">start</a></span></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>, <span class="typed"><span class="type">Int</span><span id="139754"><a id="139764">end</a></span></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>) 
-<span class="keyword">extends</span> <span class="typed"><span class="type">scala.tools.nsc.util.OffsetPosition</span><a href="#8327">OffsetPosition</a></span>(<span class="typed"><span class="type">scala.tools.nsc.util.SourceFile</span><a href="#139761">source0</a></span>, <span class="typed"><span class="type">Int</span><a href="#139762">offset0</a></span>)
+/** new for position ranges */
+<span class="keyword">class</span> <a title="class RangePosition extends scala.tools.nsc.util.OffsetPosition with ScalaObject" id="14722">RangePosition</a><span title="ScalaObject">(</span><a title="scala.tools.nsc.util.SourceFile" id="68198">source</a>: <a href="SourceFile.scala.html#14713" title="scala.tools.nsc.util.SourceFile">SourceFile</a>, <span class="keyword">override</span> <span class="keyword">val</span> <a title="Int" id="68199">start</a>: <span title="Int">Int</span>, <a title="Int" id="68200">point</a>: <span title="Int">Int</span>, <span class="keyword">override</span> <span class="keyword">val</span> <a title="Int" id="68201">end</a>: <span title="Int">Int</span>) 
+<span class="keyword">extends</span> <a href="#14563" title="scala.tools.nsc.util.OffsetPosition">OffsetPosition</a>(<a href="#68198" title="scala.tools.nsc.util.SourceFile">source</a>, <a href="#68200" title="Int">point</a>) {
+  <span title="Unit" class="keyword">if</span> (<a href="#68199" title="(x$1: Int)Boolean" id="2960">start</a> &gt; <a href="#68201" title="=&gt; Int">end</a>) <a title="(assertion: Boolean,message: =&gt; Any)Unit" id="7876">assert</a>(<span title="Boolean(false)" class="keyword">false</span>, <span title="(x$1: Any)java.lang.String" class="string">&quot;bad position: &quot;</span>+<a href="#68194" title="=&gt; java.lang.String">show</a>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Boolean" id="68180">isRange</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(true)" class="keyword">true</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Boolean" id="68181">isOpaqueRange</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(true)" class="keyword">true</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Int" id="68182">startOrPoint</a>: <span title="Int">Int</span> = <a href="#68199" title="=&gt; Int">start</a>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Int" id="68183">endOrPoint</a>: <span title="Int">Int</span> = <a href="#68201" title="=&gt; Int">end</a>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(off: Int)scala.tools.nsc.util.RangePosition" id="68184">withStart</a>(<a title="Int" id="765227">off</a>: <span title="Int">Int</span>) = <span title="scala.tools.nsc.util.RangePosition" class="keyword">new</span> <a href="#14722" title="scala.tools.nsc.util.RangePosition">RangePosition</a>(<a href="#68164" title="=&gt; scala.tools.nsc.util.SourceFile">source</a>, <a href="#765227" title="Int">off</a>, <a href="#68165" title="=&gt; Int">point</a>, <a href="#68201" title="=&gt; Int">end</a>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(off: Int)scala.tools.nsc.util.RangePosition" id="68185">withEnd</a>(<a title="Int" id="765232">off</a>: <span title="Int">Int</span>) = <span title="scala.tools.nsc.util.RangePosition" class="keyword">new</span> <a href="#14722" title="scala.tools.nsc.util.RangePosition">RangePosition</a>(<a href="#68164" title="=&gt; scala.tools.nsc.util.SourceFile">source</a>, <a href="#68199" title="=&gt; Int">start</a>, <a href="#68165" title="=&gt; Int">point</a>, <a href="#765232" title="Int">off</a>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(off: Int)scala.tools.nsc.util.RangePosition" id="68186">withPoint</a>(<a title="Int" id="765237">off</a>: <span title="Int">Int</span>) = <span title="scala.tools.nsc.util.RangePosition" class="keyword">new</span> <a href="#14722" title="scala.tools.nsc.util.RangePosition">RangePosition</a>(<a href="#68164" title="=&gt; scala.tools.nsc.util.SourceFile">source</a>, <a href="#68199" title="=&gt; Int">start</a>, <a href="#765237" title="Int">off</a>, <a href="#68201" title="=&gt; Int">end</a>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; scala.tools.nsc.util.OffsetPosition" id="68187">focusStart</a> = <span title="scala.tools.nsc.util.OffsetPosition" class="keyword">new</span> <a href="#14563" title="scala.tools.nsc.util.OffsetPosition">OffsetPosition</a>(<a href="#68164" title="=&gt; scala.tools.nsc.util.SourceFile">source</a>, <a href="#68199" title="=&gt; Int">start</a>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; scala.tools.nsc.util.Position" id="68188">focus</a> = {
+    <span title="Unit" class="keyword">if</span> (<a href="#68196" title="(x$1: AnyRef)Boolean">focusCache</a> eq <a href="#764891" title="object scala.tools.nsc.util.NoPosition">NoPosition</a>) <a href="#68196" title="(x$1: scala.tools.nsc.util.Position)Unit">focusCache</a> = <span title="scala.tools.nsc.util.OffsetPosition" class="keyword">new</span> <a href="#14563" title="scala.tools.nsc.util.OffsetPosition">OffsetPosition</a>(<a href="#68164" title="=&gt; scala.tools.nsc.util.SourceFile">source</a>, <a href="#68165" title="=&gt; Int">point</a>)
+    <a href="#68196" title="=&gt; scala.tools.nsc.util.Position">focusCache</a>
+  }
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; scala.tools.nsc.util.OffsetPosition" id="68189">focusEnd</a> = <span title="scala.tools.nsc.util.OffsetPosition" class="keyword">new</span> <a href="#14563" title="scala.tools.nsc.util.OffsetPosition">OffsetPosition</a>(<a href="#68164" title="=&gt; scala.tools.nsc.util.SourceFile">source</a>, <a href="#68201" title="=&gt; Int">end</a>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; scala.tools.nsc.util.TransparentPosition" id="68190">makeTransparent</a> = <span title="scala.tools.nsc.util.TransparentPosition" class="keyword">new</span> <a href="#14662" title="scala.tools.nsc.util.TransparentPosition">TransparentPosition</a>(<a href="#68164" title="=&gt; scala.tools.nsc.util.SourceFile">source</a>, <a href="#68199" title="=&gt; Int">start</a>, <a href="#68165" title="=&gt; Int">point</a>, <a href="#68201" title="=&gt; Int">end</a>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(pos: scala.tools.nsc.util.Position)Boolean" id="68191">includes</a>(<a title="scala.tools.nsc.util.Position" id="765283">pos</a>: <a href="#14710" title="scala.tools.nsc.util.Position">Position</a>) = <a href="#765283" title="scala.tools.nsc.util.Position">pos</a>.<a href="#30279" title="(x$1: Boolean)Boolean">isDefined</a> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <a href="#68199" title="(x$1: Int)Boolean">start</a> &lt;= <a href="#765283" title="scala.tools.nsc.util.Position">pos</a>.<a href="#30285" title="=&gt; Int">startOrPoint</a> &amp;&amp; <a href="#765283" title="scala.tools.nsc.util.Position">pos</a>.<a href="#30289" title="(x$1: Int)Boolean">endOrPoint</a> &lt;= <a href="#68201" title="=&gt; Int">end</a>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(pos: scala.tools.nsc.util.Position)scala.tools.nsc.util.Position" id="68192">union</a>(<a title="scala.tools.nsc.util.Position" id="765302">pos</a>: <a href="#14710" title="scala.tools.nsc.util.Position">Position</a>) = 
+    <span title="scala.tools.nsc.util.Position" class="keyword">if</span> (<a href="#765302" title="scala.tools.nsc.util.Position">pos</a>.<a href="#30281" title="=&gt; Boolean">isRange</a>) <span title="scala.tools.nsc.util.RangePosition" class="keyword">new</span> <a href="#14722" title="scala.tools.nsc.util.RangePosition">RangePosition</a>(<a href="#68164" title="=&gt; scala.tools.nsc.util.SourceFile">source</a>, <a href="#68199" title="(that: Int)Int" id="31711">start</a> min <a href="#765302" title="scala.tools.nsc.util.Position">pos</a>.<a href="#30284" title="=&gt; Int">start</a>, <a href="#68165" title="=&gt; Int">point</a>, <a href="#68201" title="(that: Int)Int" id="31713">end</a> max <a href="#765302" title="scala.tools.nsc.util.Position">pos</a>.<a href="#30288" title="=&gt; Int">end</a>) <span class="keyword">else</span> <a href="#14722" title="scala.tools.nsc.util.RangePosition" class="keyword">this</a>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()java.lang.String" id="68193">toString</a> = <span title="(x$1: Any)java.lang.String" class="string">&quot;RangePosition(&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#68164" title="=&gt; scala.tools.nsc.util.SourceFile">source</a><span title="(x$1: Any)java.lang.String">+</span><span title="java.lang.String(&quot;, &quot;)" class="string">&quot;, &quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#68199" title="=&gt; Int">start</a><span title="(x$1: Any)java.lang.String">+</span><span title="java.lang.String(&quot;, &quot;)" class="string">&quot;, &quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#68165" title="=&gt; Int">point</a><span title="(x$1: Any)java.lang.String">+</span><span title="java.lang.String(&quot;, &quot;)" class="string">&quot;, &quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#68201" title="=&gt; Int">end</a>+<span title="java.lang.String(&quot;)&quot;)" class="string">&quot;)&quot;</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="68194">show</a> = <span title="(x$1: Any)java.lang.String" class="string">&quot;[&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#68199" title="=&gt; Int">start</a><span title="(x$1: Any)java.lang.String">+</span><span title="java.lang.String(&quot;:&quot;)" class="string">&quot;:&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#68201" title="=&gt; Int">end</a>+<span title="java.lang.String(&quot;]&quot;)" class="string">&quot;]&quot;</span>
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="scala.tools.nsc.util.Position" id="68196">focusCache</a>: <a href="#14710" title="scala.tools.nsc.util.Position">Position</a> = <a href="#764891" title="object scala.tools.nsc.util.NoPosition">NoPosition</a>
+}
+
+<span class="keyword">class</span> <a title="class TransparentPosition extends scala.tools.nsc.util.RangePosition with ScalaObject" id="14662">TransparentPosition</a><span title="ScalaObject">(</span><a title="scala.tools.nsc.util.SourceFile" id="765277">source</a>: <a href="SourceFile.scala.html#14713" title="scala.tools.nsc.util.SourceFile">SourceFile</a>, <a title="Int" id="765278">start</a>: <span title="Int">Int</span>, <a title="Int" id="765279">point</a>: <span title="Int">Int</span>, <a title="Int" id="765280">end</a>: <span title="Int">Int</span>) <span class="keyword">extends</span> <a href="#14722" title="scala.tools.nsc.util.RangePosition">RangePosition</a>(<a href="#765277" title="scala.tools.nsc.util.SourceFile">source</a>, <a href="#765278" title="Int">start</a>, <a href="#765279" title="Int">point</a>, <a href="#765280" title="Int">end</a>) {
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Boolean" id="765273">isOpaqueRange</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Boolean" id="765274">isTransparent</a> = <span title="Boolean(true)" class="keyword">true</span>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; scala.tools.nsc.util.TransparentPosition" id="765275">makeTransparent</a> = <a href="#14662" title="scala.tools.nsc.util.TransparentPosition" class="keyword">this</a>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="765276">show</a> = <span title="(x$1: Any)java.lang.String" class="string">&quot;&lt;&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#68199" title="=&gt; Int">start</a><span title="(x$1: Any)java.lang.String">+</span><span title="java.lang.String(&quot;:&quot;)" class="string">&quot;:&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#68201" title="=&gt; Int">end</a>+<span title="java.lang.String(&quot;&gt;&quot;)" class="string">&quot;&gt;&quot;</span>
+}
+
+
+
+  
+
   
 
         </pre>

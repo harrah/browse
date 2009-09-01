@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/generic/BufferTemplate.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: BufferTemplate.scala 18545 2009-08-22 14:10:22Z extempore $
+
+
+<span class="keyword">package</span> scala.collection.generic
+
+<span class="keyword">import</span> scala.collection._
+<span class="keyword">import</span> scala.collection.mutable.Buffer
+<span class="keyword">import</span> scala.collection.script._
+
+/** Buffers are used to create sequences of elements incrementally by
+ *  appending, prepending, or inserting new elements. It is also
+ *  possible to access and modify elements in a random access fashion
+ *  via the index of the element in the current sequence.
+  *
+ *  @author Matthias Zenger
+ *  @author Martin Odersky
+ *  @version 2.8
+  */
+@cloneable
+<span class="keyword">trait</span> <a title="trait BufferTemplate[A, +This &lt;: scala.collection.generic.BufferTemplate[A,This] with scala.collection.mutable.Buffer[A]] extends java.lang.Object with scala.collection.generic.Growable[A] with scala.collection.generic.Shrinkable[A] with scala.collection.script.Scriptable[A] with scala.collection.generic.Addable[A,This] with scala.collection.generic.Subtractable[A,This] with scala.collection.generic.Cloneable[This] with scala.collection.generic.SequenceTemplate[A,This] with ScalaObject" id="10541">BufferTemplate</a>[<a title="&gt;: Nothing &lt;: Any" id="12951">A</a>, +<a title="&gt;: Nothing &lt;: scala.collection.generic.BufferTemplate[A,This] with scala.collection.mutable.Buffer[A]" id="12952">This</a> &lt;: BufferTemplate[A, This] <span class="keyword">with</span> Buffer[A]] 
+                <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="Growable.scala.html#9941" title="scala.collection.generic.Growable[A]">Growable</a>[A]
+                   <span class="keyword">with</span> <a href="Shrinkable.scala.html#10565" title="scala.collection.generic.Shrinkable[A]">Shrinkable</a>[A]
+                   <span class="keyword">with</span> <a href="../script/Scriptable.scala.html#15324" title="scala.collection.script.Scriptable[A]">Scriptable</a>[A]
+                   <span class="keyword">with</span> <a href="Addable.scala.html#10805" title="scala.collection.generic.Addable[A,This]">Addable</a>[A, This] 
+                   <span class="keyword">with</span> <a href="Subtractable.scala.html#10172" title="scala.collection.generic.Subtractable[A,This]">Subtractable</a>[A, This]
+                   <span class="keyword">with</span> <a href="Cloneable.scala.html#10166" title="scala.collection.generic.Cloneable[This]">Cloneable</a>[This]
+                   <span class="keyword">with</span> <a href="SequenceTemplate.scala.html#10952" title="scala.collection.generic.SequenceTemplate[A,This]">SequenceTemplate</a>[A, This]
+{ self =&gt;
+
+  <span class="keyword">import</span> collection.{Iterable, Traversable}
+
+// Abstract methods from Vector:
+
+  /** Return element at index `n`
+   *  @throws   IndexOutofBoundsException if the index is not valid
+   */
+  <span class="keyword">def</span> <a title="(n: Int)A" id="19930">apply</a>(<a title="Int" id="66409">n</a>: <span title="Int">Int</span>): <a href="#12951" title="A">A</a>
+
+  /** Replace element at index &lt;code&gt;n&lt;/code&gt; with the new element
+   *  &lt;code&gt;newelem&lt;/code&gt;.
+   *
+   *  @param n       the index of the element to replace.
+   *  @param newelem the new element.
+   *  @throws   IndexOutofBoundsException if the index is not valid
+   */
+  <span class="keyword">def</span> <a title="(n: Int,newelem: A)Unit" id="19931">update</a>(<a title="Int" id="66686">n</a>: <span title="Int">Int</span>, <a title="A" id="66687">newelem</a>: <a href="#12951" title="A">A</a>)
+
+  /** Return number of elements in the buffer
+   */
+  <span class="keyword">def</span> <a title="=&gt; Int" id="19932">length</a>: <span title="Int">Int</span>
+
+// Abstract methods from Appendable
+
+  /** Append a single element to this buffer.
+   *
+   *  @param elem  the element to append.
+   */
+  <span class="keyword">def</span> <a title="(elem: A)BufferTemplate.this.type" id="19933">+=</a>(<a title="A" id="20077">elem</a>: <a href="#12951" title="A">A</a>): <span class="keyword">this</span>.<span class="keyword">type</span>
+
+  /** Clears the buffer contents.
+   */
+  <span class="keyword">def</span> <a title="()Unit" id="19934">clear</a>()
+
+// Abstract methods new in this class
+
+  /** Prepend a single element to this buffer and return
+   *  the identity of the buffer.
+   *  @param elem  the element to prepend.
+   */
+  <span class="keyword">def</span> <a title="(elem: A)This" id="19935">+:</a>(<a title="A" id="65996">elem</a>: <a href="#12951" title="A">A</a>): <a href="#12952" title="This">This</a>
+
+  /** Inserts new elements at the index &lt;code&gt;n&lt;/code&gt;. Opposed to method
+   *  &lt;code&gt;update&lt;/code&gt;, this method will not replace an element with a
+   *  one. Instead, it will insert a new element at index &lt;code&gt;n&lt;/code&gt;.
+   *
+   *  @param n     the index where a new element will be inserted.
+   *  @param iter    the iterable object providing all elements to insert.
+   *  @throws   IndexOutofBoundsException if the index is not valid
+   */
+  <span class="keyword">def</span> <a title="(n: Int,iter: Traversable[A])Unit" id="19936">insertAll</a>(<a title="Int" id="66090">n</a>: <span title="Int">Int</span>, <a title="Traversable[A]" id="66091">iter</a>: <a href="../Traversable.scala.html#4436" title="Traversable[A]">Traversable</a>[A])
+
+ 
+  /** Removes the element on a given index position.
+   *
+   *  @param n  the index which refers to the element to delete.
+   *  @return   the previous element
+   */
+  <span class="keyword">def</span> <a title="(n: Int)A" id="19937">remove</a>(<a title="Int" id="66259">n</a>: <span title="Int">Int</span>): <a href="#12951" title="A">A</a>
+
+  /** Removes  a number of elements from a given index position.
+   *
+   *  @param n  the index which refers to the element to delete.
+   *  @param count  the number of elements to delete
+   *  @throws   IndexOutofBoundsException if the index is not valid
+   */
+  <span class="keyword">def</span> <a title="(n: Int,count: Int)Unit" id="19938">remove</a>(<a title="Int" id="66252">n</a>: <span title="Int">Int</span>, <a title="Int" id="66253">count</a>: <span title="Int">Int</span>) {
+    <span class="keyword">for</span> (<a title="Int" id="66728">i</a> &lt;- <a href="../../runtime/RichInt.scala.html#19060" title="(end: Int)Range" class="int">0</a> <a href="../../Range.scala.html#38256" title="(f: (Int) =&gt; A)Unit">until</a> <a href="#66253" title="Int">count</a>) <a href="#19937" title="(n: Int)A">remove</a>(<a href="#66252" title="Int">n</a>)
+  }
+
+  /** Removes a single element from this buffer, at its first occurrence.
+   *  If the buffer does not contain that element, it is unchanged.
+   *
+   *  @param x  the element to remove.
+   */
+  <span class="keyword">def</span> <a title="(x: A)BufferTemplate.this.type" id="19939">-=</a> (<a title="A" id="66745">x</a>: <a href="#12951" title="A">A</a>): <span class="keyword">this</span>.<span class="keyword">type</span> = {
+    <span class="keyword">val</span> <a title="Int" id="66752">i</a> = <a href="SequenceTemplate.scala.html#17348" title="(elem: A)Int">indexOf</a>(<a href="#66745" title="A">x</a>)
+    <span title="Any" class="keyword">if</span> (<a href="#66752" title="(x$1: Int)Boolean" id="2952">i</a> != <span title="Int(-1)">-</span><span class="int">1</span>) <a href="#19937" title="(n: Int)A">remove</a>(<a href="#66752" title="Int">i</a>)
+    <a href="#10541" title="BufferTemplate.this.type" class="keyword">this</a>
+  }
+
+  /** Prepends a number of elements provided by an iterable object
+   *  via its &lt;code&gt;iterator&lt;/code&gt; method. The identity of the
+   *  buffer is returned.(thisCollection /: elems) (_ plus _)
+   *
+   *  @param iter  the iterable object.
+   */
+  <span class="keyword">def</span> <a title="(iter: Traversable[A])This" id="19940">++:</a>(<a title="Traversable[A]" id="66084">iter</a>: <a href="../Traversable.scala.html#4436" title="Traversable[A]">Traversable</a>[A]): <a href="#12952" title="This">This</a> = { <span class="keyword">for</span> (<a title="A" id="66811">x</a> &lt;- <a href="TraversableClass.scala.html#17261" title="(f: (A) =&gt; This)Unit">iter</a>) <a href="#66811" title="A">x</a> <a href="#66812" title="A">+:</a> <a href="#19935" title="(elem: A)This" class="keyword">this</a>; <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a> }
+
+  /** Prepends a number of elements provided by an iterator
+   *  The identity of the buffer is returned.
+   *
+   *  @param iter   the iterator
+   *  @return       the updated buffer.
+   */
+  <span class="keyword">def</span> <a title="(iter: Iterator[A])This" id="19941">++:</a>(<a title="Iterator[A]" id="66081">iter</a>: <a href="../Iterator.scala.html#4274" title="Iterator[A]">Iterator</a>[A]): <a href="#12952" title="This">This</a> = { <span class="keyword">for</span> (<a title="A" id="66836">x</a> &lt;- <a href="../Iterator.scala.html#19219" title="(f: (A) =&gt; This)Unit">iter</a>) <a href="#66836" title="A">x</a> <a href="#66837" title="A">+:</a> <a href="#19935" title="(elem: A)This" class="keyword">this</a>; <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a> }
+
+  /** Appends elements to this buffer.
+   *
+   *  @param elems  the elements to append.
+   */
+  <span class="keyword">def</span> <a title="(elems: A*)Unit" id="19942">append</a>(<a title="A*" id="66843">elems</a>: <span title="A*">A</span>*) { <a href="Growable.scala.html#19586" title="(iter: Traversable[A])BufferTemplate.this.type" class="keyword">this</a> <span title="Unit">++=</span> <a href="#66843" title="A*">elems</a> }
+
+  /** Appends a number of elements provided by an iterable object
+   *  via its &lt;code&gt;iterator&lt;/code&gt; method.
+   *
+   *  @param iter  the iterable object.
+   */
+  <span class="keyword">def</span> <a title="(iter: Traversable[A])Unit" id="19943">appendAll</a>(<a title="Traversable[A]" id="66858">iter</a>: <a href="../Traversable.scala.html#4436" title="Traversable[A]">Traversable</a>[A]) { <a href="Growable.scala.html#19586" title="(iter: Traversable[A])BufferTemplate.this.type" class="keyword">this</a> <span title="Unit">++=</span> <a href="#66858" title="Traversable[A]">iter</a> }
+
+  /** Prepend given elements to this list.
+   *
+   *  @param elem  the element to prepend.
+   */
+  <span class="keyword">def</span> <a title="(elems: A*)Unit" id="19944">prepend</a>(<a title="A*" id="66873">elems</a>: <span title="A*">A</span>*) { <a href="#66873" title="A*">elems</a> <a href="#66875" title="A*">++:</a> <a href="#19940" title="(iter: Traversable[A])This" class="keyword">this</a> } 
+
+  /** Prepends a number of elements provided by an iterable object
+   *  via its &lt;code&gt;iterator&lt;/code&gt; method. The identity of the
+   *  buffer is returned.
+   *
+   *  @param iter  the iterable object.
+   */
+  <span class="keyword">def</span> <a title="(iter: Traversable[A])Unit" id="19945">prependAll</a>(<a title="Traversable[A]" id="66882">iter</a>: <a href="../Traversable.scala.html#4436" title="Traversable[A]">Traversable</a>[A]) { <a href="#66882" title="Traversable[A]">iter</a> <a href="#66884" title="Traversable[A]">++:</a> <a href="#19940" title="(iter: Traversable[A])This" class="keyword">this</a> }
+
+  /** Prepends a number of elements provided by an iterable object
+   *  via its &lt;code&gt;iterator&lt;/code&gt; method. The identity of the
+   *  buffer is returned.
+   *
+   *  @param iter  the iterable object.
+   */
+  <span class="keyword">def</span> <a title="(iter: Iterator[A])Unit" id="19946">prependAll</a>(<a title="Iterator[A]" id="66891">iter</a>: <a href="../Iterator.scala.html#4274" title="Iterator[A]">Iterator</a>[A]) { <a href="#66891" title="Iterator[A]">iter</a> <a href="#66893" title="Iterator[A]">++:</a> <a href="#19941" title="(iter: Iterator[A])This" class="keyword">this</a> }
+
+  /** Inserts new elements at the index &lt;code&gt;n&lt;/code&gt;. Opposed to method
+   *  &lt;code&gt;update&lt;/code&gt;, this method will not replace an element with a
+   *  one. Instead, it will insert the new elements at index &lt;code&gt;n&lt;/code&gt;.
+   *
+   *  @param n      the index where a new element will be inserted.
+   *  @param elems  the new elements to insert.
+   */
+  <span class="keyword">def</span> <a title="(n: Int,elems: A*)Unit" id="19947">insert</a>(<a title="Int" id="66900">n</a>: <span title="Int">Int</span>, <a title="A*" id="66901">elems</a>: <span title="A*">A</span>*) { <a href="#19936" title="(n: Int,iter: Traversable[A])Unit">insertAll</a>(<a href="#66900" title="Int">n</a>, <a href="#66901" title="A*">elems</a>) } 
+
+  /** Removes the first &lt;code&gt;n&lt;/code&gt; elements.
+   *
+   *  @param n  the number of elements to remove from the beginning
+   *            of this buffer.
+   */
+  <span class="keyword">def</span> <a title="(n: Int)Unit" id="19948">trimStart</a>(<a title="Int" id="54676">n</a>: <span title="Int">Int</span>) { <a href="#19938" title="(n: Int,count: Int)Unit">remove</a>(<span title="Int(0)" class="int">0</span>, <a href="#54676" title="Int">n</a>) }
+
+  /** Removes the last &lt;code&gt;n&lt;/code&gt; elements.
+   *
+   *  @param n  the number of elements to remove from the end
+   *            of this buffer.
+   */
+  <span class="keyword">def</span> <a title="(n: Int)Unit" id="19949">trimEnd</a>(<a title="Int" id="66929">n</a>: <span title="Int">Int</span>) { <a href="#19938" title="(n: Int,count: Int)Unit">remove</a>(<a href="#19932" title="(x$1: Int)Int">length</a> <a href="../../runtime/RichInt.scala.html#19065" title="(that: Int)Int">-</a> <a href="#66929" title="Int">n</a> max <span title="Int(0)" class="int">0</span>, <a href="#66929" title="Int">n</a>) }
+
+  /** Send a message to this scriptable object.
+   *
+   *  @param cmd  the message to send.
+   */
+  <span class="keyword">def</span> <a title="(cmd: scala.collection.script.Message[A])Unit" id="19950">&lt;&lt;</a>(<a title="scala.collection.script.Message[A]" id="66969">cmd</a>: <a href="../script/Message.scala.html#15333" title="scala.collection.script.Message[A]">Message</a>[A]): <a title="Unit" id="1948">Unit</a> = <a href="#66969" title="scala.collection.script.Message[A]">cmd</a> <span title="Unit" class="keyword">match</span> {
+    <span title="Unit" class="keyword">case</span> Include(<a href="../script/Location.scala.html#15358" title="object scala.collection.script.Start">Start</a>, <a title="A" id="67015">x</a>)      =&gt; <a href="#19944" title="(elems: A*)Unit">prepend</a>(<a href="#67015" title="A">x</a>)
+    <span title="Unit" class="keyword">case</span> Include(<a href="../script/Location.scala.html#15337" title="object scala.collection.script.End">End</a>, <a title="A" id="67024">x</a>)        =&gt; <a href="#19942" title="(elems: A*)Unit">append</a>(<a href="#67024" title="A">x</a>)
+    <span title="Unit" class="keyword">case</span> Include(Index(<a title="Int" id="67049">n</a>), <a title="A" id="67052">x</a>)   =&gt; <a href="#19947" title="(n: Int,elems: A*)Unit">insert</a>(<a href="#67049" title="Int">n</a>, <a href="#67052" title="A">x</a>)
+    <span title="Unit" class="keyword">case</span> Include(<a href="../script/Location.scala.html#15331" title="object scala.collection.script.NoLo">NoLo</a>, <a title="A" id="67061">x</a>)       =&gt; <a href="#19933" title="(elem: A)BufferTemplate.this.type" class="keyword">this</a> <span title="Unit">+=</span> <a href="#67061" title="A">x</a>
+    
+    <span title="Unit" class="keyword">case</span> Update(<a href="../script/Location.scala.html#15358" title="object scala.collection.script.Start">Start</a>, <a title="A" id="67118">x</a>)       =&gt; <a href="#19931" title="(n: Int,newelem: A)Unit">update</a>(<span title="Int(0)" class="int">0</span>, <a href="#67118" title="A">x</a>)
+    <span title="Unit" class="keyword">case</span> Update(<a href="../script/Location.scala.html#15337" title="object scala.collection.script.End">End</a>, <a title="A" id="67126">x</a>)         =&gt; <a href="#19931" title="(n: Int,newelem: A)Unit">update</a>(<a href="#19932" title="(x$1: Int)Int">length</a> - <span title="Int(1)" class="int">1</span>, <a href="#67126" title="A">x</a>)
+    <span title="Unit" class="keyword">case</span> Update(Index(<a title="Int" id="67152">n</a>), <a title="A" id="67155">x</a>)    =&gt; <a href="#19931" title="(n: Int,newelem: A)Unit">update</a>(<a href="#67152" title="Int">n</a>, <a href="#67155" title="A">x</a>)
+    
+    <span title="Unit" class="keyword">case</span> Remove(<a href="../script/Location.scala.html#15358" title="object scala.collection.script.Start">Start</a>, <a title="A" id="67200">x</a>)       =&gt; <span title="Unit" class="keyword">if</span> (<a href="#19930" title="(n: Int)A" class="keyword">this</a><span title="(x$1: Any)Boolean">(</span><span title="Int(0)" class="int">0</span>) == <a href="#67200" title="A">x</a>) <a href="#19937" title="(n: Int)A">remove</a><span title="Unit">(</span><span title="Int(0)" class="int">0</span>)
+    <span title="Unit" class="keyword">case</span> Remove(<a href="../script/Location.scala.html#15337" title="object scala.collection.script.End">End</a>, <a title="A" id="67227">x</a>)         =&gt; <span title="Unit" class="keyword">if</span> (<a href="#19930" title="(n: Int)A" class="keyword">this</a><span title="(x$1: Any)Boolean">(</span><a href="#19932" title="(x$1: Int)Int">length</a> - <span title="Int(1)" class="int">1</span>) == <a href="#67227" title="A">x</a>) <a href="#19937" title="(n: Int)A">remove</a><span title="Unit">(</span><a href="#19932" title="(x$1: Int)Int">length</a> - <span title="Int(1)" class="int">1</span>)
+    <span title="Unit" class="keyword">case</span> Remove(Index(<a title="Int" id="67278">n</a>), <a title="A" id="67281">x</a>)    =&gt; <span title="Unit" class="keyword">if</span> (<a href="#19930" title="(n: Int)A" class="keyword">this</a><span title="(x$1: Any)Boolean">(</span><a href="#67278" title="Int">n</a>) == <a href="#67281" title="A">x</a>) <a href="#19937" title="(n: Int)A">remove</a><span title="Unit">(</span><a href="#67278" title="Int">n</a>)
+    <span title="Unit" class="keyword">case</span> Remove(<a href="../script/Location.scala.html#15331" title="object scala.collection.script.NoLo">NoLo</a>, <a title="A" id="67308">x</a>)        =&gt; <a href="#19939" title="(x: A)BufferTemplate.this.type" class="keyword">this</a> <span title="Unit">-=</span> <a href="#67308" title="A">x</a>
+    
+    <span title="Unit" class="keyword">case</span> Reset()                =&gt; <a href="#19934" title="()Unit">clear</a>
+    <span title="Unit" class="keyword">case</span> <a title="scala.collection.script.Script[_]" id="67341">s</a>: <a href="../script/Message.scala.html#15342" title="scala.collection.script.Script[_]">Script</a>[_]           =&gt; <a href="#67341" title="scala.collection.script.Script[_]">s</a>.<a href="../Iterator.scala.html#19219" title="(f: (scala.collection.script.Message[_]) =&gt; Unit)Unit">iterator</a> foreach <a href="#19950" title="(cmd: scala.collection.script.Message[A])Unit">&lt;&lt;</a>
+    <span title="Nothing" class="keyword">case</span> _                      =&gt; <span title="Nothing" class="keyword">throw</span> <a title="(x$1: java.lang.String)java.lang.UnsupportedOperationException" id="45864" class="keyword">new</a> <a href="../../Predef.scala.html#16169" title="java.lang.UnsupportedOperationException">UnsupportedOperationException</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;message &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#66969" title="scala.collection.script.Message[A]">cmd</a> + <span title="java.lang.String(&quot; not understood&quot;)" class="string">&quot; not understood&quot;</span>)
+  }
+
+  /** Defines the prefix of the string representation.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; String" id="19951">stringPrefix</a>: <a title="String" id="1603">String</a> = <span title="java.lang.String(&quot;Buffer&quot;)" class="string">&quot;Buffer&quot;</span>
+    
+  /** Adds a number of elements in an array
+   *
+   *  @param src    the array
+   *  @param start  the first element to append
+   *  @param len    the number of elements to append
+   */
+  @deprecated(<span class="string">&quot;replace by: &lt;code&gt;buf ++= src.view(start, end)&lt;/code&gt;&quot;</span>)
+  <span class="keyword">def</span> <a title="(src: Array[A],start: Int,len: Int)Unit" id="19952">++=</a>(<a title="Array[A]" id="34932">src</a>: <a href="../../Array.scala.html#885" title="Array[A]">Array</a>[A], <a title="Int" id="34933">start</a>: <span title="Int">Int</span>, <a title="Int" id="34934">len</a>: <span title="Int">Int</span>) {
+    <span class="keyword">var</span> <a title="Int" id="67372">i</a> = <a href="#34933" title="Int">start</a>
+    <span class="keyword">val</span> <a title="Int" id="67373">end</a> = <a href="#67372" title="(x$1: Int)Int">i</a> + <a href="#34934" title="Int">len</a>
+    <span title="Unit" class="keyword">while</span> (<a href="#67372" title="(x$1: Int)Boolean" id="2954">i</a> &lt; <a href="#67373" title="Int">end</a>) <a href="#67380" title="()Unit">{</a>
+      <a href="#19933" title="(elem: A)BufferTemplate.this.type" class="keyword">this</a> += <a href="../../Array.scala.html#17716" title="(i: Int)A">src</a>(<a href="#67372" title="Int">i</a>)
+      <a href="#67372" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+    }
+  }
+
+  /** Adds a single element to this collection and returns 
+   *  the collection itself.
+   *
+   *  @param elem  the element to add.
+   */
+  @deprecated(<span class="string">&quot;Use += instead if you intend to add by side effect to an existing collection.\n&quot;</span>+
+              <span class="string">&quot;Use `clone() ++=' if you intend to create a new collection.&quot;</span>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(elem: A)This" id="19953">+</a> (<a title="A" id="67446">elem</a>: <a href="#12951" title="A">A</a>): <a href="#12952" title="This">This</a> = { <a href="#19933" title="(elem: A)BufferTemplate.this.type">+=</a>(<a href="#67446" title="A">elem</a>); <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a> }
+
+  /** Adds two or more elements to this collection and returns
+   *  the collection itself.
+   *
+   *  @param elem1 the first element to add.
+   *  @param elem2 the second element to add.
+   *  @param elems the remaining elements to add.
+   */
+  @deprecated(<span class="string">&quot;Use += instead if you intend to add by side effect to an existing collection.\n&quot;</span>+
+              <span class="string">&quot;Use `clone() ++=' if you intend to create a new collection.&quot;</span>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(elem1: A,elem2: A,elems: A*)This" id="19954">+</a> (<a title="A" id="67468">elem1</a>: <a href="#12951" title="A">A</a>, <a title="A" id="67469">elem2</a>: <a href="#12951" title="A">A</a>, <a title="A*" id="67470">elems</a>: <span title="A*">A</span>*): <a href="#12952" title="This">This</a> = {
+    <a href="#19933" title="(elem: A)BufferTemplate.this.type" class="keyword">this</a> <a href="#19933" title="(elem: A)BufferTemplate.this.type">+=</a> <a href="#67468" title="A">elem1</a> <a href="Growable.scala.html#19586" title="(iter: Traversable[A])BufferTemplate.this.type">+=</a> <a href="#67469" title="A">elem2</a> ++= <a href="#67470" title="A*">elems</a>
+    <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+  }
+
+  /** Adds a number of elements provided by a traversable object and returns
+   *  either the collection itself.
+   *
+   *  @param iter     the iterable object.
+   */
+  @deprecated(<span class="string">&quot;Use ++= instead if you intend to add by side effect to an existing collection.\n&quot;</span>+
+              <span class="string">&quot;Use `clone() ++=` if you intend to create a new collection.&quot;</span>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(iter: Traversable[A])This" id="19955">++</a>(<a title="Traversable[A]" id="67518">iter</a>: <a href="../Traversable.scala.html#4436" title="Traversable[A]">Traversable</a>[A]): <a href="#12952" title="This">This</a> = { 
+    <span class="keyword">for</span> (<a title="A" id="67564">elem</a> &lt;- <a href="TraversableClass.scala.html#17261" title="(f: (A) =&gt; scala.collection.generic.BufferTemplate[A,This])Unit">iter</a>) <a href="#19933" title="(elem: A)BufferTemplate.this.type">+=</a>(<a href="#67564" title="A">elem</a>)
+    <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+  }
+
+  /** Adds a number of elements provided by an iterator and returns
+   *  the collection itself.
+   *
+   *  @param iter   the iterator
+   */
+  @deprecated(<span class="string">&quot;Use ++= instead if you intend to add by side effect to an existing collection.\n&quot;</span>+
+              <span class="string">&quot;Use `clone() ++=` if you intend to create a new collection.&quot;</span>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(iter: Iterator[A])This" id="19956">++</a> (<a title="Iterator[A]" id="67583">iter</a>: <a href="../Iterator.scala.html#4274" title="Iterator[A]">Iterator</a>[A]): <a href="#12952" title="This">This</a> = {
+    <span class="keyword">for</span> (<a title="A" id="67626">elem</a> &lt;- <a href="../Iterator.scala.html#19219" title="(f: (A) =&gt; scala.collection.generic.BufferTemplate[A,This])Unit">iter</a>) <a href="#19933" title="(elem: A)BufferTemplate.this.type">+=</a>(<a href="#67626" title="A">elem</a>)
+    <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+  }
+
+  /** Removes a single element from this collection and returns 
+   *  the collection itself.
+   *
+   *  @param elem  the element to remove.
+   */
+  @deprecated(<span class="string">&quot;Use -= instead if you intend to remove by side effect from an existing collection.\n&quot;</span>+
+              <span class="string">&quot;Use `clone() -=` if you intend to create a new collection.&quot;</span>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(elem: A)This" id="19957">-</a>(<a title="A" id="67645">elem</a>: <a href="#12951" title="A">A</a>): <a href="#12952" title="This">This</a> = { <a href="#19939" title="(x: A)BufferTemplate.this.type">-=</a>(<a href="#67645" title="A">elem</a>); <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a> }
+
+  /** Removes two or more elements from this collection and returns
+   *  the collection itself.
+   *
+   *  @param elem1 the first element to remove.
+   *  @param elem2 the second element to remove.
+   *  @param elems the remaining elements to remove.
+   */
+  @deprecated(<span class="string">&quot;Use -= instead if you intend to remove by side effect from an existing collection.\n&quot;</span>+
+              <span class="string">&quot;Use `clone() -=` if you intend to create a new collection.&quot;</span>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(elem1: A,elem2: A,elems: A*)This" id="19958">-</a>(<a title="A" id="67667">elem1</a>: <a href="#12951" title="A">A</a>, <a title="A" id="67668">elem2</a>: <a href="#12951" title="A">A</a>, <a title="A*" id="67669">elems</a>: <span title="A*">A</span>*): <a href="#12952" title="This">This</a> = {
+    <a href="#19939" title="(x: A)BufferTemplate.this.type" class="keyword">this</a> <a href="#19939" title="(x: A)BufferTemplate.this.type">-=</a> <a href="#67667" title="A">elem1</a> <a href="Shrinkable.scala.html#19965" title="(iter: Traversable[A])BufferTemplate.this.type">-=</a> <a href="#67668" title="A">elem2</a> --= <a href="#67669" title="A*">elems</a>
+    <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+  }
+
+  /** Removes a number of elements provided by a Traversable object and returns
+   *  the collection itself.
+   *
+   *  @param iter     the Traversable object.
+   */
+  @deprecated(<span class="string">&quot;Use --= instead if you intend to remove by side effect from an existing collection.\n&quot;</span>+
+              <span class="string">&quot;Use `clone() --=` if you intend to create a new collection.&quot;</span>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(iter: Traversable[A])This" id="19959">--</a>(<a title="Traversable[A]" id="67719">iter</a>: <a href="../Traversable.scala.html#4436" title="Traversable[A]">Traversable</a>[A]): <a href="#12952" title="This">This</a> = { 
+    <span class="keyword">for</span> (<a title="A" id="67735">elem</a> &lt;- <a href="TraversableClass.scala.html#17261" title="(f: (A) =&gt; scala.collection.generic.BufferTemplate[A,This])Unit">iter</a>) <a href="#19939" title="(x: A)BufferTemplate.this.type">-=</a>(<a href="#67735" title="A">elem</a>)
+    <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+  }
+
+  /** Removes a number of elements provided by an iterator and returns
+   *  the collection itself.
+   *
+   *  @param iter   the iterator
+   */
+  @deprecated(<span class="string">&quot;Use --= instead if you intend to remove by side effect from an existing collection.\n&quot;</span>+
+              <span class="string">&quot;Use `clone() --=` if you intend to create a new collection.&quot;</span>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(iter: Iterator[A])This" id="19960">--</a>(<a title="Iterator[A]" id="67754">iter</a>: <a href="../Iterator.scala.html#4274" title="Iterator[A]">Iterator</a>[A]): <a href="#12952" title="This">This</a> = { 
+    <span class="keyword">for</span> (<a title="A" id="67763">elem</a> &lt;- <a href="../Iterator.scala.html#19219" title="(f: (A) =&gt; scala.collection.generic.BufferTemplate[A,This])Unit">iter</a>) <a href="#19939" title="(x: A)BufferTemplate.this.type">-=</a>(<a href="#67763" title="A">elem</a>)
+    <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+  }
+}
+
+
+
+
+        </pre>
+    </body>
+</html>

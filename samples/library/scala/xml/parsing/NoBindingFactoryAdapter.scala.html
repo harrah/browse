@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/xml/parsing/NoBindingFactoryAdapter.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |                                         **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: NoBindingFactoryAdapter.scala 18387 2009-07-24 15:28:37Z odersky $
+
+<span class="keyword">package</span> scala.xml
+<span class="keyword">package</span> parsing
+
+<span class="keyword">import</span> scala.xml.factory.NodeFactory
+<span class="keyword">import</span> org.xml.sax.InputSource
+<span class="keyword">import</span> javax.xml.parsers.{ SAXParser, SAXParserFactory }
+
+/** nobinding adaptor providing callbacks to parser to create elements.
+*   implements hash-consing
+*/
+<span class="keyword">class</span> <a title="class NoBindingFactoryAdapter extends scala.xml.parsing.FactoryAdapter with scala.xml.factory.NodeFactory[scala.xml.Elem] with ScalaObject" id="12104">NoBindingFactoryAdapter</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="FactoryAdapter.scala.html#12134" title="scala.xml.parsing.FactoryAdapter">FactoryAdapter</a> <span class="keyword">with</span> <a href="../factory/NodeFactory.scala.html#15293" title="scala.xml.factory.NodeFactory[scala.xml.Elem]">NodeFactory</a>[Elem]
+{
+  /** True.  Every XML node may contain text that the application needs */
+  <span class="keyword">def</span> <a title="(label: String)Boolean" id="243341">nodeContainsText</a>(<a title="String" id="243364">label</a>: <span title="String">String</span>) = <span title="Boolean(true)" class="keyword">true</span>
+
+  /** From NodeFactory.  Constructs an instance of scala.xml.Elem */
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(pre: String,label: String,attrs: scala.xml.MetaData,scope: scala.xml.NamespaceBinding,children: Seq[scala.xml.Node])scala.xml.Elem" id="243342">create</a>(<a title="String" id="243367">pre</a>: <span title="String">String</span>, <a title="String" id="243368">label</a>: <span title="String">String</span>, <a title="scala.xml.MetaData" id="243369">attrs</a>: <a href="../MetaData.scala.html#8585" title="scala.xml.MetaData">MetaData</a>, <a title="scala.xml.NamespaceBinding" id="243370">scope</a>: <a href="../NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>, <a title="Seq[scala.xml.Node]" id="243371">children</a>: <a href="../../collection/Sequence.scala.html#4346" title="Seq[scala.xml.Node]">Seq</a>[Node]): <a href="../Elem.scala.html#8564" title="scala.xml.Elem">Elem</a> =
+     <a href="../Elem.scala.html#50234" title="(prefix: String,label: String,attributes: scala.xml.MetaData,scope: scala.xml.NamespaceBinding,child: scala.xml.Node*)scala.xml.Elem">Elem</a>(<a href="#243367" title="String">pre</a>, <a href="#243368" title="String">label</a>, <a href="#243369" title="scala.xml.MetaData">attrs</a>, <a href="#243370" title="scala.xml.NamespaceBinding">scope</a>, <a href="#243371" title="Seq[scala.xml.Node]">children</a>: _*)
+
+  /** From FactoryAdapter.  Creates a node. never creates the same node twice, using hash-consing. */
+  <span class="keyword">def</span> <a title="(pre: String,label: String,attrs: scala.xml.MetaData,scope: scala.xml.NamespaceBinding,children: List[scala.xml.Node])scala.xml.Elem" id="243343">createNode</a>(<a title="String" id="243381">pre</a>: <span title="String">String</span>, <a title="String" id="243382">label</a>: <span title="String">String</span>, <a title="scala.xml.MetaData" id="243383">attrs</a>: <a href="../MetaData.scala.html#8585" title="scala.xml.MetaData">MetaData</a>, <a title="scala.xml.NamespaceBinding" id="243384">scope</a>: <a href="../NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>, <a title="List[scala.xml.Node]" id="243385">children</a>: <a href="../../collection/immutable/List.scala.html#8973" title="List[scala.xml.Node]">List</a>[Node]): <a href="../Elem.scala.html#8564" title="scala.xml.Elem">Elem</a> =
+    <a href="../Elem.scala.html#50234" title="(prefix: String,label: String,attributes: scala.xml.MetaData,scope: scala.xml.NamespaceBinding,child: scala.xml.Node*)scala.xml.Elem">Elem</a>(<a href="#243381" title="String">pre</a>, <a href="#243382" title="String">label</a>, <a href="#243383" title="scala.xml.MetaData">attrs</a>, <a href="#243384" title="scala.xml.NamespaceBinding">scope</a>, <a href="#243385" title="List[scala.xml.Node]">children</a>: _*)
+  
+  /** Creates a text node. */
+  <span class="keyword">def</span> <a title="(text: String)scala.xml.Text" id="243344">createText</a>(<a title="String" id="243389">text</a>: <span title="String">String</span>) = <a href="../Text.scala.html#26684" title="(_data: String)scala.xml.Text">Text</a>(<a href="#243389" title="String">text</a>)
+
+  /** Creates a processing instruction. */
+  <span class="keyword">def</span> <a title="(target: String,data: String)Seq[scala.xml.ProcInstr]" id="243345">createProcInstr</a>(<a title="String" id="243398">target</a>: <span title="String">String</span>, <a title="String" id="243399">data</a>: <span title="String">String</span>) = <a href="../factory/NodeFactory.scala.html#243361" title="(t: String,s: String)Seq[scala.xml.ProcInstr]">makeProcInstr</a>(<a href="#243398" title="String">target</a>, <a href="#243399" title="String">data</a>)
+}
+
+        </pre>
+    </body>
+</html>

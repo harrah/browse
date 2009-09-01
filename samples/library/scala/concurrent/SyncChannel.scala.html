@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/concurrent/SyncChannel.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |                                         **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: SyncChannel.scala 16893 2009-01-13 13:09:22Z cunei $
+
+
+<span class="keyword">package</span> scala.concurrent
+
+/** A &lt;code&gt;SyncChannel&lt;/code&gt; allows one to exchange data
+ *  synchronously between a reader and a writer thread.
+ *  The writer thread is blocked until the data to be written
+ *  has been read by a corresponding reader thread.
+ *
+ *  @author  Philipp Haller
+ *  @version 2.0, 04/17/2008
+ */
+<span class="keyword">class</span> <a title="class SyncChannel[A] extends java.lang.Object with ScalaObject" id="8368">SyncChannel</a>[<a title="&gt;: Nothing &lt;: Any" id="14427">A</a><a id="1">]</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="List[(A, scala.concurrent.SyncVar[Boolean])]" id="155670">pendingWrites</a> = List[(A, SyncVar[Boolean])]<a href="../collection/immutable/List.scala.html#9259" title="object Nil">(</a>)
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="List[scala.concurrent.SyncVar[A]]" id="155673">pendingReads</a>  = List[SyncVar[A]]<a href="../collection/immutable/List.scala.html#9259" title="object Nil">(</a>)
+
+  <span class="keyword">def</span> <a title="(data: A)Unit" id="155675">write</a>(<a title="A" id="155696">data</a>: <a href="#14427" title="A">A</a>) {
+    // create write request
+    <span class="keyword">val</span> <a title="scala.concurrent.SyncVar[Boolean]" id="155698">writeReq</a> = <span title="scala.concurrent.SyncVar[Boolean]" class="keyword">new</span> <a href="SyncVar.scala.html#8398" title="scala.concurrent.SyncVar[Boolean]">SyncVar</a>[Boolean]
+
+    <a href="#8368" title="SyncChannel.this.type" class="keyword">this</a>.<span title="(x$1: Unit)Unit">synchronized</span> {
+      // check whether there is a reader waiting
+      <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#155673" title="=&gt; List[scala.concurrent.SyncVar[A]]">pendingReads</a>.<a href="../collection/generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) {
+        <span class="keyword">val</span> <a title="scala.concurrent.SyncVar[A]" id="155704">readReq</a>  = <a href="#155673" title="=&gt; List[scala.concurrent.SyncVar[A]]">pendingReads</a>.<a href="../collection/generic/IterableTemplate.scala.html#17298" title="=&gt; scala.concurrent.SyncVar[A]">head</a>
+        <a href="#155673" title="(x$1: List[scala.concurrent.SyncVar[A]])Unit">pendingReads</a> = <a href="#155673" title="=&gt; List[scala.concurrent.SyncVar[A]]">pendingReads</a>.<a href="../collection/generic/TraversableTemplate.scala.html#17213" title="=&gt; List[scala.concurrent.SyncVar[A]]">tail</a>
+
+        // let reader continue
+        <a href="SyncVar.scala.html#20785" title="(x: A)Unit">readReq</a> set <a href="#155696" title="A">data</a>
+
+        // resolve write request
+        <a href="SyncVar.scala.html#20785" title="(x: Boolean)Unit">writeReq</a> set <span title="Boolean(true)" class="keyword">true</span>
+      }
+      <span class="keyword">else</span> {
+        // enqueue write request
+        <a href="#155670" title="(x$1: List[(A, scala.concurrent.SyncVar[Boolean])])Unit">pendingWrites</a> = <a href="#155670" title="=&gt; List[(A, scala.concurrent.SyncVar[Boolean])]">pendingWrites</a> <a href="#155715" title="List[(A, scala.concurrent.SyncVar[Boolean])]">:::</a> <a href="../collection/immutable/List.scala.html#17535" title="(xs: (A, scala.concurrent.SyncVar[Boolean])*)List[(A, scala.concurrent.SyncVar[Boolean])]">List</a><a href="../collection/immutable/List.scala.html#17633" title="(prefix: List[(A, scala.concurrent.SyncVar[Boolean])])List[(A, scala.concurrent.SyncVar[Boolean])]">(</a><a href="../Tuple2.scala.html#20670" title="(_1: A,_2: scala.concurrent.SyncVar[Boolean])(A, scala.concurrent.SyncVar[Boolean])">(</a><a href="#155696" title="A">data</a>, <a href="#155698" title="scala.concurrent.SyncVar[Boolean]">writeReq</a>))
+      }
+    }
+
+    <a href="#155698" title="scala.concurrent.SyncVar[Boolean]">writeReq</a>.<a href="SyncVar.scala.html#20782" title="=&gt; Boolean">get</a>
+  }
+
+  <span class="keyword">def</span> <a title="=&gt; A" id="155676">read</a>: <a href="#14427" title="A">A</a> = {
+    // create read request
+    <span class="keyword">val</span> <a title="scala.concurrent.SyncVar[A]" id="155749">readReq</a> = <span title="scala.concurrent.SyncVar[A]" class="keyword">new</span> <a href="SyncVar.scala.html#8398" title="scala.concurrent.SyncVar[A]">SyncVar</a>[A]
+
+    <a href="#8368" title="SyncChannel.this.type" class="keyword">this</a>.<span title="(x$1: Unit)Unit">synchronized</span> {
+      // check whether there is a writer waiting
+      <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#155670" title="=&gt; List[(A, scala.concurrent.SyncVar[Boolean])]">pendingWrites</a>.<a href="../collection/generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) {
+        // read data
+        <span class="keyword">val</span> <a href="../Tuple2.scala.html#20670" title="(A, scala.concurrent.SyncVar[Boolean])">(</a><a href="../Tuple2.scala.html#20472" title="A" id="155756">data</a>, <a href="../Tuple2.scala.html#20474" title="scala.concurrent.SyncVar[Boolean]" id="155757">writeReq</a>) = <a href="#155670" title="=&gt; List[(A, scala.concurrent.SyncVar[Boolean])]">pendingWrites</a>.<a href="../collection/generic/IterableTemplate.scala.html#17298" title="=&gt; (A, scala.concurrent.SyncVar[Boolean])">head</a>
+        <a href="#155670" title="(x$1: List[(A, scala.concurrent.SyncVar[Boolean])])Unit">pendingWrites</a> = <a href="#155670" title="=&gt; List[(A, scala.concurrent.SyncVar[Boolean])]">pendingWrites</a>.<a href="../collection/generic/TraversableTemplate.scala.html#17213" title="=&gt; List[(A, scala.concurrent.SyncVar[Boolean])]">tail</a>
+
+        // let writer continue
+        <a href="SyncVar.scala.html#20785" title="(x: Boolean)Unit">writeReq</a> set <span title="Boolean(true)" class="keyword">true</span>
+
+        // resolve read request
+        <a href="SyncVar.scala.html#20785" title="(x: A)Unit">readReq</a> set <a href="#155756" title="A">data</a>
+      }
+      <span class="keyword">else</span> {
+        // enqueue read request
+        <a href="#155673" title="(x$1: List[scala.concurrent.SyncVar[A]])Unit">pendingReads</a> = <a href="#155673" title="=&gt; List[scala.concurrent.SyncVar[A]]">pendingReads</a> <a href="#155784" title="List[scala.concurrent.SyncVar[A]]">:::</a> <a href="../collection/immutable/List.scala.html#17535" title="(xs: scala.concurrent.SyncVar[A]*)List[scala.concurrent.SyncVar[A]]">List</a><a href="../collection/immutable/List.scala.html#17633" title="(prefix: List[scala.concurrent.SyncVar[A]])List[scala.concurrent.SyncVar[A]]">(</a><a href="#155749" title="scala.concurrent.SyncVar[A]">readReq</a>)
+      }
+    }
+
+    <a href="#155749" title="scala.concurrent.SyncVar[A]">readReq</a>.<a href="SyncVar.scala.html#20782" title="=&gt; A">get</a>
+  }
+}
+
+        </pre>
+    </body>
+</html>

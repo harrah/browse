@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/concurrent/jolib.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: jolib.scala 18511 2009-08-19 03:27:37Z extempore $
+
+
+<span class="keyword">package</span> scala.concurrent
+
+<span class="keyword">import</span> ops._
+
+/**
+ * Library for using join-calculus concurrent primitives in Scala.
+ *
+ * @author  Vincent Cremet
+ * @version 1.0, 17/10/2003
+ */ 
+@deprecated(<span class="string">&quot;Will be removed.&quot;</span>)
+<span class="keyword">object</span> <a title="object scala.concurrent.jolib" id="8333">jolib</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+
+  <span class="keyword">type</span> <a title="List[scala.concurrent.jolib.Signal]" id="210045">Pattern</a> = <a href="../collection/immutable/List.scala.html#8973" title="List[scala.concurrent.jolib.Signal]">List</a>[Signal]
+
+  <span class="keyword">type</span> <a title="PartialFunction[List[Any],Unit]" id="210046">Rule</a> = <a href="../PartialFunction.scala.html#1083" title="PartialFunction[List[Any],Unit]">PartialFunction</a>[List[Any], Unit]
+
+  /////////////////// JOIN DEFINITION /////////////////////////
+
+  <span class="keyword">class</span> <a title="class Join extends java.lang.Object with ScalaObject" id="210047">Join</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+
+    <span class="keyword">private</span> <span class="keyword">var</span> <a title="List[(scala.concurrent.jolib.Pattern, scala.concurrent.jolib.Rule)]" id="210057">ruls</a>: <a href="../collection/immutable/List.scala.html#8973" title="List[(scala.concurrent.jolib.Pattern, scala.concurrent.jolib.Rule)]">List</a>[(Pattern, Rule)] = <span title="Null(null)" class="keyword">null</span>
+
+    <span class="keyword">def</span> <a title="(p: scala.concurrent.jolib.Pattern)Boolean" id="210059">canMatch</a>(<a title="scala.concurrent.jolib.Pattern" id="210067">p</a>: <a href="../collection/immutable/List.scala.html#8973" title="scala.concurrent.jolib.Pattern">Pattern</a>) =
+      <a href="../collection/generic/LinearSequenceTemplate.scala.html#19405" title="(p: (scala.concurrent.jolib.Signal) =&gt; Boolean)Boolean">p</a> forall { <a title="scala.concurrent.jolib.Signal" id="210074">s</a> =&gt; <a title="=&gt; Boolean" id="2203">!</a><a href="#210074" title="scala.concurrent.jolib.Signal">s</a>.<a href="#210079" title="=&gt; scala.collection.mutable.Queue[s.C]">queue</a>.<a href="../collection/mutable/MutableList.scala.html#19539" title="=&gt; Boolean">isEmpty</a> }
+    
+    <span class="keyword">def</span> <a title="(p: scala.concurrent.jolib.Pattern)List[Any]" id="210060">values</a>(<a title="scala.concurrent.jolib.Pattern" id="210086">p</a>: <a href="../collection/immutable/List.scala.html#8973" title="scala.concurrent.jolib.Pattern">Pattern</a>): <a href="../collection/immutable/List.scala.html#8973" title="List[Any]">List</a>[Any] =
+      <a href="../collection/generic/TraversableTemplate.scala.html#17161" title="(f: (scala.concurrent.jolib.Signal) =&gt; Any)(implicit bf: scala.collection.generic.BuilderFactory[Any,List[Any],List[scala.concurrent.jolib.Signal]])List[Any]">p</a> <a href="../collection/immutable/List.scala.html#17526" title="scala.collection.generic.BuilderFactory[Any,List[Any],List#Coll]">map</a> { <a title="scala.concurrent.jolib.Signal" id="210096">s</a> =&gt; <a href="#210096" title="scala.concurrent.jolib.Signal">s</a>.<a href="#210079" title="=&gt; scala.collection.mutable.Queue[s.C]">queue</a>.<a href="../collection/mutable/Queue.scala.html#19558" title="()s.C">dequeue</a>: <a title="Any" id="47">Any</a> }
+
+    <span class="keyword">def</span> <a title="(rs: (scala.concurrent.jolib.Pattern, scala.concurrent.jolib.Rule)*)Unit" id="210061">rules</a>(<a title="(scala.concurrent.jolib.Pattern, scala.concurrent.jolib.Rule)*" id="210126">rs</a>: <a title="(scala.concurrent.jolib.Pattern, scala.concurrent.jolib.Rule)*" id="4176">(</a>Pattern, Rule)*) =
+      <a href="#210057" title="(x$1: List[(scala.concurrent.jolib.Pattern, scala.concurrent.jolib.Rule)])Unit">ruls</a> = <a href="#210126" title="(scala.concurrent.jolib.Pattern, scala.concurrent.jolib.Rule)*">rs</a>.<a title="[T0]T0" id="3621">asInstanceOf</a><span title="List[(scala.concurrent.jolib.Pattern, scala.concurrent.jolib.Rule)]">[</span><a href="../collection/immutable/List.scala.html#8973" title="List[(scala.concurrent.jolib.Pattern, scala.concurrent.jolib.Rule)]">List</a>[(Pattern, Rule)]]
+
+    <span class="keyword">def</span> <a title="=&gt; () =&gt; Unit" id="210062">tryMatch</a> =
+      <a href="../collection/generic/LinearSequenceTemplate.scala.html#19408" title="(p: ((scala.concurrent.jolib.Pattern, scala.concurrent.jolib.Rule)) =&gt; Boolean)Option[(scala.concurrent.jolib.Pattern, scala.concurrent.jolib.Rule)]">ruls</a> find <a href="#210139" title="Boolean">{</a> <span title="Boolean" class="keyword">case</span> (<a title="scala.concurrent.jolib.Pattern" id="210142">p</a>, _) =&gt; <a href="#210059" title="(p: scala.concurrent.jolib.Pattern)Boolean">canMatch</a>(<a href="#210142" title="scala.concurrent.jolib.Pattern">p</a>) } <span title="() =&gt; Unit" class="keyword">match</span> {
+        <span title="() =&gt; Unit" class="keyword">case</span> <a href="../Option.scala.html#463" title="object None">None</a> =&gt; () =&gt; <span title="Unit">(</span>)
+        <span title="() =&gt; Unit" class="keyword">case</span> Some((<a title="scala.concurrent.jolib.Pattern" id="210153">p</a>, <a title="scala.concurrent.jolib.Rule" id="210154">r</a>)) =&gt; {
+          <span class="keyword">val</span> <a title="List[Any]" id="210159">args</a> = <a href="#210060" title="(p: scala.concurrent.jolib.Pattern)List[Any]">values</a>(<a href="#210153" title="scala.concurrent.jolib.Pattern">p</a>)
+          () =&gt; <a href="ops.scala.html#52268" title="(p: =&gt; Unit)(implicit runner: scala.concurrent.TaskRunner[Unit])Unit">spawn</a><a href="ops.scala.html#52255" title="=&gt; scala.concurrent.TaskRunner[Unit]">(</a><a href="../Function1.scala.html#17119" title="(v1: List[Any])Unit">r</a>(<a href="#210159" title="List[Any]">args</a>))
+        }
+      }
+
+  }
+
+  /////////////////// SIGNALS /////////////////////////
+  
+  <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class Signal extends java.lang.Object with ScalaObject" id="210048">Signal</a><a href="../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="scala.concurrent.jolib.Join" id="210175">join</a>: <a href="#210047" title="scala.concurrent.jolib.Join">Join</a>) {
+    <span class="keyword">type</span> <a title="&gt;: Nothing &lt;: Any" id="210078">C</a>
+    <span class="keyword">val</span> <a title="scala.collection.mutable.Queue[Signal.this.C]" id="210079">queue</a> = <span title="scala.collection.mutable.Queue[Signal.this.C]" class="keyword">new</span> collection.mutable.<a href="../collection/mutable/Queue.scala.html#7887" title="scala.collection.mutable.Queue[Signal.this.C]">Queue</a>[C]
+    <span class="keyword">def</span> <a title="(x: Signal.this.C)Unit" id="210081">tryReduction</a>(<a title="Signal.this.C" id="210178">x</a>: <a href="#210078" title="Signal.this.C">C</a>) {
+      <span class="keyword">val</span> <a title="() =&gt; Unit" id="210180">continuation</a> = <a href="#210175" title="(x$1: () =&gt; Unit)() =&gt; Unit" id="6535">join</a> synchronized {
+        <a href="#210079" title="=&gt; scala.collection.mutable.Queue[Signal.this.C]">queue</a>.<a href="../collection/mutable/Queue.scala.html#19557" title="(elems: Signal.this.C*)Unit">enqueue</a>(<a href="#210178" title="Signal.this.C">x</a>)
+        <a href="#210175" title="scala.concurrent.jolib.Join">join</a>.<a href="#210062" title="=&gt; () =&gt; Unit">tryMatch</a>
+      }
+      <a href="../Function0.scala.html#34096" title="()Unit">continuation</a>()
+    }
+  }
+
+  <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class Asynchr extends scala.concurrent.jolib.Signal with ScalaObject" id="210049">Asynchr</a><a href="../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="scala.concurrent.jolib.Join" id="210197">join</a>: <a href="#210047" title="scala.concurrent.jolib.Join">Join</a>) <span class="keyword">extends</span> <a href="#210048" title="scala.concurrent.jolib.Signal">Signal</a>(<a href="#210197" title="scala.concurrent.jolib.Join">join</a>) {
+    <span class="keyword">def</span> <a title="(x: Asynchr.this.C)Unit" id="210194">apply</a>(<a title="Asynchr.this.C" id="210200">x</a>: <a href="#210078" title="Asynchr.this.C">C</a>): <a title="Unit" id="1948">Unit</a> = <a href="#210081" title="(x: Asynchr.this.C)Unit">tryReduction</a>(<a href="#210200" title="Asynchr.this.C">x</a>)
+  }
+
+  <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class Synchr[A] extends scala.concurrent.jolib.Signal with ScalaObject" id="210050">Synchr</a>[<a title="&gt;: Nothing &lt;: Any" id="210051">A</a>]<a href="../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="scala.concurrent.jolib.Join" id="210212">join</a>: <a href="#210047" title="scala.concurrent.jolib.Join">Join</a>) <span class="keyword">extends</span> <a href="#210048" title="scala.concurrent.jolib.Signal">Signal</a>(<a href="#210212" title="scala.concurrent.jolib.Join">join</a>) {
+    <span class="keyword">type</span> <a title="&gt;: Nothing &lt;: scala.concurrent.SyncVar[A]" id="210208">C</a> &lt;: SyncVar[A]
+    <span class="keyword">def</span> <a title="(x: Synchr.this.C)A" id="210209">apply</a>(<a title="Synchr.this.C" id="210215">x</a>: <a href="#210208" title="Synchr.this.C">C</a>): <a href="#210051" title="A">A</a> = {
+      <a href="#210081" title="(x: Synchr.this.C)Unit">tryReduction</a>(<a href="#210215" title="Synchr.this.C">x</a>)
+      <a href="#210215" title="Synchr.this.C">x</a>.<a href="SyncVar.scala.html#20782" title="=&gt; A">get</a>
+    }
+  }
+
+}
+
+
+        </pre>
+    </body>
+</html>

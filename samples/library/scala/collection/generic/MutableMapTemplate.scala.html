@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/generic/MutableMapTemplate.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: MutableMapTemplate.scala 18545 2009-08-22 14:10:22Z extempore $
+
+
+<span class="keyword">package</span> scala.collection.generic
+<span class="keyword">import</span> scala.collection._
+
+/** &lt;p&gt;
+ *    A generic template for mutable maps from keys of type &lt;code&gt;A&lt;/code&gt; to
+ *    values of type &lt;code&gt;B&lt;/code&gt;.
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    To implement a concrete mutable map, you need to provide implementations
+ *    of the following methods:
+ *  &lt;/p&gt;&lt;pre&gt;
+ *    &lt;b&gt;def&lt;/b&gt; get(key: A): Option[B]
+ *    &lt;b&gt;def&lt;/b&gt; iterator: Iterator[(A, B)]
+ *    &lt;b&gt;def&lt;/b&gt; += (kv: (A, B)): &lt;b&gt;this.type&lt;/b&gt;
+ *    &lt;b&gt;def&lt;/b&gt; -= (key: A): &lt;b&gt;this.type&lt;/b&gt;&lt;/pre&gt;
+ *  &lt;p&gt;
+ *    If you wish that methods &lt;code&gt;like&lt;/code&gt;, &lt;code&gt;take&lt;/code&gt;,
+ *    &lt;code&gt;drop&lt;/code&gt;, &lt;code&gt;filter&lt;/code&gt; return the same kind of map, you
+ *    should also override:
+ *  &lt;/p&gt;&lt;pre&gt;
+ *   &lt;b&gt;def&lt;/b&gt; empty: This&lt;/pre&gt;
+ *  &lt;p&gt;
+ *    If you to avoid the unncessary construction of an &lt;code&gt;Option&lt;/code&gt;
+ *    object, you could also override &lt;code&gt;apply&lt;/code&gt;, &lt;code&gt;update&lt;/code&gt;,
+ *    and &lt;code&gt;delete&lt;/code&gt;.
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    It is also good idea to override methods &lt;code&gt;foreach&lt;/code&gt; and
+ *    &lt;code&gt;size&lt;/code&gt; for efficiency.
+ *  &lt;/p&gt;
+ */
+<span class="keyword">trait</span> <a title="trait MutableMapTemplate[A, B, +This &lt;: scala.collection.generic.MutableMapTemplate[A,B,This] with scala.collection.mutable.Map[A,B]] extends java.lang.Object with scala.collection.generic.MutableMapTemplateBase[A,B,This] with scala.collection.generic.Builder[(A, B),This] with scala.collection.generic.Growable[(A, B)] with scala.collection.generic.Shrinkable[A] with scala.collection.generic.Cloneable[This] with ScalaObject" id="10883">MutableMapTemplate</a>[<a title="&gt;: Nothing &lt;: Any" id="14152">A</a>, <a title="&gt;: Nothing &lt;: Any" id="14153">B</a>, +<a title="&gt;: Nothing &lt;: scala.collection.generic.MutableMapTemplate[A,B,This] with scala.collection.mutable.Map[A,B]" id="14154">This</a> &lt;: MutableMapTemplate[A, B, This] <span class="keyword">with</span> mutable.Map[A, B]]
+  <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="MutableMapTemplateBase.scala.html#10202" title="scala.collection.generic.MutableMapTemplateBase[A,B,This]">MutableMapTemplateBase</a>[A, B, This] 
+     <span class="keyword">with</span> <a href="Builder.scala.html#10028" title="scala.collection.generic.Builder[(A, B),This]">Builder</a>[(A, B), This] 
+     <span class="keyword">with</span> <a href="Growable.scala.html#9941" title="scala.collection.generic.Growable[(A, B)]">Growable</a>[(A, B)]
+     <span class="keyword">with</span> <a href="Shrinkable.scala.html#10565" title="scala.collection.generic.Shrinkable[A]">Shrinkable</a>[A]
+     <span class="keyword">with</span> <a href="Cloneable.scala.html#10166" title="scala.collection.generic.Cloneable[This]">Cloneable</a>[This]
+{ self =&gt;
+
+  /** &lt;p&gt;
+   *    A common implementation of &lt;code&gt;newBuilder&lt;/code&gt; for all mutable maps
+   *    in terms of &lt;code&gt;empty&lt;/code&gt;.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    Overrides &lt;code&gt;MapTemplate&lt;/code&gt; implementation for better efficiency.
+   *  &lt;/p&gt;
+   */
+  <span class="keyword">override</span> <span class="keyword">protected</span>[<span class="keyword">this</span>] <span class="keyword">def</span> <a title="=&gt; scala.collection.generic.Builder[(A, B),This]" id="57770">newBuilder</a>: <a href="Builder.scala.html#10028" title="scala.collection.generic.Builder[(A, B),This]">Builder</a>[(A, B), This] = <a href="MapTemplate.scala.html#35271" title="=&gt; This">empty</a>
+
+  /** Adds a new mapping from &lt;code&gt;key&lt;/code&gt;
+   *  to &lt;code&gt;value&lt;/code&gt; to the map. If the map already contains a
+   *  mapping for &lt;code&gt;key&lt;/code&gt;, it will be overridden.
+   *
+   * @param key    The key to update
+   * @param value  The new value
+   */
+  <span class="keyword">def</span> <a title="(key: A,value: B)Option[B]" id="57771">put</a>(<a title="A" id="57956">key</a>: <a href="#14152" title="A">A</a>, <a title="B" id="57957">value</a>: <a href="#14153" title="B">B</a>): <a href="../../Option.scala.html#777" title="Option[B]">Option</a>[B] = {
+    <span class="keyword">val</span> <a title="Option[B]" id="134878">r</a> = <a href="MapTemplate.scala.html#35273" title="(key: A)Option[B]">get</a>(<a href="#57956" title="A">key</a>)
+    <a href="#57772" title="(key: A,value: B)Unit">update</a>(<a href="#57956" title="A">key</a>, <a href="#57957" title="B">value</a>)
+    <a href="#134878" title="Option[B]">r</a>
+  }
+
+  /** Adds a new mapping from &lt;code&gt;key&lt;/code&gt;
+   *  to &lt;code&gt;value&lt;/code&gt; to the map. If the map already contains a
+   *  mapping for &lt;code&gt;key&lt;/code&gt;, it will be overridden.
+   *
+   *  @param key    The key to update
+   *  @param value  The new value
+   *  @return   An option consisting of value associated previously associated with `key` in the map,
+   *            or None if `key` was not yet defined in the map.
+   */    
+  <span class="keyword">def</span> <a title="(key: A,value: B)Unit" id="57772">update</a>(<a title="A" id="57974">key</a>: <a href="#14152" title="A">A</a>, <a title="B" id="57975">value</a>: <a href="#14153" title="B">B</a>) { <a href="#57773" title="(kv: (A, B))MutableMapTemplate.this.type" class="keyword">this</a> <span title="Unit">+=</span> (<a href="../../Tuple2.scala.html#20670" title="(_1: A,_2: B)(A, B)">(</a><a href="#57974" title="A">key</a>, <a href="#57975" title="B">value</a>)) }
+
+  /** Add a new key/value mapping this map.
+   *  @param    kv the key/value pair.
+   *  @return   the map itself
+   */
+  <span class="keyword">def</span> <a title="(kv: (A, B))MutableMapTemplate.this.type" id="57773">+=</a> (<a title="(A, B)" id="57842">kv</a>: <a href="../../Tuple2.scala.html#1152" title="(A, B)">(</a>A, B)): <span class="keyword">this</span>.<span class="keyword">type</span>
+
+  /** Create a new map consisting of all elements of the current map
+   *  plus the given mapping from &lt;code&gt;key&lt;/code&gt; to &lt;code&gt;value&lt;/code&gt;.
+   *
+   *  @param key    The key to ad
+   *  @param value  The new value
+   *  @return       A fresh immutable map
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[B1 &gt;: B](key: A,value: B1)scala.collection.mutable.Map[A,B1]" id="57774">updated</a>[<a title="&gt;: B &lt;: Any" id="57776">B1</a> &gt;: B](<a title="A" id="98695">key</a>: <a href="#14152" title="A">A</a>, <a title="B1" id="98696">value</a>: <a href="#57776" title="B1">B1</a>): mutable.<a href="../mutable/Map.scala.html#7590" title="scala.collection.mutable.Map[A,B1]">Map</a>[A, B1] = <a href="MutableMapTemplateBase.scala.html#57765" title="(kv: (A, B1))scala.collection.mutable.Map[A,B1]" class="keyword">this</a> + (<a href="../../Tuple2.scala.html#20670" title="(_1: A,_2: B1)(A, B1)">(</a><a href="#98695" title="A">key</a>, <a href="#98696" title="B1">value</a>))
+
+  /** If given key is already in this map, returns associated value
+   *  Otherwise, computes value from given expression `op`, stores with key
+   *  in map and returns that value.
+   */
+  <span class="keyword">def</span> <a title="(key: A,op: =&gt; B)B" id="57777">cached</a>(<a title="A" id="135037">key</a>: <a href="#14152" title="A">A</a>, <a title="=&gt; B" id="135038">op</a>: =&gt; B) = <a href="MapTemplate.scala.html#35273" title="(key: A)Option[B]">get</a>(<a href="#135037" title="A">key</a>) <span title="B" class="keyword">match</span> {
+    <span title="B" class="keyword">case</span> Some(<a title="B" id="135045">v</a>) =&gt; <a href="#135045" title="B">v</a>
+    <span title="B" class="keyword">case</span> <a href="../../Option.scala.html#463" title="object None">None</a> =&gt; <span class="keyword">val</span> <a title="B" id="135048">v</a> = <a href="#135038" title="=&gt; B">op</a>; <a href="#57772" title="(key: A,value: B)Unit">update</a>(<a href="#135037" title="A">key</a>, <a href="#135048" title="B">v</a>); <a href="#135048" title="B">v</a>
+  }
+
+  /** Add a new key/value mapping and return the map itself.
+   *
+   *  @param kv    the key/value mapping to be added
+   */
+  @deprecated(<span class="string">&quot;This operation will create a new map in the future. To add an element as a side\n&quot;</span>+
+              <span class="string">&quot;effect to an existing map and return that map itself, use +=. If you do want\n&quot;</span>+
+              <span class="string">&quot;to create a fresh map, you can use `clone() +=' to avoid a @deprecated warning.&quot;</span>)
+ <span class="keyword">def</span> <a title="(kv: (A, B))MutableMapTemplate.this.type" id="57778">+</a> (<a title="(A, B)" id="58323">kv</a>: <a href="../../Tuple2.scala.html#1152" title="(A, B)">(</a>A, B)): <span class="keyword">this</span>.<span class="keyword">type</span> = { <a href="#57772" title="(key: A,value: B)Unit">update</a>(<a href="#58323" title="(A, B)">kv</a>.<a href="../../Tuple2.scala.html#20472" title="=&gt; A">_1</a>, <a href="#58323" title="(A, B)">kv</a>.<a href="../../Tuple2.scala.html#20474" title="=&gt; B">_2</a>); <a href="#10883" title="MutableMapTemplate.this.type" class="keyword">this</a> }
+
+  /** Adds two or more key/value mappings and return the map itself.
+   *  with the added elements.
+   *
+   *  @param elem1 the first element to add.
+   *  @param elem2 the second element to add.
+   *  @param elems the remaining elements to add.
+   */
+  @deprecated(<span class="string">&quot;This operation will create a new map in the future. To add an element as a side\n&quot;</span>+
+              <span class="string">&quot;effect to an existing map and return that map itself, use +=. If you do want to\n&quot;</span>+
+              <span class="string">&quot;create a fresh map, you can use `clone() +=` to avoid a @deprecated warning.&quot;</span>)
+  <span class="keyword">def</span> <a title="(elem1: (A, B),elem2: (A, B),elems: (A, B)*)MutableMapTemplate.this.type" id="57779">+</a>(<a title="(A, B)" id="58389">elem1</a>: <a href="../../Tuple2.scala.html#1152" title="(A, B)">(</a>A, B), <a title="(A, B)" id="58390">elem2</a>: <a href="../../Tuple2.scala.html#1152" title="(A, B)">(</a>A, B), <a title="(A, B)*" id="58391">elems</a>: <span title="(A, B)*">(</span>A, B)*): <span class="keyword">this</span>.<span class="keyword">type</span> = 
+    <a href="#57773" title="(kv: (A, B))MutableMapTemplate.this.type" class="keyword">this</a> <a href="#57773" title="(kv: (A, B))MutableMapTemplate.this.type">+=</a> <a href="#58389" title="(A, B)">elem1</a> <a href="Growable.scala.html#19586" title="(iter: Traversable[(A, B)])MutableMapTemplate.this.type">+=</a> <a href="#58390" title="(A, B)">elem2</a> ++= <a href="#58391" title="(A, B)*">elems</a> 
+
+  /** Adds a number of elements provided by a traversable object
+   *  via its &lt;code&gt;iterator&lt;/code&gt; method and returns
+   *  either the collection itself (if it is mutable), or a new collection
+   *  with the added elements.
+   * 
+   *  @param iter     the traversable object.
+   */
+  @deprecated(<span class="string">&quot;This operation will create a new map in the future. To add elements as a side\n&quot;</span>+
+              <span class="string">&quot;effect to an existing map and return that map itself, use ++=. If you do want\n&quot;</span>+
+              <span class="string">&quot;to create a fresh map, you can use `clone() ++=` to avoid a @deprecated warning.&quot;</span>)
+  <span class="keyword">def</span> <a title="(iter: Traversable[(A, B)])MutableMapTemplate.this.type" id="57780">++</a>(<a title="Traversable[(A, B)]" id="98546">iter</a>: <a href="../Traversable.scala.html#4436" title="Traversable[(A, B)]">Traversable</a>[(A, B)]): <span class="keyword">this</span>.<span class="keyword">type</span> = { <span class="keyword">for</span> (<a title="(A, B)" id="135101">elem</a> &lt;- <a href="TraversableClass.scala.html#17261" title="(f: ((A, B)) =&gt; scala.collection.generic.MutableMapTemplate[A,B,This])Unit">iter</a>) <a href="#57773" title="(kv: (A, B))MutableMapTemplate.this.type">+=</a>(<a href="#135101" title="(A, B)">elem</a>); <a href="#10883" title="MutableMapTemplate.this.type" class="keyword">this</a> }
+
+  /** Adds a number of elements provided by an iterator
+   *  via its &lt;code&gt;iterator&lt;/code&gt; method and returns
+   *  the collection itself.
+   * 
+   *  @param iter   the iterator
+   */
+  @deprecated(<span class="string">&quot;This operation will create a new map in the future. To add elements as a side\n&quot;</span>+
+              <span class="string">&quot;effect to an existing map and return that map itself, use ++=. If you do want\n&quot;</span>+
+              <span class="string">&quot;to create a fresh map, you can use `clone() +=` to avoid a @deprecated warning.&quot;</span>)
+  <span class="keyword">def</span> <a title="(iter: Iterator[(A, B)])MutableMapTemplate.this.type" id="57781">++</a>(<a title="Iterator[(A, B)]" id="98601">iter</a>: <a href="../Iterator.scala.html#4274" title="Iterator[(A, B)]">Iterator</a>[(A, B)]): <span class="keyword">this</span>.<span class="keyword">type</span> = { <span class="keyword">for</span> (<a title="(A, B)" id="135125">elem</a> &lt;- <a href="../Iterator.scala.html#19219" title="(f: ((A, B)) =&gt; scala.collection.generic.MutableMapTemplate[A,B,This])Unit">iter</a>) <a href="#57773" title="(kv: (A, B))MutableMapTemplate.this.type">+=</a>(<a href="#135125" title="(A, B)">elem</a>); <a href="#10883" title="MutableMapTemplate.this.type" class="keyword">this</a> }
+
+  /** If given key is defined in this map, remove it and return associated value as an Option.
+   *  If key is not present return None.
+   *  @param    key the key to be removed
+   */  
+  <span class="keyword">def</span> <a title="(key: A)Option[B]" id="57782">remove</a>(<a title="A" id="57991">key</a>: <a href="#14152" title="A">A</a>): <a href="../../Option.scala.html#777" title="Option[B]">Option</a>[B] = {
+    <span class="keyword">val</span> <a title="Option[B]" id="135145">r</a> = <a href="MapTemplate.scala.html#35273" title="(key: A)Option[B]">get</a>(<a href="#57991" title="A">key</a>)
+    <a href="#57783" title="(key: A)MutableMapTemplate.this.type" class="keyword">this</a> -= <a href="#57991" title="A">key</a>
+    <a href="#135145" title="Option[B]">r</a>
+  }
+
+  /** Delete a key from this map if it is present.
+   *  @param    key the key to be removed
+   *  @note     same as `delete`.
+   */
+  <span class="keyword">def</span> <a title="(key: A)MutableMapTemplate.this.type" id="57783">-=</a> (<a title="A" id="57903">key</a>: <a href="#14152" title="A">A</a>): <span class="keyword">this</span>.<span class="keyword">type</span>
+
+  /** Delete a key from this map if it is present and return the map itself.
+   *  @param    key the key to be removed
+   */
+  @deprecated(<span class="string">&quot;This operation will create a new map in the future. To add elements as a side\n&quot;</span>+
+              <span class="string">&quot;effect to an existing map and return that map itself, use -=. If you do want\n&quot;</span>+
+              <span class="string">&quot;to create a fresh map, you can use `clone() -=` to avoid a @deprecated warning.&quot;</span>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(key: A)This" id="57784">-</a>(<a title="A" id="98741">key</a>: <a href="#14152" title="A">A</a>): <a href="#14154" title="This">This</a> = { <a href="#57783" title="(key: A)MutableMapTemplate.this.type">-=</a>(<a href="#98741" title="A">key</a>); <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a> }
+
+  /** If given key is defined in this map, remove it and return associated value as an Option.
+   *  If key is not present return None.
+   *  @param    key the key to be removed
+   */
+   @deprecated(<span class="string">&quot;Use `remove' instead&quot;</span>) <span class="keyword">def</span> <a title="(key: A)Option[B]" id="57785">removeKey</a>(<a title="A" id="135178">key</a>: <a href="#14152" title="A">A</a>): <a href="../../Option.scala.html#777" title="Option[B]">Option</a>[B] = <a href="#57782" title="(key: A)Option[B]">remove</a>(<a href="#135178" title="A">key</a>)
+
+
+  /** Removes all elements from the set. After this operation is completed,
+   *  the set will be empty.
+   */
+  <span class="keyword">def</span> <a title="()Unit" id="57786">clear</a>() { <span class="keyword">for</span> ((<a title="A" id="135237">k</a>, <a title="B" id="135238">v</a>) &lt;- <a href="#10883" title="MutableMapTemplate.this.type" class="keyword">this</a>.<a href="../Iterator.scala.html#19219" title="(f: ((A, B)) =&gt; scala.collection.generic.MutableMapTemplate[A,B,This])Unit">iterator</a>) <a href="#57783" title="(key: A)MutableMapTemplate.this.type">-=</a>(<a href="#135237" title="A">k</a>) }
+  
+  /** Check if this map maps &lt;code&gt;key&lt;/code&gt; to a value.
+    * Return that value if it exists, otherwise put &lt;code&gt;default&lt;/code&gt;
+    * as that key's value and return it.
+    */
+  <span class="keyword">def</span> <a title="(key: A,default: =&gt; B)B" id="57787">getOrElseUpdate</a>(<a title="A" id="58102">key</a>: <a href="#14152" title="A">A</a>, <a title="=&gt; B" id="58103">default</a>: =&gt; B): <a href="#14153" title="B">B</a> =
+    <a href="MapTemplate.scala.html#35273" title="(key: A)Option[B]">get</a>(<a href="#58102" title="A">key</a>) <span title="B" class="keyword">match</span> {
+      <span title="B" class="keyword">case</span> Some(<a title="B" id="135263">v</a>) =&gt; <a href="#135263" title="B">v</a>
+      <span title="B" class="keyword">case</span> <a href="../../Option.scala.html#463" title="object None">None</a> =&gt; <span class="keyword">val</span> <a title="B" id="135266">d</a> = <a href="#58103" title="=&gt; B">default</a>; <a href="#57772" title="(key: A,value: B)Unit" class="keyword">this</a>(<a href="#58102" title="A">key</a>) = <a href="#135266" title="B">d</a>; <a href="#135266" title="B">d</a>
+    }
+
+  /** This function transforms all the values of mappings contained
+   *  in this map with function &lt;code&gt;f&lt;/code&gt;.
+   *
+   * @param f  The transformation to apply
+   */
+  <span class="keyword">def</span> <a title="(f: (A, B) =&gt; B)MutableMapTemplate.this.type" id="57788">transform</a>(<a title="(A, B) =&gt; B" id="58119">f</a>: (A, B) =&gt; B): <span class="keyword">this</span>.<span class="keyword">type</span> = {
+    <a href="#10883" title="MutableMapTemplate.this.type" class="keyword">this</a>.<a href="../Iterator.scala.html#19219" title="(f: ((A, B)) =&gt; Unit)Unit">iterator</a> foreach <a href="#135273" title="Unit">{</a>
+      <span title="Unit" class="keyword">case</span> (<a title="A" id="135276">key</a>, <a title="B" id="135277">value</a>) =&gt; <a href="#57772" title="(key: A,value: B)Unit">update</a>(<a href="#135276" title="A">key</a>, <a href="../../Function2.scala.html#20443" title="(v1: A,v2: B)B">f</a>(<a href="#135276" title="A">key</a>, <a href="#135277" title="B">value</a>))
+    }
+    <a href="#10883" title="MutableMapTemplate.this.type" class="keyword">this</a>
+  }
+
+  /** Retain only those mappings for which the predicate
+   *  &lt;code&gt;p&lt;/code&gt; returns &lt;code&gt;true&lt;/code&gt;.
+   *
+   * @param p  The test predicate  
+   */
+  @deprecated(<span class="string">&quot;cannot be type inferred because of retain in Iterable.&quot;</span>)
+  <span class="keyword">def</span> <a title="(p: (A, B) =&gt; Boolean)MutableMapTemplate.this.type" id="57789">retain</a>(<a title="(A, B) =&gt; Boolean" id="58131">p</a>: (A, B) =&gt; Boolean): <span class="keyword">this</span>.<span class="keyword">type</span> = {
+    <span class="keyword">for</span> ((<a title="A" id="135325">k</a>, <a title="B" id="135326">v</a>) &lt;- <a href="IterableTemplate.scala.html#17287" title="(f: ((A, B)) =&gt; Any)Unit" class="keyword">this</a>) <span title="Any" class="keyword">if</span> (<a title="=&gt; Boolean" id="2203">!</a><a href="../../Function2.scala.html#20443" title="(v1: A,v2: B)Boolean">p</a>(<a href="#135325" title="A">k</a>, <a href="#135326" title="B">v</a>)) <a href="#57783" title="(key: A)MutableMapTemplate.this.type">-=</a>(<a href="#135325" title="A">k</a>)
+    <a href="#10883" title="MutableMapTemplate.this.type" class="keyword">this</a>
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()This" id="57790">clone</a>(): <a href="#14154" title="This">This</a> =
+    <a href="Growable.scala.html#19586" title="(iter: Traversable[(A, B)])This">empty</a> ++= <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+
+  /** The result when this map is used as a builder */
+  <span class="keyword">def</span> <a title="()This" id="57791">result</a>: <a href="#14154" title="This">This</a> = <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+
+  /** Removes two or more elements from this collection and returns
+   *  the collection itself.
+   *
+   *  @param elem1 the first element to remove.
+   *  @param elem2 the second element to remove.
+   *  @param elems the remaining elements to remove.
+   */
+  @deprecated(<span class="string">&quot;Use -= instead if you intend to remove by side effect from an existing collection.\n&quot;</span>+
+              <span class="string">&quot;Use `clone() -=' if you intend to create a new collection.&quot;</span>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(elem1: A,elem2: A,elems: A*)This" id="57792">-</a>(<a title="A" id="98762">elem1</a>: <a href="#14152" title="A">A</a>, <a title="A" id="98763">elem2</a>: <a href="#14152" title="A">A</a>, <a title="A*" id="98764">elems</a>: <span title="A*">A</span>*): <a href="#14154" title="This">This</a> = {
+    <a href="#57783" title="(key: A)MutableMapTemplate.this.type" class="keyword">this</a> <a href="#57783" title="(key: A)MutableMapTemplate.this.type">-=</a> <a href="#98762" title="A">elem1</a> <a href="Shrinkable.scala.html#19965" title="(iter: Traversable[A])MutableMapTemplate.this.type">-=</a> <a href="#98763" title="A">elem2</a> --= <a href="#98764" title="A*">elems</a>
+    <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+  }
+
+  /** Removes a number of elements provided by a Traversable object and returns
+   *  the collection itself.
+   *
+   *  @param iter     the Traversable object.
+   */
+  @deprecated(<span class="string">&quot;Use --= instead if you intend to remove by side effect from an existing collection.\n&quot;</span>+
+              <span class="string">&quot;Use `clone() --=' if you intend to create a new collection.&quot;</span>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(iter: Traversable[A])This" id="57793">--</a>(<a title="Traversable[A]" id="98725">iter</a>: <a href="../Traversable.scala.html#4436" title="Traversable[A]">Traversable</a>[A]): <a href="#14154" title="This">This</a> = { 
+    <span class="keyword">for</span> (<a title="A" id="135424">elem</a> &lt;- <a href="TraversableClass.scala.html#17261" title="(f: (A) =&gt; scala.collection.generic.MutableMapTemplate[A,B,This])Unit">iter</a>) <a href="#57783" title="(key: A)MutableMapTemplate.this.type">-=</a>(<a href="#135424" title="A">elem</a>)
+    <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+  }
+
+
+  /** Removes a number of elements provided by an iterator and returns
+   *  the collection itself.
+   *
+   *  @param iter   the iterator
+   */
+  @deprecated(<span class="string">&quot;Use --= instead if you intend to remove by side effect from an existing collection.\n&quot;</span>+
+              <span class="string">&quot;Use `clone() --=' if you intend to create a new collection.&quot;</span>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(iter: Iterator[A])This" id="57794">--</a>(<a title="Iterator[A]" id="98732">iter</a>: <a href="../Iterator.scala.html#4274" title="Iterator[A]">Iterator</a>[A]): <a href="#14154" title="This">This</a> = { 
+    <span class="keyword">for</span> (<a title="A" id="135447">elem</a> &lt;- <a href="../Iterator.scala.html#19219" title="(f: (A) =&gt; scala.collection.generic.MutableMapTemplate[A,B,This])Unit">iter</a>) <a href="#57783" title="(key: A)MutableMapTemplate.this.type">-=</a>(<a href="#135447" title="A">elem</a>)
+    <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+  }
+}
+
+        </pre>
+    </body>
+</html>

@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/Enumeration.scala</title>
+        <script type="text/javascript" src="../jquery-all.js"></script>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: Enumeration.scala 18511 2009-08-19 03:27:37Z extempore $
+
+
+<span class="keyword">package</span> scala
+
+
+<span class="keyword">import</span> scala.collection.mutable.{Map, HashMap}
+<span class="keyword">import</span> scala.collection.immutable.{Set, BitSet}
+<span class="keyword">import</span> scala.collection.generic.{Builder, BuilderFactory, AddingBuilder, SetTemplate}
+
+/** &lt;p&gt;
+ *    Defines a finite set of values specific to the enumeration. Typically
+ *    these values enumerate all possible forms something can take and provide a
+ *    lightweight alternative to case classes.
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    Each call to a &lt;code&gt;Value&lt;/code&gt; method adds a new unique value to the
+ *    enumeration. To be accessible, these values are usually defined as 
+ *    &lt;code&gt;val&lt;/code&gt; members of the evaluation.
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    All values in an enumeration share a common, unique type defined as the 
+ *    &lt;code&gt;Value&lt;/code&gt; type member of the enumeration (&lt;code&gt;Value&lt;/code&gt;
+ *    selected on the stable identifier path of the enumeration instance).
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    &lt;b&gt;Example use&lt;/b&gt;
+ *  &lt;/p&gt;&lt;pre&gt;
+ *  &lt;b&gt;object&lt;/b&gt; Main &lt;b&gt;extends&lt;/b&gt; Application {
+ *
+ *    &lt;b&gt;object&lt;/b&gt; WeekDay &lt;b&gt;extends&lt;/b&gt; Enumeration {
+ *      &lt;b&gt;type&lt;/b&gt; WeekDay&lt;/b&gt; = Value
+ *      &lt;b&gt;val&lt;/b&gt; Mon, Tue, Wed, Thu, Fri, Sat, Sun = Value
+ *    }
+ *    &lt;b&gt;import&lt;/b&gt; WeekDay._
+ *
+ *    &lt;b&gt;def&lt;/b&gt; isWorkingDay(d: WeekDay) = ! (d == Sat || d == Sun)
+ * 
+ *    WeekDay.iterator filter isWorkingDay foreach println
+ *  }&lt;/pre&gt;
+ *
+ *  @param initial The initial value from which to count the integers that
+ *                 identifies values at run-time.
+ *  @param names   The sequence of names to give to this enumeration's values.
+ *
+ *  @author  Matthias Zenger
+ *  @version 1.0, 10/02/2004
+ */
+@serializable
+@SerialVersionUID(<span class="long">8476000850333817230L</span>)
+<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class Enumeration extends java.lang.Object with ScalaObject" id="975">Enumeration</a><a href="ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="Int" id="29127">initial</a>: <span title="Int">Int</span>, <a title="String*" id="29128">names</a>: <span title="String*">String</span>*) {
+    
+  <span class="keyword">def</span> <a title="()Enumeration" id="29018" class="keyword">this</a>() = <a href="#975" title="Enumeration.this.type" class="keyword">this</a>(<span title="Int(0)" class="int">0</span>, <span title="Null(null)" class="keyword">null</span>)
+  <span class="keyword">def</span> <a title="(names: String*)Enumeration" id="29019" class="keyword">this</a>(<a title="String*" id="29126">names</a>: <span title="String*">String</span>*) = <a href="#975" title="Enumeration.this.type" class="keyword">this</a>(<span title="Int(0)" class="int">0</span>, <a href="#29126" title="String*">names</a>: _*)
+  
+  /** The name of this enumeration.  
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()java.lang.String" id="29020">toString</a> = {
+    <span class="keyword">var</span> <a title="java.lang.String" id="268966">string</a> = <a href="#975" title="Enumeration.this.type" class="keyword">this</a>.<a title="()java.lang.Class[_]" id="3626">getClass</a>.<a title="()java.lang.String" id="4107">getName</a>
+    <span class="keyword">val</span> <a title="Int" id="268967">idx1</a> = <a href="#268966" title="java.lang.String">string</a>.<a title="(x$1: Int)Int" id="6972">lastIndexOf</a>(<span title="Int(46)" class="char">'.'</span> : <span title="Int">Int</span>)
+    <span title="Unit" class="keyword">if</span> (<a href="#268967" title="(x$1: Int)Boolean">idx1</a> != <span title="Int(-1)">-</span><span class="int">1</span>) <a href="#268966" title="java.lang.String">string</a> = <a href="#268966" title="java.lang.String">string</a>.<a title="(x$1: Int)java.lang.String" id="7003">substring</a>(<a href="#268967" title="(x$1: Int)Int">idx1</a> + <span title="Int(1)" class="int">1</span>)
+    <span class="keyword">val</span> <a title="Int" id="268968">idx2</a> = <a href="#268966" title="java.lang.String">string</a>.<a title="(x$1: Int)Int" id="6967">indexOf</a>(<span title="Int(36)" class="char">'$'</span>)
+    <span title="Unit" class="keyword">if</span> (<a href="#268968" title="(x$1: Int)Boolean">idx2</a> != <span title="Int(-1)">-</span><span class="int">1</span>) <a href="#268966" title="java.lang.String">string</a> = <a href="#268966" title="java.lang.String">string</a>.<a title="(x$1: Int,x$2: Int)java.lang.String" id="7005">substring</a>(<span title="Int(0)" class="int">0</span>, <a href="#268968" title="Int">idx2</a>)
+    <a href="#268966" title="java.lang.String">string</a>
+  }
+  
+  /** The mapping from the integer used to identifying values to the actual
+    * values. */
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="scala.collection.mutable.Map[Int,Enumeration.this.Value]" id="29021">vmap</a>: <a href="collection/mutable/Map.scala.html#7590" title="scala.collection.mutable.Map[Int,Enumeration.this.Value]">Map</a>[Int, Value] = <span title="scala.collection.mutable.HashMap[Int,Enumeration.this.Value]" class="keyword">new</span> <a href="collection/mutable/HashMap.scala.html#7755" title="scala.collection.mutable.HashMap[Int,Enumeration.this.Value]">HashMap</a>
+
+  /** The cache listing all values of this enumeration. */
+  @transient <span class="keyword">private</span> <span class="keyword">var</span> <a title="Enumeration.this.ValueSet" id="29024">vset</a>: <a href="#29048" title="Enumeration.this.ValueSet">ValueSet</a> = <span title="Null(null)" class="keyword">null</span>
+  @transient <span class="keyword">private</span> <span class="keyword">var</span> <a title="Boolean" id="29027">vsetDefined</a> = <span title="Boolean(false)" class="keyword">false</span>
+
+  /** The values of this enumeration as a set.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Enumeration.this.ValueSet" id="29029">values</a>: <a href="#29048" title="Enumeration.this.ValueSet">ValueSet</a> = {
+    <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#29027" title="=&gt; Boolean">vsetDefined</a>) {
+      <a href="#29024" title="(x$1: Enumeration.this.ValueSet)Unit">vset</a> = <span title="Enumeration.this.ValueSet" class="keyword">new</span> <a href="#29048" title="Enumeration.this.ValueSet">ValueSet</a>(<a href="collection/immutable/BitSet.scala.html#8917" title="object scala.collection.immutable.BitSet">BitSet</a>.<a href="collection/generic/Addable.scala.html#19973" title="(iter: Iterator[Int])scala.collection.immutable.BitSet">empty</a> ++ (<a href="#29021" title="=&gt; scala.collection.mutable.Map[Int,Enumeration.this.Value]">vmap</a>.<a href="collection/Iterator.scala.html#19189" title="(f: (Enumeration.this.Value) =&gt; Int)Iterator[Int]">valuesIterator</a> map (<a href="#269113" title="Enumeration.this.Value">_</a>.<a href="#29096" title="=&gt; Int">id</a>)))
+      <a href="#29027" title="(x$1: Boolean)Unit">vsetDefined</a> = <span title="Boolean(true)" class="keyword">true</span>
+    }
+    <a href="#29024" title="=&gt; Enumeration.this.ValueSet">vset</a>
+  }
+
+  /** The integer to use to identify the next created value. */
+  <span class="keyword">protected</span> <span class="keyword">var</span> <a title="Int" id="29031">nextId</a> = <a href="#29127" title="Int">initial</a>
+  
+  /** The string to use to name the next created value. */
+  <span class="keyword">protected</span> <span class="keyword">var</span> <a title="Iterator[String]" id="29034">nextName</a> = <a href="#29128" title="String*">names</a>.<a href="collection/generic/IterableTemplate.scala.html#17285" title="=&gt; Iterator[String]">iterator</a>
+
+  /** The highest integer amongst those used to identify values in this
+    * enumeration. */
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Int" id="29037">topId</a> = <a href="#29127" title="Int">initial</a>
+
+  /** The highest integer amongst those used to identify values in this
+    * enumeration. */
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; Int" id="29039">maxId</a> = <a href="#29037" title="=&gt; Int">topId</a>
+
+  /** The value of this enumeration with given id `x`
+   */
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(x: Int)Enumeration.this.Value" id="29040">apply</a>(<a title="Int" id="269179">x</a>: <span title="Int">Int</span>): <a href="#29046" title="Enumeration.this.Value">Value</a> = <a href="collection/generic/MapTemplate.scala.html#35283" title="(key: Int)Enumeration.this.Value">vmap</a>(<a href="#269179" title="Int">x</a>)
+
+  /** Returns a Value from this Enumeration whose name matches 
+   * the argument &lt;var&gt;s&lt;/var&gt;.
+   * You must pass a String* set of names to the constructor,
+   * or initialize each Enumeration with Value(String),
+   * for valueOf to work.
+   * @param s an enumeration name
+   * @return &lt;tt&gt;Some(Value)&lt;/tt&gt; if an enumeration's name matches &lt;var&gt;s&lt;/var&gt;, 
+   * else &lt;tt&gt;None&lt;/tt&gt;
+   * Note the change here is intentional. You should know whether
+   * a name is in an Enumeration beforehand. If not, just use find on values.
+   */
+  <span class="keyword">def</span> <a title="(s: String)Enumeration.this.Value" id="29041">withName</a>(<a title="String" id="269195">s</a>: <span title="String">String</span>): <a href="#29046" title="Enumeration.this.Value">Value</a> = <a href="#29029" title="=&gt; Enumeration.this.ValueSet">values</a>.<a href="collection/generic/TraversableTemplate.scala.html#17186" title="(p: (Enumeration.this.Value) =&gt; Boolean)Option[Enumeration.this.Value]">find</a>(<a href="#269199" title="Enumeration.this.Value">_</a>.<span title="(x$1: AnyRef)Boolean">toString</span> == <a href="#269195" title="String">s</a>).<a href="Option.scala.html#19759" title="=&gt; Enumeration.this.Value">get</a>
+
+  /** Creates a fresh value, part of this enumeration. */
+  <span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; Enumeration.this.Value" id="29042">Value</a>: <a href="#29046" title="Enumeration.this.Value">Value</a> = <a href="#29043" title="(i: Int)Enumeration.this.Value">Value</a>(<a href="#29031" title="=&gt; Int">nextId</a>)      
+  
+  /** Creates a fresh value, part of this enumeration, identified by the integer
+   *  &lt;code&gt;i&lt;/code&gt;.
+   *
+   *  @param i An integer that identifies this value at run-time. It must be
+   *           unique amongst all values of the enumeration.
+   *  @return  ..
+   */
+  <span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">def</span> <a title="(i: Int)Enumeration.this.Value" id="29043">Value</a>(<a title="Int" id="29091">i</a>: <span title="Int">Int</span>): <a href="#29046" title="Enumeration.this.Value">Value</a> = 
+    <a href="#29045" title="(i: Int,name: String)Enumeration.this.Value">Value</a>(<a href="#29091" title="Int">i</a>, <span title="String" class="keyword">if</span> (<a href="#29034" title="=&gt; Iterator[String]">nextName</a>.<a href="collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>) <a href="#29034" title="=&gt; Iterator[String]">nextName</a>.<a href="collection/Iterator.scala.html#19185" title="()String">next</a> <span class="keyword">else</span> <span title="Null(null)" class="keyword">null</span>)
+  
+  /** Creates a fresh value, part of this enumeration, called &lt;code&gt;name&lt;/code&gt;.
+   *
+   *  @param name A human-readable name for that value.
+   */
+  <span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">def</span> <a title="(name: String)Enumeration.this.Value" id="29044">Value</a>(<a title="String" id="29089">name</a>: <span title="String">String</span>): <a href="#29046" title="Enumeration.this.Value">Value</a> = <a href="#29045" title="(i: Int,name: String)Enumeration.this.Value">Value</a>(<a href="#29031" title="=&gt; Int">nextId</a>, <a href="#29089" title="String">name</a>)
+  
+  /** Creates a fresh value, part of this enumeration, called &lt;code&gt;name&lt;/code&gt;
+   *  and identified by the integer &lt;code&gt;i&lt;/code&gt;.
+   *
+   * @param i    An integer that identifies this value at run-time. It must be
+   *             unique amongst all values of the enumeration.
+   * @param name A human-readable name for that value.
+   * @return     ..
+   */
+  <span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">def</span> <a title="(i: Int,name: String)Enumeration.this.Value" id="29045">Value</a>(<a title="Int" id="29086">i</a>: <span title="Int">Int</span>, <a title="String" id="29087">name</a>: <span title="String">String</span>): <a href="#29046" title="Enumeration.this.Value">Value</a> = <span title="Enumeration.this.Val" class="keyword">new</span> <a href="#29047" title="Enumeration.this.Val">Val</a>(<a href="#29086" title="Int">i</a>, <a href="#29087" title="String">name</a>)
+  
+  /** The type of the enumerated values. */
+  @serializable
+  @SerialVersionUID(<span class="long">7091335633555234129L</span>)
+  <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class Value extends java.lang.Object with Ordered[Enumeration.this.Value] with ScalaObject" id="29046">Value</a> <a href="ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="Ordered.scala.html#1218" title="Ordered[Enumeration.this.Value]">Ordered</a>[Value] {
+    /** the id and bit location of this enumeration value */
+    <span class="keyword">def</span> <a title="=&gt; Int" id="29096">id</a>: <span title="Int">Int</span>
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="(that: Enumeration.this.Value)Int" id="29097">compare</a>(<a title="Enumeration.this.Value" id="269283">that</a>: <a href="#29046" title="Enumeration.this.Value">Value</a>): <span title="Int">Int</span> = <a href="#29046" title="Value.this.type" class="keyword">this</a>.<a href="#29096" title="(x$1: Int)Int" id="2964">id</a> - <a href="#269283" title="Enumeration.this.Value">that</a>.<a href="#29096" title="=&gt; Int">id</a>
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="(other: Any)Boolean" id="29098">equals</a>(<a title="Any" id="269304">other</a>: <a title="Any" id="47">Any</a>): <span title="Boolean">Boolean</span> = 
+      <a href="#269304" title="Any">other</a> <span title="Boolean" class="keyword">match</span> {
+        <span title="Boolean" class="keyword">case</span> <a title="Enumeration.this.Value" id="269306">that</a>: <a href="#29046" title="Enumeration.this.Value">Value</a> =&gt; <a href="#29097" title="(that: Enumeration.this.Value)Int">compare</a><a title="(x$1: Int)Boolean" id="2950">(</a><a href="#269306" title="Enumeration.this.Value">that</a>) == <span title="Int(0)" class="int">0</span>
+        <span title="Boolean(false)" class="keyword">case</span> _ =&gt; <span title="Boolean(false)" class="keyword">false</span>
+      } 
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Int" id="29099">hashCode</a>: <span title="Int">Int</span> = <a href="#29096" title="=&gt; Int">id</a>.<a title="()Int" id="3616">hashCode</a>
+
+    /** this enumeration value as an &lt;code&gt;Int&lt;/code&gt; bit mask.
+     *  @throws IllegalArgumentException if &lt;code&gt;id&lt;/code&gt; is greater than 31
+     */
+    @deprecated <span class="keyword">def</span> <a title="=&gt; Int" id="29100">mask32</a>: <span title="Int">Int</span> = {
+      <span title="Unit" class="keyword">if</span> (<a href="#29096" title="(x$1: Int)Boolean">id</a> &gt;= <span title="Int(32)" class="int">32</span>) <span title="Nothing" class="keyword">throw</span> <span title="java.lang.IllegalArgumentException" class="keyword">new</span> <a href="Predef.scala.html#16170" title="java.lang.IllegalArgumentException">IllegalArgumentException</a>
+      <a title="(x$1: Int)Int" id="2851" class="int">1</a>  &lt;&lt; <a href="#29096" title="=&gt; Int">id</a>
+    }
+    /** this enumeration value as an &lt;code&gt;Long&lt;/code&gt; bit mask. 
+     *  @throws IllegalArgumentException if &lt;code&gt;id&lt;/code&gt; is greater than 63
+     */
+    @deprecated <span class="keyword">def</span> <a title="=&gt; Long" id="29101">mask64</a>: <a title="Long" id="2182">Long</a> = {
+      <span title="Unit" class="keyword">if</span> (<a href="#29096" title="(x$1: Int)Boolean">id</a> &gt;= <span title="Int(64)" class="int">64</span>) <span title="Nothing" class="keyword">throw</span> <span title="java.lang.IllegalArgumentException" class="keyword">new</span> <a href="Predef.scala.html#16170" title="java.lang.IllegalArgumentException">IllegalArgumentException</a>
+      <a title="(x$1: Int)Long" id="3059" class="long">1L</a> &lt;&lt; <a href="#29096" title="=&gt; Int">id</a>
+    }
+  }
+  
+  /** A class implementing the &lt;a href=&quot;Enumeration.Value.html&quot;
+   *  target=&quot;contentFrame&quot;&gt;&lt;code&gt;Value&lt;/code&gt;&lt;/a&gt; type. This class can be
+   *  overriden to change the enumeration's naming and integer identification
+   *  behaviour.
+   */
+  @serializable
+  @SerialVersionUID(<span class="int">0</span> - <span class="long">3501153230598116017L</span>)
+  <span class="keyword">protected</span> <span class="keyword">class</span> <a title="class Val extends Enumeration.this.Value with ScalaObject" id="29047">Val</a><a href="ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="Int" id="269276">i</a>: <span title="Int">Int</span>, <a title="String" id="269277">name</a>: <span title="String">String</span>) <span class="keyword">extends</span> <a href="#29046" title="Enumeration.this.Value">Value</a> {
+    <span class="keyword">def</span> <a title="(i: Int)Enumeration.this.Val" id="269258" class="keyword">this</a>(<a title="Int" id="269271">i</a>: <span title="Int">Int</span>) =
+      <a href="#29047" title="Val.this.type" class="keyword">this</a>(<a href="#269271" title="Int">i</a>, <span title="String" class="keyword">if</span> (<a href="#29034" title="=&gt; Iterator[String]">nextName</a>.<a href="collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>) <a href="#29034" title="=&gt; Iterator[String]">nextName</a>.<a href="collection/Iterator.scala.html#19185" title="()String">next</a> <span class="keyword">else</span> <a href="#269271" title="Int">i</a>.<span title="()java.lang.String">toString</span>())
+    <span class="keyword">def</span> <a title="(name: String)Enumeration.this.Val" id="269259" class="keyword">this</a>(<a title="String" id="269266">name</a>: <span title="String">String</span>) = <a href="#29047" title="Val.this.type" class="keyword">this</a>(<a href="#29031" title="=&gt; Int">nextId</a>, <a href="#269266" title="String">name</a>)
+    <span class="keyword">def</span> <a title="()Enumeration.this.Val" id="269260" class="keyword">this</a>() =
+      <a href="#29047" title="Val.this.type" class="keyword">this</a>(<a href="#29031" title="=&gt; Int">nextId</a>, <span title="String" class="keyword">if</span> (<a href="#29034" title="=&gt; Iterator[String]">nextName</a>.<a href="collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>) <a href="#29034" title="=&gt; Iterator[String]">nextName</a>.<a href="collection/Iterator.scala.html#19185" title="()String">next</a> <span class="keyword">else</span> <a href="#29031" title="=&gt; Int">nextId</a>.<span title="()java.lang.String">toString</span>())
+    <a href="Predef.scala.html#16213" title="(assertion: Boolean)Unit">assert</a>(<span title="=&gt; Boolean">!</span><a href="#29021" title="=&gt; scala.collection.mutable.Map[Int,Enumeration.this.Value]">vmap</a>.<a href="collection/generic/MapTemplate.scala.html#35285" title="(key: Int)Boolean">isDefinedAt</a>(<a href="#269276" title="Int">i</a>))
+    <a href="collection/generic/MutableMapTemplate.scala.html#57772" title="(key: Int,value: Enumeration.this.Value)Unit">vmap</a>(<a href="#269276" title="Int">i</a>) = <a href="#29047" title="Enumeration.this.Val" class="keyword">this</a>
+    <a href="#29027" title="(x$1: Boolean)Unit">vsetDefined</a> = <span title="Boolean(false)" class="keyword">false</span>
+    <a href="#29031" title="(x$1: Int)Unit">nextId</a> = <a href="#269276" title="(x$1: Int)Int">i</a> + <span title="Int(1)" class="int">1</span>
+    <span title="Unit" class="keyword">if</span> (<a href="#29031" title="(x$1: Int)Boolean" id="2958">nextId</a> &gt; <a href="#29037" title="=&gt; Int">topId</a>) <a href="#29037" title="(x$1: Int)Unit">topId</a> = <a href="#29031" title="=&gt; Int">nextId</a>
+    <span class="keyword">def</span> <a title="=&gt; Int" id="269261">id</a> = <a href="#269276" title="Int">i</a>
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="()java.lang.String" id="269262">toString</a>() =
+      <span title="java.lang.String" class="keyword">if</span> (<a href="#269277" title="(x$1: AnyRef)Boolean" id="6531">name</a> eq <span title="Null(null)" class="keyword">null</span>) <a href="runtime/StringAdd.scala.html#18936" title="(other: String)java.lang.String">Enumeration</a>.<span class="keyword">this</span> <span title="(x$1: Any)java.lang.String">+</span> <span title="java.lang.String(&quot;(&quot;)" class="string">&quot;(&quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#269276" title="Int">i</a> + <span title="java.lang.String(&quot;)&quot;)" class="string">&quot;)&quot;</span>
+      <span class="keyword">else</span> <a href="#269277" title="String">name</a>
+    <span class="keyword">private</span> <span class="keyword">def</span> <a title="()AnyRef" id="269263">readResolve</a>(): <a title="AnyRef" id="1756">AnyRef</a> =
+      <span title="AnyRef" class="keyword">if</span> (<a href="#29021" title="(x$1: AnyRef)Boolean" id="6533">vmap</a> ne <span title="Null(null)" class="keyword">null</span>) <a href="collection/generic/MapTemplate.scala.html#35283" title="(key: Int)Enumeration.this.Value">vmap</a>(<a href="#269276" title="Int">i</a>)
+      <span class="keyword">else</span> <a href="#29047" title="Enumeration.this.Val" class="keyword">this</a>
+  }
+
+  /** A class for sets of values
+   *  Iterating through this set will yield values in increasing order of their ids.
+   *  @param   ids   The set of ids of values, organized as a BitSet. 
+   */
+  <span class="keyword">class</span> <a title="class ValueSet extends java.lang.Object with scala.collection.immutable.Set[Enumeration.this.Value] with scala.collection.generic.SetTemplate[Enumeration.this.Value,Enumeration.this.ValueSet] with ScalaObject" id="29048">ValueSet</a> <a href="ScalaObject.scala.html#957" title="ScalaObject" class="keyword">private</a>[Enumeration] (<span class="keyword">val</span> <a title="scala.collection.immutable.BitSet" id="269054">ids</a>: <a href="collection/immutable/BitSet.scala.html#8916" title="scala.collection.immutable.BitSet">BitSet</a>) <span class="keyword">extends</span> <a href="collection/immutable/Set.scala.html#9171" title="scala.collection.immutable.Set[Enumeration.this.Value]">Set</a>[Value] <span class="keyword">with</span> <a href="collection/generic/SetTemplate.scala.html#10160" title="scala.collection.generic.SetTemplate[Enumeration.this.Value,Enumeration.this.ValueSet]">SetTemplate</a>[Value, ValueSet] {
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Enumeration.this.ValueSet" id="268928">empty</a> = <a href="#29049" title="object Enumeration.this.ValueSet">ValueSet</a>.<a href="#269530" title="=&gt; Enumeration.this.ValueSet">empty</a>
+    <span class="keyword">def</span> <a title="(v: Enumeration.this.Value)Boolean" id="268929">contains</a>(<a title="Enumeration.this.Value" id="269537">v</a>: <a href="#29046" title="Enumeration.this.Value">Value</a>) = <a href="collection/generic/BitSetTemplate.scala.html#56032" title="(elem: Int)Boolean">ids</a> contains (<a href="#269537" title="Enumeration.this.Value">v</a>.<a href="#29096" title="=&gt; Int">id</a>)
+    <span class="keyword">def</span> <a title="(value: Enumeration.this.Value)Enumeration.this.ValueSet" id="268930">+</a> (<a title="Enumeration.this.Value" id="269546">value</a>: <a href="#29046" title="Enumeration.this.Value">Value</a>) = <span title="Enumeration.this.ValueSet" class="keyword">new</span> <a href="#29048" title="Enumeration.this.ValueSet">ValueSet</a>(<a href="collection/immutable/BitSet.scala.html#56077" title="(elem: Int)scala.collection.immutable.BitSet">ids</a> + <a href="#269546" title="Enumeration.this.Value">value</a>.<a href="#29096" title="=&gt; Int">id</a>)
+    <span class="keyword">def</span> <a title="(value: Enumeration.this.Value)Enumeration.this.ValueSet" id="268931">-</a> (<a title="Enumeration.this.Value" id="269601">value</a>: <a href="#29046" title="Enumeration.this.Value">Value</a>) = <span title="Enumeration.this.ValueSet" class="keyword">new</span> <a href="#29048" title="Enumeration.this.ValueSet">ValueSet</a>(<a href="collection/immutable/BitSet.scala.html#56078" title="(elem: Int)scala.collection.immutable.BitSet">ids</a> - <a href="#269601" title="Enumeration.this.Value">value</a>.<a href="#29096" title="=&gt; Int">id</a>)
+    <span class="keyword">def</span> <a title="=&gt; Iterator[Enumeration.this.Value]" id="268932">iterator</a> = <a href="#269054" title="=&gt; scala.collection.immutable.BitSet">ids</a>.<a href="collection/Iterator.scala.html#19189" title="(f: (Int) =&gt; Enumeration.this.Value)Iterator[Enumeration.this.Value]">iterator</a> map <a href="#975" title="Enumeration.this.type">Enumeration</a>.<span class="keyword">this</span>.<a href="#29040" title="(x: Int)Enumeration.this.Value">apply</a>
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="268933">stringPrefix</a> = <a href="runtime/StringAdd.scala.html#18936" title="(other: String)java.lang.String">Enumeration</a>.<span class="keyword">this</span> + <span title="java.lang.String(&quot;.ValueSet&quot;)" class="string">&quot;.ValueSet&quot;</span>
+  }
+
+  /** A factory object for value sets */
+  <span class="keyword">object</span> <a title="object Enumeration.this.ValueSet" id="29049">ValueSet</a> <a href="ScalaObject.scala.html#957" title="ScalaObject">{</a>
+    /** The empty value set */
+    <span class="keyword">val</span> <a title="Enumeration.this.ValueSet" id="269530">empty</a> = <span title="Enumeration.this.ValueSet" class="keyword">new</span> <a href="#29048" title="Enumeration.this.ValueSet">ValueSet</a>(<a href="collection/immutable/BitSet.scala.html#8917" title="object scala.collection.immutable.BitSet">BitSet</a>.<a href="collection/immutable/BitSet.scala.html#56064" title="=&gt; scala.collection.immutable.BitSet">empty</a>)
+    /** A value set consisting of given elements */ 
+    <span class="keyword">def</span> <a title="(elems: Enumeration.this.Value*)Enumeration.this.ValueSet" id="269532">apply</a>(<a title="Enumeration.this.Value*" id="269689">elems</a>: <span title="Enumeration.this.Value*">Value</span>*): <a href="#29048" title="Enumeration.this.ValueSet">ValueSet</a> = {
+      <span class="keyword">var</span> <a title="Enumeration.this.ValueSet" id="269691">s</a> = <a href="#269530" title="=&gt; Enumeration.this.ValueSet">empty</a>
+      <span class="keyword">for</span> (<a title="Enumeration.this.Value" id="269702">elem</a> &lt;- <a href="collection/generic/IterableTemplate.scala.html#17287" title="(f: (Enumeration.this.Value) =&gt; Unit)Unit">elems</a>) <a href="#269691" title="Enumeration.this.ValueSet">s</a> = <a href="#268930" title="(value: Enumeration.this.Value)Enumeration.this.ValueSet">s</a> + <a href="#269702" title="Enumeration.this.Value">elem</a> // !!! change to s += elem --&gt; error
+      <a href="#269691" title="Enumeration.this.ValueSet">s</a> 
+    }
+    /** A builder object for value sets */
+    <span class="keyword">def</span> <a title="=&gt; scala.collection.generic.Builder[Enumeration.this.Value,Enumeration.this.ValueSet]" id="269533">newBuilder</a>: <a href="collection/generic/Builder.scala.html#10028" title="scala.collection.generic.Builder[Enumeration.this.Value,Enumeration.this.ValueSet]">Builder</a>[Value, ValueSet] = <span title="scala.collection.generic.AddingBuilder[Enumeration.this.Value,Enumeration.this.ValueSet]" class="keyword">new</span> <a href="collection/generic/AddingBuilder.scala.html#10838" title="scala.collection.generic.AddingBuilder[Enumeration.this.Value,Enumeration.this.ValueSet]">AddingBuilder</a>(<a href="#269530" title="=&gt; Enumeration.this.ValueSet">empty</a>)
+    /** The implicit builder for value sets */
+    <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="=&gt; scala.collection.generic.BuilderFactory[Enumeration.this.Value,Enumeration.this.ValueSet,Enumeration.this.ValueSet]" id="269534">builderFactory</a>: <a href="collection/generic/BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[Enumeration.this.Value,Enumeration.this.ValueSet,Enumeration.this.ValueSet]">BuilderFactory</a>[Value, ValueSet, ValueSet] = <a href="#269740" title="java.lang.Object with scala.collection.generic.BuilderFactory[Enumeration.this.Value,Enumeration.this.ValueSet,Enumeration.this.ValueSet]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with scala.collection.generic.BuilderFactory[Enumeration.this.Value,Enumeration.this.ValueSet,Enumeration.this.ValueSet]" id="269740">BuilderFactory</a>[Value, ValueSet, ValueSet] { <span class="keyword">def</span> <a title="(from: Enumeration.this.ValueSet)scala.collection.generic.Builder[Enumeration.this.Value,Enumeration.this.ValueSet]" id="269742">apply</a>(<a title="Enumeration.this.ValueSet" id="269747">from</a>: <a href="#29048" title="Enumeration.this.ValueSet">ValueSet</a>) = <a href="#269533" title="=&gt; scala.collection.generic.Builder[Enumeration.this.Value,Enumeration.this.ValueSet]">newBuilder</a> }
+  }
+  
+  /** The name of this enumeration. */
+  @deprecated(<span class="string">&quot;use toString instead&quot;</span>) <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="29051">name</a> = <a href="#29020" title="()java.lang.String">toString</a>
+
+  @deprecated(<span class="string">&quot;use withName instead&quot;</span>)
+  <span class="keyword">def</span> <a title="(s: String)Option[Enumeration.this.Value]" id="29052">valueOf</a>(<a title="String" id="269760">s</a>: <span title="String">String</span>) = <a href="#29029" title="=&gt; Enumeration.this.ValueSet">values</a>.<a href="collection/generic/TraversableTemplate.scala.html#17186" title="(p: (Enumeration.this.Value) =&gt; Boolean)Option[Enumeration.this.Value]">find</a>(<a href="#269765" title="Enumeration.this.Value">_</a>.<span title="(x$1: AnyRef)Boolean">toString</span> == <a href="#269760" title="String">s</a>)
+
+  /** A new iterator over all values of this enumeration. */
+  @deprecated(<span class="string">&quot;use values.iterator instead&quot;</span>)
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; Iterator[Enumeration.this.Value]" id="29053">iterator</a>: <a href="collection/Iterator.scala.html#4274" title="Iterator[Enumeration.this.Value]">Iterator</a>[Value] = <a href="#29029" title="=&gt; Enumeration.this.ValueSet">values</a>.<a href="#268932" title="=&gt; Iterator[Enumeration.this.Value]">iterator</a>
+  
+  /** Apply a function f to all values of this enumeration. */
+  @deprecated(<span class="string">&quot;use values.foreach instead&quot;</span>)
+  <span class="keyword">def</span> <a title="(f: (Enumeration.this.Value) =&gt; Unit)Unit" id="29054">foreach</a>(<a title="(Enumeration.this.Value) =&gt; Unit" id="269780">f</a>: Value =&gt; Unit): <a title="Unit" id="1948">Unit</a> = <a href="#975" title="Enumeration.this.type" class="keyword">this</a>.<a href="collection/Iterator.scala.html#19219" title="(f: (Enumeration.this.Value) =&gt; Unit)Unit">iterator</a> foreach <a href="#269780" title="(Enumeration.this.Value) =&gt; Unit">f</a>
+  
+  /** Apply a predicate p to all values of this enumeration and return
+    * true, iff the predicate yields true for all values. 
+   */
+  @deprecated(<span class="string">&quot;use values.forall instead&quot;</span>)
+  <span class="keyword">def</span> <a title="(p: (Enumeration.this.Value) =&gt; Boolean)Boolean" id="29055">forall</a>(<a title="(Enumeration.this.Value) =&gt; Boolean" id="269788">p</a>: Value =&gt; Boolean): <span title="Boolean">Boolean</span> = <a href="#975" title="Enumeration.this.type" class="keyword">this</a>.<a href="collection/Iterator.scala.html#19222" title="(p: (Enumeration.this.Value) =&gt; Boolean)Boolean">iterator</a> forall <a href="#269788" title="(Enumeration.this.Value) =&gt; Boolean">p</a>
+  
+  /** Apply a predicate p to all values of this enumeration and return
+    * true, iff there is at least one value for which p yields true.
+    */
+  @deprecated(<span class="string">&quot;use values.exists instead&quot;</span>)
+  <span class="keyword">def</span> <a title="(p: (Enumeration.this.Value) =&gt; Boolean)Boolean" id="29056">exists</a>(<a title="(Enumeration.this.Value) =&gt; Boolean" id="269793">p</a>: Value =&gt; Boolean): <span title="Boolean">Boolean</span> = <a href="#975" title="Enumeration.this.type" class="keyword">this</a>.<a href="collection/Iterator.scala.html#19223" title="(p: (Enumeration.this.Value) =&gt; Boolean)Boolean">iterator</a> exists <a href="#269793" title="(Enumeration.this.Value) =&gt; Boolean">p</a>
+  
+  /** Returns an iterator resulting from applying the given function f to each
+    * value of this enumeration.
+    */
+  @deprecated(<span class="string">&quot;use values.map instead&quot;</span>)
+  <span class="keyword">def</span> <a title="[B](f: (Enumeration.this.Value) =&gt; B)Iterator[B]" id="29057">map</a>[<a title="&gt;: Nothing &lt;: Any" id="29059">B</a>](<a title="(Enumeration.this.Value) =&gt; B" id="269798">f</a>: Value =&gt; B): <a href="collection/Iterator.scala.html#4274" title="Iterator[B]">Iterator</a>[B] = <a href="#975" title="Enumeration.this.type" class="keyword">this</a>.<a href="collection/Iterator.scala.html#19189" title="(f: (Enumeration.this.Value) =&gt; B)Iterator[B]">iterator</a> map <a href="#269798" title="(Enumeration.this.Value) =&gt; B">f</a>
+  
+  /** Applies the given function f to each value of this enumeration, then
+    * concatenates the results. 
+    */
+  @deprecated(<span class="string">&quot;use values.flatMap instead&quot;</span>)
+  <span class="keyword">def</span> <a title="[B](f: (Enumeration.this.Value) =&gt; Iterator[B])Iterator[B]" id="29060">flatMap</a>[<a title="&gt;: Nothing &lt;: Any" id="29062">B</a>](<a title="(Enumeration.this.Value) =&gt; Iterator[B]" id="269807">f</a>: Value =&gt; Iterator[B]): <a href="collection/Iterator.scala.html#4274" title="Iterator[B]">Iterator</a>[B] = <a href="#975" title="Enumeration.this.type" class="keyword">this</a>.<a href="collection/Iterator.scala.html#19195" title="(f: (Enumeration.this.Value) =&gt; Iterator[B])Iterator[B]">iterator</a> flatMap <a href="#269807" title="(Enumeration.this.Value) =&gt; Iterator[B]">f</a>
+    
+  /** Returns all values of this enumeration that satisfy the predicate p.
+    * The order of values is preserved. 
+    */
+  @deprecated(<span class="string">&quot;use values.filter instead&quot;</span>)
+  <span class="keyword">def</span> <a title="(p: (Enumeration.this.Value) =&gt; Boolean)Iterator[Enumeration.this.Value]" id="29063">filter</a>(<a title="(Enumeration.this.Value) =&gt; Boolean" id="269816">p</a>: Value =&gt; Boolean): <a href="collection/Iterator.scala.html#4274" title="Iterator[Enumeration.this.Value]">Iterator</a>[Value] = <a href="#975" title="Enumeration.this.type" class="keyword">this</a>.<a href="collection/Iterator.scala.html#19198" title="(p: (Enumeration.this.Value) =&gt; Boolean)Iterator[Enumeration.this.Value]">iterator</a> filter <a href="#269816" title="(Enumeration.this.Value) =&gt; Boolean">p</a>
+}
+
+        </pre>
+    </body>
+</html>

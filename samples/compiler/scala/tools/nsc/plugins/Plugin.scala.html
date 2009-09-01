@@ -1,19 +1,22 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
         <title>scala/tools/nsc/plugins/Plugin.scala</title>
+        <script type="text/javascript" src="../../../../jquery-all.js"></script>
         <script type="text/javascript" src="../../../../linked.js"></script>
         <link rel="stylesheet" type="text/css" href="../../../../style.css" title="Style">
     </head>
-    <body onload="initializeLinked()">
+    <body>
         <pre>
-<span class="comment">/* NSC -- new Scala compiler
+/* NSC -- new Scala compiler
  * Copyright 2007-2009 LAMP/EPFL
  * @author Lex Spoon
- */</span>
-<span class="comment">// $Id: Plugin.scala 17274 2009-03-10 11:39:04Z michelou $</span>
+ */
+// $Id: Plugin.scala 18387 2009-07-24 15:28:37Z odersky $
 
-<span class="keyword">package</span> scala.tools.nsc.plugins
+<span class="keyword">package</span> scala.tools.nsc
+<span class="keyword">package</span> plugins
 
 <span class="keyword">import</span> java.io.File
 <span class="keyword">import</span> java.net.URLClassLoader
@@ -24,7 +27,7 @@
 <span class="keyword">import</span> mutable.ListBuffer
 <span class="keyword">import</span> scala.xml.XML
 
-<span class="comment">/** &lt;p&gt;
+/** &lt;p&gt;
  *    Information about a plugin loaded from a jar file.
  *  &lt;/p&gt;
  *  &lt;p&gt;
@@ -36,127 +39,129 @@
  *
  *  @author Lex Spoon
  *  @version 1.0, 2007-5-21
- */</span>
-<span class="keyword">abstract</span> <span class="keyword">class</span> <span class="typed"><span class="type">class Plugin extends java.lang.Object with ScalaObject</span><a id="17029">Plugin</a></span> {
-  <span class="comment">/** The name of this plugin */</span>
-  <span class="keyword">val</span> <span class="typed"><span class="type">=&gt; String</span><a id="95603">name</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>
+ */
+<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class Plugin extends java.lang.Object with ScalaObject" id="21932">Plugin</a> <span title="ScalaObject">{</span>
+  /** The name of this plugin */
+  <span class="keyword">val</span> <a title="=&gt; String" id="557757">name</a>: <span title="String">String</span>
 
-  <span class="comment">/** The components that this phase defines */</span>
-  <span class="keyword">val</span> <span class="typed"><span class="type">=&gt; List[scala.tools.nsc.plugins.PluginComponent]</span><a id="95604">components</a></span>: <span class="typed"><span class="type">List[scala.tools.nsc.plugins.PluginComponent]</span><a id="526">List</a></span>[PluginComponent]
+  /** The components that this phase defines */
+  <span class="keyword">val</span> <a title="=&gt; List[scala.tools.nsc.plugins.PluginComponent]" id="557758">components</a>: <span title="List[scala.tools.nsc.plugins.PluginComponent]">List</span>[PluginComponent]
 
-  <span class="comment">/** A one-line description of the plugin */</span>
-  <span class="keyword">val</span> <span class="typed"><span class="type">=&gt; String</span><a id="95605">description</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>
+  /** A one-line description of the plugin */
+  <span class="keyword">val</span> <a title="=&gt; String" id="557759">description</a>: <span title="String">String</span>
 
-  <span class="comment">/** The compiler that this plugin uses.  This is normally equated
-   *  to a constructor parameter in the concrete subclass. */</span>
-  <span class="keyword">val</span> <span class="typed"><span class="type">=&gt; scala.tools.nsc.Global</span><a id="95606">global</a></span>: <span class="typed"><span class="type">scala.tools.nsc.Global</span><a href="../Global.scala.html#6489">Global</a></span>
+  /** The compiler that this plugin uses.  This is normally equated
+   *  to a constructor parameter in the concrete subclass. */
+  <span class="keyword">val</span> <a title="=&gt; scala.tools.nsc.Global" id="557760">global</a>: <a href="../Global.scala.html#8460" title="scala.tools.nsc.Global">Global</a>
 
-  <span class="comment">/** Handle any plugin-specific options.  The -P:plugname: part
-   *  will not be present. */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(List[String],(String) =&gt; Unit)Unit</span><a id="95607">processOptions</a></span>(<span class="typed"><span class="type">List[String]</span><a id="95611">options</a></span>: <span class="typed"><span class="type">List[String]</span><a id="526">List</a></span>[String], <span class="typed"><span class="type">(String) =&gt; Unit</span><a id="95612">error</a></span>: String =&gt; Unit) {
-    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2747">!</a></span><span class="typed"><span class="type">List[String]</span><a href="#95611">options</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a id="21645">isEmpty</a></span>)
-      <span class="typed"><span class="type">(String)Unit</span><a href="#95612" id="21757">error</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;Error: &quot;)</span><span class="string">&quot;Error: &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">=&gt; String</span><a href="#95603">name</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot; has no options&quot;)</span><span class="string">&quot; has no options&quot;</span></span>)
+  /** Handle any plugin-specific options.  The -P:plugname: part
+   *  will not be present. */
+  <span class="keyword">def</span> <a title="(options: List[String],error: (String) =&gt; Unit)Unit" id="557761">processOptions</a>(<a title="List[String]" id="557767">options</a>: <span title="List[String]">List</span>[String], <a title="(String) =&gt; Unit" id="557768">error</a>: String =&gt; Unit) {
+    <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#557767" title="List[String]">options</a>.<a title="=&gt; Boolean" id="25434">isEmpty</a>)
+      <a href="#557768" title="(v1: String)Unit" id="25529">error</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;Error: &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#557757" title="=&gt; String">name</a> + <span title="java.lang.String(&quot; has no options&quot;)" class="string">&quot; has no options&quot;</span>)
   }
 
-  <span class="comment">/** A description of this plugin's options, suitable as a response
+  /** A description of this plugin's options, suitable as a response
    *  to the -help command-line option.  Conventionally, the
    *  options should be listed with the &lt;code&gt;-P:plugname:&lt;/code&gt;
    *  part included.
-   */</span>
-  <span class="keyword">val</span> <span class="typed"><span class="type">Option[String]</span><span id="95609"><a id="95608">optionsHelp</a></span></span>: <span class="typed"><span class="type">Option[String]</span><a id="934">Option</a></span>[String] = <span class="typed"><span class="type">object None</span><a id="536">None</a></span>
+   */
+  <span class="keyword">val</span> <a title="Option[String]" id="557762">optionsHelp</a>: <span title="Option[String]">Option</span>[String] = <span title="object None">None</span>
 }
 
-<span class="comment">/** ...
+/** ...
  *
  *  @author Lex Spoon
  *  @version 1.0, 2007-5-21
- */</span>
-<span class="keyword">object</span> <span class="typed"><span class="type">object scala.tools.nsc.plugins.Plugin</span><a id="17030">Plugin</a></span> {
-  <span class="comment">/** Create a class loader with the specified file plus
+ */
+<span class="keyword">object</span> <a title="object scala.tools.nsc.plugins.Plugin" id="21933">Plugin</a> <span title="ScalaObject">{</span>
+  /** Create a class loader with the specified file plus
    *  the loader that loaded the Scala compiler.
-   */</span>
-  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Seq[java.io.File])java.lang.ClassLoader</span><a id="95614">loaderFor</a></span>(<span class="typed"><span class="type">Seq[java.io.File]</span><a id="95621">jarfiles</a></span>: <span class="typed"><span class="type">Seq[java.io.File]</span><a id="763">Seq</a></span>[File]): <span class="typed"><span class="type">java.lang.ClassLoader</span><a id="1726">ClassLoader</a></span> = {
-    <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.ClassLoader</span><a id="95622">compilerLoader</a></span> = <span class="typed"><span class="type">java.lang.Class[scala.tools.nsc.plugins.Plugin]</span><span >classOf</span></span>[Plugin].<span class="typed"><span class="type">()java.lang.ClassLoader</span><a id="3949">getClassLoader</a></span>
-    <span class="keyword">val</span> <span class="typed"><span class="type">Array[java.net.URL]</span><a id="95623">jarurls</a></span> = <span class="typed"><span class="type">Seq[java.io.File]</span><a href="#95621">jarfiles</a></span>.<span class="typed"><span class="type">((java.io.File) =&gt; java.net.URL)Seq[java.net.URL]</span><a id="21661">map</a></span>(<span class="typed"><span class="type">java.io.File</span><a href="#95626">_</a></span>.<span class="typed"><span class="type">()java.net.URL</span><a id="40693">toURL</a></span>).<span class="typed"><span class="type">Array[java.net.URL]</span><a id="21675">toArray</a></span>
-    <span class="typed"><span class="type">java.net.URLClassLoader</span><span class="keyword">new</span></span> <span class="typed"><span class="type">java.net.URLClassLoader</span><a id="4412">URLClassLoader</a></span>(<span class="typed"><span class="type">Array[java.net.URL]</span><a href="#95623">jarurls</a></span>, <span class="typed"><span class="type">java.lang.ClassLoader</span><a href="#95622">compilerLoader</a></span>)
+   */
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(jarfiles: Seq[java.io.File])java.lang.ClassLoader" id="557778">loaderFor</a>(<a title="Seq[java.io.File]" id="557787">jarfiles</a>: <a title="Seq[java.io.File]" id="4351">Seq</a>[File]): <span title="java.lang.ClassLoader">ClassLoader</span> = {
+    <span class="keyword">val</span> <a title="java.lang.ClassLoader" id="557789">compilerLoader</a> = classOf<span title="java.lang.Class[scala.tools.nsc.plugins.Plugin]">[</span>Plugin].<a title="()java.lang.ClassLoader" id="4110">getClassLoader</a>
+    <span class="keyword">val</span> <a title="Array[java.net.URL]" id="557790">jarurls</a> = <a href="#557787" title="Seq[java.io.File]">jarfiles</a>.<span title="(f: (java.io.File) =&gt; java.net.URL)(implicit bf: scala.collection.generic.BuilderFactory[java.net.URL,Sequence[java.net.URL],Sequence[java.io.File]])Sequence[java.net.URL]">map</span><a title="scala.collection.generic.BuilderFactory[java.net.URL,Sequence[java.net.URL],Sequence#Coll]" id="4352">(</a><a href="#557801" title="java.io.File">_</a>.<a title="()java.net.URL" id="35188">toURL</a>).<a title="(implicit evidence$1: scala.reflect.ClassManifest[java.net.URL])Array[java.net.URL]" id="27330">toArray</a>
+    <span title="java.net.URLClassLoader" class="keyword">new</span> <a title="java.net.URLClassLoader" id="4941">URLClassLoader</a>(<a href="#557790" title="Array[java.net.URL]">jarurls</a>, <a href="#557789" title="java.lang.ClassLoader">compilerLoader</a>)
   }
 
-  <span class="comment">/** Try to load a plugin description from the specified
-   *  file, returning None if it does not work. */</span>
-  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">(java.io.File)Option[scala.tools.nsc.plugins.PluginDescription]</span><a id="95615">loadDescription</a></span>(<span class="typed"><span class="type">java.io.File</span><a id="95678">jarfile</a></span>: <span class="typed"><span class="type">java.io.File</span><a id="3669">File</a></span>): <span class="typed"><span class="type">Option[scala.tools.nsc.plugins.PluginDescription]</span><a id="934">Option</a></span>[PluginDescription] = {
-    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2747">!</a></span><span class="typed"><span class="type">java.io.File</span><a href="#95678">jarfile</a></span>.<span class="typed"><span class="type">()Boolean</span><a id="40697">exists</a></span>) <span class="typed"><span class="type">Nothing</span><span class="keyword">return</span></span> <span class="typed"><span class="type">object None</span><a id="536">None</a></span>
+  /** Try to load a plugin description from the specified
+   *  file, returning None if it does not work. */
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(jarfile: java.io.File)Option[scala.tools.nsc.plugins.PluginDescription]" id="557779">loadDescription</a>(<a title="java.io.File" id="557893">jarfile</a>: <span title="java.io.File">File</span>): <span title="Option[scala.tools.nsc.plugins.PluginDescription]">Option</span>[PluginDescription] = {
+    <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#557893" title="java.io.File">jarfile</a>.<a title="()Boolean" id="35192">exists</a>) <span title="Nothing" class="keyword">return</span> <span title="object None">None</span>
 
     <span class="keyword">try</span> {
-      <span class="keyword">val</span> <span class="typed"><span class="type">java.util.jar.JarFile</span><a id="95683">jar</a></span> = <span class="typed"><span class="type">(java.io.File)java.util.jar.JarFile</span><a id="95690" class="keyword">new</a></span> <span class="typed"><span class="type">java.util.jar.JarFile</span><a id="57352">JarFile</a></span>(<span class="typed"><span class="type">java.io.File</span><a href="#95678">jarfile</a></span>)
+      <span class="keyword">val</span> <a title="java.util.jar.JarFile" id="557901">jar</a> = <a title="(x$1: java.io.File)java.util.jar.JarFile" id="557911" class="keyword">new</a> <a title="java.util.jar.JarFile" id="118783">JarFile</a>(<a href="#557893" title="java.io.File">jarfile</a>)
       <span class="keyword">try</span> {
-	<span class="keyword">val</span> <span class="typed"><span class="type">java.util.zip.ZipEntry</span><a id="95705">ent</a></span> = <span class="typed"><span class="type">java.util.jar.JarFile</span><a href="#95683">jar</a></span>.<span class="typed"><span class="type">(java.lang.String)java.util.zip.ZipEntry</span><a id="95695">getEntry</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;scalac-plugin.xml&quot;)</span><span class="string">&quot;scalac-plugin.xml&quot;</span></span>)
-	<span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">java.util.zip.ZipEntry</span><a href="#95705">ent</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="3509">==</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>) <span class="typed"><span class="type">Nothing</span><span class="keyword">return</span></span> <span class="typed"><span class="type">object None</span><a id="536">None</a></span>
+	<span class="keyword">val</span> <a title="java.util.zip.ZipEntry" id="557941">ent</a> = <a href="#557901" title="java.util.jar.JarFile">jar</a>.<a title="(x$1: java.lang.String)java.util.zip.ZipEntry" id="557923">getEntry</a>(<span title="java.lang.String(&quot;scalac-plugin.xml&quot;)" class="string">&quot;scalac-plugin.xml&quot;</span>)
+	<span title="Unit" class="keyword">if</span> (<a href="#557941" title="(x$1: AnyRef)Boolean" id="3626">ent</a> == <span title="Null(null)" class="keyword">null</span>) <span title="Nothing" class="keyword">return</span> <span title="object None">None</span>
 
-	<span class="keyword">val</span> <span class="typed"><span class="type">java.io.InputStream</span><a id="95706">inBytes</a></span> = <span class="typed"><span class="type">java.util.jar.JarFile</span><a href="#95683">jar</a></span>.<span class="typed"><span class="type">(java.util.zip.ZipEntry)java.io.InputStream</span><a id="95698">getInputStream</a></span>(<span class="typed"><span class="type">java.util.zip.ZipEntry</span><a href="#95705">ent</a></span>)
-	<span class="keyword">val</span> <span class="typed"><span class="type">scala.xml.Elem</span><a id="95707">packXML</a></span> = <span class="typed"><span class="type">object scala.xml.XML</span><a id="39640">XML</a></span>.<span class="typed"><span class="type">(java.io.InputStream)scala.xml.Elem</span><a id="95727">load</a></span>(<span class="typed"><span class="type">java.io.InputStream</span><a href="#95706">inBytes</a></span>)
-	<span class="typed"><span class="type">java.io.InputStream</span><a href="#95706">inBytes</a></span>.<span class="typed"><span class="type">()Unit</span><a id="41377">close</a></span>()
+	<span class="keyword">val</span> <a title="java.io.InputStream" id="557942">inBytes</a> = <a href="#557901" title="java.util.jar.JarFile">jar</a>.<a title="(x$1: java.util.zip.ZipEntry)java.io.InputStream" id="557927">getInputStream</a>(<a href="#557941" title="java.util.zip.ZipEntry">ent</a>)
+	<span class="keyword">val</span> <a title="scala.xml.Elem" id="557943">packXML</a> = <a title="object scala.xml.XML" id="40882">XML</a>.<a title="(is: java.io.InputStream)scala.xml.Elem" id="320147">load</a>(<a href="#557942" title="java.io.InputStream">inBytes</a>)
+	<a href="#557942" title="java.io.InputStream">inBytes</a>.<a title="()Unit" id="83991">close</a>()
         
-	<span class="typed"><span class="type">object scala.tools.nsc.plugins.PluginDescription</span><a href="PluginDescription.scala.html#17105">PluginDescription</a></span>.<span class="typed"><span class="type">(scala.xml.Node)Option[scala.tools.nsc.plugins.PluginDescription]</span><a href="PluginDescription.scala.html#95753">fromXML</a></span>(<span class="typed"><span class="type">scala.xml.Elem</span><a href="#95707">packXML</a></span>)
+	<a href="PluginDescription.scala.html#22008" title="object scala.tools.nsc.plugins.PluginDescription">PluginDescription</a>.<a href="PluginDescription.scala.html#557963" title="(xml: scala.xml.Node)Option[scala.tools.nsc.plugins.PluginDescription]">fromXML</a>(<a href="#557943" title="scala.xml.Elem">packXML</a>)
       } <span class="keyword">finally</span> {
-	<span class="typed"><span class="type">java.util.jar.JarFile</span><a href="#95683">jar</a></span>.<span class="typed"><span class="type">()Unit</span><a id="40863">close</a></span>()
+	<a href="#557901" title="java.util.jar.JarFile">jar</a>.<a title="()Unit" id="112521">close</a>()
       }
     } <span class="keyword">catch</span> {
-      <span class="typed"><span class="type">None.type</span><span class="keyword">case</span></span> _: <span class="typed"><span class="type">java.util.zip.ZipException</span><a id="40627">ZipException</a></span> =&gt; <span class="typed"><span class="type">object None</span><a id="536">None</a></span>
+      <span title="None.type" class="keyword">case</span> _: <a title="java.util.zip.ZipException" id="40509">ZipException</a> =&gt; <span title="object None">None</span>
     }
   }
 
-  <span class="keyword">type</span> <span class="typed"><span class="type">Class[_]</span><a id="95616">AnyClass</a></span> = <span class="typed"><span class="type">Class[_]</span><a id="1672">Class</a></span>[_]
+  <span class="keyword">type</span> <a title="Class[_]" id="557780">AnyClass</a> = <span title="Class[_]">Class</span>[_]
 
-  <span class="comment">/** Loads a plugin class from the named jar file.  Returns None
+  /** Loads a plugin class from the named jar file.  Returns None
    *  if the jar file has no plugin in it or if the plugin
    *  is badly formed.
-   */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(java.io.File,java.lang.ClassLoader)Option[scala.tools.nsc.plugins.Plugin.AnyClass]</span><a id="95617">loadFrom</a></span>(<span class="typed"><span class="type">java.io.File</span><a id="95760">jarfile</a></span>: <span class="typed"><span class="type">java.io.File</span><a id="3669">File</a></span>, <span class="typed"><span class="type">java.lang.ClassLoader</span><a id="95761">loader</a></span>: <span class="typed"><span class="type">java.lang.ClassLoader</span><a id="1726">ClassLoader</a></span>): <span class="typed"><span class="type">Option[scala.tools.nsc.plugins.Plugin.AnyClass]</span><a id="934">Option</a></span>[AnyClass] = {
-    <span class="keyword">val</span> <span class="typed"><span class="type">scala.tools.nsc.plugins.PluginDescription</span><a id="95762">pluginInfo</a></span> = <span class="typed"><span class="type">(java.io.File)Option[scala.tools.nsc.plugins.PluginDescription]</span><a href="#95615">loadDescription</a></span>(<span class="typed"><span class="type">java.io.File</span><a href="#95760">jarfile</a></span>).<span class="typed"><span class="type">=&gt; scala.tools.nsc.plugins.PluginDescription</span><a id="25408">get</a></span>
+   */
+  <span class="keyword">def</span> <a title="(jarfile: java.io.File,loader: java.lang.ClassLoader)Option[scala.tools.nsc.plugins.Plugin.AnyClass]" id="557781">loadFrom</a>(<a title="java.io.File" id="557976">jarfile</a>: <span title="java.io.File">File</span>, <a title="java.lang.ClassLoader" id="557977">loader</a>: <span title="java.lang.ClassLoader">ClassLoader</span>): <span title="Option[scala.tools.nsc.plugins.Plugin.AnyClass]">Option</span>[AnyClass] = {
+    <span class="keyword">val</span> <a title="scala.tools.nsc.plugins.PluginDescription" id="557979">pluginInfo</a> = <a href="#557779" title="(jarfile: java.io.File)Option[scala.tools.nsc.plugins.PluginDescription]">loadDescription</a>(<a href="#557976" title="java.io.File">jarfile</a>).<a title="=&gt; scala.tools.nsc.plugins.PluginDescription" id="35043">get</a>
 
     <span class="keyword">try</span> {
-      <span class="typed"><span class="type">(java.lang.Class[?0])Some[java.lang.Class[?0]]</span><span id="29737"><a id="308">Some</a></span></span>(<span class="typed"><span class="type">java.lang.ClassLoader</span><a href="#95761">loader</a></span>.<span class="typed"><span class="type">(java.lang.String)java.lang.Class[_]</span><a id="56809">loadClass</a></span>(<span class="typed"><span class="type">scala.tools.nsc.plugins.PluginDescription</span><a href="#95762">pluginInfo</a></span>.<span class="typed"><span class="type">=&gt; String</span><a href="PluginDescription.scala.html#95681">classname</a></span>))
+      <a title="(x: java.lang.Class[?0])Some[java.lang.Class[?0]]" id="258">Some</a>(<a href="#557977" title="java.lang.ClassLoader">loader</a>.<a title="(x$1: java.lang.String)java.lang.Class[_]" id="118137">loadClass</a>(<a href="#557979" title="scala.tools.nsc.plugins.PluginDescription">pluginInfo</a>.<a href="PluginDescription.scala.html#557899" title="=&gt; String">classname</a>))
     } <span class="keyword">catch</span> {
-      <span class="typed"><span class="type">None.type</span><span class="keyword">case</span></span> _:<span class="typed"><span class="type">java.lang.ClassNotFoundException</span><a id="1729">ClassNotFoundException</a></span> =&gt;
-	<span class="typed"><span class="type">(Any)Unit</span><span id="6112"><a id="821">println</a></span></span>(<span class="typed"><span class="type">java.lang.String(&quot;Warning: class not found for plugin in &quot;)</span><span class="string">&quot;Warning: class not found for plugin in &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">java.io.File</span><a href="#95760">jarfile</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span>
-                <span class="typed"><span class="type">java.lang.String(&quot; (&quot;)</span><span class="string">&quot; (&quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">scala.tools.nsc.plugins.PluginDescription</span><a href="#95762">pluginInfo</a></span>.<span class="typed"><span class="type">=&gt; String</span><a href="PluginDescription.scala.html#95681">classname</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot;)&quot;)</span><span class="string">&quot;)&quot;</span></span>)
-      <span class="typed"><span class="type">object None</span><a id="536">None</a></span>
+      <span title="None.type" class="keyword">case</span> _:<a title="java.lang.ClassNotFoundException" id="1473">ClassNotFoundException</a> =&gt;
+	<a title="(x: Any)Unit" id="8057">println</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;Warning: class not found for plugin in &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#557976" title="java.io.File">jarfile</a> <span title="(x$1: Any)java.lang.String">+</span>
+                <span title="java.lang.String(&quot; (&quot;)" class="string">&quot; (&quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#557979" title="scala.tools.nsc.plugins.PluginDescription">pluginInfo</a>.<a href="PluginDescription.scala.html#557899" title="=&gt; String">classname</a> + <span title="java.lang.String(&quot;)&quot;)" class="string">&quot;)&quot;</span>)
+      <span title="object None">None</span>
     } 
   }
 
-  <span class="comment">/** Load all plugins found in the argument list, both in the
+  /** Load all plugins found in the argument list, both in the
    *  jar files explicitly listed, and in the jar files in the
    *  directories specified. Skips all plugins in &lt;code&gt;ignoring&lt;/code&gt;.
    *  A single classloader is created and used to load all of them.
-   */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(List[java.io.File],List[java.io.File],List[String])List[scala.tools.nsc.plugins.Plugin.AnyClass]</span><a id="95618">loadAllFrom</a></span>(<span class="typed"><span class="type">List[java.io.File]</span><a id="95771">jars</a></span>: <span class="typed"><span class="type">List[java.io.File]</span><a id="526">List</a></span>[File], 
-		  <span class="typed"><span class="type">List[java.io.File]</span><a id="95772">dirs</a></span>: <span class="typed"><span class="type">List[java.io.File]</span><a id="526">List</a></span>[File], 
-		  <span class="typed"><span class="type">List[String]</span><a id="95773">ignoring</a></span>: <span class="typed"><span class="type">List[String]</span><a id="526">List</a></span>[String]): <span class="typed"><span class="type">List[scala.tools.nsc.plugins.Plugin.AnyClass]</span><a id="526">List</a></span>[AnyClass] = 
+   */
+  <span class="keyword">def</span> <a title="(jars: List[java.io.File],dirs: List[java.io.File],ignoring: List[String])List[scala.tools.nsc.plugins.Plugin.AnyClass]" id="557782">loadAllFrom</a>(<a title="List[java.io.File]" id="558011">jars</a>: <span title="List[java.io.File]">List</span>[File], 
+		  <a title="List[java.io.File]" id="558012">dirs</a>: <span title="List[java.io.File]">List</span>[File], 
+		  <a title="List[String]" id="558013">ignoring</a>: <span title="List[String]">List</span>[String]): <span title="List[scala.tools.nsc.plugins.Plugin.AnyClass]">List</span>[AnyClass] = 
   {
-    <span class="keyword">val</span> <span class="typed"><span class="type">scala.collection.mutable.ListBuffer[java.io.File]</span><a id="95774">alljars</a></span> = <span class="typed"><span class="type">scala.collection.mutable.ListBuffer[java.io.File]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">scala.collection.mutable.ListBuffer[java.io.File]</span><a id="19925">ListBuffer</a></span>[File]
+    <span class="keyword">val</span> <a title="scala.collection.mutable.ListBuffer[java.io.File]" id="558015">alljars</a> = <span title="scala.collection.mutable.ListBuffer[java.io.File]" class="keyword">new</span> <a title="scala.collection.mutable.ListBuffer[java.io.File]" id="24819">ListBuffer</a>[File]
 
-    <span class="typed"><span class="type">scala.collection.mutable.ListBuffer[java.io.File]</span><a href="#95774">alljars</a></span> <span class="typed"><span class="type">(Iterable[java.io.File])Unit</span><a id="31623">++=</a></span> <span class="typed"><span class="type">List[java.io.File]</span><a href="#95771">jars</a></span>
+    <a href="#558015" title="(iter: Traversable[java.io.File])alljars.type" id="39507">alljars</a> ++= <a href="#558011" title="List[java.io.File]">jars</a>
 
     <span class="keyword">for</span> {
-      <span class="typed"><span class="type">(((java.io.File, Array[java.io.File])) =&gt; Unit)Unit</span><span id="95796"><span id="21366"><span id="95783"><span id="21362"><span id="95791"><span id="95779"><span id="23625"><span id="21367"><a id="1379">dir</a></span></span></span></span></span></span></span></span></span> &lt;- <span class="typed"><span class="type">List[java.io.File]</span><a href="#95772">dirs</a></span> <span class="keyword">if</span> <span class="typed"><span class="type">java.io.File</span><a href="#95779">dir</a></span>.<span class="typed"><span class="type">()Boolean</span><a id="40698">isDirectory</a></span>
-      <span class="typed"><span class="type">Array[java.io.File]</span><span id="95784"><span id="95792"><a id="95797">entries</a></span></span></span> = <span class="typed"><span class="type">java.io.File</span><a href="#95783">dir</a></span>.<span class="typed"><span class="type">()Array[java.io.File]</span><a id="40708">listFiles</a></span>
-      <span class="keyword">if</span> <span class="typed"><span class="type">Array[java.io.File]</span><a href="#95792">entries</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5795">ne</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>
-      <span class="typed"><span class="type">((java.io.File) =&gt; Unit)Unit</span><span id="21366"><span id="21367"><span id="95807"><a id="95811">entry</a></span></span></span></span> &lt;- <span class="typed"><span class="type">Array[java.io.File]</span><a href="#95797">entries</a></span>.<span class="typed"><span class="type">=&gt; List[java.io.File]</span><a id="21815">toList</a></span>.<span class="typed"><span class="type">((java.io.File, java.io.File) =&gt; Boolean)List[java.io.File]</span><a id="21370">sort</a></span>(<span class="typed"><span class="type">java.io.File</span><a href="#95799">_</a></span>.<span class="typed"><span class="type">implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString</span><span id="6140"><span id="821"><a id="40684">getName</a></span></span></span> <span class="typed"><span class="type">(String)Boolean</span><a id="23140">&lt;=</a></span> <span class="typed"><span class="type">java.io.File</span><a href="#95800">_</a></span>.<span class="typed"><span class="type">()java.lang.String</span><a id="40684">getName</a></span>)
-      <span class="keyword">if</span> <span class="typed"><span class="type">java.io.File</span><a href="#95807">entry</a></span>.<span class="typed"><span class="type">()java.lang.String</span><a id="40722">toString</a></span>.<span class="typed"><span class="type">()java.lang.String</span><a id="5867">toLowerCase</a></span> <span class="typed"><span class="type">(java.lang.String)Boolean</span><a id="5842">endsWith</a></span> <span class="typed"><span class="type">java.lang.String(&quot;.jar&quot;)</span><span class="string">&quot;.jar&quot;</span></span>
-      <span class="typed"><span class="type">((scala.tools.nsc.plugins.PluginDescription) =&gt; Unit)Unit</span><span id="25418"><span id="25417"><span id="95813"><a id="95815">pdesc</a></span></span></span></span> &lt;- <span class="typed"><span class="type">(java.io.File)Option[scala.tools.nsc.plugins.PluginDescription]</span><a href="#95615">loadDescription</a></span>(<span class="typed"><span class="type">java.io.File</span><a href="#95811">entry</a></span>)
-      <span class="keyword">if</span> <span class="typed"><span class="type">=&gt; Boolean</span><a id="2747">!</a></span>(<span class="typed"><span class="type">List[String]</span><a href="#95773">ignoring</a></span> <span class="typed"><span class="type">(Any)Boolean</span><a id="21673">contains</a></span> <span class="typed"><span class="type">scala.tools.nsc.plugins.PluginDescription</span><a href="#95813">pdesc</a></span>.<span class="typed"><span class="type">=&gt; String</span><a href="PluginDescription.scala.html#95680">name</a></span>)
-    } <span class="typed"><span class="type">scala.collection.mutable.ListBuffer[java.io.File]</span><a href="#95774">alljars</a></span> <span class="typed"><span class="type">(java.io.File)Unit</span><a id="33306">+=</a></span> <span class="typed"><span class="type">java.io.File</span><a href="#95811">entry</a></span>
+      <a title="java.io.File" id="558193">dir</a> &lt;- <a href="#558012" title="(f: (java.io.File) =&gt; (java.io.File, Array[java.io.File]))(implicit bf: scala.collection.generic.BuilderFactory[(java.io.File, Array[java.io.File]),List[(java.io.File, Array[java.io.File])],List[java.io.File]])List[(java.io.File, Array[java.io.File])]">dirs</a> <span class="keyword">if</span> <a href="#558193" title="java.io.File">dir</a>.<a title="()Boolean" id="35193">isDirectory</a>
+      <a title="Array[java.io.File]" id="558194">entries</a> = <a href="#558193" title="java.io.File">dir</a>.<a title="()Array[java.io.File]" id="35204">listFiles</a>
+      <span class="keyword">if</span> <a href="#558194" title="(x$1: AnyRef)Boolean" id="6544">entries</a> ne <span title="Null(null)" class="keyword">null</span>
+      <a title="java.io.File" id="558282">entry</a> &lt;- <a href="#558194" title="Array[java.io.File]">entries</a>.<a title="=&gt; List[java.io.File]" id="25352">toList</a>.<a title="(lt: (java.io.File, java.io.File) =&gt; Boolean)List[java.io.File]" id="24310">sort</a><a title="(f: (java.io.File) =&gt; Unit)Unit" id="28932">(</a><a href="#558199" title="java.io.File">_</a>.<a title="(that: String)Boolean" id="8101">getName</a> &lt;= <a href="#558200" title="java.io.File">_</a>.<span title="()java.lang.String">getName</span>)
+      <span class="keyword">if</span> <a href="#558282" title="java.io.File">entry</a>.<a title="()java.lang.String" id="35248">toString</a>.<a title="(x$1: java.lang.String)Boolean" id="7047">toLowerCase</a> endsWith <span title="java.lang.String(&quot;.jar&quot;)" class="string">&quot;.jar&quot;</span>
+      <a title="scala.tools.nsc.plugins.PluginDescription" id="558296">pdesc</a> &lt;- <a href="#557779" title="(jarfile: java.io.File)Option[scala.tools.nsc.plugins.PluginDescription]">loadDescription</a><a title="(f: (scala.tools.nsc.plugins.PluginDescription) =&gt; scala.collection.mutable.ListBuffer[java.io.File])Unit" id="35056">(</a><a href="#558282" title="java.io.File">entry</a>)
+      <span class="keyword">if</span> <span title="=&gt; Boolean">!</span>(<a href="#558013" title="(elem: Any)Boolean" id="25609">ignoring</a> contains <a href="#558296" title="scala.tools.nsc.plugins.PluginDescription">pdesc</a>.<a href="PluginDescription.scala.html#557898" title="=&gt; String">name</a>)
+    } <a href="#558015" title="(x: java.io.File)alljars.type" id="61580">alljars</a> += <a href="#558282" title="java.io.File">entry</a>
 
-    <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.ClassLoader</span><a id="95775">loader</a></span> = <span class="typed"><span class="type">(Seq[java.io.File])java.lang.ClassLoader</span><a href="#95614">loaderFor</a></span>(<span class="typed"><span class="type">scala.collection.mutable.ListBuffer[java.io.File]</span><a href="#95774">alljars</a></span>.<span class="typed"><span class="type">=&gt; List[java.io.File]</span><a id="33309">toList</a></span>)
-    <span class="typed"><span class="type">scala.collection.mutable.ListBuffer[java.io.File]</span><a href="#95774">alljars</a></span>.<span class="typed"><span class="type">=&gt; List[java.io.File]</span><a id="33309">toList</a></span>.<span class="typed"><span class="type">((java.io.File) =&gt; Option[scala.tools.nsc.plugins.Plugin.AnyClass])List[Option[scala.tools.nsc.plugins.Plugin.AnyClass]]</span><a id="21362">map</a></span>(<span class="typed"><span class="type">java.io.File</span><a id="95819">f</a></span> =&gt; <span class="typed"><span class="type">(java.io.File,java.lang.ClassLoader)Option[scala.tools.nsc.plugins.Plugin.AnyClass]</span><a href="#95617">loadFrom</a></span>(<span class="typed"><span class="type">java.io.File</span><a href="#95819">f</a></span>,<span class="typed"><span class="type">java.lang.ClassLoader</span><a href="#95775">loader</a></span>)).<span class="typed"><span class="type">((Option[scala.tools.nsc.plugins.Plugin.AnyClass]) =&gt; Iterable[scala.tools.nsc.plugins.Plugin.AnyClass])List[scala.tools.nsc.plugins.Plugin.AnyClass]</span><a id="21383">flatMap</a></span>(<span class="typed"><span class="type">Option[scala.tools.nsc.plugins.Plugin.AnyClass]</span><a id="95823">x</a></span> =&gt; <span class="typed"><span class="type">(Option[scala.tools.nsc.plugins.Plugin.AnyClass])Iterable[scala.tools.nsc.plugins.Plugin.AnyClass]</span><span id="25402"><a href="#95823" id="935">x</a></span></span>)
+    <span class="keyword">val</span> <a title="java.lang.ClassLoader" id="558016">loader</a> = <a href="#557778" title="(jarfiles: Seq[java.io.File])java.lang.ClassLoader">loaderFor</a>(<a href="#558015" title="scala.collection.mutable.ListBuffer[java.io.File]">alljars</a>.<span title="=&gt; List[java.io.File]">toList</span>)
+    <a href="#558015" title="scala.collection.mutable.ListBuffer[java.io.File]">alljars</a>.<span title="=&gt; List[java.io.File]">toList</span>.<span title="(f: (java.io.File) =&gt; Option[scala.tools.nsc.plugins.Plugin.AnyClass])(implicit bf: scala.collection.generic.BuilderFactory[Option[scala.tools.nsc.plugins.Plugin.AnyClass],List[Option[scala.tools.nsc.plugins.Plugin.AnyClass]],List[java.io.File]])List[Option[scala.tools.nsc.plugins.Plugin.AnyClass]]">map</span><span title="scala.collection.generic.BuilderFactory[Option[scala.tools.nsc.plugins.Plugin.AnyClass],List[Option[scala.tools.nsc.plugins.Plugin.AnyClass]],List#Coll]">(</span><a title="java.io.File" id="558347">f</a> =&gt; <a href="#557781" title="(jarfile: java.io.File,loader: java.lang.ClassLoader)Option[scala.tools.nsc.plugins.Plugin.AnyClass]">loadFrom</a>(<a href="#558347" title="java.io.File">f</a>,<a href="#558016" title="java.lang.ClassLoader">loader</a>)).<a title="(f: (Option[scala.tools.nsc.plugins.Plugin.AnyClass]) =&gt; Traversable[scala.tools.nsc.plugins.Plugin.AnyClass])(implicit bf: scala.collection.generic.BuilderFactory[scala.tools.nsc.plugins.Plugin.AnyClass,List[scala.tools.nsc.plugins.Plugin.AnyClass],List[Option[scala.tools.nsc.plugins.Plugin.AnyClass]]])List[scala.tools.nsc.plugins.Plugin.AnyClass]" id="25248">flatMap</a><span title="scala.collection.generic.BuilderFactory[scala.tools.nsc.plugins.Plugin.AnyClass,List[scala.tools.nsc.plugins.Plugin.AnyClass],List#Coll]">(</span><a title="Option[scala.tools.nsc.plugins.Plugin.AnyClass]" id="558438">x</a> =&gt; <a href="#558438" title="(xo: Option[scala.tools.nsc.plugins.Plugin.AnyClass])Iterable[scala.tools.nsc.plugins.Plugin.AnyClass]" id="783">x</a>)
   }
 
-  <span class="comment">/** Instantiate a plugin class, given the class and
+  /** Instantiate a plugin class, given the class and
    *  the compiler it is to be used in.
-   */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(scala.tools.nsc.plugins.Plugin.AnyClass,scala.tools.nsc.Global)scala.tools.nsc.plugins.Plugin</span><a id="95619">instantiate</a></span>(<span class="typed"><span class="type">scala.tools.nsc.plugins.Plugin.AnyClass</span><a id="95828">clazz</a></span>: <span class="typed"><span class="type">scala.tools.nsc.plugins.Plugin.AnyClass</span><a id="1672">AnyClass</a></span>, <span class="typed"><span class="type">scala.tools.nsc.Global</span><a id="95829">global</a></span>: <span class="typed"><span class="type">scala.tools.nsc.Global</span><a href="../Global.scala.html#6489">Global</a></span>): <span class="typed"><span class="type">scala.tools.nsc.plugins.Plugin</span><a href="#17029">Plugin</a></span> = {
-    <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.reflect.Constructor[_]</span><a id="95830">constructor</a></span> = <span class="typed"><span class="type">scala.tools.nsc.plugins.Plugin.AnyClass</span><a href="#95828">clazz</a></span>.<span class="typed"><span class="type">((java.lang.Class[_]*)java.lang.reflect.Constructor[_$1]) forSome { type _$1 }</span><a id="4345">getConstructor</a></span>(<span class="typed"><span class="type">java.lang.Class[scala.tools.nsc.Global]</span><span >classOf</span></span>[Global])
-    <span class="typed"><span class="type">java.lang.reflect.Constructor[_]</span><a href="#95830">constructor</a></span>.<span class="typed"><span class="type">(java.lang.Object*)Any</span><a id="3995">newInstance</a></span>(<span class="typed"><span class="type">scala.tools.nsc.Global</span><a href="#95829">global</a></span>).<span class="typed"><span class="type">scala.tools.nsc.plugins.Plugin</span><a id="3503">asInstanceOf</a></span>[<span class="typed"><span class="type">scala.tools.nsc.plugins.Plugin</span><a href="#17029">Plugin</a></span>]
+   */
+  <span class="keyword">def</span> <a title="(clazz: scala.tools.nsc.plugins.Plugin.AnyClass,global: scala.tools.nsc.Global)scala.tools.nsc.plugins.Plugin" id="557783">instantiate</a>(<a title="scala.tools.nsc.plugins.Plugin.AnyClass" id="559374">clazz</a>: <span title="scala.tools.nsc.plugins.Plugin.AnyClass">AnyClass</span>, <a title="scala.tools.nsc.Global" id="559375">global</a>: <a href="../Global.scala.html#8460" title="scala.tools.nsc.Global">Global</a>): <a href="#21932" title="scala.tools.nsc.plugins.Plugin">Plugin</a> = {
+    //println(&quot;instantiating &quot;+clazz)
+    //println(clazz.getDeclaredConstructors)
+    <span class="keyword">val</span> <a title="java.lang.reflect.Constructor[_]" id="559377">constructor</a> = <a href="#559374" title="scala.tools.nsc.plugins.Plugin.AnyClass">clazz</a>.<a title="((x$1: java.lang.Class[_]*)java.lang.reflect.Constructor[_$1]) forSome { type _$1 }" id="4854">getConstructor</a>(classOf<span title="java.lang.Class[scala.tools.nsc.Global]">[</span>Global])
+    <a href="#559377" title="java.lang.reflect.Constructor[_]">constructor</a>.<a title="(x$1: java.lang.Object*)Any" id="4175">newInstance</a>(<a href="#559375" title="scala.tools.nsc.Global">global</a>).<a title="[T0]T0" id="3623">asInstanceOf</a><span title="scala.tools.nsc.plugins.Plugin">[</span><a href="#21932" title="scala.tools.nsc.plugins.Plugin">Plugin</a>]
   }
 }
 

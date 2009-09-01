@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/xml/persistent/SetStorage.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: SetStorage.scala 18615 2009-08-31 13:21:58Z extempore $
+
+<span class="keyword">package</span> scala.xml
+<span class="keyword">package</span> persistent
+
+<span class="keyword">import</span> scala.collection.mutable
+<span class="keyword">import</span> mutable.HashSet
+<span class="keyword">import</span> scala.io.File
+
+/** A persistent store with set semantics. This class allows to add and remove 
+ *  trees, but never contains two structurally equal trees.
+ *
+ *  @author Burak Emir
+ */
+<span class="keyword">class</span> <a title="class SetStorage extends scala.xml.persistent.CachedFileStorage with ScalaObject" id="11290">SetStorage</a><a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="scala.io.File" id="37349">file</a>: <a href="../../io/File.scala.html#9637" title="scala.io.File">File</a>) <span class="keyword">extends</span> <a href="CachedFileStorage.scala.html#11281" title="scala.xml.persistent.CachedFileStorage">CachedFileStorage</a>(<a href="#37349" title="scala.io.File">file</a>)
+{
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="scala.collection.mutable.HashSet[scala.xml.Node]" id="37323">theSet</a>: <a href="../../collection/mutable/HashSet.scala.html#7602" title="scala.collection.mutable.HashSet[scala.xml.Node]">HashSet</a>[Node] = <a href="../../collection/generic/Companion.scala.html#17471" title="(args: scala.xml.Node*)scala.collection.mutable.HashSet[scala.xml.Node]">HashSet</a><a href="../../collection/generic/MutableSetTemplate.scala.html#37379" title="(iter: Iterator[scala.xml.Node])scala.collection.mutable.HashSet[scala.xml.Node]">(</a>) ++ <a href="CachedFileStorage.scala.html#37310" title="=&gt; Iterator[scala.xml.Node]">initialNodes</a>
+  <a href="CachedFileStorage.scala.html#37306" title="(x$1: Boolean)Unit">dirty</a> = <a href="#37323" title="=&gt; scala.collection.mutable.HashSet[scala.xml.Node]">theSet</a>.<a href="../../collection/generic/TraversableTemplate.scala.html#17136" title="=&gt; Boolean">nonEmpty</a>
+
+  /* forwarding methods to hashset */
+
+  <span class="keyword">def</span> <a title="(e: scala.xml.Node)Unit" id="37325">+=</a> (<a title="scala.xml.Node" id="37592">e</a>: <a href="../Node.scala.html#8654" title="scala.xml.Node">Node</a>): <span title="Unit">Unit</span> = <a href="#11290" title="(x$1: scala.collection.mutable.HashSet[scala.xml.Node])scala.collection.mutable.HashSet[scala.xml.Node]">synchronized</a> <span title="Unit">{</span> <a href="#11290" title="SetStorage.this.type" class="keyword">this</a>.<a href="CachedFileStorage.scala.html#37306" title="(x$1: Boolean)Unit">dirty</a> = <span title="Boolean(true)" class="keyword">true</span>; <a href="../../collection/mutable/HashSet.scala.html#37339" title="(elem: scala.xml.Node)scala.collection.mutable.HashSet[scala.xml.Node]">theSet</a> += <a href="#37592" title="scala.xml.Node">e</a> }
+  <span class="keyword">def</span> <a title="(e: scala.xml.Node)Unit" id="37326">-=</a> (<a title="scala.xml.Node" id="37685">e</a>: <a href="../Node.scala.html#8654" title="scala.xml.Node">Node</a>): <span title="Unit">Unit</span> = <a href="#11290" title="(x$1: scala.collection.mutable.HashSet[scala.xml.Node])scala.collection.mutable.HashSet[scala.xml.Node]">synchronized</a> <span title="Unit">{</span> <a href="#11290" title="SetStorage.this.type" class="keyword">this</a>.<a href="CachedFileStorage.scala.html#37306" title="(x$1: Boolean)Unit">dirty</a> = <span title="Boolean(true)" class="keyword">true</span>; <a href="../../collection/mutable/HashSet.scala.html#37340" title="(elem: scala.xml.Node)scala.collection.mutable.HashSet[scala.xml.Node]">theSet</a> -= <a href="#37685" title="scala.xml.Node">e</a> }
+  <span class="keyword">def</span> <a title="=&gt; &lt;refinement&gt; extends java.lang.Object with Iterator[scala.xml.Node]" id="37327">nodes</a> = <a href="#11290" title="(x$1: java.lang.Object with Iterator[scala.xml.Node])java.lang.Object with Iterator[scala.xml.Node]">synchronized</a> { <a href="#37323" title="=&gt; scala.collection.mutable.HashSet[scala.xml.Node]">theSet</a>.<a href="../../collection/mutable/FlatHashTable.scala.html#34332" title="=&gt; &lt;refinement&gt; extends java.lang.Object with Iterator[scala.xml.Node]">iterator</a> }
+}
+
+        </pre>
+    </body>
+</html>

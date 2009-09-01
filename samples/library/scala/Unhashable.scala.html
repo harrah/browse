@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/Unhashable.scala</title>
+        <script type="text/javascript" src="../jquery-all.js"></script>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: Unhashable.scala 18478 2009-08-13 21:30:20Z stepancheg $
+
+
+<span class="keyword">package</span> scala
+
+/** &lt;p&gt;
+ *    A marker trait for data structures that cannot be hashed, for instance
+ *    because they are mutable and at the same time support structural
+ *    equality, so hashing them would lead to unpredictable results.
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    Such data structures have &lt;code&gt;hashCode&lt;/code&gt; throw an &lt;a href=&quot;&quot;
+ *    target=&quot;contentFrame&quot; class=&quot;java/lang/UnsupportedOperationException&quot;&gt;
+ *    &lt;code&gt;java.lang.UnsupportedOperationException&lt;/code&gt;&lt;/a&gt;. They retain
+ *    the original object hashcode with &lt;code&gt;identityHashCode&lt;/code&gt;.
+ *  &lt;/p&gt;
+ *
+ *  @author  Martin Odersky
+ *  @version 1.0
+ *  @since   2.8
+ */
+<span class="keyword">trait</span> <a title="trait Unhashable extends java.lang.Object with ScalaObject" id="168">Unhashable</a> <a href="ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a title="java.lang.Object" id="1756">Object</a> {
+
+  /** The hashCode method always yields an error, since it is not
+   *  safe to use sets as keys in hash tables.
+   *
+   *  @return never.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Int" id="17733">hashCode</a>: <span title="Int">Int</span> =
+    <span title="Nothing" class="keyword">throw</span> <a title="(x$1: java.lang.String)java.lang.UnsupportedOperationException" id="45864" class="keyword">new</a> <a href="Predef.scala.html#16169" title="java.lang.UnsupportedOperationException">UnsupportedOperationException</a>(<span title="java.lang.String(&quot;unsuitable as hash key&quot;)" class="string">&quot;unsuitable as hash key&quot;</span>)
+
+  /** The identity hash code is the original hash code inherited from Object.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Int" id="17734">identityHashCode</a>: <span title="Int">Int</span> =
+    <a href="#271479" title="()Int" class="keyword">super</a>/*[Object]*/.<a title="()Int" id="271479">hashCode</a>  // !!! super[Object] does not work here
+}
+
+        </pre>
+    </body>
+</html>

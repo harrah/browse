@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/concurrent/ThreadRunner.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+<span class="keyword">package</span> scala.concurrent
+
+<span class="keyword">import</span> java.lang.Thread
+
+/** The &lt;code&gt;ThreadRunner&lt;/code&gt; trait...
+ *  
+ *  @author Philipp Haller
+ */
+<span class="keyword">class</span> <a title="class ThreadRunner[T] extends java.lang.Object with scala.concurrent.TaskRunner[T] with ScalaObject" id="8233">ThreadRunner</a>[<a title="&gt;: Nothing &lt;: Any" id="15020">T</a>] <a href="../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="TaskRunner.scala.html#8209" title="scala.concurrent.TaskRunner[T]">TaskRunner</a>[T] {
+
+  <span class="keyword">type</span> <a title="[+S]() =&gt; S" id="175097">Future</a>[+<a title="&gt;: Nothing &lt;: Any" id="175098">S</a>] = () =&gt; S
+
+  <span class="keyword">def</span> <a title="(task: () =&gt; T)() =&gt; T" id="175099">submit</a>(<a title="() =&gt; T" id="175105">task</a>: () =&gt; T): <span class="keyword">this</span>.<a href="../Function0.scala.html#369" title="() =&gt; T">Future</a>[T] = {
+    <span class="keyword">val</span> <a title="scala.concurrent.SyncVar[Either[Exception,T]]" id="175108">result</a> = <span title="scala.concurrent.SyncVar[Either[Exception,T]]" class="keyword">new</span> <a href="SyncVar.scala.html#8398" title="scala.concurrent.SyncVar[Either[Exception,T]]">SyncVar</a>[Either[Exception, T]]
+    <span class="keyword">val</span> <a title="&lt;refinement&gt; extends java.lang.Object with java.lang.Runnable" id="175109">runnable</a> = <a href="#175112" title="java.lang.Object with java.lang.Runnable{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with java.lang.Runnable" id="175112">Runnable</a> {
+      <span class="keyword">def</span> <a title="()Unit" id="175114">run</a>() { <a href="SyncVar.scala.html#20785" title="(x: Either[Exception,T])Unit">result</a> set <a href="TaskRunner.scala.html#52059" title="(body: =&gt; T)Either[Exception,T]">tryCatch</a>(<a href="../Function0.scala.html#34096" title="()T">task</a>()) }
+    }
+    (<a title="(x$1: java.lang.Runnable)java.lang.Thread" id="37222" class="keyword">new</a> <a title="java.lang.Thread" id="1825">Thread</a>(<a href="#175109" title="&lt;refinement&gt; extends java.lang.Object with java.lang.Runnable">runnable</a>)).<a title="()Unit" id="37244">start</a>()
+    () =&gt; <a href="ops.scala.html#52263" title="(x: Either[Exception,T])T">ops</a> getOrThrow <a href="#175108" title="scala.concurrent.SyncVar[Either[Exception,T]]">result</a>.<a href="SyncVar.scala.html#20782" title="=&gt; Either[Exception,T]">get</a>
+  }
+
+  <span class="keyword">def</span> <a title="(blocker: scala.concurrent.ManagedBlocker)Unit" id="175100">managedBlock</a>(<a title="scala.concurrent.ManagedBlocker" id="175155">blocker</a>: <a href="ManagedBlocker.scala.html#8326" title="scala.concurrent.ManagedBlocker">ManagedBlocker</a>) {
+    <a href="#175155" title="scala.concurrent.ManagedBlocker">blocker</a>.<a href="ManagedBlocker.scala.html#52302" title="()Boolean">block</a><span title="Unit">(</span>)
+  }
+
+  <span class="keyword">def</span> <a title="()Unit" id="175101">shutdown</a>() <span title="Unit">{</span>
+    // do nothing
+  }
+
+}
+
+        </pre>
+    </body>
+</html>

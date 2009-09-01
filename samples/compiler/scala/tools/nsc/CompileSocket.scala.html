@@ -1,285 +1,243 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
         <title>scala/tools/nsc/CompileSocket.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
         <script type="text/javascript" src="../../../linked.js"></script>
         <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
     </head>
-    <body onload="initializeLinked()">
+    <body>
         <pre>
-<span class="comment">/* NSC -- new Scala compiler
+/* NSC -- new Scala compiler
  * Copyright 2005-2009 LAMP/EPFL
  * @author  Martin Odersky
- */</span>
-<span class="comment">// $Id: CompileSocket.scala 17274 2009-03-10 11:39:04Z michelou $</span>
+ */
+// $Id: CompileSocket.scala 18620 2009-08-31 20:19:46Z extempore $
 
 <span class="keyword">package</span> scala.tools.nsc
 
-<span class="keyword">import</span> java.lang.{Thread, System, Runtime}
-<span class="keyword">import</span> java.lang.NumberFormatException
-<span class="keyword">import</span> java.io.{File, IOException, PrintWriter, FileOutputStream}
-<span class="keyword">import</span> java.io.{BufferedReader, FileReader}
+<span class="keyword">import</span> java.io.{ IOException, FileNotFoundException, PrintWriter, FileOutputStream }
+<span class="keyword">import</span> java.io.{ BufferedReader, FileReader }
 <span class="keyword">import</span> java.util.regex.Pattern
 <span class="keyword">import</span> java.net._
+<span class="keyword">import</span> java.security.SecureRandom
 
-<span class="comment">/** This class manages sockets for the fsc offline compiler.  */</span>
-<span class="keyword">class</span> <span class="typed"><span class="type">class CompileSocket extends java.lang.Object with ScalaObject</span><a id="6852">CompileSocket</a></span> {
-  <span class="keyword">protected</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; scala.tools.nsc.StandardCompileClient</span><a id="67443">compileClient</a></span>: <span class="typed"><span class="type">scala.tools.nsc.StandardCompileClient</span><a href="CompileClient.scala.html#6474">StandardCompileClient</a></span> = <span class="typed"><span class="type">object scala.tools.nsc.CompileClient</span><a href="CompileClient.scala.html#6361">CompileClient</a></span> <span class="comment">//todo: lazy val</span>
+<span class="keyword">import</span> scala.io.{ File, Path }
+<span class="keyword">import</span> scala.util.control.Exception.catching
 
-  <span class="comment">/** The prefix of the port identification file, which is followed
+// class CompileChannel { }
+
+/** This class manages sockets for the fsc offline compiler.  */
+<span class="keyword">class</span> <a title="class CompileSocket extends java.lang.Object with ScalaObject" id="8838">CompileSocket</a> <span title="ScalaObject">{</span>
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; scala.tools.nsc.StandardCompileClient" id="131891">compileClient</a>: <a href="CompileClient.scala.html#8442" title="scala.tools.nsc.StandardCompileClient">StandardCompileClient</a> = <a href="CompileClient.scala.html#8314" title="object scala.tools.nsc.CompileClient">CompileClient</a> //todo: lazy val
+
+  /** The prefix of the port identification file, which is followed
    *  by the port number.
-   */</span>
-  <span class="keyword">protected</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; java.lang.String</span><a id="67444">dirName</a></span> = <span class="typed"><span class="type">java.lang.String(&quot;scalac-compile-server-port&quot;)</span><span class="string">&quot;scalac-compile-server-port&quot;</span></span> <span class="comment">//todo: lazy val</span>
+   */
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="131892">dirName</a> = <span title="java.lang.String(&quot;scalac-compile-server-port&quot;)" class="string">&quot;scalac-compile-server-port&quot;</span> //todo: lazy val
 
-  <span class="keyword">protected</span> <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; java.lang.String</span><a id="67445">cmdName</a></span> = <span class="typed"><span class="type">object scala.tools.nsc.Properties</span><a href="Properties.scala.html#7366">Properties</a></span>.<span class="typed"><span class="type">=&gt; java.lang.String</span><a href="Properties.scala.html#46666">cmdName</a></span> <span class="comment">//todo: lazy val</span>
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="131893">cmdName</a> = <a href="Properties.scala.html#9424" title="object scala.tools.nsc.Properties">Properties</a>.<a href="Properties.scala.html#38276" title="=&gt; java.lang.String">cmdName</a> //todo: lazy val
 
-  <span class="comment">/** The vm part of the command to start a new scala compile server */</span>
-  <span class="keyword">protected</span> <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.String</span><span id="67447"><a id="67446">vmCommand</a></span></span> =
-    <span class="typed"><span class="type">object scala.tools.nsc.Properties</span><a href="Properties.scala.html#7366">Properties</a></span>.<span class="typed"><span class="type">=&gt; String</span><a id="46651">scalaHome</a></span> <span class="typed"><span class="type">java.lang.String</span><span class="keyword">match</span></span> {
-      <span class="typed"><span class="type">java.lang.String</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span> =&gt;
-        <span class="typed"><span class="type">=&gt; java.lang.String</span><a href="#67445">cmdName</a></span>
-      <span class="typed"><span class="type">java.lang.String</span><span class="keyword">case</span></span> <span class="typed"><span class="type">String</span><a id="67480">dirname</a></span> =&gt;
-        <span class="keyword">val</span> <span class="typed"><span class="type">java.io.File</span><a id="67481">trial</a></span> = <span class="typed"><span class="type">(java.io.File,java.lang.String)java.io.File</span><a id="40682" class="keyword">new</a></span> <span class="typed"><span class="type">java.io.File</span><a id="3669">File</a></span>(<span class="typed"><span class="type">(java.lang.String,java.lang.String)java.io.File</span><a id="40681" class="keyword">new</a></span> <span class="typed"><span class="type">java.io.File</span><a id="3669">File</a></span>(<span class="typed"><span class="type">String</span><a href="#67480">dirname</a></span>, <span class="typed"><span class="type">java.lang.String(&quot;bin&quot;)</span><span class="string">&quot;bin&quot;</span></span>), <span class="typed"><span class="type">=&gt; java.lang.String</span><a href="#67445">cmdName</a></span>)
-        <span class="typed"><span class="type">java.lang.String</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">java.io.File</span><a href="#67481">trial</a></span>.<span class="typed"><span class="type">()Boolean</span><a id="40695">canRead</a></span>)
-          <span class="typed"><span class="type">java.io.File</span><a href="#67481">trial</a></span>.<span class="typed"><span class="type">()java.lang.String</span><a id="40687">getPath</a></span>
-        <span class="keyword">else</span>
-          <span class="typed"><span class="type">=&gt; java.lang.String</span><a href="#67445">cmdName</a></span>
-    }
-
-  <span class="comment">/** The class name of the scala compile server */</span>
-  <span class="keyword">protected</span> <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.String</span><span id="67449"><a id="67448">serverClass</a></span></span> = <span class="typed"><span class="type">java.lang.String(&quot;scala.tools.nsc.CompileServer&quot;)</span><span class="string">&quot;scala.tools.nsc.CompileServer&quot;</span></span>
-    
-  <span class="comment">/** A regular expression for checking compiler output for errors */</span>
-  <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.String</span><span id="67451"><a id="67450">errorRegex</a></span></span> = <span class="typed"><span class="type">java.lang.String(&quot;.*(errors? found|don't know|bad option).*&quot;)</span><span class="string">&quot;.*(errors? found|don't know|bad option).*&quot;</span></span>
-    
-  <span class="comment">/** A Pattern object for checking compiler output for errors */</span>
-  <span class="keyword">val</span> <span class="typed"><span class="type">java.util.regex.Pattern</span><span id="67453"><a id="67452">errorPattern</a></span></span> = <span class="typed"><span class="type">object java.util.regex.Pattern</span><a id="22978">Pattern</a></span>.<span class="typed"><span class="type">(java.lang.String)java.util.regex.Pattern</span><a id="67776">compile</a></span>(<span class="typed"><span class="type">=&gt; java.lang.String</span><a href="#67450">errorRegex</a></span>)
-
-  <span class="keyword">protected</span> <span class="keyword">def</span> <span class="typed"><span class="type">(String)Unit</span><a id="67454">error</a></span>(<span class="typed"><span class="type">String</span><a id="67864">msg</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>) = <span class="typed"><span class="type">object java.lang.System</span><a id="1886">System</a></span>.<span class="typed"><span class="type">java.io.PrintStream</span><a id="47437">err</a></span>.<span class="typed"><span class="type">(java.lang.String)Unit</span><a id="27111">println</a></span>(<span class="typed"><span class="type">String</span><a href="#67864">msg</a></span>)
-    
-  <span class="keyword">protected</span> <span class="keyword">def</span> <span class="typed"><span class="type">(String)Nothing</span><a id="67455">fatal</a></span>(<span class="typed"><span class="type">String</span><a id="67862">msg</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>) = {
-    <span class="typed"><span class="type">(String)Unit</span><a href="#67454">error</a></span>(<span class="typed"><span class="type">String</span><a href="#67862">msg</a></span>)
-    <span class="typed"><span class="type">Nothing</span><span class="keyword">throw</span></span> <span class="typed"><span class="type">(java.lang.String)java.lang.Exception</span><a id="29864" class="keyword">new</a></span> <span class="typed"><span class="type">java.lang.Exception</span><span id="5974"><a id="821">Exception</a></span></span>(<span class="typed"><span class="type">java.lang.String(&quot;fsc failure&quot;)</span><span class="string">&quot;fsc failure&quot;</span></span>)
+  /** The vm part of the command to start a new scala compile server */
+  <span class="keyword">protected</span> <span class="keyword">val</span> <a title="java.lang.String" id="131894">vmCommand</a> = <a href="Properties.scala.html#9424" title="object scala.tools.nsc.Properties">Properties</a>.<a title="=&gt; String" id="38260">scalaHome</a> <span title="java.lang.String" class="keyword">match</span> {
+    <span title="java.lang.String" class="keyword">case</span> <span title="Null(null)" class="keyword">null</span>     =&gt; <a href="#131893" title="=&gt; java.lang.String">cmdName</a>
+    <span title="String" class="keyword">case</span> <a title="String" id="604467">dirname</a>  =&gt;
+      <span class="keyword">val</span> <a title="scala.io.Path" id="604468">trial</a> = <span title="object scala.io.File">File</span><a title="(child: scala.io.Path)scala.io.Path" id="604485">(</a><a href="#604467" title="scala.io.Path" id="604480">dirname</a>) <span title="(child: scala.io.Path)scala.io.Path">/</span> <span title="implicit scala.io.Path.string2path : (s: String)scala.io.Path" class="string">&quot;bin&quot;</span> / <a href="#131893" title="implicit scala.io.Path.string2path : (s: String)scala.io.Path">cmdName</a>
+      <span title="String" class="keyword">if</span> (<a href="#604468" title="scala.io.Path">trial</a>.<a title="=&gt; Boolean" id="111856">canRead</a>) <a href="#604468" title="scala.io.Path">trial</a>.<span title="=&gt; String">path</span>
+      <span class="keyword">else</span> <a href="#131893" title="=&gt; java.lang.String">cmdName</a>
   }
 
-  <span class="keyword">protected</span> <span class="keyword">def</span> <span class="typed"><span class="type">(String)Unit</span><a id="67456">info</a></span>(<span class="typed"><span class="type">String</span><a id="67839">msg</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>) =
-    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; scala.tools.nsc.StandardCompileClient</span><a href="#67443">compileClient</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a href="CompileClient.scala.html#67846">verbose</a></span>) <span class="typed"><span class="type">object java.lang.System</span><a id="1886">System</a></span>.<span class="typed"><span class="type">java.io.PrintStream</span><a id="47436">out</a></span>.<span class="typed"><span class="type">(java.lang.String)Unit</span><a id="27111">println</a></span>(<span class="typed"><span class="type">String</span><a href="#67839">msg</a></span>)
-
-  <span class="comment">/** A temporary directory to use */</span>
-  <span class="keyword">val</span> <span class="typed"><span class="type">java.io.File</span><span id="67458"><a id="67457">tmpDir</a></span></span> = {
-    <span class="keyword">val</span> <span class="typed"><span class="type">List[(java.lang.String, List[java.lang.String])]</span><a id="67790">totry</a></span> = <span class="typed"><span class="type">((java.lang.String, List[java.lang.String])*)List[(java.lang.String, List[java.lang.String])]</span><span id="21328"><a id="527">List</a></span></span>(
-        <span class="typed"><span class="type">(java.lang.String,List[java.lang.String])(java.lang.String, List[java.lang.String])</span><span id="23625"><a id="1379">(</a></span></span><span class="typed"><span class="type">java.lang.String(&quot;scala.home&quot;)</span><span class="string">&quot;scala.home&quot;</span></span>, <span class="typed"><span class="type">(java.lang.String*)List[java.lang.String]</span><span id="21328"><a id="527">List</a></span></span>(<span class="typed"><span class="type">java.lang.String(&quot;var&quot;)</span><span class="string">&quot;var&quot;</span></span>, <span class="typed"><span class="type">java.lang.String(&quot;scala-devel&quot;)</span><span class="string">&quot;scala-devel&quot;</span></span>)),
-        <span class="typed"><span class="type">(java.lang.String,List[java.lang.String])(java.lang.String, List[java.lang.String])</span><span id="23625"><a id="1379">(</a></span></span><span class="typed"><span class="type">java.lang.String(&quot;java.io.tmpdir&quot;)</span><span class="string">&quot;java.io.tmpdir&quot;</span></span>, <span class="typed"><span class="type">(java.lang.String*)List[java.lang.String]</span><span id="21328"><a id="527">List</a></span></span>(<span class="typed"><span class="type">java.lang.String(&quot;scala-devel&quot;)</span><span class="string">&quot;scala-devel&quot;</span></span>)),
-        <span class="typed"><span class="type">(java.lang.String,List[java.lang.String])(java.lang.String, List[java.lang.String])</span><span id="23625"><a id="1379">(</a></span></span><span class="typed"><span class="type">java.lang.String(&quot;user.home&quot;)</span><span class="string">&quot;user.home&quot;</span></span>, <span class="typed"><span class="type">(java.lang.String*)List[java.lang.String]</span><span id="21328"><a id="527">List</a></span></span>(<span class="typed"><span class="type">java.lang.String(&quot;tmp&quot;)</span><span class="string">&quot;tmp&quot;</span></span>)))
-
-    <span class="comment">/** Expand a property-extensions pair into a complete File object */</span>
-    <span class="keyword">def</span> <span class="typed"><span class="type">((String, List[String]))Option[java.io.File]</span><a id="67791">expand</a></span>(<span class="typed"><span class="type">(String, List[String])</span><a id="67804">trial</a></span>: <span class="typed"><span class="type">(String, List[String])</span><a id="1378">(</a></span>String, List[String])): <span class="typed"><span class="type">Option[java.io.File]</span><a id="934">Option</a></span>[File] = {
-      <span class="keyword">val</span> <span class="typed"><span class="type">(String, List[String])</span><span id="23625"><a href="#67810" id="1379">(</a></span></span><span class="typed"><span class="type">String</span><span id="67810"><span id="67806"><a href="#67805" id="23614">topdirProp</a></span></span></span>, <span class="typed"><span class="type">List[String]</span><span id="67811"><span id="67807"><a href="#67805" id="23616">extensions</a></span></span></span>) = <span class="typed"><span class="type">(String, List[String])</span><a href="#67804">trial</a></span>
-      <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.String</span><a id="67808">topdir</a></span> = <span class="typed"><span class="type">object java.lang.System</span><a id="1886">System</a></span>.<span class="typed"><span class="type">(java.lang.String)java.lang.String</span><a id="47450">getProperty</a></span>(<span class="typed"><span class="type">String</span><a href="#67806">topdirProp</a></span>)
-      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">java.lang.String</span><a href="#67808">topdir</a></span> <span class="typed"><span class="type">(AnyRef)Boolean</span><a id="5794">eq</a></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>)
-        <span class="typed"><span class="type">Nothing</span><span class="keyword">return</span></span> <span class="typed"><span class="type">object None</span><a id="536">None</a></span>
-
-      <span class="keyword">val</span> <span class="typed"><span class="type">java.io.File</span><a id="67809">fulldir</a></span> =
-        <span class="typed"><span class="type">List[String]</span><a href="#67807">extensions</a></span>.<span class="typed"><span class="type">(java.io.File)((java.io.File, String) =&gt; java.io.File)java.io.File</span><a id="21375">foldLeft</a></span>[<span class="typed"><span class="type">java.io.File</span><a id="3669">File</a></span>](<span class="typed"><span class="type">java.io.File</span><span class="keyword">new</span></span> <span class="typed"><span class="type">java.io.File</span><a id="3669">File</a></span>(<span class="typed"><span class="type">java.lang.String</span><a href="#67808">topdir</a></span>))(
-            (<span class="typed"><span class="type">java.io.File</span><a id="67818">dir</a></span>,<span class="typed"><span class="type">String</span><a id="67819">ext</a></span>) =&gt; <span class="typed"><span class="type">(java.io.File,java.lang.String)java.io.File</span><a id="40682" class="keyword">new</a></span> <span class="typed"><span class="type">java.io.File</span><a id="3669">File</a></span>(<span class="typed"><span class="type">java.io.File</span><a href="#67818">dir</a></span>, <span class="typed"><span class="type">String</span><a href="#67819">ext</a></span>))
-
-      <span class="typed"><span class="type">(java.io.File)Some[java.io.File]</span><span id="29737"><a id="308">Some</a></span></span>(<span class="typed"><span class="type">java.io.File</span><a href="#67809">fulldir</a></span>)
-    }
-
-    <span class="comment">/** Try to create directory f, and then see if it can
-     *  be written into. */</span>
-    <span class="keyword">def</span> <span class="typed"><span class="type">(java.io.File)Boolean</span><a id="67792">isDirWritable</a></span>(<span class="typed"><span class="type">java.io.File</span><a id="67835">f</a></span>: <span class="typed"><span class="type">java.io.File</span><a id="3669">File</a></span>): <span class="typed"><span class="type">Boolean</span><a id="2170">Boolean</a></span> = {
-      <span class="typed"><span class="type">java.io.File</span><a href="#67835">f</a></span>.<span class="typed"><span class="type">()Boolean</span><a id="40712">mkdirs</a></span>()
-      <span class="typed"><span class="type">java.io.File</span><a href="#67835">f</a></span>.<span class="typed"><span class="type">()Boolean</span><a id="40698">isDirectory</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2751">&amp;&amp;</a></span> <span class="typed"><span class="type">java.io.File</span><a href="#67835">f</a></span>.<span class="typed"><span class="type">()Boolean</span><a id="40696">canWrite</a></span>
-    }
+  /** The class name of the scala compile server */
+  <span class="keyword">protected</span> <span class="keyword">val</span> <a title="java.lang.String" id="131896">serverClass</a> = <span title="java.lang.String(&quot;scala.tools.nsc.CompileServer&quot;)" class="string">&quot;scala.tools.nsc.CompileServer&quot;</span>
     
-    <span class="keyword">def</span> <span class="typed"><span class="type">()java.io.File</span><a id="67793">findTmpDir</a></span>(): <span class="typed"><span class="type">java.io.File</span><a id="3669">File</a></span> = {    
-      <span class="keyword">for</span> (<span class="typed"><span class="type">(((java.lang.String, List[java.lang.String])) =&gt; Unit)Unit</span><span id="21366"><a id="67837">trial</a></span></span> &lt;- <span class="typed"><span class="type">List[(java.lang.String, List[java.lang.String])]</span><a href="#67790">totry</a></span>) <span class="typed"><span class="type">((String, List[String]))Option[java.io.File]</span><a href="#67791">expand</a></span>(<span class="typed"><span class="type">(java.lang.String, List[java.lang.String])</span><a href="#67837">trial</a></span>) <span class="typed"><span class="type">Unit</span><span class="keyword">match</span></span> {
-        <span class="typed"><span class="type">Nothing</span><span class="keyword">case</span></span> <a id="1">Some</a>(<span class="typed"><span class="type">java.io.File</span><a id="67838">dir</a></span>) <span class="keyword">if</span> <span class="typed"><span class="type">(java.io.File)Boolean</span><a href="#67792">isDirWritable</a></span>(<span class="typed"><span class="type">java.io.File</span><a href="#67838">dir</a></span>) =&gt;
-          <span class="typed"><span class="type">(String)Unit</span><a href="#67456">info</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;[Temp directory: &quot;)</span><span class="string">&quot;[Temp directory: &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">java.io.File</span><a href="#67838">dir</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot;]&quot;)</span><span class="string">&quot;]&quot;</span></span>)
-          <span class="typed"><span class="type">Nothing</span><span class="keyword">return</span></span> <span class="typed"><span class="type">java.io.File</span><a href="#67838">dir</a></span>
-        <span class="typed"><span class="type">Unit</span><span class="keyword">case</span></span> _ =&gt;
-      }
-      <span class="typed"><span class="type">(String)Nothing</span><a href="#67455">fatal</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;Could not find a directory for temporary files&quot;)</span><span class="string">&quot;Could not find a directory for temporary files&quot;</span></span>)
-    }
+  /** A regular expression for checking compiler output for errors */
+  <span class="keyword">val</span> <a title="java.lang.String" id="131898">errorRegex</a> = <span title="java.lang.String(&quot;.*(errors? found|don't know|bad option).*&quot;)" class="string">&quot;.*(errors? found|don't know|bad option).*&quot;</span>
     
-    <span class="typed"><span class="type">()java.io.File</span><a href="#67793">findTmpDir</a></span>()
+  /** A Pattern object for checking compiler output for errors */
+  <span class="keyword">val</span> <a title="java.util.regex.Pattern" id="131900">errorPattern</a> = <a title="(x$1: java.lang.String)java.util.regex.Pattern" id="30615">Pattern</a> compile <a href="#131898" title="=&gt; java.lang.String">errorRegex</a>
+
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(msg: String)Unit" id="131902">error</a>(<a title="String" id="604643">msg</a>: <span title="String">String</span>) = <span title="object java.lang.System">System</span>.<a title="java.io.PrintStream" id="64905">err</a>.<span title="(x$1: java.lang.String)Unit">println</span>(<a href="#604643" title="String">msg</a>)
+    
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(msg: String)Nothing" id="131903">fatal</a>(<a title="String" id="604640">msg</a>: <span title="String">String</span>) = {
+    <a href="#131902" title="(msg: String)Unit">error</a>(<a href="#604640" title="String">msg</a>)
+    <span title="Nothing" class="keyword">throw</span> <a title="(x$1: java.lang.String)java.lang.Exception" id="29255" class="keyword">new</a> <a title="java.lang.Exception" id="7820">Exception</a>(<span title="java.lang.String(&quot;fsc failure&quot;)" class="string">&quot;fsc failure&quot;</span>)
+  }
+
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(msg: String)Unit" id="131904">info</a>(<a title="String" id="604623">msg</a>: <span title="String">String</span>) =
+    <span title="Unit" class="keyword">if</span> (<a href="#131891" title="=&gt; scala.tools.nsc.StandardCompileClient">compileClient</a>.<a href="CompileClient.scala.html#60307" title="=&gt; Boolean">verbose</a>) <span title="object java.lang.System">System</span>.<a title="java.io.PrintStream" id="64904">out</a>.<span title="(x$1: java.lang.String)Unit">println</span>(<a href="#604623" title="String">msg</a>)
+
+  /** A temporary directory to use */
+  <span class="keyword">val</span> <a title="scala.io.Directory" id="131905">tmpDir</a> = {
+    <span class="keyword">val</span> <a title="String" id="604548">udir</a>  = <a title="(x: String)Option[String]" id="783">Option</a><a title="(default: =&gt; String)String" id="35047">(</a><a href="Properties.scala.html#9424" title="object scala.tools.nsc.Properties">Properties</a>.<a title="=&gt; String" id="38258">userName</a>) getOrElse <span title="java.lang.String(&quot;shared&quot;)" class="string">&quot;shared&quot;</span>
+    <span class="keyword">val</span> <a title="scala.io.Directory" id="604549">f</a>     = (<a title="(path: String)scala.io.Path" id="111893">Path</a><span title="(child: scala.io.Path)scala.io.Path">(</span><a href="Properties.scala.html#9424" title="object scala.tools.nsc.Properties">Properties</a>.<a title="=&gt; String" id="38256">tmpDir</a>) <span title="(child: scala.io.Path)scala.io.Path">/</span> <span title="implicit scala.io.Path.string2path : (s: String)scala.io.Path" class="string">&quot;scala-devel&quot;</span> <a title="scala.io.Path" id="604616">/</a> <a href="#604548" title="implicit scala.io.Path.string2path : (s: String)scala.io.Path">udir</a>).<a href="#604616" title="Boolean" id="604618">ensureDirectory</a>()
+    
+    <span title="scala.io.Directory" class="keyword">if</span> (<a href="#604549" title="scala.io.Directory">f</a>.<a title="(x$1: Boolean)Boolean" id="111861">isDirectory</a> &amp;&amp; <a href="#604549" title="scala.io.Directory">f</a>.<a title="=&gt; Boolean" id="111857">canWrite</a>) {
+      <a href="#131904" title="(msg: String)Unit">info</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;[Temp directory: &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#604549" title="scala.io.Directory">f</a> + <span title="java.lang.String(&quot;]&quot;)" class="string">&quot;]&quot;</span>)
+      <a href="#604549" title="scala.io.Directory">f</a>
+    }
+    <span class="keyword">else</span> <a href="#131903" title="(msg: String)Nothing">fatal</a>(<span title="java.lang.String(&quot;Could not find a directory for temporary files&quot;)" class="string">&quot;Could not find a directory for temporary files&quot;</span>)
   }
   
-  <span class="comment">/* A directory holding port identification files */</span>
-  <span class="keyword">val</span> <span class="typed"><span class="type">java.io.File</span><span id="67460"><a id="67459">portsDir</a></span></span> =  <span class="typed"><span class="type">(java.io.File,java.lang.String)java.io.File</span><a id="40682" class="keyword">new</a></span> <span class="typed"><span class="type">java.io.File</span><a id="3669">File</a></span>(<span class="typed"><span class="type">=&gt; java.io.File</span><a href="#67457">tmpDir</a></span>, <span class="typed"><span class="type">=&gt; java.lang.String</span><a href="#67444">dirName</a></span>)
-  <span class="typed"><span class="type">=&gt; java.io.File</span><a href="#67459">portsDir</a></span>.<span class="typed"><span class="type">()Boolean</span><a id="40712">mkdirs</a></span>
+  /* A directory holding port identification files */
+  <span class="keyword">val</span> <a title="scala.io.Directory" id="131907">portsDir</a> = (<a href="#131905" title="(child: scala.io.Path)scala.io.Path">tmpDir</a> <a title="scala.io.Path" id="604685">/</a> <a href="#131892" title="implicit scala.io.Path.string2path : (s: String)scala.io.Path">dirName</a>).<a href="#604685" title="Boolean" id="604687">ensureDirectory</a>()
 
-  <span class="comment">/** Maximum number of polls for an available port */</span>
-  <span class="keyword">private</span> <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><span id="67462"><a id="67461">MaxAttempts</a></span></span> = <span class="typed"><span class="type">Int(100)</span><span class="int">100</span></span>
+  /** Maximum number of polls for an available port */
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="Int" id="131909">MaxAttempts</a> = <span title="Int(100)" class="int">100</span>
 
-  <span class="comment">/** Time (in ms) to sleep between two polls */</span>
-  <span class="keyword">private</span> <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><span id="67464"><a id="67463">sleepTime</a></span></span> = <span class="typed"><span class="type">Int(20)</span><span class="int">20</span></span>
+  /** Time (in ms) to sleep between two polls */
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="Int" id="131911">sleepTime</a> = <span title="Int(20)" class="int">20</span>
 
-  <span class="comment">/** The command which starts the compile server, given vm arguments.
+  /** The command which starts the compile server, given vm arguments.
     *
     *  @param vmArgs  the argument string to be passed to the java or scala command
     *                 the string must be either empty or start with a ' '.
-    */</span>
-  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">(String)String</span><a id="67465">serverCommand</a></span>(<span class="typed"><span class="type">String</span><a id="67887">vmArgs</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>): <span class="typed"><span class="type">String</span><a id="1861">String</a></span> =
-    <span class="typed"><span class="type">=&gt; java.lang.String</span><a href="#67446">vmCommand</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">String</span><a href="#67887">vmArgs</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot; &quot;)</span><span class="string">&quot; &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">=&gt; java.lang.String</span><a href="#67448">serverClass</a></span>
+    */
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(vmArgs: String)String" id="131913">serverCommand</a>(<a title="String" id="604692">vmArgs</a>: <span title="String">String</span>): <span title="String">String</span> =
+    <a href="#131894" title="(x$1: Any)java.lang.String">vmCommand</a> <span title="(x$1: Any)java.lang.String">+</span> <a href="#604692" title="String">vmArgs</a> <span title="(x$1: Any)java.lang.String">+</span> <span title="java.lang.String(&quot; &quot;)" class="string">&quot; &quot;</span> + <a href="#131896" title="=&gt; java.lang.String">serverClass</a>
 
-  <span class="comment">/** Start a new server; returns true iff it succeeds */</span>
-  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">(String)Unit</span><a id="67466">startNewServer</a></span>(<span class="typed"><span class="type">String</span><a id="67888">vmArgs</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>) {
-    <span class="keyword">val</span> <span class="typed"><span class="type">String</span><a id="67889">cmd</a></span> = <span class="typed"><span class="type">(String)String</span><a href="#67465">serverCommand</a></span>(<span class="typed"><span class="type">String</span><a href="#67888">vmArgs</a></span>)
-    <span class="typed"><span class="type">(String)Unit</span><a href="#67456">info</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;[Executed command: &quot;)</span><span class="string">&quot;[Executed command: &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">String</span><a href="#67889">cmd</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot;]&quot;)</span><span class="string">&quot;]&quot;</span></span>)
+  /** Start a new server; returns true iff it succeeds */
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(vmArgs: String)Unit" id="131914">startNewServer</a>(<a title="String" id="604700">vmArgs</a>: <span title="String">String</span>) {
+    <span class="keyword">val</span> <a title="String" id="604702">cmd</a> = <a href="#131913" title="(vmArgs: String)String">serverCommand</a>(<a href="#604700" title="String">vmArgs</a>)
+    <a href="#131904" title="(msg: String)Unit">info</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;[Executed command: &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#604702" title="String">cmd</a> + <span title="java.lang.String(&quot;]&quot;)" class="string">&quot;]&quot;</span>)
     <span class="keyword">try</span> {
-      <span class="typed"><span class="type">object java.lang.Runtime</span><a id="1751">Runtime</a></span>.<span class="typed"><span class="type">()java.lang.Runtime</span><a id="67890">getRuntime</a></span>().<span class="typed"><span class="type">(java.lang.String)java.lang.Process</span><a id="67896">exec</a></span>(<span class="typed"><span class="type">String</span><a href="#67889">cmd</a></span>)
-<span class="comment">//      val exitVal = proc.waitFor()</span>
-<span class="comment">//      info(&quot;[Exit value: &quot; + exitVal + &quot;]&quot;)</span>
+      <a title="object java.lang.Runtime" id="1498">Runtime</a>.<a title="()java.lang.Runtime" id="130424">getRuntime</a>().<a title="(x$1: java.lang.String)java.lang.Process" id="130435">exec</a><span title="Unit">(</span><a href="#604702" title="String">cmd</a>)
+//      val exitVal = proc.waitFor()
+//      info(&quot;[Exit value: &quot; + exitVal + &quot;]&quot;)
     } <span class="keyword">catch</span> {
-      <span class="typed"><span class="type">Nothing</span><span class="keyword">case</span></span> <span class="typed"><span class="type">java.io.IOException</span><a id="67928">ex</a></span>: <span class="typed"><span class="type">java.io.IOException</span><a id="3519">IOException</a></span> =&gt;
-        <span class="typed"><span class="type">(String)Nothing</span><a href="#67455">fatal</a></span>(<span class="string">&quot;Cannot start compilation daemon.&quot;</span> <span class="typed"><span class="type">java.lang.String(&quot;Cannot start compilation daemon.\012tried command: &quot;)</span><span >+</span></span>
-              <span class="string">&quot;\ntried command: &quot;</span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">String</span><a href="#67889">cmd</a></span>)
+      <span title="Nothing" class="keyword">case</span> <a title="java.io.IOException" id="604726">ex</a>: <span title="java.io.IOException">IOException</span> =&gt;
+        <a href="#131903" title="(msg: String)Nothing">fatal</a>(<span class="string">&quot;Cannot start compilation daemon.&quot;</span> <span title="(x$1: Any)java.lang.String">+</span>
+              <span class="string">&quot;\ntried command: &quot;</span> + <a href="#604702" title="String">cmd</a>)
     }
   }
 
-  <span class="comment">/** The port identification file */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)java.io.File</span><a id="67467">portFile</a></span>(<span class="typed"><span class="type">Int</span><a id="67929">port</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>) = <span class="typed"><span class="type">(java.io.File,java.lang.String)java.io.File</span><a id="40682" class="keyword">new</a></span> <span class="typed"><span class="type">java.io.File</span><a id="3669">File</a></span>(<span class="typed"><span class="type">=&gt; java.io.File</span><a href="#67459">portsDir</a></span>, <span class="typed"><span class="type">Int</span><a href="#67929">port</a></span>.<span class="typed"><span class="type">()java.lang.String</span><a id="3500">toString</a></span>())
+  /** The port identification file */
+  <span class="keyword">def</span> <a title="(port: Int)scala.io.File" id="131915">portFile</a>(<a title="Int" id="604733">port</a>: <span title="Int">Int</span>) = <a href="#131907" title="(child: scala.io.File)scala.io.File" id="111846">portsDir</a> / <span title="object scala.io.File">File</span><a title="scala.io.Codec" id="604754">(</a><a href="#604733" title="Int">port</a>.<a title="scala.io.Path" id="604749">toString</a>)
 
-  <span class="comment">/** Poll for a server port number; return -1 if none exists yet */</span>
-  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">()Int</span><a id="67468">pollPort</a></span>(): <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span> = {
-    <span class="keyword">val</span> <span class="typed"><span class="type">Array[java.io.File]</span><a id="67945">hits</a></span> = <span class="typed"><span class="type">=&gt; java.io.File</span><a href="#67459">portsDir</a></span>.<span class="typed"><span class="type">()Array[java.io.File]</span><a id="40708">listFiles</a></span>()
-    <span class="typed"><span class="type">Int</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Array[java.io.File]</span><a href="#67945">hits</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a id="21508">length</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">==</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) -<span class="typed"><span class="type">Int(-1)</span><span class="int">1</span></span>
-    <span class="keyword">else</span>
-      <span class="keyword">try</span> {
-        <span class="keyword">for</span> (<span class="typed"><span class="type">((Int) =&gt; Unit)Unit</span><span id="40475"><a id="67959">i</a></span></span> &lt;- <span class="typed"><span class="type">implicit scala.Predef.intWrapper : (Int)scala.runtime.RichInt</span><span id="6133"><a id="821" class="int">1</a></span></span> <span class="typed"><span class="type">(Int)Range</span><a id="26778">until</a></span> <span class="typed"><span class="type">Array[java.io.File]</span><a href="#67945">hits</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a id="21508">length</a></span>) <span class="typed"><span class="type">(Int)java.io.File</span><a href="#67945" id="21509">hits</a></span>(<span class="typed"><span class="type">Int</span><a href="#67959">i</a></span>).<span class="typed"><span class="type">()Boolean</span><a id="40704">delete</a></span>()
-        <span class="typed"><span class="type">(Int)java.io.File</span><a href="#67945" id="21509">hits</a></span>(<span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>).<span class="typed"><span class="type">implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString</span><span id="6140"><span id="821"><a id="40684">getName</a></span></span></span>.<span class="typed"><span class="type">=&gt; Int</span><a id="23114">toInt</a></span>
-      } <span class="keyword">catch</span> {
-        <span class="typed"><span class="type">Nothing</span><span class="keyword">case</span></span> <span class="typed"><span class="type">java.lang.NumberFormatException</span><a id="67970">ex</a></span>: <span class="typed"><span class="type">java.lang.NumberFormatException</span><a id="2104">NumberFormatException</a></span> =&gt;
-          <span class="typed"><span class="type">(String)Nothing</span><a href="#67455">fatal</a></span>(<span class="typed"><span class="type">java.lang.NumberFormatException</span><a href="#67970">ex</a></span>.<span class="typed"><span class="type">()java.lang.String</span><a id="23650">toString</a></span>() <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span>
-                <span class="typed"><span class="type">java.lang.String(&quot;\012bad file in temp directory: &quot;)</span><span class="string">&quot;\nbad file in temp directory: &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span>
-                <span class="typed"><span class="type">(Int)java.io.File</span><a href="#67945" id="21509">hits</a></span>(<span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>).<span class="typed"><span class="type">()java.lang.String</span><a id="40689">getAbsolutePath</a></span>() <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span>
-                <span class="typed"><span class="type">java.lang.String(&quot;\012please remove the file and try again&quot;)</span><span class="string">&quot;\nplease remove the file and try again&quot;</span></span>)
-      }
-  }
+  /** Poll for a server port number; return -1 if none exists yet */
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="()Int" id="131916">pollPort</a>(): <span title="Int">Int</span> =
+    <a href="#131907" title="=&gt; scala.io.Directory">portsDir</a>.<a title="=&gt; Iterator[scala.io.Path]" id="130938">list</a>.<a title="=&gt; List[scala.io.Path]" id="32276">toList</a> <span title="Int" class="keyword">match</span> {
+      <span title="Int(-1)" class="keyword">case</span> <a title="object Nil" id="7634">Nil</a>      =&gt; <span title="Int(-1)">-</span><span class="int">1</span>
+      <span title="Int" class="keyword">case</span> <a title="scala.io.Path" id="604764">p</a> :: <a title="List[scala.io.Path]" id="604765">xs</a>  =&gt;
+        <a href="#604765" title="(p: (scala.io.Path) =&gt; Boolean)Boolean" id="28935">xs</a> forall (<a href="#604772" title="scala.io.Path">_</a>.<span title="()Boolean">delete</span>())
+        <a href="#604764" title="scala.io.Path">p</a>.<a title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" id="111848">name</a>.<span title="=&gt; Int">toInt</span>
+    }
 
-  <span class="comment">/** Get the port number to which a scala compile server is connected;
+  /** Get the port number to which a scala compile server is connected;
    *  If no server is running yet, then create one.
-   */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(String)Int</span><a id="67469">getPort</a></span>(<span class="typed"><span class="type">String</span><a id="67974">vmArgs</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>): <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span> = {
-    <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="67975">attempts</a></span> = <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>
-    <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="67976">port</a></span> = <span class="typed"><span class="type">()Int</span><a href="#67468">pollPort</a></span>()
+   */
+  <span class="keyword">def</span> <a title="(vmArgs: String)Int" id="131917">getPort</a>(<a title="String" id="604794">vmArgs</a>: <span title="String">String</span>): <span title="Int">Int</span> = {
+    <span class="keyword">var</span> <a title="Int" id="604796">attempts</a> = <span title="Int(0)" class="int">0</span>
+    <span class="keyword">var</span> <a title="Int" id="604797">port</a> = <a href="#131916" title="()Int">pollPort</a>()
 
-    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#67976">port</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&lt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>)
-      <span class="typed"><span class="type">(String)Unit</span><a href="#67466">startNewServer</a></span>(<span class="typed"><span class="type">String</span><a href="#67974">vmArgs</a></span>)
-    <span class="typed"><span class="type">Unit</span><a href="#67977" class="keyword">while</a></span> (<span class="typed"><span class="type">Int</span><a href="#67976">port</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&lt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2751">&amp;&amp;</a></span> <span class="typed"><span class="type">Int</span><a href="#67975">attempts</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&lt;</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#67461">MaxAttempts</a></span>) {
-      <span class="typed"><span class="type">Int</span><a href="#67975">attempts</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3147">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
-      <span class="typed"><span class="type">object java.lang.Thread</span><a id="2084">Thread</a></span>.<span class="typed"><span class="type">(Long)Unit</span><a id="29017">sleep</a></span>(<span class="typed"><span class="type">implicit scala.Predef.int2long : (Int)Long</span><span id="6212"><a href="#67463" id="821">sleepTime</a></span></span>)
-      <span class="typed"><span class="type">Int</span><a href="#67976">port</a></span> = <span class="typed"><span class="type">()Int</span><a href="#67468">pollPort</a></span>()
+    <span title="Unit" class="keyword">if</span> (<a href="#604797" title="(x$1: Int)Boolean">port</a> &lt; <span title="Int(0)" class="int">0</span>)
+      <a href="#131914" title="(vmArgs: String)Unit">startNewServer</a>(<a href="#604794" title="String">vmArgs</a>)
+      
+    <span title="Unit" class="keyword">while</span> (<a href="#604797" title="(x$1: Int)Boolean">port</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <span title="Int(0)" class="int">0</span> &amp;&amp; <a href="#604796" title="(x$1: Int)Boolean">attempts</a> &lt; <a href="#131909" title="=&gt; Int">MaxAttempts</a>) <a href="#604798" title="()Unit">{</a>
+      <a href="#604796" title="Int">attempts</a> += <span title="Int(1)" class="int">1</span>
+      <span title="object java.lang.Thread">Thread</span>.<span title="(x$1: Long)Unit">sleep</span>(<a href="#131911" title="implicit scala.Predef.int2long : (x: Int)Long" id="8137">sleepTime</a>)
+      <a href="#604797" title="Int">port</a> = <a href="#131916" title="()Int">pollPort</a>()
     }
-    <span class="typed"><span class="type">(String)Unit</span><a href="#67456">info</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;[Port number: &quot;)</span><span class="string">&quot;[Port number: &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">Int</span><a href="#67976">port</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot;]&quot;)</span><span class="string">&quot;]&quot;</span></span>)
-    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#67976">port</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&lt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>)
-      <span class="typed"><span class="type">(String)Nothing</span><a href="#67455">fatal</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;Could not connect to compilation daemon.&quot;)</span><span class="string">&quot;Could not connect to compilation daemon.&quot;</span></span>)
-    <span class="typed"><span class="type">Int</span><a href="#67976">port</a></span>
+    <a href="#131904" title="(msg: String)Unit">info</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;[Port number: &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#604797" title="Int">port</a> + <span title="java.lang.String(&quot;]&quot;)" class="string">&quot;]&quot;</span>)
+    <span title="Unit" class="keyword">if</span> (<a href="#604797" title="(x$1: Int)Boolean">port</a> &lt; <span title="Int(0)" class="int">0</span>)
+      <a href="#131903" title="(msg: String)Nothing">fatal</a>(<span title="java.lang.String(&quot;Could not connect to compilation daemon.&quot;)" class="string">&quot;Could not connect to compilation daemon.&quot;</span>)
+    <a href="#604797" title="Int">port</a>
   }
 
-  <span class="comment">/** Set the port number to which a scala compile server is connected */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Unit</span><a id="67470">setPort</a></span>(<span class="typed"><span class="type">Int</span><a id="68005">port</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>) {
-    <span class="keyword">try</span> {
-      <span class="keyword">val</span> <span class="typed"><span class="type">java.io.PrintWriter</span><a id="68006">f</a></span> = <span class="typed"><span class="type">(java.io.OutputStream)java.io.PrintWriter</span><a id="28679" class="keyword">new</a></span> <span class="typed"><span class="type">java.io.PrintWriter</span><a id="3759">PrintWriter</a></span>(<span class="typed"><span class="type">(java.io.File)java.io.FileOutputStream</span><a id="48703" class="keyword">new</a></span> <span class="typed"><span class="type">java.io.FileOutputStream</span><a id="3798">FileOutputStream</a></span>(<span class="typed"><span class="type">(Int)java.io.File</span><a href="#67467">portFile</a></span>(<span class="typed"><span class="type">Int</span><a href="#68005">port</a></span>)))
-      <span class="typed"><span class="type">java.io.PrintWriter</span><a href="#68006">f</a></span>.<span class="typed"><span class="type">(java.lang.String)Unit</span><a id="28711">println</a></span>(<span class="typed"><span class="type">java.security.SecureRandom</span><span class="keyword">new</span></span> java.security.<span class="typed"><span class="type">java.security.SecureRandom</span><a id="4869">SecureRandom</a></span>().<span class="typed"><span class="type">()Int</span><a id="68036">nextInt</a></span>.<span class="typed"><span class="type">()java.lang.String</span><a id="3500">toString</a></span>)
-      <span class="typed"><span class="type">java.io.PrintWriter</span><a href="#68006">f</a></span>.<span class="typed"><span class="type">()Unit</span><a id="28686">close</a></span>()
-    } <span class="keyword">catch</span> {
-      <span class="typed"><span class="type">Nothing</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Exception</span><a id="68057">ex</a></span>: <span class="comment">/*FileNotFound+Security*/</span><span class="typed"><span class="type">Exception</span><a id="2131">Exception</a></span> =&gt;
-        <span class="typed"><span class="type">(String)Nothing</span><a href="#67455">fatal</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;Cannot create file: &quot;)</span><span class="string">&quot;Cannot create file: &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span>
-              <span class="typed"><span class="type">(Int)java.io.File</span><a href="#67467">portFile</a></span>(<span class="typed"><span class="type">Int</span><a href="#68005">port</a></span>).<span class="typed"><span class="type">()java.lang.String</span><a id="40689">getAbsolutePath</a></span>())
+  /** Set the port number to which a scala compile server is connected */
+  <span class="keyword">def</span> <a title="(port: Int)Unit" id="131918">setPort</a>(<a title="Int" id="604885">port</a>: <span title="Int">Int</span>) {
+    <span class="keyword">val</span> <a title="scala.io.File" id="604887">file</a>    = <a href="#131915" title="(port: Int)scala.io.File">portFile</a>(<a href="#604885" title="Int">port</a>)
+    <span class="keyword">val</span> <a title="java.lang.String" id="604888">secret</a>  = <span title="java.security.SecureRandom" class="keyword">new</span> <a title="java.security.SecureRandom" id="5486">SecureRandom</a>().<a title="()Int" id="604932">nextInt</a>.<span title="()java.lang.String">toString</span>
+    
+    <span class="keyword">try</span> <a href="#604887" title="(xs: Traversable[String],append: Boolean,codec: scala.io.Codec)Unit" id="130755">file</a> writeAll <a title="(xs: java.lang.String*)List[java.lang.String]" id="7346">List</a>(<a href="#604888" title="java.lang.String">secret</a>) <span class="keyword">catch</span> { 
+      <span title="Nothing" class="keyword">case</span> <a title="java.lang.Throwable" id="604966">e</a> @ (_: <a title="java.io.FileNotFoundException" id="3699">FileNotFoundException</a> | _: <span title="java.lang.SecurityException">SecurityException</span>) =&gt;
+        <a href="#131903" title="(msg: String)Nothing">fatal</a>(<span title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;Cannot create file: %s&quot;</span>.<span title="(args: Any*)String">format</span>(<a href="#604887" title="scala.io.File">file</a>.<span title="=&gt; String">path</span>))
     }
   }
 
-  <span class="comment">/** Delete the port number to which a scala compile server was connected */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Unit</span><a id="67471">deletePort</a></span>(<span class="typed"><span class="type">Int</span><a id="68058">port</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>) { <span class="typed"><span class="type">(Int)java.io.File</span><a href="#67467">portFile</a></span>(<span class="typed"><span class="type">Int</span><a href="#68058">port</a></span>).<span class="typed"><span class="type">()Boolean</span><a id="40704">delete</a></span>() }
+  /** Delete the port number to which a scala compile server was connected */
+  <span class="keyword">def</span> <a title="(port: Int)Boolean" id="131919">deletePort</a>(<a title="Int" id="604990">port</a>: <span title="Int">Int</span>) = <a href="#131915" title="(port: Int)scala.io.File">portFile</a>(<a href="#604990" title="Int">port</a>).<span title="()Boolean">delete</span>()
 
-  <span class="comment">/** Get a socket connected to a daemon.  If create is true, then
+  /** Get a socket connected to a daemon.  If create is true, then
     * create a new daemon if necessary.  Returns null if the connection
     * cannot be established.
-    */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(String,Boolean)java.net.Socket</span><a id="67472">getOrCreateSocket</a></span>(<span class="typed"><span class="type">String</span><a id="68059">vmArgs</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>, <span class="typed"><span class="type">Boolean</span><a id="68060">create</a></span>: <span class="typed"><span class="type">Boolean</span><a id="2170">Boolean</a></span>): <span class="typed"><span class="type">java.net.Socket</span><a id="4403">Socket</a></span> = {
-    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="68061">nAttempts</a></span> = <span class="typed"><span class="type">Int(49)</span><span class="int">49</span></span>  <span class="comment">// try for about 5 seconds</span>
-    <span class="keyword">def</span> <span class="typed"><span class="type">(Int)java.net.Socket</span><a id="68062">getsock</a></span>(<span class="typed"><span class="type">Int</span><a id="68063">attempts</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>): <span class="typed"><span class="type">java.net.Socket</span><a id="4403">Socket</a></span> =
-      <span class="typed"><span class="type">java.net.Socket</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#68063">attempts</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">==</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) {
-        <span class="typed"><span class="type">(String)Unit</span><a href="#67454">error</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;Unable to establish connection to compilation daemon&quot;)</span><span class="string">&quot;Unable to establish connection to compilation daemon&quot;</span></span>)
-        <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>
+    */
+  <span class="keyword">def</span> <a title="(vmArgs: String,create: Boolean)java.net.Socket" id="131920">getOrCreateSocket</a>(<a title="String" id="131926">vmArgs</a>: <span title="String">String</span>, <a title="Boolean" id="132031">create</a>: <a title="Boolean" id="1951">Boolean</a> = <span title="Boolean(true)" class="keyword">true</span>): <span title="java.net.Socket">Socket</span> = {
+    <span class="keyword">val</span> <a title="Int" id="604997">nAttempts</a> = <span title="Int(49)" class="int">49</span>  // try for about 5 seconds
+    <span class="keyword">def</span> <a title="(attempts: Int)java.net.Socket" id="604998">getsock</a>(<a title="Int" id="604999">attempts</a>: <span title="Int">Int</span>): <span title="java.net.Socket">Socket</span> =
+      <span title="java.net.Socket" class="keyword">if</span> (<a href="#604999" title="(x$1: Int)Boolean">attempts</a> == <span title="Int(0)" class="int">0</span>) {
+        <a href="#131902" title="(msg: String)Unit">error</a>(<span title="java.lang.String(&quot;Unable to establish connection to compilation daemon&quot;)" class="string">&quot;Unable to establish connection to compilation daemon&quot;</span>)
+        <span title="Null(null)" class="keyword">null</span>
       } <span class="keyword">else</span> {
-        <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="68065">port</a></span> = <span class="typed"><span class="type">Int</span><span class="keyword">if</span></span>(<span class="typed"><span class="type">Boolean</span><a href="#68060">create</a></span>) <span class="typed"><span class="type">(String)Int</span><a href="#67469">getPort</a></span>(<span class="typed"><span class="type">String</span><a href="#68059">vmArgs</a></span>) <span class="keyword">else</span> <span class="typed"><span class="type">()Int</span><a href="#67468">pollPort</a></span>()
-        <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span>(<span class="typed"><span class="type">Int</span><a href="#68065">port</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&lt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) <span class="typed"><span class="type">Nothing</span><span class="keyword">return</span></span> <span class="typed"><span class="type">Null(null)</span><span class="keyword">null</span></span>
-        <span class="keyword">val</span> <span class="typed"><span class="type">java.net.InetAddress</span><a id="68066">hostAdr</a></span> = <span class="typed"><span class="type">object java.net.InetAddress</span><a id="4647">InetAddress</a></span>.<span class="typed"><span class="type">()java.net.InetAddress</span><a id="47327">getLocalHost</a></span>()
+        <span class="keyword">val</span> <a title="Int" id="605008">port</a> = <span title="Int" class="keyword">if</span>(<a href="#132031" title="Boolean">create</a>) <a href="#131917" title="(vmArgs: String)Int">getPort</a>(<a href="#131926" title="String">vmArgs</a>) <span class="keyword">else</span> <a href="#131916" title="()Int">pollPort</a>()
+        <span title="Unit" class="keyword">if</span>(<a href="#605008" title="(x$1: Int)Boolean">port</a> &lt; <span title="Int(0)" class="int">0</span>) <span title="Nothing" class="keyword">return</span> <span title="Null(null)" class="keyword">null</span>
+        <span class="keyword">val</span> <a title="java.net.InetAddress" id="605009">hostAdr</a> = <a title="object java.net.InetAddress" id="5251">InetAddress</a>.<a title="()java.net.InetAddress" id="286765">getLocalHost</a>()
         <span class="keyword">try</span> {
-          <span class="keyword">val</span> <span class="typed"><span class="type">java.net.Socket</span><a id="68068">result</a></span> = <span class="typed"><span class="type">(java.net.InetAddress,Int)java.net.Socket</span><a id="47485" class="keyword">new</a></span> <span class="typed"><span class="type">java.net.Socket</span><a id="4403">Socket</a></span>(<span class="typed"><span class="type">java.net.InetAddress</span><a href="#68066">hostAdr</a></span>, <span class="typed"><span class="type">Int</span><a href="#68065">port</a></span>)
-          <span class="typed"><span class="type">(String)Unit</span><a href="#67456">info</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;[Connected to compilation daemon at port &quot;)</span><span class="string">&quot;[Connected to compilation daemon at port &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">Int</span><a href="#68065">port</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot;]&quot;)</span><span class="string">&quot;]&quot;</span></span>)
-          <span class="typed"><span class="type">java.net.Socket</span><a href="#68068">result</a></span>
+          <span class="keyword">val</span> <a title="java.net.Socket" id="605022">result</a> = <a title="(x$1: java.net.InetAddress,x$2: Int)java.net.Socket" id="131939" class="keyword">new</a> <span title="java.net.Socket">Socket</span>(<a href="#605009" title="java.net.InetAddress">hostAdr</a>, <a href="#605008" title="Int">port</a>)
+          <a href="#131904" title="(msg: String)Unit">info</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;[Connected to compilation daemon at port &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#605008" title="Int">port</a> + <span title="java.lang.String(&quot;]&quot;)" class="string">&quot;]&quot;</span>)
+          <a href="#605022" title="java.net.Socket">result</a>
         } <span class="keyword">catch</span> {
-          <span class="typed"><span class="type">java.net.Socket</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Exception</span><a id="68078">e</a></span>: <span class="comment">/*IO+Security*/</span><span class="typed"><span class="type">Exception</span><a id="2131">Exception</a></span> =&gt;
-            <span class="typed"><span class="type">(String)Unit</span><a href="#67456">info</a></span>(<span class="typed"><span class="type">Exception</span><a href="#68078">e</a></span>.<span class="typed"><span class="type">()java.lang.String</span><a id="23650">toString</a></span>)
-            <span class="typed"><span class="type">(String)Unit</span><a href="#67456">info</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;[Connecting to compilation daemon at port &quot;)</span><span class="string">&quot;[Connecting to compilation daemon at port &quot;</span></span>  <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span>
-                 <span class="typed"><span class="type">Int</span><a href="#68065">port</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot; failed; re-trying...]&quot;)</span><span class="string">&quot; failed; re-trying...]&quot;</span></span>)
+          <span title="java.net.Socket" class="keyword">case</span> <a title="Exception" id="605039">e</a>: /*IO+Security*/<a title="Exception" id="1875">Exception</a> =&gt;
+            <a href="#131904" title="(msg: String)Unit">info</a>(<a href="#605039" title="Exception">e</a>.<a title="()java.lang.String" id="25931">toString</a>)
+            <a href="#131904" title="(msg: String)Unit">info</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;[Connecting to compilation daemon at port &quot;</span>  <span title="(x$1: Any)java.lang.String">+</span>
+                 <a href="#605008" title="Int">port</a> + <span title="java.lang.String(&quot; failed; re-trying...]&quot;)" class="string">&quot; failed; re-trying...]&quot;</span>)
             
-            <span class="typed"><span class="type">AnyVal with NotNull</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#68063">attempts</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3151">%</a></span> <span class="typed"><span class="type">Int(2)</span><span class="int">2</span></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">==</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) 
-              <span class="typed"><span class="type">(Int)java.io.File</span><a href="#67467">portFile</a></span>(<span class="typed"><span class="type">Int</span><a href="#68065">port</a></span>).<span class="typed"><span class="type">()Boolean</span><a id="40704">delete</a></span> <span class="comment">// 50% chance to stop trying on this port</span>
+            <span title="AnyVal with NotNull" class="keyword">if</span> (<a href="#604999" title="(x$1: Int)Int" id="2972">attempts</a> <span title="(x$1: Int)Boolean">%</span> <span title="Int(2)" class="int">2</span> == <span title="Int(0)" class="int">0</span>) 
+              <a href="#131915" title="(port: Int)scala.io.File">portFile</a>(<a href="#605008" title="Int">port</a>).<span title="()Boolean">delete</span> // 50% chance to stop trying on this port
               
-            <span class="typed"><span class="type">object java.lang.Thread</span><a id="2084">Thread</a></span>.<span class="typed"><span class="type">(Long)Unit</span><a id="29017">sleep</a></span>(<span class="typed"><span class="type">Long(100L)</span><span class="int">100</span></span>) <span class="comment">// delay before retrying</span>
+            <span title="object java.lang.Thread">Thread</span>.<span title="(x$1: Long)Unit">sleep</span>(<span title="Long(100L)" class="int">100</span>) // delay before retrying
             
-            <span class="typed"><span class="type">(Int)java.net.Socket</span><a href="#68062">getsock</a></span>(<span class="typed"><span class="type">Int</span><a href="#68063">attempts</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3148">-</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>)
+            <a href="#604998" title="(attempts: Int)java.net.Socket">getsock</a>(<a href="#604999" title="(x$1: Int)Int" id="2966">attempts</a> - <span title="Int(1)" class="int">1</span>)
         }
       }
-    <span class="typed"><span class="type">(Int)java.net.Socket</span><a href="#68062">getsock</a></span>(<span class="typed"><span class="type">Int</span><a href="#68061">nAttempts</a></span>)
+    <a href="#604998" title="(attempts: Int)java.net.Socket">getsock</a>(<a href="#604997" title="Int">nAttempts</a>)
   }
+
+  // XXX way past time for this to be central
+  <span class="keyword">def</span> <a title="(x: String)Option[Int]" id="131921">parseInt</a>(<a title="String" id="605099">x</a>: <span title="String">String</span>): <a title="Option[Int]" id="782">Option</a>[Int] =
+    <span class="keyword">try</span>   { <a title="(x: Int)Some[Int]" id="258">Some</a>(<a href="#605099" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString">x</a>.<span title="=&gt; Int">toInt</span>) }
+    <span class="keyword">catch</span> { <span title="None.type" class="keyword">case</span> _: <a title="NumberFormatException" id="1848">NumberFormatException</a> =&gt; <a title="object None" id="465">None</a> }
   
-  <span class="comment">/** Same as getOrCreateSocket(vmArgs, true). */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(String)java.net.Socket</span><a id="67473">getOrCreateSocket</a></span>(<span class="typed"><span class="type">String</span><a id="68103">vmArgs</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>): <span class="typed"><span class="type">java.net.Socket</span><a id="4403">Socket</a></span> =
-    <span class="typed"><span class="type">(String,Boolean)java.net.Socket</span><a href="#67472">getOrCreateSocket</a></span>(<span class="typed"><span class="type">String</span><a href="#68103">vmArgs</a></span>, <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>)
-
-  <span class="keyword">def</span> <span class="typed"><span class="type">(String)java.net.Socket</span><a id="67474">getSocket</a></span>(<span class="typed"><span class="type">String</span><a id="68109">serverAdr</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>): <span class="typed"><span class="type">java.net.Socket</span><a id="4403">Socket</a></span> = {
-    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="68110">cpos</a></span> = <span class="typed"><span class="type">String</span><a href="#68109">serverAdr</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="5844">indexOf</a></span> <span class="typed"><span class="type">Int(58)</span><span class="char">':'</span></span>
-    <span class="typed"><span class="type">java.net.Socket</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#68110">cpos</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&lt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>)
-      <span class="typed"><span class="type">(String)Nothing</span><a href="#67455">fatal</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;Malformed server address: &quot;)</span><span class="string">&quot;Malformed server address: &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">String</span><a href="#68109">serverAdr</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot;; exiting&quot;)</span><span class="string">&quot;; exiting&quot;</span></span>)
-    <span class="keyword">else</span> {
-      <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.String</span><a id="68118">hostName</a></span> = <span class="typed"><span class="type">String</span><a href="#68109">serverAdr</a></span>.<span class="typed"><span class="type">(Int,Int)java.lang.String</span><a id="5855">substring</a></span>(<span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>, <span class="typed"><span class="type">Int</span><a href="#68110">cpos</a></span>)
-      <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="68119">port</a></span> = <span class="keyword">try</span> {
-        <span class="typed"><span class="type">String</span><a href="#68109">serverAdr</a></span>.<span class="typed"><span class="type">implicit scala.Predef.stringWrapper : (String)scala.runtime.RichString</span><span id="6140"><span id="821"><a id="5854">substring</a></span></span></span>(<span class="typed"><span class="type">Int</span><a href="#68110">cpos</a></span><span class="typed"><span class="type">(Int)Int</span><a id="3147">+</a></span><span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>).<span class="typed"><span class="type">=&gt; Int</span><a id="23114">toInt</a></span>
-      } <span class="keyword">catch</span> {
-        <span class="typed"><span class="type">Nothing</span><span class="keyword">case</span></span> <span class="typed"><span class="type">java.lang.Throwable</span><a id="68150">ex</a></span>: <span class="typed"><span class="type">Throwable</span><a id="2143">Throwable</a></span> =&gt;
-          <span class="typed"><span class="type">(String)Nothing</span><a href="#67455">fatal</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;Malformed server address: &quot;)</span><span class="string">&quot;Malformed server address: &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">String</span><a href="#68109">serverAdr</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot;; exiting&quot;)</span><span class="string">&quot;; exiting&quot;</span></span>)
-      }
-      <span class="typed"><span class="type">(String,Int)java.net.Socket</span><a href="#67475">getSocket</a></span>(<span class="typed"><span class="type">java.lang.String</span><a href="#68118">hostName</a></span>, <span class="typed"><span class="type">Int</span><a href="#68119">port</a></span>)
+  <span class="keyword">def</span> <a title="(serverAdr: String)java.net.Socket" id="131922">getSocket</a>(<a title="String" id="605119">serverAdr</a>: <span title="String">String</span>): <span title="java.net.Socket">Socket</span> = {
+    <span class="keyword">def</span> <a title="=&gt; Nothing" id="605121">fail</a> = <a href="#131903" title="(msg: String)Nothing">fatal</a>(<span title="(args: Any*)String" class="string">&quot;Malformed server address: %s; exiting&quot;</span> format <a href="#605119" title="String">serverAdr</a>)
+    (<a href="#605119" title="(x$1: Int)Int" id="6978">serverAdr</a> indexOf <span title="Int(58)" class="char">':'</span>) <span title="java.net.Socket" class="keyword">match</span> {
+      <span title="Nothing" class="keyword">case</span> <span title="Int(-1)">-</span><span class="int">1</span>   =&gt; <a href="#605121" title="=&gt; Nothing">fail</a>
+      <span title="java.net.Socket" class="keyword">case</span> <a title="Int" id="605159">cpos</a> =&gt;
+        <span class="keyword">val</span> <a title="String" id="605160">hostName</a>: <span title="String">String</span> = <a href="#605119" title="(n: Int)scala.runtime.RichString" id="25784">serverAdr</a> <span title="implicit scala.Predef.richString2String : (x: scala.runtime.RichString)String">take</span> <a href="#605159" title="Int">cpos</a>
+        <a href="#131921" title="(x: String)Option[Int]">parseInt</a>(<a href="#605119" title="(n: Int)scala.runtime.RichString" id="25786">serverAdr</a> <span title="implicit scala.Predef.richString2String : (x: scala.runtime.RichString)String">drop</span> (<a href="#605159" title="(x$1: Int)Int">cpos</a> + <span title="Int(1)" class="int">1</span>)) <span title="java.net.Socket" class="keyword">match</span> {
+          <span title="java.net.Socket" class="keyword">case</span> Some(<a title="Int" id="605234">port</a>) =&gt; <a href="#131923" title="(hostName: String,port: Int)java.net.Socket">getSocket</a>(<a href="#605160" title="String">hostName</a>, <a href="#605234" title="Int">port</a>)
+          <span title="Nothing" class="keyword">case</span> _          =&gt; <a href="#605121" title="=&gt; Nothing">fail</a>
+        }
     }
   }
 
-  <span class="keyword">def</span> <span class="typed"><span class="type">(String,Int)java.net.Socket</span><a id="67475">getSocket</a></span>(<span class="typed"><span class="type">String</span><a id="68152">hostName</a></span>: <span class="typed"><span class="type">String</span><a id="1861">String</a></span>, <span class="typed"><span class="type">Int</span><a id="68153">port</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>): <span class="typed"><span class="type">java.net.Socket</span><a id="4403">Socket</a></span> =
-    <span class="keyword">try</span> {
-      <span class="typed"><span class="type">(java.lang.String,Int)java.net.Socket</span><a id="47484" class="keyword">new</a></span> <span class="typed"><span class="type">java.net.Socket</span><a id="4403">Socket</a></span>(<span class="typed"><span class="type">String</span><a href="#68152">hostName</a></span>, <span class="typed"><span class="type">Int</span><a href="#68153">port</a></span>)
-    } <span class="keyword">catch</span> {
-      <span class="typed"><span class="type">Nothing</span><span class="keyword">case</span></span> <span class="typed"><span class="type">Exception</span><a id="68167">e</a></span>: <span class="comment">/*IO+Security*/</span><span class="typed"><span class="type">Exception</span><a id="2131">Exception</a></span> =&gt;
-        <span class="typed"><span class="type">(String)Nothing</span><a href="#67455">fatal</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;Unable to establish connection to server &quot;)</span><span class="string">&quot;Unable to establish connection to server &quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span>
-              <span class="typed"><span class="type">String</span><a href="#68152">hostName</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot;:&quot;)</span><span class="string">&quot;:&quot;</span></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">Int</span><a href="#68153">port</a></span> <span class="typed"><span class="type">(Any)java.lang.String</span><a id="5802">+</a></span> <span class="typed"><span class="type">java.lang.String(&quot;; exiting&quot;)</span><span class="string">&quot;; exiting&quot;</span></span>)
+  <span class="keyword">def</span> <a title="(hostName: String,port: Int)java.net.Socket" id="131923">getSocket</a>(<a title="String" id="605240">hostName</a>: <span title="String">String</span>, <a title="Int" id="605241">port</a>: <span title="Int">Int</span>): <span title="java.net.Socket">Socket</span> =
+    <span class="keyword">try</span> <a title="(x$1: java.lang.String,x$2: Int)java.net.Socket" id="131936" class="keyword">new</a> <span title="java.net.Socket">Socket</span>(<a href="#605240" title="String">hostName</a>, <a href="#605241" title="Int">port</a>) <span class="keyword">catch</span> {
+      <span title="Nothing" class="keyword">case</span> <a title="java.lang.Throwable" id="605259">e</a> @ (_: <span title="java.io.IOException">IOException</span> | _: <span title="java.lang.SecurityException">SecurityException</span>) =&gt;
+        <a href="#131903" title="(msg: String)Nothing">fatal</a>(<span title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;Unable to establish connection to server %s:%d; exiting&quot;</span>.<span title="(args: Any*)String">format</span>(<a href="#605240" title="String">hostName</a>, <a href="#605241" title="Int">port</a>))
     }
 
-  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)String</span><a id="67476">getPassword</a></span>(<span class="typed"><span class="type">Int</span><a id="68168">port</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>): <span class="typed"><span class="type">String</span><a id="1861">String</a></span> = {
-    <span class="keyword">val</span> <span class="typed"><span class="type">java.io.File</span><a id="68169">ff</a></span> = <span class="typed"><span class="type">(Int)java.io.File</span><a href="#67467">portFile</a></span>(<span class="typed"><span class="type">Int</span><a href="#68168">port</a></span>)
-    <span class="keyword">val</span> <span class="typed"><span class="type">java.io.BufferedReader</span><a id="68170">f</a></span> = <span class="typed"><span class="type">(java.io.Reader)java.io.BufferedReader</span><a id="46775" class="keyword">new</a></span> <span class="typed"><span class="type">java.io.BufferedReader</span><a id="3549">BufferedReader</a></span>(<span class="typed"><span class="type">(java.io.File)java.io.FileReader</span><a id="68176" class="keyword">new</a></span> <span class="typed"><span class="type">java.io.FileReader</span><a id="3828">FileReader</a></span>(<span class="typed"><span class="type">java.io.File</span><a href="#68169">ff</a></span>))
-    <span class="comment">// allow some time for the server to start up</span>
-    <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="68171">retry</a></span> = <span class="typed"><span class="type">Int(50)</span><span class="int">50</span></span>
-    <span class="typed"><span class="type">Unit</span><a href="#68173" class="keyword">while</a></span> (<span class="typed"><span class="type">java.io.File</span><a href="#68169">ff</a></span>.<span class="typed"><span class="type">()Long</span><a id="40702">length</a></span>() <span class="typed"><span class="type">(Int)Boolean</span><a id="3250">==</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2751">&amp;&amp;</a></span> <span class="typed"><span class="type">Int</span><a href="#68171">retry</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3145">&gt;</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) {
-      <span class="typed"><span class="type">object java.lang.Thread</span><a id="2084">Thread</a></span>.<span class="typed"><span class="type">(Long)Unit</span><a id="29017">sleep</a></span>(<span class="typed"><span class="type">Long(100L)</span><span class="int">100</span></span>)
-      <span class="typed"><span class="type">Int</span><a href="#68171">retry</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3148">-=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+  <span class="keyword">def</span> <a title="(port: Int)String" id="131924">getPassword</a>(<a title="Int" id="132161">port</a>: <span title="Int">Int</span>): <span title="String">String</span> = {
+    <span class="keyword">val</span> <a title="scala.io.File" id="605283">ff</a>  = <a href="#131915" title="(port: Int)scala.io.File">portFile</a>(<a href="#132161" title="Int">port</a>)
+    <span class="keyword">val</span> <a title="java.io.BufferedReader" id="605284">f</a>   = <a href="#605283" title="scala.io.File">ff</a>.<a title="(codec: scala.io.Codec)java.io.BufferedReader" id="130744">bufferedReader</a>()
+
+    // allow some time for the server to start up
+    <span class="keyword">def</span> <a title="=&gt; Long" id="605285">check</a> = {
+      <span title="(x$1: Long)Unit">Thread</span> sleep <span title="Long(100L)" class="int">100</span>
+      <a href="#605283" title="scala.io.File">ff</a>.<a title="=&gt; Long" id="111865">length</a>
     }
-    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">java.io.File</span><a href="#68169">ff</a></span>.<span class="typed"><span class="type">()Long</span><a id="40702">length</a></span>() <span class="typed"><span class="type">(Int)Boolean</span><a id="3250">==</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) {
-      <span class="typed"><span class="type">java.io.File</span><a href="#68169">ff</a></span>.<span class="typed"><span class="type">()Boolean</span><a id="40704">delete</a></span>()
-      <span class="typed"><span class="type">(String)Nothing</span><a href="#67455">fatal</a></span>(<span class="typed"><span class="type">java.lang.String(&quot;Unable to establish connection to server.&quot;)</span><span class="string">&quot;Unable to establish connection to server.&quot;</span></span>)
+    <span title="Unit" class="keyword">if</span> (<a title="(elem: =&gt; Long)Iterator[Long]" id="366">Iterator</a> <a title="(n: Int)Iterator[Long]" id="32123">continually</a> <a href="#605285" title="=&gt; Long">check</a> <a title="(p: (Long) =&gt; Boolean)Option[Long]" id="32182">take</a> <span title="Int(50)" class="int">50</span> find (<a href="#605304" title="(x$1: Int)Boolean" id="3168">_</a> &gt; <span title="Int(0)" class="int">0</span>) <a title="=&gt; Boolean" id="35041">isEmpty</a>) {
+      <a href="#605283" title="scala.io.File">ff</a>.<span title="()Boolean">delete</span>()
+      <a href="#131903" title="(msg: String)Nothing">fatal</a>(<span title="java.lang.String(&quot;Unable to establish connection to server.&quot;)" class="string">&quot;Unable to establish connection to server.&quot;</span>)
     }
-    <span class="keyword">val</span> <span class="typed"><span class="type">java.lang.String</span><a id="68172">result</a></span> = <span class="typed"><span class="type">java.io.BufferedReader</span><a href="#68170">f</a></span>.<span class="typed"><span class="type">()java.lang.String</span><a id="46779">readLine</a></span>()
-    <span class="typed"><span class="type">java.io.BufferedReader</span><a href="#68170">f</a></span>.<span class="typed"><span class="type">()Unit</span><a id="46785">close</a></span>()
-    <span class="typed"><span class="type">java.lang.String</span><a href="#68172">result</a></span>
+    <span class="keyword">val</span> <a title="java.lang.String" id="605286">result</a> = <a href="#605284" title="java.io.BufferedReader">f</a>.<a title="()java.lang.String" id="38849">readLine</a>()
+    <a href="#605284" title="java.io.BufferedReader">f</a>.<a title="()Unit" id="38857">close</a>()
+    <a href="#605286" title="java.lang.String">result</a>
   }
 }
 
 
-<span class="keyword">object</span> <span class="typed"><span class="type">object scala.tools.nsc.CompileSocket</span><a id="6853">CompileSocket</a></span> <span class="keyword">extends</span> <span class="typed"><span class="type">scala.tools.nsc.CompileSocket</span><a href="#6852">CompileSocket</a></span>
+<span class="keyword">object</span> <a title="object scala.tools.nsc.CompileSocket" id="8839">CompileSocket</a> <span title="ScalaObject" class="keyword">extends</span> <a href="#8838" title="scala.tools.nsc.CompileSocket">CompileSocket</a>
 
         </pre>
     </body>

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/reflect/Symbol.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: Symbol.scala 16893 2009-01-13 13:09:22Z cunei $
+
+
+<span class="keyword">package</span> scala.reflect
+
+<span class="keyword">import</span> Predef._
+
+/** This type is required by the compiler and &lt;b&gt;should not be used in client code&lt;/b&gt;. */
+<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class Symbol extends java.lang.Object with ScalaObject" id="11347">Symbol</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  <span class="keyword">val</span> <a title="=&gt; scala.reflect.Symbol" id="115882">owner</a>: <a href="#11347" title="scala.reflect.Symbol">Symbol</a>
+  <span class="keyword">val</span> <a title="=&gt; String" id="115883">name</a>: <span title="String">String</span>
+  <span class="keyword">val</span> <a title="=&gt; scala.reflect.Type" id="115884">tpe</a>: <a href="Type.scala.html#11431" title="scala.reflect.Type">Type</a>
+}
+
+/** This type is required by the compiler and &lt;b&gt;should not be used in client code&lt;/b&gt;. */
+<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class GlobalSymbol extends scala.reflect.Symbol with ScalaObject" id="11575">GlobalSymbol</a><a href="../ScalaObject.scala.html#957" title="ScalaObject">(</a><span class="keyword">val</span> <a title="String" id="153207">fullname</a>: <span title="String">String</span>) <span class="keyword">extends</span> <a href="#11347" title="scala.reflect.Symbol">Symbol</a> {
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="Int" id="117098">pointIndex</a> = <a href="#153207" title="=&gt; String">fullname</a>.<a title="(x$1: java.lang.String)Int" id="6990">lastIndexOf</a>(<span title="java.lang.String(&quot;.&quot;)" class="string">&quot;.&quot;</span>)
+  <span class="keyword">val</span> <a title="scala.reflect.Symbol" id="117100">owner</a>: <a href="#11347" title="scala.reflect.Symbol">Symbol</a> =
+    <span title="scala.reflect.Symbol" class="keyword">if</span> (<a href="#117098" title="(x$1: Int)Boolean">pointIndex</a> &lt; <span title="Int(0)" class="int">0</span>) <a href="#153722" title="object scala.reflect.RootSymbol">RootSymbol</a>
+    <span class="keyword">else</span> <a href="#117093" title="(fullname: String)scala.reflect.Class">Class</a>(<a href="#153207" title="=&gt; String">fullname</a>.<span title="(x$1: Int,x$2: Int)java.lang.String">substring</span>(<span title="Int(0)" class="int">0</span>, <a href="#117098" title="=&gt; Int">pointIndex</a>))
+  <span class="keyword">val</span> <a title="String" id="117102">name</a>: <span title="String">String</span> =
+    <span title="String" class="keyword">if</span> (<a href="#117098" title="(x$1: Int)Boolean">pointIndex</a> &lt; <span title="Int(0)" class="int">0</span>) <a href="#153207" title="=&gt; String">fullname</a>
+    <span class="keyword">else</span> <a href="#153207" title="=&gt; String">fullname</a>.<span title="(x$1: Int,x$2: Int)java.lang.String">substring</span>(<a href="#117098" title="(x$1: Int)Int" id="2962">pointIndex</a>+<span title="Int(1)" class="int">1</span>, <a href="#153207" title="=&gt; String">fullname</a>.<a title="()Int" id="6904">length</a>())
+}
+
+/** This type is required by the compiler and &lt;b&gt;should not be used in client code&lt;/b&gt;. */
+<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class LocalSymbol extends scala.reflect.Symbol with ScalaObject" id="11647">LocalSymbol</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="#11347" title="scala.reflect.Symbol">Symbol</a>
+
+/** This type is required by the compiler and &lt;b&gt;should not be used in client code&lt;/b&gt;. */
+case <span class="keyword">class</span> <a title="class Class extends scala.reflect.GlobalSymbol with ScalaObject with Product" id="117093">Class</a><a href="../ScalaObject.scala.html#957" title="ScalaObject">(</a><span class="keyword">override</span> <span class="keyword">val</span> <a href="#153207" title="String" id="153216">fullname</a>: <span title="String">String</span>) <span class="keyword">extends</span> <a href="#11575" title="scala.reflect.GlobalSymbol">GlobalSymbol</a>(<a href="#153216" title="String">fullname</a>) {
+  <span class="keyword">val</span> <a title="scala.reflect.NamedType" id="117108">tpe</a> = <a href="Type.scala.html#117578" title="(fullname: String)scala.reflect.NamedType">NamedType</a>(<a href="#153216" title="=&gt; String">fullname</a>)
+}
+
+/** This type is required by the compiler and &lt;b&gt;should not be used in client code&lt;/b&gt;. */
+case <span class="keyword">class</span> <a title="class Method extends scala.reflect.GlobalSymbol with ScalaObject with Product" id="117165">Method</a><a href="../ScalaObject.scala.html#957" title="ScalaObject">(</a><span class="keyword">override</span> <span class="keyword">val</span> <a href="#153207" title="String" id="153781">fullname</a>: <span title="String">String</span>, <a title="scala.reflect.Type" id="153782">tpe</a>: <a href="Type.scala.html#11431" title="scala.reflect.Type">Type</a>) <span class="keyword">extends</span> <a href="#11575" title="scala.reflect.GlobalSymbol">GlobalSymbol</a>(<a href="#153781" title="String">fullname</a>)
+
+/** This type is required by the compiler and &lt;b&gt;should not be used in client code&lt;/b&gt;. */
+case <span class="keyword">class</span> <a title="class Field extends scala.reflect.GlobalSymbol with ScalaObject with Product" id="117238">Field</a><a href="../ScalaObject.scala.html#957" title="ScalaObject">(</a><span class="keyword">override</span> <span class="keyword">val</span> <a href="#153207" title="String" id="153811">fullname</a>: <span title="String">String</span>, <a title="scala.reflect.Type" id="153812">tpe</a>: <a href="Type.scala.html#11431" title="scala.reflect.Type">Type</a>) <span class="keyword">extends</span> <a href="#11575" title="scala.reflect.GlobalSymbol">GlobalSymbol</a>(<a href="#153811" title="String">fullname</a>)
+
+/** This type is required by the compiler and &lt;b&gt;should not be used in client code&lt;/b&gt;. */
+case <span class="keyword">class</span> <a title="class TypeField extends scala.reflect.GlobalSymbol with ScalaObject with Product" id="117311">TypeField</a><a href="../ScalaObject.scala.html#957" title="ScalaObject">(</a><span class="keyword">override</span> <span class="keyword">val</span> <a href="#153207" title="String" id="153821">fullname</a>: <span title="String">String</span>, <a title="scala.reflect.Type" id="153822">tpe</a>: <a href="Type.scala.html#11431" title="scala.reflect.Type">Type</a>) <span class="keyword">extends</span> <a href="#11575" title="scala.reflect.GlobalSymbol">GlobalSymbol</a>(<a href="#153821" title="String">fullname</a>)
+
+/** This type is required by the compiler and &lt;b&gt;should not be used in client code&lt;/b&gt;. */case <span class="keyword">class</span> <a title="class LocalValue extends scala.reflect.LocalSymbol with ScalaObject with Product" id="117384">LocalValue</a><a href="../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="scala.reflect.Symbol" id="153831">owner</a>: <a href="#11347" title="scala.reflect.Symbol">Symbol</a>, <a title="String" id="153832">name</a>: <span title="String">String</span>, <a title="scala.reflect.Type" id="153833">tpe</a>: <a href="Type.scala.html#11431" title="scala.reflect.Type">Type</a>) <span class="keyword">extends</span> <a href="#11647" title="scala.reflect.LocalSymbol">LocalSymbol</a>
+
+/** This type is required by the compiler and &lt;b&gt;should not be used in client code&lt;/b&gt;. */
+case <span class="keyword">class</span> <a title="class LocalMethod extends scala.reflect.LocalSymbol with ScalaObject with Product" id="117466">LocalMethod</a><a href="../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="scala.reflect.Symbol" id="153799">owner</a>: <a href="#11347" title="scala.reflect.Symbol">Symbol</a>, <a title="String" id="153800">name</a>: <span title="String">String</span>, <a title="scala.reflect.Type" id="153801">tpe</a>: <a href="Type.scala.html#11431" title="scala.reflect.Type">Type</a>) <span class="keyword">extends</span> <a href="#11647" title="scala.reflect.LocalSymbol">LocalSymbol</a>
+
+/** This type is required by the compiler and &lt;b&gt;should not be used in client code&lt;/b&gt;. */
+case <span class="keyword">object</span> <a href="#153692" title="object scala.reflect.NoSymbol" id="153703">NoSymbol</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="#11347" title="scala.reflect.Symbol">Symbol</a> {
+  <span class="keyword">val</span> <a title="Null" id="117547">owner</a> = <span title="Null(null)" class="keyword">null</span>
+  <span class="keyword">val</span> <a title="Null" id="117549">name</a> = <span title="Null(null)" class="keyword">null</span>
+  <span class="keyword">val</span> <a title="scala.reflect.NoType.type" id="117551">tpe</a> = <a href="Type.scala.html#11744" title="object scala.reflect.NoType">NoType</a>
+}
+
+/** This type is required by the compiler and &lt;b&gt;should not be used in client code&lt;/b&gt;. */
+case <span class="keyword">object</span> <a href="#153711" title="object scala.reflect.RootSymbol" id="153722">RootSymbol</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="#11347" title="scala.reflect.Symbol">Symbol</a> {
+  <span class="keyword">val</span> <a title="scala.reflect.NoSymbol.type" id="117554">owner</a> = <a href="#153703" title="object scala.reflect.NoSymbol">NoSymbol</a>
+  <span class="keyword">val</span> <a title="java.lang.String" id="117556">name</a> = <span title="java.lang.String(&quot;&lt;root&gt;&quot;)" class="string">&quot;&lt;root&gt;&quot;</span>
+  <span class="keyword">val</span> <a title="scala.reflect.NoPrefix.type" id="117558">tpe</a> = <a href="Type.scala.html#11378" title="object scala.reflect.NoPrefix">NoPrefix</a>
+}
+
+/** This type is required by the compiler and &lt;b&gt;should not be used in client code&lt;/b&gt;. */
+case <span class="keyword">class</span> <a title="class LabelSymbol extends scala.reflect.Symbol with ScalaObject with Product" id="117561">LabelSymbol</a><a href="../ScalaObject.scala.html#957" title="ScalaObject">(</a><span class="keyword">val</span> <a title="String" id="153791">name</a>: <span title="String">String</span>) <span class="keyword">extends</span> <a href="#11347" title="scala.reflect.Symbol">Symbol</a> {
+  <span class="keyword">val</span> <a title="scala.reflect.NoSymbol.type" id="116990">owner</a> = <a href="#153703" title="object scala.reflect.NoSymbol">NoSymbol</a>
+  <span class="keyword">val</span> <a title="scala.reflect.NamedType" id="116992">tpe</a> = <a href="Type.scala.html#117578" title="(fullname: String)scala.reflect.NamedType">NamedType</a>(<span title="java.lang.String(&quot;scala.Unit&quot;)" class="string">&quot;scala.Unit&quot;</span>)
+}
+
+
+/* Standard pattern match:
+
+    case reflect.Class(fullname) =&gt; 
+    case reflect.Method(fullname, tpe) =&gt;
+    case reflect.Field(fullname, tpe) =&gt;
+    case reflect.TypeField(fullname, tpe) =&gt;
+    case reflect.LocalValue(owner, name, tpe) =&gt;
+    case reflect.LocalMethod(owner, name, tpe) =&gt;
+    case reflect.NoSymbol =&gt;
+    case reflect.RootSymbol =&gt;
+    case reflect.LabelSymbol(name) =&gt; 
+*/
+
+        </pre>
+    </body>
+</html>

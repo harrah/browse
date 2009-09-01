@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/generic/LinkedListTemplate.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |                                         **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: LinkedListTemplate.scala 18553 2009-08-23 14:58:41Z extempore $
+
+
+<span class="keyword">package</span> scala.collection.generic
+<span class="keyword">import</span> scala.collection._
+<span class="keyword">import</span> annotation.tailrec
+
+/** This extensible class may be used as a basis for implementing linked
+ *  list. Type variable &lt;code&gt;A&lt;/code&gt; refers to the element type of the
+ *  list, type variable &lt;code&gt;This&lt;/code&gt; is used to model self types of
+ *  linked lists.
+ *  !!! todo: integrate with LinearSequence, need to drop null then. 
+ *  @author  Matthias Zenger
+ *  @author  Martin Odersky
+ *  @version 2.8
+ */
+<span class="keyword">trait</span> <a title="trait LinkedListTemplate[A, This &gt;: Null &lt;: Sequence[A] with scala.collection.generic.LinkedListTemplate[A,This]] extends java.lang.Object with scala.collection.generic.SequenceTemplate[A,This] with ScalaObject" id="10958">LinkedListTemplate</a>[<a title="&gt;: Nothing &lt;: Any" id="13520">A</a>, <a title="&gt;: Null &lt;: Sequence[A] with scala.collection.generic.LinkedListTemplate[A,This]" id="13521">This</a> &gt;: Null &lt;: Sequence[A] <span class="keyword">with</span> LinkedListTemplate[A, This]] <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="SequenceTemplate.scala.html#10952" title="scala.collection.generic.SequenceTemplate[A,This]">SequenceTemplate</a>[A, This] { self =&gt;
+  
+  <span class="keyword">var</span> <a title="A" id="19641">elem</a>: <a href="#13520" title="A">A</a> = _
+  <span class="keyword">var</span> <a title="This" id="19644">next</a>: <a href="#13521" title="This">This</a> = _
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Boolean" id="19646">isEmpty</a> = <span title="Boolean(false)" class="keyword">false</span>
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Int" id="19647">length</a>: <span title="Int">Int</span> = <span title="(x$1: Int)Int" class="int">1</span> + (<span title="Int" class="keyword">if</span> (<a href="#19644" title="(x$1: AnyRef)Boolean">next</a> eq <span title="Null(null)" class="keyword">null</span>) <span title="Int(0)" class="int">0</span> <span class="keyword">else</span> <a href="#19644" title="=&gt; This">next</a>.<a href="#19647" title="=&gt; Int">length</a>)
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; A" id="19648">head</a>: <a href="#13520" title="A">A</a>    = <a href="#19641" title="=&gt; A">elem</a>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; This" id="19649">tail</a>: <a href="#13521" title="This">This</a> = <a href="#19644" title="=&gt; This">next</a>
+
+  <span class="keyword">def</span> <a title="(that: This)Unit" id="19650">append</a>(<a title="This" id="118414">that</a>: <a href="#13521" title="This">This</a>): <span title="Unit">Unit</span> = {
+    @tailrec
+    <span class="keyword">def</span> <a title="(x: This)Unit" id="118416">loop</a>(<a title="This" id="118417">x</a>: <a href="#13521" title="This">This</a>): <span title="Unit">Unit</span> = {
+      <span title="Unit" class="keyword">if</span> (<a href="#118417" title="This">x</a>.<a href="#19644" title="(x$1: AnyRef)Boolean">next</a> eq <span title="Null(null)" class="keyword">null</span>) <a href="#118417" title="This">x</a>.<a href="#19644" title="(x$1: This)Unit">next</a> = <a href="#118414" title="This">that</a>
+      <span class="keyword">else</span> <a href="#118416" title="(x: This)Unit">loop</a>(<a href="#118417" title="This">x</a>.<a href="#19644" title="=&gt; This">next</a>)
+    }
+    <a href="#118416" title="(x: This)Unit">loop</a>(<a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>)
+  }
+
+  <span class="keyword">def</span> <a title="(that: This)Unit" id="19651">insert</a>(<a title="This" id="118426">that</a>: <a href="#13521" title="This">This</a>): <span title="Unit">Unit</span> = <span title="Unit" class="keyword">if</span> (<a href="#118426" title="(x$1: AnyRef)Boolean">that</a> ne <span title="Null(null)" class="keyword">null</span>) {
+    <a href="#118426" title="This">that</a>.<a href="#19650" title="(that: This)Unit">append</a>(<a href="#19644" title="=&gt; This">next</a>)
+    <a href="#19644" title="(x$1: This)Unit">next</a> = <a href="#118426" title="This">that</a>
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(n: Int)This" id="19652">drop</a>(<a title="Int" id="118434">n</a>: <span title="Int">Int</span>): <a href="#13521" title="This">This</a> = {
+    <span class="keyword">var</span> <a title="Int" id="118436">i</a> = <span title="Int(0)" class="int">0</span>
+    <span class="keyword">var</span> <a title="This" id="118437">these</a>: <a href="#13521" title="This">This</a> = <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+    <span title="Unit" class="keyword">while</span> (<a href="#118436" title="(x$1: Int)Boolean" id="2954">i</a> <a title="(x$1: Boolean)Boolean" id="2210">&lt;</a> <a href="#118434" title="Int">n</a> &amp;&amp; (<a href="#118437" title="(x$1: AnyRef)Boolean">these</a> ne <span title="Null(null)" class="keyword">null</span>)) <a href="#118438" title="()Unit">{</a>
+      <a href="#118437" title="This">these</a> = <a href="#118437" title="This">these</a>.<a href="#19644" title="=&gt; This">next</a>.<a title="[T0]T0" id="3621">asInstanceOf</a><span title="This">[</span><a href="#13521" title="This">This</a>] // !!! concrete overrides abstract problem
+      <a href="#118436" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+    }
+    <a href="#118437" title="This">these</a>
+  }
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="[T](n: Int)(f: (This) =&gt; T)T" id="19653">atLocation</a>[<a title="&gt;: Nothing &lt;: Any" id="19655">T</a>](<a title="Int" id="118485">n</a>: <span title="Int">Int</span>)(<a title="(This) =&gt; T" id="118486">f</a>: This =&gt; T) = {
+    <span class="keyword">val</span> <a title="This" id="118489">loc</a> = <a href="#19652" title="(n: Int)This">drop</a>(<a href="#118485" title="Int">n</a>)
+    <span title="T" class="keyword">if</span> (<a href="#118489" title="(x$1: AnyRef)Boolean">loc</a> ne <span title="Null(null)" class="keyword">null</span>) <a href="../../Function1.scala.html#17119" title="(v1: This)T">f</a>(<a href="#118489" title="This">loc</a>)
+    <span class="keyword">else</span> <span title="Nothing" class="keyword">throw</span> <a title="(x$1: java.lang.String)java.lang.IndexOutOfBoundsException" id="20725" class="keyword">new</a> <a href="../../Predef.scala.html#16166" title="java.lang.IndexOutOfBoundsException">IndexOutOfBoundsException</a>(<a href="#118485" title="Int">n</a>.<a title="()java.lang.String" id="3617">toString</a>)
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(n: Int)A" id="19656">apply</a>(<a title="Int" id="118504">n</a>: <span title="Int">Int</span>): <a href="#13520" title="A">A</a>   = <a href="#19653" title="(n: Int)(f: (This) =&gt; A)A">atLocation</a>(<a href="#118504" title="Int">n</a>)(<a href="#118513" title="This">_</a>.<a href="#19641" title="=&gt; A">elem</a>)
+  <span class="keyword">def</span> <a title="(n: Int,x: A)Unit" id="19657">update</a>(<a title="Int" id="118518">n</a>: <span title="Int">Int</span>, <a title="A" id="118519">x</a>: <a href="#13520" title="A">A</a>): <span title="Unit">Unit</span>  = <a href="#19653" title="(n: Int)(f: (This) =&gt; Unit)Unit">atLocation</a>(<a href="#118518" title="Int">n</a>)(<a href="#118528" title="This">_</a>.<a href="#19641" title="(x$1: A)Unit">elem</a> = <a href="#118519" title="A">x</a>)
+
+  <span class="keyword">def</span> <a title="(n: Int)Option[A]" id="19658">get</a>(<a title="Int" id="118535">n</a>: <span title="Int">Int</span>): <a href="../../Option.scala.html#777" title="Option[A]">Option</a>[A] = {
+    <span class="keyword">val</span> <a title="This" id="118537">loc</a> = <a href="#19652" title="(n: Int)This">drop</a>(<a href="#118535" title="Int">n</a>)
+    <span title="Option[A]" class="keyword">if</span> (<a href="#118537" title="(x$1: AnyRef)Boolean">loc</a> ne <span title="Null(null)" class="keyword">null</span>) <a href="../../Option.scala.html#19800" title="(x: A)Some[A]">Some</a>(<a href="#118537" title="This">loc</a>.<a href="#19641" title="=&gt; A">elem</a>)
+    <span class="keyword">else</span> <a href="../../Option.scala.html#463" title="object None">None</a>
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Iterator[A]" id="19659">iterator</a>: <a href="../Iterator.scala.html#4274" title="Iterator[A]">Iterator</a>[A] = <a href="#118549" title="java.lang.Object with Iterator[A]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with Iterator[A]" id="118549">Iterator</a>[A] {
+    <span class="keyword">var</span> <a title="scala.collection.generic.LinkedListTemplate[A,This]" id="118552">elems</a> = <a href="#10958" title="scala.collection.generic.LinkedListTemplate[A,This]">self</a>
+    <span class="keyword">def</span> <a title="=&gt; Boolean" id="118554">hasNext</a> = (<a href="#118552" title="(x$1: AnyRef)Boolean">elems</a> ne <span title="Null(null)" class="keyword">null</span>)
+    <span class="keyword">def</span> <a title="()A" id="118555">next</a> = {
+      <span class="keyword">val</span> <a title="A" id="118569">res</a> = <a href="#118552" title="=&gt; scala.collection.generic.LinkedListTemplate[A,This]">elems</a>.<a href="#19641" title="=&gt; A">elem</a>
+      <a href="#118552" title="(x$1: scala.collection.generic.LinkedListTemplate[A,This])Unit">elems</a> = <a href="#118552" title="=&gt; scala.collection.generic.LinkedListTemplate[A,This]">elems</a>.<a href="#19644" title="=&gt; This">next</a>
+      <a href="#118569" title="A">res</a>;
+    }
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[B](f: (A) =&gt; B)Unit" id="19660">foreach</a>[<a title="&gt;: Nothing &lt;: Any" id="19662">B</a>](<a title="(A) =&gt; B" id="118574">f</a>: A =&gt; B) {
+    <span class="keyword">var</span> <a title="scala.collection.generic.LinkedListTemplate[A,This]" id="118583">these</a> = <a href="#10958" title="scala.collection.generic.LinkedListTemplate[A,This]" class="keyword">this</a>
+    <span title="Unit" class="keyword">while</span> (<a href="#118583" title="(x$1: AnyRef)Boolean">these</a> ne <span title="Null(null)" class="keyword">null</span>) <a href="#118584" title="()Unit">{</a>
+      <a href="../../Function1.scala.html#17119" title="(v1: A)B">f</a>(<a href="#118583" title="scala.collection.generic.LinkedListTemplate[A,This]">these</a>.<a href="#19641" title="=&gt; A">elem</a>);
+      <a href="#118583" title="scala.collection.generic.LinkedListTemplate[A,This]">these</a> = <a href="#118583" title="scala.collection.generic.LinkedListTemplate[A,This]">these</a>.<a href="#19644" title="=&gt; This">next</a>
+    }
+  }
+}
+
+        </pre>
+    </body>
+</html>

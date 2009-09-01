@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/util/Hashable.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: $
+
+
+<span class="keyword">package</span> scala.util
+
+/** &lt;p&gt;
+ *    A convenience trait for simplifying hashCode creation.
+ *    Mix this into a class and define &lt;code&gt;val hashValues = Seq(x1, x2, ...)&lt;/code&gt;
+ *    and your &lt;code&gt;hashCode&lt;/code&gt; will be derived from those values.
+ *    If you define &lt;code&gt;equals&lt;/code&gt; in terms of &lt;code&gt;equalHashValues&lt;/code&gt;
+ *    then your &lt;code&gt;hashCode&lt;/code&gt; and &lt;code&gt;equals&lt;/code&gt; methods will
+ *    never be out of sync.  Something like:
+ *  &lt;/p&gt;&lt;pre&gt;
+ *    &lt;b&gt;override def&lt;/b&gt; equals(other: Any) = other &lt;b&gt;match&lt;/b&gt; {
+ *      &lt;b&gt;case&lt;/b&gt; x: YourClass =&gt; &lt;b&gt;this&lt;/b&gt; equalHashValues x
+ *      &lt;b&gt;case&lt;/b&gt; _            =&gt; &lt;b&gt;false&lt;/b&gt;
+ *    }&lt;/pre&gt;
+ *
+ * @author Paul Phillips
+ */
+<span class="keyword">abstract</span> <span class="keyword">trait</span> <a title="trait Hashable extends java.lang.Object with ScalaObject" id="8077">Hashable</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a title="java.lang.Object" id="3623">AnyRef</a>
+{
+  <span class="keyword">import</span> Hashable._
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; Seq[Any]" id="31331">hashValues</a>: <a href="../collection/Sequence.scala.html#4346" title="Seq[Any]">Seq</a>[Any]  // in an ideal universe this would be more like Seq[Hashable]
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; Int" id="31332">hashSeed</a>: <span title="Int">Int</span> = <span title="Int(1)" class="int">1</span>
+  
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Int" id="31333">hashCode</a>: <span title="Int">Int</span> = 
+    (<a href="../collection/generic/TraversableTemplate.scala.html#17161" title="(f: (Any) =&gt; Int)(implicit bf: scala.collection.generic.BuilderFactory[Int,Sequence[Int],Sequence[Any]])Sequence[Int]">hashValues</a> <a href="../collection/Sequence.scala.html#22039" title="scala.collection.generic.BuilderFactory[Int,Sequence[Int],Sequence#Coll]">map</a> <a href="#90068" title="(x: Any)Int">calculateHashCode</a>).<a href="../collection/generic/TraversableTemplate.scala.html#17187" title="(z: Int)(op: (Int, Int) =&gt; Int)Int">foldLeft</a>(<a href="#31332" title="=&gt; Int">hashSeed</a>)((<a title="Int" id="198498">x</a>, <a title="Int" id="198499">y</a>) =&gt; <a href="#198498" title="(x$1: Int)Int" id="2966">x</a> <a title="(x$1: Int)Int" id="2962">*</a> <span title="Int(41)" class="int">41</span> + <a href="#198499" title="Int">y</a>)
+  
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(other: Any)Boolean" id="31334">equalHashValues</a>(<a title="Any" id="90063">other</a>: <span title="Any">Any</span>) = <a href="#90063" title="Any">other</a> <span title="Boolean" class="keyword">match</span> {
+    <span title="Boolean" class="keyword">case</span> <a title="scala.util.Hashable" id="90069">x</a>: <a href="#8077" title="scala.util.Hashable">Hashable</a>  =&gt; <a href="../collection/generic/IterableTemplate.scala.html#17321" title="(that: Iterable[Any])Boolean">hashValues</a> sameElements <a href="#90069" title="scala.util.Hashable">x</a>.<a href="#31331" title="=&gt; Seq[Any]">hashValues</a>
+    <span title="Boolean(false)" class="keyword">case</span> _            =&gt; <span title="Boolean(false)" class="keyword">false</span>
+  }
+}
+<span class="keyword">abstract</span> <span class="keyword">trait</span> <a title="trait StrictHashable extends java.lang.Object with scala.util.Hashable" id="8002">StrictHashable</a> <span class="keyword">extends</span> <a href="#8077" title="scala.util.Hashable">Hashable</a>
+{
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; Seq[scala.util.Hashable]" id="198530">hashValues</a>: <a href="../collection/Sequence.scala.html#4346" title="Seq[scala.util.Hashable]">Seq</a>[Hashable]
+}
+
+<span class="keyword">object</span> <a title="object scala.util.Hashable" id="8078">Hashable</a>
+<a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  /** This implicit is for StrictHashable's benefit, so your hashValues Seq
+   *  can contain both explicitly Hashable classes and value types.
+   */
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="implicit scala.util.Hashable.anyVal2Hashable : (x: AnyVal)scala.util.Hashable" id="90067">anyVal2Hashable</a>(<a title="AnyVal" id="198459">x</a>: <a title="AnyVal" id="1947">AnyVal</a>): <a href="#8077" title="scala.util.Hashable">Hashable</a> =
+    <a href="#198537" title="java.lang.Object with scala.util.Hashable{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with scala.util.Hashable" id="198537">Hashable</a> { <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; Sequence[AnyVal]" id="198539">hashValues</a> = <a href="../collection/generic/Companion.scala.html#17471" title="(args: AnyVal*)Sequence[AnyVal]">Seq</a>(<a href="#198459" title="AnyVal">x</a>) }
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(x: Any)Int" id="90068">calculateHashCode</a>(<a title="Any" id="198438">x</a>: <span title="Any">Any</span>) = <a href="#198438" title="Any">x</a> <span title="Int" class="keyword">match</span> {
+    <span title="Int(0)" class="keyword">case</span> <span title="Null(null)" class="keyword">null</span>       =&gt; <span title="Int(0)" class="int">0</span>
+    <span title="Int" class="keyword">case</span> <a title="AnyRef" id="198441">x</a>: <span title="AnyRef">AnyRef</span>  =&gt; <a href="#198441" title="AnyRef">x</a>.<span title="()Int">hashCode</span>
+    <span title="Int" class="keyword">case</span> <a title="Any" id="198444">x</a>          =&gt; <a href="#198444" title="Any">x</a>.<a title="[T0]T0" id="3621">asInstanceOf</a><span title="AnyRef">[</span><span title="AnyRef">AnyRef</span>].<span title="()Int">hashCode</span>
+  }
+}
+
+
+        </pre>
+    </body>
+</html>

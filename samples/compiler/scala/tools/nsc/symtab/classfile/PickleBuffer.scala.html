@@ -1,158 +1,178 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
         <title>scala/tools/nsc/symtab/classfile/PickleBuffer.scala</title>
+        <script type="text/javascript" src="../../../../../jquery-all.js"></script>
         <script type="text/javascript" src="../../../../../linked.js"></script>
         <link rel="stylesheet" type="text/css" href="../../../../../style.css" title="Style">
     </head>
-    <body onload="initializeLinked()">
+    <body>
         <pre>
-<span class="comment">/* NSC -- new Scala compiler
+/* NSC -- new Scala compiler
  * Copyright 2005-2009 LAMP/EPFL
  * @author  Martin Odersky
- */</span>
-<span class="comment">// $Id: PickleBuffer.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+ */
+// $Id: PickleBuffer.scala 18387 2009-07-24 15:28:37Z odersky $
 
-<span class="keyword">package</span> scala.tools.nsc.symtab.classfile
+<span class="keyword">package</span> scala.tools.nsc
+<span class="keyword">package</span> symtab
+<span class="keyword">package</span> classfile
 
-<span class="comment">/** Variable length byte arrays, with methods for basic pickling and unpickling.
+/** Variable length byte arrays, with methods for basic pickling and unpickling.
  *
  *  @param data The initial buffer
  *  @param from The first index where defined data are found
  *  @param to   The first index where new data can be written
- */</span>
-<span class="keyword">class</span> <span class="typed"><span class="type">class PickleBuffer extends java.lang.Object with ScalaObject</span><a id="16515">PickleBuffer</a></span>(<span class="typed"><span class="type">Array[Byte]</span><span id="68890"><a id="76357">data</a></span></span>: <span class="typed"><span class="type">Array[Byte]</span><a id="1072">Array</a></span>[Byte], <span class="typed"><span class="type">Int</span><span id="68891"><a id="76358">from</a></span></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>, <span class="typed"><span class="type">Int</span><span id="68892"><a id="76359">to</a></span></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>) {
+ */
+<span class="keyword">class</span> <a title="class PickleBuffer extends java.lang.Object with ScalaObject" id="20469">PickleBuffer</a><a title="ScalaObject" id="959">(</a><a title="Array[Byte]" id="148260">data</a>: <span title="Array[Byte]">Array</span>[Byte], <a title="Int" id="148261">from</a>: <span title="Int">Int</span>, <a title="Int" id="148262">to</a>: <span title="Int">Int</span>) {
 
-  <span class="keyword">var</span> <span class="typed"><span class="type">Array[Byte]</span><span id="68896"><span id="68894"><span id="68895"><a id="145278">bytes</a></span></span></span></span> = <span class="typed"><span class="type">Array[Byte]</span><a href="#68890">data</a></span>
-  <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><span id="68899"><span id="68897"><span id="68898"><a id="145279">readIndex</a></span></span></span></span> = <span class="typed"><span class="type">Int</span><a href="#68891">from</a></span>
-  <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><span id="68902"><span id="68900"><span id="68901"><a id="145280">writeIndex</a></span></span></span></span> = <span class="typed"><span class="type">Int</span><a href="#68892">to</a></span>
+  <span class="keyword">var</span> <a title="Array[Byte]" id="83276">bytes</a> = <a href="#148260" title="Array[Byte]">data</a>
+  <span class="keyword">var</span> <a title="Int" id="83279">readIndex</a> = <a href="#148261" title="Int">from</a>
+  <span class="keyword">var</span> <a title="Int" id="83282">writeIndex</a> = <a href="#148262" title="Int">to</a>
 
-  <span class="comment">/** Double bytes array */</span>
-  <span class="keyword">private</span> <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="68903">dble</a></span>() {
-    <span class="keyword">val</span> <span class="typed"><span class="type">Array[Byte]</span><a id="145281">bytes1</a></span> = <span class="typed"><span class="type">Array[Byte]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">Array[Byte]</span><a id="1072">Array</a></span>[Byte](<span class="typed"><span class="type">=&gt; Array[Byte]</span><a href="#68894">bytes</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a id="21508">length</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3149">*</a></span> <span class="typed"><span class="type">Int(2)</span><span class="int">2</span></span>)
-    <span class="typed"><span class="type">object Array</span><a id="1073">Array</a></span>.<span class="typed"><span class="type">(AnyRef,Int,AnyRef,Int,Int)Unit</span><a id="21467">copy</a></span>(<span class="typed"><span class="type">=&gt; Array[Byte]</span><a href="#68894">bytes</a></span>, <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>, <span class="typed"><span class="type">Array[Byte]</span><a href="#145281">bytes1</a></span>, <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>, <span class="typed"><span class="type">=&gt; Int</span><a href="#68900">writeIndex</a></span>)
-    <span class="typed"><span class="type">(Array[Byte])Unit</span><a href="#68895">bytes</a></span> = <span class="typed"><span class="type">Array[Byte]</span><a href="#145281">bytes1</a></span>
+  /** Double bytes array */
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="()Unit" id="83284">dble</a>() {
+    <span class="keyword">val</span> <a title="Array[Byte]" id="734822">bytes1</a> = <span title="Array[Byte]" class="keyword">new</span> <span title="Array[Byte]">Array</span>[Byte](<a href="#83276" title="=&gt; Array[Byte]">bytes</a>.<a title="(x$1: Int)Int" id="2968">length</a> * <span title="Int(2)" class="int">2</span>)
+    <span title="object Array">Array</span>.<span title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">copy</span>(<a href="#83276" title="=&gt; Array[Byte]">bytes</a>, <span title="Int(0)" class="int">0</span>, <a href="#734822" title="Array[Byte]">bytes1</a>, <span title="Int(0)" class="int">0</span>, <a href="#83282" title="=&gt; Int">writeIndex</a>)
+    <a href="#83276" title="(x$1: Array[Byte])Unit">bytes</a> = <a href="#734822" title="Array[Byte]">bytes1</a>
   }
 
-  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Unit</span><a id="68904">ensureCapacity</a></span>(<span class="typed"><span class="type">Int</span><a id="76744">capacity</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>) =
-    <span class="typed"><span class="type">Unit</span><a href="#76746" class="keyword">while</a></span> (<span class="typed"><span class="type">=&gt; Array[Byte]</span><a href="#68894">bytes</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a id="21508">length</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&lt;</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#68900">writeIndex</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3147">+</a></span> <span class="typed"><span class="type">Int</span><a href="#76744">capacity</a></span>) <span class="typed"><span class="type">()Unit</span><a href="#68903">dble</a></span>()
+  <span class="keyword">def</span> <a title="(capacity: Int)Unit" id="83285">ensureCapacity</a>(<a title="Int" id="150067">capacity</a>: <span title="Int">Int</span>) =
+    <span title="Unit" class="keyword">while</span> (<a href="#83276" title="=&gt; Array[Byte]">bytes</a>.<span title="(x$1: Int)Boolean">length</span> &lt; <a href="#83282" title="(x$1: Int)Int">writeIndex</a> + <a href="#150067" title="Int">capacity</a>) <a href="#83284" title="()Unit">dble</a><a href="#150070" title="()Unit">(</a>)
 
-  <span class="comment">// -- Basic output routines --------------------------------------------</span>
+  // -- Basic output routines --------------------------------------------
 
-  <span class="comment">/** Write a byte of data */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Unit</span><a id="68905">writeByte</a></span>(<span class="typed"><span class="type">Int</span><a id="77106">b</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>) {
-    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Int</span><a href="#68900">writeIndex</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">==</a></span> <span class="typed"><span class="type">=&gt; Array[Byte]</span><a href="#68894">bytes</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a id="21508">length</a></span>) <span class="typed"><span class="type">()Unit</span><a href="#68903">dble</a></span>()
-    <span class="typed"><span class="type">=&gt; Array[Byte]</span><a href="#68894">bytes</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="#68900">writeIndex</a></span>) = <span class="typed"><span class="type">Int</span><a href="#77106">b</a></span>.<span class="typed"><span class="type">Byte</span><a id="3503">asInstanceOf</a></span>[<span class="typed"><span class="type">Byte</span><a id="2379">Byte</a></span>]
-    <span class="typed"><span class="type">(Int)Unit</span><a href="#68901">writeIndex</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3147">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+  /** Write a byte of data */
+  <span class="keyword">def</span> <a title="(b: Int)Unit" id="83286">writeByte</a>(<a title="Int" id="151446">b</a>: <span title="Int">Int</span>) {
+    <span title="Unit" class="keyword">if</span> (<a href="#83282" title="(x$1: Int)Boolean">writeIndex</a> == <a href="#83276" title="=&gt; Array[Byte]">bytes</a>.<span title="=&gt; Int">length</span>) <a href="#83284" title="()Unit">dble</a>()
+    <a href="#83276" title="(i: Int,x: Byte)Unit">bytes</a>(<a href="#83282" title="=&gt; Int">writeIndex</a>) = <a href="#151446" title="Int">b</a>.<span title="[T0]T0">asInstanceOf</span><span title="Byte">[</span><span title="Byte">Byte</span>]
+    <a href="#83282" title="(x$1: Int)Unit">writeIndex</a> += <span title="Int(1)" class="int">1</span>
   }
 
-  <span class="comment">/** Write a natural number in big endian format, base 128.
+  /** Write a natural number in big endian format, base 128.
    *  All but the last digits have bit 0x80 set.
-   */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Unit</span><a id="68906">writeNat</a></span>(<span class="typed"><span class="type">Int</span><a id="76608">x</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>) {
-    <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Unit</span><a id="145325">writeNatPrefix</a></span>(<span class="typed"><span class="type">Int</span><a id="145327">x</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>) {
-      <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="145328">y</a></span> = <span class="typed"><span class="type">Int</span><a href="#145327">x</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3092">&gt;&gt;&gt;</a></span> <span class="typed"><span class="type">Int(7)</span><span class="int">7</span></span>
-      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#145328">y</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3142">!=</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) <span class="typed"><span class="type">(Int)Unit</span><a href="#145325">writeNatPrefix</a></span>(<span class="typed"><span class="type">Int</span><a href="#145328">y</a></span>)
-      <span class="typed"><span class="type">(Int)Unit</span><a href="#68905">writeByte</a></span>((<span class="typed"><span class="type">Int</span><a href="#145327">x</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3153">&amp;</a></span> <span class="typed"><span class="type">Int(127)</span><span class="int">0x7f</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3152">|</a></span> <span class="typed"><span class="type">Int(128)</span><span class="int">0x80</span></span>)
+   */
+  <span class="keyword">def</span> <a title="(x: Int)Unit" id="83287">writeNat</a>(<a title="Int" id="149264">x</a>: <span title="Int">Int</span>) =
+    <a href="#83288" title="(x: Long)Unit">writeLongNat</a>(<a href="#149264" title="Int">x</a>.<span title="[T0]T0">asInstanceOf</span><a title="(x$1: Long)Long" id="3212">[</a><span title="Long">Long</span>] &amp; <span title="Long(4294967295L)" class="long">0x00000000FFFFFFFFL</span>)
+
+  /**
+   * Like writeNat, but for longs. This is not the same as
+   * writeLong, which writes in base 256. Note that the
+   * binary representation of LongNat is identical to Nat
+   * if the long value is in the range Int.MIN_VALUE to
+   * Int.MAX_VALUE.
+   */
+  <span class="keyword">def</span> <a title="(x: Long)Unit" id="83288">writeLongNat</a>(<a title="Long" id="149267">x</a>: <span title="Long">Long</span>) {
+    <span class="keyword">def</span> <a title="(x: Long)Unit" id="734912">writeNatPrefix</a>(<a title="Long" id="734914">x</a>: <span title="Long">Long</span>) {
+      <span class="keyword">val</span> <a title="Long" id="734915">y</a> = <a href="#734914" title="(x$1: Int)Long">x</a> &gt;&gt;&gt; <span title="Int(7)" class="int">7</span>
+      <span title="Unit" class="keyword">if</span> (<a href="#734915" title="(x$1: Int)Boolean">y</a> != <span title="Int(0)" class="int">0</span>) <a href="#734912" title="(x: Long)Unit">writeNatPrefix</a>(<a href="#734915" title="Long">y</a>)
+      <a href="#83286" title="(b: Int)Unit">writeByte</a>((<a title="(x$1: Int)Long" id="3182">(</a><a href="#734914" title="(x$1: Int)Long">x</a> &amp; <span title="Int(127)" class="int">0x7f</span>) | <span title="Int(128)" class="int">0x80</span>).<span title="[T0]T0">asInstanceOf</span><span title="Int">[</span><span title="Int">Int</span>])
     }
-    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="145326">y</a></span> = <span class="typed"><span class="type">Int</span><a href="#76608">x</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3092">&gt;&gt;&gt;</a></span> <span class="typed"><span class="type">Int(7)</span><span class="int">7</span></span>
-    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#145326">y</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3142">!=</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) <span class="typed"><span class="type">(Int)Unit</span><a href="#145325">writeNatPrefix</a></span>(<span class="typed"><span class="type">Int</span><a href="#145326">y</a></span>)
-    <span class="typed"><span class="type">(Int)Unit</span><a href="#68905">writeByte</a></span>(<span class="typed"><span class="type">Int</span><a href="#76608">x</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3153">&amp;</a></span> <span class="typed"><span class="type">Int(127)</span><span class="int">0x7f</span></span>)
+    <span class="keyword">val</span> <a title="Long" id="734913">y</a> = <a href="#149267" title="(x$1: Int)Long">x</a> &gt;&gt;&gt; <span title="Int(7)" class="int">7</span>
+    <span title="Unit" class="keyword">if</span> (<a href="#734913" title="(x$1: Int)Boolean">y</a> != <span title="Int(0)" class="int">0</span>) <a href="#734912" title="(x: Long)Unit">writeNatPrefix</a>(<a href="#734913" title="Long">y</a>)
+    <a href="#83286" title="(b: Int)Unit">writeByte</a>((<a href="#149267" title="(x$1: Int)Long">x</a> &amp; <span title="Int(127)" class="int">0x7f</span>).<span title="[T0]T0">asInstanceOf</span><span title="Int">[</span><span title="Int">Int</span>])
   }
 
-  <span class="comment">/** Write a natural number &lt;code&gt;x&lt;/code&gt; at position &lt;code&gt;pos&lt;/code&gt;.
+  /** Write a natural number &lt;code&gt;x&lt;/code&gt; at position &lt;code&gt;pos&lt;/code&gt;.
    *  If number is more than one byte, shift rest of array to make space.
    *
    *  @param pos ...
    *  @param x   ...
-   */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(Int,Int)Unit</span><a id="68907">patchNat</a></span>(<span class="typed"><span class="type">Int</span><a id="77107">pos</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>, <span class="typed"><span class="type">Int</span><a id="77108">x</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>) {
-    <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Unit</span><a id="145346">patchNatPrefix</a></span>(<span class="typed"><span class="type">Int</span><a id="145348">x</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>) {
-      <span class="typed"><span class="type">(Int)Unit</span><a href="#68905">writeByte</a></span>(<span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>)
-      <span class="typed"><span class="type">object Array</span><a id="1073">Array</a></span>.<span class="typed"><span class="type">(AnyRef,Int,AnyRef,Int,Int)Unit</span><a id="21467">copy</a></span>(<span class="typed"><span class="type">=&gt; Array[Byte]</span><a href="#68894">bytes</a></span>, <span class="typed"><span class="type">Int</span><a href="#77107">pos</a></span>, <span class="typed"><span class="type">=&gt; Array[Byte]</span><a href="#68894">bytes</a></span>, <span class="typed"><span class="type">Int</span><a href="#77107">pos</a></span><span class="typed"><span class="type">(Int)Int</span><a id="3147">+</a></span><span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>, <span class="typed"><span class="type">=&gt; Int</span><a href="#68900">writeIndex</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3148">-</a></span> (<span class="typed"><span class="type">Int</span><a href="#77107">pos</a></span><span class="typed"><span class="type">(Int)Int</span><a id="3147">+</a></span><span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>))
-      <span class="typed"><span class="type">=&gt; Array[Byte]</span><a href="#68894">bytes</a></span>(<span class="typed"><span class="type">Int</span><a href="#77107">pos</a></span>) = ((<span class="typed"><span class="type">Int</span><a href="#145348">x</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3153">&amp;</a></span> <span class="typed"><span class="type">Int(127)</span><span class="int">0x7f</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3152">|</a></span> <span class="typed"><span class="type">Int(128)</span><span class="int">0x80</span></span>).<span class="typed"><span class="type">Byte</span><a id="3503">asInstanceOf</a></span>[<span class="typed"><span class="type">Byte</span><a id="2379">Byte</a></span>]
-      <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="145349">y</a></span> = <span class="typed"><span class="type">Int</span><a href="#145348">x</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3092">&gt;&gt;&gt;</a></span> <span class="typed"><span class="type">Int(7)</span><span class="int">7</span></span>
-      <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#145349">y</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3142">!=</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) <span class="typed"><span class="type">(Int)Unit</span><a href="#145346">patchNatPrefix</a></span>(<span class="typed"><span class="type">Int</span><a href="#145349">y</a></span>)
+   */
+  <span class="keyword">def</span> <a title="(pos: Int,x: Int)Unit" id="83289">patchNat</a>(<a title="Int" id="151452">pos</a>: <span title="Int">Int</span>, <a title="Int" id="151453">x</a>: <span title="Int">Int</span>) {
+    <span class="keyword">def</span> <a title="(x: Int)Unit" id="734966">patchNatPrefix</a>(<a title="Int" id="734968">x</a>: <span title="Int">Int</span>) {
+      <a href="#83286" title="(b: Int)Unit">writeByte</a>(<span title="Int(0)" class="int">0</span>)
+      <span title="object Array">Array</span>.<span title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">copy</span>(<a href="#83276" title="=&gt; Array[Byte]">bytes</a>, <a href="#151452" title="Int">pos</a>, <a href="#83276" title="=&gt; Array[Byte]">bytes</a>, <a href="#151452" title="(x$1: Int)Int">pos</a>+<span title="Int(1)" class="int">1</span>, <a href="#83282" title="(x$1: Int)Int">writeIndex</a> - (<a href="#151452" title="(x$1: Int)Int">pos</a>+<span title="Int(1)" class="int">1</span>))
+      <a href="#83276" title="(i: Int,x: Byte)Unit">bytes</a>(<a href="#151452" title="Int">pos</a>) = (<a title="(x$1: Int)Int" id="2974">(</a><a href="#734968" title="(x$1: Int)Int">x</a> &amp; <span title="Int(127)" class="int">0x7f</span>) | <span title="Int(128)" class="int">0x80</span>).<span title="[T0]T0">asInstanceOf</span><span title="Byte">[</span><span title="Byte">Byte</span>]
+      <span class="keyword">val</span> <a title="Int" id="734969">y</a> = <a href="#734968" title="(x$1: Int)Int">x</a> &gt;&gt;&gt; <span title="Int(7)" class="int">7</span>
+      <span title="Unit" class="keyword">if</span> (<a href="#734969" title="(x$1: Int)Boolean">y</a> != <span title="Int(0)" class="int">0</span>) <a href="#734966" title="(x: Int)Unit">patchNatPrefix</a>(<a href="#734969" title="Int">y</a>)
     }
-    <span class="typed"><span class="type">=&gt; Array[Byte]</span><a href="#68894">bytes</a></span>(<span class="typed"><span class="type">Int</span><a href="#77107">pos</a></span>) = (<span class="typed"><span class="type">Int</span><a href="#77108">x</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3153">&amp;</a></span> <span class="typed"><span class="type">Int(127)</span><span class="int">0x7f</span></span>).<span class="typed"><span class="type">Byte</span><a id="3503">asInstanceOf</a></span>[<span class="typed"><span class="type">Byte</span><a id="2379">Byte</a></span>]
-    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="145347">y</a></span> = <span class="typed"><span class="type">Int</span><a href="#77108">x</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3092">&gt;&gt;&gt;</a></span> <span class="typed"><span class="type">Int(7)</span><span class="int">7</span></span>
-    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#145347">y</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3142">!=</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) <span class="typed"><span class="type">(Int)Unit</span><a href="#145346">patchNatPrefix</a></span>(<span class="typed"><span class="type">Int</span><a href="#145347">y</a></span>)
+    <a href="#83276" title="(i: Int,x: Byte)Unit">bytes</a>(<a href="#151452" title="Int">pos</a>) = (<a href="#151453" title="(x$1: Int)Int">x</a> &amp; <span title="Int(127)" class="int">0x7f</span>).<span title="[T0]T0">asInstanceOf</span><span title="Byte">[</span><span title="Byte">Byte</span>]
+    <span class="keyword">val</span> <a title="Int" id="734967">y</a> = <a href="#151453" title="(x$1: Int)Int">x</a> &gt;&gt;&gt; <span title="Int(7)" class="int">7</span>
+    <span title="Unit" class="keyword">if</span> (<a href="#734967" title="(x$1: Int)Boolean">y</a> != <span title="Int(0)" class="int">0</span>) <a href="#734966" title="(x: Int)Unit">patchNatPrefix</a>(<a href="#734967" title="Int">y</a>)
   }
 
-  <span class="comment">/** Write a long number &lt;code&gt;x&lt;/code&gt; in signed big endian format, base 256.
+  /** Write a long number &lt;code&gt;x&lt;/code&gt; in signed big endian format, base 256.
    *
    *  @param x The long number to be written.
-   */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(Long)Unit</span><a id="68908">writeLong</a></span>(<span class="typed"><span class="type">Long</span><a id="76867">x</a></span>: <span class="typed"><span class="type">Long</span><a id="2399">Long</a></span>) {
-    <span class="keyword">val</span> <span class="typed"><span class="type">Long</span><a id="145392">y</a></span> = <span class="typed"><span class="type">Long</span><a href="#76867">x</a></span> <span class="typed"><span class="type">(Int)Long</span><a id="3203">&gt;&gt;</a></span> <span class="typed"><span class="type">Int(8)</span><span class="int">8</span></span>
-    <span class="keyword">val</span> <span class="typed"><span class="type">Long</span><a id="145393">z</a></span> = <span class="typed"><span class="type">Long</span><a href="#76867">x</a></span> <span class="typed"><span class="type">(Int)Long</span><a id="3262">&amp;</a></span> <span class="typed"><span class="type">Int(255)</span><span class="int">0xff</span></span>
-    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (-<span class="typed"><span class="type">=&gt; Long</span><a href="#145392" id="3206">y</a></span> <span class="typed"><span class="type">(Long)Boolean</span><a id="3265">!=</a></span> (<span class="typed"><span class="type">Long</span><a href="#145393">z</a></span> <span class="typed"><span class="type">(Int)Long</span><a id="3203">&gt;&gt;</a></span> <span class="typed"><span class="type">Int(7)</span><span class="int">7</span></span>)) <span class="typed"><span class="type">(Long)Unit</span><a href="#68908">writeLong</a></span>(<span class="typed"><span class="type">Long</span><a href="#145392">y</a></span>)
-    <span class="typed"><span class="type">(Int)Unit</span><a href="#68905">writeByte</a></span>(<span class="typed"><span class="type">Long</span><a href="#145393">z</a></span>.<span class="typed"><span class="type">Int</span><a id="3503">asInstanceOf</a></span>[<span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>])
+   */
+  <span class="keyword">def</span> <a title="(x: Long)Unit" id="83290">writeLong</a>(<a title="Long" id="150393">x</a>: <span title="Long">Long</span>) {
+    <span class="keyword">val</span> <a title="Long" id="735092">y</a> = <a href="#150393" title="(x$1: Int)Long">x</a> &gt;&gt; <span title="Int(8)" class="int">8</span>
+    <span class="keyword">val</span> <a title="Long" id="735093">z</a> = <a href="#150393" title="(x$1: Int)Long">x</a> &amp; <span title="Int(255)" class="int">0xff</span>
+    <span title="Unit" class="keyword">if</span> (<a title="(x$1: Long)Boolean" id="3074">-</a><a href="#735092" title="Long">y</a> != (<a href="#735093" title="(x$1: Int)Long">z</a> &gt;&gt; <span title="Int(7)" class="int">7</span>)) <a href="#83290" title="(x: Long)Unit">writeLong</a>(<a href="#735092" title="Long">y</a>)
+    <a href="#83286" title="(b: Int)Unit">writeByte</a>(<a href="#735093" title="Long">z</a>.<span title="[T0]T0">asInstanceOf</span><span title="Int">[</span><span title="Int">Int</span>])
   }
 
-  <span class="comment">// -- Basic input routines --------------------------------------------</span>
+  // -- Basic input routines --------------------------------------------
 
-  <span class="comment">/** Peek at the current byte without moving the read index */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">()Int</span><a id="68909">peekByte</a></span>(): <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span> = <span class="typed"><span class="type">implicit scala.Predef.byte2int : (Byte)Int</span><span id="6200"><span id="821"><a href="#68894" id="21509">bytes</a></span></span></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="#68897">readIndex</a></span>)
+  /** Peek at the current byte without moving the read index */
+  <span class="keyword">def</span> <a title="()Int" id="83291">peekByte</a>(): <span title="Int">Int</span> = <a href="#83276" title="(i: Int)Byte">bytes</a><span title="implicit scala.Predef.byte2int : (x: Byte)Int">(</span><a href="#83279" title="=&gt; Int">readIndex</a>)
 
-  <span class="comment">/** Read a byte */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">()Int</span><a id="68910">readByte</a></span>(): <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span> = {
-    <span class="keyword">val</span> <span class="typed"><span class="type">Byte</span><a id="145403">x</a></span> = <span class="typed"><span class="type">(Int)Byte</span><a href="#68894" id="21509">bytes</a></span>(<span class="typed"><span class="type">=&gt; Int</span><a href="#68897">readIndex</a></span>); <span class="typed"><span class="type">(Int)Unit</span><a href="#68898">readIndex</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3147">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>; <span class="typed"><span class="type">implicit scala.Predef.byte2int : (Byte)Int</span><span id="6200"><a href="#145403" id="821">x</a></span></span>
+  /** Read a byte */
+  <span class="keyword">def</span> <a title="()Int" id="83292">readByte</a>(): <span title="Int">Int</span> = {
+    <span class="keyword">val</span> <a title="Byte" id="735139">x</a> = <a href="#83276" title="(i: Int)Byte">bytes</a>(<a href="#83279" title="=&gt; Int">readIndex</a>); <a href="#83279" title="(x$1: Int)Unit">readIndex</a> += <span title="Int(1)" class="int">1</span>; <a href="#735139" title="implicit scala.Predef.byte2int : (x: Byte)Int">x</a>
   }
 
-  <span class="comment">/** Read a natural number in big endian format, base 128.
-   *  All but the last digits have bit 0x80 set.*/</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">()Int</span><a id="68911">readNat</a></span>(): <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span> = {
-    <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="145430">b</a></span> = <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>
-    <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="145431">x</a></span> = <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>
-    <span class="typed"><span class="type">Unit</span><a href="#145432" class="keyword">do</a></span> {
-      <span class="typed"><span class="type">Int</span><a href="#145430">b</a></span> = <span class="typed"><span class="type">()Int</span><a href="#68910">readByte</a></span>()
-      <span class="typed"><span class="type">Int</span><a href="#145431">x</a></span> = (<span class="typed"><span class="type">Int</span><a href="#145431">x</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3090">&lt;&lt;</a></span> <span class="typed"><span class="type">Int(7)</span><span class="int">7</span></span>) <span class="typed"><span class="type">(Int)Int</span><a id="3147">+</a></span> (<span class="typed"><span class="type">Int</span><a href="#145430">b</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3153">&amp;</a></span> <span class="typed"><span class="type">Int(127)</span><span class="int">0x7f</span></span>)
-    } <span class="keyword">while</span> ((<span class="typed"><span class="type">Int</span><a href="#145430">b</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3153">&amp;</a></span> <span class="typed"><span class="type">Int(128)</span><span class="int">0x80</span></span>) <span class="typed"><span class="type">(Int)Boolean</span><a id="3142">!=</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>);
-    <span class="typed"><span class="type">Int</span><a href="#145431">x</a></span>
+  /** Read a natural number in big endian format, base 128.
+   *  All but the last digits have bit 0x80 set.*/
+  <span class="keyword">def</span> <a title="()Int" id="83293">readNat</a>(): <span title="Int">Int</span> = <a href="#83294" title="()Long">readLongNat</a>().<span title="[T0]T0">asInstanceOf</span><span title="Int">[</span><span title="Int">Int</span>]
+
+  <span class="keyword">def</span> <a title="()Long" id="83294">readLongNat</a>(): <span title="Long">Long</span> = {
+    <span class="keyword">var</span> <a title="Long" id="735194">b</a> = <span title="Long(0L)" class="long">0L</span>
+    <span class="keyword">var</span> <a title="Long" id="735195">x</a> = <span title="Long(0L)" class="long">0L</span>
+    <a href="#735196" title="Unit" class="keyword">do</a> {
+      <a href="#735194" title="Long">b</a> = <a href="#83292" title="()Int">readByte</a><a title="implicit scala.Predef.int2long : (x: Int)Long" id="8137">(</a>)
+      <a href="#735195" title="Long">x</a> = <a title="(x$1: Long)Long" id="3200">(</a><a href="#735195" title="(x$1: Int)Long">x</a> &lt;&lt; <span title="Int(7)" class="int">7</span>) + (<a href="#735194" title="(x$1: Int)Long">b</a> &amp; <span title="Int(127)" class="int">0x7f</span>)
+    } <span class="keyword">while</span> (<span title="(x$1: Int)Boolean">(</span><a href="#735194" title="(x$1: Int)Long">b</a> &amp; <span title="Int(128)" class="int">0x80</span>) != <span title="Int(0)" class="int">0</span>);
+    <a href="#735195" title="Long">x</a>
   }
 
-  <span class="comment">/** Read a long number in signed big endian format, base 256. */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(Int)Long</span><a id="68912">readLong</a></span>(<span class="typed"><span class="type">Int</span><a id="122086">len</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>): <span class="typed"><span class="type">Long</span><a id="2399">Long</a></span> = {
-    <span class="keyword">var</span> <span class="typed"><span class="type">Long</span><a id="145456">x</a></span> = <span class="typed"><span class="type">Long(0L)</span><span class="long">0L</span></span>
-    <span class="keyword">var</span> <span class="typed"><span class="type">Int</span><a id="145457">i</a></span> = <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>
-    <span class="typed"><span class="type">Unit</span><a href="#145459" class="keyword">while</a></span> (<span class="typed"><span class="type">Int</span><a href="#145457">i</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3143">&lt;</a></span> <span class="typed"><span class="type">Int</span><a href="#122086">len</a></span>) {
-      <span class="typed"><span class="type">Long</span><a href="#145456">x</a></span> = (<span class="typed"><span class="type">Long</span><a href="#145456">x</a></span> <span class="typed"><span class="type">(Int)Long</span><a id="3199">&lt;&lt;</a></span> <span class="typed"><span class="type">Int(8)</span><span class="int">8</span></span>) <span class="typed"><span class="type">(Int)Long</span><a id="3256">+</a></span> (<span class="typed"><span class="type">()Int</span><a href="#68910">readByte</a></span>() <span class="typed"><span class="type">(Int)Int</span><a id="3153">&amp;</a></span> <span class="typed"><span class="type">Int(255)</span><span class="int">0xff</span></span>)
-      <span class="typed"><span class="type">Int</span><a href="#145457">i</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3147">+=</a></span> <span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>
+  /** Read a long number in signed big endian format, base 256. */
+  <span class="keyword">def</span> <a title="(len: Int)Long" id="83295">readLong</a>(<a title="Int" id="344626">len</a>: <span title="Int">Int</span>): <span title="Long">Long</span> = {
+    <span class="keyword">var</span> <a title="Long" id="735250">x</a> = <span title="Long(0L)" class="long">0L</span>
+    <span class="keyword">var</span> <a title="Int" id="735251">i</a> = <span title="Int(0)" class="int">0</span>
+    <span title="Unit" class="keyword">while</span> (<a href="#735251" title="(x$1: Int)Boolean">i</a> &lt; <a href="#344626" title="Int">len</a>) <a href="#735253" title="()Unit">{</a>
+      <a href="#735250" title="Long">x</a> = <a title="(x$1: Int)Long" id="3172">(</a><a href="#735250" title="(x$1: Int)Long">x</a> &lt;&lt; <span title="Int(8)" class="int">8</span>) + (<a href="#83292" title="()Int">readByte</a><span title="(x$1: Int)Int">(</span>) &amp; <span title="Int(255)" class="int">0xff</span>)
+      <a href="#735251" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
     }
-    <span class="keyword">val</span> <span class="typed"><span class="type">Int</span><a id="145458">leading</a></span> = <span class="typed"><span class="type">Int(64)</span><span class="int">64</span></span> <span class="typed"><span class="type">(Int)Int</span><a id="3148">-</a></span> (<span class="typed"><span class="type">Int</span><a href="#122086">len</a></span> <span class="typed"><span class="type">(Int)Int</span><a id="3090">&lt;&lt;</a></span> <span class="typed"><span class="type">Int(3)</span><span class="int">3</span></span>)
-    <span class="typed"><span class="type">Long</span><a href="#145456">x</a></span> <span class="typed"><span class="type">(Int)Long</span><a id="3199">&lt;&lt;</a></span> <span class="typed"><span class="type">Int</span><a href="#145458">leading</a></span> <span class="typed"><span class="type">(Int)Long</span><a id="3203">&gt;&gt;</a></span> <span class="typed"><span class="type">Int</span><a href="#145458">leading</a></span>
+    <span class="keyword">val</span> <a title="Int" id="735252">leading</a> = <span title="(x$1: Int)Int" class="int">64</span> - (<a href="#344626" title="(x$1: Int)Int" id="2853">len</a> &lt;&lt; <span title="Int(3)" class="int">3</span>)
+    <a href="#735250" title="(x$1: Int)Long">x</a> <span title="(x$1: Int)Long">&lt;&lt;</span> <a href="#735252" title="Int">leading</a> &gt;&gt; <a href="#735252" title="Int">leading</a>
   }
 
-  <span class="comment">/** Perform operation &lt;code&gt;op&lt;/code&gt; until the condition
+  /** Perform operation &lt;code&gt;op&lt;/code&gt; until the condition
    *  &lt;code&gt;readIndex == end&lt;/code&gt; is satisfied.
    *  Concatenate results into a list.
    *
    *  @param end ...
    *  @param op  ...
    *  @return    ...
-   */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">[T](Int,() =&gt; T)List[T]</span><a id="68913">until</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="68915">T</a></span>](<span class="typed"><span class="type">Int</span><a id="122038">end</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>, <span class="typed"><span class="type">() =&gt; T</span><a id="122039">op</a></span>: () =&gt; T): <span class="typed"><span class="type">List[T]</span><a id="526">List</a></span>[T] =
-    <span class="typed"><span class="type">List[T]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Int</span><a href="#68897">readIndex</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">==</a></span> <span class="typed"><span class="type">Int</span><a href="#122038">end</a></span>) <span class="typed"><span class="type">object Nil</span><a id="335">List</a></span>() <span class="keyword">else</span> <span class="typed"><span class="type">()T</span><a href="#122039" id="31093">op</a></span>() <span class="typed"><span class="type">(T)List[T]</span><a href="#145506" id="21335">::</a></span> <span class="typed"><span class="type">(Int,() =&gt; T)List[T]</span><a href="#68913">until</a></span>(<span class="typed"><span class="type">Int</span><a href="#122038">end</a></span>, <span class="typed"><span class="type">() =&gt; T</span><a href="#122039">op</a></span>);
+   */
+  <span class="keyword">def</span> <a title="[T](end: Int,op: () =&gt; T)List[T]" id="83296">until</a>[<a title="&gt;: Nothing &lt;: Any" id="83298">T</a>](<a title="Int" id="344245">end</a>: <span title="Int">Int</span>, <a title="() =&gt; T" id="344246">op</a>: () =&gt; T): <span title="List[T]">List</span>[T] =
+    <span title="List[T]" class="keyword">if</span> (<a href="#83279" title="(x$1: Int)Boolean">readIndex</a> == <a href="#344245" title="Int">end</a>) List<span title="object Nil">(</span>) <span class="keyword">else</span> <a href="#344246" title="()T">op</a>() <a href="#735368" title="T">::</a> <a href="#83296" title="(end: Int,op: () =&gt; T)List[T]">until</a><span title="(x: T)List[T]">(</span><a href="#344245" title="Int">end</a>, <a href="#344246" title="() =&gt; T">op</a>);
 
-  <span class="comment">/** Perform operation &lt;code&gt;op&lt;/code&gt; the number of
+  /** Perform operation &lt;code&gt;op&lt;/code&gt; the number of
    *  times specified.  Concatenate the results into a list.
-   */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">[T](Int,() =&gt; T)List[T]</span><a id="68916">times</a></span>[<span class="typed"><span class="type">&gt;: Nothing &lt;: Any</span><a id="68918">T</a></span>](<span class="typed"><span class="type">Int</span><a id="122143">n</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>, <span class="typed"><span class="type">() =&gt; T</span><a id="122144">op</a></span>: ()=&gt;T): <span class="typed"><span class="type">List[T]</span><a id="526">List</a></span>[T] =
-    <span class="typed"><span class="type">List[T]</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">Int</span><a href="#122143">n</a></span> <span class="typed"><span class="type">(Int)Boolean</span><a id="3141">==</a></span> <span class="typed"><span class="type">Int(0)</span><span class="int">0</span></span>) <span class="typed"><span class="type">object Nil</span><a id="335">List</a></span>() <span class="keyword">else</span> <span class="typed"><span class="type">()T</span><a href="#122144" id="31093">op</a></span>() <span class="typed"><span class="type">(T)List[T]</span><a href="#145512" id="21335">::</a></span> <span class="typed"><span class="type">(Int,() =&gt; T)List[T]</span><a href="#68916">times</a></span>(<span class="typed"><span class="type">Int</span><a href="#122143">n</a></span><span class="typed"><span class="type">(Int)Int</span><a id="3148">-</a></span><span class="typed"><span class="type">Int(1)</span><span class="int">1</span></span>, <span class="typed"><span class="type">() =&gt; T</span><a href="#122144">op</a></span>)
+   */
+  <span class="keyword">def</span> <a title="[T](n: Int,op: () =&gt; T)List[T]" id="83299">times</a>[<a title="&gt;: Nothing &lt;: Any" id="83301">T</a>](<a title="Int" id="503752">n</a>: <span title="Int">Int</span>, <a title="() =&gt; T" id="503753">op</a>: ()=&gt;T): <span title="List[T]">List</span>[T] =
+    <span title="List[T]" class="keyword">if</span> (<a href="#503752" title="(x$1: Int)Boolean">n</a> == <span title="Int(0)" class="int">0</span>) List<span title="object Nil">(</span>) <span class="keyword">else</span> <a href="#503753" title="()T">op</a>() <a href="#735400" title="T">::</a> <a href="#83299" title="(n: Int,op: () =&gt; T)List[T]">times</a><span title="(x: T)List[T]">(</span><a href="#503752" title="(x$1: Int)Int">n</a>-<span title="Int(1)" class="int">1</span>, <a href="#503753" title="() =&gt; T">op</a>)
 
-  <span class="comment">/** Create an index.
+  /** Pickle = majorVersion_Nat minorVersion_Nat nbEntries_Nat {Entry}
+   *  Entry  = type_Nat length_Nat [actual entries]
+   * 
+   *  Assumes that the ..Version_Nat are already consumed.
    *
-   *  @return ...
-   */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">=&gt; Array[Int]</span><a id="68919">createIndex</a></span>: <span class="typed"><span class="type">Array[Int]</span><a id="1072">Array</a></span>[Int] = {
-    <span class="keyword">val</span> <span class="typed"><span class="type">Array[Int]</span><a id="145530">index</a></span> = <span class="typed"><span class="type">Array[Int]</span><span class="keyword">new</span></span> <span class="typed"><span class="type">Array[Int]</span><a id="1072">Array</a></span>[Int](<span class="typed"><span class="type">()Int</span><a href="#68911">readNat</a></span>())
-    <span class="keyword">for</span> (<span class="typed"><span class="type">((Int) =&gt; Unit)Unit</span><span id="40475"><a id="145541">i</a></span></span> &lt;- <span class="typed"><span class="type">implicit scala.Predef.intWrapper : (Int)scala.runtime.RichInt</span><span id="6133"><a id="821" class="int">0</a></span></span> <span class="typed"><span class="type">(Int)Range</span><a id="26778">until</a></span> <span class="typed"><span class="type">Array[Int]</span><a href="#145530">index</a></span>.<span class="typed"><span class="type">=&gt; Int</span><a id="21508">length</a></span>) {
-      <span class="typed"><span class="type">Array[Int]</span><a href="#145530">index</a></span>(<span class="typed"><span class="type">Int</span><a href="#145541">i</a></span>) = <span class="typed"><span class="type">=&gt; Int</span><a href="#68897">readIndex</a></span>
-      <span class="typed"><span class="type">()Int</span><a href="#68910">readByte</a></span>()
-      <span class="typed"><span class="type">(Int)Unit</span><a href="#68898">readIndex</a></span> = <span class="typed"><span class="type">()Int</span><a href="#68911">readNat</a></span>() <span class="typed"><span class="type">(Int)Int</span><a id="3147">+</a></span> <span class="typed"><span class="type">=&gt; Int</span><a href="#68897">readIndex</a></span>
+   *  @return an array mapping entry numbers to locations in
+   *  the byte array where the entries start.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Array[Int]" id="83302">createIndex</a>: <span title="Array[Int]">Array</span>[Int] = {
+    <span class="keyword">val</span> <a title="Array[Int]" id="735435">index</a> = <span title="Array[Int]" class="keyword">new</span> <span title="Array[Int]">Array</span>[Int](<a href="#83293" title="()Int">readNat</a>()) // nbEntries_Nat
+    <span class="keyword">for</span> (<a title="Int" id="735476">i</a> &lt;- <a title="(end: Int)Range" id="8089" class="int">0</a> <a title="(f: (Int) =&gt; Unit)Unit" id="56267">until</a> <a href="#735435" title="Array[Int]">index</a>.<span title="=&gt; Int">length</span>) {
+      <a href="#735435" title="(i: Int,x: Int)Unit">index</a>(<a href="#735476" title="Int">i</a>) = <a href="#83279" title="=&gt; Int">readIndex</a>
+      <a href="#83292" title="()Int">readByte</a>() // skip type_Nat
+      <a href="#83279" title="(x$1: Int)Unit">readIndex</a> = <a href="#83293" title="()Int">readNat</a><span title="(x$1: Int)Int">(</span>) + <a href="#83279" title="=&gt; Int">readIndex</a> // read length_Nat, jump to next entry
     }
-    <span class="typed"><span class="type">Array[Int]</span><a href="#145530">index</a></span>
+    <a href="#735435" title="Array[Int]">index</a>
   }
 }
 

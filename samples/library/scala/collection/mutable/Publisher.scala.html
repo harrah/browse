@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/mutable/Publisher.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |                                         **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: Publisher.scala 18511 2009-08-19 03:27:37Z extempore $
+
+
+<span class="keyword">package</span> scala.collection.mutable
+
+
+/** &lt;code&gt;Publisher[A,This]&lt;/code&gt; objects publish events of type &lt;code&gt;A&lt;/code&gt;
+ *  to all registered subscribers. When subscribing, a subscriber may specify
+ *  a filter which can be used to constrain the number of events sent to the
+ *  subscriber. Subscribers may suspend their subscription, or reactivate a
+ *  suspended subscription. Class &lt;code&gt;Publisher&lt;/code&gt; is typically used
+ *  as a mixin. The type variable &lt;code&gt;This&lt;/code&gt; models self types.
+ *
+ *  @author  Matthias Zenger
+ *  @version 1.0, 08/07/2003
+ */
+<span class="keyword">trait</span> <a title="trait Publisher[A, This &lt;: scala.collection.mutable.Publisher[A,This]] extends java.lang.Object with ScalaObject" id="7722">Publisher</a>[<a title="&gt;: Nothing &lt;: Any" id="15454">A</a>, <a title="&gt;: Nothing &lt;: scala.collection.mutable.Publisher[A,This]" id="15455">This</a> &lt;: <a id="1">Publisher</a>[A, This]] <a href="../../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  self: This =&gt;
+  
+  <span class="keyword">type</span> <a title="scala.collection.mutable.Subscriber[A,This]" id="134110">SubThis</a> = <a href="Subscriber.scala.html#7905" title="scala.collection.mutable.Subscriber[A,This]">Subscriber</a>[A, This]
+  <span class="keyword">type</span> <a title="(A) =&gt; Boolean" id="134111">Filter</a> = A =&gt; Boolean
+  
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="&lt;refinement&gt; extends scala.collection.mutable.HashMap[Publisher.this.SubThis,scala.collection.mutable.Set[(A) =&gt; Boolean]] with scala.collection.mutable.MultiMap[Publisher.this.SubThis,(A) =&gt; Boolean]" id="134112">filters</a> = <a href="#190535" title="scala.collection.mutable.HashMap[Publisher.this.SubThis,scala.collection.mutable.Set[(A) =&gt; Boolean]] with scala.collection.mutable.MultiMap[Publisher.this.SubThis,(A) =&gt; Boolean]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends scala.collection.mutable.HashMap[Publisher.this.SubThis,scala.collection.mutable.Set[(A) =&gt; Boolean]] with scala.collection.mutable.MultiMap[Publisher.this.SubThis,(A) =&gt; Boolean]" id="190535">HashMap</a>[SubThis, Set[Filter]] <span class="keyword">with</span> <a href="MultiMap.scala.html#7776" title="scala.collection.mutable.MultiMap[Publisher.this.SubThis,(A) =&gt; Boolean]">MultiMap</a>[SubThis, Filter]
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="scala.collection.mutable.HashSet[Publisher.this.SubThis]" id="134114">suspended</a> = <span title="scala.collection.mutable.HashSet[Publisher.this.SubThis]" class="keyword">new</span> <a href="HashSet.scala.html#7602" title="scala.collection.mutable.HashSet[Publisher.this.SubThis]">HashSet</a>[SubThis]
+
+  <span class="keyword">def</span> <a title="(sub: Publisher.this.SubThis)Unit" id="134116">subscribe</a>(<a title="Publisher.this.SubThis" id="190566">sub</a>: <a href="Subscriber.scala.html#7905" title="Publisher.this.SubThis">SubThis</a>): <span title="Unit">Unit</span> = <a href="#134117" title="(sub: Publisher.this.SubThis,filter: (A) =&gt; Boolean)Unit">subscribe</a>(<a href="#190566" title="Publisher.this.SubThis">sub</a>, <a title="A" id="190586">event</a> =&gt; <span title="Boolean(true)" class="keyword">true</span>)
+  <span class="keyword">def</span> <a title="(sub: Publisher.this.SubThis,filter: (A) =&gt; Boolean)Unit" id="134117">subscribe</a>(<a title="Publisher.this.SubThis" id="190571">sub</a>: <a href="Subscriber.scala.html#7905" title="Publisher.this.SubThis">SubThis</a>, <a title="(A) =&gt; Boolean" id="190572">filter</a>: <a href="../../Function1.scala.html#159" title="(A) =&gt; Boolean">Filter</a>): <span title="Unit">Unit</span> = <a href="../generic/MapTemplate.scala.html#35283" title="(key: Publisher.this.SubThis)scala.collection.mutable.Set[(A) =&gt; Boolean]">filters</a><a href="../generic/MutableSetTemplate.scala.html#37370" title="(elem: (A) =&gt; Boolean)scala.collection.mutable.Set[(A) =&gt; Boolean]">(</a><a href="#190571" title="Publisher.this.SubThis">sub</a>) <span title="Unit">+=</span> <a href="#190572" title="(A) =&gt; Boolean">filter</a>
+  <span class="keyword">def</span> <a title="(sub: Publisher.this.SubThis)Unit" id="134118">suspendSubscription</a>(<a title="Publisher.this.SubThis" id="190645">sub</a>: <a href="Subscriber.scala.html#7905" title="Publisher.this.SubThis">SubThis</a>): <span title="Unit">Unit</span> = <a href="HashSet.scala.html#37339" title="(elem: Publisher.this.SubThis)Publisher.this.suspended.type">suspended</a> <span title="Unit">+=</span> <a href="#190645" title="Publisher.this.SubThis">sub</a>
+  <span class="keyword">def</span> <a title="(sub: Publisher.this.SubThis)Unit" id="134119">activateSubscription</a>(<a title="Publisher.this.SubThis" id="190678">sub</a>: <a href="Subscriber.scala.html#7905" title="Publisher.this.SubThis">SubThis</a>): <span title="Unit">Unit</span> = <a href="HashSet.scala.html#37340" title="(elem: Publisher.this.SubThis)Publisher.this.suspended.type">suspended</a> <span title="Unit">-=</span> <a href="#190678" title="Publisher.this.SubThis">sub</a>
+  <span class="keyword">def</span> <a title="(sub: Publisher.this.SubThis)Unit" id="134120">removeSubscription</a>(<a title="Publisher.this.SubThis" id="190705">sub</a>: <a href="Subscriber.scala.html#7905" title="Publisher.this.SubThis">SubThis</a>): <span title="Unit">Unit</span> = <a href="HashMap.scala.html#91078" title="(key: Publisher.this.SubThis)Publisher.this.filters.type">filters</a> <span title="Unit">-=</span> <a href="#190705" title="Publisher.this.SubThis">sub</a>
+  <span class="keyword">def</span> <a title="()Unit" id="134121">removeSubscriptions</a>() { <a href="#134112" title="=&gt; &lt;refinement&gt; extends scala.collection.mutable.HashMap[Publisher.this.SubThis,scala.collection.mutable.Set[(A) =&gt; Boolean]] with scala.collection.mutable.MultiMap[Publisher.this.SubThis,(A) =&gt; Boolean]">filters</a>.<a href="HashMap.scala.html#91070" title="()Unit">clear</a> }
+
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(event: A)Unit" id="134122">publish</a>(<a title="A" id="134176">event</a>: <a href="#15454" title="A">A</a>): <span title="Unit">Unit</span> =
+    <a href="#134112" title="=&gt; &lt;refinement&gt; extends scala.collection.mutable.HashMap[Publisher.this.SubThis,scala.collection.mutable.Set[(A) =&gt; Boolean]] with scala.collection.mutable.MultiMap[Publisher.this.SubThis,(A) =&gt; Boolean]">filters</a>.<a href="../generic/MapTemplate.scala.html#35288" title="=&gt; Iterator[Publisher.this.SubThis]">keysIterator</a>.<a href="../Iterator.scala.html#19219" title="(f: (Publisher.this.SubThis) =&gt; Unit)Unit">foreach</a>(<a title="Publisher.this.SubThis" id="190739">sub</a> =&gt;
+      <span title="Unit" class="keyword">if</span> (<a href="#134112" title="=&gt; &lt;refinement&gt; extends scala.collection.mutable.HashMap[Publisher.this.SubThis,scala.collection.mutable.Set[(A) =&gt; Boolean]] with scala.collection.mutable.MultiMap[Publisher.this.SubThis,(A) =&gt; Boolean]">filters</a>.<a href="MultiMap.scala.html#190541" title="(key: Publisher.this.SubThis,p: ((A) =&gt; Boolean) =&gt; Boolean)Boolean">entryExists</a>(<a href="#190739" title="Publisher.this.SubThis">sub</a>, <a title="(A) =&gt; Boolean" id="190746">p</a> =&gt; <a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#134176" title="A">event</a>)))
+        <a href="#190739" title="Publisher.this.SubThis">sub</a>.<a href="Subscriber.scala.html#37850" title="(pub: This,event: A)Unit">notify</a>(<a href="#7722" title="This" class="keyword">this</a>, <a href="#134176" title="A">event</a>)
+    )
+}
+        </pre>
+    </body>
+</html>

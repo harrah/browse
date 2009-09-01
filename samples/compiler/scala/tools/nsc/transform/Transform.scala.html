@@ -1,21 +1,24 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
         <title>scala/tools/nsc/transform/Transform.scala</title>
+        <script type="text/javascript" src="../../../../jquery-all.js"></script>
         <script type="text/javascript" src="../../../../linked.js"></script>
         <link rel="stylesheet" type="text/css" href="../../../../style.css" title="Style">
     </head>
-    <body onload="initializeLinked()">
+    <body>
         <pre>
-<span class="comment">/* NSC -- new Scala compiler
+/* NSC -- new Scala compiler
  * Copyright 2005-2009 LAMP/EPFL
  * @author Martin Odersky
- */</span>
-<span class="comment">// $Id: Transform.scala 16893 2009-01-13 13:09:22Z cunei $</span>
+ */
+// $Id: Transform.scala 18387 2009-07-24 15:28:37Z odersky $
 
-<span class="keyword">package</span> scala.tools.nsc.transform
+<span class="keyword">package</span> scala.tools.nsc
+<span class="keyword">package</span> transform
 
-<span class="comment">/** &lt;p&gt;
+/** &lt;p&gt;
  *    A base class for transforms.
  *  &lt;/p&gt;
  *  &lt;p&gt;
@@ -24,19 +27,19 @@
  *
  *  @author Martin Odersky
  *  @version 1.0
- */</span>
-<span class="keyword">trait</span> <span class="typed"><span class="type">trait Transform extends scala.tools.nsc.SubComponent with ScalaObject</span><a id="13183">Transform</a></span> <span class="keyword">extends</span> <span class="typed"><span class="type">scala.tools.nsc.SubComponent</span><a href="../SubComponent.scala.html#6300">SubComponent</a></span> {
+ */
+<span class="keyword">trait</span> <a title="trait Transform extends scala.tools.nsc.SubComponent with ScalaObject" id="14089">Transform</a> <span title="ScalaObject" class="keyword">extends</span> <a href="../SubComponent.scala.html#8259" title="scala.tools.nsc.SubComponent">SubComponent</a> {
 
-  <span class="comment">/** The transformer factory */</span>
-  <span class="keyword">protected</span> <span class="keyword">def</span> <span class="typed"><span class="type">(Transform.this.global.CompilationUnit)Transform.this.global.Transformer</span><a id="29470">newTransformer</a></span>(<span class="typed"><span class="type">Transform.this.global.CompilationUnit</span><a id="98904">unit</a></span>: global.<span class="typed"><span class="type">Transform.this.global.CompilationUnit</span><a href="../CompilationUnits.scala.html#22571">CompilationUnit</a></span>): global.<span class="typed"><span class="type">Transform.this.global.Transformer</span><a href="../ast/Trees.scala.html#22548">Transformer</a></span>
+  /** The transformer factory */
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(unit: Transform.this.global.CompilationUnit)Transform.this.global.Transformer" id="42399">newTransformer</a>(<a title="Transform.this.global.CompilationUnit" id="45423">unit</a>: global.<a href="../CompilationUnits.scala.html#39196" title="Transform.this.global.CompilationUnit">CompilationUnit</a>): global.<a href="../ast/Trees.scala.html#26773" title="Transform.this.global.Transformer">Transformer</a>
 
-  <span class="comment">/** Create a new phase which applies transformer */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(scala.tools.nsc.Phase)Transform.this.StdPhase</span><a id="29471">newPhase</a></span>(<span class="typed"><span class="type">scala.tools.nsc.Phase</span><a id="43348">prev</a></span>: scala.tools.nsc.<span class="typed"><span class="type">scala.tools.nsc.Phase</span><a href="../Phase.scala.html#6873">Phase</a></span>): <span class="typed"><span class="type">Transform.this.StdPhase</span><a href="../SubComponent.scala.html#29468">StdPhase</a></span> = <span class="typed"><span class="type">Transform.this.Phase</span><span class="keyword">new</span></span> <span class="typed"><span class="type">Transform.this.Phase</span><a href="#29472">Phase</a></span>(<span class="typed"><span class="type">scala.tools.nsc.Phase</span><a href="#43348">prev</a></span>)
+  /** Create a new phase which applies transformer */
+  <span class="keyword">def</span> <a title="(prev: scala.tools.nsc.Phase)Transform.this.StdPhase" id="42400">newPhase</a>(<a title="scala.tools.nsc.Phase" id="110652">prev</a>: scala.tools.nsc.<a href="../Phase.scala.html#8862" title="scala.tools.nsc.Phase">Phase</a>): <a href="../SubComponent.scala.html#39640" title="Transform.this.StdPhase">StdPhase</a> = <span title="Transform.this.Phase" class="keyword">new</span> <a href="#42401" title="Transform.this.Phase">Phase</a>(<a href="#110652" title="scala.tools.nsc.Phase">prev</a>)
 
-  <span class="comment">/** The phase defined by this transform */</span>
-  <span class="keyword">class</span> <span class="typed"><span class="type">class Phase extends Transform.this.StdPhase with ScalaObject</span><a id="29472">Phase</a></span>(<span class="typed"><span class="type">scala.tools.nsc.Phase</span><span id="52542"><a id="158116">prev</a></span></span>: scala.tools.nsc.<span class="typed"><span class="type">scala.tools.nsc.Phase</span><a href="../Phase.scala.html#6873">Phase</a></span>) <span class="keyword">extends</span> <span class="typed"><span class="type">Transform.this.StdPhase</span><a href="../SubComponent.scala.html#29468">StdPhase</a></span>(<span class="typed"><span class="type">scala.tools.nsc.Phase</span><a href="#158116">prev</a></span>) {
-    <span class="keyword">def</span> <span class="typed"><span class="type">(Transform.this.global.CompilationUnit)Unit</span><a id="52544">apply</a></span>(<span class="typed"><span class="type">Transform.this.global.CompilationUnit</span><a id="158119">unit</a></span>: global.<span class="typed"><span class="type">Transform.this.global.CompilationUnit</span><a href="../CompilationUnits.scala.html#22571">CompilationUnit</a></span>) {
-      <span class="typed"><span class="type">(Transform.this.global.CompilationUnit)Transform.this.global.Transformer</span><a href="#29470">newTransformer</a></span>(<span class="typed"><span class="type">Transform.this.global.CompilationUnit</span><a href="#158119">unit</a></span>).<span class="typed"><span class="type">(Transform.this.global.CompilationUnit)Unit</span><a href="../ast/Trees.scala.html#43106">transformUnit</a></span>(<span class="typed"><span class="type">Transform.this.global.CompilationUnit</span><a href="#158119">unit</a></span>)
+  /** The phase defined by this transform */
+  <span class="keyword">class</span> <a title="class Phase extends Transform.this.StdPhase with ScalaObject" id="42401">Phase</a><span title="ScalaObject">(</span><a title="scala.tools.nsc.Phase" id="110664">prev</a>: scala.tools.nsc.<a href="../Phase.scala.html#8862" title="scala.tools.nsc.Phase">Phase</a>) <span class="keyword">extends</span> <a href="../SubComponent.scala.html#39640" title="Transform.this.StdPhase">StdPhase</a>(<a href="#110664" title="scala.tools.nsc.Phase">prev</a>) {
+    <span class="keyword">def</span> <a title="(unit: Transform.this.global.CompilationUnit)Unit" id="110663">apply</a>(<a title="Transform.this.global.CompilationUnit" id="110672">unit</a>: global.<a href="../CompilationUnits.scala.html#39196" title="Transform.this.global.CompilationUnit">CompilationUnit</a>) {
+      <a href="#42399" title="(unit: Transform.this.global.CompilationUnit)Transform.this.global.Transformer">newTransformer</a>(<a href="#110672" title="Transform.this.global.CompilationUnit">unit</a>).<a href="../ast/Trees.scala.html#45483" title="(unit: Transform.this.global.CompilationUnit)Unit">transformUnit</a>(<a href="#110672" title="Transform.this.global.CompilationUnit">unit</a>)
     }
   }
 }

@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/io/Path.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+<span class="keyword">package</span> scala.io
+
+<span class="keyword">import</span> java.io.{ 
+  FileInputStream, FileOutputStream, BufferedReader, BufferedWriter, InputStreamReader, OutputStreamWriter, 
+  BufferedInputStream, BufferedOutputStream, File =&gt; JFile }
+<span class="keyword">import</span> java.net.{ URI, URL }
+<span class="keyword">import</span> collection.{ Sequence, Traversable }
+<span class="keyword">import</span> collection.immutable.{ StringVector =&gt; SV }
+<span class="keyword">import</span> PartialFunction._
+<span class="keyword">import</span> util.Random.nextASCIIString
+
+/** An abstraction for filesystem paths.  The differences between
+ *  Path, File, and Directory are primarily to communicate intent.
+ *  Since the filesystem can change at any time, there is no way to
+ *  reliably associate Files only with files and so on.  Any Path
+ *  can be converted to a File or Directory (and thus gain access to
+ *  the additional entity specific methods) by calling toFile or
+ *  toDirectory, which has no effect on the filesystem.
+ *
+ *  Also available are createFile and createDirectory, which attempt
+ *  to create the path in question.
+ *
+ *  @author  Paul Phillips
+ *  @since   2.8
+ */
+
+<span class="keyword">object</span> <a title="object scala.io.Path" id="9563">Path</a>
+<a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  // not sure whether this will be problematic
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="implicit scala.io.Path.string2path : (s: String)scala.io.Path" id="32660">string2path</a>(<a title="String" id="33618">s</a>: <span title="String">String</span>): <a href="#9562" title="scala.io.Path">Path</a> = <a href="#32663" title="(path: String)scala.io.Path">apply</a>(<a href="#33618" title="String">s</a>)
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="implicit scala.io.Path.jfile2path : (jfile: java.io.File)scala.io.Path" id="32661">jfile2path</a>(<a title="java.io.File" id="33614">jfile</a>: <span title="java.io.File">JFile</span>): <a href="#9562" title="scala.io.Path">Path</a> = <a href="#32664" title="(jfile: java.io.File)scala.io.Path">apply</a>(<a href="#33614" title="java.io.File">jfile</a>)
+    
+  // java 7 style, we don't use it yet
+  // object AccessMode extends Enumeration(&quot;AccessMode&quot;) {
+  //   val EXECUTE, READ, WRITE = Value
+  // }
+  // def checkAccess(modes: AccessMode*): Boolean = {
+  //   modes foreach {
+  //     case EXECUTE  =&gt; throw new Exception(&quot;Unsupported&quot;) // can't check in java 5
+  //     case READ     =&gt; if (!jfile.canRead()) return false
+  //     case WRITE    =&gt; if (!jfile.canWrite()) return false
+  //   }
+  //   true
+  // }
+  
+  <span class="keyword">def</span> <a title="=&gt; List[scala.io.Path]" id="32662">roots</a>: <a href="../collection/immutable/List.scala.html#8973" title="List[scala.io.Path]">List</a>[Path] = <span title="object java.io.File">JFile</span>.<a title="()Array[java.io.File]" id="32739">listRoots</a>().<a href="../collection/generic/TraversableTemplate.scala.html#17161" title="(f: (java.io.File) =&gt; scala.io.Path)(implicit bf: scala.collection.generic.BuilderFactory[scala.io.Path,List[scala.io.Path],List[java.io.File]])List[scala.io.Path]">toList</a> <a href="../collection/immutable/List.scala.html#17526" title="scala.collection.generic.BuilderFactory[scala.io.Path,List[scala.io.Path],List#Coll]">map</a> <a href="#9563" title="object scala.io.Path">Path</a>.<a href="#32664" title="(jfile: java.io.File)scala.io.Path">apply</a>
+
+  <span class="keyword">def</span> <a title="(path: String)scala.io.Path" id="32663">apply</a>(<a title="String" id="33842">path</a>: <span title="String">String</span>): <a href="#9562" title="scala.io.Path">Path</a> = <a href="#32664" title="(jfile: java.io.File)scala.io.Path">apply</a>(<span title="java.io.File" class="keyword">new</span> <span title="java.io.File">JFile</span>(<a href="#33842" title="String">path</a>))
+  <span class="keyword">def</span> <a title="(jfile: java.io.File)scala.io.Path" id="32664">apply</a>(<a title="java.io.File" id="33840">jfile</a>: <span title="java.io.File">JFile</span>): <a href="#9562" title="scala.io.Path">Path</a> = {
+    <span title="scala.io.Path" class="keyword">if</span> (<a href="#33840" title="java.io.File">jfile</a>.<span title="()Boolean">isFile</span>) <a href="File.scala.html#33598" title="scala.io.Codec" id="179988" class="keyword">new</a> <a href="File.scala.html#9637" title="scala.io.File">File</a>(<a href="#33840" title="java.io.File" id="179983">jfile</a>)
+    <span class="keyword">else</span> <span title="scala.io.Path" class="keyword">if</span> (<a href="#33840" title="java.io.File">jfile</a>.<span title="()Boolean">isDirectory</span>) <span title="scala.io.Directory" class="keyword">new</span> <a href="Directory.scala.html#9568" title="scala.io.Directory">Directory</a>(<a href="#33840" title="java.io.File">jfile</a>)
+    <span class="keyword">else</span> <span title="scala.io.Path" class="keyword">new</span> <a href="#9562" title="scala.io.Path">Path</a>(<a href="#33840" title="java.io.File">jfile</a>)
+  }
+  <span class="keyword">private</span>[io] <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="32665">randomPrefix</a> = <a href="../util/Random.scala.html#32794" title="(length: Int)java.lang.String">nextASCIIString</a>(<span title="Int(6)" class="int">6</span>)
+  <span class="keyword">private</span>[io] <span class="keyword">def</span> <a title="(msg: String)Nothing" id="32666">fail</a>(<a title="String" id="179997">msg</a>: <span title="String">String</span>) = <span title="Nothing" class="keyword">throw</span> <a href="FileOperationException.scala.html#23530" title="(msg: String)scala.io.FileOperationException">FileOperationException</a>(<a href="#179997" title="String">msg</a>)
+}
+<span class="keyword">import</span> Path._
+
+/** The Path constructor is private so we can enforce some
+ *  semantics regarding how a Path might relate to the world.
+ */
+<span class="keyword">class</span> <a title="class Path extends java.lang.Object with ScalaObject" id="9562">Path</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">private</a>[io] (<span class="keyword">val</span> <a title="java.io.File" id="33753">jfile</a>: <span title="java.io.File">JFile</span>)
+{
+  <span class="keyword">val</span> <a title="Char" id="32600">separator</a> = <span title="object java.io.File">JFile</span>.<a title="Char" id="32670">separatorChar</a>
+
+  // Validation: this verifies that the type of this object and the
+  // contents of the filesystem are in agreement.  All objects are
+  // valid except File objects whose path points to a directory and
+  // Directory objects whose path points to a file.
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="32602">isValid</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(true)" class="keyword">true</span>
+
+  // conversions
+  <span class="keyword">def</span> <a title="=&gt; scala.io.File" id="32603">toFile</a>: <a href="File.scala.html#9637" title="scala.io.File">File</a> = <a href="File.scala.html#33598" title="scala.io.Codec" id="180019" class="keyword">new</a> <a href="File.scala.html#9637" title="scala.io.File">File</a>(<a href="#33753" title="java.io.File" id="180014">jfile</a>)
+  <span class="keyword">def</span> <a title="=&gt; scala.io.Directory" id="32604">toDirectory</a>: <a href="Directory.scala.html#9568" title="scala.io.Directory">Directory</a> = <span title="scala.io.Directory" class="keyword">new</span> <a href="Directory.scala.html#9568" title="scala.io.Directory">Directory</a>(<a href="#33753" title="=&gt; java.io.File">jfile</a>)
+  <span class="keyword">def</span> <a title="=&gt; scala.io.Path" id="32605">toAbsolute</a>: <a href="#9562" title="scala.io.Path">Path</a> = <span title="scala.io.Path" class="keyword">if</span> (<a href="#32625" title="=&gt; Boolean">isAbsolute</a>) <a href="#9562" title="scala.io.Path" class="keyword">this</a> <span class="keyword">else</span> <a href="#32663" title="(path: String)scala.io.Path">Path</a>(<a href="#33753" title="=&gt; java.io.File">jfile</a>.<a title="()java.lang.String" id="32691">getAbsolutePath</a>())
+  <span class="keyword">def</span> <a title="=&gt; java.net.URI" id="32606">toURI</a>: <a title="java.net.URI" id="5101">URI</a> = <a href="#33753" title="=&gt; java.io.File">jfile</a>.<a title="()java.net.URI" id="32696">toURI</a>()
+  <span class="keyword">def</span> <a title="=&gt; java.net.URL" id="32607">toURL</a>: <a title="java.net.URL" id="4909">URL</a> = <a href="#32606" title="=&gt; java.net.URI">toURI</a>.<a title="()java.net.URL" id="124075">toURL</a>()
+  
+  /** Creates a new Path with the specified path appended.  Assumes
+   *  the type of the new component implies the type of the result.
+   */  
+  <span class="keyword">def</span> <a title="(child: scala.io.Path)scala.io.Path" id="32608">/</a>(<a title="scala.io.Path" id="180051">child</a>: <a href="#9562" title="scala.io.Path">Path</a>): <a href="#9562" title="scala.io.Path">Path</a> = <span title="scala.io.Path" class="keyword">new</span> <a href="#9562" title="scala.io.Path">Path</a>(<a title="(x$1: java.io.File,x$2: java.lang.String)java.io.File" id="32681" class="keyword">new</a> <span title="java.io.File">JFile</span>(<a href="#33753" title="=&gt; java.io.File">jfile</a>, <a href="#180051" title="scala.io.Path">child</a>.<a href="#32612" title="=&gt; String">path</a>))
+  <span class="keyword">def</span> <a title="(child: scala.io.Directory)scala.io.Directory" id="32609">/</a>(<a title="scala.io.Directory" id="180075">child</a>: <a href="Directory.scala.html#9568" title="scala.io.Directory">Directory</a>): <a href="Directory.scala.html#9568" title="scala.io.Directory">Directory</a> = <a href="#32608" title="(child: scala.io.Path)scala.io.Path">/</a>(<a href="#180075" title="scala.io.Directory">child</a>: <a href="#9562" title="scala.io.Path">Path</a>).<a href="#32604" title="=&gt; scala.io.Directory">toDirectory</a>
+  <span class="keyword">def</span> <a title="(child: scala.io.File)scala.io.File" id="32610">/</a>(<a title="scala.io.File" id="180080">child</a>: <a href="File.scala.html#9637" title="scala.io.File">File</a>): <a href="File.scala.html#9637" title="scala.io.File">File</a> = <a href="#32608" title="(child: scala.io.Path)scala.io.Path">/</a>(<a href="#180080" title="scala.io.File">child</a>: <a href="#9562" title="scala.io.Path">Path</a>).<a href="#32603" title="=&gt; scala.io.File">toFile</a>
+
+  // identity
+  <span class="keyword">def</span> <a title="=&gt; String" id="32611">name</a>: <span title="String">String</span> = <a href="#33753" title="=&gt; java.io.File">jfile</a>.<a title="()java.lang.String" id="32686">getName</a>()
+  <span class="keyword">def</span> <a title="=&gt; String" id="32612">path</a>: <span title="String">String</span> = <a href="#33753" title="=&gt; java.io.File">jfile</a>.<a title="()java.lang.String" id="32689">getPath</a>()
+  <span class="keyword">def</span> <a title="=&gt; scala.io.Path" id="32613">normalize</a>: <a href="#9562" title="scala.io.Path">Path</a> = <a href="#32663" title="(path: String)scala.io.Path">Path</a>(<a href="#33753" title="=&gt; java.io.File">jfile</a>.<a title="()java.lang.String" id="32693">getCanonicalPath</a>())
+  // todo - 
+  // def resolve(other: Path): Path
+  // def relativize(other: Path): Path 
+  
+  // derived from identity
+  <span class="keyword">def</span> <a title="=&gt; Option[scala.io.Path]" id="32614">root</a>: <a href="../Option.scala.html#777" title="Option[scala.io.Path]">Option</a>[Path] = <a href="../collection/generic/LinearSequenceTemplate.scala.html#19408" title="(p: (scala.io.Path) =&gt; Boolean)Option[scala.io.Path]">roots</a> find (<a href="#32630" title="(other: scala.io.Path)Boolean" class="keyword">this</a> startsWith <a href="#180120" title="scala.io.Path">_</a>)
+  <span class="keyword">def</span> <a title="=&gt; List[String]" id="32615">segments</a>: <a href="../collection/immutable/List.scala.html#8973" title="List[String]">List</a>[String] = (<a href="../runtime/RichString.scala.html#18049" title="(separator: Char)Array[String]">path</a> split <a href="#32600" title="=&gt; Char">separator</a>).<a href="../collection/generic/TraversableTemplate.scala.html#17177" title="(p: (String) =&gt; Boolean)List[String]">toList</a> filterNot (<a href="#180180" title="String">_</a>.<a title="()Boolean" id="6905">isEmpty</a>)
+  <span class="keyword">def</span> <a title="=&gt; Option[scala.io.Path]" id="32616">parent</a>: <a href="../Option.scala.html#777" title="Option[scala.io.Path]">Option</a>[Path] = <a href="../Option.scala.html#58054" title="(x: java.lang.String)Option[java.lang.String]">Option</a><a href="../Option.scala.html#19766" title="(f: (java.lang.String) =&gt; scala.io.Path)Option[scala.io.Path]">(</a><a href="#33753" title="=&gt; java.io.File">jfile</a>.<a title="()java.lang.String" id="32687">getParent</a>()) map <a href="#9563" title="object scala.io.Path">Path</a>.<a href="#32663" title="(path: String)scala.io.Path">apply</a>
+  <span class="keyword">def</span> <a title="=&gt; List[scala.io.Path]" id="32617">parents</a>: <a href="../collection/immutable/List.scala.html#8973" title="List[scala.io.Path]">List</a>[Path] = <a href="#32616" title="=&gt; Option[scala.io.Path]">parent</a> <span title="List[scala.io.Path]" class="keyword">match</span> {
+    <span title="scala.collection.immutable.Nil.type" class="keyword">case</span> <a href="../Option.scala.html#463" title="object None">None</a>     =&gt; <a href="../collection/immutable/List.scala.html#9259" title="object Nil">Nil</a>
+    <span title="List[scala.io.Path]" class="keyword">case</span> <a id="1">Some</a>(<a title="scala.io.Path" id="180213">p</a>)  =&gt; <a href="#180213" title="scala.io.Path">p</a> <a href="#180216" title="scala.io.Path">::</a> <a href="#180213" title="scala.io.Path">p</a>.<a href="../collection/immutable/List.scala.html#17630" title="(x: scala.io.Path)List[scala.io.Path]">parents</a>
+  }
+  // if name ends with an extension (e.g. &quot;foo.jpg&quot;) returns the extension (&quot;jpg&quot;)
+  <span class="keyword">def</span> <a title="=&gt; Option[String]" id="32618">extension</a>: <a href="../Option.scala.html#777" title="Option[String]">Option</a>[String] =   
+    <a href="../PartialFunction.scala.html#22081" title="(x: Int)(pf: PartialFunction[Int,String])Option[String]">condOpt</a>(<a href="../collection/immutable/StringVector.scala.html#9121" title="object scala.collection.immutable.StringVector">SV</a>.<a href="../collection/immutable/StringVector.scala.html#69197" title="(s: String,p: (Char) =&gt; Boolean)Int">lastIndexWhere</a>(<a href="#32611" title="=&gt; String">name</a>, <a href="#180234" title="(x$1: Char)Boolean" id="2714">_</a> == <span title="Char('.')" class="char">'.'</span>)) <a href="#180249" title="String">{</a>
+      <span title="String" class="keyword">case</span> <a title="Int" id="180250">idx</a> <span class="keyword">if</span> <a href="#180250" title="(x$1: Int)Boolean" id="2952">idx</a> != <span title="Int(-1)">-</span><span class="int">1</span> =&gt; <a href="../collection/immutable/StringVector.scala.html#9121" title="object scala.collection.immutable.StringVector">SV</a>.<a href="../collection/immutable/StringVector.scala.html#69184" title="(s: String,len: Int)String">drop</a>(<a href="#32611" title="=&gt; String">name</a>, <a href="#180250" title="(x$1: Int)Int" id="2962">idx</a> + <span title="Int(1)" class="int">1</span>)
+    }
+  // Alternative approach:
+  // (Option fromReturnValue SV.lastIndexWhere(name, _ == '.') map (x =&gt; SV.drop(name, x + 1))
+
+  // Boolean tests
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="32619">canRead</a> = <a href="#33753" title="=&gt; java.io.File">jfile</a>.<a title="()Boolean" id="32697">canRead</a>()
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="32620">canWrite</a> = <a href="#33753" title="=&gt; java.io.File">jfile</a>.<a title="()Boolean" id="32698">canWrite</a>()
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="32621">exists</a> = <a href="#33753" title="=&gt; java.io.File">jfile</a>.<span title="()Boolean">exists</span>()  
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="32622">notExists</a> = <span class="keyword">try</span> <a title="=&gt; Boolean" id="2203">!</a><a href="#33753" title="=&gt; java.io.File">jfile</a>.<span title="()Boolean">exists</span>() <span class="keyword">catch</span> { <span title="Boolean(false)" class="keyword">case</span> <a title="java.lang.SecurityException" id="180305">ex</a>: <a title="java.lang.SecurityException" id="1600">SecurityException</a> =&gt; <span title="Boolean(false)" class="keyword">false</span> }
+
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="32623">isFile</a> = <a href="#33753" title="=&gt; java.io.File">jfile</a>.<span title="()Boolean">isFile</span>()
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="32624">isDirectory</a> = <a href="#33753" title="=&gt; java.io.File">jfile</a>.<span title="()Boolean">isDirectory</span>()
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="32625">isAbsolute</a> = <a href="#33753" title="=&gt; java.io.File">jfile</a>.<a title="()Boolean" id="32690">isAbsolute</a>()
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="32626">isHidden</a> = <a href="#33753" title="=&gt; java.io.File">jfile</a>.<a title="()Boolean" id="32702">isHidden</a>()
+  
+  // Information
+  <span class="keyword">def</span> <a title="=&gt; Long" id="32627">lastModified</a> = <a href="#33753" title="=&gt; java.io.File">jfile</a>.<a title="()Long" id="32703">lastModified</a>()
+  <span class="keyword">def</span> <a title="=&gt; Long" id="32628">length</a> = <a href="#33753" title="=&gt; java.io.File">jfile</a>.<a title="()Long" id="32704">length</a>()
+  
+  // Boolean path comparisons
+  <span class="keyword">def</span> <a title="(other: scala.io.Path)Boolean" id="32629">endsWith</a>(<a title="scala.io.Path" id="180331">other</a>: <a href="#9562" title="scala.io.Path">Path</a>) = <a href="../collection/generic/SequenceTemplate.scala.html#17371" title="(that: Sequence[String])Boolean">segments</a> endsWith <a href="#180331" title="scala.io.Path">other</a>.<a href="#32615" title="=&gt; List[String]">segments</a>
+  <span class="keyword">def</span> <a title="(other: scala.io.Path)Boolean" id="32630">startsWith</a>(<a title="scala.io.Path" id="180121">other</a>: <a href="#9562" title="scala.io.Path">Path</a>) = <a href="../collection/generic/SequenceTemplate.scala.html#17368" title="(that: Sequence[String])Boolean">segments</a> startsWith <a href="#180121" title="scala.io.Path">other</a>.<a href="#32615" title="=&gt; List[String]">segments</a>
+  <span class="keyword">def</span> <a title="(other: scala.io.Path)Boolean" id="32631">isSame</a>(<a title="scala.io.Path" id="180339">other</a>: <a href="#9562" title="scala.io.Path">Path</a>) = <a href="#32605" title="(x$1: AnyRef)Boolean">toAbsolute</a> == <a href="#180339" title="scala.io.Path">other</a>.<a href="#32605" title="=&gt; scala.io.Path">toAbsolute</a>
+  <span class="keyword">def</span> <a title="(other: scala.io.Path)Boolean" id="32632">isFresher</a>(<a title="scala.io.Path" id="180349">other</a>: <a href="#9562" title="scala.io.Path">Path</a>) = <a href="#32627" title="(x$1: Long)Boolean" id="3194">lastModified</a> &gt; <a href="#180349" title="scala.io.Path">other</a>.<a href="#32627" title="=&gt; Long">lastModified</a>
+
+  // creations
+  <span class="keyword">def</span> <a title="()Boolean" id="32633">create</a>(): <span title="Boolean">Boolean</span> = <span title="Boolean(true)" class="keyword">true</span>
+  <span class="keyword">def</span> <a title="(force: Boolean)scala.io.Directory" id="32634">createDirectory</a>(<a title="Boolean" id="33740">force</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(true)" class="keyword">true</span>): <a href="Directory.scala.html#9568" title="scala.io.Directory">Directory</a> = {
+    <span class="keyword">val</span> <a title="Boolean" id="180358">res</a> = <span title="Boolean" class="keyword">if</span> (<a href="#33740" title="Boolean">force</a>) <a href="#33753" title="=&gt; java.io.File">jfile</a>.<a title="()Boolean" id="32717">mkdirs</a>() <span class="keyword">else</span> <a href="#33753" title="=&gt; java.io.File">jfile</a>.<a title="()Boolean" id="32716">mkdir</a>()
+    <span title="scala.io.Directory" class="keyword">if</span> (<a href="#180358" title="Boolean">res</a>) <span title="scala.io.Directory" class="keyword">new</span> <a href="Directory.scala.html#9568" title="scala.io.Directory">Directory</a>(<a href="#33753" title="=&gt; java.io.File">jfile</a>)
+    <span class="keyword">else</span> <a href="#32666" title="(msg: String)Nothing">fail</a>(<span title="java.lang.String(&quot;Failed to create new directory.&quot;)" class="string">&quot;Failed to create new directory.&quot;</span>)
+  }
+  <span class="keyword">def</span> <a title="()scala.io.File" id="32635">createFile</a>(): <a href="File.scala.html#9637" title="scala.io.File">File</a> =
+    <span title="scala.io.File" class="keyword">if</span> (<a href="#33753" title="=&gt; java.io.File">jfile</a>.<a title="()Boolean" id="32705">createNewFile</a>()) <a href="File.scala.html#33598" title="scala.io.Codec" id="180378" class="keyword">new</a> <a href="File.scala.html#9637" title="scala.io.File">File</a>(<a href="#33753" title="java.io.File" id="180373">jfile</a>)
+    <span class="keyword">else</span> <a href="#32666" title="(msg: String)Nothing">fail</a>(<span title="java.lang.String(&quot;Failed to create new file.&quot;)" class="string">&quot;Failed to create new file.&quot;</span>)
+    
+  /** Like createDirectory, but does not fail if it already exists. */
+  <span class="keyword">def</span> <a title="(force: Boolean)scala.io.Directory" id="32636">ensureDirectory</a>(<a title="Boolean" id="180385">force</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(true)" class="keyword">true</span>): <a href="Directory.scala.html#9568" title="scala.io.Directory">Directory</a> =
+    <span title="scala.io.Directory" class="keyword">if</span> (<a href="#9562" title="Path.this.type" class="keyword">this</a>.<a href="#32624" title="=&gt; Boolean">isDirectory</a>) <a href="#9562" title="Path.this.type" class="keyword">this</a>.<a href="#32604" title="=&gt; scala.io.Directory">toDirectory</a> <span class="keyword">else</span> <a href="#32634" title="(force: Boolean)scala.io.Directory">createDirectory</a>(<a href="#180385" title="Boolean">force</a>)
+
+  /** This is temporary while I try to unbreak fsc. */
+  <span class="keyword">def</span> <a title="()scala.io.File" id="32637">ensureFile</a>(): <a href="File.scala.html#9637" title="scala.io.File">File</a> =
+    <span title="scala.io.File" class="keyword">if</span> (<a href="#9562" title="Path.this.type" class="keyword">this</a>.<a href="#32623" title="=&gt; Boolean">isFile</a>) <a href="#9562" title="Path.this.type" class="keyword">this</a>.<a href="#32603" title="=&gt; scala.io.File">toFile</a> <span class="keyword">else</span> <a href="#32635" title="()scala.io.File">createFile</a>()
+  
+  // deletions
+  <span class="keyword">def</span> <a title="()Boolean" id="32638">delete</a>() = <a href="#33753" title="=&gt; java.io.File">jfile</a>.<a title="()Boolean" id="32706">delete</a>()
+  <span class="keyword">def</span> <a title="()Boolean" id="32639">deleteIfExists</a>() = <span title="Boolean" class="keyword">if</span> (<a href="#33753" title="=&gt; java.io.File">jfile</a>.<span title="()Boolean">exists</span>()) <a href="#32638" title="()Boolean">delete</a>() <span class="keyword">else</span> <span title="Boolean(false)" class="keyword">false</span>
+
+  // todo
+  // def copyTo(target: Path, options ...): Boolean
+  // def moveTo(target: Path, options ...): Boolean
+  
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="32640">toString</a>() = <a href="../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;Path(%s)&quot;</a>.<a href="../runtime/RichString.scala.html#18060" title="(args: Any*)String">format</a>(<a href="#32612" title="=&gt; String">path</a>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(other: Any)Boolean" id="32641">equals</a>(<a title="Any" id="180399">other</a>: <a title="Any" id="47">Any</a>) = <a href="#180399" title="Any">other</a> <span title="Boolean" class="keyword">match</span> {
+    <span title="Boolean" class="keyword">case</span> <a title="scala.io.Path" id="180402">x</a>: <a href="#9562" title="scala.io.Path">Path</a>  =&gt; <a href="#32612" title="(x$1: AnyRef)Boolean">path</a> == <a href="#180402" title="scala.io.Path">x</a>.<a href="#32612" title="=&gt; String">path</a>
+    <span title="Boolean(false)" class="keyword">case</span> _        =&gt; <span title="Boolean(false)" class="keyword">false</span>
+  }  
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Int" id="32642">hashCode</a>() = <a href="#32612" title="=&gt; String">path</a>.<a title="()Int" id="6966">hashCode</a>()
+}
+
+        </pre>
+    </body>
+</html>

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/mutable/BitSet.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+<span class="keyword">package</span> scala.collection.mutable
+
+<span class="keyword">import</span> scala.collection.generic._
+<span class="keyword">import</span> scala.collection.immutable
+<span class="keyword">import</span> BitSetTemplate.{LogWL, updateArray}
+
+/** A class for mutable bitsets */
+<span class="keyword">class</span> <a title="class BitSet extends java.lang.Object with scala.collection.mutable.Set[Int] with scala.collection.BitSet with scala.collection.generic.BitSetTemplate[scala.collection.mutable.BitSet] with scala.collection.generic.MutableSetTemplate[Int,scala.collection.mutable.BitSet] with ScalaObject" id="7629">BitSet</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><span class="keyword">protected</span> <span class="keyword">var</span> <a title="Array[Long]" id="56619">elems</a>: <a href="../../Array.scala.html#885" title="Array[Long]">Array</a>[Long]) <span class="keyword">extends</span> <a href="Set.scala.html#7812" title="scala.collection.mutable.Set[Int]">Set</a>[Int] 
+                                                  <span class="keyword">with</span> collection.<a href="../BitSet.scala.html#4226" title="scala.collection.BitSet">BitSet</a> 
+                                                  <span class="keyword">with</span> <a href="../generic/BitSetTemplate.scala.html#10115" title="scala.collection.generic.BitSetTemplate[scala.collection.mutable.BitSet]">BitSetTemplate</a>[BitSet] 
+                                                  <span class="keyword">with</span> <a href="../generic/MutableSetTemplate.scala.html#10103" title="scala.collection.generic.MutableSetTemplate[Int,scala.collection.mutable.BitSet]">MutableSetTemplate</a>[Int, BitSet] {
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; scala.collection.mutable.BitSet" id="56602">empty</a> = <a href="#7630" title="object scala.collection.mutable.BitSet">BitSet</a>.<a href="#252055" title="=&gt; scala.collection.mutable.BitSet">empty</a>
+
+  <span class="keyword">def</span> <a title="(initSize: Int)scala.collection.mutable.BitSet" id="56603" class="keyword">this</a>(<a title="Int" id="56618">initSize</a>: <span title="Int">Int</span>) = <a href="#7629" title="BitSet.this.type" class="keyword">this</a>(<span title="Array[Long]" class="keyword">new</span> <a href="../../Array.scala.html#885" title="Array[Long]">Array</a>[Long](<span title="(x$1: Int)Int">(</span><a href="#56618" title="(x$1: Int)Int" id="2962">initSize</a> + <span title="Int(63)" class="int">63</span>) <a href="../../runtime/RichInt.scala.html#19065" title="(that: Int)Int">&gt;&gt;</a> <span title="Int(6)" class="int">6</span> max <span title="Int(1)" class="int">1</span>))
+
+  <span class="keyword">def</span> <a title="()scala.collection.mutable.BitSet" id="56604" class="keyword">this</a>() = <a href="#56603" title="(initSize: Int)scala.collection.mutable.BitSet" class="keyword">this</a>(<span title="Int(0)" class="int">0</span>)
+
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; Int" id="56605">nwords</a> = <a href="#56619" title="=&gt; Array[Long]">elems</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(idx: Int)Long" id="56606">word</a>(<a title="Int" id="252114">idx</a>: <span title="Int">Int</span>): <span title="Long">Long</span> = 
+    <span title="Long" class="keyword">if</span> (<a href="#252114" title="(x$1: Int)Boolean" id="2954">idx</a> &lt; <a href="#56605" title="=&gt; Int">nwords</a>) <a href="../../Array.scala.html#17716" title="(i: Int)Long">elems</a>(<a href="#252114" title="Int">idx</a>) <span class="keyword">else</span> <span title="Long(0L)" class="long">0L</span>
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(idx: Int,w: Long)Unit" id="56607">updateWord</a>(<a title="Int" id="252132">idx</a>: <span title="Int">Int</span>, <a title="Long" id="252133">w</a>: <span title="Long">Long</span>) {
+    <span title="Unit" class="keyword">if</span> (<a href="#252132" title="(x$1: Int)Boolean">idx</a> &gt;= <a href="#56605" title="=&gt; Int">nwords</a>) {
+      <span class="keyword">var</span> <a title="Int" id="252141">newlen</a> = <a href="#56605" title="=&gt; Int">nwords</a>
+      <span title="Unit" class="keyword">while</span> (<a href="#252132" title="(x$1: Int)Boolean">idx</a> &gt;= <a href="#252141" title="Int">newlen</a>) <a href="#252141" title="Int">newlen</a> = <a href="#252141" title="(x$1: Int)Int" id="2966">newlen</a> * <span title="Int(2)" class="int">2</span>
+      <span class="keyword">val</span> <a title="Array[Long]" id="252142">elems1</a> = <span title="Array[Long]" class="keyword">new</span> <a href="../../Array.scala.html#885" title="Array[Long]">Array</a>[Long](<a href="#252141" title="Int">newlen</a>)
+      <a href="../../Array.scala.html#886" title="object Array">Array</a>.<a href="../../Array.scala.html#29214" title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">copy</a>(<a href="#56619" title="=&gt; Array[Long]">elems</a>, <span title="Int(0)" class="int">0</span>, <a href="#252142" title="Array[Long]">elems1</a>, <span title="Int(0)" class="int">0</span>, <a href="#56605" title="=&gt; Int">nwords</a>)
+      <a href="#56619" title="(x$1: Array[Long])Unit">elems</a> = <a href="#252142" title="Array[Long]">elems1</a>
+    }
+    <a href="../../Array.scala.html#17717" title="(i: Int,x: Long)Unit">elems</a>(<a href="#252132" title="Int">idx</a>) = <a href="#252133" title="Long">w</a>
+  }
+
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(words: Array[Long])scala.collection.mutable.BitSet" id="56608">fromArray</a>(<a title="Array[Long]" id="252191">words</a>: <a href="../../Array.scala.html#885" title="Array[Long]">Array</a>[Long]): <a href="#7629" title="scala.collection.mutable.BitSet">BitSet</a> = <span title="scala.collection.mutable.BitSet" class="keyword">new</span> <a href="#7629" title="scala.collection.mutable.BitSet">BitSet</a>(<a href="#252191" title="Array[Long]">words</a>)
+
+  /** Adds element to bitset,
+   *  @return element was already present.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(elem: Int)Boolean" id="56609">add</a> (<a title="Int" id="252199">elem</a>: <span title="Int">Int</span>): <span title="Boolean">Boolean</span> = {
+    <a href="../../Predef.scala.html#16217" title="(requirement: Boolean)Unit">require</a>(<a href="#252199" title="(x$1: Int)Boolean">elem</a> &gt;= <span title="Int(0)" class="int">0</span>)
+    <span title="Boolean" class="keyword">if</span> (<a href="../generic/BitSetTemplate.scala.html#56032" title="(elem: Int)Boolean">contains</a>(<a href="#252199" title="Int">elem</a>)) <span title="Boolean(false)" class="keyword">false</span> 
+    <span class="keyword">else</span> {
+      <span class="keyword">val</span> <a title="Int" id="252215">idx</a> = <a href="#252199" title="(x$1: Int)Int">elem</a> &gt;&gt; <a href="../generic/BitSetTemplate.scala.html#56009" title="=&gt; Int">LogWL</a>
+      <a href="#56607" title="(idx: Int,w: Long)Unit">updateWord</a>(<a href="#252215" title="Int">idx</a>, <a href="#56606" title="(idx: Int)Long">word</a><a title="(x$1: Long)Long" id="3208">(</a><a href="#252215" title="Int">idx</a>) | (<span title="(x$1: Int)Long" class="long">1L</span> &lt;&lt; <a href="#252199" title="Int">elem</a>))
+      <span title="Boolean(true)" class="keyword">true</span>
+    }
+  }
+
+  /** Removes element from bitset.  
+   *  @return element was already present.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(elem: Int)Boolean" id="56610">remove</a> (<a title="Int" id="252238">elem</a>: <span title="Int">Int</span>): <span title="Boolean">Boolean</span> = {
+    <a href="../../Predef.scala.html#16217" title="(requirement: Boolean)Unit">require</a>(<a href="#252238" title="(x$1: Int)Boolean">elem</a> &gt;= <span title="Int(0)" class="int">0</span>)
+    <span title="Boolean" class="keyword">if</span> (<a href="../generic/BitSetTemplate.scala.html#56032" title="(elem: Int)Boolean">contains</a>(<a href="#252238" title="Int">elem</a>)) {
+      <span class="keyword">val</span> <a title="Int" id="252258">idx</a> = <a href="#252238" title="(x$1: Int)Int">elem</a> &gt;&gt; <a href="../generic/BitSetTemplate.scala.html#56009" title="=&gt; Int">LogWL</a>
+      <a href="#56607" title="(idx: Int,w: Long)Unit">updateWord</a>(<a href="#252258" title="Int">idx</a>, <a href="#56606" title="(idx: Int)Long">word</a><a title="(x$1: Long)Long" id="3210">(</a><a href="#252258" title="Int">idx</a>) &amp; <a title="=&gt; Long" id="3073">~</a>(<span title="(x$1: Int)Long" class="long">1L</span> &lt;&lt; <a href="#252238" title="Int">elem</a>))
+      <span title="Boolean(true)" class="keyword">true</span>
+    } <span class="keyword">else</span> <span title="Boolean(false)" class="keyword">false</span>
+  }
+
+  <span class="keyword">def</span> <a title="(elem: Int)BitSet.this.type" id="56611">+=</a> (<a title="Int" id="56643">elem</a>: <span title="Int">Int</span>): <span class="keyword">this</span>.<span class="keyword">type</span> = { <a href="#56609" title="(elem: Int)Boolean">add</a>(<a href="#56643" title="Int">elem</a>); <a href="#7629" title="BitSet.this.type" class="keyword">this</a> }
+  <span class="keyword">def</span> <a title="(elem: Int)BitSet.this.type" id="56612">-=</a> (<a title="Int" id="252284">elem</a>: <span title="Int">Int</span>): <span class="keyword">this</span>.<span class="keyword">type</span> = { <a href="#56610" title="(elem: Int)Boolean">remove</a>(<a href="#252284" title="Int">elem</a>); <a href="#7629" title="BitSet.this.type" class="keyword">this</a> }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Unit" id="56613">clear</a>() {
+    <a href="#56619" title="(x$1: Array[Long])Unit">elems</a> = <span title="Array[Long]" class="keyword">new</span> <a href="../../Array.scala.html#885" title="Array[Long]">Array</a>[Long](<a href="#56619" title="=&gt; Array[Long]">elems</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>)
+  }
+  <span class="keyword">def</span> <a title="=&gt; scala.collection.immutable.BitSet" id="56614">toImmutable</a> = immutable.<a href="../immutable/BitSet.scala.html#8917" title="object scala.collection.immutable.BitSet">BitSet</a>.<a href="../immutable/BitSet.scala.html#56067" title="(elems: Array[Long])scala.collection.immutable.BitSet">fromArray</a>(<a href="#56619" title="=&gt; Array[Long]">elems</a>)
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()scala.collection.mutable.BitSet" id="56615">clone</a>(): <a href="#7629" title="scala.collection.mutable.BitSet">BitSet</a> = {
+    <span class="keyword">val</span> <a title="Array[Long]" id="252321">elems1</a> = <span title="Array[Long]" class="keyword">new</span> <a href="../../Array.scala.html#885" title="Array[Long]">Array</a>[Long](<a href="#56619" title="=&gt; Array[Long]">elems</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>)
+    <a href="../../Array.scala.html#886" title="object Array">Array</a>.<a href="../../Array.scala.html#29214" title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">copy</a>(<a href="#56619" title="=&gt; Array[Long]">elems</a>, <span title="Int(0)" class="int">0</span>, <a href="#252321" title="Array[Long]">elems1</a>, <span title="Int(0)" class="int">0</span>, <a href="#56619" title="=&gt; Array[Long]">elems</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>)
+    <span title="scala.collection.mutable.BitSet" class="keyword">new</span> <a href="#7629" title="scala.collection.mutable.BitSet">BitSet</a>(<a href="#252321" title="Array[Long]">elems1</a>)
+  }
+}
+
+/** A factory object for mutable bitsets */
+<span class="keyword">object</span> <a title="object scala.collection.mutable.BitSet" id="7630">BitSet</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="../generic/BitSetFactory.scala.html#10685" title="scala.collection.generic.BitSetFactory[scala.collection.mutable.BitSet]">BitSetFactory</a>[BitSet] {
+  <span class="keyword">def</span> <a title="=&gt; scala.collection.mutable.BitSet" id="252055">empty</a>: <a href="#7629" title="scala.collection.mutable.BitSet">BitSet</a> = <a href="#56604" title="()scala.collection.mutable.BitSet" class="keyword">new</a> <a href="#7629" title="scala.collection.mutable.BitSet">BitSet</a>
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="=&gt; scala.collection.generic.BuilderFactory[Int,scala.collection.mutable.BitSet,scala.collection.mutable.BitSet]" id="252056">builderFactory</a>: <a href="../generic/BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[Int,scala.collection.mutable.BitSet,scala.collection.mutable.BitSet]">BuilderFactory</a>[Int, BitSet, BitSet] = <a href="../generic/BitSetFactory.scala.html#56054" title="=&gt; &lt;refinement&gt; extends java.lang.Object with scala.collection.generic.BuilderFactory[Int,scala.collection.mutable.BitSet,scala.collection.mutable.BitSet]">bitsetBuilderFactory</a>
+}
+
+        </pre>
+    </body>
+</html>

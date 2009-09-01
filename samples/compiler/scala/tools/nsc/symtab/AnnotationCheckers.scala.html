@@ -1,98 +1,101 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
         <title>scala/tools/nsc/symtab/AnnotationCheckers.scala</title>
+        <script type="text/javascript" src="../../../../jquery-all.js"></script>
         <script type="text/javascript" src="../../../../linked.js"></script>
         <link rel="stylesheet" type="text/css" href="../../../../style.css" title="Style">
     </head>
-    <body onload="initializeLinked()">
+    <body>
         <pre>
-<span class="comment">/* NSC -- new Scala compiler
+/* NSC -- new Scala compiler
  * Copyright 2007-2009 LAMP/EPFL
  * @author  Martin Odersky
- */</span>
-<span class="comment">// $Id: AnnotationCheckers.scala 17180 2009-02-23 15:35:27Z rompf $</span>
+ */
+// $Id: AnnotationCheckers.scala 18387 2009-07-24 15:28:37Z odersky $
 
-<span class="keyword">package</span> scala.tools.nsc.symtab
+<span class="keyword">package</span> scala.tools.nsc
+<span class="keyword">package</span> symtab
 
-<span class="comment">/** Additions to the type checker that can be added at
+/** Additions to the type checker that can be added at
  *  run time.  Typically these are added by
- *  compiler plugins. */</span>
-<span class="keyword">trait</span> <span class="typed"><span class="type">trait AnnotationCheckers extends java.lang.Object with ScalaObject</span><a id="9963">AnnotationCheckers</a></span> {
+ *  compiler plugins. */
+<span class="keyword">trait</span> <a title="trait AnnotationCheckers extends java.lang.Object with ScalaObject" id="10691">AnnotationCheckers</a> <span title="ScalaObject">{</span>
   self: SymbolTable =&gt;
 
 
-  <span class="comment">/** An additional checker for annotations on types.
+  /** An additional checker for annotations on types.
    *  Typically these are registered by compiler plugins
-   *  with the addAnnotationChecker method. */</span>
-  <span class="keyword">abstract</span> <span class="keyword">class</span> <span class="typed"><span class="type">class AnnotationChecker extends java.lang.Object with ScalaObject</span><a id="22339">AnnotationChecker</a></span> {
-    <span class="comment">/** Check the annotations on two types conform. */</span>
-    <span class="keyword">def</span> <span class="typed"><span class="type">(AnnotationCheckers.this.Type,AnnotationCheckers.this.Type)Boolean</span><a id="149323">annotationsConform</a></span>(<span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a id="149328">tpe1</a></span>: <span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a href="Types.scala.html#21944">Type</a></span>, <span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a id="149329">tpe2</a></span>: <span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a href="Types.scala.html#21944">Type</a></span>): <span class="typed"><span class="type">Boolean</span><a id="2170">Boolean</a></span>
+   *  with the addAnnotationChecker method. */
+  <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class AnnotationChecker extends java.lang.Object with ScalaObject" id="26561">AnnotationChecker</a> <span title="ScalaObject">{</span>
+    /** Check the annotations on two types conform. */
+    <span class="keyword">def</span> <a title="(tpe1: AnnotationCheckers.this.Type,tpe2: AnnotationCheckers.this.Type)Boolean" id="257703">annotationsConform</a>(<a title="AnnotationCheckers.this.Type" id="257710">tpe1</a>: <a href="Types.scala.html#26205" title="AnnotationCheckers.this.Type">Type</a>, <a title="AnnotationCheckers.this.Type" id="257711">tpe2</a>: <a href="Types.scala.html#26205" title="AnnotationCheckers.this.Type">Type</a>): <span title="Boolean">Boolean</span>
 
-    <span class="comment">/** Modify the type that has thus far been inferred
-     *  for a tree.  All this should do is add annotations. */</span>
-    <span class="keyword">def</span> <span class="typed"><span class="type">(AnnotationCheckers.this.Tree,AnnotationCheckers.this.Type)AnnotationCheckers.this.Type</span><a id="149324">addAnnotations</a></span>(<span class="typed"><span class="type">AnnotationCheckers.this.Tree</span><a id="149330">tree</a></span>: <span class="typed"><span class="type">AnnotationCheckers.this.Tree</span><a href="../ast/Trees.scala.html#22371">Tree</a></span>, <span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a id="149331">tpe</a></span>: <span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a href="Types.scala.html#21944">Type</a></span>): <span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a href="Types.scala.html#21944">Type</a></span> = <span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a href="#149331">tpe</a></span>
+    /** Modify the type that has thus far been inferred
+     *  for a tree.  All this should do is add annotations. */
+    <span class="keyword">def</span> <a title="(tree: AnnotationCheckers.this.Tree,tpe: AnnotationCheckers.this.Type)AnnotationCheckers.this.Type" id="257704">addAnnotations</a>(<a title="AnnotationCheckers.this.Tree" id="257713">tree</a>: <a href="../ast/Trees.scala.html#26593" title="AnnotationCheckers.this.Tree">Tree</a>, <a title="AnnotationCheckers.this.Type" id="257714">tpe</a>: <a href="Types.scala.html#26205" title="AnnotationCheckers.this.Type">Type</a>): <a href="Types.scala.html#26205" title="AnnotationCheckers.this.Type">Type</a> = <a href="#257714" title="AnnotationCheckers.this.Type">tpe</a>
     
-    <span class="comment">/** Decide whether this annotation checker can adapt a tree
+    /** Decide whether this annotation checker can adapt a tree
      *  that has an annotated type to the given type tp, taking
-     *  into account the given mode (see method adapt in trait Typers).*/</span>
-    <span class="keyword">def</span> <span class="typed"><span class="type">(AnnotationCheckers.this.Tree,Int,AnnotationCheckers.this.Type)Boolean</span><a id="149325">canAdaptAnnotations</a></span>(<span class="typed"><span class="type">AnnotationCheckers.this.Tree</span><a id="149332">tree</a></span>: <span class="typed"><span class="type">AnnotationCheckers.this.Tree</span><a href="../ast/Trees.scala.html#22371">Tree</a></span>, <span class="typed"><span class="type">Int</span><a id="149333">mode</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>, <span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a id="149334">pt</a></span>: <span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a href="Types.scala.html#21944">Type</a></span>): <span class="typed"><span class="type">Boolean</span><a id="2170">Boolean</a></span> = <span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>
+     *  into account the given mode (see method adapt in trait Typers).*/
+    <span class="keyword">def</span> <a title="(tree: AnnotationCheckers.this.Tree,mode: Int,pt: AnnotationCheckers.this.Type)Boolean" id="257705">canAdaptAnnotations</a>(<a title="AnnotationCheckers.this.Tree" id="257716">tree</a>: <a href="../ast/Trees.scala.html#26593" title="AnnotationCheckers.this.Tree">Tree</a>, <a title="Int" id="257717">mode</a>: <span title="Int">Int</span>, <a title="AnnotationCheckers.this.Type" id="257718">pt</a>: <a href="Types.scala.html#26205" title="AnnotationCheckers.this.Type">Type</a>): <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>
 
-    <span class="comment">/** Adapt a tree that has an annotated type to the given type tp,
+    /** Adapt a tree that has an annotated type to the given type tp,
      *  taking into account the given mode (see method adapt in trait Typers).
      *  An implementation cannot rely on canAdaptAnnotations being called
      *  before. If the implementing class cannot do the adaptiong, it
-     *  should return the tree unchanged.*/</span>
-    <span class="keyword">def</span> <span class="typed"><span class="type">(AnnotationCheckers.this.Tree,Int,AnnotationCheckers.this.Type)AnnotationCheckers.this.Tree</span><a id="149326">adaptAnnotations</a></span>(<span class="typed"><span class="type">AnnotationCheckers.this.Tree</span><a id="149335">tree</a></span>: <span class="typed"><span class="type">AnnotationCheckers.this.Tree</span><a href="../ast/Trees.scala.html#22371">Tree</a></span>, <span class="typed"><span class="type">Int</span><a id="149336">mode</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>, <span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a id="149337">pt</a></span>: <span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a href="Types.scala.html#21944">Type</a></span>): <span class="typed"><span class="type">AnnotationCheckers.this.Tree</span><a href="../ast/Trees.scala.html#22371">Tree</a></span> = <span class="typed"><span class="type">AnnotationCheckers.this.Tree</span><a href="#149335">tree</a></span>
+     *  should return the tree unchanged.*/
+    <span class="keyword">def</span> <a title="(tree: AnnotationCheckers.this.Tree,mode: Int,pt: AnnotationCheckers.this.Type)AnnotationCheckers.this.Tree" id="257706">adaptAnnotations</a>(<a title="AnnotationCheckers.this.Tree" id="257720">tree</a>: <a href="../ast/Trees.scala.html#26593" title="AnnotationCheckers.this.Tree">Tree</a>, <a title="Int" id="257721">mode</a>: <span title="Int">Int</span>, <a title="AnnotationCheckers.this.Type" id="257722">pt</a>: <a href="Types.scala.html#26205" title="AnnotationCheckers.this.Type">Type</a>): <a href="../ast/Trees.scala.html#26593" title="AnnotationCheckers.this.Tree">Tree</a> = <a href="#257720" title="AnnotationCheckers.this.Tree">tree</a>
   }
 
-  <span class="comment">/** The list of annotation checkers that have been registered */</span>
-  <span class="keyword">private</span> <span class="keyword">var</span> <span class="typed"><span class="type">List[AnnotationCheckers.this.AnnotationChecker]</span><span id="22342"><span id="22340"><span id="22341"><a id="149321">annotationCheckers</a></span></span></span></span>: <span class="typed"><span class="type">List[AnnotationCheckers.this.AnnotationChecker]</span><a id="526">List</a></span>[AnnotationChecker] = <span class="typed"><span class="type">object Nil</span><a id="335">Nil</a></span>
+  /** The list of annotation checkers that have been registered */
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="List[AnnotationCheckers.this.AnnotationChecker]" id="26563">annotationCheckers</a>: <a title="List[AnnotationCheckers.this.AnnotationChecker]" id="7345">List</a>[AnnotationChecker] = <span title="object Nil">Nil</span>
 
-  <span class="comment">/** Register an annotation checker.  Typically these
-   *  are added by compiler plugins. */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(AnnotationCheckers.this.AnnotationChecker)Unit</span><a id="22343">addAnnotationChecker</a></span>(<span class="typed"><span class="type">AnnotationCheckers.this.AnnotationChecker</span><a id="149338">checker</a></span>: <span class="typed"><span class="type">AnnotationCheckers.this.AnnotationChecker</span><a href="#22339">AnnotationChecker</a></span>) {
-    <span class="typed"><span class="type">Unit</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">=&gt; Boolean</span><a id="2747">!</a></span>(<span class="typed"><span class="type">=&gt; List[AnnotationCheckers.this.AnnotationChecker]</span><a href="#22340">annotationCheckers</a></span> <span class="typed"><span class="type">(Any)Boolean</span><a id="21673">contains</a></span> <span class="typed"><span class="type">AnnotationCheckers.this.AnnotationChecker</span><a href="#149338">checker</a></span>))
-      <span class="typed"><span class="type">(List[AnnotationCheckers.this.AnnotationChecker])Unit</span><a href="#22341">annotationCheckers</a></span> = <span class="typed"><span class="type">AnnotationCheckers.this.AnnotationChecker</span><a href="#149338">checker</a></span> <span class="typed"><span class="type">(AnnotationCheckers.this.AnnotationChecker)List[AnnotationCheckers.this.AnnotationChecker]</span><a href="#149339" id="21335">::</a></span> <span class="typed"><span class="type">=&gt; List[AnnotationCheckers.this.AnnotationChecker]</span><a href="#22340">annotationCheckers</a></span>
+  /** Register an annotation checker.  Typically these
+   *  are added by compiler plugins. */
+  <span class="keyword">def</span> <a title="(checker: AnnotationCheckers.this.AnnotationChecker)Unit" id="26565">addAnnotationChecker</a>(<a title="AnnotationCheckers.this.AnnotationChecker" id="257724">checker</a>: <a href="#26561" title="AnnotationCheckers.this.AnnotationChecker">AnnotationChecker</a>) {
+    <span title="Unit" class="keyword">if</span> (<a title="=&gt; Boolean" id="2205">!</a>(<a href="#26563" title="(elem: Any)Boolean" id="25609">annotationCheckers</a> contains <a href="#257724" title="AnnotationCheckers.this.AnnotationChecker">checker</a>))
+      <a href="#26563" title="(x$1: List[AnnotationCheckers.this.AnnotationChecker])Unit">annotationCheckers</a> = <a href="#257724" title="AnnotationCheckers.this.AnnotationChecker">checker</a> <a href="#257728" title="AnnotationCheckers.this.AnnotationChecker">::</a> <a href="#26563" title="(x: AnnotationCheckers.this.AnnotationChecker)List[AnnotationCheckers.this.AnnotationChecker]" id="24258">annotationCheckers</a>
   }
 
-  <span class="comment">/** Remove all annotation checkers */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">()Unit</span><a id="22344">removeAllAnnotationCheckers</a></span>() {
-    <span class="typed"><span class="type">(List[AnnotationCheckers.this.AnnotationChecker])Unit</span><a href="#22341">annotationCheckers</a></span> = <span class="typed"><span class="type">object Nil</span><a id="335">Nil</a></span>
+  /** Remove all annotation checkers */
+  <span class="keyword">def</span> <a title="()Unit" id="26566">removeAllAnnotationCheckers</a>() {
+    <a href="#26563" title="(x$1: List[AnnotationCheckers.this.AnnotationChecker])Unit">annotationCheckers</a> = <span title="object Nil">Nil</span>
   }
 
-  <span class="comment">/** Check that the annotations on two types conform.  To do
-   *  so, consult all registered annotation checkers. */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(AnnotationCheckers.this.Type,AnnotationCheckers.this.Type)Boolean</span><a id="22345">annotationsConform</a></span>(<span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a id="119934">tp1</a></span>: <span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a href="Types.scala.html#21944">Type</a></span>, <span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a id="119935">tp2</a></span>: <span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a href="Types.scala.html#21944">Type</a></span>): <span class="typed"><span class="type">Boolean</span><a id="2170">Boolean</a></span> = {
-    <span class="comment">/* Finish quickly if there are no attributes */</span>
-    <span class="typed"><span class="type">Boolean</span><span class="keyword">if</span></span> (<span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a href="#119934">tp1</a></span>.<span class="typed"><span class="type">=&gt; List[AnnotationCheckers.this.AnnotationInfo]</span><a href="Types.scala.html#25723">attributes</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a id="21645">isEmpty</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2751">&amp;&amp;</a></span> <span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a href="#119935">tp2</a></span>.<span class="typed"><span class="type">=&gt; List[AnnotationCheckers.this.AnnotationInfo]</span><a href="Types.scala.html#25723">attributes</a></span>.<span class="typed"><span class="type">=&gt; Boolean</span><a id="21645">isEmpty</a></span>)
-      <span class="typed"><span class="type">Boolean(true)</span><span class="keyword">true</span></span>
+  /** Check that the annotations on two types conform.  To do
+   *  so, consult all registered annotation checkers. */
+  <span class="keyword">def</span> <a title="(tp1: AnnotationCheckers.this.Type,tp2: AnnotationCheckers.this.Type)Boolean" id="26567">annotationsConform</a>(<a title="AnnotationCheckers.this.Type" id="182948">tp1</a>: <a href="Types.scala.html#26205" title="AnnotationCheckers.this.Type">Type</a>, <a title="AnnotationCheckers.this.Type" id="182949">tp2</a>: <a href="Types.scala.html#26205" title="AnnotationCheckers.this.Type">Type</a>): <span title="Boolean">Boolean</span> = {
+    /* Finish quickly if there are no annotations */
+    <span title="Boolean" class="keyword">if</span> (<a href="#182948" title="AnnotationCheckers.this.Type">tp1</a>.<a href="Types.scala.html#30258" title="=&gt; List[AnnotationCheckers.this.AnnotationInfo]">annotations</a>.<a title="(x$1: Boolean)Boolean" id="2212">isEmpty</a> &amp;&amp; <a href="#182949" title="AnnotationCheckers.this.Type">tp2</a>.<a href="Types.scala.html#30258" title="=&gt; List[AnnotationCheckers.this.AnnotationInfo]">annotations</a>.<span title="=&gt; Boolean">isEmpty</span>)
+      <span title="Boolean(true)" class="keyword">true</span>
     <span class="keyword">else</span>
-     <span class="typed"><span class="type">=&gt; List[AnnotationCheckers.this.AnnotationChecker]</span><a href="#22340">annotationCheckers</a></span>.<span class="typed"><span class="type">((AnnotationCheckers.this.AnnotationChecker) =&gt; Boolean)Boolean</span><a id="21372">forall</a></span>(
-       <span class="typed"><span class="type">AnnotationCheckers.this.AnnotationChecker</span><a href="#149344">_</a></span>.<span class="typed"><span class="type">(AnnotationCheckers.this.Type,AnnotationCheckers.this.Type)Boolean</span><a href="#149323">annotationsConform</a></span>(<span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a href="#119934">tp1</a></span>,<span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a href="#119935">tp2</a></span>))
+     <a href="#26563" title="=&gt; List[AnnotationCheckers.this.AnnotationChecker]">annotationCheckers</a>.<a title="(p: (AnnotationCheckers.this.AnnotationChecker) =&gt; Boolean)Boolean" id="28935">forall</a>(
+       <a href="#257752" title="AnnotationCheckers.this.AnnotationChecker">_</a>.<a href="#257703" title="(tpe1: AnnotationCheckers.this.Type,tpe2: AnnotationCheckers.this.Type)Boolean">annotationsConform</a>(<a href="#182948" title="AnnotationCheckers.this.Type">tp1</a>,<a href="#182949" title="AnnotationCheckers.this.Type">tp2</a>))
   }
 
-  <span class="comment">/** Let all annotations checkers add extra annotations
-   *  to this tree's type. */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(AnnotationCheckers.this.Tree,AnnotationCheckers.this.Type)AnnotationCheckers.this.Type</span><a id="22346">addAnnotations</a></span>(<span class="typed"><span class="type">AnnotationCheckers.this.Tree</span><a id="139331">tree</a></span>: <span class="typed"><span class="type">AnnotationCheckers.this.Tree</span><a href="../ast/Trees.scala.html#22371">Tree</a></span>, <span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a id="139332">tpe</a></span>: <span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a href="Types.scala.html#21944">Type</a></span>): <span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a href="Types.scala.html#21944">Type</a></span> = {
-    <span class="typed"><span class="type">=&gt; List[AnnotationCheckers.this.AnnotationChecker]</span><a href="#22340">annotationCheckers</a></span>.<span class="typed"><span class="type">(AnnotationCheckers.this.Type)((AnnotationCheckers.this.Type, AnnotationCheckers.this.AnnotationChecker) =&gt; AnnotationCheckers.this.Type)AnnotationCheckers.this.Type</span><a id="21375">foldLeft</a></span>(<span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a href="#139332">tpe</a></span>)((<span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a id="149348">tpe</a></span>, <span class="typed"><span class="type">AnnotationCheckers.this.AnnotationChecker</span><a id="149349">checker</a></span>) =&gt; 
-      <span class="typed"><span class="type">AnnotationCheckers.this.AnnotationChecker</span><a href="#149349">checker</a></span>.<span class="typed"><span class="type">(AnnotationCheckers.this.Tree,AnnotationCheckers.this.Type)AnnotationCheckers.this.Type</span><a href="#149324">addAnnotations</a></span>(<span class="typed"><span class="type">AnnotationCheckers.this.Tree</span><a href="#139331">tree</a></span>, <span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a href="#149348">tpe</a></span>))
+  /** Let all annotations checkers add extra annotations
+   *  to this tree's type. */
+  <span class="keyword">def</span> <a title="(tree: AnnotationCheckers.this.Tree,tpe: AnnotationCheckers.this.Type)AnnotationCheckers.this.Type" id="26568">addAnnotations</a>(<a title="AnnotationCheckers.this.Tree" id="257757">tree</a>: <a href="../ast/Trees.scala.html#26593" title="AnnotationCheckers.this.Tree">Tree</a>, <a title="AnnotationCheckers.this.Type" id="257758">tpe</a>: <a href="Types.scala.html#26205" title="AnnotationCheckers.this.Type">Type</a>): <a href="Types.scala.html#26205" title="AnnotationCheckers.this.Type">Type</a> = {
+    <a href="#26563" title="=&gt; List[AnnotationCheckers.this.AnnotationChecker]">annotationCheckers</a>.<span title="(z: AnnotationCheckers.this.Type)(f: (AnnotationCheckers.this.Type, AnnotationCheckers.this.AnnotationChecker) =&gt; AnnotationCheckers.this.Type)AnnotationCheckers.this.Type">foldLeft</span>(<a href="#257758" title="AnnotationCheckers.this.Type">tpe</a>)((<a title="AnnotationCheckers.this.Type" id="257776">tpe</a>, <a title="AnnotationCheckers.this.AnnotationChecker" id="257777">checker</a>) =&gt; 
+      <a href="#257777" title="AnnotationCheckers.this.AnnotationChecker">checker</a>.<a href="#257704" title="(tree: AnnotationCheckers.this.Tree,tpe: AnnotationCheckers.this.Type)AnnotationCheckers.this.Type">addAnnotations</a>(<a href="#257757" title="AnnotationCheckers.this.Tree">tree</a>, <a href="#257776" title="AnnotationCheckers.this.Type">tpe</a>))
   }
 
-  <span class="comment">/** Find out whether any annotation checker can adapt a tree
-   *  to a given type. Called by Typers.adapt. */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(AnnotationCheckers.this.Tree,Int,AnnotationCheckers.this.Type)Boolean</span><a id="22347">canAdaptAnnotations</a></span>(<span class="typed"><span class="type">AnnotationCheckers.this.Tree</span><a id="135654">tree</a></span>: <span class="typed"><span class="type">AnnotationCheckers.this.Tree</span><a href="../ast/Trees.scala.html#22371">Tree</a></span>, <span class="typed"><span class="type">Int</span><a id="135655">mode</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>, <span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a id="135656">pt</a></span>: <span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a href="Types.scala.html#21944">Type</a></span>): <span class="typed"><span class="type">Boolean</span><a id="2170">Boolean</a></span> = {
-    <span class="typed"><span class="type">=&gt; List[AnnotationCheckers.this.AnnotationChecker]</span><a href="#22340">annotationCheckers</a></span>.<span class="typed"><span class="type">(Boolean)((Boolean, AnnotationCheckers.this.AnnotationChecker) =&gt; Boolean)Boolean</span><a id="21375">foldLeft</a></span>(<span class="typed"><span class="type">Boolean(false)</span><span class="keyword">false</span></span>)((<span class="typed"><span class="type">Boolean</span><a id="149353">res</a></span>, <span class="typed"><span class="type">AnnotationCheckers.this.AnnotationChecker</span><a id="149354">checker</a></span>) =&gt; 
-      <span class="typed"><span class="type">Boolean</span><a href="#149353">res</a></span> <span class="typed"><span class="type">(Boolean)Boolean</span><a id="2750">||</a></span> <span class="typed"><span class="type">AnnotationCheckers.this.AnnotationChecker</span><a href="#149354">checker</a></span>.<span class="typed"><span class="type">(AnnotationCheckers.this.Tree,Int,AnnotationCheckers.this.Type)Boolean</span><a href="#149325">canAdaptAnnotations</a></span>(<span class="typed"><span class="type">AnnotationCheckers.this.Tree</span><a href="#135654">tree</a></span>, <span class="typed"><span class="type">Int</span><a href="#135655">mode</a></span>, <span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a href="#135656">pt</a></span>))
+  /** Find out whether any annotation checker can adapt a tree
+   *  to a given type. Called by Typers.adapt. */
+  <span class="keyword">def</span> <a title="(tree: AnnotationCheckers.this.Tree,mode: Int,pt: AnnotationCheckers.this.Type)Boolean" id="26569">canAdaptAnnotations</a>(<a title="AnnotationCheckers.this.Tree" id="257782">tree</a>: <a href="../ast/Trees.scala.html#26593" title="AnnotationCheckers.this.Tree">Tree</a>, <a title="Int" id="257783">mode</a>: <span title="Int">Int</span>, <a title="AnnotationCheckers.this.Type" id="257784">pt</a>: <a href="Types.scala.html#26205" title="AnnotationCheckers.this.Type">Type</a>): <span title="Boolean">Boolean</span> = {
+    <a href="#26563" title="=&gt; List[AnnotationCheckers.this.AnnotationChecker]">annotationCheckers</a>.<span title="(z: Boolean)(f: (Boolean, AnnotationCheckers.this.AnnotationChecker) =&gt; Boolean)Boolean">foldLeft</span>(<span title="Boolean(false)" class="keyword">false</span>)((<a title="Boolean" id="257802">res</a>, <a title="AnnotationCheckers.this.AnnotationChecker" id="257803">checker</a>) =&gt; 
+      <a href="#257802" title="(x$1: Boolean)Boolean" id="2210">res</a> || <a href="#257803" title="AnnotationCheckers.this.AnnotationChecker">checker</a>.<a href="#257705" title="(tree: AnnotationCheckers.this.Tree,mode: Int,pt: AnnotationCheckers.this.Type)Boolean">canAdaptAnnotations</a>(<a href="#257782" title="AnnotationCheckers.this.Tree">tree</a>, <a href="#257783" title="Int">mode</a>, <a href="#257784" title="AnnotationCheckers.this.Type">pt</a>))
   }
 
-  <span class="comment">/** Let registered annotation checkers adapt a tree
+  /** Let registered annotation checkers adapt a tree
    *  to a given type (called by Typers.adapt). Annotation checkers
    *  that cannot do the adaption should pass the tree through
-   *  unchanged. */</span>
-  <span class="keyword">def</span> <span class="typed"><span class="type">(AnnotationCheckers.this.Tree,Int,AnnotationCheckers.this.Type)AnnotationCheckers.this.Tree</span><a id="22348">adaptAnnotations</a></span>(<span class="typed"><span class="type">AnnotationCheckers.this.Tree</span><a id="135657">tree</a></span>: <span class="typed"><span class="type">AnnotationCheckers.this.Tree</span><a href="../ast/Trees.scala.html#22371">Tree</a></span>, <span class="typed"><span class="type">Int</span><a id="135658">mode</a></span>: <span class="typed"><span class="type">Int</span><a id="2394">Int</a></span>, <span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a id="135659">pt</a></span>: <span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a href="Types.scala.html#21944">Type</a></span>): <span class="typed"><span class="type">AnnotationCheckers.this.Tree</span><a href="../ast/Trees.scala.html#22371">Tree</a></span> = {
-    <span class="typed"><span class="type">=&gt; List[AnnotationCheckers.this.AnnotationChecker]</span><a href="#22340">annotationCheckers</a></span>.<span class="typed"><span class="type">(AnnotationCheckers.this.Tree)((AnnotationCheckers.this.Tree, AnnotationCheckers.this.AnnotationChecker) =&gt; AnnotationCheckers.this.Tree)AnnotationCheckers.this.Tree</span><a id="21375">foldLeft</a></span>(<span class="typed"><span class="type">AnnotationCheckers.this.Tree</span><a href="#135657">tree</a></span>)((<span class="typed"><span class="type">AnnotationCheckers.this.Tree</span><a id="149358">tree</a></span>, <span class="typed"><span class="type">AnnotationCheckers.this.AnnotationChecker</span><a id="149359">checker</a></span>) =&gt; 
-      <span class="typed"><span class="type">AnnotationCheckers.this.AnnotationChecker</span><a href="#149359">checker</a></span>.<span class="typed"><span class="type">(AnnotationCheckers.this.Tree,Int,AnnotationCheckers.this.Type)AnnotationCheckers.this.Tree</span><a href="#149326">adaptAnnotations</a></span>(<span class="typed"><span class="type">AnnotationCheckers.this.Tree</span><a href="#149358">tree</a></span>, <span class="typed"><span class="type">Int</span><a href="#135658">mode</a></span>, <span class="typed"><span class="type">AnnotationCheckers.this.Type</span><a href="#135659">pt</a></span>))
+   *  unchanged. */
+  <span class="keyword">def</span> <a title="(tree: AnnotationCheckers.this.Tree,mode: Int,pt: AnnotationCheckers.this.Type)AnnotationCheckers.this.Tree" id="26570">adaptAnnotations</a>(<a title="AnnotationCheckers.this.Tree" id="257810">tree</a>: <a href="../ast/Trees.scala.html#26593" title="AnnotationCheckers.this.Tree">Tree</a>, <a title="Int" id="257811">mode</a>: <span title="Int">Int</span>, <a title="AnnotationCheckers.this.Type" id="257812">pt</a>: <a href="Types.scala.html#26205" title="AnnotationCheckers.this.Type">Type</a>): <a href="../ast/Trees.scala.html#26593" title="AnnotationCheckers.this.Tree">Tree</a> = {
+    <a href="#26563" title="=&gt; List[AnnotationCheckers.this.AnnotationChecker]">annotationCheckers</a>.<span title="(z: AnnotationCheckers.this.Tree)(f: (AnnotationCheckers.this.Tree, AnnotationCheckers.this.AnnotationChecker) =&gt; AnnotationCheckers.this.Tree)AnnotationCheckers.this.Tree">foldLeft</span>(<a href="#257810" title="AnnotationCheckers.this.Tree">tree</a>)((<a title="AnnotationCheckers.this.Tree" id="257830">tree</a>, <a title="AnnotationCheckers.this.AnnotationChecker" id="257831">checker</a>) =&gt; 
+      <a href="#257831" title="AnnotationCheckers.this.AnnotationChecker">checker</a>.<a href="#257706" title="(tree: AnnotationCheckers.this.Tree,mode: Int,pt: AnnotationCheckers.this.Type)AnnotationCheckers.this.Tree">adaptAnnotations</a>(<a href="#257830" title="AnnotationCheckers.this.Tree">tree</a>, <a href="#257811" title="Int">mode</a>, <a href="#257812" title="AnnotationCheckers.this.Type">pt</a>))
   }
 }
 

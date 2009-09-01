@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/xml/transform/BasicTransformer.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: BasicTransformer.scala 18593 2009-08-28 11:25:43Z extempore $
+
+
+<span class="keyword">package</span> scala.xml
+<span class="keyword">package</span> transform
+
+/** A class for XML transformations.
+ *
+ *  @author  Burak Emir
+ *  @version 1.0
+ */
+<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class BasicTransformer extends java.lang.Object with (scala.xml.Node) =&gt; scala.xml.Node with ScalaObject" id="8835">BasicTransformer</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="../../Function1.scala.html#159" title="(scala.xml.Node) =&gt; scala.xml.Node">Function1</a>[Node,Node]
+{
+  /**
+   *  @param n  ...
+   *  @param ns ...
+   *  @return   ...
+   */
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(n: scala.xml.Node,ns: Seq[scala.xml.Node])Boolean" id="20953">unchanged</a>(<a title="scala.xml.Node" id="255728">n</a>: <a href="../Node.scala.html#8654" title="scala.xml.Node">Node</a>, <a title="Seq[scala.xml.Node]" id="255729">ns</a>: <a href="../../collection/Sequence.scala.html#4346" title="Seq[scala.xml.Node]">Seq</a>[Node]) =
+    <a href="#255729" title="Seq[scala.xml.Node]">ns</a>.<a href="../../collection/generic/SequenceTemplate.scala.html#17338" title="(x$1: Int)Boolean" id="2950">length</a> <a title="(x$1: Boolean)Boolean" id="2210">==</a> <span title="Int(1)" class="int">1</span> &amp;&amp; (<a href="#255729" title="Seq[scala.xml.Node]">ns</a>.<a href="../../collection/generic/IterableTemplate.scala.html#17298" title="(x$1: AnyRef)Boolean" id="3624">head</a> == <a href="#255728" title="scala.xml.Node">n</a>)
+
+  /** Call transform(Node) for each node in ns, append results
+   *  to NodeBuffer.
+   */
+  <span class="keyword">def</span> <a title="(it: Iterator[scala.xml.Node],nb: scala.xml.NodeBuffer)Seq[scala.xml.Node]" id="20954">transform</a>(<a title="Iterator[scala.xml.Node]" id="20974">it</a>: <a href="../../collection/Iterator.scala.html#4274" title="Iterator[scala.xml.Node]">Iterator</a>[Node], <a title="scala.xml.NodeBuffer" id="20975">nb</a>: <a href="../NodeBuffer.scala.html#8696" title="scala.xml.NodeBuffer">NodeBuffer</a>): <a href="../../collection/Sequence.scala.html#4346" title="Seq[scala.xml.Node]">Seq</a>[Node] =
+    <a href="#20974" title="Iterator[scala.xml.Node]">it</a>.<a href="../../collection/Iterator.scala.html#19230" title="(z: scala.xml.NodeBuffer)(op: (scala.xml.NodeBuffer, scala.xml.Node) =&gt; scala.xml.NodeBuffer)scala.xml.NodeBuffer">foldLeft</a>(<a href="#20975" title="scala.xml.NodeBuffer">nb</a>)(<a href="../../collection/mutable/ArrayBuffer.scala.html#19918" title="(iter: Traversable[scala.xml.Node])x$1.type">_</a> ++= <a href="#20956" title="(n: scala.xml.Node)Seq[scala.xml.Node]">transform</a>(<a href="#255760" title="scala.xml.Node">_</a>)) <a href="../../collection/generic/TraversableTemplate.scala.html#17233" title="(implicit evidence$1: scala.reflect.ClassManifest[scala.xml.Node])Array[scala.xml.Node]">toArray</a>
+
+  /** Call transform(Node) to each node in ns, yield ns if nothing changes,
+   *  otherwise a new sequence of concatenated results.
+   */
+  <span class="keyword">def</span> <a title="(ns: Seq[scala.xml.Node])Seq[scala.xml.Node]" id="20955">transform</a>(<a title="Seq[scala.xml.Node]" id="20972">ns</a>: <a href="../../collection/Sequence.scala.html#4346" title="Seq[scala.xml.Node]">Seq</a>[Node]): <a href="../../collection/Sequence.scala.html#4346" title="Seq[scala.xml.Node]">Seq</a>[Node] = {
+    <span class="keyword">val</span> <a href="../../Tuple2.scala.html#20670" title="(Sequence[scala.xml.Node], Sequence[scala.xml.Node])">(</a><a href="../../Tuple2.scala.html#20472" title="Sequence[scala.xml.Node]" id="255832">xs1</a>, <a href="../../Tuple2.scala.html#20474" title="Sequence[scala.xml.Node]" id="255833">xs2</a>) = <a href="../../collection/generic/TraversableTemplate.scala.html#17222" title="(p: (scala.xml.Node) =&gt; Boolean)(Sequence[scala.xml.Node], Sequence[scala.xml.Node])">ns</a> <a href="../../Tuple2.scala.html#1152" title="(Sequence[scala.xml.Node], Sequence[scala.xml.Node]) @unchecked">span</a> (<a title="scala.xml.Node" id="255836">n</a> =&gt; <a href="#20953" title="(n: scala.xml.Node,ns: Seq[scala.xml.Node])Boolean">unchanged</a>(<a href="#255836" title="scala.xml.Node">n</a>, <a href="#20956" title="(n: scala.xml.Node)Seq[scala.xml.Node]">transform</a>(<a href="#255836" title="scala.xml.Node">n</a>)))
+    
+    <span title="Seq[scala.xml.Node]" class="keyword">if</span> (<a href="#255833" title="Sequence[scala.xml.Node]">xs2</a>.<a href="../../collection/generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#20972" title="Seq[scala.xml.Node]">ns</a>
+    <span class="keyword">else</span> <a href="../../collection/generic/TraversableTemplate.scala.html#17151" title="(that: Traversable[scala.xml.Node])(implicit bf: scala.collection.generic.BuilderFactory[scala.xml.Node,Sequence[scala.xml.Node],Sequence[scala.xml.Node]])Sequence[scala.xml.Node]">xs1</a> <a href="../../collection/generic/TraversableTemplate.scala.html#17151" title="(that: Traversable[scala.xml.Node])(implicit bf: scala.collection.generic.BuilderFactory[scala.xml.Node,Seq[scala.xml.Node],Sequence[scala.xml.Node]])Seq[scala.xml.Node]">++</a> <a href="#20956" title="(n: scala.xml.Node)Seq[scala.xml.Node]">transform</a>(<a href="#255833" title="Sequence[scala.xml.Node]">xs2</a>.<a href="../../collection/generic/IterableTemplate.scala.html#17298" title="=&gt; scala.xml.Node">head</a>) <a href="../../collection/Sequence.scala.html#22039" title="scala.collection.generic.BuilderFactory[scala.xml.Node,Sequence[scala.xml.Node],Sequence#Coll]">++</a> <a href="#20955" title="(ns: Seq[scala.xml.Node])Seq[scala.xml.Node]">transform</a>(<a href="#255833" title="Sequence[scala.xml.Node]">xs2</a>.<a href="../../collection/generic/TraversableTemplate.scala.html#17213" title="=&gt; Sequence[scala.xml.Node]">tail</a>)
+  }
+
+  <span class="keyword">def</span> <a title="(n: scala.xml.Node)Seq[scala.xml.Node]" id="20956">transform</a>(<a title="scala.xml.Node" id="20970">n</a>: <a href="../Node.scala.html#8654" title="scala.xml.Node">Node</a>): <a href="../../collection/Sequence.scala.html#4346" title="Seq[scala.xml.Node]">Seq</a>[Node] = {
+    <span title="Seq[scala.xml.Node]" class="keyword">if</span> (<a href="#20970" title="scala.xml.Node">n</a>.<a href="../Node.scala.html#20995" title="=&gt; Boolean">doTransform</a>) <a href="#20970" title="scala.xml.Node">n</a> <span title="Seq[scala.xml.Node]" class="keyword">match</span> {
+      <span title="scala.xml.Group" class="keyword">case</span> <a id="1">Group</a>(<a title="Seq[scala.xml.Node]" id="256054">xs</a>)  =&gt; <a href="../Group.scala.html#179213" title="(nodes: Seq[scala.xml.Node])scala.xml.Group">Group</a>(<a href="#20955" title="(ns: Seq[scala.xml.Node])Seq[scala.xml.Node]">transform</a>(<a href="#256054" title="Seq[scala.xml.Node]">xs</a>)) // un-group the hack Group tag
+      <span title="Seq[scala.xml.Node]" class="keyword">case</span> _          =&gt;
+        <span class="keyword">val</span> <a title="Seq[scala.xml.Node]" id="256070">ch</a> = <a href="#20970" title="scala.xml.Node">n</a>.<a href="../Node.scala.html#21002" title="=&gt; Seq[scala.xml.Node]">child</a>
+        <span class="keyword">val</span> <a title="Seq[scala.xml.Node]" id="256071">nch</a> = <a href="#20955" title="(ns: Seq[scala.xml.Node])Seq[scala.xml.Node]">transform</a>(<a href="#256070" title="Seq[scala.xml.Node]">ch</a>)
+        
+        <span title="Seq[scala.xml.Node]" class="keyword">if</span> (<a href="#256070" title="(x$1: AnyRef)Boolean" id="6531">ch</a> eq <a href="#256071" title="Seq[scala.xml.Node]">nch</a>) <a href="#20970" title="scala.xml.Node">n</a>
+        <span class="keyword">else</span>           <a href="../Elem.scala.html#50234" title="(prefix: String,label: String,attributes: scala.xml.MetaData,scope: scala.xml.NamespaceBinding,child: scala.xml.Node*)scala.xml.Elem">Elem</a>(<a href="#20970" title="scala.xml.Node">n</a>.<a href="../Node.scala.html#20991" title="=&gt; String">prefix</a>, <a href="#20970" title="scala.xml.Node">n</a>.<a href="../Node.scala.html#20992" title="=&gt; String">label</a>, <a href="#20970" title="scala.xml.Node">n</a>.<a href="../Node.scala.html#21001" title="=&gt; scala.xml.MetaData">attributes</a>, <a href="#20970" title="scala.xml.Node">n</a>.<a href="../Node.scala.html#20996" title="=&gt; scala.xml.NamespaceBinding">scope</a>, <a href="#256071" title="Seq[scala.xml.Node]">nch</a>:_*)
+    }
+    <span class="keyword">else</span> <a href="#20970" title="scala.xml.Node">n</a>
+  }
+
+  <span class="keyword">def</span> <a title="(n: scala.xml.Node)scala.xml.Node" id="20957">apply</a>(<a title="scala.xml.Node" id="256083">n</a>: <a href="../Node.scala.html#8654" title="scala.xml.Node">Node</a>): <a href="../Node.scala.html#8654" title="scala.xml.Node">Node</a> = {
+    <span class="keyword">val</span> <a title="Seq[scala.xml.Node]" id="256086">seq</a> = <a href="#20956" title="(n: scala.xml.Node)Seq[scala.xml.Node]">transform</a>(<a href="#256083" title="scala.xml.Node">n</a>)
+    <span title="scala.xml.Node" class="keyword">if</span> (<a href="#256086" title="Seq[scala.xml.Node]">seq</a>.<a href="../../collection/generic/SequenceTemplate.scala.html#17338" title="(x$1: Int)Boolean" id="2958">length</a> &gt; <span title="Int(1)" class="int">1</span>)
+      <span title="Nothing" class="keyword">throw</span> <a title="(x$1: java.lang.String)java.lang.UnsupportedOperationException" id="45864" class="keyword">new</a> <a href="../../Predef.scala.html#16169" title="java.lang.UnsupportedOperationException">UnsupportedOperationException</a>(<span title="java.lang.String(&quot;transform must return single node for root&quot;)" class="string">&quot;transform must return single node for root&quot;</span>);
+    <span class="keyword">else</span> <a href="#256086" title="Seq[scala.xml.Node]">seq</a>.<a href="../../collection/generic/IterableTemplate.scala.html#17298" title="=&gt; scala.xml.Node">head</a>
+  }
+}
+
+        </pre>
+    </body>
+</html>

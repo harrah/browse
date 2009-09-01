@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/runtime/BoxedAnyArray.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: BoxedAnyArray.scala 18572 2009-08-25 14:14:11Z odersky $
+
+
+<span class="keyword">package</span> scala.runtime
+<span class="keyword">import</span> scala.reflect.ClassManifest
+<span class="keyword">import</span> compat.Platform
+
+/**
+ * Arrays created by &lt;code&gt;new Array[T](length)&lt;/code&gt; where &lt;code&gt;T&lt;/code&gt;
+ * is a type variable.
+ *
+ * @author Martin Odersky
+ */
+@serializable
+<span class="keyword">final</span> <span class="keyword">class</span> <a title="class BoxedAnyArray[A] extends scala.runtime.BoxedArray[A] with ScalaObject" id="2013">BoxedAnyArray</a>[<a title="&gt;: Nothing &lt;: Any" id="12181">A</a><a id="1">]</a><a href="../ScalaObject.scala.html#957" title="ScalaObject">(</a><span class="keyword">val</span> <a title="Int" id="50680">length</a>: <span title="Int">Int</span>) <span class="keyword">extends</span> <a href="BoxedArray.scala.html#2034" title="scala.runtime.BoxedArray[A]">BoxedArray</a>[A] {
+
+  <span class="keyword">def</span> <a title="=&gt; scala.reflect.ClassManifest[A]" id="50639">elemManifest</a>: <a href="../reflect/ClassManifest.scala.html#11503" title="scala.reflect.ClassManifest[A]">ClassManifest</a>[A] = <span title="Null(null)" class="keyword">null</span> 
+
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Array[AnyRef]" id="50641">boxed</a> = <span title="Array[AnyRef]" class="keyword">new</span> <a href="../Array.scala.html#885" title="Array[AnyRef]">Array</a>[AnyRef](<a href="#50680" title="=&gt; Int">length</a>)
+//  private val hash = boxed.hashCode()
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="AnyRef" id="50644">unboxed</a>: <span title="AnyRef">AnyRef</span> = <span title="Null(null)" class="keyword">null</span>
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Class[_]" id="50647">elemClass</a>: <span title="Class[_]">Class</span>[_] = <span title="Null(null)" class="keyword">null</span>
+
+  <span class="keyword">def</span> <a title="(index: Int)A" id="50649">apply</a>(<a title="Int" id="50686">index</a>: <span title="Int">Int</span>): <a href="#12181" title="A">A</a> = <a href="#2013" title="(x$1: AnyRef)AnyRef">synchronized</a> { 
+    <span title="AnyRef" class="keyword">if</span> (<a href="#50644" title="(x$1: AnyRef)Boolean">unboxed</a> eq <span title="Null(null)" class="keyword">null</span>)
+      <a href="../Array.scala.html#17716" title="(i: Int)AnyRef">boxed</a>(<a href="#50686" title="Int">index</a>)
+    <span class="keyword">else</span> <span title="java.lang.Object" class="keyword">if</span> (<a href="#50647" title="(x$1: AnyRef)Boolean">elemClass</a> eq classOf<span title="java.lang.Class[Int]">[</span>Int])
+      <span title="object Int">Int</span>.<a title="(x$1: Int)java.lang.Object" id="2178">box</a>(<a href="#50644" title="=&gt; AnyRef">unboxed</a>.<span title="[T0]T0">asInstanceOf</span><a href="../Array.scala.html#17716" title="(i: Int)Int">[</a><a href="../Array.scala.html#885" title="Array[Int]">Array</a>[Int]](<a href="#50686" title="Int">index</a>))
+    <span class="keyword">else</span> <span title="java.lang.Object" class="keyword">if</span> (<a href="#50647" title="(x$1: AnyRef)Boolean">elemClass</a> eq classOf<span title="java.lang.Class[Double]">[</span>Double])
+      <span title="object Double">Double</span>.<a title="(x$1: Double)java.lang.Object" id="2199">box</a>(<a href="#50644" title="=&gt; AnyRef">unboxed</a>.<span title="[T0]T0">asInstanceOf</span><a href="../Array.scala.html#17716" title="(i: Int)Double">[</a><a href="../Array.scala.html#885" title="Array[Double]">Array</a>[Double]](<a href="#50686" title="Int">index</a>))
+    <span class="keyword">else</span> <span title="java.lang.Object" class="keyword">if</span> (<a href="#50647" title="(x$1: AnyRef)Boolean">elemClass</a> eq classOf<span title="java.lang.Class[Float]">[</span>Float])
+      <span title="object Float">Float</span>.<a title="(x$1: Float)java.lang.Object" id="2192">box</a>(<a href="#50644" title="=&gt; AnyRef">unboxed</a>.<span title="[T0]T0">asInstanceOf</span><a href="../Array.scala.html#17716" title="(i: Int)Float">[</a><a href="../Array.scala.html#885" title="Array[Float]">Array</a>[Float]](<a href="#50686" title="Int">index</a>))
+    <span class="keyword">else</span> <span title="java.lang.Object" class="keyword">if</span> (<a href="#50647" title="(x$1: AnyRef)Boolean">elemClass</a> eq classOf<span title="java.lang.Class[Long]">[</span>Long])
+      <span title="object Long">Long</span>.<a title="(x$1: Long)java.lang.Object" id="2185">box</a>(<a href="#50644" title="=&gt; AnyRef">unboxed</a>.<span title="[T0]T0">asInstanceOf</span><a href="../Array.scala.html#17716" title="(i: Int)Long">[</a><a href="../Array.scala.html#885" title="Array[Long]">Array</a>[Long]](<a href="#50686" title="Int">index</a>))
+    <span class="keyword">else</span> <span title="java.lang.Object" class="keyword">if</span> (<a href="#50647" title="(x$1: AnyRef)Boolean">elemClass</a> eq classOf<span title="java.lang.Class[Char]">[</span>Char])
+      <span title="object Char">Char</span>.<a title="(x$1: Char)java.lang.Object" id="2164">box</a>(<a href="#50644" title="=&gt; AnyRef">unboxed</a>.<span title="[T0]T0">asInstanceOf</span><a href="../Array.scala.html#17716" title="(i: Int)Char">[</a><a href="../Array.scala.html#885" title="Array[Char]">Array</a>[Char]](<a href="#50686" title="Int">index</a>))
+    <span class="keyword">else</span> <span title="java.lang.Object" class="keyword">if</span> (<a href="#50647" title="(x$1: AnyRef)Boolean">elemClass</a> eq classOf<span title="java.lang.Class[Byte]">[</span>Byte])
+      <span title="object Byte">Byte</span>.<a title="(x$1: Byte)java.lang.Object" id="2157">box</a>(<a href="#50644" title="=&gt; AnyRef">unboxed</a>.<span title="[T0]T0">asInstanceOf</span><a href="../Array.scala.html#17716" title="(i: Int)Byte">[</a><a href="../Array.scala.html#885" title="Array[Byte]">Array</a>[Byte]](<a href="#50686" title="Int">index</a>))
+    <span class="keyword">else</span> <span title="java.lang.Object" class="keyword">if</span> (<a href="#50647" title="(x$1: AnyRef)Boolean">elemClass</a> eq classOf<span title="java.lang.Class[Short]">[</span>Short])
+      <span title="object Short">Short</span>.<a title="(x$1: Short)java.lang.Object" id="2171">box</a>(<a href="#50644" title="=&gt; AnyRef">unboxed</a>.<span title="[T0]T0">asInstanceOf</span><a href="../Array.scala.html#17716" title="(i: Int)Short">[</a><a href="../Array.scala.html#885" title="Array[Short]">Array</a>[Short]](<a href="#50686" title="Int">index</a>))
+    <span class="keyword">else</span> <span title="java.lang.Object" class="keyword">if</span> (<a href="#50647" title="(x$1: AnyRef)Boolean">elemClass</a> eq classOf<span title="java.lang.Class[Boolean]">[</span>Boolean])
+      <span title="object Boolean">Boolean</span>.<a title="(x$1: Boolean)java.lang.Object" id="2150">box</a>(<a href="#50644" title="=&gt; AnyRef">unboxed</a>.<span title="[T0]T0">asInstanceOf</span><a href="../Array.scala.html#17716" title="(i: Int)Boolean">[</a><a href="../Array.scala.html#885" title="Array[Boolean]">Array</a>[Boolean]](<a href="#50686" title="Int">index</a>))
+    <span class="keyword">else</span>
+      <a href="#50644" title="=&gt; AnyRef">unboxed</a>.<span title="[T0]T0">asInstanceOf</span><a href="../Array.scala.html#17716" title="(i: Int)AnyRef">[</a><a href="../Array.scala.html#885" title="Array[AnyRef]">Array</a>[AnyRef]](<a href="#50686" title="Int">index</a>)
+  }.<span title="[T0]T0">asInstanceOf</span><span title="A">[</span><a href="#12181" title="A">A</a>]
+
+  <span class="keyword">def</span> <a title="(index: Int,_elem: A)Unit" id="50650">update</a>(<a title="Int" id="50838">index</a>: <span title="Int">Int</span>, <a title="A" id="50839">_elem</a>: <a href="#12181" title="A">A</a>): <a title="Unit" id="1948">Unit</a> = <a href="#2013" title="(x$1: Unit)Unit">synchronized</a> {
+    <span class="keyword">val</span> <a title="AnyRef" id="50853">elem</a> = <a href="#50839" title="A">_elem</a>.<span title="[T0]T0">asInstanceOf</span><span title="AnyRef">[</span><span title="AnyRef">AnyRef</span>]
+    <span title="Unit" class="keyword">if</span> (<a href="#50644" title="(x$1: AnyRef)Boolean">unboxed</a> eq <span title="Null(null)" class="keyword">null</span>)
+      <a href="../Array.scala.html#17717" title="(i: Int,x: AnyRef)Unit">boxed</a>(<a href="#50838" title="Int">index</a>) = <a href="#50853" title="AnyRef">elem</a>
+    <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#50647" title="(x$1: AnyRef)Boolean">elemClass</a> eq classOf<span title="java.lang.Class[Int]">[</span>Int])
+      <a href="#50644" title="=&gt; AnyRef">unboxed</a>.<span title="[T0]T0">asInstanceOf</span><a href="../Array.scala.html#17717" title="(i: Int,x: Int)Unit">[</a><a href="../Array.scala.html#885" title="Array[Int]">Array</a>[Int]](<a href="#50838" title="Int">index</a>) = <span title="object Int">Int</span>.<span title="(x$1: java.lang.Object)Int">unbox</span>(<a href="#50853" title="AnyRef">elem</a>)
+    <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#50647" title="(x$1: AnyRef)Boolean">elemClass</a> eq classOf<span title="java.lang.Class[Double]">[</span>Double])
+      <a href="#50644" title="=&gt; AnyRef">unboxed</a>.<span title="[T0]T0">asInstanceOf</span><a href="../Array.scala.html#17717" title="(i: Int,x: Double)Unit">[</a><a href="../Array.scala.html#885" title="Array[Double]">Array</a>[Double]](<a href="#50838" title="Int">index</a>) = <span title="object Double">Double</span>.<span title="(x$1: java.lang.Object)Double">unbox</span>(<a href="#50853" title="AnyRef">elem</a>)
+    <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#50647" title="(x$1: AnyRef)Boolean">elemClass</a> eq classOf<span title="java.lang.Class[Float]">[</span>Float])
+      <a href="#50644" title="=&gt; AnyRef">unboxed</a>.<span title="[T0]T0">asInstanceOf</span><a href="../Array.scala.html#17717" title="(i: Int,x: Float)Unit">[</a><a href="../Array.scala.html#885" title="Array[Float]">Array</a>[Float]](<a href="#50838" title="Int">index</a>) = <span title="object Float">Float</span>.<span title="(x$1: java.lang.Object)Float">unbox</span>(<a href="#50853" title="AnyRef">elem</a>)
+    <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#50647" title="(x$1: AnyRef)Boolean">elemClass</a> eq classOf<span title="java.lang.Class[Long]">[</span>Long])
+      <a href="#50644" title="=&gt; AnyRef">unboxed</a>.<span title="[T0]T0">asInstanceOf</span><a href="../Array.scala.html#17717" title="(i: Int,x: Long)Unit">[</a><a href="../Array.scala.html#885" title="Array[Long]">Array</a>[Long]](<a href="#50838" title="Int">index</a>) = <span title="object Long">Long</span>.<span title="(x$1: java.lang.Object)Long">unbox</span>(<a href="#50853" title="AnyRef">elem</a>)
+    <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#50647" title="(x$1: AnyRef)Boolean">elemClass</a> eq classOf<span title="java.lang.Class[Char]">[</span>Char])
+      <a href="#50644" title="=&gt; AnyRef">unboxed</a>.<span title="[T0]T0">asInstanceOf</span><a href="../Array.scala.html#17717" title="(i: Int,x: Char)Unit">[</a><a href="../Array.scala.html#885" title="Array[Char]">Array</a>[Char]](<a href="#50838" title="Int">index</a>) = <span title="object Char">Char</span>.<span title="(x$1: java.lang.Object)Char">unbox</span>(<a href="#50853" title="AnyRef">elem</a>)
+    <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#50647" title="(x$1: AnyRef)Boolean">elemClass</a> eq classOf<span title="java.lang.Class[Byte]">[</span>Byte])
+      <a href="#50644" title="=&gt; AnyRef">unboxed</a>.<span title="[T0]T0">asInstanceOf</span><a href="../Array.scala.html#17717" title="(i: Int,x: Byte)Unit">[</a><a href="../Array.scala.html#885" title="Array[Byte]">Array</a>[Byte]](<a href="#50838" title="Int">index</a>) = <span title="object Byte">Byte</span>.<span title="(x$1: java.lang.Object)Byte">unbox</span>(<a href="#50853" title="AnyRef">elem</a>)
+    <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#50647" title="(x$1: AnyRef)Boolean">elemClass</a> eq classOf<span title="java.lang.Class[Short]">[</span>Short])
+      <a href="#50644" title="=&gt; AnyRef">unboxed</a>.<span title="[T0]T0">asInstanceOf</span><a href="../Array.scala.html#17717" title="(i: Int,x: Short)Unit">[</a><a href="../Array.scala.html#885" title="Array[Short]">Array</a>[Short]](<a href="#50838" title="Int">index</a>) = <span title="object Short">Short</span>.<span title="(x$1: java.lang.Object)Short">unbox</span>(<a href="#50853" title="AnyRef">elem</a>)
+    <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#50647" title="(x$1: AnyRef)Boolean">elemClass</a> eq classOf<span title="java.lang.Class[Boolean]">[</span>Boolean])
+      <a href="#50644" title="=&gt; AnyRef">unboxed</a>.<span title="[T0]T0">asInstanceOf</span><a href="../Array.scala.html#17717" title="(i: Int,x: Boolean)Unit">[</a><a href="../Array.scala.html#885" title="Array[Boolean]">Array</a>[Boolean]](<a href="#50838" title="Int">index</a>) = <span title="object Boolean">Boolean</span>.<span title="(x$1: java.lang.Object)Boolean">unbox</span>(<a href="#50853" title="AnyRef">elem</a>)
+    <span class="keyword">else</span>
+      <a href="#50644" title="=&gt; AnyRef">unboxed</a>.<span title="[T0]T0">asInstanceOf</span><a href="../Array.scala.html#17717" title="(i: Int,x: AnyRef)Unit">[</a><a href="../Array.scala.html#885" title="Array[AnyRef]">Array</a>[AnyRef]](<a href="#50838" title="Int">index</a>) = <a href="#50853" title="AnyRef">elem</a>
+  }
+
+  <span class="keyword">def</span> <a title="(elemClass: Class[_])AnyRef" id="50651">unbox</a>(<a title="Class[_]" id="51029">elemClass</a>: <span title="Class[_]">Class</span>[_]): <span title="AnyRef">AnyRef</span> = <a href="#2013" title="(x$1: AnyRef)AnyRef">synchronized</a> {
+    <span title="Unit" class="keyword">if</span> (<a href="#50644" title="(x$1: AnyRef)Boolean">unboxed</a> eq <span title="Null(null)" class="keyword">null</span>) {
+      <a href="#2013" title="BoxedAnyArray.this.type" class="keyword">this</a>.<a href="#50647" title="(x$1: Class[_])Unit">elemClass</a> = <a href="#51029" title="Class[_]">elemClass</a>;
+      <span title="Unit" class="keyword">if</span> (<a href="#51029" title="(x$1: AnyRef)Boolean">elemClass</a> eq classOf<span title="java.lang.Class[Int]">[</span>Int]) {
+        <span class="keyword">val</span> <a title="Array[Int]" id="51043">newvalue</a> = <span title="Array[Int]" class="keyword">new</span> <a href="../Array.scala.html#885" title="Array[Int]">Array</a>[Int](<a href="#50680" title="=&gt; Int">length</a>)
+        <span class="keyword">var</span> <a title="Int" id="51044">i</a> = <span title="Int(0)" class="int">0</span>
+        <span title="Unit" class="keyword">while</span> (<a href="#51044" title="(x$1: Int)Boolean">i</a> &lt; <a href="#50680" title="=&gt; Int">length</a>) <a href="#51045" title="()Unit">{</a>
+          <a href="../Array.scala.html#17717" title="(i: Int,x: Int)Unit">newvalue</a>(<a href="#51044" title="Int">i</a>) = <span title="object Int">Int</span>.<span title="(x$1: java.lang.Object)Int">unbox</span>(<a href="../Array.scala.html#17716" title="(i: Int)AnyRef">boxed</a>(<a href="#51044" title="Int">i</a>))
+          <a href="#51044" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+        }
+        <a href="#50644" title="(x$1: AnyRef)Unit">unboxed</a> = <a href="#51043" title="Array[Int]">newvalue</a>
+      } <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#51029" title="(x$1: AnyRef)Boolean">elemClass</a> eq classOf<span title="java.lang.Class[Double]">[</span>Double]) {
+        <span class="keyword">val</span> <a title="Array[Double]" id="51123">newvalue</a> = <span title="Array[Double]" class="keyword">new</span> <a href="../Array.scala.html#885" title="Array[Double]">Array</a>[Double](<a href="#50680" title="=&gt; Int">length</a>)
+        <span class="keyword">var</span> <a title="Int" id="51124">i</a> = <span title="Int(0)" class="int">0</span>
+        <span title="Unit" class="keyword">while</span> (<a href="#51124" title="(x$1: Int)Boolean">i</a> &lt; <a href="#50680" title="=&gt; Int">length</a>) <a href="#51125" title="()Unit">{</a>
+          <a href="../Array.scala.html#17717" title="(i: Int,x: Double)Unit">newvalue</a>(<a href="#51124" title="Int">i</a>) = <span title="object Double">Double</span>.<span title="(x$1: java.lang.Object)Double">unbox</span>(<a href="../Array.scala.html#17716" title="(i: Int)AnyRef">boxed</a>(<a href="#51124" title="Int">i</a>))
+          <a href="#51124" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+        }
+        <a href="#50644" title="(x$1: AnyRef)Unit">unboxed</a> = <a href="#51123" title="Array[Double]">newvalue</a>;
+      } <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#51029" title="(x$1: AnyRef)Boolean">elemClass</a> eq classOf<span title="java.lang.Class[Float]">[</span>Float]) {
+        <span class="keyword">val</span> <a title="Array[Float]" id="51200">newvalue</a> = <span title="Array[Float]" class="keyword">new</span> <a href="../Array.scala.html#885" title="Array[Float]">Array</a>[Float](<a href="#50680" title="=&gt; Int">length</a>)
+        <span class="keyword">var</span> <a title="Int" id="51201">i</a> = <span title="Int(0)" class="int">0</span>
+        <span title="Unit" class="keyword">while</span> (<a href="#51201" title="(x$1: Int)Boolean">i</a> &lt; <a href="#50680" title="=&gt; Int">length</a>) <a href="#51202" title="()Unit">{</a>
+          <a href="../Array.scala.html#17717" title="(i: Int,x: Float)Unit">newvalue</a>(<a href="#51201" title="Int">i</a>) = <span title="object Float">Float</span>.<span title="(x$1: java.lang.Object)Float">unbox</span>(<a href="../Array.scala.html#17716" title="(i: Int)AnyRef">boxed</a>(<a href="#51201" title="Int">i</a>))
+          <a href="#51201" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+        }
+        <a href="#50644" title="(x$1: AnyRef)Unit">unboxed</a> = <a href="#51200" title="Array[Float]">newvalue</a>;
+      } <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#51029" title="(x$1: AnyRef)Boolean">elemClass</a> eq classOf<span title="java.lang.Class[Long]">[</span>Long]) {
+        <span class="keyword">val</span> <a title="Array[Long]" id="51277">newvalue</a> = <span title="Array[Long]" class="keyword">new</span> <a href="../Array.scala.html#885" title="Array[Long]">Array</a>[Long](<a href="#50680" title="=&gt; Int">length</a>)
+        <span class="keyword">var</span> <a title="Int" id="51278">i</a> = <span title="Int(0)" class="int">0</span>
+        <span title="Unit" class="keyword">while</span> (<a href="#51278" title="(x$1: Int)Boolean">i</a> &lt; <a href="#50680" title="=&gt; Int">length</a>) <a href="#51279" title="()Unit">{</a>
+          <a href="../Array.scala.html#17717" title="(i: Int,x: Long)Unit">newvalue</a>(<a href="#51278" title="Int">i</a>) = <span title="object Long">Long</span>.<span title="(x$1: java.lang.Object)Long">unbox</span>(<a href="../Array.scala.html#17716" title="(i: Int)AnyRef">boxed</a>(<a href="#51278" title="Int">i</a>))
+          <a href="#51278" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+        }
+        <a href="#50644" title="(x$1: AnyRef)Unit">unboxed</a> = <a href="#51277" title="Array[Long]">newvalue</a>;
+      } <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#51029" title="(x$1: AnyRef)Boolean">elemClass</a> eq classOf<span title="java.lang.Class[Char]">[</span>Char]) {
+        <span class="keyword">val</span> <a title="Array[Char]" id="51354">newvalue</a> = <span title="Array[Char]" class="keyword">new</span> <a href="../Array.scala.html#885" title="Array[Char]">Array</a>[Char](<a href="#50680" title="=&gt; Int">length</a>)
+        <span class="keyword">var</span> <a title="Int" id="51355">i</a> = <span title="Int(0)" class="int">0</span>
+        <span title="Unit" class="keyword">while</span> (<a href="#51355" title="(x$1: Int)Boolean">i</a> &lt; <a href="#50680" title="=&gt; Int">length</a>) <a href="#51356" title="()Unit">{</a>
+          <a href="../Array.scala.html#17717" title="(i: Int,x: Char)Unit">newvalue</a>(<a href="#51355" title="Int">i</a>) = <span title="object Char">Char</span>.<span title="(x$1: java.lang.Object)Char">unbox</span>(<a href="../Array.scala.html#17716" title="(i: Int)AnyRef">boxed</a>(<a href="#51355" title="Int">i</a>))
+          <a href="#51355" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+        }
+        <a href="#50644" title="(x$1: AnyRef)Unit">unboxed</a> = <a href="#51354" title="Array[Char]">newvalue</a>
+      } <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#51029" title="(x$1: AnyRef)Boolean">elemClass</a> eq classOf<span title="java.lang.Class[Byte]">[</span>Byte]) {
+        <span class="keyword">val</span> <a title="Array[Byte]" id="51431">newvalue</a> = <span title="Array[Byte]" class="keyword">new</span> <a href="../Array.scala.html#885" title="Array[Byte]">Array</a>[Byte](<a href="#50680" title="=&gt; Int">length</a>)
+        <span class="keyword">var</span> <a title="Int" id="51432">i</a> = <span title="Int(0)" class="int">0</span>
+        <span title="Unit" class="keyword">while</span> (<a href="#51432" title="(x$1: Int)Boolean">i</a> &lt; <a href="#50680" title="=&gt; Int">length</a>) <a href="#51433" title="()Unit">{</a>
+          <a href="../Array.scala.html#17717" title="(i: Int,x: Byte)Unit">newvalue</a>(<a href="#51432" title="Int">i</a>) = <span title="object Byte">Byte</span>.<span title="(x$1: java.lang.Object)Byte">unbox</span>(<a href="../Array.scala.html#17716" title="(i: Int)AnyRef">boxed</a>(<a href="#51432" title="Int">i</a>))
+          <a href="#51432" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+        }
+        <a href="#50644" title="(x$1: AnyRef)Unit">unboxed</a> = <a href="#51431" title="Array[Byte]">newvalue</a>;
+      } <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#51029" title="(x$1: AnyRef)Boolean">elemClass</a> eq classOf<span title="java.lang.Class[Short]">[</span>Short]) {
+        <span class="keyword">val</span> <a title="Array[Short]" id="51508">newvalue</a> = <span title="Array[Short]" class="keyword">new</span> <a href="../Array.scala.html#885" title="Array[Short]">Array</a>[Short](<a href="#50680" title="=&gt; Int">length</a>)
+        <span class="keyword">var</span> <a title="Int" id="51509">i</a> = <span title="Int(0)" class="int">0</span>
+        <span title="Unit" class="keyword">while</span> (<a href="#51509" title="(x$1: Int)Boolean">i</a> &lt; <a href="#50680" title="=&gt; Int">length</a>) <a href="#51510" title="()Unit">{</a>
+          <a href="../Array.scala.html#17717" title="(i: Int,x: Short)Unit">newvalue</a>(<a href="#51509" title="Int">i</a>) = <span title="object Short">Short</span>.<span title="(x$1: java.lang.Object)Short">unbox</span>(<a href="../Array.scala.html#17716" title="(i: Int)AnyRef">boxed</a>(<a href="#51509" title="Int">i</a>))
+          <a href="#51509" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+        }
+        <a href="#50644" title="(x$1: AnyRef)Unit">unboxed</a> = <a href="#51508" title="Array[Short]">newvalue</a>;
+      } <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#51029" title="(x$1: AnyRef)Boolean">elemClass</a> eq classOf<span title="java.lang.Class[Boolean]">[</span>Boolean]) {
+        <span class="keyword">val</span> <a title="Array[Boolean]" id="51585">newvalue</a> = <span title="Array[Boolean]" class="keyword">new</span> <a href="../Array.scala.html#885" title="Array[Boolean]">Array</a>[Boolean](<a href="#50680" title="=&gt; Int">length</a>)
+        <span class="keyword">var</span> <a title="Int" id="51586">i</a> = <span title="Int(0)" class="int">0</span>
+        <span title="Unit" class="keyword">while</span> (<a href="#51586" title="(x$1: Int)Boolean">i</a> &lt; <a href="#50680" title="=&gt; Int">length</a>) <a href="#51587" title="()Unit">{</a>
+          <a href="../Array.scala.html#17717" title="(i: Int,x: Boolean)Unit">newvalue</a>(<a href="#51586" title="Int">i</a>) = <span title="object Boolean">Boolean</span>.<span title="(x$1: java.lang.Object)Boolean">unbox</span>(<a href="../Array.scala.html#17716" title="(i: Int)AnyRef">boxed</a>(<a href="#51586" title="Int">i</a>))
+          <a href="#51586" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+        }
+        <a href="#50644" title="(x$1: AnyRef)Unit">unboxed</a> = <a href="#51585" title="Array[Boolean]">newvalue</a>;
+      } <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#51029" title="(x$1: AnyRef)Boolean" id="3624">elemClass</a> == classOf<span title="java.lang.Class[AnyRef]">[</span>AnyRef]) {
+        <a href="#50644" title="(x$1: AnyRef)Unit">unboxed</a> = <a href="#50641" title="=&gt; Array[AnyRef]">boxed</a>
+      } <span class="keyword">else</span> {
+        <a href="#50644" title="(x$1: AnyRef)Unit">unboxed</a> = <a href="../compat/Platform.scala.html#16638" title="object scala.compat.Platform">Platform</a>.<a href="../compat/Platform.scala.html#17686" title="(elemClass: Class[_],length: Int)AnyRef">createArray</a>(<a href="#51029" title="Class[_]">elemClass</a>, <a href="#50680" title="=&gt; Int">length</a>)
+        <span title="Unit" class="keyword">if</span> (<a href="#51029" title="Class[_]">elemClass</a>.<a title="()Boolean" id="4103">isArray</a>) {
+          <span class="keyword">var</span> <a title="Int" id="51680">i</a> = <span title="Int(0)" class="int">0</span>
+          <span title="Unit" class="keyword">while</span> (<a href="#51680" title="(x$1: Int)Boolean">i</a> &lt; <a href="#50680" title="=&gt; Int">length</a>) <a href="#51681" title="()Unit">{</a>
+            <a href="../Array.scala.html#17716" title="(i: Int)AnyRef">boxed</a>(<a href="#51680" title="Int">i</a>) <span title="Unit" class="keyword">match</span> {
+              <span title="Unit" class="keyword">case</span> <a title="scala.runtime.BoxedArray[_]" id="51698">ba</a>: <a href="BoxedArray.scala.html#2034" title="scala.runtime.BoxedArray[_]">BoxedArray</a>[_] =&gt; <a href="../Array.scala.html#17717" title="(i: Int,x: AnyRef)Unit">boxed</a>(<a href="#51680" title="Int">i</a>) = <a href="#51698" title="scala.runtime.BoxedArray[_]">ba</a>.<a href="BoxedArray.scala.html#26151" title="(elemClass: Class[_])AnyRef">unbox</a>(<a href="#51029" title="Class[_]">elemClass</a>.<a title="()java.lang.Class[_]" id="4120">getComponentType</a>())
+              <span title="Unit" class="keyword">case</span> _ =&gt;
+            }
+            <a href="#51680" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+          }
+        }
+        <a href="../compat/Platform.scala.html#16638" title="object scala.compat.Platform">Platform</a>.<a href="../compat/Platform.scala.html#17685" title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">arraycopy</a>(<a href="#50641" title="=&gt; Array[AnyRef]">boxed</a>, <span title="Int(0)" class="int">0</span>, <a href="#50644" title="=&gt; AnyRef">unboxed</a>, <span title="Int(0)" class="int">0</span>, <a href="#50680" title="=&gt; Int">length</a>)
+      }
+      <a href="#50641" title="(x$1: Array[AnyRef])Unit">boxed</a> = <span title="Null(null)" class="keyword">null</span>
+    }
+    <a href="#50644" title="=&gt; AnyRef">unboxed</a>
+  }
+
+/* !!! todo: deal with array equality
+  override def equals(other: Any): Boolean =    
+    other.isInstanceOf[BoxedAnyArray[_]] &amp;&amp; (this eq (other.asInstanceOf[BoxedAnyArray[_]])) ||
+    (if (unboxed eq null) boxed == other else unboxed == other)
+
+  override def hashCode(): Int = hash
+*/
+
+  <span class="keyword">def</span> <a title="=&gt; AnyRef" id="50652">value</a>: <span title="AnyRef">AnyRef</span> = {
+    <span title="Unit" class="keyword">if</span> (<a href="#50644" title="(x$1: AnyRef)Boolean">unboxed</a> eq <span title="Null(null)" class="keyword">null</span>) <span title="Nothing" class="keyword">throw</span> <span title="NotDefinedError" class="keyword">new</span> <a href="../NotDefinedError.scala.html#420" title="NotDefinedError">NotDefinedError</a>(<span title="java.lang.String(&quot;BoxedAnyArray.value&quot;)" class="string">&quot;BoxedAnyArray.value&quot;</span>)
+    <a href="#50644" title="=&gt; AnyRef">unboxed</a>
+  }
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(other: AnyRef)AnyRef" id="50653">adapt</a>(<a title="AnyRef" id="51777">other</a>: <span title="AnyRef">AnyRef</span>): <span title="AnyRef">AnyRef</span> =
+    <span title="AnyRef" class="keyword">if</span> (<a href="#2013" title="BoxedAnyArray.this.type" class="keyword">this</a>.<a href="#50644" title="(x$1: AnyRef)Boolean">unboxed</a> eq <span title="Null(null)" class="keyword">null</span>)
+      <a href="#51777" title="AnyRef">other</a> <span title="AnyRef" class="keyword">match</span> {
+        <span title="AnyRef" class="keyword">case</span> <a title="scala.runtime.BoxedAnyArray[_]" id="51781">that</a>: <a href="#2013" title="scala.runtime.BoxedAnyArray[_]">BoxedAnyArray</a>[_] =&gt;
+          <span title="AnyRef" class="keyword">if</span> (<a href="#51781" title="scala.runtime.BoxedAnyArray[_]">that</a>.<a href="#50644" title="(x$1: AnyRef)Boolean">unboxed</a> eq <span title="Null(null)" class="keyword">null</span>) {
+            <a href="#51781" title="scala.runtime.BoxedAnyArray[_]">that</a>.<a href="#50641" title="=&gt; Array[AnyRef]">boxed</a>
+          } <span class="keyword">else</span> {
+            <span title="Any" class="keyword">if</span> (<a href="ScalaRunTime.scala.html#1987" title="object scala.runtime.ScalaRunTime">ScalaRunTime</a>.<a href="ScalaRunTime.scala.html#20616" title="(clazz: Class[_])Boolean">isValueClass</a>(<a href="#51781" title="scala.runtime.BoxedAnyArray[_]">that</a>.<a href="#50647" title="=&gt; Class[_]">elemClass</a>)) <a href="#50651" title="(elemClass: Class[_])AnyRef">unbox</a>(<a href="#51781" title="scala.runtime.BoxedAnyArray[_]">that</a>.<a href="#50647" title="=&gt; Class[_]">elemClass</a>); 
+            <a href="#51781" title="scala.runtime.BoxedAnyArray[_]">that</a>.<a href="#50644" title="=&gt; AnyRef">unboxed</a>
+          }
+        <span title="AnyRef" class="keyword">case</span> <a title="scala.runtime.BoxedArray[_]" id="51804">that</a>: <a href="BoxedArray.scala.html#2034" title="scala.runtime.BoxedArray[_]">BoxedArray</a>[_] =&gt;
+          <a href="#50653" title="(other: AnyRef)AnyRef">adapt</a>(<a href="#51804" title="scala.runtime.BoxedArray[_]">that</a>.<a href="BoxedArray.scala.html#26152" title="=&gt; AnyRef">value</a>)
+        <span title="Array[Int]" class="keyword">case</span> <a title="Array[Int]" id="51808">that</a>: <a href="../Array.scala.html#885" title="Array[Int]">Array</a>[Int] =&gt;
+          <a href="#50651" title="(elemClass: Class[_])AnyRef">unbox</a>(classOf<span title="java.lang.Class[Int]">[</span>Int]); <a href="#51808" title="Array[Int]">that</a>
+        <span title="Array[Double]" class="keyword">case</span> <a title="Array[Double]" id="51811">that</a>: <a href="../Array.scala.html#885" title="Array[Double]">Array</a>[Double] =&gt;
+          <a href="#50651" title="(elemClass: Class[_])AnyRef">unbox</a>(classOf<span title="java.lang.Class[Double]">[</span>Double]); <a href="#51811" title="Array[Double]">that</a>
+        <span title="Array[Float]" class="keyword">case</span> <a title="Array[Float]" id="51814">that</a>: <a href="../Array.scala.html#885" title="Array[Float]">Array</a>[Float] =&gt;
+          <a href="#50651" title="(elemClass: Class[_])AnyRef">unbox</a>(classOf<span title="java.lang.Class[Float]">[</span>Float]); <a href="#51814" title="Array[Float]">that</a>
+        <span title="Array[Long]" class="keyword">case</span> <a title="Array[Long]" id="51817">that</a>: <a href="../Array.scala.html#885" title="Array[Long]">Array</a>[Long] =&gt;
+          <a href="#50651" title="(elemClass: Class[_])AnyRef">unbox</a>(classOf<span title="java.lang.Class[Long]">[</span>Long]); <a href="#51817" title="Array[Long]">that</a>
+        <span title="Array[Char]" class="keyword">case</span> <a title="Array[Char]" id="51820">that</a>: <a href="../Array.scala.html#885" title="Array[Char]">Array</a>[Char] =&gt;
+          <a href="#50651" title="(elemClass: Class[_])AnyRef">unbox</a>(classOf<span title="java.lang.Class[Char]">[</span>Char]); <a href="#51820" title="Array[Char]">that</a>
+        <span title="Array[Short]" class="keyword">case</span> <a title="Array[Short]" id="51823">that</a>: <a href="../Array.scala.html#885" title="Array[Short]">Array</a>[Short] =&gt;
+          <a href="#50651" title="(elemClass: Class[_])AnyRef">unbox</a>(classOf<span title="java.lang.Class[Short]">[</span>Short]); <a href="#51823" title="Array[Short]">that</a>
+        <span title="Array[Byte]" class="keyword">case</span> <a title="Array[Byte]" id="51826">that</a>: <a href="../Array.scala.html#885" title="Array[Byte]">Array</a>[Byte] =&gt;
+          <a href="#50651" title="(elemClass: Class[_])AnyRef">unbox</a>(classOf<span title="java.lang.Class[Byte]">[</span>Byte]); <a href="#51826" title="Array[Byte]">that</a>
+        <span title="Array[Boolean]" class="keyword">case</span> <a title="Array[Boolean]" id="51829">that</a>: <a href="../Array.scala.html#885" title="Array[Boolean]">Array</a>[Boolean] =&gt;
+          <a href="#50651" title="(elemClass: Class[_])AnyRef">unbox</a>(classOf<span title="java.lang.Class[Boolean]">[</span>Boolean]); <a href="#51829" title="Array[Boolean]">that</a>
+        <span title="AnyRef" class="keyword">case</span> _ =&gt;
+          <a href="#51777" title="AnyRef">other</a>
+      }
+    <span class="keyword">else</span>
+      <a href="#51777" title="AnyRef">other</a> <span title="AnyRef" class="keyword">match</span> {
+        <span title="AnyRef" class="keyword">case</span> <a title="scala.runtime.BoxedAnyArray[_]" id="51832">that</a>: <a href="#2013" title="scala.runtime.BoxedAnyArray[_]">BoxedAnyArray</a>[_] =&gt;
+          <span title="AnyRef" class="keyword">if</span> (<a href="#51832" title="scala.runtime.BoxedAnyArray[_]">that</a>.<a href="#50644" title="(x$1: AnyRef)Boolean">unboxed</a> ne <span title="Null(null)" class="keyword">null</span>) <a href="#51832" title="scala.runtime.BoxedAnyArray[_]">that</a>.<a href="#50644" title="=&gt; AnyRef">unboxed</a>
+          <span class="keyword">else</span> <span title="AnyRef" class="keyword">if</span> (<a href="ScalaRunTime.scala.html#1987" title="object scala.runtime.ScalaRunTime">ScalaRunTime</a>.<a href="ScalaRunTime.scala.html#20616" title="(clazz: Class[_])Boolean">isValueClass</a>(<a href="#2013" title="BoxedAnyArray.this.type" class="keyword">this</a>.<a href="#50647" title="=&gt; Class[_]">elemClass</a>)) <a href="#51832" title="scala.runtime.BoxedAnyArray[_]">that</a>.<a href="#50651" title="(elemClass: Class[_])AnyRef">unbox</a>(<a href="#2013" title="BoxedAnyArray.this.type" class="keyword">this</a>.<a href="#50647" title="=&gt; Class[_]">elemClass</a>)
+          <span class="keyword">else</span> <a href="#51832" title="scala.runtime.BoxedAnyArray[_]">that</a>.<a href="#50641" title="=&gt; Array[AnyRef]">boxed</a>
+        <span title="AnyRef" class="keyword">case</span> <a title="scala.runtime.BoxedArray[_]" id="51842">that</a>: <a href="BoxedArray.scala.html#2034" title="scala.runtime.BoxedArray[_]">BoxedArray</a>[_] =&gt;
+          <a href="#50653" title="(other: AnyRef)AnyRef">adapt</a>(<a href="#51842" title="scala.runtime.BoxedArray[_]">that</a>.<a href="BoxedArray.scala.html#26152" title="=&gt; AnyRef">value</a>)
+        <span title="AnyRef" class="keyword">case</span> _ =&gt;
+          <a href="#51777" title="AnyRef">other</a>
+      }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(src: AnyRef,from: Int,to: Int,len: Int)Unit" id="50654">copyFrom</a>(<a title="AnyRef" id="51846">src</a>: <span title="AnyRef">AnyRef</span>, <a title="Int" id="51847">from</a>: <span title="Int">Int</span>, <a title="Int" id="51848">to</a>: <span title="Int">Int</span>, <a title="Int" id="51849">len</a>: <span title="Int">Int</span>) {
+    <span class="keyword">val</span> <a title="AnyRef" id="51856">src1</a> = <a href="#50653" title="(other: AnyRef)AnyRef">adapt</a>(<a href="#51846" title="AnyRef">src</a>)
+    <a href="../Array.scala.html#886" title="object Array">Array</a>.<a href="../Array.scala.html#29214" title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">copy</a>(<a href="#51856" title="AnyRef">src1</a>, <a href="#51847" title="Int">from</a>, <span title="AnyRef" class="keyword">if</span> (<a href="#50644" title="(x$1: AnyRef)Boolean">unboxed</a> ne <span title="Null(null)" class="keyword">null</span>) <a href="#50644" title="=&gt; AnyRef">unboxed</a> <span class="keyword">else</span> <a href="#50641" title="=&gt; Array[AnyRef]">boxed</a>, <a href="#51848" title="Int">to</a>, <a href="#51849" title="Int">len</a>)
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(from: Int,dest: AnyRef,to: Int,len: Int)Unit" id="50655">copyTo</a>(<a title="Int" id="51863">from</a>: <span title="Int">Int</span>, <a title="AnyRef" id="51864">dest</a>: <span title="AnyRef">AnyRef</span>, <a title="Int" id="51865">to</a>: <span title="Int">Int</span>, <a title="Int" id="51866">len</a>: <span title="Int">Int</span>) {
+    <span class="keyword">var</span> <a title="AnyRef" id="51873">dest1</a> = <a href="#50653" title="(other: AnyRef)AnyRef">adapt</a>(<a href="#51864" title="AnyRef">dest</a>)
+    <a href="../Array.scala.html#886" title="object Array">Array</a>.<a href="../Array.scala.html#29214" title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">copy</a>(<span title="AnyRef" class="keyword">if</span> (<a href="#50644" title="(x$1: AnyRef)Boolean">unboxed</a> ne <span title="Null(null)" class="keyword">null</span>) <a href="#50644" title="=&gt; AnyRef">unboxed</a> <span class="keyword">else</span> <a href="#50641" title="=&gt; Array[AnyRef]">boxed</a>, <a href="#51863" title="Int">from</a>, <a href="#51873" title="AnyRef">dest1</a>, <a href="#51865" title="Int">to</a>, <a href="#51866" title="Int">len</a>)
+  }
+}
+
+        </pre>
+    </body>
+</html>

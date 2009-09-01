@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/generic/MutableVectorTemplate.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: MutableVectorTemplate.scala 18387 2009-07-24 15:28:37Z odersky $
+
+
+<span class="keyword">package</span> scala.collection.generic
+<span class="keyword">import</span> scala.collection._
+
+/** A subtrait of collection.Vector which represents sequences
+ *  that can be mutated.
+ */
+<span class="keyword">trait</span> <a title="trait MutableVectorTemplate[A, +This &lt;: scala.collection.generic.MutableVectorTemplate[A,This] with scala.collection.mutable.Vector[A]] extends java.lang.Object with scala.collection.generic.VectorTemplate[A,This] with ScalaObject" id="10985">MutableVectorTemplate</a>[<a title="&gt;: Nothing &lt;: Any" id="15698">A</a>, +<a title="&gt;: Nothing &lt;: scala.collection.generic.MutableVectorTemplate[A,This] with scala.collection.mutable.Vector[A]" id="15699">This</a> &lt;: <a id="1">MutableVectorTemplate</a>[A, This] <span class="keyword">with</span> mutable.Vector[A]] <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="VectorTemplate.scala.html#10595" title="scala.collection.generic.VectorTemplate[A,This]">VectorTemplate</a>[A, This] { self =&gt;
+
+  <span class="keyword">def</span> <a title="(idx: Int,elem: A)Unit" id="17832">update</a>(<a title="Int" id="26398">idx</a>: <span title="Int">Int</span>, <a title="A" id="26399">elem</a>: <a href="#15698" title="A">A</a>)
+
+  /** Creates a view of this iterable @see Iterable.View
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; &lt;refinement&gt; extends java.lang.Object with scala.collection.generic.MutableVectorView[A,This]" id="17833">view</a> = <a href="#164673" title="java.lang.Object with scala.collection.generic.MutableVectorView[A,This]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with scala.collection.generic.MutableVectorView[A,This]" id="164673">MutableVectorView</a>[A, This] { 
+    <span class="keyword">protected</span> <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="This" id="164690">underlying</a> = <a href="#10985" title="MutableVectorTemplate.this.type">self</a>.<a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Iterator[A]" id="164691">iterator</a> = <a href="#10985" title="MutableVectorTemplate.this.type">self</a>.<a href="VectorTemplate.scala.html#17750" title="=&gt; Iterator[A]">iterator</a>
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Int" id="164692">length</a> = <a href="#10985" title="MutableVectorTemplate.this.type">self</a>.<a href="SequenceTemplate.scala.html#17338" title="=&gt; Int">length</a>
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="(idx: Int)A" id="164693">apply</a>(<a title="Int" id="164755">idx</a>: <span title="Int">Int</span>) = <a href="#10985" title="MutableVectorTemplate.this.type">self</a>.<a href="SequenceTemplate.scala.html#17339" title="(idx: Int)A">apply</a>(<a href="#164755" title="Int">idx</a>)
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="(idx: Int,elem: A)Unit" id="164694">update</a>(<a title="Int" id="164762">idx</a>: <span title="Int">Int</span>, <a title="A" id="164763">elem</a>: <a href="#15698" title="A">A</a>) = <a href="#10985" title="MutableVectorTemplate.this.type">self</a>.<a href="#17832" title="(idx: Int,elem: A)Unit">update</a>(<a href="#164762" title="Int">idx</a>, <a href="#164763" title="A">elem</a>)
+  }
+
+  /** A sub-sequence view  starting at index `from`
+   *  and extending up to (but not including) index `until`.
+   *
+   *  @param from   The index of the first element of the slice
+   *  @param until  The index of the element following the slice
+   *  @note  The difference between `view` and `slice` is that `view` produces
+   *         a view of the current sequence, whereas `slice` produces a new sequence.
+   *
+   *  @note view(from, to)  is equivalent to view.slice(from, to)
+   */ 
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(from: Int,until: Int)scala.collection.generic.MutableVectorView[A,This]" id="17834">view</a>(<a title="Int" id="164799">from</a>: <span title="Int">Int</span>, <a title="Int" id="164800">until</a>: <span title="Int">Int</span>) = <a href="#17833" title="=&gt; &lt;refinement&gt; extends java.lang.Object with scala.collection.generic.MutableVectorView[A,This]">view</a>.<a href="TraversableViewTemplate.scala.html#25982" title="(from: Int,until: Int)scala.collection.generic.MutableVectorView[A,This]">slice</a>(<a href="#164799" title="Int">from</a>, <a href="#164800" title="Int">until</a>)
+}
+
+        </pre>
+    </body>
+</html>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/xml/TextBuffer.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: TextBuffer.scala 16884 2009-01-09 16:52:09Z cunei $
+
+
+<span class="keyword">package</span> scala.xml
+
+
+<span class="keyword">object</span> <a title="object scala.xml.TextBuffer" id="8682">TextBuffer</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  <span class="keyword">def</span> <a title="(str: String)scala.xml.TextBuffer" id="145876">fromString</a>(<a title="String" id="145877">str</a>: <a title="String" id="1603">String</a>): <a href="#8681" title="scala.xml.TextBuffer">TextBuffer</a> = <span title="scala.xml.TextBuffer" class="keyword">new</span> <a href="#8681" title="scala.xml.TextBuffer">TextBuffer</a>().<a href="#145889" title="(cs: Seq[Char])scala.xml.TextBuffer">append</a>(<a href="../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString">str</a>)
+}
+
+/** The class &lt;code&gt;TextBuffer&lt;/code&gt; is for creating text nodes without
+ *  surplus whitespace. All occurrences of one or more whitespace in strings
+ *  appended with the &lt;code&gt;append&lt;/code&gt; method will be replaced by a single
+ *  space character, and leading and trailing space will be removed completely.
+ */
+<span class="keyword">class</span> <a title="class TextBuffer extends java.lang.Object with ScalaObject" id="8681">TextBuffer</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+
+  <span class="keyword">val</span> <a title="StringBuilder" id="145882">sb</a> = <a href="../collection/mutable/StringBuilder.scala.html#23348" title="()StringBuilder" class="keyword">new</a> <a href="../package.scala.html#14791" title="StringBuilder">StringBuilder</a>()
+  <span class="keyword">var</span> <a title="Boolean" id="145885">ws</a> = <span title="Boolean(true)" class="keyword">true</span>
+
+  <span class="keyword">def</span> <a title="=&gt; Any" id="145887">appendSpace</a>         = <span title="Any" class="keyword">if</span>(<a title="=&gt; Boolean" id="2203">!</a><a href="#145885" title="=&gt; Boolean">ws</a>) { <a href="#145885" title="(x$1: Boolean)Unit">ws</a> = <span title="Boolean(true)" class="keyword">true</span>;  <a href="#145882" title="=&gt; StringBuilder">sb</a>.<a href="../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<span title="Char(' ')" class="char">' '</span>) } <span class="keyword">else</span> <span title="Unit">{</span>}
+  <span class="keyword">def</span> <a title="(c: Char)StringBuilder" id="145888">appendChar</a>(<a title="Char" id="152211">c</a>: <a title="Char" id="2161">Char</a>) =         { <a href="#145885" title="(x$1: Boolean)Unit">ws</a> = <span title="Boolean(false)" class="keyword">false</span>; <a href="#145882" title="=&gt; StringBuilder">sb</a>.<a href="../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>( <a href="#152211" title="Char">c</a> ) }
+
+  /** Appends this string to the text buffer, trimming whitespaces as needed.
+   *
+   *  @param  cs ...
+   *  @return ...
+   */
+  <span class="keyword">def</span> <a title="(cs: Seq[Char])scala.xml.TextBuffer" id="145889">append</a>(<a title="Seq[Char]" id="152161">cs</a>: <a href="../collection/Sequence.scala.html#4346" title="Seq[Char]">Seq</a>[Char]): <a href="#8681" title="scala.xml.TextBuffer">TextBuffer</a> = {
+    <span class="keyword">for</span> (<a title="Char" id="152232">c</a> &lt;- <a href="../collection/generic/IterableTemplate.scala.html#17287" title="(f: (Char) =&gt; Any)Unit">cs</a>)
+      <span title="Any" class="keyword">if</span> (<a href="Utility.scala.html#8724" title="object scala.xml.Utility">Utility</a>.<a href="parsing/TokenTests.scala.html#26600" title="(ch: Char)Boolean">isSpace</a>(<a href="#152232" title="Char">c</a>)) <a href="#145887" title="=&gt; Any">appendSpace</a> <span class="keyword">else</span> <a href="#145888" title="(c: Char)StringBuilder">appendChar</a>(<a href="#152232" title="Char">c</a>)
+    <a href="#8681" title="scala.xml.TextBuffer" class="keyword">this</a>
+  }
+
+  /** Returns an empty sequence if text is only whitespace.
+   *
+   *  @return the text without whitespaces.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Seq[scala.xml.Text]" id="145890">toText</a>: <a href="../collection/Sequence.scala.html#4346" title="Seq[scala.xml.Text]">Seq</a>[Text] = {
+    <span class="keyword">var</span> <a title="Int" id="152244">len</a> = <a href="#145882" title="=&gt; StringBuilder">sb</a>.<a href="../collection/mutable/StringBuilder.scala.html#23352" title="=&gt; Int">length</a> /* invariant */
+    <span title="Unit" class="keyword">if</span> (<a href="#152244" title="(x$1: Int)Boolean">len</a> == <span title="Int(0)" class="int">0</span>) <span title="Nothing" class="keyword">return</span> <a href="../collection/immutable/List.scala.html#9259" title="object Nil">Nil</a>
+
+    <span title="Unit" class="keyword">if</span> (<a href="Utility.scala.html#8724" title="object scala.xml.Utility">Utility</a>.<a href="parsing/TokenTests.scala.html#26600" title="(ch: Char)Boolean">isSpace</a>(<a href="#145882" title="=&gt; StringBuilder">sb</a>.<a href="../collection/mutable/StringBuilder.scala.html#23359" title="(index: Int)Char">charAt</a>(<a href="#152244" title="(x$1: Int)Int">len</a> - <span title="Int(1)" class="int">1</span>))) {
+      <a href="#152244" title="Int">len</a> -= <span title="Int(1)" class="int">1</span>
+      <a href="#145882" title="=&gt; StringBuilder">sb</a>.<a href="../collection/mutable/StringBuilder.scala.html#23353" title="(n: Int)Unit">length</a> = <a href="#152244" title="Int">len</a>
+    }
+    <span title="Unit" class="keyword">if</span> (<a href="#152244" title="(x$1: Int)Boolean">len</a> == <span title="Int(0)" class="int">0</span>) <span title="Nothing" class="keyword">return</span> <a href="../collection/immutable/List.scala.html#9259" title="object Nil">Nil</a>
+
+    <a href="../collection/immutable/List.scala.html#17535" title="(xs: scala.xml.Text*)List[scala.xml.Text]">List</a>(<a href="Text.scala.html#26684" title="(_data: String)scala.xml.Text">Text</a>(<a href="#145882" title="=&gt; StringBuilder">sb</a>.<a href="../collection/mutable/StringBuilder.scala.html#23409" title="()String">toString</a>()))
+  }
+
+}
+
+        </pre>
+    </body>
+</html>

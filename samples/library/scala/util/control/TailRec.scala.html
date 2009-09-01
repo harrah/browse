@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/util/control/TailRec.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+<span class="keyword">package</span> scala.util.control
+
+<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class TailRec[+A] extends java.lang.Object with ScalaObject" id="12283">TailRec</a>[+<a title="&gt;: Nothing &lt;: Any" id="15730">A</a>] 
+
+<a href="#12283" title="scala.util.control.TailRec[A]" class="keyword">object</a> <a title="object scala.util.control.TailRec" id="12284">TailRec</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+
+  case <span class="keyword">class</span> <a title="class Call[A] extends scala.util.control.TailRec[A] with ScalaObject with Product" id="210636">Call</a>[<a title="&gt;: Nothing &lt;: Any" id="210638">A</a>]<a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="() =&gt; scala.util.control.TailRec[A]" id="210819">rest</a>: () =&gt; TailRec[A]) <span class="keyword">extends</span> <a href="#12283" title="scala.util.control.TailRec[A]">TailRec</a>[A]
+  case <span class="keyword">class</span> <a title="class Done[A] extends scala.util.control.TailRec[A] with ScalaObject with Product" id="210714">Done</a>[<a title="&gt;: Nothing &lt;: Any" id="210716">A</a>]<a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="A" id="210810">result</a>: <a href="#210716" title="A">A</a>) <span class="keyword">extends</span> <a href="#12283" title="scala.util.control.TailRec[A]">TailRec</a>[A]
+
+  <span class="keyword">def</span> <a title="[A](rest: =&gt; scala.util.control.TailRec[A])scala.util.control.TailRec.Call[A]" id="210586">tailcall</a>[<a title="&gt;: Nothing &lt;: Any" id="210588">A</a>](<a title="=&gt; scala.util.control.TailRec[A]" id="210753">rest</a>: =&gt; TailRec[A]) = <span title="scala.util.control.TailRec.Call[A]" class="keyword">new</span> <a href="#210636" title="scala.util.control.TailRec.Call[A]">Call</a>(() =&gt; <a href="#210753" title="=&gt; scala.util.control.TailRec[A]">rest</a>)
+  <span class="keyword">def</span> <a title="[A](result: A)scala.util.control.TailRec.Done[A]" id="210589">done</a>    [<a title="&gt;: Nothing &lt;: Any" id="210591">A</a>](<a title="A" id="210763">result</a>: <a href="#210591" title="A">A</a>) = <span title="scala.util.control.TailRec.Done[A]" class="keyword">new</span> <a href="#210714" title="scala.util.control.TailRec.Done[A]">Done</a>(<a href="#210763" title="A">result</a>)
+  <span class="keyword">def</span> <a title="[A](body: scala.util.control.TailRec[A])A" id="210592">trampoline</a>[<a title="&gt;: Nothing &lt;: Any" id="210594">A</a>](<a title="scala.util.control.TailRec[A]" id="210772">body</a>: <a href="#12283" title="scala.util.control.TailRec[A]">TailRec</a>[A]): <a href="#210594" title="A">A</a> = {
+    <span class="keyword">def</span> <a title="(body: scala.util.control.TailRec[A])A" id="210775">loop</a>(<a title="scala.util.control.TailRec[A]" id="210776">body</a>: <a href="#12283" title="scala.util.control.TailRec[A]">TailRec</a>[A]): <a href="#210594" title="A">A</a> = <a href="#210776" title="scala.util.control.TailRec[A]">body</a> <span title="A" class="keyword">match</span> {
+      <span title="A" class="keyword">case</span> Call(<a title="() =&gt; scala.util.control.TailRec[A]" id="210778">rest</a>) =&gt; <a href="#210775" title="(body: scala.util.control.TailRec[A])A">loop</a>(<a href="../../Function0.scala.html#34096" title="()scala.util.control.TailRec[A]">rest</a>())
+      <span title="A" class="keyword">case</span> Done(<a title="A" id="210786">result</a>) =&gt; <a href="#210786" title="A">result</a>
+    }
+    <a href="#210775" title="(body: scala.util.control.TailRec[A])A">loop</a>(<a href="#210772" title="scala.util.control.TailRec[A]">body</a>)
+  }
+  <span class="keyword">def</span> <a title="[A](body: scala.util.control.TailRec[A])A" id="210595">loop</a>[<a title="&gt;: Nothing &lt;: Any" id="210597">A</a>](<a title="scala.util.control.TailRec[A]" id="210791">body</a>: <a href="#12283" title="scala.util.control.TailRec[A]">TailRec</a>[A]): <a href="#210597" title="A">A</a> = <a href="#210791" title="scala.util.control.TailRec[A]">body</a> <span title="A" class="keyword">match</span> {
+    <span title="A" class="keyword">case</span> Call(<a title="() =&gt; scala.util.control.TailRec[A]" id="210795">rest</a>) =&gt; <a href="#210595" title="[A](body: scala.util.control.TailRec[A])A">loop</a><span title="(body: scala.util.control.TailRec[A])A">[</span><a href="#210597" title="A">A</a>](<a href="../../Function0.scala.html#34096" title="()scala.util.control.TailRec[A]">rest</a>())
+    <span title="A" class="keyword">case</span> Done(<a title="A" id="210804">result</a>) =&gt; <a href="#210804" title="A">result</a>
+  }
+}
+
+
+        </pre>
+    </body>
+</html>

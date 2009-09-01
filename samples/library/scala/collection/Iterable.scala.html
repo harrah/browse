@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/Iterable.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: Iterable.scala 15188 2008-05-24 15:01:02Z stepancheg $
+
+<span class="keyword">package</span> scala.collection
+
+<span class="keyword">import</span> scala.util.control.Breaks._
+// import immutable.Stream
+<span class="keyword">import</span> generic._
+
+/** &lt;p&gt;
+ *    A template trait for iterable collections.
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    Collection classes mixing in this trait provide a method
+ *    &lt;code&gt;iterator&lt;/code&gt; which returns an iterator over all the
+ *    elements contained in the collection. They also provide a method
+ *    &lt;code&gt;newBuilder&lt;/code&gt; which creates a builder for collections
+ *    of the same kind.
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    This trait implements &lt;code&gt;Traversable&lt;/code&gt;'s &lt;code&gt;foreach&lt;/code&gt;
+ *    method by stepping through all elements. Subclasses of &lt;code&gt;Iterable&lt;/code&gt;
+ *    should re-implement &lt;code&gt;foreach&lt;/code&gt; with something more efficient,
+ *    if possible.
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    This trait adds methods &lt;code&gt;iterator&lt;/code&gt;, &lt;code&gt;zip&lt;/code&gt;,
+ *    &lt;code&gt;zipAll&lt;/code&gt;, &lt;code&gt;zipWithIndex&lt;/code&gt;, &lt;code&gt;sameElements&lt;/code&gt;,
+ *    &lt;code&gt;takeRight&lt;/code&gt;, &lt;code&gt;dropRight&lt;/code&gt; to the methods inherited
+ *    from trait &lt;code&gt;Traversable&lt;/code&gt;.
+ *  &lt;/p&gt;
+ *
+ *  @author Martin Odersky
+ *  @version 2.8
+ */
+<span class="keyword">trait</span> <a title="trait Iterable[+A] extends java.lang.Object with Traversable[A] with scala.collection.generic.TraversableClass[A,Iterable] with scala.collection.generic.IterableTemplate[A,Iterable[A]] with ScalaObject" id="4460">Iterable</a>[+<a title="&gt;: Nothing &lt;: Any" id="14092">A</a>] <a href="../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="Traversable.scala.html#4436" title="Traversable[A]">Traversable</a>[A] 
+                      <span class="keyword">with</span> <a href="generic/TraversableClass.scala.html#10655" title="scala.collection.generic.TraversableClass[A,Iterable]">TraversableClass</a>[A, Iterable]
+                      <span class="keyword">with</span> <a href="generic/IterableTemplate.scala.html#10949" title="scala.collection.generic.IterableTemplate[A,Iterable[A]]">IterableTemplate</a>[A, Iterable[A]] {
+   <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; scala.collection.generic.Companion[Iterable]" id="17259">companion</a>: <a href="generic/Companion.scala.html#10781" title="scala.collection.generic.Companion[Iterable]">Companion</a>[Iterable] = <a href="#4461" title="object Iterable">Iterable</a>
+ 
+  /* The following methods are inherited from trait IterableTemplate
+   *
+  override def iterator: Iterator[A]
+  override def takeRight(n: Int): Iterable[A]
+  override def dropRight(n: Int): Iterable[A]
+  override def sameElements[B &gt;: A](that: Iterable[B]): Boolean
+  override def view
+  override def view(from: Int, until: Int)
+  */
+
+}
+                                         
+/** Factory methods and utilities for instances of type Traversable */
+<span class="keyword">object</span> <a title="object Iterable" id="4461">Iterable</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="generic/TraversableFactory.scala.html#10784" title="scala.collection.generic.TraversableFactory[Iterable]">TraversableFactory</a>[Iterable] {
+  
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="[A]scala.collection.generic.BuilderFactory[A,Iterable[A],scala.collection.Iterable.Coll]" id="22057">builderFactory</a>[<a title="&gt;: Nothing &lt;: Any" id="22059">A</a>]: <a href="generic/BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[A,Iterable[A],scala.collection.Iterable.Coll]">BuilderFactory</a>[A, Iterable[A], Coll] = <span title="scala.collection.Iterable.VirtualBuilderFactory[A]" class="keyword">new</span> <a href="generic/TraversableFactory.scala.html#17476" title="scala.collection.Iterable.VirtualBuilderFactory[A]">VirtualBuilderFactory</a>[A]
+  <span class="keyword">def</span> <a title="[A]scala.collection.generic.Builder[A,Iterable[A]]" id="22060">newBuilder</a>[<a title="&gt;: Nothing &lt;: Any" id="22062">A</a>]: <a href="generic/Builder.scala.html#10028" title="scala.collection.generic.Builder[A,Iterable[A]]">Builder</a>[A, Iterable[A]] = immutable.<a href="immutable/Iterable.scala.html#9403" title="object scala.collection.immutable.Iterable">Iterable</a>.<a href="immutable/Iterable.scala.html#36463" title="[A]scala.collection.generic.Builder[A,scala.collection.immutable.Iterable[A]]">newBuilder</a><span title="scala.collection.generic.Builder[A,scala.collection.immutable.Iterable[A]]">[</span><a href="#22062" title="A">A</a>]
+  
+  /** The minimum element of a non-empty sequence of ordered elements */
+  @deprecated(<span class="string">&quot;use seq.min instead&quot;</span>)
+  <span class="keyword">def</span> <a title="[A](seq: Iterable[A])(implicit ord: Ordering[A])A" id="22063">min</a>[<a title="&gt;: Nothing &lt;: Any" id="22065">A</a>](<a title="Iterable[A]" id="132222">seq</a>: <a href="#4460" title="Iterable[A]">Iterable</a>[A])(<span class="keyword">implicit</span> <a title="Ordering[A]" id="132223">ord</a>: <a href="../Ordering.scala.html#807" title="Ordering[A]">Ordering</a>[A]): <a href="#22065" title="A">A</a> = <a href="#132222" title="Iterable[A]">seq</a>.<a href="generic/TraversableTemplate.scala.html#17144" title="(implicit cmp: Ordering[A])A">min</a>
+
+  /** The maximum element of a non-empty sequence of ordered elements */
+  @deprecated(<span class="string">&quot;use seq.max instead&quot;</span>)
+  <span class="keyword">def</span> <a title="[A](seq: Iterable[A])(implicit ord: Ordering[A])A" id="22066">max</a>[<a title="&gt;: Nothing &lt;: Any" id="22068">A</a>](<a title="Iterable[A]" id="132241">seq</a>: <a href="#4460" title="Iterable[A]">Iterable</a>[A])(<span class="keyword">implicit</span> <a title="Ordering[A]" id="132242">ord</a>: <a href="../Ordering.scala.html#807" title="Ordering[A]">Ordering</a>[A]): <a href="#22068" title="A">A</a> = <a href="#132241" title="Iterable[A]">seq</a>.<a href="generic/TraversableTemplate.scala.html#17147" title="(implicit cmp: Ordering[A])A">max</a>
+
+  @deprecated(<span class="string">&quot;use View instead&quot;</span>) <span class="keyword">type</span> <a title="[A]scala.collection.generic.IterableView[A,scala.collection.Iterable.Coll]" id="22069">Projection</a>[<a title="&gt;: Nothing &lt;: Any" id="22070">A</a>] = <a href="generic/IterableView.scala.html#10241" title="scala.collection.generic.IterableView[A,scala.collection.Iterable.Coll]">IterableView</a>[A, Coll]
+}
+
+        </pre>
+    </body>
+</html>

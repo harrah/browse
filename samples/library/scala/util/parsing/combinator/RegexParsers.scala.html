@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/util/parsing/combinator/RegexParsers.scala</title>
+        <script type="text/javascript" src="../../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2006-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: RegexParsers.scala 16893 2009-01-13 13:09:22Z cunei $
+
+<span class="keyword">package</span> scala.util.parsing.combinator
+
+<span class="keyword">import</span> java.util.regex.Pattern
+<span class="keyword">import</span> scala.util.matching.Regex
+<span class="keyword">import</span> scala.util.parsing.input._
+<span class="keyword">import</span> scala.collection.immutable.PagedSeq
+
+<span class="keyword">trait</span> <a title="trait RegexParsers extends java.lang.Object with scala.util.parsing.combinator.Parsers with ScalaObject" id="12511">RegexParsers</a> <a href="../../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="Parsers.scala.html#12544" title="scala.util.parsing.combinator.Parsers">Parsers</a> {
+
+  <span class="keyword">type</span> <a title="Char" id="168259">Elem</a> = <a title="Char" id="2161">Char</a>
+
+  <span class="keyword">protected</span> <span class="keyword">val</span> <a title="scala.util.matching.Regex" id="168260">whiteSpace</a> = <a href="../../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;&quot;&quot;\s+&quot;&quot;&quot;</a>.<a href="../../../runtime/RichString.scala.html#18051" title="=&gt; scala.util.matching.Regex">r</a>
+
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="168262">skipWhitespace</a> = <a href="#168260" title="=&gt; scala.util.matching.Regex">whiteSpace</a>.<a href="../../matching/Regex.scala.html#59793" title="()String">toString</a>.<a title="(x$1: Int)Boolean" id="2958">length</a> &gt; <span title="Int(0)" class="int">0</span>
+
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(source: java.lang.CharSequence,offset: Int)Int" id="168263">handleWhiteSpace</a>(<a title="java.lang.CharSequence" id="268266">source</a>: java.lang.<span title="java.lang.CharSequence">CharSequence</span>, <a title="Int" id="268267">offset</a>: <span title="Int">Int</span>): <span title="Int">Int</span> =
+    <span title="Int" class="keyword">if</span> (<a href="#168262" title="=&gt; Boolean">skipWhitespace</a>)
+      (<a href="../../matching/Regex.scala.html#59789" title="(source: java.lang.CharSequence)Option[scala.util.matching.Regex.Match]">whiteSpace</a> findPrefixMatchOf (<a href="#268266" title="java.lang.CharSequence">source</a>.<span title="(x$1: Int,x$2: Int)java.lang.CharSequence">subSequence</span>(<a href="#268267" title="Int">offset</a>, <a href="#268266" title="java.lang.CharSequence">source</a>.<span title="()Int">length</span>))) <span title="Int" class="keyword">match</span> {
+        <span title="Int" class="keyword">case</span> Some(<a title="scala.util.matching.Regex.Match" id="268276">matched</a>) =&gt; <a href="#268267" title="(x$1: Int)Int">offset</a> + <a href="#268276" title="scala.util.matching.Regex.Match">matched</a>.<a href="../../matching/Regex.scala.html#60250" title="=&gt; Int">end</a>
+        <span title="Int" class="keyword">case</span> <a href="../../../Option.scala.html#463" title="object None">None</a> =&gt; <a href="#268267" title="Int">offset</a>
+      }
+    <span class="keyword">else</span> 
+      <a href="#268267" title="Int">offset</a>
+
+  /** A parser that matches a literal string */
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="implicit scala.util.parsing.combinator.RegexParsers.literal : (s: String)RegexParsers.this.Parser[String]" id="168264">literal</a>(<a title="String" id="168304">s</a>: <a title="String" id="1603">String</a>): <a href="Parsers.scala.html#57397" title="RegexParsers.this.Parser[String]">Parser</a>[String] = <a href="#268308" title="RegexParsers.this.Parser[String]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends RegexParsers.this.Parser[String]" id="268308">Parser</a>[String] {
+    <span class="keyword">def</span> <a title="(in: RegexParsers.this.Input)RegexParsers.this.ParseResult[String]" id="268310">apply</a>(<a title="RegexParsers.this.Input" id="268314">in</a>: <a href="../input/Reader.scala.html#9440" title="RegexParsers.this.Input">Input</a>) = {
+      <span class="keyword">val</span> <a title="java.lang.CharSequence" id="268324">source</a> = <a href="#268314" title="RegexParsers.this.Input">in</a>.<a href="../input/Reader.scala.html#21888" title="=&gt; java.lang.CharSequence">source</a>
+      <span class="keyword">val</span> <a title="Int" id="268325">offset</a> = <a href="#268314" title="RegexParsers.this.Input">in</a>.<a href="../input/Reader.scala.html#21889" title="=&gt; Int">offset</a>
+      <span class="keyword">val</span> <a title="Int" id="268326">start</a> = <a href="#168263" title="(source: java.lang.CharSequence,offset: Int)Int">handleWhiteSpace</a>(<a href="#268324" title="java.lang.CharSequence">source</a>, <a href="#268325" title="Int">offset</a>)
+      <span class="keyword">var</span> <a title="Int" id="268327">i</a> = <span title="Int(0)" class="int">0</span>
+      <span class="keyword">var</span> <a title="Int" id="268328">j</a> = <a href="#268326" title="Int">start</a>
+      <span title="Unit" class="keyword">while</span> (<a href="#268327" title="(x$1: Int)Boolean">i</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <a href="#168304" title="String">s</a>.<span title="()Int">length</span> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <a href="#268328" title="(x$1: Int)Boolean">j</a> &lt; <a href="#268324" title="java.lang.CharSequence">source</a>.<span title="()Int">length</span> &amp;&amp; <a href="#168304" title="String">s</a>.<a title="(x$1: Int)Char" id="6906">charAt</a><a title="(x$1: Char)Boolean" id="2714">(</a><a href="#268327" title="Int">i</a>) == <a href="#268324" title="java.lang.CharSequence">source</a>.<a title="(x$1: Int)Char" id="18001">charAt</a>(<a href="#268328" title="Int">j</a>)) <a href="#268329" title="()Unit">{</a>
+        <a href="#268327" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+        <a href="#268328" title="Int">j</a> += <span title="Int(1)" class="int">1</span>
+      }
+      <span title="RegexParsers.this.ParseResult[String]" class="keyword">if</span> (<a href="#268327" title="(x$1: Int)Boolean" id="2950">i</a> == <a href="#168304" title="String">s</a>.<span title="()Int">length</span>)
+        <a href="Parsers.scala.html#124669" title="(result: java.lang.String,next: RegexParsers.this.Input)RegexParsers.this.Success[java.lang.String]">Success</a>(<a href="#268324" title="java.lang.CharSequence">source</a>.<span title="(x$1: Int,x$2: Int)java.lang.CharSequence">subSequence</span>(<a href="#268326" title="Int">start</a>, <a href="#268328" title="Int">j</a>).<span title="()java.lang.String">toString</span>, <a href="#268314" title="RegexParsers.this.Input">in</a>.<a href="../input/Reader.scala.html#21892" title="(n: Int)scala.util.parsing.input.Reader[RegexParsers.this.Elem]">drop</a>(<a href="#268328" title="(x$1: Int)Int">j</a> - <a href="#268325" title="Int">offset</a>))
+      <span class="keyword">else</span> 
+        <a href="Parsers.scala.html#84387" title="(msg: String,next: RegexParsers.this.Input)RegexParsers.this.Failure">Failure</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;`&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#168304" title="String">s</a><span title="(x$1: Any)java.lang.String">+</span><span title="java.lang.String(&quot;' expected but `&quot;)" class="string">&quot;' expected but `&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#268314" title="RegexParsers.this.Input">in</a>.<a href="../input/Reader.scala.html#21890" title="=&gt; RegexParsers.this.Elem">first</a>+<span title="java.lang.String(&quot;' found&quot;)" class="string">&quot;' found&quot;</span>, <a href="#268314" title="RegexParsers.this.Input">in</a>.<a href="../input/Reader.scala.html#21892" title="(n: Int)scala.util.parsing.input.Reader[RegexParsers.this.Elem]">drop</a>(<a href="#268326" title="(x$1: Int)Int">start</a> - <a href="#268325" title="Int">offset</a>))
+    }
+  }
+
+  /** A parser that matches a regex string */
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="implicit scala.util.parsing.combinator.RegexParsers.regex : (r: scala.util.matching.Regex)RegexParsers.this.Parser[String]" id="168265">regex</a>(<a title="scala.util.matching.Regex" id="168302">r</a>: <a href="../../matching/Regex.scala.html#12912" title="scala.util.matching.Regex">Regex</a>): <a href="Parsers.scala.html#57397" title="RegexParsers.this.Parser[String]">Parser</a>[String] = <a href="#268526" title="RegexParsers.this.Parser[String]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends RegexParsers.this.Parser[String]" id="268526">Parser</a>[String] {
+    <span class="keyword">def</span> <a title="(in: RegexParsers.this.Input)RegexParsers.this.ParseResult[String]" id="268528">apply</a>(<a title="RegexParsers.this.Input" id="268532">in</a>: <a href="../input/Reader.scala.html#9440" title="RegexParsers.this.Input">Input</a>) = {
+      <span class="keyword">val</span> <a title="java.lang.CharSequence" id="268542">source</a> = <a href="#268532" title="RegexParsers.this.Input">in</a>.<a href="../input/Reader.scala.html#21888" title="=&gt; java.lang.CharSequence">source</a>
+      <span class="keyword">val</span> <a title="Int" id="268543">offset</a> = <a href="#268532" title="RegexParsers.this.Input">in</a>.<a href="../input/Reader.scala.html#21889" title="=&gt; Int">offset</a>
+      <span class="keyword">val</span> <a title="Int" id="268544">start</a> = <a href="#168263" title="(source: java.lang.CharSequence,offset: Int)Int">handleWhiteSpace</a>(<a href="#268542" title="java.lang.CharSequence">source</a>, <a href="#268543" title="Int">offset</a>)
+      (<a href="../../matching/Regex.scala.html#59789" title="(source: java.lang.CharSequence)Option[scala.util.matching.Regex.Match]">r</a> findPrefixMatchOf (<a href="#268542" title="java.lang.CharSequence">source</a>.<span title="(x$1: Int,x$2: Int)java.lang.CharSequence">subSequence</span>(<a href="#268544" title="Int">start</a>, <a href="#268542" title="java.lang.CharSequence">source</a>.<span title="()Int">length</span>))) <span title="RegexParsers.this.ParseResult[String]" class="keyword">match</span> {
+        <span title="RegexParsers.this.Success[java.lang.String]" class="keyword">case</span> Some(<a title="scala.util.matching.Regex.Match" id="268554">matched</a>) =&gt;
+          <a href="Parsers.scala.html#124669" title="(result: java.lang.String,next: RegexParsers.this.Input)RegexParsers.this.Success[java.lang.String]">Success</a>(<a href="#268542" title="java.lang.CharSequence">source</a>.<span title="(x$1: Int,x$2: Int)java.lang.CharSequence">subSequence</span>(<a href="#268544" title="Int">start</a>, <a href="#268544" title="(x$1: Int)Int">start</a> + <a href="#268554" title="scala.util.matching.Regex.Match">matched</a>.<a href="../../matching/Regex.scala.html#60250" title="=&gt; Int">end</a>).<span title="()java.lang.String">toString</span>, 
+                  <a href="#268532" title="RegexParsers.this.Input">in</a>.<a href="../input/Reader.scala.html#21892" title="(n: Int)scala.util.parsing.input.Reader[RegexParsers.this.Elem]">drop</a>(<a href="#268544" title="(x$1: Int)Int">start</a> <span title="(x$1: Int)Int">+</span> <a href="#268554" title="scala.util.matching.Regex.Match">matched</a>.<a href="../../matching/Regex.scala.html#60250" title="=&gt; Int">end</a> - <a href="#268543" title="Int">offset</a>))
+        <span title="RegexParsers.this.Failure" class="keyword">case</span> <a href="../../../Option.scala.html#463" title="object None">None</a> =&gt;
+          <a href="Parsers.scala.html#84387" title="(msg: String,next: RegexParsers.this.Input)RegexParsers.this.Failure">Failure</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;string matching regex `&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#168302" title="scala.util.matching.Regex">r</a><span title="(x$1: Any)java.lang.String">+</span><span title="java.lang.String(&quot;' expected but `&quot;)" class="string">&quot;' expected but `&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#268532" title="RegexParsers.this.Input">in</a>.<a href="../input/Reader.scala.html#21890" title="=&gt; RegexParsers.this.Elem">first</a>+<span title="java.lang.String(&quot;' found&quot;)" class="string">&quot;' found&quot;</span>, <a href="#268532" title="RegexParsers.this.Input">in</a>.<a href="../input/Reader.scala.html#21892" title="(n: Int)scala.util.parsing.input.Reader[RegexParsers.this.Elem]">drop</a>(<a href="#268544" title="(x$1: Int)Int">start</a> - <a href="#268543" title="Int">offset</a>))
+      }
+    }
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[T](p: RegexParsers.this.Parser[T])RegexParsers.this.Parser[T]" id="168266">phrase</a>[<a title="&gt;: Nothing &lt;: Any" id="168268">T</a>](<a title="RegexParsers.this.Parser[T]" id="202744">p</a>: <a href="Parsers.scala.html#57397" title="RegexParsers.this.Parser[T]">Parser</a>[T]): <a href="Parsers.scala.html#57397" title="RegexParsers.this.Parser[T]">Parser</a>[T] =
+    <a href="#273391" title="[T](p: RegexParsers.this.Parser[T])RegexParsers.this.Parser[T]" class="keyword">super</a>.<a title="[T](p: RegexParsers.this.Parser[T])RegexParsers.this.Parser[T]" id="273391">phrase</a>(<a href="Parsers.scala.html#57582" title="(p: =&gt; RegexParsers.this.Parser[Option[String]])RegexParsers.this.Parser[T]">p</a> &lt;~ <a href="Parsers.scala.html#57464" title="(p: =&gt; RegexParsers.this.Parser[String])RegexParsers.this.Parser[Option[String]]">opt</a>(<a href="../../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;&quot;&quot;\z&quot;&quot;&quot;</a>.<a href="#168265" title="implicit scala.util.parsing.combinator.RegexParsers.regex : (r: scala.util.matching.Regex)RegexParsers.this.Parser[String]">r</a>))
+
+  /** Parse some prefix of reader `in' with parser `p' */
+  <span class="keyword">def</span> <a title="[T](p: RegexParsers.this.Parser[T],in: scala.util.parsing.input.Reader[Char])RegexParsers.this.ParseResult[T]" id="168269">parse</a>[<a title="&gt;: Nothing &lt;: Any" id="168271">T</a>](<a title="RegexParsers.this.Parser[T]" id="268711">p</a>: <a href="Parsers.scala.html#57397" title="RegexParsers.this.Parser[T]">Parser</a>[T], <a title="scala.util.parsing.input.Reader[Char]" id="268712">in</a>: <a href="../input/Reader.scala.html#9440" title="scala.util.parsing.input.Reader[Char]">Reader</a>[Char]): <a href="Parsers.scala.html#57373" title="RegexParsers.this.ParseResult[T]">ParseResult</a>[T] = 
+    <a href="Parsers.scala.html#57566" title="(in: RegexParsers.this.Input)RegexParsers.this.ParseResult[T]">p</a>(<a href="#268712" title="scala.util.parsing.input.Reader[Char]">in</a>)
+
+  /** Parse some prefix of character sequence `in' with parser `p' */
+  <span class="keyword">def</span> <a title="[T](p: RegexParsers.this.Parser[T],in: java.lang.CharSequence)RegexParsers.this.ParseResult[T]" id="168272">parse</a>[<a title="&gt;: Nothing &lt;: Any" id="168274">T</a>](<a title="RegexParsers.this.Parser[T]" id="268730">p</a>: <a href="Parsers.scala.html#57397" title="RegexParsers.this.Parser[T]">Parser</a>[T], <a title="java.lang.CharSequence" id="268731">in</a>: java.lang.<span title="java.lang.CharSequence">CharSequence</span>): <a href="Parsers.scala.html#57373" title="RegexParsers.this.ParseResult[T]">ParseResult</a>[T] = 
+    <a href="Parsers.scala.html#57566" title="(in: RegexParsers.this.Input)RegexParsers.this.ParseResult[T]">p</a>(<a href="../input/CharSequenceReader.scala.html#66527" title="(source: java.lang.CharSequence)scala.util.parsing.input.CharSequenceReader" class="keyword">new</a> <a href="../input/CharSequenceReader.scala.html#9443" title="scala.util.parsing.input.CharSequenceReader">CharSequenceReader</a>(<a href="#268731" title="java.lang.CharSequence">in</a>))
+  
+  /** Parse some prefix of reader `in' with parser `p' */
+  <span class="keyword">def</span> <a title="[T](p: RegexParsers.this.Parser[T],in: java.io.Reader)RegexParsers.this.ParseResult[T]" id="168275">parse</a>[<a title="&gt;: Nothing &lt;: Any" id="168277">T</a>](<a title="RegexParsers.this.Parser[T]" id="268753">p</a>: <a href="Parsers.scala.html#57397" title="RegexParsers.this.Parser[T]">Parser</a>[T], <a title="java.io.Reader" id="268754">in</a>: java.io.<span title="java.io.Reader">Reader</span>): <a href="Parsers.scala.html#57373" title="RegexParsers.this.ParseResult[T]">ParseResult</a>[T] =
+    <a href="Parsers.scala.html#57566" title="(in: RegexParsers.this.Input)RegexParsers.this.ParseResult[T]">p</a>(<a href="../input/PagedSeqReader.scala.html#21904" title="(seq: scala.collection.immutable.PagedSeq[Char])scala.util.parsing.input.PagedSeqReader" class="keyword">new</a> <a href="../input/PagedSeqReader.scala.html#9461" title="scala.util.parsing.input.PagedSeqReader">PagedSeqReader</a>(<a href="../../../collection/immutable/PagedSeq.scala.html#9271" title="object scala.collection.immutable.PagedSeq">PagedSeq</a>.<a href="../../../collection/immutable/PagedSeq.scala.html#21964" title="(source: java.io.Reader)scala.collection.immutable.PagedSeq[Char]">fromReader</a>(<a href="#268754" title="java.io.Reader">in</a>)))
+
+  /** Parse all of reader `in' with parser `p' */
+  <span class="keyword">def</span> <a title="[T](p: RegexParsers.this.Parser[T],in: scala.util.parsing.input.Reader[Char])RegexParsers.this.ParseResult[T]" id="168278">parseAll</a>[<a title="&gt;: Nothing &lt;: Any" id="168280">T</a>](<a title="RegexParsers.this.Parser[T]" id="268778">p</a>: <a href="Parsers.scala.html#57397" title="RegexParsers.this.Parser[T]">Parser</a>[T], <a title="scala.util.parsing.input.Reader[Char]" id="268779">in</a>: <a href="../input/Reader.scala.html#9440" title="scala.util.parsing.input.Reader[Char]">Reader</a>[Char]): <a href="Parsers.scala.html#57373" title="RegexParsers.this.ParseResult[T]">ParseResult</a>[T] =
+    <a href="#168269" title="(p: RegexParsers.this.Parser[T],in: scala.util.parsing.input.Reader[Char])RegexParsers.this.ParseResult[T]">parse</a>(<a href="#168266" title="(p: RegexParsers.this.Parser[T])RegexParsers.this.Parser[T]">phrase</a>(<a href="#268778" title="RegexParsers.this.Parser[T]">p</a>), <a href="#268779" title="scala.util.parsing.input.Reader[Char]">in</a>)
+
+  /** Parse all of reader `in' with parser `p' */
+  <span class="keyword">def</span> <a title="[T](p: RegexParsers.this.Parser[T],in: java.io.Reader)RegexParsers.this.ParseResult[T]" id="168281">parseAll</a>[<a title="&gt;: Nothing &lt;: Any" id="168283">T</a>](<a title="RegexParsers.this.Parser[T]" id="268820">p</a>: <a href="Parsers.scala.html#57397" title="RegexParsers.this.Parser[T]">Parser</a>[T], <a title="java.io.Reader" id="268821">in</a>: java.io.<span title="java.io.Reader">Reader</span>): <a href="Parsers.scala.html#57373" title="RegexParsers.this.ParseResult[T]">ParseResult</a>[T] =
+    <a href="#168275" title="(p: RegexParsers.this.Parser[T],in: java.io.Reader)RegexParsers.this.ParseResult[T]">parse</a>(<a href="#168266" title="(p: RegexParsers.this.Parser[T])RegexParsers.this.Parser[T]">phrase</a>(<a href="#268820" title="RegexParsers.this.Parser[T]">p</a>), <a href="#268821" title="java.io.Reader">in</a>)
+
+  /** Parse all of character sequence `in' with parser `p' */
+  <span class="keyword">def</span> <a title="[T](p: RegexParsers.this.Parser[T],in: java.lang.CharSequence)RegexParsers.this.ParseResult[T]" id="168284">parseAll</a>[<a title="&gt;: Nothing &lt;: Any" id="168286">T</a>](<a title="RegexParsers.this.Parser[T]" id="268862">p</a>: <a href="Parsers.scala.html#57397" title="RegexParsers.this.Parser[T]">Parser</a>[T], <a title="java.lang.CharSequence" id="268863">in</a>: java.lang.<span title="java.lang.CharSequence">CharSequence</span>): <a href="Parsers.scala.html#57373" title="RegexParsers.this.ParseResult[T]">ParseResult</a>[T] = 
+    <a href="#168272" title="(p: RegexParsers.this.Parser[T],in: java.lang.CharSequence)RegexParsers.this.ParseResult[T]">parse</a>(<a href="#168266" title="(p: RegexParsers.this.Parser[T])RegexParsers.this.Parser[T]">phrase</a>(<a href="#268862" title="RegexParsers.this.Parser[T]">p</a>), <a href="#268863" title="java.lang.CharSequence">in</a>)
+}
+
+        </pre>
+    </body>
+</html>

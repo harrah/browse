@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/Traversable.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: Traversable.scala 15188 2008-05-24 15:01:02Z stepancheg $
+<span class="keyword">package</span> scala.collection
+
+// import immutable.{List, Stream, Nil}
+<span class="keyword">import</span> mutable.{Buffer, ArrayBuffer, ListBuffer}
+<span class="keyword">import</span> scala.util.control.Breaks
+<span class="keyword">import</span> generic._
+
+/** &lt;p&gt;
+ *    A template trait for traversable collections.
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    Collection classes mixing in this trait provide a method
+ *    &lt;code&gt;foreach&lt;/code&gt; which traverses all the
+ *    elements contained in the collection, applying a given procedure to each.
+ *    They also provide a method &lt;code&gt;newBuilder&lt;/code&gt;
+ *    which creates a builder for collections of the same kind.
+ *  &lt;/p&gt;
+ *
+ *  @author Martin Odersky
+ *  @version 2.8
+ */
+<span class="keyword">trait</span> <a title="trait Traversable[+A] extends java.lang.Object with scala.collection.generic.TraversableTemplate[A,Traversable[A]] with scala.collection.generic.TraversableClass[A,Traversable] with ScalaObject" id="4436">Traversable</a>[+<a title="&gt;: Nothing &lt;: Any" id="12219">A</a>] <a href="../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="generic/TraversableTemplate.scala.html#10391" title="scala.collection.generic.TraversableTemplate[A,Traversable[A]]">TraversableTemplate</a>[A, Traversable[A]] 
+                         <span class="keyword">with</span> <a href="generic/TraversableClass.scala.html#10655" title="scala.collection.generic.TraversableClass[A,Traversable]">TraversableClass</a>[A, Traversable] {
+  <span class="keyword">def</span> <a title="=&gt; scala.collection.generic.Companion[Traversable]" id="17257">companion</a>: <a href="generic/Companion.scala.html#10781" title="scala.collection.generic.Companion[Traversable]">Companion</a>[Traversable] = <a href="#4437" title="object Traversable">Traversable</a>
+
+  /* The following methods are inherited from TraversableTemplate
+   * 
+  override def isEmpty: Boolean
+  override def size: Int
+  override def hasDefiniteSize
+  override def ++[B &gt;: A, That](that: Traversable[B])(implicit bf: BuilderFactory[B, That, Traversable[A]]): That
+  override def ++[B &gt;: A, That](that: Iterator[B])(implicit bf: BuilderFactory[B, That, Traversable[A]]): That
+  override def map[B, That](f: A =&gt; B)(implicit bf: BuilderFactory[B, That, Traversable[A]]): That
+  override def flatMap[B, That](f: A =&gt; Traversable[B])(implicit bf: BuilderFactory[B, That, Traversable[A]]): That
+  override def filter(p: A =&gt; Boolean): Traversable[A]
+  override def remove(p: A =&gt; Boolean): Traversable[A]
+  override def partition(p: A =&gt; Boolean): (Traversable[A], Traversable[A])
+  override def groupBy[K](f: A =&gt; K): Map[K, Traversable[A]]
+  override def foreach[U](f: A =&gt;  U): Unit
+  override def forall(p: A =&gt; Boolean): Boolean
+  override def exists(p: A =&gt; Boolean): Boolean
+  override def count(p: A =&gt; Boolean): Int
+  override def find(p: A =&gt; Boolean): Option[A]
+  override def foldLeft[B](z: B)(op: (B, A) =&gt; B): B
+  override def /: [B](z: B)(op: (B, A) =&gt; B): B
+  override def foldRight[B](z: B)(op: (A, B) =&gt; B): B
+  override def :\ [B](z: B)(op: (A, B) =&gt; B): B
+  override def reduceLeft[B &gt;: A](op: (B, A) =&gt; B): B
+  override def reduceLeftOption[B &gt;: A](op: (B, A) =&gt; B): Option[B]
+  override def reduceRight[B &gt;: A](op: (A, B) =&gt; B): B
+  override def reduceRightOption[B &gt;: A](op: (A, B) =&gt; B): Option[B]
+  override def head: A
+  override def headOption: Option[A]
+  override def tail: Traversable[A]
+  override def last: A
+  override def lastOption: Option[A]
+  override def init: Traversable[A]
+  override def take(n: Int): Traversable[A]
+  override def drop(n: Int): Traversable[A]
+  override def slice(from: Int, until: Int): Traversable[A]
+  override def takeWhile(p: A =&gt; Boolean): Traversable[A]
+  override def dropWhile(p: A =&gt; Boolean): Traversable[A]
+  override def span(p: A =&gt; Boolean): (Traversable[A], Traversable[A])
+  override def splitAt(n: Int): (Traversable[A], Traversable[A])
+  override def copyToBuffer[B &gt;: A](dest: Buffer[B])
+  override def copyToArray[B &gt;: A](xs: Array[B], start: Int, len: Int)
+  override def copyToArray[B &gt;: A](xs: Array[B], start: Int)
+  override def toArray[B &gt;: A : ClassManifest]: Array[B]
+  override def toList: List[A]
+  override def toIterable: Iterable[A]
+  override def toSequence: Sequence[A]
+  override def toStream: Stream[A]
+//  override def sortWith(lt : (A,A) =&gt; Boolean): Traversable[A]
+  override def mkString(start: String, sep: String, end: String): String
+  override def mkString(sep: String): String
+  override def mkString: String
+  override def addString(b: StringBuilder, start: String, sep: String, end: String): StringBuilder
+  override def addString(b: StringBuilder, sep: String): StringBuilder
+  override def addString(b: StringBuilder): StringBuilder
+  override def toString
+  override def stringPrefix : String
+  override def view
+  override def view(from: Int, until: Int): TraversableView[A, Traversable[A]]
+  */
+}
+
+/** Factory methods and utilities for instances of type Traversable */
+<span class="keyword">object</span> <a title="object Traversable" id="4437">Traversable</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="generic/TraversableFactory.scala.html#10784" title="scala.collection.generic.TraversableFactory[Traversable]">TraversableFactory</a>[Traversable] { self =&gt;
+
+  /** provide break functionality separate from client code */
+  <span class="keyword">private</span>[collection] <span class="keyword">val</span> <a title="scala.util.control.Breaks" id="17853">breaks</a>: <a href="../util/control/Breaks.scala.html#12325" title="scala.util.control.Breaks">Breaks</a> = <span title="scala.util.control.Breaks" class="keyword">new</span> <a href="../util/control/Breaks.scala.html#12325" title="scala.util.control.Breaks">Breaks</a>
+  
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="[A]scala.collection.generic.BuilderFactory[A,Traversable[A],scala.collection.Traversable.Coll]" id="17855">builderFactory</a>[<a title="&gt;: Nothing &lt;: Any" id="17857">A</a>]: <a href="generic/BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[A,Traversable[A],scala.collection.Traversable.Coll]">BuilderFactory</a>[A, Traversable[A], Coll] = <span title="scala.collection.Traversable.VirtualBuilderFactory[A]" class="keyword">new</span> <a href="generic/TraversableFactory.scala.html#17476" title="scala.collection.Traversable.VirtualBuilderFactory[A]">VirtualBuilderFactory</a>[A]
+
+  <span class="keyword">def</span> <a title="[A]scala.collection.generic.Builder[A,Traversable[A]]" id="17858">newBuilder</a>[<a title="&gt;: Nothing &lt;: Any" id="17860">A</a>]: <a href="generic/Builder.scala.html#10028" title="scala.collection.generic.Builder[A,Traversable[A]]">Builder</a>[A, Traversable[A]] = immutable.<a href="immutable/Traversable.scala.html#9349" title="object scala.collection.immutable.Traversable">Traversable</a>.<a href="immutable/Traversable.scala.html#36473" title="[A]scala.collection.generic.Builder[A,scala.collection.immutable.Traversable[A]]">newBuilder</a><span title="scala.collection.generic.Builder[A,scala.collection.immutable.Traversable[A]]">[</span><a href="#17860" title="A">A</a>]
+}
+
+
+        </pre>
+    </body>
+</html>

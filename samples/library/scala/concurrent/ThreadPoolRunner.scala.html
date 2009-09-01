@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/concurrent/ThreadPoolRunner.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+<span class="keyword">package</span> scala.concurrent
+
+<span class="keyword">import</span> java.util.concurrent.{ExecutorService, Callable, TimeUnit}
+
+<span class="keyword">import</span> scala.annotation.unchecked.uncheckedVariance
+
+/** The &lt;code&gt;ThreadPoolRunner&lt;/code&gt; trait...
+ *  
+ *  @author Philipp Haller
+ */
+<span class="keyword">trait</span> <a title="trait ThreadPoolRunner[T] extends java.lang.Object with scala.concurrent.TaskRunner[T] with ScalaObject" id="8263">ThreadPoolRunner</a>[<a title="&gt;: Nothing &lt;: Any" id="16886">T</a>] <a href="../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="TaskRunner.scala.html#8209" title="scala.concurrent.TaskRunner[T]">TaskRunner</a>[T] {
+
+  <span class="keyword">type</span> <a title="[+R]ThreadPoolRunner.this.RichFuture[R]" id="52167">Future</a>[+<a title="&gt;: Nothing &lt;: Any" id="52168">R</a>] = <a href="#52169" title="ThreadPoolRunner.this.RichFuture[R]">RichFuture</a>[R]
+
+  <span class="keyword">trait</span> <a title="trait RichFuture[+S] extends java.lang.Object with java.util.concurrent.Future[S @scala.annotation.unchecked.uncheckedVariance] with () =&gt; S" id="52169">RichFuture</a>[+<a title="&gt;: Nothing &lt;: Any" id="52170">S</a>] <span class="keyword">extends</span> java.util.concurrent.<span title="java.util.concurrent.Future[S @scala.annotation.unchecked.uncheckedVariance]">Future</span>[S @uncheckedVariance]
+                          <span class="keyword">with</span> (() =&gt; S)
+
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; java.util.concurrent.ExecutorService" id="52171">executor</a>: <a title="java.util.concurrent.ExecutorService" id="44691">ExecutorService</a>
+
+  <span class="keyword">def</span> <a title="(task: () =&gt; T)ThreadPoolRunner.this.Future[T]" id="52172">submit</a>(<a title="() =&gt; T" id="261119">task</a>: () =&gt; T): <span class="keyword">this</span>.<a href="#52169" title="ThreadPoolRunner.this.Future[T]">Future</a>[T] = {
+    <span class="keyword">val</span> <a title="&lt;refinement&gt; extends java.lang.Object with java.util.concurrent.Callable[T]" id="261122">callable</a> = <a href="#261123" title="java.lang.Object with java.util.concurrent.Callable[T]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with java.util.concurrent.Callable[T]" id="261123">Callable</a>[T] {
+      <span class="keyword">def</span> <a title="()T" id="261127">call</a>() = <a href="../Function0.scala.html#34096" title="()T">task</a>()
+    }
+    <a href="#52175" title="(future: java.util.concurrent.Future[T])java.lang.Object with ThreadPoolRunner.this.RichFuture[T]">toRichFuture</a>(<a href="#52171" title="=&gt; java.util.concurrent.ExecutorService">executor</a>.<a title="[T](x$1: java.util.concurrent.Callable[T])java.util.concurrent.Future[T]" id="52069">submit</a><span title="(x$1: java.util.concurrent.Callable[T])java.util.concurrent.Future[T]">[</span><a href="#16886" title="T">T</a>](<a href="#261122" title="&lt;refinement&gt; extends java.lang.Object with java.util.concurrent.Callable[T]">callable</a>))
+  }
+
+  <span class="keyword">def</span> <a title="(task: Runnable)Unit" id="52173">execute</a>(<a title="Runnable" id="261245">task</a>: <a title="Runnable" id="1807">Runnable</a>): <a title="Unit" id="1948">Unit</a> =
+    <a href="#52171" title="(x$1: java.lang.Runnable)Unit" id="52193">executor</a> execute <a href="#261245" title="Runnable">task</a>
+
+  <span class="keyword">def</span> <a title="(blocker: scala.concurrent.ManagedBlocker)Unit" id="52174">managedBlock</a>(<a title="scala.concurrent.ManagedBlocker" id="261249">blocker</a>: <a href="ManagedBlocker.scala.html#8326" title="scala.concurrent.ManagedBlocker">ManagedBlocker</a>) {
+    <a href="#261249" title="scala.concurrent.ManagedBlocker">blocker</a>.<a href="ManagedBlocker.scala.html#52302" title="()Boolean">block</a><span title="Unit">(</span>)
+  }
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="[S](future: java.util.concurrent.Future[S])java.lang.Object with ThreadPoolRunner.this.RichFuture[S]" id="52175">toRichFuture</a>[<a title="&gt;: Nothing &lt;: Any" id="52177">S</a>](<a title="java.util.concurrent.Future[S]" id="261144">future</a>: java.util.concurrent.<span title="java.util.concurrent.Future[S]">Future</span>[S]) =
+    <a href="#261147" title="java.lang.Object with ThreadPoolRunner.this.RichFuture[S]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with ThreadPoolRunner.this.RichFuture[S]" id="261147">RichFuture</a>[S] {
+      <span class="keyword">def</span> <a title="(mayInterrupt: Boolean)Boolean" id="261149">cancel</a>(<a title="Boolean" id="261159">mayInterrupt</a>: <a title="Boolean" id="1949">Boolean</a>) = <a href="#261144" title="(x$1: Boolean)Boolean" id="52083">future</a> cancel <a href="#261159" title="Boolean">mayInterrupt</a>
+      <span class="keyword">def</span> <a title="()S" id="261150">get</a>() = <a href="#261144" title="java.util.concurrent.Future[S]">future</a>.<span title="()S">get</span>()
+      <span class="keyword">def</span> <a title="(timeout: Long,unit: java.util.concurrent.TimeUnit)S" id="261151">get</a>(<a title="Long" id="261172">timeout</a>: <a title="Long" id="2182">Long</a>, <a title="java.util.concurrent.TimeUnit" id="261173">unit</a>: <a title="java.util.concurrent.TimeUnit" id="44634">TimeUnit</a>) = <a href="#261144" title="java.util.concurrent.Future[S]">future</a>.<a title="(x$1: Long,x$2: java.util.concurrent.TimeUnit)S" id="52088">get</a>(<a href="#261172" title="Long">timeout</a>, <a href="#261173" title="java.util.concurrent.TimeUnit">unit</a>)
+      <span class="keyword">def</span> <a title="()Boolean" id="261152">isCancelled</a>() = <a href="#261144" title="java.util.concurrent.Future[S]">future</a>.<a title="()Boolean" id="52085">isCancelled</a>()
+      <span class="keyword">def</span> <a title="()Boolean" id="261153">isDone</a>() = <a href="#261144" title="java.util.concurrent.Future[S]">future</a>.<a title="()Boolean" id="52086">isDone</a>()
+      <span class="keyword">def</span> <a title="()S" id="261154">apply</a>() = <a href="#261144" title="java.util.concurrent.Future[S]">future</a>.<span title="()S">get</span>()
+    }
+
+}
+
+        </pre>
+    </body>
+</html>

@@ -1,0 +1,1231 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/xml/parsing/MarkupParser.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: MarkupParser.scala 18387 2009-07-24 15:28:37Z odersky $
+
+
+<span class="keyword">package</span> scala.xml
+<span class="keyword">package</span> parsing
+
+<span class="keyword">import</span> scala.io.Source
+<span class="keyword">import</span> scala.xml.dtd._
+
+/**
+ * An XML parser.
+ *
+ * Parses XML 1.0, invokes callback methods of a MarkupHandler
+ * and returns whatever the markup handler returns. Use
+ * &lt;code&gt;ConstructingParser&lt;/code&gt; if you just want to parse XML to
+ * construct instances of &lt;code&gt;scala.xml.Node&lt;/code&gt;.
+ *
+ * While XML elements are returned, DTD declarations - if handled - are 
+ * collected using side-effects.
+ *
+ * @author  Burak Emir
+ * @version 1.0
+ */
+<span class="keyword">trait</span> <a title="trait MarkupParser extends java.lang.Object with scala.xml.parsing.TokenTests with ScalaObject" id="12074">MarkupParser</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a title="java.lang.Object" id="3623">AnyRef</a> <span class="keyword">with</span> <a href="TokenTests.scala.html#12152" title="scala.xml.parsing.TokenTests">TokenTests</a> { self:  MarkupParser <span class="keyword">with</span> MarkupHandler =&gt;
+
+  <span class="keyword">val</span> <a title="=&gt; scala.io.Source" id="83166">input</a>: <a href="../../io/Source.scala.html#9826" title="scala.io.Source">Source</a>
+
+  /** if true, does not remove surplus whitespace */
+  <span class="keyword">val</span> <a title="=&gt; Boolean" id="83167">preserveWS</a>: <span title="Boolean">Boolean</span>
+
+  <span class="keyword">def</span> <a title="(systemLiteral: String)scala.io.Source" id="83168">externalSource</a>(<a title="String" id="144515">systemLiteral</a>: <span title="String">String</span>): <a href="../../io/Source.scala.html#9826" title="scala.io.Source">Source</a>
+
+  //
+  // variables, values
+  //
+
+  <span class="keyword">var</span> <a title="scala.io.Source" id="83170">curInput</a>: <a href="../../io/Source.scala.html#9826" title="scala.io.Source">Source</a> = <a href="#83166" title="=&gt; scala.io.Source">input</a>
+
+  /** the handler of the markup, returns this */
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="scala.xml.parsing.MarkupHandler" id="83172">handle</a>: <a href="MarkupHandler.scala.html#12125" title="scala.xml.parsing.MarkupHandler">MarkupHandler</a> = <a href="#12074" title="&lt;refinement&gt; extends scala.xml.parsing.MarkupParser with scala.xml.parsing.MarkupHandler" class="keyword">this</a>
+
+  /** stack of inputs */
+  <span class="keyword">var</span> <a title="List[scala.io.Source]" id="83175">inpStack</a>: <a href="../../collection/immutable/List.scala.html#8973" title="List[scala.io.Source]">List</a>[Source] = <a href="../../collection/immutable/List.scala.html#9259" title="object Nil">Nil</a>
+
+  /** holds the position in the source file */
+  <span class="keyword">var</span> <a title="Int" id="83178">pos</a>: <span title="Int">Int</span> = _
+
+
+  /* used when reading external subset */
+  <span class="keyword">var</span> <a title="Int" id="83181">extIndex</a> = <span title="Int(-1)">-</span><span class="int">1</span>
+
+  /** holds temporary values of pos */
+  <span class="keyword">var</span> <a title="Int" id="83184">tmppos</a>: <span title="Int">Int</span> = _
+
+  /** holds the next character */
+  <span class="keyword">var</span> <a title="Char" id="83187">ch</a>: <span title="Char">Char</span> = _
+
+  /** character buffer, for names */
+  <span class="keyword">protected</span> <span class="keyword">val</span> <a title="StringBuilder" id="83189">cbuf</a> = <a href="../../collection/mutable/StringBuilder.scala.html#23348" title="()StringBuilder" class="keyword">new</a> <a href="../../package.scala.html#14791" title="StringBuilder">StringBuilder</a>()
+
+  <span class="keyword">var</span> <a title="scala.xml.dtd.DTD" id="83192">dtd</a>: <a href="../dtd/DTD.scala.html#11143" title="scala.xml.dtd.DTD">DTD</a> = <span title="Null(null)" class="keyword">null</span>
+
+  <span class="keyword">protected</span> <span class="keyword">var</span> <a title="scala.xml.Document" id="83195">doc</a>: <a href="../Document.scala.html#8465" title="scala.xml.Document">Document</a> = <span title="Null(null)" class="keyword">null</span>
+
+  <span class="keyword">var</span> <a title="Boolean" id="83198">eof</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>
+
+  //
+  // methods
+  //
+
+  /** &amp;lt;? prolog ::= xml S ... ?&amp;gt;
+   */
+  <span class="keyword">def</span> <a title="()scala.xml.MetaData" id="83200">xmlProcInstr</a>(): <a href="../MetaData.scala.html#8585" title="scala.xml.MetaData">MetaData</a> = {
+    <a href="#83207" title="(that: Seq[Char])Unit">xToken</a>(<a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;xml&quot;</a>)
+    <a href="#83226" title="=&gt; Unit">xSpace</a>
+    <span class="keyword">val</span> <a href="../../Tuple2.scala.html#20670" title="(scala.xml.MetaData, scala.xml.NamespaceBinding)">(</a><a href="../../Tuple2.scala.html#20472" title="scala.xml.MetaData" id="144523">md</a>,<a href="../../Tuple2.scala.html#20474" title="scala.xml.NamespaceBinding" id="144524">scp</a>) = <a href="#83208" title="(pscope: scala.xml.NamespaceBinding)(scala.xml.MetaData, scala.xml.NamespaceBinding)">xAttributes</a><a href="../../Tuple2.scala.html#1152" title="(scala.xml.MetaData, scala.xml.NamespaceBinding) @unchecked">(</a><a href="../TopScope.scala.html#8562" title="object scala.xml.TopScope">TopScope</a>)
+    <span title="Unit" class="keyword">if</span> (<a href="#144524" title="(x$1: AnyRef)Boolean">scp</a> != <a href="../TopScope.scala.html#8562" title="object scala.xml.TopScope">TopScope</a>)
+      <a href="#83240" title="(str: String)Unit">reportSyntaxError</a>(<span title="java.lang.String(&quot;no xmlns definitions here, please.&quot;)" class="string">&quot;no xmlns definitions here, please.&quot;</span>);
+    <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char('?')" class="char">'?'</span>)
+    <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char('&gt;')" class="char">'&gt;'</span>)
+    <a href="#144523" title="scala.xml.MetaData">md</a>
+  }
+
+  /** &amp;lt;? prolog ::= xml S?
+   *  // this is a bit more lenient than necessary...
+   */
+  <span class="keyword">def</span> <a title="()(Option[String], Option[String], Option[Boolean])" id="83201">prolog</a>(): <a href="../../Tuple3.scala.html#393" title="(Option[String], Option[String], Option[Boolean])">Tuple3</a>[Option[String], Option[String], Option[Boolean]] = {
+
+    //Console.println(&quot;(DEBUG) prolog&quot;)
+    <span class="keyword">var</span> <a title="Int" id="144649">n</a> = <span title="Int(0)" class="int">0</span>
+    <span class="keyword">var</span> <a title="Option[String]" id="144650">info_ver</a>: <a href="../../Option.scala.html#777" title="Option[String]">Option</a>[String] = <a href="../../Option.scala.html#463" title="object None">None</a>
+    <span class="keyword">var</span> <a title="Option[String]" id="144651">info_enc</a>: <a href="../../Option.scala.html#777" title="Option[String]">Option</a>[String] = <a href="../../Option.scala.html#463" title="object None">None</a>
+    <span class="keyword">var</span> <a title="Option[Boolean]" id="144652">info_stdl</a>: <a href="../../Option.scala.html#777" title="Option[Boolean]">Option</a>[Boolean] = <a href="../../Option.scala.html#463" title="object None">None</a>
+
+    <span class="keyword">var</span> <a title="scala.xml.MetaData" id="144653">m</a> = <a href="#83200" title="()scala.xml.MetaData">xmlProcInstr</a>()
+
+    <a href="#83225" title="=&gt; Unit">xSpaceOpt</a>
+
+    <a href="../MetaData.scala.html#31867" title="(key: String)Seq[scala.xml.Node]">m</a>(<span title="java.lang.String(&quot;version&quot;)" class="string">&quot;version&quot;</span>) <span title="Unit" class="keyword">match</span> {
+      <span title="Unit" class="keyword">case</span> <span title="Null(null)" class="keyword">null</span>  =&gt; ;
+      <span title="Unit" class="keyword">case</span> Text(<span title="java.lang.String(&quot;1.0&quot;)" class="string">&quot;1.0&quot;</span>) =&gt; <a href="#144650" title="Option[String]">info_ver</a> = <a href="../../Option.scala.html#19800" title="(x: java.lang.String)Some[java.lang.String]">Some</a>(<span title="java.lang.String(&quot;1.0&quot;)" class="string">&quot;1.0&quot;</span>); <a href="#144649" title="Int">n</a> += <span title="Int(1)" class="int">1</span>
+      <span title="Unit" class="keyword">case</span> _     =&gt; <a href="#83240" title="(str: String)Unit">reportSyntaxError</a>(<span title="java.lang.String(&quot;cannot deal with versions != 1.0&quot;)" class="string">&quot;cannot deal with versions != 1.0&quot;</span>)
+    }
+
+    <a href="../MetaData.scala.html#31867" title="(key: String)Seq[scala.xml.Node]">m</a>(<span title="java.lang.String(&quot;encoding&quot;)" class="string">&quot;encoding&quot;</span>) <span title="Unit" class="keyword">match</span> {
+      <span title="Unit" class="keyword">case</span> <span title="Null(null)" class="keyword">null</span> =&gt; ;
+      <span title="Unit" class="keyword">case</span> Text(<a title="String" id="144718">enc</a>) =&gt;
+        <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="TokenTests.scala.html#26606" title="(ianaEncoding: Seq[Char])Boolean">isValidIANAEncoding</a>(<a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString">enc</a>))
+          <a href="#83240" title="(str: String)Unit">reportSyntaxError</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;\&quot;&quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#144718" title="String">enc</a> + <span title="java.lang.String(&quot;&quot; is not a valid encoding&quot;)" class="string">&quot;\&quot; is not a valid encoding&quot;</span>)
+        <span class="keyword">else</span> {
+          <a href="#144651" title="Option[String]">info_enc</a> = <a href="../../Option.scala.html#19800" title="(x: String)Some[String]">Some</a>(<a href="#144718" title="String">enc</a>)
+          <a href="#144649" title="Int">n</a> += <span title="Int(1)" class="int">1</span>
+        }
+    }
+    <a href="../MetaData.scala.html#31867" title="(key: String)Seq[scala.xml.Node]">m</a>(<span title="java.lang.String(&quot;standalone&quot;)" class="string">&quot;standalone&quot;</span>) <span title="Unit" class="keyword">match</span> {
+      <span title="Unit" class="keyword">case</span> <span title="Null(null)" class="keyword">null</span> =&gt; ;
+      <span title="Unit" class="keyword">case</span> Text(<span title="java.lang.String(&quot;yes&quot;)" class="string">&quot;yes&quot;</span>) =&gt; <a href="#144652" title="Option[Boolean]">info_stdl</a> = <a href="../../Option.scala.html#19800" title="(x: Boolean)Some[Boolean]">Some</a>(<span title="Boolean(true)" class="keyword">true</span>);  <a href="#144649" title="Int">n</a> += <span title="Int(1)" class="int">1</span>
+      <span title="Unit" class="keyword">case</span> Text(<span title="java.lang.String(&quot;no&quot;)" class="string">&quot;no&quot;</span>)  =&gt; <a href="#144652" title="Option[Boolean]">info_stdl</a> = <a href="../../Option.scala.html#19800" title="(x: Boolean)Some[Boolean]">Some</a>(<span title="Boolean(false)" class="keyword">false</span>); <a href="#144649" title="Int">n</a> += <span title="Int(1)" class="int">1</span>
+      <span title="Unit" class="keyword">case</span> _     =&gt; <a href="#83240" title="(str: String)Unit">reportSyntaxError</a>(<span title="java.lang.String(&quot;either 'yes' or 'no' expected&quot;)" class="string">&quot;either 'yes' or 'no' expected&quot;</span>)
+    }
+
+    <span title="Unit" class="keyword">if</span> (<a href="#144653" title="scala.xml.MetaData">m</a>.<a href="../MetaData.scala.html#31874" title="(x$1: Int)Int">length</a> <span title="(x$1: Int)Boolean">-</span> <a href="#144649" title="Int">n</a> != <span title="Int(0)" class="int">0</span>) {
+      <a href="#83240" title="(str: String)Unit">reportSyntaxError</a>(<span title="java.lang.String(&quot;VersionInfo EncodingDecl? SDDecl? or '?&gt;' expected!&quot;)" class="string">&quot;VersionInfo EncodingDecl? SDDecl? or '?&gt;' expected!&quot;</span>);
+    }
+    //Console.println(&quot;[MarkupParser::prolog] finished parsing prolog!&quot;);
+    <a href="../../Tuple3.scala.html#19124" title="(_1: Option[String],_2: Option[String],_3: Option[Boolean])(Option[String], Option[String], Option[Boolean])">Tuple3</a>(<a href="#144650" title="Option[String]">info_ver</a>,<a href="#144651" title="Option[String]">info_enc</a>,<a href="#144652" title="Option[Boolean]">info_stdl</a>)
+  }
+
+  /** prolog, but without standalone */
+  <span class="keyword">def</span> <a title="()(Option[String], Option[String])" id="83202">textDecl</a>(): <a href="../../Tuple2.scala.html#1152" title="(Option[String], Option[String])">Tuple2</a>[Option[String],Option[String]] = {
+
+    <span class="keyword">var</span> <a title="Option[String]" id="144907">info_ver</a>: <a href="../../Option.scala.html#777" title="Option[String]">Option</a>[String] = <a href="../../Option.scala.html#463" title="object None">None</a>
+    <span class="keyword">var</span> <a title="Option[String]" id="144908">info_enc</a>: <a href="../../Option.scala.html#777" title="Option[String]">Option</a>[String] = <a href="../../Option.scala.html#463" title="object None">None</a>
+
+    <span class="keyword">var</span> <a title="scala.xml.MetaData" id="144909">m</a> = <a href="#83200" title="()scala.xml.MetaData">xmlProcInstr</a>()
+    <span class="keyword">var</span> <a title="Int" id="144910">n</a> = <span title="Int(0)" class="int">0</span>
+
+    <a href="../MetaData.scala.html#31867" title="(key: String)Seq[scala.xml.Node]">m</a>(<span title="java.lang.String(&quot;version&quot;)" class="string">&quot;version&quot;</span>) <span title="Unit" class="keyword">match</span> {
+      <span title="Unit" class="keyword">case</span> <span title="Null(null)" class="keyword">null</span> =&gt; ;
+      <span title="Unit" class="keyword">case</span> Text(<span title="java.lang.String(&quot;1.0&quot;)" class="string">&quot;1.0&quot;</span>) =&gt; <a href="#144907" title="Option[String]">info_ver</a> = <a href="../../Option.scala.html#19800" title="(x: java.lang.String)Some[java.lang.String]">Some</a>(<span title="java.lang.String(&quot;1.0&quot;)" class="string">&quot;1.0&quot;</span>); <a href="#144910" title="Int">n</a> += <span title="Int(1)" class="int">1</span>
+      <span title="Unit" class="keyword">case</span> _     =&gt; <a href="#83240" title="(str: String)Unit">reportSyntaxError</a>(<span title="java.lang.String(&quot;cannot deal with versions != 1.0&quot;)" class="string">&quot;cannot deal with versions != 1.0&quot;</span>)
+    }
+
+    <a href="../MetaData.scala.html#31867" title="(key: String)Seq[scala.xml.Node]">m</a>(<span title="java.lang.String(&quot;encoding&quot;)" class="string">&quot;encoding&quot;</span>) <span title="Unit" class="keyword">match</span> {
+      <span title="Unit" class="keyword">case</span> <span title="Null(null)" class="keyword">null</span> =&gt; ;
+      <span title="Unit" class="keyword">case</span> Text(<a title="String" id="144975">enc</a>)  =&gt;
+        <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="TokenTests.scala.html#26606" title="(ianaEncoding: Seq[Char])Boolean">isValidIANAEncoding</a>(<a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString">enc</a>))
+          <a href="#83240" title="(str: String)Unit">reportSyntaxError</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;\&quot;&quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#144975" title="String">enc</a> + <span title="java.lang.String(&quot;&quot; is not a valid encoding&quot;)" class="string">&quot;\&quot; is not a valid encoding&quot;</span>)
+        <span class="keyword">else</span> {
+          <a href="#144908" title="Option[String]">info_enc</a> = <a href="../../Option.scala.html#19800" title="(x: String)Some[String]">Some</a>(<a href="#144975" title="String">enc</a>)
+          <a href="#144910" title="Int">n</a> += <span title="Int(1)" class="int">1</span>
+        }
+    }
+
+    <span title="Unit" class="keyword">if</span> (<a href="#144909" title="scala.xml.MetaData">m</a>.<a href="../MetaData.scala.html#31874" title="(x$1: Int)Int">length</a> <span title="(x$1: Int)Boolean">-</span> <a href="#144910" title="Int">n</a> != <span title="Int(0)" class="int">0</span>) {
+      <a href="#83240" title="(str: String)Unit">reportSyntaxError</a>(<span title="java.lang.String(&quot;VersionInfo EncodingDecl? or '?&gt;' expected!&quot;)" class="string">&quot;VersionInfo EncodingDecl? or '?&gt;' expected!&quot;</span>);
+    }
+    //Console.println(&quot;[MarkupParser::textDecl] finished parsing textdecl&quot;);
+    <a href="../../Tuple2.scala.html#20670" title="(_1: Option[String],_2: Option[String])(Option[String], Option[String])">Tuple2</a>(<a href="#144907" title="Option[String]">info_ver</a>, <a href="#144908" title="Option[String]">info_enc</a>);
+  }
+
+  /**
+   *[22]        prolog     ::=          XMLDecl? Misc* (doctypedecl Misc*)?
+   *[23]        XMLDecl    ::=          '&amp;lt;?xml' VersionInfo EncodingDecl? SDDecl? S? '?&gt;'
+   *[24]        VersionInfo        ::=          S 'version' Eq (&quot;'&quot; VersionNum &quot;'&quot; | '&quot;' VersionNum '&quot;')
+   *[25]        Eq         ::=          S? '=' S?
+   *[26]        VersionNum         ::=          '1.0'
+   *[27]        Misc       ::=          Comment | PI | S
+   */
+
+  <span class="keyword">def</span> <a title="()scala.xml.Document" id="83203">document</a>(): <a href="../Document.scala.html#8465" title="scala.xml.Document">Document</a> = {
+
+    //Console.println(&quot;(DEBUG) document&quot;)
+    <a href="#83195" title="(x$1: scala.xml.Document)Unit">doc</a> = <span title="scala.xml.Document" class="keyword">new</span> <a href="../Document.scala.html#8465" title="scala.xml.Document">Document</a>()
+
+    <a href="#12074" title="MarkupParser.this.type" class="keyword">this</a>.<a href="#83192" title="(x$1: scala.xml.dtd.DTD)Unit">dtd</a> = <span title="Null(null)" class="keyword">null</span>
+    <span class="keyword">var</span> <a title="(Option[String], Option[String], Option[Boolean])" id="145064">info_prolog</a>: <a href="../../Tuple3.scala.html#393" title="(Option[String], Option[String], Option[Boolean])">Tuple3</a>[Option[String], Option[String], Option[Boolean]] = <a href="../../Tuple3.scala.html#19124" title="(_1: object None,_2: object None,_3: object None)(object None, object None, object None)">Tuple3</a>(<a href="../../Option.scala.html#463" title="object None">None</a>, <a href="../../Option.scala.html#463" title="object None">None</a>, <a href="../../Option.scala.html#463" title="object None">None</a>);
+    <span title="Unit" class="keyword">if</span> (<span title="(x$1: Char)Boolean" class="char">'&lt;'</span> != <a href="#83187" title="=&gt; Char">ch</a>) {
+      <a href="#83240" title="(str: String)Unit">reportSyntaxError</a>(<span title="java.lang.String(&quot;&lt; expected&quot;)" class="string">&quot;&lt; expected&quot;</span>)
+      <span title="Nothing" class="keyword">return</span> <span title="Null(null)" class="keyword">null</span>
+    }
+
+    <a href="#83205" title="=&gt; Unit">nextch</a> // is prolog ?
+    <span class="keyword">var</span> <a title="scala.xml.NodeSeq" id="145065">children</a>: <a href="../NodeSeq.scala.html#8522" title="scala.xml.NodeSeq">NodeSeq</a> = <span title="Null(null)" class="keyword">null</span>
+    <span title="Unit" class="keyword">if</span> (<span title="(x$1: Char)Boolean" class="char">'?'</span> == <a href="#83187" title="=&gt; Char">ch</a>) {
+      //Console.println(&quot;[MarkupParser::document] starts with xml declaration&quot;);
+      <a href="#83205" title="=&gt; Unit">nextch</a>;
+      <a href="#145064" title="(Option[String], Option[String], Option[Boolean])">info_prolog</a> = <a href="#83201" title="()(Option[String], Option[String], Option[Boolean])">prolog</a>()
+      <a href="#83195" title="=&gt; scala.xml.Document">doc</a>.<a href="../Document.scala.html#144505" title="(x$1: Option[String])Unit">version</a>    = <a href="#145064" title="(Option[String], Option[String], Option[Boolean])">info_prolog</a>.<a href="../../Tuple3.scala.html#17981" title="=&gt; Option[String]">_1</a>
+      <a href="#83195" title="=&gt; scala.xml.Document">doc</a>.<a href="../Document.scala.html#144499" title="(x$1: Option[String])Unit">encoding</a>   = <a href="#145064" title="(Option[String], Option[String], Option[Boolean])">info_prolog</a>.<a href="../../Tuple3.scala.html#17983" title="=&gt; Option[String]">_2</a>
+      <a href="#83195" title="=&gt; scala.xml.Document">doc</a>.<a href="../Document.scala.html#144502" title="(x$1: Option[Boolean])Unit">standAlone</a> = <a href="#145064" title="(Option[String], Option[String], Option[Boolean])">info_prolog</a>.<a href="../../Tuple3.scala.html#17985" title="=&gt; Option[Boolean]">_3</a>
+
+      <a href="#145065" title="scala.xml.NodeSeq">children</a> = <a href="#83218" title="(pscope: scala.xml.NamespaceBinding)scala.xml.NodeSeq">content</a>(<a href="../TopScope.scala.html#8562" title="object scala.xml.TopScope">TopScope</a>) // DTD handled as side effect
+    } <span class="keyword">else</span> {
+      //Console.println(&quot;[MarkupParser::document] does not start with xml declaration&quot;);
+ //
+
+      <span class="keyword">val</span> <a title="scala.xml.NodeBuffer" id="145122">ts</a> = <span title="scala.xml.NodeBuffer" class="keyword">new</span> <a href="../NodeBuffer.scala.html#8696" title="scala.xml.NodeBuffer">NodeBuffer</a>();
+      <a href="#83217" title="(pscope: scala.xml.NamespaceBinding,ts: scala.xml.NodeBuffer)Unit">content1</a>(<a href="../TopScope.scala.html#8562" title="object scala.xml.TopScope">TopScope</a>, <a href="#145122" title="scala.xml.NodeBuffer">ts</a>); // DTD handled as side effect
+      <a href="../NodeBuffer.scala.html#141952" title="(o: Any)scala.xml.NodeBuffer">ts</a> &amp;+ <a href="#83218" title="(pscope: scala.xml.NamespaceBinding)scala.xml.NodeSeq">content</a>(<a href="../TopScope.scala.html#8562" title="object scala.xml.TopScope">TopScope</a>);
+      <a href="#145065" title="scala.xml.NodeSeq">children</a> = <a href="../NodeSeq.scala.html#8523" title="object scala.xml.NodeSeq">NodeSeq</a>.<a href="../NodeSeq.scala.html#26526" title="(s: Seq[scala.xml.Node])scala.xml.NodeSeq">fromSeq</a>(<a href="#145122" title="scala.xml.NodeBuffer">ts</a>);
+    }
+    //Console.println(&quot;[MarkupParser::document] children now: &quot;+children.toList);
+    <span class="keyword">var</span> <a title="Int" id="145066">elemCount</a> = <span title="Int(0)" class="int">0</span>;
+    <span class="keyword">var</span> <a title="scala.xml.Node" id="145067">theNode</a>: <a href="../Node.scala.html#8654" title="scala.xml.Node">Node</a> = <span title="Null(null)" class="keyword">null</span>;
+    <span class="keyword">for</span> (<a title="scala.xml.Node" id="145147">c</a> &lt;- <a href="../../collection/generic/IterableTemplate.scala.html#17287" title="(f: (scala.xml.Node) =&gt; Unit)Unit">children</a>) <a href="#145147" title="scala.xml.Node">c</a> <span title="Unit" class="keyword">match</span> {
+      <span title="Unit" class="keyword">case</span> _:<a href="../ProcInstr.scala.html#8732" title="scala.xml.ProcInstr">ProcInstr</a> =&gt; ;
+      <span title="Unit" class="keyword">case</span> _:<a href="../Comment.scala.html#8408" title="scala.xml.Comment">Comment</a> =&gt; ;
+      <span title="Unit" class="keyword">case</span> _:<a href="../EntityRef.scala.html#8495" title="scala.xml.EntityRef">EntityRef</a> =&gt; // todo: fix entities, shouldn't be &quot;special&quot;
+        <a href="#83240" title="(str: String)Unit">reportSyntaxError</a>(<span title="java.lang.String(&quot;no entity references alllowed here&quot;)" class="string">&quot;no entity references alllowed here&quot;</span>);
+      <span title="Unit" class="keyword">case</span> <a title="scala.xml.SpecialNode" id="145153">s</a>:<a href="../SpecialNode.scala.html#8711" title="scala.xml.SpecialNode">SpecialNode</a> =&gt;
+        <span title="Unit" class="keyword">if</span> (<a href="#145153" title="scala.xml.SpecialNode">s</a>.<a href="../Node.scala.html#21010" title="()String">toString</a>().<a title="()java.lang.String" id="7040">trim</a>().<span title="(x$1: Int)Boolean">length</span> &gt; <span title="Int(0)" class="int">0</span>) //non-empty text nodes not allowed
+          <a href="#145066" title="Int">elemCount</a> = <a href="#145066" title="(x$1: Int)Int">elemCount</a> + <span title="Int(2)" class="int">2</span>;
+      <span title="Unit" class="keyword">case</span> <a title="scala.xml.Node" id="145189">m</a>:<a href="../Node.scala.html#8654" title="scala.xml.Node">Node</a> =&gt;
+        <a href="#145066" title="Int">elemCount</a> = <a href="#145066" title="(x$1: Int)Int">elemCount</a> + <span title="Int(1)" class="int">1</span>;
+        <a href="#145067" title="scala.xml.Node">theNode</a> = <a href="#145189" title="scala.xml.Node">m</a>;
+    }
+    <span title="Unit" class="keyword">if</span> (<span title="(x$1: Int)Boolean" class="int">1</span> != <a href="#145066" title="Int">elemCount</a>) {
+      <a href="#83240" title="(str: String)Unit">reportSyntaxError</a>(<span title="java.lang.String(&quot;document must contain exactly one element&quot;)" class="string">&quot;document must contain exactly one element&quot;</span>)
+      <a href="../../Console.scala.html#388" title="object Console">Console</a>.<a href="../../Console.scala.html#58869" title="(x: Any)Unit">println</a>(<a href="#145065" title="scala.xml.NodeSeq">children</a>.<a href="../../collection/generic/TraversableTemplate.scala.html#17236" title="=&gt; List[scala.xml.Node]">toList</a>)
+    }
+
+    <a href="#83195" title="=&gt; scala.xml.Document">doc</a>.<a href="../Document.scala.html#144485" title="(x$1: Seq[scala.xml.Node])Unit">children</a> = <a href="#145065" title="scala.xml.NodeSeq">children</a>
+    <a href="#83195" title="=&gt; scala.xml.Document">doc</a>.<a href="../Document.scala.html#144488" title="(x$1: scala.xml.Node)Unit">docElem</a> = <a href="#145067" title="scala.xml.Node">theNode</a>
+    <a href="#83195" title="=&gt; scala.xml.Document">doc</a>
+  }
+
+  /** append Unicode character to name buffer*/
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(c: Char)StringBuilder" id="83204">putChar</a>(<a title="Char" id="145237">c</a>: <span title="Char">Char</span>) = <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<a href="#145237" title="Char">c</a>)
+
+  //var xEmbeddedBlock = false;
+
+  /** this method assign the next character to ch and advances in input */
+  <span class="keyword">def</span> <a title="=&gt; Unit" id="83205">nextch</a> {
+    <span title="Unit" class="keyword">if</span> (<a href="#83170" title="=&gt; scala.io.Source">curInput</a>.<a href="../../io/Source.scala.html#83264" title="=&gt; Boolean">hasNext</a>) {
+      <a href="#83187" title="(x$1: Char)Unit">ch</a> = <a href="#83170" title="=&gt; scala.io.Source">curInput</a>.<a href="../../io/Source.scala.html#83265" title="()Char">next</a>
+      <a href="#83178" title="(x$1: Int)Unit">pos</a> = <a href="#83170" title="=&gt; scala.io.Source">curInput</a>.<a href="../../io/Source.scala.html#83270" title="=&gt; Int">pos</a>
+    } <span class="keyword">else</span> {
+      <span class="keyword">val</span> <a title="Int" id="145279">ilen</a> = <a href="#83175" title="=&gt; List[scala.io.Source]">inpStack</a>.<a href="../../collection/generic/LinearSequenceTemplate.scala.html#19399" title="=&gt; Int">length</a>;
+      //Console.println(&quot;  ilen = &quot;+ilen+ &quot; extIndex = &quot;+extIndex);
+      <span title="Unit" class="keyword">if</span> (<span title="(x$1: Boolean)Boolean">(</span><a href="#145279" title="(x$1: Int)Boolean">ilen</a> != <a href="#83181" title="=&gt; Int">extIndex</a>) &amp;&amp; (<a href="#145279" title="(x$1: Int)Boolean">ilen</a> &gt; <span title="Int(0)" class="int">0</span>)) { 
+        /** for external source, inpStack == Nil ! need notify of eof! */
+        <a href="#83244" title="()Unit">pop</a>()
+      } <span class="keyword">else</span> {
+        <a href="#83198" title="(x$1: Boolean)Unit">eof</a> = <span title="Boolean(true)" class="keyword">true</span>
+        <a href="#83187" title="(x$1: Char)Unit">ch</a> = <span title="Int(0)" class="int">0</span>.<span title="[T0]T0">asInstanceOf</span><span title="Char">[</span><span title="Char">Char</span>]
+      }
+    }
+  }
+
+  //final val enableEmbeddedExpressions: Boolean = false;
+
+  /** munch expected XML token, report syntax error for unexpected
+  */
+  <span class="keyword">def</span> <a title="(that: Char)Unit" id="83206">xToken</a>(<a title="Char" id="144530">that</a>: <span title="Char">Char</span>) {
+    <span title="Unit" class="keyword">if</span> (<a href="#83187" title="(x$1: Char)Boolean">ch</a> == <a href="#144530" title="Char">that</a>)
+      <a href="#83205" title="=&gt; Unit">nextch</a>
+    <span class="keyword">else</span>  {
+      <a href="#83240" title="(str: String)Unit">reportSyntaxError</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;'&quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#144530" title="Char">that</a> <span title="(x$1: Any)java.lang.String">+</span> <span title="java.lang.String(&quot;' expected instead of '&quot;)" class="string">&quot;' expected instead of '&quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#83187" title="=&gt; Char">ch</a> + <span title="java.lang.String(&quot;'&quot;)" class="string">&quot;'&quot;</span>)
+      <a href="../../Predef.scala.html#16210" title="(message: String)Nothing">error</a>(<span title="java.lang.String(&quot;FATAL&quot;)" class="string">&quot;FATAL&quot;</span>)
+    }
+  }
+
+  <span class="keyword">def</span> <a title="(that: Seq[Char])Unit" id="83207">xToken</a>(<a title="Seq[Char]" id="144528">that</a>: <a href="../../collection/Sequence.scala.html#4346" title="Seq[Char]">Seq</a>[Char]): <span title="Unit">Unit</span> = {
+    <span class="keyword">val</span> <a title="Iterator[Char]" id="145325">it</a> = <a href="#144528" title="Seq[Char]">that</a>.<a href="../../collection/generic/IterableTemplate.scala.html#17285" title="=&gt; Iterator[Char]">iterator</a>;
+    <span title="Unit" class="keyword">while</span> (<a href="#145325" title="Iterator[Char]">it</a>.<a href="../../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>)
+      <a href="#83206" title="(that: Char)Unit">xToken</a><a href="#145326" title="()Unit">(</a><a href="#145325" title="Iterator[Char]">it</a>.<a href="../../collection/Iterator.scala.html#19185" title="()Char">next</a>);
+  }
+
+  /** parse attribute and create namespace scope, metadata
+   *  [41] Attributes    ::= { S Name Eq AttValue }
+   */
+  <span class="keyword">def</span> <a title="(pscope: scala.xml.NamespaceBinding)(scala.xml.MetaData, scala.xml.NamespaceBinding)" id="83208">xAttributes</a>(<a title="scala.xml.NamespaceBinding" id="144603">pscope</a>:<a href="../NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>): <a href="../../Tuple2.scala.html#1152" title="(scala.xml.MetaData, scala.xml.NamespaceBinding)">(</a>MetaData,NamespaceBinding) = {
+    <span class="keyword">var</span> <a title="scala.xml.NamespaceBinding" id="145338">scope</a>: <a href="../NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a> = <a href="#144603" title="scala.xml.NamespaceBinding">pscope</a>
+    <span class="keyword">var</span> <a title="scala.xml.MetaData" id="145339">aMap</a>: <a href="../MetaData.scala.html#8585" title="scala.xml.MetaData">MetaData</a> = <a href="../Null.scala.html#8526" title="object scala.xml.Null">Null</a>
+    <span title="Unit" class="keyword">while</span> (<a href="TokenTests.scala.html#26603" title="(ch: Char)Boolean">isNameStart</a>(<a href="#83187" title="=&gt; Char">ch</a>)) <a href="#145340" title="()Unit">{</a>
+      <span class="keyword">val</span> <a title="Int" id="145352">pos</a> = <a href="#12074" title="MarkupParser.this.type" class="keyword">this</a>.<a href="#83178" title="=&gt; Int">pos</a>
+
+      <span class="keyword">val</span> <a title="String" id="145353">qname</a> = <a href="#83223" title="=&gt; String">xName</a>
+      <span class="keyword">val</span> <a title="Unit" id="145354">_</a>     = <a href="#83224" title="=&gt; Unit">xEQ</a>
+      <span class="keyword">val</span> <a title="String" id="145355">value</a> = <a href="#83209" title="()String">xAttributeValue</a>()
+
+      <a href="../Utility.scala.html#8724" title="object scala.xml.Utility">Utility</a>.<a href="../Utility.scala.html#26590" title="(name: String)Option[String]">prefix</a>(<a href="#145353" title="String">qname</a>) <span title="Unit" class="keyword">match</span> {
+        <span title="Unit" class="keyword">case</span> Some(<span title="java.lang.String(&quot;xmlns&quot;)" class="string">&quot;xmlns&quot;</span>) =&gt;
+          <span class="keyword">val</span> <a title="java.lang.String" id="145378">prefix</a> = <a href="#145353" title="String">qname</a>.<span title="(x$1: Int,x$2: Int)java.lang.String">substring</span>(<span title="Int(6)" class="int">6</span> /*xmlns:*/ , <a href="#145353" title="String">qname</a>.<span title="()Int">length</span>);
+          <a href="#145338" title="scala.xml.NamespaceBinding">scope</a> = <span title="scala.xml.NamespaceBinding" class="keyword">new</span> <a href="../NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>(<a href="#145378" title="java.lang.String">prefix</a>, <a href="#145355" title="String">value</a>, <a href="#145338" title="scala.xml.NamespaceBinding">scope</a>);
+        
+        <span title="Unit" class="keyword">case</span> Some(<a title="String" id="145392">prefix</a>)       =&gt; 
+          <span class="keyword">val</span> <a title="java.lang.String" id="145395">key</a> = <a href="#145353" title="String">qname</a>.<span title="(x$1: Int,x$2: Int)java.lang.String">substring</span>(<a href="#145392" title="String">prefix</a>.<span title="(x$1: Int)Int">length</span>+<span title="Int(1)" class="int">1</span>, <a href="#145353" title="String">qname</a>.<span title="()Int">length</span>);
+          <a href="#145339" title="scala.xml.MetaData">aMap</a> = <span title="scala.xml.PrefixedAttribute" class="keyword">new</span> <a href="../PrefixedAttribute.scala.html#8705" title="scala.xml.PrefixedAttribute">PrefixedAttribute</a>(<a href="#145392" title="String">prefix</a>, <a href="#145395" title="java.lang.String">key</a>, <a href="../Text.scala.html#26684" title="(_data: String)scala.xml.Text">Text</a>(<a href="#145355" title="String">value</a>), <a href="#145339" title="scala.xml.MetaData">aMap</a>);
+
+        <span title="Unit" class="keyword">case</span> _             =&gt; 
+          <span title="Unit" class="keyword">if</span>( <a href="#145353" title="(x$1: AnyRef)Boolean" id="3624">qname</a> == <span title="java.lang.String(&quot;xmlns&quot;)" class="string">&quot;xmlns&quot;</span> ) 
+            <a href="#145338" title="scala.xml.NamespaceBinding">scope</a> = <span title="scala.xml.NamespaceBinding" class="keyword">new</span> <a href="../NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>(<span title="Null(null)" class="keyword">null</span>, <a href="#145355" title="String">value</a>, <a href="#145338" title="scala.xml.NamespaceBinding">scope</a>);
+          <span class="keyword">else</span> 
+            <a href="#145339" title="scala.xml.MetaData">aMap</a> = <span title="scala.xml.UnprefixedAttribute" class="keyword">new</span> <a href="../UnprefixedAttribute.scala.html#8474" title="scala.xml.UnprefixedAttribute">UnprefixedAttribute</a>(<a href="#145353" title="String">qname</a>, <a href="../Text.scala.html#26684" title="(_data: String)scala.xml.Text">Text</a>(<a href="#145355" title="String">value</a>), <a href="#145339" title="scala.xml.MetaData">aMap</a>);
+      }
+            
+      <span title="Unit" class="keyword">if</span> (<span title="(x$1: Boolean)Boolean">(</span><a href="#83187" title="(x$1: Char)Boolean">ch</a> != <span title="Char('/')" class="char">'/'</span>) <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> (<a href="#83187" title="(x$1: Char)Boolean">ch</a> != <span title="Char('&gt;')" class="char">'&gt;'</span>) &amp;&amp; (<span title="(x$1: Char)Boolean" class="char">'?'</span> != <a href="#83187" title="=&gt; Char">ch</a>))
+        <a href="#83226" title="=&gt; Unit">xSpace</a>; 
+    }
+
+    <span title="Unit" class="keyword">if</span>(<span title="=&gt; Boolean">!</span><a href="#145339" title="scala.xml.MetaData">aMap</a>.<a href="../MetaData.scala.html#31894" title="(scope: scala.xml.NamespaceBinding)Boolean">wellformed</a>(<a href="#145338" title="scala.xml.NamespaceBinding">scope</a>))
+        <a href="#83240" title="(str: String)Unit">reportSyntaxError</a>( <span title="java.lang.String(&quot;double attribute&quot;)" class="string">&quot;double attribute&quot;</span>);
+
+    <a href="../../Tuple2.scala.html#20670" title="(_1: scala.xml.MetaData,_2: scala.xml.NamespaceBinding)(scala.xml.MetaData, scala.xml.NamespaceBinding)">(</a><a href="#145339" title="scala.xml.MetaData">aMap</a>,<a href="#145338" title="scala.xml.NamespaceBinding">scope</a>)
+  }
+
+  /** attribute value, terminated by either ' or &quot;. value may not contain &amp;lt;.
+   *       AttValue     ::= `'` { _  } `'`
+   *                      | `&quot;` { _ } `&quot;`
+   */
+  <span class="keyword">def</span> <a title="()String" id="83209">xAttributeValue</a>(): <span title="String">String</span> = {
+    <span class="keyword">val</span> <a title="Char" id="145504">endch</a> = <a href="#83187" title="=&gt; Char">ch</a>
+    <a href="#83205" title="=&gt; Unit">nextch</a>
+    <span title="Unit" class="keyword">while</span> (<a href="#83187" title="(x$1: Char)Boolean">ch</a> != <a href="#145504" title="Char">endch</a>) <a href="#145506" title="()Unit">{</a>
+      <span title="Unit" class="keyword">if</span> (<span title="(x$1: Char)Boolean" class="char">'&lt;'</span> == <a href="#83187" title="=&gt; Char">ch</a>)
+        <a href="#83240" title="(str: String)Unit">reportSyntaxError</a>( <span title="java.lang.String(&quot;'&lt;' not allowed in attrib value&quot;)" class="string">&quot;'&lt;' not allowed in attrib value&quot;</span> );
+      <a href="#83204" title="(c: Char)StringBuilder">putChar</a>(<a href="#83187" title="=&gt; Char">ch</a>)
+      <a href="#83205" title="=&gt; Unit">nextch</a>
+    }
+    <a href="#83205" title="=&gt; Unit">nextch</a>
+    <span class="keyword">val</span> <a title="String" id="145505">str</a> = <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23409" title="()String">toString</a>()
+    <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23353" title="(n: Int)Unit">length</a> = <span title="Int(0)" class="int">0</span>
+
+    // well-formedness constraint
+    <a href="#83245" title="(attval: String)String">normalizeAttributeValue</a>(<a href="#145505" title="String">str</a>)
+  }
+
+  /** entity value, terminated by either ' or &quot;. value may not contain &amp;lt;.
+   *       AttValue     ::= `'` { _  } `'`
+   *                      | `&quot;` { _ } `&quot;`
+   */
+  <span class="keyword">def</span> <a title="()String" id="83210">xEntityValue</a>(): <span title="String">String</span> = {
+    <span class="keyword">val</span> <a title="Char" id="145543">endch</a> = <a href="#83187" title="=&gt; Char">ch</a>
+    <a href="#83205" title="=&gt; Unit">nextch</a>
+    <span title="Unit" class="keyword">while</span> (<a href="#83187" title="(x$1: Char)Boolean">ch</a> != <a href="#145543" title="Char">endch</a>) <a href="#145545" title="()Unit">{</a>
+      <a href="#83204" title="(c: Char)StringBuilder">putChar</a>(<a href="#83187" title="=&gt; Char">ch</a>)
+      <a href="#83205" title="=&gt; Unit">nextch</a>
+    }
+    <a href="#83205" title="=&gt; Unit">nextch</a>
+    <span class="keyword">val</span> <a title="String" id="145544">str</a> = <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23409" title="()String">toString</a>()
+    <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23353" title="(n: Int)Unit">length</a> = <span title="Int(0)" class="int">0</span>
+    <a href="#145544" title="String">str</a>
+  }
+
+
+  /** parse a start or empty tag.
+   *  [40] STag         ::= '&amp;lt;' Name { S Attribute } [S] 
+   *  [44] EmptyElemTag ::= '&amp;lt;' Name { S Attribute } [S] 
+   */
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(pscope: scala.xml.NamespaceBinding)(String, scala.xml.MetaData, scala.xml.NamespaceBinding)" id="83211">xTag</a>(<a title="scala.xml.NamespaceBinding" id="145561">pscope</a>:<a href="../NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>): <a href="../../Tuple3.scala.html#393" title="(String, scala.xml.MetaData, scala.xml.NamespaceBinding)">Tuple3</a>[String, MetaData, NamespaceBinding] = {
+    <span class="keyword">val</span> <a title="String" id="145563">qname</a> = <a href="#83223" title="=&gt; String">xName</a>
+
+    <a href="#83225" title="=&gt; Unit">xSpaceOpt</a>
+    <span class="keyword">val</span> <a href="../../Tuple2.scala.html#20670" title="(scala.xml.MetaData, scala.xml.NamespaceBinding)">(</a><a href="../../Tuple2.scala.html#20472" title="scala.xml.MetaData" id="145565">aMap</a>: <a href="../MetaData.scala.html#8585" title="scala.xml.MetaData">MetaData</a>, <a href="../../Tuple2.scala.html#20474" title="scala.xml.NamespaceBinding" id="145566">scope</a>: <a href="../NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>) = {
+      <span title="(scala.xml.MetaData, scala.xml.NamespaceBinding)" class="keyword">if</span> (<a href="TokenTests.scala.html#26603" title="(ch: Char)Boolean">isNameStart</a>(<a href="#83187" title="=&gt; Char">ch</a>)) 
+        <a href="#83208" title="(pscope: scala.xml.NamespaceBinding)(scala.xml.MetaData, scala.xml.NamespaceBinding)">xAttributes</a>(<a href="#145561" title="scala.xml.NamespaceBinding">pscope</a>)
+      <span class="keyword">else</span> 
+        <a href="../../Tuple2.scala.html#20670" title="(_1: object scala.xml.Null,_2: scala.xml.NamespaceBinding)(object scala.xml.Null, scala.xml.NamespaceBinding)">(</a><a href="../Null.scala.html#8526" title="object scala.xml.Null">Null</a>, <a href="#145561" title="scala.xml.NamespaceBinding">pscope</a>)
+    }
+    <a href="../../Tuple3.scala.html#19124" title="(_1: String,_2: scala.xml.MetaData,_3: scala.xml.NamespaceBinding)(String, scala.xml.MetaData, scala.xml.NamespaceBinding)">(</a><a href="#145563" title="String">qname</a>, <a href="#145565" title="scala.xml.MetaData">aMap</a>, <a href="#145566" title="scala.xml.NamespaceBinding">scope</a>)
+  }
+
+  /** [42]  '&amp;lt;' xmlEndTag ::=  '&amp;lt;' '/' Name S? '&amp;gt;'
+   */
+  <span class="keyword">def</span> <a title="(n: String)Unit" id="83212">xEndTag</a>(<a title="String" id="145606">n</a>: <span title="String">String</span>) = {
+    <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char('/')" class="char">'/'</span>)
+    <span class="keyword">val</span> <a title="String" id="145609">m</a> = <a href="#83223" title="=&gt; String">xName</a>
+    <span title="Unit" class="keyword">if</span> (<a href="#145606" title="(x$1: AnyRef)Boolean">n</a> != <a href="#145609" title="String">m</a>)
+      <a href="#83240" title="(str: String)Unit">reportSyntaxError</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;expected closing tag of &quot;</span> + <a href="#145606" title="String">n</a>/* +&quot;, not &quot;+m*/);
+    <a href="#83225" title="=&gt; Unit">xSpaceOpt</a>
+    <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char('&gt;')" class="char">'&gt;'</span>)
+  }
+
+  /** '&amp;lt;! CharData ::= [CDATA[ ( {char} - {char}&quot;]]&amp;gt;&quot;{char} ) ']]&amp;gt;'
+   *
+   * see [15]
+   */
+  <span class="keyword">def</span> <a title="=&gt; scala.xml.NodeSeq" id="83213">xCharData</a>: <a href="../NodeSeq.scala.html#8522" title="scala.xml.NodeSeq">NodeSeq</a> = {
+    <a href="#83207" title="(that: Seq[Char])Unit">xToken</a>(<a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;[CDATA[&quot;</a>)
+    <span class="keyword">val</span> <a title="Int" id="145639">pos1</a> = <a href="#83178" title="=&gt; Int">pos</a>
+    <span class="keyword">val</span> <a title="StringBuilder" id="145640">sb</a>: <a href="../../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a> = <a href="../../collection/mutable/StringBuilder.scala.html#23348" title="()StringBuilder" class="keyword">new</a> <a href="../../package.scala.html#14791" title="StringBuilder">StringBuilder</a>()
+    <span title="Unit" class="keyword">while</span> (<span title="Boolean(true)" class="keyword">true</span>) <a href="#145641" title="()Unit">{</a>
+      <span title="StringBuilder" class="keyword">if</span> (<a href="#83187" title="(x$1: Char)Boolean">ch</a><span title="(x$1: Boolean)Boolean">==</span><span title="Char(']')" class="char">']'</span>  <span title="(x$1: Boolean)Boolean">&amp;&amp;</span>
+         { <a href="#145640" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<a href="#83187" title="=&gt; Char">ch</a>); <a href="#83205" title="=&gt; Unit">nextch</a>; <a href="#83187" title="(x$1: Char)Boolean">ch</a> == <span title="Char(']')" class="char">']'</span> } &amp;&amp;
+         { <a href="#145640" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<a href="#83187" title="=&gt; Char">ch</a>); <a href="#83205" title="=&gt; Unit">nextch</a>; <a href="#83187" title="(x$1: Char)Boolean">ch</a> == <span title="Char('&gt;')" class="char">'&gt;'</span> } ) {
+        <a href="#145640" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23353" title="(n: Int)Unit">length</a> = <a href="#145640" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23352" title="(x$1: Int)Int">length</a> - <span title="Int(2)" class="int">2</span>
+        <a href="#83205" title="=&gt; Unit">nextch</a>; 
+        <span title="Nothing" class="keyword">return</span> <a href="#83172" title="=&gt; scala.xml.parsing.MarkupHandler">handle</a>.<a href="MarkupHandler.scala.html#50199" title="(pos: Int,txt: String)scala.xml.NodeSeq">text</a>( <a href="#145639" title="Int">pos1</a>, <a href="#145640" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23409" title="()String">toString</a>() );
+      } <span class="keyword">else</span> <a href="#145640" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>( <a href="#83187" title="=&gt; Char">ch</a> );
+      <a href="#83205" title="=&gt; Unit">nextch</a>; 
+    }
+    <span title="Nothing" class="keyword">throw</span> <a href="FatalError.scala.html#119975" title="(msg: String)scala.xml.parsing.FatalError">FatalError</a>(<span title="java.lang.String(&quot;this cannot happen&quot;)" class="string">&quot;this cannot happen&quot;</span>);
+  };
+
+  /** CharRef ::= &quot;&amp;amp;#&quot; '0'..'9' {'0'..'9'} &quot;;&quot;
+   *            | &quot;&amp;amp;#x&quot; '0'..'9'|'A'..'F'|'a'..'f' { hexdigit } &quot;;&quot;
+   *
+   * see [66]
+   */
+  <span class="keyword">def</span> <a title="(ch: () =&gt; Char,nextch: () =&gt; Unit)String" id="83214">xCharRef</a>(<a title="() =&gt; Char" id="145752">ch</a>: () =&gt; Char, <a title="() =&gt; Unit" id="145753">nextch</a>: () =&gt; Unit): <span title="String">String</span> = {
+    <a href="../Utility.scala.html#8724" title="object scala.xml.Utility">Utility</a>.<a href="../Utility.scala.html#26598" title="(ch: () =&gt; Char,nextch: () =&gt; Unit,reportSyntaxError: (String) =&gt; Unit)String">parseCharRef</a>(<a href="#145752" title="() =&gt; Char">ch</a>, <a href="#145753" title="() =&gt; Unit">nextch</a>, <a href="#83240" title="(str: String)Unit">reportSyntaxError</a> _)
+    /*
+    val hex  = (ch() == 'x') &amp;&amp; { nextch(); true };
+    val base = if (hex) 16 else 10;
+    var i = 0;
+    while (ch() != ';') {
+      ch() match {
+        case '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' =&gt;
+          i = i * base + Character.digit( ch(), base );
+        case 'a' | 'b' | 'c' | 'd' | 'e' | 'f'
+           | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' =&gt;
+          if (! hex) 
+            reportSyntaxError(&quot;hex char not allowed in decimal char ref\n&quot;
+                         +&quot;Did you mean to write &amp;#x ?&quot;);
+          else 
+            i = i * base + Character.digit(ch(), base);
+        case _ =&gt;
+          reportSyntaxError(&quot;character '&quot; + ch() + &quot; not allowed in char ref\n&quot;);
+      }
+      nextch();
+    }
+    new String(Array(i.asInstanceOf[char]))
+    */
+  }
+
+
+  /** Comment ::= '&amp;lt;!--' ((Char - '-') | ('-' (Char - '-')))* '--&amp;gt;'
+   *
+   * see [15]
+   */
+  <span class="keyword">def</span> <a title="=&gt; scala.xml.NodeSeq" id="83215">xComment</a>: <a href="../NodeSeq.scala.html#8522" title="scala.xml.NodeSeq">NodeSeq</a> = {
+    <span class="keyword">val</span> <a title="StringBuilder" id="145772">sb</a>: <a href="../../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a> = <a href="../../collection/mutable/StringBuilder.scala.html#23348" title="()StringBuilder" class="keyword">new</a> <a href="../../package.scala.html#14791" title="StringBuilder">StringBuilder</a>()
+    <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char('-')" class="char">'-'</span>)
+    <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char('-')" class="char">'-'</span>)
+    <span title="Unit" class="keyword">while</span> (<span title="Boolean(true)" class="keyword">true</span>) <a href="#145773" title="()Unit">{</a> 
+      <span title="StringBuilder" class="keyword">if</span> (<a href="#83187" title="(x$1: Char)Boolean">ch</a> <span title="(x$1: Boolean)Boolean">==</span> <span title="Char('-')" class="char">'-'</span>  &amp;&amp; { <a href="#145772" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<a href="#83187" title="=&gt; Char">ch</a>); <a href="#83205" title="=&gt; Unit">nextch</a>; <a href="#83187" title="(x$1: Char)Boolean">ch</a> == <span title="Char('-')" class="char">'-'</span> }) {
+        <a href="#145772" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23353" title="(n: Int)Unit">length</a> = <a href="#145772" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23352" title="(x$1: Int)Int">length</a> - <span title="Int(1)" class="int">1</span>
+        <a href="#83205" title="=&gt; Unit">nextch</a>
+        <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char('&gt;')" class="char">'&gt;'</span>)
+        <span title="Nothing" class="keyword">return</span> <a href="#83172" title="=&gt; scala.xml.parsing.MarkupHandler">handle</a>.<a href="MarkupHandler.scala.html#50197" title="(pos: Int,comment: String)scala.xml.NodeSeq">comment</a>(<a href="#83178" title="=&gt; Int">pos</a>, <a href="#145772" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23409" title="()String">toString</a>())
+      } <span class="keyword">else</span> <a href="#145772" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<a href="#83187" title="=&gt; Char">ch</a>)
+      <a href="#83205" title="=&gt; Unit">nextch</a>
+    }
+    <span title="Nothing" class="keyword">throw</span> <a href="FatalError.scala.html#119975" title="(msg: String)scala.xml.parsing.FatalError">FatalError</a>(<span title="java.lang.String(&quot;this cannot happen&quot;)" class="string">&quot;this cannot happen&quot;</span>)
+  }
+
+  /* todo: move this into the NodeBuilder class */
+  <span class="keyword">def</span> <a title="(pos: Int,ts: scala.xml.NodeBuffer,txt: String)Unit" id="83216">appendText</a>(<a title="Int" id="145867">pos</a>: <span title="Int">Int</span>, <a title="scala.xml.NodeBuffer" id="145868">ts</a>: <a href="../NodeBuffer.scala.html#8696" title="scala.xml.NodeBuffer">NodeBuffer</a>, <a title="String" id="145869">txt</a>: <span title="String">String</span>): <span title="Unit">Unit</span> = {
+    <span title="Unit" class="keyword">if</span> (<a href="#83167" title="=&gt; Boolean">preserveWS</a>)
+      <a href="../NodeBuffer.scala.html#141952" title="(o: Any)scala.xml.NodeBuffer">ts</a> <span title="Unit">&amp;+</span> <a href="#83172" title="=&gt; scala.xml.parsing.MarkupHandler">handle</a>.<a href="MarkupHandler.scala.html#50199" title="(pos: Int,txt: String)scala.xml.NodeSeq">text</a>(<a href="#145867" title="Int">pos</a>, <a href="#145869" title="String">txt</a>);
+    <span class="keyword">else</span>
+      <span class="keyword">for</span> (<a title="scala.xml.Text" id="145904">t</a> &lt;- <a href="../TextBuffer.scala.html#8682" title="object scala.xml.TextBuffer">TextBuffer</a>.<a href="../TextBuffer.scala.html#145876" title="(str: String)scala.xml.TextBuffer">fromString</a>(<a href="#145869" title="String">txt</a>).<a href="../../collection/generic/IterableTemplate.scala.html#17287" title="(f: (scala.xml.Text) =&gt; scala.xml.NodeBuffer)Unit">toText</a>) {
+        <a href="../NodeBuffer.scala.html#141952" title="(o: Any)scala.xml.NodeBuffer">ts</a> &amp;+ <a href="#83172" title="=&gt; scala.xml.parsing.MarkupHandler">handle</a>.<a href="MarkupHandler.scala.html#50199" title="(pos: Int,txt: String)scala.xml.NodeSeq">text</a>(<a href="#145867" title="Int">pos</a>, <a href="#145904" title="scala.xml.Text">t</a>.<a href="../Atom.scala.html#26468" title="=&gt; String">text</a>);
+      }
+  }
+
+  /** '&amp;lt;' content1 ::=  ... */
+  <span class="keyword">def</span> <a title="(pscope: scala.xml.NamespaceBinding,ts: scala.xml.NodeBuffer)Unit" id="83217">content1</a>(<a title="scala.xml.NamespaceBinding" id="145125">pscope</a>: <a href="../NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>, <a title="scala.xml.NodeBuffer" id="145126">ts</a>: <a href="../NodeBuffer.scala.html#8696" title="scala.xml.NodeBuffer">NodeBuffer</a>): <span title="Unit">Unit</span> =
+    <a href="#83187" title="=&gt; Char">ch</a> <span title="Unit" class="keyword">match</span> {
+      <span title="Unit" class="keyword">case</span> <span title="Char('!')" class="char">'!'</span> =&gt;
+        <a href="#83205" title="=&gt; Unit">nextch</a>
+      <span title="Unit" class="keyword">if</span> (<span title="(x$1: Char)Boolean" class="char">'['</span> == <a href="#83187" title="=&gt; Char">ch</a>)                 // CDATA 
+        <a href="../NodeBuffer.scala.html#141952" title="(o: Any)scala.xml.NodeBuffer">ts</a> <span title="Unit">&amp;+</span> <a href="#83213" title="=&gt; scala.xml.NodeSeq">xCharData</a>
+      <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<span title="(x$1: Char)Boolean" class="char">'D'</span> == <a href="#83187" title="=&gt; Char">ch</a>) // doctypedecl, parse DTD // @todo REMOVE HACK
+        <a href="#83220" title="()Unit">parseDTD</a>()
+      <span class="keyword">else</span> // comment
+        <a href="../NodeBuffer.scala.html#141952" title="(o: Any)scala.xml.NodeBuffer">ts</a> <span title="Unit">&amp;+</span> <a href="#83215" title="=&gt; scala.xml.NodeSeq">xComment</a>
+      <span title="Unit" class="keyword">case</span> <span title="Char('?')" class="char">'?'</span> =&gt;                    // PI
+        <a href="#83205" title="=&gt; Unit">nextch</a>
+        <a href="../NodeBuffer.scala.html#141952" title="(o: Any)scala.xml.NodeBuffer">ts</a> <span title="Unit">&amp;+</span> <a href="#83227" title="=&gt; scala.xml.NodeSeq">xProcInstr</a>
+      <span title="Unit" class="keyword">case</span> _   =&gt; 
+        <a href="../NodeBuffer.scala.html#141952" title="(o: Any)scala.xml.NodeBuffer">ts</a> <span title="Unit">&amp;+</span> <a href="#83222" title="(pscope: scala.xml.NamespaceBinding)scala.xml.NodeSeq">element1</a>(<a href="#145125" title="scala.xml.NamespaceBinding">pscope</a>)      // child
+    }
+
+  /** content1 ::=  '&amp;lt;' content1 | '&amp;amp;' charref ... */
+  <span class="keyword">def</span> <a title="(pscope: scala.xml.NamespaceBinding)scala.xml.NodeSeq" id="83218">content</a>(<a title="scala.xml.NamespaceBinding" id="145118">pscope</a>: <a href="../NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>): <a href="../NodeSeq.scala.html#8522" title="scala.xml.NodeSeq">NodeSeq</a> = {
+    <span class="keyword">var</span> <a title="scala.xml.NodeBuffer" id="145945">ts</a> = <span title="scala.xml.NodeBuffer" class="keyword">new</span> <a href="../NodeBuffer.scala.html#8696" title="scala.xml.NodeBuffer">NodeBuffer</a>
+    <span class="keyword">var</span> <a title="Boolean" id="145946">exit</a> = <a href="#83198" title="=&gt; Boolean">eof</a>
+    <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span> <a href="#145946" title="Boolean">exit</a>) <a href="#145948" title="()Unit">{</a>
+      //Console.println(&quot;in content, ch = '&quot;+ch+&quot;' line=&quot;+scala.io.Position.line(pos));
+      /*      if( xEmbeddedBlock ) {
+       ts.append( xEmbeddedExpr );
+       } else {*/
+        <a href="#83184" title="(x$1: Int)Unit">tmppos</a> = <a href="#83178" title="=&gt; Int">pos</a>;
+        <a href="#145946" title="Boolean">exit</a> = <a href="#83198" title="=&gt; Boolean">eof</a>;
+        <span title="Any" class="keyword">if</span>(<span title="=&gt; Boolean">!</span><a href="#83198" title="=&gt; Boolean">eof</a>) 
+          <a href="#83187" title="=&gt; Char">ch</a> <span title="Any" class="keyword">match</span> {
+          <span title="Unit" class="keyword">case</span> <span title="Char('&lt;')" class="char">'&lt;'</span> =&gt; // another tag
+            //Console.println(&quot;before ch = '&quot;+ch+&quot;' line=&quot;+scala.io.Position.line(pos)+&quot; pos=&quot;+pos);
+            <a href="#83205" title="=&gt; Unit">nextch</a>; 
+            //Console.println(&quot;after ch = '&quot;+ch+&quot;' line=&quot;+scala.io.Position.line(pos)+&quot; pos=&quot;+pos);
+
+            <span title="Unit" class="keyword">if</span>(<span title="(x$1: Char)Boolean" class="char">'/'</span> ==<a href="#83187" title="=&gt; Char">ch</a>)
+              <a href="#145946" title="Boolean">exit</a> = <span title="Boolean(true)" class="keyword">true</span>;                    // end tag
+            <span class="keyword">else</span>
+              <a href="#83217" title="(pscope: scala.xml.NamespaceBinding,ts: scala.xml.NodeBuffer)Unit">content1</a>(<a href="#145118" title="scala.xml.NamespaceBinding">pscope</a>, <a href="#145945" title="scala.xml.NodeBuffer">ts</a>)
+          //case '{' =&gt; 
+/*            if( xCheckEmbeddedBlock ) {
+              ts.appendAll(xEmbeddedExpr);
+            } else {*/
+          //    val str = new StringBuilder(&quot;{&quot;);
+          //    str.append(xText);
+          //    appendText(tmppos, ts, str.toString());
+            /*}*/
+          // postcond: xEmbeddedBlock == false!
+          <span title="Any" class="keyword">case</span> <span title="Char('&amp;')" class="char">'&amp;'</span> =&gt; // EntityRef or CharRef 
+            <a href="#83205" title="=&gt; Unit">nextch</a>;
+            <a href="#83187" title="=&gt; Char">ch</a> <span title="Any" class="keyword">match</span> {
+              <span title="scala.xml.NodeBuffer" class="keyword">case</span> <span title="Char('#')" class="char">'#'</span> =&gt; // CharacterRef
+                <a href="#83205" title="=&gt; Unit">nextch</a>;
+                <span class="keyword">val</span> <a title="scala.xml.NodeSeq" id="145962">theChar</a> = <a href="#83172" title="=&gt; scala.xml.parsing.MarkupHandler">handle</a>.<a href="MarkupHandler.scala.html#50199" title="(pos: Int,txt: String)scala.xml.NodeSeq">text</a>( <a href="#83184" title="=&gt; Int">tmppos</a>, 
+                                          <a href="#83214" title="(ch: () =&gt; Char,nextch: () =&gt; Unit)String">xCharRef</a> ({ ()=&gt; <a href="#83187" title="=&gt; Char">ch</a> },{ () =&gt; <a href="#83205" title="=&gt; Unit">nextch</a> }) );
+                <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char(';')" class="char">';'</span>);
+                <a href="../NodeBuffer.scala.html#141952" title="(o: Any)scala.xml.NodeBuffer">ts</a> &amp;+ <a href="#145962" title="scala.xml.NodeSeq">theChar</a> ;
+              <span title="Any" class="keyword">case</span> _ =&gt; // EntityRef
+                <span class="keyword">val</span> <a title="String" id="145978">n</a> = <a href="#83223" title="=&gt; String">xName</a>
+                <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char(';')" class="char">';'</span>)
+                <a href="#145978" title="String">n</a> <span title="Any" class="keyword">match</span> {
+                  <span title="scala.xml.NodeBuffer" class="keyword">case</span> <span title="java.lang.String(&quot;lt&quot;)" class="string">&quot;lt&quot;</span>    =&gt; <a href="../NodeBuffer.scala.html#141952" title="(o: Any)scala.xml.NodeBuffer">ts</a> &amp;+ <span title="Char('&lt;')" class="char">'&lt;'</span>
+                  <span title="scala.xml.NodeBuffer" class="keyword">case</span> <span title="java.lang.String(&quot;gt&quot;)" class="string">&quot;gt&quot;</span>    =&gt; <a href="../NodeBuffer.scala.html#141952" title="(o: Any)scala.xml.NodeBuffer">ts</a> &amp;+ <span title="Char('&gt;')" class="char">'&gt;'</span>
+                  <span title="scala.xml.NodeBuffer" class="keyword">case</span> <span title="java.lang.String(&quot;amp&quot;)" class="string">&quot;amp&quot;</span>   =&gt; <a href="../NodeBuffer.scala.html#141952" title="(o: Any)scala.xml.NodeBuffer">ts</a> &amp;+ <span title="Char('&amp;')" class="char">'&amp;'</span>
+                  <span title="scala.xml.NodeBuffer" class="keyword">case</span> <span title="java.lang.String(&quot;quot&quot;)" class="string">&quot;quot&quot;</span> =&gt; <a href="../NodeBuffer.scala.html#141952" title="(o: Any)scala.xml.NodeBuffer">ts</a> &amp;+ <span title="Char('&quot;')" class="char">'&quot;'</span>
+                  <span title="Unit" class="keyword">case</span> _ =&gt;
+                    /*
+                     ts + handle.entityRef( tmppos, n ) ;
+                     */
+                    <a href="#83242" title="(entityName: String)Unit">push</a>(<a href="#145978" title="String">n</a>)
+                }
+            }
+          <span title="Unit" class="keyword">case</span> _ =&gt; // text content
+            //Console.println(&quot;text content?? pos = &quot;+pos);
+            <a href="#83216" title="(pos: Int,ts: scala.xml.NodeBuffer,txt: String)Unit">appendText</a>(<a href="#83184" title="=&gt; Int">tmppos</a>, <a href="#145945" title="scala.xml.NodeBuffer">ts</a>, <a href="#83228" title="=&gt; String">xText</a>);
+          // here xEmbeddedBlock might be true
+          }
+    /*}*/
+    }
+    <span class="keyword">val</span> <a title="List[scala.xml.Node]" id="145947">list</a> = <a href="#145945" title="scala.xml.NodeBuffer">ts</a>.<a href="../../collection/generic/TraversableTemplate.scala.html#17236" title="=&gt; List[scala.xml.Node]">toList</a>
+    // 2do: optimize seq repr.
+    <a href="#146010" title="scala.xml.NodeSeq{ ... }" class="keyword">new</a> <a href="../NodeSeq.scala.html#8522" title="anonymous class $anon extends scala.xml.NodeSeq" id="146010">NodeSeq</a> {
+      <span class="keyword">val</span> <a title="List[scala.xml.Node]" id="146012">theSeq</a> = <a href="#145947" title="List[scala.xml.Node]">list</a>
+    }
+  } // content(NamespaceBinding)
+
+  /** externalID ::= SYSTEM S syslit
+   *                 PUBLIC S pubid S syslit
+   */
+
+  <span class="keyword">def</span> <a title="()scala.xml.dtd.ExternalID" id="83219">externalID</a>(): <a href="../dtd/ExternalID.scala.html#11068" title="scala.xml.dtd.ExternalID">ExternalID</a> = <a href="#83187" title="=&gt; Char">ch</a> <span title="scala.xml.dtd.ExternalID" class="keyword">match</span> {
+    <span title="scala.xml.dtd.SystemID" class="keyword">case</span> <span title="Char('S')" class="char">'S'</span> =&gt;
+      <a href="#83205" title="=&gt; Unit">nextch</a>
+      <a href="#83207" title="(that: Seq[Char])Unit">xToken</a>(<a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;YSTEM&quot;</a>)
+      <a href="#83226" title="=&gt; Unit">xSpace</a>
+      <span class="keyword">val</span> <a title="String" id="146020">sysID</a> = <a href="#83229" title="()String">systemLiteral</a>()
+      <span title="scala.xml.dtd.SystemID" class="keyword">new</span> <a href="../dtd/ExternalID.scala.html#11182" title="scala.xml.dtd.SystemID">SystemID</a>(<a href="#146020" title="String">sysID</a>)
+    <span title="scala.xml.dtd.PublicID" class="keyword">case</span> <span title="Char('P')" class="char">'P'</span> =&gt;
+      <a href="#83205" title="=&gt; Unit">nextch</a>; <a href="#83207" title="(that: Seq[Char])Unit">xToken</a>(<a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;UBLIC&quot;</a>)
+      <a href="#83226" title="=&gt; Unit">xSpace</a>
+      <span class="keyword">val</span> <a title="String" id="146057">pubID</a> = <a href="#83230" title="()String">pubidLiteral</a>()
+      <a href="#83226" title="=&gt; Unit">xSpace</a>
+      <span class="keyword">val</span> <a title="String" id="146058">sysID</a> = <a href="#83229" title="()String">systemLiteral</a>()
+      <span title="scala.xml.dtd.PublicID" class="keyword">new</span> <a href="../dtd/ExternalID.scala.html#11065" title="scala.xml.dtd.PublicID">PublicID</a>(<a href="#146057" title="String">pubID</a>, <a href="#146058" title="String">sysID</a>)
+  }
+
+
+  /** parses document type declaration and assigns it to instance variable
+   *  dtd.
+   *
+   *  &amp;lt;! parseDTD ::= DOCTYPE name ... &gt;
+   */ 
+  <span class="keyword">def</span> <a title="()Unit" id="83220">parseDTD</a>(): <span title="Unit">Unit</span> = { // dirty but fast
+    //Console.println(&quot;(DEBUG) parseDTD&quot;);
+    <span class="keyword">var</span> <a title="scala.xml.dtd.ExternalID" id="146102">extID</a>: <a href="../dtd/ExternalID.scala.html#11068" title="scala.xml.dtd.ExternalID">ExternalID</a> = <span title="Null(null)" class="keyword">null</span>
+    <span title="Unit" class="keyword">if</span> (<a href="#12074" title="MarkupParser.this.type" class="keyword">this</a>.<a href="#83192" title="(x$1: AnyRef)Boolean">dtd</a> ne <span title="Null(null)" class="keyword">null</span>)
+      <a href="#83240" title="(str: String)Unit">reportSyntaxError</a>(<span title="java.lang.String(&quot;unexpected character (DOCTYPE already defined&quot;)" class="string">&quot;unexpected character (DOCTYPE already defined&quot;</span>);
+    <a href="#83207" title="(that: Seq[Char])Unit">xToken</a>(<a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;DOCTYPE&quot;</a>)
+    <a href="#83226" title="=&gt; Unit">xSpace</a>
+    <span class="keyword">val</span> <a title="String" id="146103">n</a> = <a href="#83223" title="=&gt; String">xName</a>
+    <a href="#83226" title="=&gt; Unit">xSpace</a>
+    //external ID
+    <span title="Unit" class="keyword">if</span> (<span title="(x$1: Char)Boolean" class="char">'S'</span> <span title="(x$1: Boolean)Boolean">==</span> <a href="#83187" title="=&gt; Char">ch</a> || <span title="(x$1: Char)Boolean" class="char">'P'</span> == <a href="#83187" title="=&gt; Char">ch</a>) {
+      <a href="#146102" title="scala.xml.dtd.ExternalID">extID</a> = <a href="#83219" title="()scala.xml.dtd.ExternalID">externalID</a>()
+      <a href="#83225" title="=&gt; Unit">xSpaceOpt</a>
+    }
+
+    /* parse external subset of DTD 
+     */
+
+    <span title="Unit" class="keyword">if</span> (<span title="(x$1: Boolean)Boolean">(</span><span title="(x$1: AnyRef)Boolean" class="keyword">null</span> != <a href="#146102" title="scala.xml.dtd.ExternalID">extID</a>) &amp;&amp; <a href="MarkupHandler.scala.html#50182" title="=&gt; Boolean">isValidating</a>) {
+
+      <a href="#83243" title="(systemId: String)Unit">pushExternal</a>(<a href="#146102" title="scala.xml.dtd.ExternalID">extID</a>.<a href="../dtd/ExternalID.scala.html#27488" title="=&gt; String">systemId</a>)
+      //val extSubsetSrc = externalSource( extID.systemId );
+
+      <a href="#83181" title="(x$1: Int)Unit">extIndex</a> = <a href="#83175" title="=&gt; List[scala.io.Source]">inpStack</a>.<a href="../../collection/generic/LinearSequenceTemplate.scala.html#19399" title="=&gt; Int">length</a>
+      /*
+       .indexOf(':') != -1) { // assume URI
+         Source.fromFile(new java.net.URI(extID.systemLiteral));
+       } else {
+         Source.fromFile(extID.systemLiteral);
+       }
+      */
+      //Console.println(&quot;I'll print it now&quot;);
+      //val old = curInput;
+      //tmppos = curInput.pos;
+      //val oldch = ch;
+      //curInput = extSubsetSrc;
+      //pos = 0;
+      //nextch;
+
+      <a href="#83231" title="()Unit">extSubset</a>()
+
+      <a href="#83244" title="()Unit">pop</a>()
+
+      <a href="#83181" title="(x$1: Int)Unit">extIndex</a> = <span title="Int(-1)">-</span><span class="int">1</span>
+
+      //curInput = old;
+      //pos = curInput.pos;
+      //ch = curInput.ch;
+      //eof = false;
+      //while(extSubsetSrc.hasNext)
+      //Console.print(extSubsetSrc.next);
+
+      //Console.println(&quot;returned from external, current ch = &quot;+ch )
+    }
+
+    <span title="Unit" class="keyword">if</span> (<span title="(x$1: Char)Boolean" class="char">'['</span> == <a href="#83187" title="=&gt; Char">ch</a>) { // internal subset
+      <a href="#83205" title="=&gt; Unit">nextch</a>
+      /* TODO */
+      //Console.println(&quot;hello&quot;);
+      <a href="#83234" title="()Unit">intSubset</a>()
+      //while(']' != ch)
+      //  nextch;
+      // TODO: do the DTD parsing?? ?!?!?!?!!
+      <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char(']')" class="char">']'</span>)
+      <a href="#83225" title="=&gt; Unit">xSpaceOpt</a>
+    }
+    <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char('&gt;')" class="char">'&gt;'</span>)
+    <a href="#12074" title="MarkupParser.this.type" class="keyword">this</a>.<a href="#83192" title="(x$1: scala.xml.dtd.DTD)Unit">dtd</a> = <a href="#146201" title="scala.xml.dtd.DTD{ ... }" class="keyword">new</a> <a href="../dtd/DTD.scala.html#11143" title="anonymous class $anon extends scala.xml.dtd.DTD" id="146201">DTD</a> {
+      /*override var*/ <a href="../dtd/DTD.scala.html#91039" title="(x$1: scala.xml.dtd.ExternalID)Unit">externalID</a> = <a href="#146102" title="scala.xml.dtd.ExternalID">extID</a>
+      /*override val */<a href="../dtd/DTD.scala.html#91053" title="(x$1: List[scala.xml.dtd.Decl])Unit">decls</a>      = <a href="#83172" title="=&gt; scala.xml.parsing.MarkupHandler">handle</a>.<a href="MarkupHandler.scala.html#50184" title="=&gt; List[scala.xml.dtd.Decl]">decls</a>.<a href="../../collection/immutable/List.scala.html#17664" title="=&gt; List[scala.xml.dtd.Decl]">reverse</a>
+    }
+    //this.dtd.initializeEntities();
+    <span title="Unit" class="keyword">if</span> (<a href="#83195" title="(x$1: AnyRef)Boolean">doc</a> ne <span title="Null(null)" class="keyword">null</span>)
+      <a href="#83195" title="=&gt; scala.xml.Document">doc</a>.<a href="../Document.scala.html#144491" title="(x$1: scala.xml.dtd.DTD)Unit">dtd</a> = <a href="#12074" title="MarkupParser.this.type" class="keyword">this</a>.<a href="#83192" title="=&gt; scala.xml.dtd.DTD">dtd</a>
+
+    <a href="#83172" title="=&gt; scala.xml.parsing.MarkupHandler">handle</a>.<a href="MarkupHandler.scala.html#50192" title="(n: String)Unit">endDTD</a>(<a href="#146103" title="String">n</a>)
+  }
+
+  <span class="keyword">def</span> <a title="(pscope: scala.xml.NamespaceBinding)scala.xml.NodeSeq" id="83221">element</a>(<a title="scala.xml.NamespaceBinding" id="146224">pscope</a>: <a href="../NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>): <a href="../NodeSeq.scala.html#8522" title="scala.xml.NodeSeq">NodeSeq</a> = {
+    <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char('&lt;')" class="char">'&lt;'</span>)
+    <a href="#83222" title="(pscope: scala.xml.NamespaceBinding)scala.xml.NodeSeq">element1</a>(<a href="#146224" title="scala.xml.NamespaceBinding">pscope</a>)
+  }
+
+  /** '&amp;lt;' element ::= xmlTag1 '&amp;gt;'  { xmlExpr | '{' simpleExpr '}' } ETag
+   *               | xmlTag1 '/' '&amp;gt;'
+   */
+  <span class="keyword">def</span> <a title="(pscope: scala.xml.NamespaceBinding)scala.xml.NodeSeq" id="83222">element1</a>(<a title="scala.xml.NamespaceBinding" id="145939">pscope</a>: <a href="../NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>): <a href="../NodeSeq.scala.html#8522" title="scala.xml.NodeSeq">NodeSeq</a> = {
+    <span class="keyword">val</span> <a title="Int" id="146235">pos</a> = <a href="#12074" title="MarkupParser.this.type" class="keyword">this</a>.<a href="#83178" title="=&gt; Int">pos</a>
+    <span class="keyword">val</span> Tuple3<a href="../../Tuple3.scala.html#19124" title="(String, scala.xml.MetaData, scala.xml.NamespaceBinding)">(</a><a href="../../Tuple3.scala.html#17981" title="String" id="146237">qname</a>, <a href="../../Tuple3.scala.html#17983" title="scala.xml.MetaData" id="146238">aMap</a>, <a href="../../Tuple3.scala.html#17985" title="scala.xml.NamespaceBinding" id="146239">scope</a>) = <a href="#83211" title="(pscope: scala.xml.NamespaceBinding)(String, scala.xml.MetaData, scala.xml.NamespaceBinding)">xTag</a><a href="../../Tuple3.scala.html#393" title="(String, scala.xml.MetaData, scala.xml.NamespaceBinding) @unchecked">(</a><a href="#145939" title="scala.xml.NamespaceBinding">pscope</a>)
+    <span class="keyword">val</span> Tuple2<a href="../../Tuple2.scala.html#20670" title="(String, java.lang.String)">(</a><a href="../../Tuple2.scala.html#20472" title="String" id="146241">pre</a>, <a href="../../Tuple2.scala.html#20474" title="java.lang.String" id="146242">local</a>) = <a href="../Utility.scala.html#8724" title="object scala.xml.Utility">Utility</a>.<a href="../Utility.scala.html#26590" title="(name: String)Option[String]">prefix</a>(<a href="#146237" title="String">qname</a>) <span title="(String, java.lang.String)" class="keyword">match</span> {
+      <span title="(String, java.lang.String)" class="keyword">case</span> Some(<a title="String" id="146271">p</a>) =&gt; <a href="../../Tuple2.scala.html#20670" title="(_1: String,_2: java.lang.String)(String, java.lang.String)">(</a><a href="#146271" title="String">p</a>,<a href="#146237" title="String">qname</a>.<span title="(x$1: Int,x$2: Int)java.lang.String">substring</span>(<a href="#146271" title="String">p</a>.<span title="(x$1: Int)Int">length</span>+<span title="Int(1)" class="int">1</span>, <a href="#146237" title="String">qname</a>.<span title="()Int">length</span>))
+      <span title="(Null, String)" class="keyword">case</span> _       =&gt; <a href="../../Tuple2.scala.html#20670" title="(_1: Null,_2: String)(Null, String)">(</a><span title="Null(null)" class="keyword">null</span>,<a href="#146237" title="String">qname</a>)
+    }
+    <span class="keyword">val</span> <a title="scala.xml.NodeSeq" id="146243">ts</a> = {
+      <span title="scala.xml.NodeSeq" class="keyword">if</span> (<a href="#83187" title="(x$1: Char)Boolean">ch</a> == <span title="Char('/')" class="char">'/'</span>) {  // empty element
+        <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char('/')" class="char">'/'</span>)
+        <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char('&gt;')" class="char">'&gt;'</span>)
+        <a href="#83172" title="=&gt; scala.xml.parsing.MarkupHandler">handle</a>.<a href="MarkupHandler.scala.html#50193" title="(pos: Int,pre: String,label: String,attrs: scala.xml.MetaData,scope: scala.xml.NamespaceBinding)Unit">elemStart</a>(<a href="#146235" title="Int">pos</a>, <a href="#146241" title="String">pre</a>, <a href="#146242" title="java.lang.String">local</a>, <a href="#146238" title="scala.xml.MetaData">aMap</a>, <a href="#146239" title="scala.xml.NamespaceBinding">scope</a>)
+        <a href="../NodeSeq.scala.html#8523" title="object scala.xml.NodeSeq">NodeSeq</a>.<a href="../NodeSeq.scala.html#26524" title="=&gt; scala.xml.NodeSeq">Empty</a>
+      }
+      <span class="keyword">else</span> {           // element with content
+        <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char('&gt;')" class="char">'&gt;'</span>)
+        <a href="#83172" title="=&gt; scala.xml.parsing.MarkupHandler">handle</a>.<a href="MarkupHandler.scala.html#50193" title="(pos: Int,pre: String,label: String,attrs: scala.xml.MetaData,scope: scala.xml.NamespaceBinding)Unit">elemStart</a>(<a href="#146235" title="Int">pos</a>, <a href="#146241" title="String">pre</a>, <a href="#146242" title="java.lang.String">local</a>, <a href="#146238" title="scala.xml.MetaData">aMap</a>, <a href="#146239" title="scala.xml.NamespaceBinding">scope</a>)
+        <span class="keyword">val</span> <a title="scala.xml.NodeSeq" id="146369">tmp</a> = <a href="#83218" title="(pscope: scala.xml.NamespaceBinding)scala.xml.NodeSeq">content</a>(<a href="#146239" title="scala.xml.NamespaceBinding">scope</a>)
+        <a href="#83212" title="(n: String)Unit">xEndTag</a>(<a href="#146237" title="String">qname</a>)
+        <a href="#146369" title="scala.xml.NodeSeq">tmp</a>
+      }
+    }
+    <span class="keyword">val</span> <a title="scala.xml.NodeSeq" id="146244">res</a> = <a href="#83172" title="=&gt; scala.xml.parsing.MarkupHandler">handle</a>.<a href="MarkupHandler.scala.html#50195" title="(pos: Int,pre: String,label: String,attrs: scala.xml.MetaData,scope: scala.xml.NamespaceBinding,args: scala.xml.NodeSeq)scala.xml.NodeSeq">elem</a>(<a href="#146235" title="Int">pos</a>, <a href="#146241" title="String">pre</a>, <a href="#146242" title="java.lang.String">local</a>, <a href="#146238" title="scala.xml.MetaData">aMap</a>, <a href="#146239" title="scala.xml.NamespaceBinding">scope</a>, <a href="#146243" title="scala.xml.NodeSeq">ts</a>)
+    <a href="#83172" title="=&gt; scala.xml.parsing.MarkupHandler">handle</a>.<a href="MarkupHandler.scala.html#50194" title="(pos: Int,pre: String,label: String)Unit">elemEnd</a>(<a href="#146235" title="Int">pos</a>, <a href="#146241" title="String">pre</a>, <a href="#146242" title="java.lang.String">local</a>)
+    <a href="#146244" title="scala.xml.NodeSeq">res</a>
+  }
+
+  //def xEmbeddedExpr: MarkupType;
+
+  /** Name ::= (Letter | '_' | ':') (NameChar)*
+   *
+   *  see  [5] of XML 1.0 specification
+   */
+  <span class="keyword">def</span> <a title="=&gt; String" id="83223">xName</a>: <span title="String">String</span> = {
+    <span title="String" class="keyword">if</span> (<a href="TokenTests.scala.html#26603" title="(ch: Char)Boolean">isNameStart</a>(<a href="#83187" title="=&gt; Char">ch</a>)) {
+      <span title="Unit" class="keyword">while</span> (<a href="TokenTests.scala.html#26602" title="(ch: Char)Boolean">isNameChar</a>(<a href="#83187" title="=&gt; Char">ch</a>)) <a href="#146394" title="()Unit">{</a>
+        <a href="#83204" title="(c: Char)StringBuilder">putChar</a>(<a href="#83187" title="=&gt; Char">ch</a>)
+        <a href="#83205" title="=&gt; Unit">nextch</a>
+      }
+      <span class="keyword">val</span> <a title="java.lang.String" id="146393">n</a> = <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23409" title="()String">toString</a>().<a title="()java.lang.String" id="7081">intern</a>()
+      <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23353" title="(n: Int)Unit">length</a> = <span title="Int(0)" class="int">0</span>
+      <a href="#146393" title="java.lang.String">n</a>
+    } <span class="keyword">else</span> {
+      <a href="#83240" title="(str: String)Unit">reportSyntaxError</a>(<span title="java.lang.String(&quot;name expected&quot;)" class="string">&quot;name expected&quot;</span>)
+      <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>
+    }
+  }
+
+  /** scan [S] '=' [S]*/
+  <span class="keyword">def</span> <a title="=&gt; Unit" id="83224">xEQ</a> = { <a href="#83225" title="=&gt; Unit">xSpaceOpt</a>; <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char('=')" class="char">'='</span>); <a href="#83225" title="=&gt; Unit">xSpaceOpt</a> }
+
+  /** skip optional space S? */
+  <span class="keyword">def</span> <a title="=&gt; Unit" id="83225">xSpaceOpt</a> = <span title="Unit" class="keyword">while</span> (<a href="TokenTests.scala.html#26600" title="(ch: Char)Boolean">isSpace</a><span title="(x$1: Boolean)Boolean">(</span><a href="#83187" title="=&gt; Char">ch</a>) &amp;&amp; <span title="=&gt; Boolean">!</span><a href="#83198" title="=&gt; Boolean">eof</a>) { <a href="#83205" title="=&gt; Unit">nextch</a>; }
+
+  /** scan [3] S ::= (#x20 | #x9 | #xD | #xA)+ */
+  <span class="keyword">def</span> <a title="=&gt; Unit" id="83226">xSpace</a> =
+    <span title="Unit" class="keyword">if</span> (<a href="TokenTests.scala.html#26600" title="(ch: Char)Boolean">isSpace</a>(<a href="#83187" title="=&gt; Char">ch</a>)) { <a href="#83205" title="=&gt; Unit">nextch</a>; <a href="#83225" title="=&gt; Unit">xSpaceOpt</a> }
+    <span class="keyword">else</span> <a href="#83240" title="(str: String)Unit">reportSyntaxError</a>(<span title="java.lang.String(&quot;whitespace expected&quot;)" class="string">&quot;whitespace expected&quot;</span>)
+
+  /** '&amp;lt;?' ProcInstr ::= Name [S ({Char} - ({Char}'&amp;gt;?' {Char})]'?&amp;gt;'
+   *
+   * see [15]
+   */
+  <span class="keyword">def</span> <a title="=&gt; scala.xml.NodeSeq" id="83227">xProcInstr</a>: <a href="../NodeSeq.scala.html#8522" title="scala.xml.NodeSeq">NodeSeq</a> = {
+    <span class="keyword">val</span> <a title="StringBuilder" id="146425">sb</a>:<a href="../../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a> = <a href="../../collection/mutable/StringBuilder.scala.html#23348" title="()StringBuilder" class="keyword">new</a> <a href="../../package.scala.html#14791" title="StringBuilder">StringBuilder</a>()
+    <span class="keyword">val</span> <a title="String" id="146426">n</a> = <a href="#83223" title="=&gt; String">xName</a>
+    <span title="Unit" class="keyword">if</span> (<a href="TokenTests.scala.html#26600" title="(ch: Char)Boolean">isSpace</a>(<a href="#83187" title="=&gt; Char">ch</a>)) {
+      <a href="#83226" title="=&gt; Unit">xSpace</a>
+      <span title="Unit" class="keyword">while</span> (<span title="Boolean(true)" class="keyword">true</span>) <a href="#146446" title="()Unit">{</a>
+        <span title="StringBuilder" class="keyword">if</span> (<a href="#83187" title="(x$1: Char)Boolean">ch</a> <span title="(x$1: Boolean)Boolean">==</span> <span title="Char('?')" class="char">'?'</span> &amp;&amp; { <a href="#146425" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>( <a href="#83187" title="=&gt; Char">ch</a> ); <a href="#83205" title="=&gt; Unit">nextch</a>; <a href="#83187" title="(x$1: Char)Boolean">ch</a> == <span title="Char('&gt;')" class="char">'&gt;'</span> }) {
+          <a href="#146425" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23353" title="(n: Int)Unit">length</a> = <a href="#146425" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23352" title="(x$1: Int)Int">length</a> - <span title="Int(1)" class="int">1</span>;
+          <a href="#83205" title="=&gt; Unit">nextch</a>;
+          <span title="Nothing" class="keyword">return</span> <a href="#83172" title="=&gt; scala.xml.parsing.MarkupHandler">handle</a>.<a href="MarkupHandler.scala.html#50196" title="(pos: Int,target: String,txt: String)scala.xml.NodeSeq">procInstr</a>(<a href="#83184" title="=&gt; Int">tmppos</a>, <a href="#146426" title="String">n</a>, <a href="#146425" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23409" title="()String">toString</a>);
+        } <span class="keyword">else</span>
+          <a href="#146425" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<a href="#83187" title="=&gt; Char">ch</a>);
+        <a href="#83205" title="=&gt; Unit">nextch</a>
+      }
+    };
+    <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char('?')" class="char">'?'</span>)
+    <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char('&gt;')" class="char">'&gt;'</span>)
+    <a href="#83172" title="=&gt; scala.xml.parsing.MarkupHandler">handle</a>.<a href="MarkupHandler.scala.html#50196" title="(pos: Int,target: String,txt: String)scala.xml.NodeSeq">procInstr</a>(<a href="#83184" title="=&gt; Int">tmppos</a>, <a href="#146426" title="String">n</a>, <a href="#146425" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23409" title="()String">toString</a>)
+  }
+
+  /** parse character data.
+   *   precondition: xEmbeddedBlock == false (we are not in a scala block)
+   */
+  <span class="keyword">def</span> <a title="=&gt; String" id="83228">xText</a>: <span title="String">String</span> = {
+    //if( xEmbeddedBlock ) throw FatalError(&quot;internal error: encountered embedded block&quot;); // assert
+
+    /*if( xCheckEmbeddedBlock )
+      return &quot;&quot;
+    else {*/
+    //Console.println(&quot;in xText! ch = '&quot;+ch+&quot;'&quot;);
+      <span class="keyword">var</span> <a title="Boolean" id="146519">exit</a> = <span title="Boolean(false)" class="keyword">false</span>;
+      <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span> <a href="#146519" title="Boolean">exit</a>) <a href="#146521" title="()Unit">{</a>
+        //Console.println(&quot;LOOP in xText! ch = '&quot;+ch+&quot;' + pos=&quot;+pos);
+        <a href="#83204" title="(c: Char)StringBuilder">putChar</a>(<a href="#83187" title="=&gt; Char">ch</a>);
+        <span class="keyword">val</span> <a title="Int" id="146522">opos</a> = <a href="#83178" title="=&gt; Int">pos</a>;
+        <a href="#83205" title="=&gt; Unit">nextch</a>;
+
+        //Console.println(&quot;STILL LOOP in xText! ch = '&quot;+ch+&quot;' + pos=&quot;+pos+&quot; opos=&quot;+opos);
+        
+
+        <a href="#146519" title="Boolean">exit</a> = <a href="#83198" title="(x$1: Boolean)Boolean">eof</a> <span title="(x$1: Boolean)Boolean">||</span> /*{ nextch; xCheckEmbeddedBlock }||*/( <a href="#83187" title="(x$1: Char)Boolean">ch</a> == <span title="Char('&lt;')" class="char">'&lt;'</span> ) || ( <a href="#83187" title="(x$1: Char)Boolean">ch</a> == <span title="Char('&amp;')" class="char">'&amp;'</span> );
+      }
+      <span class="keyword">val</span> <a title="String" id="146520">str</a> = <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23409" title="()String">toString</a>();
+      <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23353" title="(n: Int)Unit">length</a> = <span title="Int(0)" class="int">0</span>;
+      <a href="#146520" title="String">str</a>
+    /*}*/
+  }
+
+  /** attribute value, terminated by either ' or &quot;. value may not contain &amp;lt;.
+   *       AttValue     ::= `'` { _ } `'`
+   *                      | `&quot;` { _ } `&quot;`
+   */
+  <span class="keyword">def</span> <a title="()String" id="83229">systemLiteral</a>(): <span title="String">String</span> = {
+    <span class="keyword">val</span> <a title="Char" id="146549">endch</a> = <a href="#83187" title="=&gt; Char">ch</a>
+    <span title="Unit" class="keyword">if</span> (<a href="#83187" title="(x$1: Char)Boolean">ch</a> <span title="(x$1: Boolean)Boolean">!=</span> <span title="Char(''')" class="char">'\''</span> &amp;&amp; <a href="#83187" title="(x$1: Char)Boolean">ch</a> != <span title="Char('&quot;')" class="char">'&quot;'</span>)
+      <a href="#83240" title="(str: String)Unit">reportSyntaxError</a>(<span title="java.lang.String(&quot;quote ' or &quot; expected&quot;)" class="string">&quot;quote ' or \&quot; expected&quot;</span>);
+    <a href="#83205" title="=&gt; Unit">nextch</a>
+    <span title="Unit" class="keyword">while</span> (<a href="#83187" title="(x$1: Char)Boolean">ch</a> != <a href="#146549" title="Char">endch</a>) <a href="#146551" title="()Unit">{</a>
+      <a href="#83204" title="(c: Char)StringBuilder">putChar</a>(<a href="#83187" title="=&gt; Char">ch</a>)
+      <a href="#83205" title="=&gt; Unit">nextch</a>
+    }
+    <a href="#83205" title="=&gt; Unit">nextch</a>
+    <span class="keyword">val</span> <a title="String" id="146550">str</a> = <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23409" title="()String">toString</a>()
+    <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23353" title="(n: Int)Unit">length</a> = <span title="Int(0)" class="int">0</span>
+    <a href="#146550" title="String">str</a>
+  }
+
+
+  /* [12]       PubidLiteral ::=        '&quot;' PubidChar* '&quot;' | &quot;'&quot; (PubidChar - &quot;'&quot;)* &quot;'&quot; */
+  <span class="keyword">def</span> <a title="()String" id="83230">pubidLiteral</a>(): <span title="String">String</span> = {
+    <span class="keyword">val</span> <a title="Char" id="146588">endch</a> = <a href="#83187" title="=&gt; Char">ch</a>
+    <span title="Unit" class="keyword">if</span> (<a href="#83187" title="(x$1: Char)Boolean">ch</a><span title="(x$1: Boolean)Boolean">!=</span><span title="Char(''')" class="char">'\''</span> &amp;&amp; <a href="#83187" title="(x$1: Char)Boolean">ch</a> != <span title="Char('&quot;')" class="char">'&quot;'</span>)
+      <a href="#83240" title="(str: String)Unit">reportSyntaxError</a>(<span title="java.lang.String(&quot;quote ' or &quot; expected&quot;)" class="string">&quot;quote ' or \&quot; expected&quot;</span>);
+    <a href="#83205" title="=&gt; Unit">nextch</a>
+    <span title="Unit" class="keyword">while</span> (<a href="#83187" title="(x$1: Char)Boolean">ch</a> != <a href="#146588" title="Char">endch</a>) <a href="#146590" title="()Unit">{</a>
+      <a href="#83204" title="(c: Char)StringBuilder">putChar</a>(<a href="#83187" title="=&gt; Char">ch</a>)
+      //Console.println(&quot;hello '&quot;+ch+&quot;'&quot;+isPubIDChar(ch));
+      <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="TokenTests.scala.html#26605" title="(ch: Char)Boolean">isPubIDChar</a>(<a href="#83187" title="=&gt; Char">ch</a>))
+        <a href="#83240" title="(str: String)Unit">reportSyntaxError</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;char '&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#83187" title="=&gt; Char">ch</a>+<span title="java.lang.String(&quot;' is not allowed in public id&quot;)" class="string">&quot;' is not allowed in public id&quot;</span>);
+      <a href="#83205" title="=&gt; Unit">nextch</a>
+    }
+    <a href="#83205" title="=&gt; Unit">nextch</a>
+    <span class="keyword">val</span> <a title="String" id="146589">str</a> = <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23409" title="()String">toString</a>()
+    <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23353" title="(n: Int)Unit">length</a> = <span title="Int(0)" class="int">0</span>
+    <a href="#146589" title="String">str</a>
+  }
+
+  //
+  //  dtd parsing
+  //
+
+  <span class="keyword">def</span> <a title="()Unit" id="83231">extSubset</a>(): <span title="Unit">Unit</span> = {
+    <span class="keyword">var</span> <a title="(Option[String], Option[String])" id="146640">textdecl</a>:<a href="../../Tuple2.scala.html#1152" title="(Option[String], Option[String])">Tuple2</a>[Option[String],Option[String]] = <span title="Null(null)" class="keyword">null</span>;
+    <span title="Any" class="keyword">if</span> (<a href="#83187" title="(x$1: Char)Boolean">ch</a>==<span title="Char('&lt;')" class="char">'&lt;'</span>) {
+      <a href="#83205" title="=&gt; Unit">nextch</a>
+      <span title="Any" class="keyword">if</span> (<a href="#83187" title="(x$1: Char)Boolean">ch</a>==<span title="Char('?')" class="char">'?'</span>) {
+        <a href="#83205" title="=&gt; Unit">nextch</a>
+        <a href="#146640" title="(Option[String], Option[String])">textdecl</a> = <a href="#83202" title="()(Option[String], Option[String])">textDecl</a>()
+      } <span class="keyword">else</span>
+        <a href="#83232" title="()Any">markupDecl1</a>()
+    }
+    <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span><a href="#83198" title="=&gt; Boolean">eof</a>)
+      <a href="#83233" title="()Unit">markupDecl</a><a href="#147157" title="()Unit">(</a>)
+  }
+
+  <span class="keyword">def</span> <a title="()Any" id="83232">markupDecl1</a>() = {
+    <span class="keyword">def</span> <a title="()Unit" id="146659">doInclude</a>() = {
+      <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char('[')" class="char">'['</span>); <span title="Unit" class="keyword">while</span>(<span title="(x$1: Char)Boolean" class="char">']'</span> != <a href="#83187" title="=&gt; Char">ch</a>) <a href="#83233" title="()Unit">markupDecl</a><a href="#146661" title="()Unit">(</a>); <a href="#83205" title="=&gt; Unit">nextch</a> // ']'
+    }
+    <span class="keyword">def</span> <a title="()Unit" id="146660">doIgnore</a>() = {
+      <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char('[')" class="char">'['</span>); <span title="Unit" class="keyword">while</span>(<span title="(x$1: Char)Boolean" class="char">']'</span> != <a href="#83187" title="=&gt; Char">ch</a>) <a href="#83205" title="=&gt; Unit">nextch</a>; <a href="#83205" title="=&gt; Unit">nextch</a>; // ']'
+    }
+    <span title="Any" class="keyword">if</span> (<span title="(x$1: Char)Boolean" class="char">'?'</span> == <a href="#83187" title="=&gt; Char">ch</a>) {
+      <a href="#83205" title="=&gt; Unit">nextch</a>
+      <a href="#83227" title="=&gt; scala.xml.NodeSeq">xProcInstr</a> // simply ignore processing instructions!
+    } <span class="keyword">else</span> {
+      <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char('!')" class="char">'!'</span>)
+      <a href="#83187" title="=&gt; Char">ch</a> <span title="Any" class="keyword">match</span> {
+        <span title="scala.xml.NodeSeq" class="keyword">case</span> <span title="Char('-')" class="char">'-'</span> =&gt;
+          <a href="#83215" title="=&gt; scala.xml.NodeSeq">xComment</a> // ignore comments
+
+        <span title="Unit" class="keyword">case</span> <span title="Char('E')" class="char">'E'</span> =&gt;
+          <a href="#83205" title="=&gt; Unit">nextch</a>
+          <span title="Unit" class="keyword">if</span> (<span title="(x$1: Char)Boolean" class="char">'L'</span> == <a href="#83187" title="=&gt; Char">ch</a>) {
+            <a href="#83205" title="=&gt; Unit">nextch</a>
+            <a href="#83235" title="()Unit">elementDecl</a>()
+          } <span class="keyword">else</span> 
+            <a href="#83237" title="()Unit">entityDecl</a>()
+
+        <span title="Unit" class="keyword">case</span> <span title="Char('A')" class="char">'A'</span> =&gt;
+          <a href="#83205" title="=&gt; Unit">nextch</a>
+          <a href="#83236" title="()Unit">attrDecl</a>()
+
+        <span title="Unit" class="keyword">case</span> <span title="Char('N')" class="char">'N'</span> =&gt;
+          <a href="#83205" title="=&gt; Unit">nextch</a>
+          <a href="#83238" title="()Unit">notationDecl</a>()
+
+        <span title="Unit" class="keyword">case</span> <span title="Char('[')" class="char">'['</span> <span class="keyword">if</span> <a href="#83175" title="=&gt; List[scala.io.Source]">inpStack</a>.<a href="../../collection/generic/LinearSequenceTemplate.scala.html#19399" title="(x$1: Int)Boolean" id="2960">length</a> &gt;= <a href="#83181" title="=&gt; Int">extIndex</a> =&gt;
+          <a href="#83205" title="=&gt; Unit">nextch</a>
+          <a href="#83225" title="=&gt; Unit">xSpaceOpt</a>
+          <a href="#83187" title="=&gt; Char">ch</a> <span title="Unit" class="keyword">match</span> {
+            <span title="Unit" class="keyword">case</span> <span title="Char('%')" class="char">'%'</span> =&gt;
+              <a href="#83205" title="=&gt; Unit">nextch</a>
+              <span class="keyword">val</span> <a title="String" id="147035">ent</a> = <a href="#83223" title="=&gt; String">xName</a>
+              <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char(';')" class="char">';'</span>)
+              <a href="#83225" title="=&gt; Unit">xSpaceOpt</a>
+            /*
+              Console.println(&quot;hello, pushing!&quot;);
+            {
+              val test =  replacementText(ent);
+              while(test.hasNext)
+                Console.print(test.next);
+            } */
+              <a href="#83242" title="(entityName: String)Unit">push</a>(<a href="#147035" title="String">ent</a>)
+              <a href="#83225" title="=&gt; Unit">xSpaceOpt</a>
+              //Console.println(&quot;hello, getting name&quot;);
+              <span class="keyword">val</span> <a title="String" id="147036">stmt</a> = <a href="#83223" title="=&gt; String">xName</a>
+              //Console.println(&quot;hello, got name&quot;);
+              <a href="#83225" title="=&gt; Unit">xSpaceOpt</a>
+            //Console.println(&quot;how can we be eof = &quot;+eof);
+
+            // eof = true because not external?!
+              //if(!eof)
+              //  error(&quot;expected only INCLUDE or IGNORE&quot;);
+
+              //pop();
+
+              //Console.println(&quot;hello, popped&quot;);
+              <a href="#147036" title="String">stmt</a> <span title="Unit" class="keyword">match</span> {
+                // parameter entity
+                <span title="Unit" class="keyword">case</span> <span title="java.lang.String(&quot;INCLUDE&quot;)" class="string">&quot;INCLUDE&quot;</span> =&gt;
+                  <a href="#146659" title="()Unit">doInclude</a>()
+                <span title="Unit" class="keyword">case</span> <span title="java.lang.String(&quot;IGNORE&quot;)" class="string">&quot;IGNORE&quot;</span> =&gt;
+                  <a href="#146660" title="()Unit">doIgnore</a>()
+              }
+            <span title="Unit" class="keyword">case</span> <span title="Char('I')" class="char">'I'</span> =&gt;
+              <a href="#83205" title="=&gt; Unit">nextch</a>
+              <a href="#83187" title="=&gt; Char">ch</a> <span title="Unit" class="keyword">match</span> {
+                <span title="Unit" class="keyword">case</span> <span title="Char('G')" class="char">'G'</span> =&gt;
+                  <a href="#83205" title="=&gt; Unit">nextch</a>
+                  <a href="#83207" title="(that: Seq[Char])Unit">xToken</a>(<a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;NORE&quot;</a>)
+                  <a href="#83225" title="=&gt; Unit">xSpaceOpt</a>
+                  <a href="#146660" title="()Unit">doIgnore</a>()
+                <span title="Unit" class="keyword">case</span> <span title="Char('N')" class="char">'N'</span> =&gt;
+                  <a href="#83205" title="=&gt; Unit">nextch</a>
+                  <a href="#83207" title="(that: Seq[Char])Unit">xToken</a>(<a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;NCLUDE&quot;</a>)
+                  <a href="#146659" title="()Unit">doInclude</a>()
+              }
+          }
+        <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char(']')" class="char">']'</span>)
+        <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char('&gt;')" class="char">'&gt;'</span>)
+
+        <span title="Unit" class="keyword">case</span> _  =&gt;
+          <a href="#83170" title="scala.io.Source" id="147119">curInput</a>.<a href="../../io/Source.scala.html#147118" title="java.io.PrintStream" id="147129">reportError</a>(<a href="#83178" title="Int" id="147127">pos</a>, <span title="(x$1: Any)java.lang.String" class="string">&quot;unexpected character '&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#83187" title="=&gt; Char">ch</a><a title="java.lang.String" id="147128">+</a><span title="java.lang.String(&quot;', expected some markupdecl&quot;)" class="string">&quot;', expected some markupdecl&quot;</span>)
+        <span title="Unit" class="keyword">while</span> (<a href="#83187" title="(x$1: Char)Boolean">ch</a>!=<span title="Char('&gt;')" class="char">'&gt;'</span>)
+          <a href="#83205" title="=&gt; Unit">nextch</a>
+      }
+    }
+  }
+
+  <span class="keyword">def</span> <a title="()Unit" id="83233">markupDecl</a>(): <span title="Unit">Unit</span> = <a href="#83187" title="=&gt; Char">ch</a> <span title="Unit" class="keyword">match</span> {
+    <span title="Unit" class="keyword">case</span> <span title="Char('%')" class="char">'%'</span> =&gt;                  // parameter entity reference
+      <a href="#83205" title="=&gt; Unit">nextch</a>
+      <span class="keyword">val</span> <a title="String" id="147162">ent</a> = <a href="#83223" title="=&gt; String">xName</a>
+      <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char(';')" class="char">';'</span>)
+      <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="MarkupHandler.scala.html#50182" title="=&gt; Boolean">isValidating</a>)
+        <a href="#83172" title="=&gt; scala.xml.parsing.MarkupHandler">handle</a>.<a href="MarkupHandler.scala.html#50205" title="(name: String)Unit">peReference</a>(<a href="#147162" title="String">ent</a>)  //  n-v: just create PE-reference 
+      <span class="keyword">else</span>
+        <a href="#83242" title="(entityName: String)Unit">push</a>(<a href="#147162" title="String">ent</a>)                //    v: parse replacementText
+
+    //peReference
+    <span title="Unit" class="keyword">case</span> <span title="Char('&lt;')" class="char">'&lt;'</span> =&gt;
+      <a href="#83205" title="=&gt; Unit">nextch</a>
+      <a href="#83232" title="()Any">markupDecl1</a><span title="Unit">(</span>)
+    <span title="Unit" class="keyword">case</span> _ <span class="keyword">if</span> <a href="TokenTests.scala.html#26600" title="(ch: Char)Boolean">isSpace</a>(<a href="#83187" title="=&gt; Char">ch</a>) =&gt;
+      <a href="#83226" title="=&gt; Unit">xSpace</a>
+    <span title="Unit" class="keyword">case</span> _ =&gt;
+      <a href="#83240" title="(str: String)Unit">reportSyntaxError</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;markupdecl: unexpected character '&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#83187" title="=&gt; Char">ch</a><span title="(x$1: Any)java.lang.String">+</span><span title="java.lang.String(&quot;' #&quot;)" class="string">&quot;' #&quot;</span> + <a href="#83187" title="=&gt; Char">ch</a>.<span title="[T0]T0">asInstanceOf</span><span title="Int">[</span><span title="Int">Int</span>])
+      <a href="#83205" title="=&gt; Unit">nextch</a>
+  }
+
+  /**  &quot;rec-xml/#ExtSubset&quot; pe references may not occur within markup 
+   declarations 
+   */
+  <span class="keyword">def</span> <a title="()Unit" id="83234">intSubset</a>() {
+    //Console.println(&quot;(DEBUG) intSubset()&quot;)
+    <a href="#83226" title="=&gt; Unit">xSpace</a>
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: Char)Boolean" class="char">']'</span> != <a href="#83187" title="=&gt; Char">ch</a>)
+      <a href="#83233" title="()Unit">markupDecl</a><a href="#147196" title="()Unit">(</a>)
+  }
+
+  /** &amp;lt;! element := ELEMENT
+   */
+  <span class="keyword">def</span> <a title="()Unit" id="83235">elementDecl</a>() {
+    <a href="#83207" title="(that: Seq[Char])Unit">xToken</a>(<a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;EMENT&quot;</a>)
+    <a href="#83226" title="=&gt; Unit">xSpace</a>
+    <span class="keyword">val</span> <a title="String" id="147208">n</a> = <a href="#83223" title="=&gt; String">xName</a>
+    <a href="#83226" title="=&gt; Unit">xSpace</a>
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: Char)Boolean" class="char">'&gt;'</span> != <a href="#83187" title="=&gt; Char">ch</a>) <a href="#147210" title="()Unit">{</a>
+      //Console.println(&quot;[&quot;+ch+&quot;]&quot;)
+      <a href="#83204" title="(c: Char)StringBuilder">putChar</a>(<a href="#83187" title="=&gt; Char">ch</a>)
+      <a href="#83205" title="=&gt; Unit">nextch</a>
+    }
+    //Console.println(&quot;END[&quot;+ch+&quot;]&quot;)
+    <a href="#83205" title="=&gt; Unit">nextch</a>
+    <span class="keyword">val</span> <a title="String" id="147209">cmstr</a> = <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23409" title="()String">toString</a>()
+    <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23353" title="(n: Int)Unit">length</a> = <span title="Int(0)" class="int">0</span>
+    <a href="#83172" title="=&gt; scala.xml.parsing.MarkupHandler">handle</a>.<a href="MarkupHandler.scala.html#50200" title="(n: String,cmstr: String)Unit">elemDecl</a>(<a href="#147208" title="String">n</a>, <a href="#147209" title="String">cmstr</a>)
+  }
+
+  /** &amp;lt;! attlist := ATTLIST
+   */
+  <span class="keyword">def</span> <a title="()Unit" id="83236">attrDecl</a>() = {
+    <a href="#83207" title="(that: Seq[Char])Unit">xToken</a>(<a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;TTLIST&quot;</a>)
+    <a href="#83226" title="=&gt; Unit">xSpace</a>
+    <span class="keyword">val</span> <a title="String" id="146863">n</a> = <a href="#83223" title="=&gt; String">xName</a>
+    <a href="#83226" title="=&gt; Unit">xSpace</a>
+    <span class="keyword">var</span> <a title="List[scala.xml.dtd.AttrDecl]" id="146864">attList</a>: <a href="../../collection/immutable/List.scala.html#8973" title="List[scala.xml.dtd.AttrDecl]">List</a>[AttrDecl] = <a href="../../collection/immutable/List.scala.html#9259" title="object Nil">Nil</a>
+    // later: find the elemDecl for n
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: Char)Boolean" class="char">'&gt;'</span> != <a href="#83187" title="=&gt; Char">ch</a>) <a href="#146865" title="()Unit">{</a>
+      <span class="keyword">val</span> <a title="String" id="146896">aname</a> = <a href="#83223" title="=&gt; String">xName</a>
+      //Console.println(&quot;attribute name: &quot;+aname);
+      <span class="keyword">var</span> <a title="scala.xml.dtd.DefaultDecl" id="146897">defdecl</a>: <a href="../dtd/Decl.scala.html#11029" title="scala.xml.dtd.DefaultDecl">DefaultDecl</a> = <span title="Null(null)" class="keyword">null</span>
+      <a href="#83226" title="=&gt; Unit">xSpace</a>
+      // could be enumeration (foo,bar) parse this later :-/
+      <span title="Unit" class="keyword">while</span> (<span title="(x$1: Char)Boolean" class="char">'&quot;'</span> <span title="(x$1: Boolean)Boolean">!=</span> <a href="#83187" title="=&gt; Char">ch</a> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <span title="(x$1: Char)Boolean" class="char">'\''</span> != <a href="#83187" title="=&gt; Char">ch</a> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <span title="(x$1: Char)Boolean" class="char">'#'</span> != <a href="#83187" title="=&gt; Char">ch</a> &amp;&amp; <span title="(x$1: Char)Boolean" class="char">'&lt;'</span> != <a href="#83187" title="=&gt; Char">ch</a>) <a href="#146899" title="()Unit">{</a>
+        <span title="Any" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="TokenTests.scala.html#26600" title="(ch: Char)Boolean">isSpace</a>(<a href="#83187" title="=&gt; Char">ch</a>))
+          <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<a href="#83187" title="=&gt; Char">ch</a>);
+        <a href="#83205" title="=&gt; Unit">nextch</a>;
+      }
+      <span class="keyword">val</span> <a title="String" id="146898">atpe</a> = <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23409" title="()String">toString</a>()
+      <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23353" title="(n: Int)Unit">length</a> = <span title="Int(0)" class="int">0</span>
+      //Console.println(&quot;attr type: &quot;+atpe);
+      <a href="#83187" title="=&gt; Char">ch</a> <span title="Unit" class="keyword">match</span> {
+        <span title="Unit" class="keyword">case</span> <span title="Char(''')" class="char">'\''</span> | <span title="Char('&quot;')" class="char">'&quot;'</span> =&gt;
+          <span class="keyword">val</span> <a title="String" id="146959">defValue</a> = <a href="#83209" title="()String">xAttributeValue</a>() // default value
+          <a href="#146897" title="scala.xml.dtd.DefaultDecl">defdecl</a> = <a href="../dtd/Decl.scala.html#28357" title="(fixed: Boolean,attValue: String)scala.xml.dtd.DEFAULT">DEFAULT</a>(<span title="Boolean(false)" class="keyword">false</span>, <a href="#146959" title="String">defValue</a>)
+
+        <span title="Unit" class="keyword">case</span> <span title="Char('#')" class="char">'#'</span> =&gt;
+          <a href="#83205" title="=&gt; Unit">nextch</a>
+          <a href="#83223" title="=&gt; String">xName</a> <span title="Unit" class="keyword">match</span> {
+            <span title="Unit" class="keyword">case</span> <span title="java.lang.String(&quot;FIXED&quot;)" class="string">&quot;FIXED&quot;</span> =&gt;
+              <a href="#83226" title="=&gt; Unit">xSpace</a>
+              <span class="keyword">val</span> <a title="String" id="146972">defValue</a> = <a href="#83209" title="()String">xAttributeValue</a>() // default value
+              <a href="#146897" title="scala.xml.dtd.DefaultDecl">defdecl</a> = <a href="../dtd/Decl.scala.html#28357" title="(fixed: Boolean,attValue: String)scala.xml.dtd.DEFAULT">DEFAULT</a>(<span title="Boolean(true)" class="keyword">true</span>, <a href="#146972" title="String">defValue</a>)
+            <span title="Unit" class="keyword">case</span> <span title="java.lang.String(&quot;IMPLIED&quot;)" class="string">&quot;IMPLIED&quot;</span> =&gt;
+              <a href="#146897" title="scala.xml.dtd.DefaultDecl">defdecl</a> = <a href="../dtd/Decl.scala.html#11060" title="object scala.xml.dtd.IMPLIED">IMPLIED</a>
+            <span title="Unit" class="keyword">case</span> <span title="java.lang.String(&quot;REQUIRED&quot;)" class="string">&quot;REQUIRED&quot;</span> =&gt;
+              <a href="#146897" title="scala.xml.dtd.DefaultDecl">defdecl</a> = <a href="../dtd/Decl.scala.html#11177" title="object scala.xml.dtd.REQUIRED">REQUIRED</a>
+          }
+        <span title="Unit" class="keyword">case</span> _ =&gt;
+      }
+      <a href="#83225" title="=&gt; Unit">xSpaceOpt</a>
+
+      <a href="#146864" title="List[scala.xml.dtd.AttrDecl]">attList</a> = <a href="../dtd/Decl.scala.html#27150" title="(name: String,tpe: String,default: scala.xml.dtd.DefaultDecl)scala.xml.dtd.AttrDecl">AttrDecl</a>(<a href="#146896" title="String">aname</a>, <a href="#146898" title="String">atpe</a>, <a href="#146897" title="scala.xml.dtd.DefaultDecl">defdecl</a>) <a href="#146985" title="scala.xml.dtd.AttrDecl">::</a> <a href="../../collection/immutable/List.scala.html#17630" title="(x: scala.xml.dtd.AttrDecl)List[scala.xml.dtd.AttrDecl]">attList</a>
+      <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23353" title="(n: Int)Unit">length</a> = <span title="Int(0)" class="int">0</span>
+    }
+    <a href="#83205" title="=&gt; Unit">nextch</a>
+    <a href="#83172" title="=&gt; scala.xml.parsing.MarkupHandler">handle</a>.<a href="MarkupHandler.scala.html#50201" title="(name: String,attList: List[scala.xml.dtd.AttrDecl])Unit">attListDecl</a>(<a href="#146863" title="String">n</a>, <a href="#146864" title="List[scala.xml.dtd.AttrDecl]">attList</a>.<a href="../../collection/immutable/List.scala.html#17664" title="=&gt; List[scala.xml.dtd.AttrDecl]">reverse</a>)
+  }
+
+  /** &amp;lt;! element := ELEMENT
+   */
+  <span class="keyword">def</span> <a title="()Unit" id="83237">entityDecl</a>() = {
+    //Console.println(&quot;entityDecl()&quot;)
+    <span class="keyword">var</span> <a title="Boolean" id="146724">isParameterEntity</a> = <span title="Boolean(false)" class="keyword">false</span>
+    <span class="keyword">var</span> <a title="scala.xml.dtd.EntityDef" id="146725">entdef</a>: <a href="../dtd/Decl.scala.html#11035" title="scala.xml.dtd.EntityDef">EntityDef</a> = <span title="Null(null)" class="keyword">null</span>
+    <a href="#83207" title="(that: Seq[Char])Unit">xToken</a>(<a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;NTITY&quot;</a>)
+    <a href="#83226" title="=&gt; Unit">xSpace</a>
+    <span title="Unit" class="keyword">if</span> (<span title="(x$1: Char)Boolean" class="char">'%'</span> == <a href="#83187" title="=&gt; Char">ch</a>) {
+      <a href="#83205" title="=&gt; Unit">nextch</a>
+      <a href="#146724" title="Boolean">isParameterEntity</a> = <span title="Boolean(true)" class="keyword">true</span>
+      <a href="#83226" title="=&gt; Unit">xSpace</a>
+    }
+    <span class="keyword">val</span> <a title="String" id="146726">n</a> = <a href="#83223" title="=&gt; String">xName</a>
+    <a href="#83226" title="=&gt; Unit">xSpace</a>
+    <a href="#83187" title="=&gt; Char">ch</a> <span title="Unit" class="keyword">match</span> {
+      <span title="Unit" class="keyword">case</span> <span title="Char('S')" class="char">'S'</span> | <span title="Char('P')" class="char">'P'</span> =&gt; //sy
+        <span class="keyword">val</span> <a title="scala.xml.dtd.ExternalID" id="146757">extID</a> = <a href="#83219" title="()scala.xml.dtd.ExternalID">externalID</a>()
+        <span title="Unit" class="keyword">if</span> (<a href="#146724" title="Boolean">isParameterEntity</a>) {
+          <a href="#83225" title="=&gt; Unit">xSpaceOpt</a>
+          <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char('&gt;')" class="char">'&gt;'</span>)
+          <a href="#83172" title="=&gt; scala.xml.parsing.MarkupHandler">handle</a>.<a href="MarkupHandler.scala.html#50203" title="(name: String,edef: scala.xml.dtd.EntityDef)Unit">parameterEntityDecl</a>(<a href="#146726" title="String">n</a>, <a href="../dtd/Decl.scala.html#28080" title="(extID: scala.xml.dtd.ExternalID)scala.xml.dtd.ExtDef">ExtDef</a>(<a href="#146757" title="scala.xml.dtd.ExternalID">extID</a>))
+        } <span class="keyword">else</span> { // notation?
+          <a href="#83226" title="=&gt; Unit">xSpace</a>
+          <span title="Unit" class="keyword">if</span> (<span title="(x$1: Char)Boolean" class="char">'&gt;'</span> != <a href="#83187" title="=&gt; Char">ch</a>) {
+            <a href="#83207" title="(that: Seq[Char])Unit">xToken</a>(<a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;NDATA&quot;</a>)
+            <a href="#83226" title="=&gt; Unit">xSpace</a>
+            <span class="keyword">val</span> <a title="String" id="146785">notat</a> = <a href="#83223" title="=&gt; String">xName</a>
+            <a href="#83225" title="=&gt; Unit">xSpaceOpt</a>
+            <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char('&gt;')" class="char">'&gt;'</span>)
+            <a href="#83172" title="=&gt; scala.xml.parsing.MarkupHandler">handle</a>.<a href="MarkupHandler.scala.html#50206" title="(name: String,extID: scala.xml.dtd.ExternalID,notat: String)Unit">unparsedEntityDecl</a>(<a href="#146726" title="String">n</a>, <a href="#146757" title="scala.xml.dtd.ExternalID">extID</a>, <a href="#146785" title="String">notat</a>)
+          } <span class="keyword">else</span> {
+            <a href="#83205" title="=&gt; Unit">nextch</a>
+            <a href="#83172" title="=&gt; scala.xml.parsing.MarkupHandler">handle</a>.<a href="MarkupHandler.scala.html#50204" title="(name: String,edef: scala.xml.dtd.EntityDef)Unit">parsedEntityDecl</a>(<a href="#146726" title="String">n</a>, <a href="../dtd/Decl.scala.html#28080" title="(extID: scala.xml.dtd.ExternalID)scala.xml.dtd.ExtDef">ExtDef</a>(<a href="#146757" title="scala.xml.dtd.ExternalID">extID</a>))
+          }
+        }
+
+      <span title="Unit" class="keyword">case</span> <span title="Char('&quot;')" class="char">'&quot;'</span> | <span title="Char(''')" class="char">'\''</span> =&gt;
+        <span class="keyword">val</span> <a title="String" id="146833">av</a> = <a href="#83210" title="()String">xEntityValue</a>()
+        <a href="#83225" title="=&gt; Unit">xSpaceOpt</a>
+        <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char('&gt;')" class="char">'&gt;'</span>)
+        <span title="Unit" class="keyword">if</span> (<a href="#146724" title="Boolean">isParameterEntity</a>)
+          <a href="#83172" title="=&gt; scala.xml.parsing.MarkupHandler">handle</a>.<a href="MarkupHandler.scala.html#50203" title="(name: String,edef: scala.xml.dtd.EntityDef)Unit">parameterEntityDecl</a>(<a href="#146726" title="String">n</a>, <a href="../dtd/Decl.scala.html#28009" title="(value: String)scala.xml.dtd.IntDef">IntDef</a>(<a href="#146833" title="String">av</a>))
+        <span class="keyword">else</span>
+          <a href="#83172" title="=&gt; scala.xml.parsing.MarkupHandler">handle</a>.<a href="MarkupHandler.scala.html#50204" title="(name: String,edef: scala.xml.dtd.EntityDef)Unit">parsedEntityDecl</a>(<a href="#146726" title="String">n</a>, <a href="../dtd/Decl.scala.html#28009" title="(value: String)scala.xml.dtd.IntDef">IntDef</a>(<a href="#146833" title="String">av</a>))
+    }
+    <span title="Unit">{</span>}
+  } // entityDecl
+
+  /** 'N' notationDecl ::= &quot;OTATION&quot;
+   */
+  <span class="keyword">def</span> <a title="()Unit" id="83238">notationDecl</a>() {
+    <a href="#83207" title="(that: Seq[Char])Unit">xToken</a>(<a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;OTATION&quot;</a>)
+    <a href="#83226" title="=&gt; Unit">xSpace</a>
+    <span class="keyword">val</span> <a title="String" id="147254">notat</a> = <a href="#83223" title="=&gt; String">xName</a>
+    <a href="#83226" title="=&gt; Unit">xSpace</a>
+    <span class="keyword">val</span> <a title="scala.xml.dtd.ExternalID" id="147255">extID</a> = <span title="scala.xml.dtd.ExternalID" class="keyword">if</span> (<a href="#83187" title="(x$1: Char)Boolean">ch</a> == <span title="Char('S')" class="char">'S'</span>) {
+      <a href="#83219" title="()scala.xml.dtd.ExternalID">externalID</a>();
+    }
+    <span class="keyword">else</span> <span title="scala.xml.dtd.PublicID" class="keyword">if</span> (<a href="#83187" title="(x$1: Char)Boolean">ch</a> == <span title="Char('P')" class="char">'P'</span>) {
+      /** PublicID (without system, only used in NOTATION) */
+      <a href="#83205" title="=&gt; Unit">nextch</a>
+      <a href="#83207" title="(that: Seq[Char])Unit">xToken</a>(<a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;UBLIC&quot;</a>)
+      <a href="#83226" title="=&gt; Unit">xSpace</a>
+      <span class="keyword">val</span> <a title="String" id="147295">pubID</a> = <a href="#83230" title="()String">pubidLiteral</a>()
+      <a href="#83225" title="=&gt; Unit">xSpaceOpt</a>
+      <span class="keyword">val</span> <a title="String" id="147296">sysID</a> = <span title="String" class="keyword">if</span> (<a href="#83187" title="(x$1: Char)Boolean">ch</a> != <span title="Char('&gt;')" class="char">'&gt;'</span>)
+        <a href="#83229" title="()String">systemLiteral</a>()
+      <span class="keyword">else</span>
+        <span title="Null(null)" class="keyword">null</span>;
+      <span title="scala.xml.dtd.PublicID" class="keyword">new</span> <a href="../dtd/ExternalID.scala.html#11065" title="scala.xml.dtd.PublicID">PublicID</a>(<a href="#147295" title="String">pubID</a>, <a href="#147296" title="String">sysID</a>);
+    } <span class="keyword">else</span> {
+      <a href="#83240" title="(str: String)Unit">reportSyntaxError</a>(<span title="java.lang.String(&quot;PUBLIC or SYSTEM expected&quot;)" class="string">&quot;PUBLIC or SYSTEM expected&quot;</span>);
+      <a href="../../Predef.scala.html#16210" title="(message: String)Nothing">error</a>(<span title="java.lang.String(&quot;died parsing notationdecl&quot;)" class="string">&quot;died parsing notationdecl&quot;</span>)
+    }
+    <a href="#83225" title="=&gt; Unit">xSpaceOpt</a>
+    <a href="#83206" title="(that: Char)Unit">xToken</a>(<span title="Char('&gt;')" class="char">'&gt;'</span>)
+    <a href="#83172" title="=&gt; scala.xml.parsing.MarkupHandler">handle</a>.<a href="MarkupHandler.scala.html#50207" title="(notat: String,extID: scala.xml.dtd.ExternalID)Unit">notationDecl</a>(<a href="#147254" title="String">notat</a>, <a href="#147255" title="scala.xml.dtd.ExternalID">extID</a>)
+  }
+
+  /**
+   * report a syntax error
+   */
+  <span class="keyword">def</span> <a title="(pos: Int,str: String)Unit" id="83239">reportSyntaxError</a>(<a title="Int" id="144590">pos</a>: <span title="Int">Int</span>, <a title="String" id="144591">str</a>: <span title="String">String</span>) {
+    <a href="#83170" title="scala.io.Source" id="147350">curInput</a>.<a href="../../io/Source.scala.html#147118" title="java.io.PrintStream" id="147354">reportError</a>(<a href="#144590" title="Int" id="147352">pos</a>, <a href="#144591" title="String" id="147353">str</a>)
+    //error(&quot;MarkupParser::synerr&quot;) // DEBUG
+  }
+
+  <span class="keyword">def</span> <a title="(str: String)Unit" id="83240">reportSyntaxError</a>(<a title="String" id="144599">str</a>: <span title="String">String</span>): <span title="Unit">Unit</span> = <a href="#83239" title="(pos: Int,str: String)Unit">reportSyntaxError</a>(<a href="#83178" title="=&gt; Int">pos</a>, <a href="#144599" title="String">str</a>)
+
+  /**
+   * report a syntax error
+   */
+  <span class="keyword">def</span> <a title="(pos: Int,str: String)Unit" id="83241">reportValidationError</a>(<a title="Int" id="147366">pos</a>: <span title="Int">Int</span>, <a title="String" id="147367">str</a>: <span title="String">String</span>) {
+    <a href="#83170" title="scala.io.Source" id="147369">curInput</a>.<a href="../../io/Source.scala.html#147118" title="java.io.PrintStream" id="147373">reportError</a>(<a href="#147366" title="Int" id="147371">pos</a>, <a href="#147367" title="String" id="147372">str</a>)
+  }
+
+  <span class="keyword">def</span> <a title="(entityName: String)Unit" id="83242">push</a>(<a title="String" id="145994">entityName</a>: <span title="String">String</span>) {
+    //Console.println(&quot;BEFORE PUSHING  &quot;+ch)
+    //Console.println(&quot;BEFORE PUSHING  &quot;+pos)
+    //Console.print(&quot;[PUSHING &quot;+entityName+&quot;]&quot;)
+    <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#83198" title="=&gt; Boolean">eof</a>)
+      <a href="#83175" title="(x$1: List[scala.io.Source])Unit">inpStack</a> = <a href="#83170" title="=&gt; scala.io.Source">curInput</a> <a href="#147376" title="scala.io.Source">::</a> <a href="../../collection/immutable/List.scala.html#17630" title="(x: scala.io.Source)List[scala.io.Source]">inpStack</a>
+
+    <a href="#83170" title="(x$1: scala.io.Source)Unit">curInput</a> = <a href="MarkupHandler.scala.html#50191" title="(entityName: String)scala.io.Source">replacementText</a>(<a href="#145994" title="String">entityName</a>)
+    <a href="#83205" title="=&gt; Unit">nextch</a>
+  }
+
+  /*
+  def push(src:Source) = {
+    curInput = src
+    nextch
+  }
+  */
+
+  <span class="keyword">def</span> <a title="(systemId: String)Unit" id="83243">pushExternal</a>(<a title="String" id="146161">systemId</a>: <span title="String">String</span>) {
+    //Console.print(&quot;BEFORE PUSH, curInput = $&quot;+curInput.descr)
+    //Console.println(&quot; stack = &quot;+inpStack.map { x =&gt; &quot;$&quot;+x.descr })
+
+    //Console.print(&quot;[PUSHING EXTERNAL &quot;+systemId+&quot;]&quot;)
+    <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#83198" title="=&gt; Boolean">eof</a>)
+      <a href="#83175" title="(x$1: List[scala.io.Source])Unit">inpStack</a> = <a href="#83170" title="=&gt; scala.io.Source">curInput</a> <a href="#147392" title="scala.io.Source">::</a> <a href="../../collection/immutable/List.scala.html#17630" title="(x: scala.io.Source)List[scala.io.Source]">inpStack</a>
+
+    <a href="#83170" title="(x$1: scala.io.Source)Unit">curInput</a> = <a href="#83168" title="(systemLiteral: String)scala.io.Source">externalSource</a>(<a href="#146161" title="String">systemId</a>)
+
+    //Console.print(&quot;AFTER PUSH, curInput = $&quot;+curInput.descr)
+    //Console.println(&quot; stack = &quot;+inpStack.map { x =&gt; &quot;$&quot;+x.descr })
+
+    <a href="#83205" title="=&gt; Unit">nextch</a>
+  }
+
+  <span class="keyword">def</span> <a title="()Unit" id="83244">pop</a>() {
+    <a href="#83170" title="(x$1: scala.io.Source)Unit">curInput</a> = <a href="#83175" title="=&gt; List[scala.io.Source]">inpStack</a>.<a href="../../collection/generic/IterableTemplate.scala.html#17298" title="=&gt; scala.io.Source">head</a>
+    <a href="#83175" title="(x$1: List[scala.io.Source])Unit">inpStack</a> = <a href="#83175" title="=&gt; List[scala.io.Source]">inpStack</a>.<a href="../../collection/generic/TraversableTemplate.scala.html#17213" title="=&gt; List[scala.io.Source]">tail</a>
+    <a href="#83187" title="(x$1: Char)Unit">ch</a> = <a href="#83170" title="=&gt; scala.io.Source">curInput</a>.<a href="../../io/Source.scala.html#83269" title="=&gt; Char">ch</a>
+    <a href="#83178" title="(x$1: Int)Unit">pos</a> = <a href="#83170" title="=&gt; scala.io.Source">curInput</a>.<a href="../../io/Source.scala.html#83270" title="=&gt; Int">pos</a>
+    <a href="#83198" title="(x$1: Boolean)Unit">eof</a> = <span title="Boolean(false)" class="keyword">false</span> // must be false, because of places where entity refs occur
+    //Console.println(&quot;\n AFTER POP, curInput = $&quot;+curInput.descr);
+    //Console.println(inpStack.map { x =&gt; x.descr });
+  }
+
+  /** for the moment, replace only character references 
+   *  see spec 3.3.3
+   *  precond: cbuf empty
+   */
+  <span class="keyword">def</span> <a title="(attval: String)String" id="83245">normalizeAttributeValue</a>(<a title="String" id="145538">attval</a>: <span title="String">String</span>): <span title="String">String</span> = {
+    <span class="keyword">val</span> <a title="Seq[Char]" id="147421">s</a>: <a href="../../collection/Sequence.scala.html#4346" title="Seq[Char]">Seq</a>[Char] = <a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString">attval</a>
+    <span class="keyword">val</span> <a title="Iterator[Char]" id="147422">it</a> = <a href="#147421" title="Seq[Char]">s</a>.<a href="../../collection/generic/IterableTemplate.scala.html#17285" title="=&gt; Iterator[Char]">iterator</a>
+    <span title="Unit" class="keyword">while</span> (<a href="#147422" title="Iterator[Char]">it</a>.<a href="../../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>) {
+      <a href="#147422" title="Iterator[Char]">it</a>.<a href="../../collection/Iterator.scala.html#19185" title="()Char">next</a> <a href="#147424" title="StringBuilder" class="keyword">match</a> {
+        <span title="StringBuilder" class="keyword">case</span> <span title="Char(' ')" class="char">' '</span>|<span title="Char('\011')" class="char">'\t'</span>|<span title="Char('\012')" class="char">'\n'</span>|<span title="Char('\015')" class="char">'\r'</span> =&gt; 
+          <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<span title="Char(' ')" class="char">' '</span>);
+        <span title="StringBuilder" class="keyword">case</span> <span title="Char('&amp;')" class="char">'&amp;'</span> =&gt; <a href="#147422" title="Iterator[Char]">it</a>.<a href="../../collection/Iterator.scala.html#19185" title="()Char">next</a> <span title="StringBuilder" class="keyword">match</span> {
+          <span title="StringBuilder" class="keyword">case</span> <span title="Char('#')" class="char">'#'</span> =&gt;
+            <span class="keyword">var</span> <a title="Char" id="147442">c</a> = <a href="#147422" title="Iterator[Char]">it</a>.<a href="../../collection/Iterator.scala.html#19185" title="()Char">next</a>
+            <span class="keyword">val</span> <a title="String" id="147443">s</a> = <a href="#83214" title="(ch: () =&gt; Char,nextch: () =&gt; Unit)String">xCharRef</a> ({ () =&gt; <a href="#147442" title="Char">c</a> }, { () =&gt; <a href="#147442" title="Char">c</a> = <a href="#147422" title="Iterator[Char]">it</a>.<a href="../../collection/Iterator.scala.html#19185" title="()Char">next</a> })
+            <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">append</a>(<a href="#147443" title="String">s</a>)
+          <span title="StringBuilder" class="keyword">case</span> <a title="Char" id="147458">nchar</a> =&gt;
+            <span class="keyword">val</span> <a title="StringBuilder" id="147459">nbuf</a> = <a href="../../collection/mutable/StringBuilder.scala.html#23348" title="()StringBuilder" class="keyword">new</a> <a href="../../package.scala.html#14791" title="StringBuilder">StringBuilder</a>()
+            <span class="keyword">var</span> <a title="Char" id="147460">d</a> = <a href="#147458" title="Char">nchar</a>
+            <a href="#147461" title="Unit" class="keyword">do</a> {
+              <a href="#147459" title="StringBuilder">nbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<a href="#147460" title="Char">d</a>)
+              <a href="#147460" title="Char">d</a> = <a href="#147422" title="Iterator[Char]">it</a>.<a href="../../collection/Iterator.scala.html#19185" title="()Char">next</a>
+            } <span class="keyword">while</span>(<a href="#147460" title="(x$1: Char)Boolean">d</a> != <span title="Char(';')" class="char">';'</span>);
+            <a href="#147459" title="StringBuilder">nbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23409" title="()String">toString</a>() <span title="StringBuilder" class="keyword">match</span> {
+              <span title="StringBuilder" class="keyword">case</span> <span title="java.lang.String(&quot;lt&quot;)" class="string">&quot;lt&quot;</span>    =&gt; <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<span title="Char('&lt;')" class="char">'&lt;'</span>)
+              <span title="StringBuilder" class="keyword">case</span> <span title="java.lang.String(&quot;gt&quot;)" class="string">&quot;gt&quot;</span>    =&gt; <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<span title="Char('&gt;')" class="char">'&gt;'</span>)
+              <span title="StringBuilder" class="keyword">case</span> <span title="java.lang.String(&quot;amp&quot;)" class="string">&quot;amp&quot;</span>   =&gt; <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<span title="Char('&amp;')" class="char">'&amp;'</span>)
+              <span title="StringBuilder" class="keyword">case</span> <span title="java.lang.String(&quot;apos&quot;)" class="string">&quot;apos&quot;</span>  =&gt; <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<span title="Char(''')" class="char">'\''</span>)
+              <span title="StringBuilder" class="keyword">case</span> <span title="java.lang.String(&quot;quot&quot;)" class="string">&quot;quot&quot;</span>  =&gt; <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<span title="Char('&quot;')" class="char">'&quot;'</span>)
+              <span title="StringBuilder" class="keyword">case</span> <span title="java.lang.String(&quot;quote&quot;)" class="string">&quot;quote&quot;</span> =&gt; <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<span title="Char('&quot;')" class="char">'&quot;'</span>)
+              <span title="StringBuilder" class="keyword">case</span> <a title="String" id="147529">name</a> =&gt;
+                <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<span title="Char('&amp;')" class="char">'&amp;'</span>)
+                <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">append</a>(<a href="#147529" title="String">name</a>)
+                <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<span title="Char(';')" class="char">';'</span>)
+            }
+        }
+        <span title="StringBuilder" class="keyword">case</span> <a title="Char" id="147548">c</a> =&gt;
+          <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<a href="#147548" title="Char">c</a>)
+      }
+    }
+    <span class="keyword">val</span> <a title="String" id="147423">name</a> = <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23409" title="()String">toString</a>()
+    <a href="#83189" title="=&gt; StringBuilder">cbuf</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23353" title="(n: Int)Unit">length</a> = <span title="Int(0)" class="int">0</span>
+    <a href="#147423" title="String">name</a>
+  }
+
+}
+
+        </pre>
+    </body>
+</html>

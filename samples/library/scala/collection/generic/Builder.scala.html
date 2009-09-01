@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/collection/generic/Builder.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: Builder.scala 18387 2009-07-24 15:28:37Z odersky $
+
+<span class="keyword">package</span> scala.collection.generic
+<span class="keyword">import</span> scala.collection._
+
+/** The base trait of all builders.
+ *  A builder lets one construct a collection incrementally, by adding
+ *  elements to the builder with += and then converting to the required
+ *  collection type with `result`.
+ */
+<span class="keyword">trait</span> <a title="trait Builder[-Elem, +To] extends java.lang.Object with scala.collection.generic.Growable[Elem] with ScalaObject" id="10028">Builder</a>[-<a title="&gt;: Nothing &lt;: Any" id="15772">Elem</a>, +<a title="&gt;: Nothing &lt;: Any" id="15773">To</a>] <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="Growable.scala.html#9941" title="scala.collection.generic.Growable[Elem]">Growable</a>[Elem] {
+
+  /** Adds a single element to the builder.
+   *  @param elem The element to be added
+   */
+  <span class="keyword">def</span> <a title="(elem: Elem)Builder.this.type" id="19589">+=</a>(<a title="Elem" id="20066">elem</a>: <a href="#15772" title="Elem">Elem</a>): <span class="keyword">this</span>.<span class="keyword">type</span>
+  
+  /** Clear the contents of this builder
+   */
+  <span class="keyword">def</span> <a title="()Unit" id="19590">clear</a>()
+
+  /** Returns collection resulting from this builder. The buffer's contents
+   *  are undefined afterwards.
+   */
+  <span class="keyword">def</span> <a title="()To" id="19591">result</a>(): <a href="#15773" title="To">To</a>
+
+  /** Give a hint how many elements are expected to be added
+   *  when the next `result` is called.
+   */
+  <span class="keyword">def</span> <a title="(size: Int)Unit" id="19592">sizeHint</a>(<a title="Int" id="62896">size</a>: <a title="Int" id="2175">Int</a>) <span title="Unit">{</span>}
+
+  /** Create a new builder which is the same as the current builder except
+   *  that a given function is applied to the current builder's result.
+   *  @param  f   the function to apply to the builder's result
+   */	
+  <span class="keyword">def</span> <a title="[NewTo](f: (To) =&gt; NewTo)scala.collection.generic.Builder[Elem,NewTo]" id="19593">mapResult</a>[<a title="&gt;: Nothing &lt;: Any" id="19595">NewTo</a>](<a title="(To) =&gt; NewTo" id="68118">f</a>: To =&gt; NewTo): <a href="#10028" title="scala.collection.generic.Builder[Elem,NewTo]">Builder</a>[Elem, NewTo] = 
+    <a href="#213098" title="java.lang.Object with scala.collection.generic.Builder[Elem,NewTo] with Proxy{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with scala.collection.generic.Builder[Elem,NewTo] with Proxy" id="213098">Builder</a>[Elem, NewTo] <span class="keyword">with</span> <a href="../../Proxy.scala.html#180" title="Proxy">Proxy</a> {
+      <span class="keyword">val</span> <a title="scala.collection.generic.Builder[Elem,To]" id="213100">self</a> = <a href="#10028" title="scala.collection.generic.Builder[Elem,To]">Builder</a>.<span class="keyword">this</span>
+      <span class="keyword">def</span> <a title="(x: Elem)this.type" id="213102">+=</a>(<a title="Elem" id="213111">x</a>: <a href="#15772" title="Elem">Elem</a>): <span class="keyword">this</span>.<span class="keyword">type</span> = { <a href="#19589" title="(elem: Elem)this.self.type">self</a> += <a href="#213111" title="Elem">x</a>; <a href="#213098" title="this.type" class="keyword">this</a> }
+      <span class="keyword">def</span> <a title="()Unit" id="213103">clear</a>() = <a href="#213100" title="=&gt; scala.collection.generic.Builder[Elem,To]">self</a>.<a href="#19590" title="()Unit">clear</a>()
+      <span class="keyword">override</span> <span class="keyword">def</span> <a title="(xs: Iterator[Elem])this.type" id="213104">++=</a>(<a title="Iterator[Elem]" id="213142">xs</a>: <a href="../Iterator.scala.html#4274" title="Iterator[Elem]">Iterator</a>[Elem]): <span class="keyword">this</span>.<span class="keyword">type</span> = { <a href="Growable.scala.html#19585" title="(iter: Iterator[Elem])this.self.type">self</a> ++= <a href="#213142" title="Iterator[Elem]">xs</a>; <a href="#213098" title="this.type" class="keyword">this</a> }
+      <span class="keyword">override</span> <span class="keyword">def</span> <a title="(xs: Traversable[Elem])this.type" id="213105">++=</a>(<a title="Traversable[Elem]" id="213158">xs</a>: <a href="../Traversable.scala.html#4436" title="Traversable[Elem]">Traversable</a>[Elem]): <span class="keyword">this</span>.<span class="keyword">type</span> = { <a href="Growable.scala.html#19586" title="(iter: Traversable[Elem])this.self.type">self</a> ++= <a href="#213158" title="Traversable[Elem]">xs</a>; <a href="#213098" title="this.type" class="keyword">this</a> }
+      <span class="keyword">def</span> <a title="()NewTo" id="213106">result</a>: <a href="#19595" title="NewTo">NewTo</a> = <a href="../../Function1.scala.html#17119" title="(v1: To)NewTo">f</a>(<a href="#213100" title="=&gt; scala.collection.generic.Builder[Elem,To]">self</a>.<a href="#19591" title="()To">result</a>)
+    }
+}
+
+
+        </pre>
+    </body>
+</html>

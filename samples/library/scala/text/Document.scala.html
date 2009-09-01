@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/text/Document.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: Document.scala 16893 2009-01-13 13:09:22Z cunei $
+
+
+<span class="keyword">package</span> scala.text
+
+
+<span class="keyword">import</span> java.io.Writer
+
+case <span class="keyword">object</span> <a href="#92359" title="object scala.text.DocNil" id="92370">DocNil</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="#13440" title="scala.text.Document">Document</a>
+case <span class="keyword">object</span> <a href="#92379" title="object scala.text.DocBreak" id="92390">DocBreak</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="#13440" title="scala.text.Document">Document</a>
+case <span class="keyword">class</span> <a title="class DocText extends scala.text.Document with ScalaObject with Product" id="92420">DocText</a><a href="../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="String" id="92739">txt</a>: <span title="String">String</span>) <span class="keyword">extends</span> <a href="#13440" title="scala.text.Document">Document</a>
+case <span class="keyword">class</span> <a title="class DocGroup extends scala.text.Document with ScalaObject with Product" id="92486">DocGroup</a><a href="../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="scala.text.Document" id="93583">doc</a>: <a href="#13440" title="scala.text.Document">Document</a>) <span class="keyword">extends</span> <a href="#13440" title="scala.text.Document">Document</a>
+case <span class="keyword">class</span> <a title="class DocNest extends scala.text.Document with ScalaObject with Product" id="92562">DocNest</a><a href="../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="Int" id="93640">indent</a>: <span title="Int">Int</span>, <a title="scala.text.Document" id="93641">doc</a>: <a href="#13440" title="scala.text.Document">Document</a>) <span class="keyword">extends</span> <a href="#13440" title="scala.text.Document">Document</a>
+case <span class="keyword">class</span> <a title="class DocCons extends scala.text.Document with ScalaObject with Product" id="92655">DocCons</a><a href="../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="scala.text.Document" id="92714">hd</a>: <a href="#13440" title="scala.text.Document">Document</a>, <a title="scala.text.Document" id="92715">tl</a>: <a href="#13440" title="scala.text.Document">Document</a>) <span class="keyword">extends</span> <a href="#13440" title="scala.text.Document">Document</a>
+
+/**
+ * A basic pretty-printing library, based on Lindig's strict version
+ * of Wadler's adaptation of Hughes' pretty-printer.
+ *
+ * @author Michel Schinz
+ * @version 1.0
+ */
+<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class Document extends java.lang.Object with ScalaObject" id="13440">Document</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  <span class="keyword">def</span> <a title="(hd: scala.text.Document)scala.text.Document" id="92346">::</a>(<a title="scala.text.Document" id="92712">hd</a>: <a href="#13440" title="scala.text.Document">Document</a>): <a href="#13440" title="scala.text.Document">Document</a> = <a href="#92655" title="(hd: scala.text.Document,tl: scala.text.Document)scala.text.DocCons">DocCons</a>(<a href="#92712" title="scala.text.Document">hd</a>, <a href="#13440" title="scala.text.Document" class="keyword">this</a>)
+  <span class="keyword">def</span> <a title="(hd: String)scala.text.Document" id="92347">::</a>(<a title="String" id="92729">hd</a>: <span title="String">String</span>): <a href="#13440" title="scala.text.Document">Document</a> = <a href="#92655" title="(hd: scala.text.Document,tl: scala.text.Document)scala.text.DocCons">DocCons</a>(<a href="#92420" title="(txt: String)scala.text.DocText">DocText</a>(<a href="#92729" title="String">hd</a>), <a href="#13440" title="scala.text.Document" class="keyword">this</a>)
+  <span class="keyword">def</span> <a title="(hd: scala.text.Document)scala.text.Document" id="92348">:/:</a>(<a title="scala.text.Document" id="92750">hd</a>: <a href="#13440" title="scala.text.Document">Document</a>): <a href="#13440" title="scala.text.Document">Document</a> = <a href="#92750" title="scala.text.Document">hd</a> <a href="#92752" title="scala.text.Document">::</a> <a href="#92390" title="object scala.text.DocBreak">DocBreak</a> <a href="#92346" title="(hd: scala.text.Document)scala.text.Document">::</a> <a href="#92346" title="(hd: scala.text.Document)scala.text.Document" class="keyword">this</a>
+  <span class="keyword">def</span> <a title="(hd: String)scala.text.Document" id="92349">:/:</a>(<a title="String" id="92766">hd</a>: <span title="String">String</span>): <a href="#13440" title="scala.text.Document">Document</a> = <a href="#92766" title="String">hd</a> <a href="#92768" title="String">::</a> <a href="#92390" title="object scala.text.DocBreak">DocBreak</a> <a href="#92347" title="(hd: String)scala.text.Document">::</a> <a href="#92346" title="(hd: scala.text.Document)scala.text.Document" class="keyword">this</a>
+
+  /**
+   * Format this document on &lt;code&gt;writer&lt;/code&gt; and try to set line
+   * breaks so that the result fits in &lt;code&gt;width&lt;/code&gt; columns.
+   *
+   * @param width  ...
+   * @param writer ...
+   */
+  <span class="keyword">def</span> <a title="(width: Int,writer: java.io.Writer)Unit" id="92350">format</a>(<a title="Int" id="92782">width</a>: <span title="Int">Int</span>, <a title="java.io.Writer" id="92783">writer</a>: <a title="java.io.Writer" id="3952">Writer</a>) {
+    <span class="keyword">type</span> <a title="(Int, Boolean, scala.text.Document)" id="92785">FmtState</a> = <a href="../Tuple3.scala.html#393" title="(Int, Boolean, scala.text.Document)">(</a>Int, Boolean, Document)
+
+    <span class="keyword">def</span> <a title="(w: Int,state: List[(Int, Boolean, scala.text.Document)])Boolean" id="92786">fits</a>(<a title="Int" id="92789">w</a>: <span title="Int">Int</span>, <a title="List[(Int, Boolean, scala.text.Document)]" id="92790">state</a>: <a href="../collection/immutable/List.scala.html#8973" title="List[(Int, Boolean, scala.text.Document)]">List</a>[FmtState]): <a title="Boolean" id="1949">Boolean</a> = <a href="#92790" title="List[(Int, Boolean, scala.text.Document)]">state</a> <span title="Boolean" class="keyword">match</span> {
+      <span title="Boolean(false)" class="keyword">case</span> _ <span class="keyword">if</span> <a href="#92789" title="(x$1: Int)Boolean" id="2954">w</a> &lt; <span title="Int(0)" class="int">0</span> =&gt;
+        <span title="Boolean(false)" class="keyword">false</span>
+      <span title="Boolean(true)" class="keyword">case</span> <a href="../collection/generic/SequenceFactory.scala.html#17519" title="(x: List[(Int, Boolean, scala.text.Document)])Some[List[(Int, Boolean, scala.text.Document)]]">List</a>() =&gt;
+        <span title="Boolean(true)" class="keyword">true</span>
+      <span title="Boolean" class="keyword">case</span> (_, _, <a href="#92370" title="object scala.text.DocNil">DocNil</a>) :: <a title="List[(Int, Boolean, scala.text.Document)]" id="92826">z</a> =&gt;
+        <a href="#92786" title="(w: Int,state: List[(Int, Boolean, scala.text.Document)])Boolean">fits</a>(<a href="#92789" title="Int">w</a>, <a href="#92826" title="List[(Int, Boolean, scala.text.Document)]">z</a>)
+      <span title="Boolean" class="keyword">case</span> (<a title="Int" id="92839">i</a>, <a title="Boolean" id="92840">b</a>, DocCons(<a title="scala.text.Document" id="92841">h</a>, <a title="scala.text.Document" id="92842">t</a>)) :: <a title="List[(Int, Boolean, scala.text.Document)]" id="92847">z</a> =&gt;
+        <a href="#92786" title="(w: Int,state: List[(Int, Boolean, scala.text.Document)])Boolean">fits</a>(<a href="#92789" title="Int">w</a>, <a href="../Tuple3.scala.html#19124" title="(_1: Int,_2: Boolean,_3: scala.text.Document)(Int, Boolean, scala.text.Document)">(</a><a href="#92839" title="Int">i</a>,<a href="#92840" title="Boolean">b</a>,<a href="#92841" title="scala.text.Document">h</a>) <a href="#92850" title="(Int, Boolean, scala.text.Document)">::</a> <a href="../Tuple3.scala.html#19124" title="(_1: Int,_2: Boolean,_3: scala.text.Document)(Int, Boolean, scala.text.Document)">(</a><a href="#92839" title="Int">i</a>,<a href="#92840" title="Boolean">b</a>,<a href="#92842" title="scala.text.Document">t</a>) <a href="../collection/immutable/List.scala.html#17630" title="(x: (Int, Boolean, scala.text.Document))List[(Int, Boolean, scala.text.Document)]">::</a> <a href="../collection/immutable/List.scala.html#17630" title="(x: (Int, Boolean, scala.text.Document))List[(Int, Boolean, scala.text.Document)]">z</a>)
+      <span title="Boolean" class="keyword">case</span> (_, _, DocText(<a title="String" id="92898">t</a>)) :: <a title="List[(Int, Boolean, scala.text.Document)]" id="92903">z</a> =&gt;
+        <a href="#92786" title="(w: Int,state: List[(Int, Boolean, scala.text.Document)])Boolean">fits</a>(<a href="#92789" title="(x$1: Int)Int">w</a> - <a href="#92898" title="String">t</a>.<span title="()Int">length</span>(), <a href="#92903" title="List[(Int, Boolean, scala.text.Document)]">z</a>)
+      <span title="Boolean" class="keyword">case</span> (<a title="Int" id="92939">i</a>, <a title="Boolean" id="92940">b</a>, DocNest(<a title="Int" id="92941">ii</a>, <a title="scala.text.Document" id="92942">d</a>)) :: <a title="List[(Int, Boolean, scala.text.Document)]" id="92947">z</a> =&gt;
+        <a href="#92786" title="(w: Int,state: List[(Int, Boolean, scala.text.Document)])Boolean">fits</a>(<a href="#92789" title="Int">w</a>, <a href="../Tuple3.scala.html#19124" title="(_1: Int,_2: Boolean,_3: scala.text.Document)(Int, Boolean, scala.text.Document)">(</a><a href="#92939" title="(x$1: Int)Int">i</a> + <a href="#92941" title="Int">ii</a>, <a href="#92940" title="Boolean">b</a>, <a href="#92942" title="scala.text.Document">d</a>) <a href="#92950" title="(Int, Boolean, scala.text.Document)">::</a> <a href="../collection/immutable/List.scala.html#17630" title="(x: (Int, Boolean, scala.text.Document))List[(Int, Boolean, scala.text.Document)]">z</a>)
+      <span title="Boolean" class="keyword">case</span> (_, <span title="Boolean(false)" class="keyword">false</span>, <a href="#92390" title="object scala.text.DocBreak">DocBreak</a>) :: <a title="List[(Int, Boolean, scala.text.Document)]" id="92987">z</a> =&gt;
+        <a href="#92786" title="(w: Int,state: List[(Int, Boolean, scala.text.Document)])Boolean">fits</a>(<a href="#92789" title="(x$1: Int)Int">w</a> - <span title="Int(1)" class="int">1</span>, <a href="#92987" title="List[(Int, Boolean, scala.text.Document)]">z</a>)
+      <span title="Boolean(true)" class="keyword">case</span> (_, <span title="Boolean(true)" class="keyword">true</span>, <a href="#92390" title="object scala.text.DocBreak">DocBreak</a>) :: <a title="List[(Int, Boolean, scala.text.Document)]" id="93020">z</a> =&gt;
+        <span title="Boolean(true)" class="keyword">true</span>
+      <span title="Boolean" class="keyword">case</span> (<a title="Int" id="93031">i</a>, _, DocGroup(<a title="scala.text.Document" id="93032">d</a>)) :: <a title="List[(Int, Boolean, scala.text.Document)]" id="93037">z</a> =&gt;
+        <a href="#92786" title="(w: Int,state: List[(Int, Boolean, scala.text.Document)])Boolean">fits</a>(<a href="#92789" title="Int">w</a>, <a href="../Tuple3.scala.html#19124" title="(_1: Int,_2: Boolean,_3: scala.text.Document)(Int, Boolean, scala.text.Document)">(</a><a href="#93031" title="Int">i</a>, <span title="Boolean(false)" class="keyword">false</span>, <a href="#93032" title="scala.text.Document">d</a>) <a href="#93040" title="(Int, Boolean, scala.text.Document)">::</a> <a href="../collection/immutable/List.scala.html#17630" title="(x: (Int, Boolean, scala.text.Document))List[(Int, Boolean, scala.text.Document)]">z</a>)
+    }
+
+    <span class="keyword">def</span> <a title="(n: Int)Unit" id="92787">spaces</a>(<a title="Int" id="93061">n</a>: <span title="Int">Int</span>) {
+      <span class="keyword">var</span> <a title="Int" id="93062">rem</a> = <a href="#93061" title="Int">n</a>
+      <span title="Unit" class="keyword">while</span> (<a href="#93062" title="(x$1: Int)Boolean">rem</a> &gt;= <span title="Int(16)" class="int">16</span>) <a href="#93063" title="()Unit">{</a> <a href="#92783" title="(x$1: java.lang.String)Unit">writer</a> write <span title="java.lang.String(&quot;                &quot;)" class="string">&quot;                &quot;</span>; <a href="#93062" title="Int">rem</a> -= <span title="Int(16)" class="int">16</span> }
+      <span title="Unit" class="keyword">if</span> (<a href="#93062" title="(x$1: Int)Boolean">rem</a> &gt;= <span title="Int(8)" class="int">8</span>)     { <a href="#92783" title="(x$1: java.lang.String)Unit">writer</a> write <span title="java.lang.String(&quot;        &quot;)" class="string">&quot;        &quot;</span>; <a href="#93062" title="Int">rem</a> -= <span title="Int(8)" class="int">8</span> }
+      <span title="Unit" class="keyword">if</span> (<a href="#93062" title="(x$1: Int)Boolean">rem</a> &gt;= <span title="Int(4)" class="int">4</span>)     { <a href="#92783" title="(x$1: java.lang.String)Unit">writer</a> write <span title="java.lang.String(&quot;    &quot;)" class="string">&quot;    &quot;</span>; <a href="#93062" title="Int">rem</a> -= <span title="Int(4)" class="int">4</span> }
+      <span title="Unit" class="keyword">if</span> (<a href="#93062" title="(x$1: Int)Boolean">rem</a> &gt;= <span title="Int(2)" class="int">2</span>)     { <a href="#92783" title="(x$1: java.lang.String)Unit">writer</a> write <span title="java.lang.String(&quot;  &quot;)" class="string">&quot;  &quot;</span>; <a href="#93062" title="Int">rem</a> -= <span title="Int(2)" class="int">2</span>}
+      <span title="Unit" class="keyword">if</span> (<a href="#93062" title="(x$1: Int)Boolean">rem</a> == <span title="Int(1)" class="int">1</span>)     { <a href="#92783" title="(x$1: java.lang.String)Unit">writer</a> write <span title="java.lang.String(&quot; &quot;)" class="string">&quot; &quot;</span> }
+    }
+
+    <span class="keyword">def</span> <a title="(k: Int,state: List[(Int, Boolean, scala.text.Document)])Unit" id="92788">fmt</a>(<a title="Int" id="93247">k</a>: <span title="Int">Int</span>, <a title="List[(Int, Boolean, scala.text.Document)]" id="93248">state</a>: <a href="../collection/immutable/List.scala.html#8973" title="List[(Int, Boolean, scala.text.Document)]">List</a>[FmtState]): <a title="Unit" id="1948">Unit</a> = <a href="#93248" title="List[(Int, Boolean, scala.text.Document)]">state</a> <span title="Unit" class="keyword">match</span> {
+      <span title="Unit" class="keyword">case</span> <a href="../collection/generic/SequenceFactory.scala.html#17519" title="(x: List[(Int, Boolean, scala.text.Document)])Some[List[(Int, Boolean, scala.text.Document)]]">List</a>() =&gt; <span title="Unit">(</span>)
+      <span title="Unit" class="keyword">case</span> (_, _, <a href="#92370" title="object scala.text.DocNil">DocNil</a>) :: <a title="List[(Int, Boolean, scala.text.Document)]" id="93270">z</a> =&gt;
+        <a href="#92788" title="(k: Int,state: List[(Int, Boolean, scala.text.Document)])Unit">fmt</a>(<a href="#93247" title="Int">k</a>, <a href="#93270" title="List[(Int, Boolean, scala.text.Document)]">z</a>)
+      <span title="Unit" class="keyword">case</span> (<a title="Int" id="93283">i</a>, <a title="Boolean" id="93284">b</a>, DocCons(<a title="scala.text.Document" id="93285">h</a>, <a title="scala.text.Document" id="93286">t</a>)) :: <a title="List[(Int, Boolean, scala.text.Document)]" id="93291">z</a> =&gt;
+        <a href="#92788" title="(k: Int,state: List[(Int, Boolean, scala.text.Document)])Unit">fmt</a>(<a href="#93247" title="Int">k</a>, <a href="../Tuple3.scala.html#19124" title="(_1: Int,_2: Boolean,_3: scala.text.Document)(Int, Boolean, scala.text.Document)">(</a><a href="#93283" title="Int">i</a>, <a href="#93284" title="Boolean">b</a>, <a href="#93285" title="scala.text.Document">h</a>) <a href="#93294" title="(Int, Boolean, scala.text.Document)">::</a> <a href="../Tuple3.scala.html#19124" title="(_1: Int,_2: Boolean,_3: scala.text.Document)(Int, Boolean, scala.text.Document)">(</a><a href="#93283" title="Int">i</a>, <a href="#93284" title="Boolean">b</a>, <a href="#93286" title="scala.text.Document">t</a>) <a href="../collection/immutable/List.scala.html#17630" title="(x: (Int, Boolean, scala.text.Document))List[(Int, Boolean, scala.text.Document)]">::</a> <a href="../collection/immutable/List.scala.html#17630" title="(x: (Int, Boolean, scala.text.Document))List[(Int, Boolean, scala.text.Document)]">z</a>)
+      <span title="Unit" class="keyword">case</span> (<a title="Int" id="93342">i</a>, _, DocText(<a title="String" id="93343">t</a>)) :: <a title="List[(Int, Boolean, scala.text.Document)]" id="93348">z</a> =&gt;
+        <a href="#92783" title="(x$1: java.lang.String)Unit">writer</a> write <a href="#93343" title="String">t</a>
+        <a href="#92788" title="(k: Int,state: List[(Int, Boolean, scala.text.Document)])Unit">fmt</a>(<a href="#93247" title="(x$1: Int)Int">k</a> + <a href="#93343" title="String">t</a>.<span title="()Int">length</span>(), <a href="#93348" title="List[(Int, Boolean, scala.text.Document)]">z</a>)
+      <span title="Unit" class="keyword">case</span> (<a title="Int" id="93391">i</a>, <a title="Boolean" id="93392">b</a>, DocNest(<a title="Int" id="93393">ii</a>, <a title="scala.text.Document" id="93394">d</a>)) :: <a title="List[(Int, Boolean, scala.text.Document)]" id="93399">z</a> =&gt;
+        <a href="#92788" title="(k: Int,state: List[(Int, Boolean, scala.text.Document)])Unit">fmt</a>(<a href="#93247" title="Int">k</a>, <a href="../Tuple3.scala.html#19124" title="(_1: Int,_2: Boolean,_3: scala.text.Document)(Int, Boolean, scala.text.Document)">(</a><a href="#93391" title="(x$1: Int)Int">i</a> + <a href="#93393" title="Int">ii</a>, <a href="#93392" title="Boolean">b</a>, <a href="#93394" title="scala.text.Document">d</a>) <a href="#93402" title="(Int, Boolean, scala.text.Document)">::</a> <a href="../collection/immutable/List.scala.html#17630" title="(x: (Int, Boolean, scala.text.Document))List[(Int, Boolean, scala.text.Document)]">z</a>)
+      <span title="Unit" class="keyword">case</span> (<a title="Int" id="93437">i</a>, <span title="Boolean(true)" class="keyword">true</span>, <a href="#92390" title="object scala.text.DocBreak">DocBreak</a>) :: <a title="List[(Int, Boolean, scala.text.Document)]" id="93440">z</a> =&gt;
+        <a href="#92783" title="(x$1: java.lang.String)Unit">writer</a> write <span title="java.lang.String(&quot;\012&quot;)" class="string">&quot;\n&quot;</span>
+        <a href="#92787" title="(n: Int)Unit">spaces</a>(<a href="#93437" title="Int">i</a>);
+        <a href="#92788" title="(k: Int,state: List[(Int, Boolean, scala.text.Document)])Unit">fmt</a>(<a href="#93437" title="Int">i</a>, <a href="#93440" title="List[(Int, Boolean, scala.text.Document)]">z</a>)
+      <span title="Unit" class="keyword">case</span> (<a title="Int" id="93461">i</a>, <span title="Boolean(false)" class="keyword">false</span>, <a href="#92390" title="object scala.text.DocBreak">DocBreak</a>) :: <a title="List[(Int, Boolean, scala.text.Document)]" id="93464">z</a> =&gt;
+        <a href="#92783" title="(x$1: java.lang.String)Unit">writer</a> write <span title="java.lang.String(&quot; &quot;)" class="string">&quot; &quot;</span>
+        <a href="#92788" title="(k: Int,state: List[(Int, Boolean, scala.text.Document)])Unit">fmt</a>(<a href="#93247" title="(x$1: Int)Int">k</a> + <span title="Int(1)" class="int">1</span>, <a href="#93464" title="List[(Int, Boolean, scala.text.Document)]">z</a>)
+      <span title="Unit" class="keyword">case</span> (<a title="Int" id="93505">i</a>, <a title="Boolean" id="93506">b</a>, DocGroup(<a title="scala.text.Document" id="93507">d</a>)) :: <a title="List[(Int, Boolean, scala.text.Document)]" id="93512">z</a> =&gt;
+        <span class="keyword">val</span> <a title="Boolean" id="93515">fitsFlat</a> = <a href="#92786" title="(w: Int,state: List[(Int, Boolean, scala.text.Document)])Boolean">fits</a>(<a href="#92782" title="(x$1: Int)Int">width</a> - <a href="#93247" title="Int">k</a>, <a href="../Tuple3.scala.html#19124" title="(_1: Int,_2: Boolean,_3: scala.text.Document)(Int, Boolean, scala.text.Document)">(</a><a href="#93505" title="Int">i</a>, <span title="Boolean(false)" class="keyword">false</span>, <a href="#93507" title="scala.text.Document">d</a>) <a href="#93534" title="(Int, Boolean, scala.text.Document)">::</a> <a href="../collection/immutable/List.scala.html#17630" title="(x: (Int, Boolean, scala.text.Document))List[(Int, Boolean, scala.text.Document)]">z</a>)
+        <a href="#92788" title="(k: Int,state: List[(Int, Boolean, scala.text.Document)])Unit">fmt</a>(<a href="#93247" title="Int">k</a>, <a href="../Tuple3.scala.html#19124" title="(_1: Int,_2: Boolean,_3: scala.text.Document)(Int, Boolean, scala.text.Document)">(</a><a href="#93505" title="Int">i</a>, <a title="=&gt; Boolean" id="2203">!</a><a href="#93515" title="Boolean">fitsFlat</a>, <a href="#93507" title="scala.text.Document">d</a>) <a href="#93555" title="(Int, Boolean, scala.text.Document)">::</a> <a href="../collection/immutable/List.scala.html#17630" title="(x: (Int, Boolean, scala.text.Document))List[(Int, Boolean, scala.text.Document)]">z</a>)
+    }
+
+    <a href="#92788" title="(k: Int,state: List[(Int, Boolean, scala.text.Document)])Unit">fmt</a>(<span title="Int(0)" class="int">0</span>, <a href="../Tuple3.scala.html#19124" title="(_1: Int,_2: Boolean,_3: scala.text.DocGroup)(Int, Boolean, scala.text.DocGroup)">(</a><span title="Int(0)" class="int">0</span>, <span title="Boolean(false)" class="keyword">false</span>, <a href="#92486" title="(doc: scala.text.Document)scala.text.DocGroup">DocGroup</a>(<a href="#13440" title="scala.text.Document" class="keyword">this</a>)) <a href="#93576" title="(Int, Boolean, scala.text.DocGroup)">::</a> <a href="../collection/immutable/List.scala.html#17630" title="(x: (Int, Boolean, scala.text.DocGroup))List[(Int, Boolean, scala.text.DocGroup)]">Nil</a>)
+  }
+}
+
+<span class="keyword">object</span> <a title="object scala.text.Document" id="13441">Document</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  /** The empty document */
+  <span class="keyword">def</span> <a title="=&gt; object scala.text.DocNil" id="93607">empty</a> = <a href="#92370" title="object scala.text.DocNil">DocNil</a>
+
+  /** A break, which will either be turned into a space or a line break */
+  <span class="keyword">def</span> <a title="=&gt; object scala.text.DocBreak" id="93608">break</a> = <a href="#92390" title="object scala.text.DocBreak">DocBreak</a>
+
+  /** A document consisting of some text literal */
+  <span class="keyword">def</span> <a title="(s: String)scala.text.Document" id="93609">text</a>(<a title="String" id="93621">s</a>: <span title="String">String</span>): <a href="#13440" title="scala.text.Document">Document</a> = <a href="#92420" title="(txt: String)scala.text.DocText">DocText</a>(<a href="#93621" title="String">s</a>)
+
+  /**
+   * A group, whose components will either be printed with all breaks
+   * rendered as spaces, or with all breaks rendered as line breaks.
+   */
+  <span class="keyword">def</span> <a title="(d: scala.text.Document)scala.text.Document" id="93610">group</a>(<a title="scala.text.Document" id="93629">d</a>: <a href="#13440" title="scala.text.Document">Document</a>): <a href="#13440" title="scala.text.Document">Document</a> = <a href="#92486" title="(doc: scala.text.Document)scala.text.DocGroup">DocGroup</a>(<a href="#93629" title="scala.text.Document">d</a>)
+
+  /** A nested document, which will be indented as specified. */
+  <span class="keyword">def</span> <a title="(i: Int,d: scala.text.Document)scala.text.Document" id="93611">nest</a>(<a title="Int" id="93637">i</a>: <span title="Int">Int</span>, <a title="scala.text.Document" id="93638">d</a>: <a href="#13440" title="scala.text.Document">Document</a>): <a href="#13440" title="scala.text.Document">Document</a> = <a href="#92562" title="(indent: Int,doc: scala.text.Document)scala.text.DocNest">DocNest</a>(<a href="#93637" title="Int">i</a>, <a href="#93638" title="scala.text.Document">d</a>)
+}
+
+        </pre>
+    </body>
+</html>

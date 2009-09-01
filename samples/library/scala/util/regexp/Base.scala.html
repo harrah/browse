@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/util/regexp/Base.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: Base.scala 17757 2009-05-18 16:02:09Z extempore $
+
+
+<span class="keyword">package</span> scala.util.regexp
+
+/** Basic regular expressions.
+ *
+ *  @author  Burak Emir
+ *  @version 1.0
+ */
+<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class Base extends java.lang.Object with ScalaObject" id="13319">Base</a>
+<a href="../../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  <span class="keyword">type</span> <a title="&gt;: Nothing &lt;: Base.this.RegExp" id="26756">_regexpT</a> &lt;: <a id="1">RegExp</a>
+
+  <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class RegExp extends java.lang.Object with ScalaObject" id="26757">RegExp</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+    <span class="keyword">val</span> <a title="=&gt; Boolean" id="26805">isNullable</a>: <a title="Boolean" id="1949">Boolean</a>
+  }
+
+  /** Alt( R,R,R* ) */
+  case <span class="keyword">class</span> <a href="../../runtime/ScalaRunTime.scala.html#20630" title="class Alt extends Base.this.RegExp with ScalaObject with Product" id="57120">Alt</a><a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="Base.this._regexpT*" id="239227">rs</a>: <span title="Base.this._regexpT*">_regexpT</span>*) <span class="keyword">extends</span> <a href="#26757" title="Base.this.RegExp">RegExp</a> {
+    // check rs \in R,R,R*
+    // @todo: flattening
+    <span title="Unit" class="keyword">if</span> (<a href="#239227" title="=&gt; Base.this._regexpT*">rs</a>.<a href="../../collection/generic/SequenceTemplate.scala.html#17341" title="(x$1: Int)Boolean" id="2954">size</a> &lt; <span title="Int(2)" class="int">2</span>)
+      <span title="Nothing" class="keyword">throw</span> <span title="scala.util.regexp.SyntaxError" class="keyword">new</span> <a href="SyntaxError.scala.html#13292" title="scala.util.regexp.SyntaxError">SyntaxError</a>(<span title="java.lang.String(&quot;need at least 2 branches in Alt&quot;)" class="string">&quot;need at least 2 branches in Alt&quot;</span>)
+
+    <span class="keyword">final</span> <span class="keyword">val</span> <a title="Boolean" id="57125">isNullable</a> = <a href="../../collection/generic/TraversableTemplate.scala.html#17183" title="(p: (Base.this._regexpT) =&gt; Boolean)Boolean">rs</a> forall (<a href="#248804" title="Base.this._regexpT">_</a>.<a href="#26805" title="=&gt; Boolean">isNullable</a>)
+  }
+
+  case <span class="keyword">class</span> <a href="../../runtime/ScalaRunTime.scala.html#20630" title="class Sequ extends Base.this.RegExp with ScalaObject with Product" id="132177">Sequ</a><a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="Base.this._regexpT*" id="132179">rs</a>: <span title="Base.this._regexpT*">_regexpT</span>*) <span class="keyword">extends</span> <a href="#26757" title="Base.this.RegExp">RegExp</a> {
+    // @todo: flattening
+    // check rs \in R,R*     
+    <span title="Unit" class="keyword">if</span> (<a href="#132179" title="=&gt; Base.this._regexpT*">rs</a>.<a href="../../collection/generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>)
+      <span title="Nothing" class="keyword">throw</span> <span title="scala.util.regexp.SyntaxError" class="keyword">new</span> <a href="SyntaxError.scala.html#13292" title="scala.util.regexp.SyntaxError">SyntaxError</a>(<span title="java.lang.String(&quot;need at least 1 item in Sequ&quot;)" class="string">&quot;need at least 1 item in Sequ&quot;</span>)
+
+    <span class="keyword">final</span> <span class="keyword">val</span> <a title="Boolean" id="131504">isNullable</a> = <a href="../../collection/generic/TraversableTemplate.scala.html#17183" title="(p: (Base.this._regexpT) =&gt; Boolean)Boolean">rs</a> forall (<a href="#131554" title="Base.this._regexpT">_</a>.<a href="#26805" title="=&gt; Boolean">isNullable</a>)
+  }
+
+  case <span class="keyword">class</span> <a title="class Star extends Base.this.RegExp with ScalaObject with Product" id="238733">Star</a><a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="Base.this._regexpT" id="248993">r</a>: <a href="#26756" title="Base.this._regexpT">_regexpT</a>) <span class="keyword">extends</span> <a href="#26757" title="Base.this.RegExp">RegExp</a> {
+    <span class="keyword">final</span> <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="Boolean" id="238739">isNullable</a> = <span title="Boolean(true)" class="keyword">true</span>
+  }
+
+  case <span class="keyword">object</span> <a href="#248956" title="object Base.this.Eps" id="248967">Eps</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="#26757" title="Base.this.RegExp">RegExp</a> {
+    <span class="keyword">final</span> <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="Boolean" id="130904">isNullable</a> = <span title="Boolean(true)" class="keyword">true</span>
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="()java.lang.String" id="130905">toString</a>() = <span title="java.lang.String(&quot;Eps&quot;)" class="string">&quot;Eps&quot;</span>
+  }
+
+  /** this class can be used to add meta information to regexps */
+  <span class="keyword">class</span> <a title="class Meta extends Base.this.RegExp with ScalaObject" id="26769">Meta</a><a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="Base.this._regexpT" id="248976">r1</a>: <a href="#26756" title="Base.this._regexpT">_regexpT</a>) <span class="keyword">extends</span> <a href="#26757" title="Base.this.RegExp">RegExp</a> {
+    <span class="keyword">final</span> <span class="keyword">val</span> <a title="Boolean" id="248971">isNullable</a> = <a href="#248976" title="Base.this._regexpT">r1</a>.<a href="#26805" title="=&gt; Boolean">isNullable</a>
+    <span class="keyword">def</span> <a title="=&gt; Base.this._regexpT" id="248973">r</a> = <a href="#248976" title="Base.this._regexpT">r1</a>
+  }
+
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(rs: Base.this._regexpT*)Base.this.RegExp" id="26770">mkSequ</a>(<a title="Base.this._regexpT*" id="248982">rs</a>: <span title="Base.this._regexpT*">_regexpT</span> *): <a href="#26757" title="Base.this.RegExp">RegExp</a> =
+    <span title="Base.this.RegExp" class="keyword">if</span> (<a href="#248982" title="Base.this._regexpT*">rs</a>.<a href="../../collection/generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#248967" title="object Base.this.Eps">Eps</a> <span class="keyword">else</span> <a href="#132177" title="(rs: Base.this._regexpT*)Base.this.Sequ">Sequ</a>(<a href="#248982" title="Base.this._regexpT*">rs</a> : _*)
+}
+
+        </pre>
+    </body>
+</html>

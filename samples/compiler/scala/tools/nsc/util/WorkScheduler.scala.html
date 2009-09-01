@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/tools/nsc/util/WorkScheduler.scala</title>
+        <script type="text/javascript" src="../../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+<span class="keyword">package</span> scala.tools.nsc
+<span class="keyword">package</span> util
+
+<span class="keyword">import</span> scala.collection.mutable.Queue
+
+<span class="keyword">class</span> <a title="class WorkScheduler extends java.lang.Object with ScalaObject" id="14623">WorkScheduler</a> <a title="ScalaObject" id="959">{</a>
+
+  <span class="keyword">type</span> <a title="() =&gt; Unit" id="256032">Action</a> = () =&gt; Unit
+
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="scala.collection.mutable.Queue[() =&gt; Unit]" id="256034">todo</a> = <span title="scala.collection.mutable.Queue[() =&gt; Unit]" class="keyword">new</span> <a title="scala.collection.mutable.Queue[() =&gt; Unit]" id="25086">Queue</a>[Action]
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Option[Exception]" id="256037">except</a>: <span title="Option[Exception]">Option</span>[Exception] = <span title="object None">None</span>
+
+  /** Called from server: block until todo list is nonempty */
+  <span class="keyword">def</span> <a title="()Unit" id="256039">waitForMoreWork</a>() = <a href="#14623" title="(x$1: Unit)Unit">synchronized</a> {
+    <span title="Unit" class="keyword">while</span> (<a href="#256034" title="=&gt; scala.collection.mutable.Queue[() =&gt; Unit]">todo</a>.<span title="=&gt; Boolean">isEmpty</span>) { <a href="#14623" title="()Unit" id="6536">wait</a><a href="#556322" title="()Unit">(</a>) } 
+  }
+
+  /** called from Server: test whether todo list is nonempty */
+  <span class="keyword">def</span> <a title="()Boolean" id="256040">moreWork</a>(): <a title="Boolean" id="1951">Boolean</a> = <a href="#14623" title="(x$1: Boolean)Boolean">synchronized</a> {
+    <a href="#256034" title="=&gt; scala.collection.mutable.Queue[() =&gt; Unit]">todo</a>.<a title="=&gt; Boolean" id="25218">nonEmpty</a>
+  }
+
+  /** Called from server: get first action in todo list, and pop it off */
+  <span class="keyword">def</span> <a title="()Option[() =&gt; Unit]" id="256041">nextWorkItem</a>(): <span title="Option[() =&gt; Unit]">Option</span>[Action] = <a href="#14623" title="(x$1: Option[() =&gt; Unit])Option[() =&gt; Unit]">synchronized</a> {
+    <span title="Option[() =&gt; Unit]" class="keyword">if</span> (<a title="=&gt; Boolean" id="2205">!</a><a href="#256034" title="=&gt; scala.collection.mutable.Queue[() =&gt; Unit]">todo</a>.<span title="=&gt; Boolean">isEmpty</span>) {
+      <span title="(x: () =&gt; Unit)Some[() =&gt; Unit]">Some</span>(<a href="#256034" title="=&gt; scala.collection.mutable.Queue[() =&gt; Unit]">todo</a>.<a title="()() =&gt; Unit" id="55867">dequeue</a>()) 
+    } <span class="keyword">else</span> <span title="object None">None</span>
+  }
+
+  /** Called from server: return optional exception posted by client
+   *  Reset to no exception.
+   */
+  <span class="keyword">def</span> <a title="()Option[Exception]" id="256042">pollException</a>(): <span title="Option[Exception]">Option</span>[Exception] = <a href="#14623" title="(x$1: Option[Exception])Option[Exception]">synchronized</a> {
+    <span class="keyword">val</span> <a title="Option[Exception]" id="702066">result</a> = <a href="#256037" title="=&gt; Option[Exception]">except</a>; <a href="#256037" title="(x$1: Option[Exception])Unit">except</a> = <span title="object None">None</span>; <a href="#702066" title="Option[Exception]">result</a>
+  }
+
+  /** Called from client: have action executed by server */
+  <span class="keyword">def</span> <a title="(action: () =&gt; Unit)Unit" id="256043">postWorkItem</a>(<a title="() =&gt; Unit" id="256048">action</a>: <a title="() =&gt; Unit" id="371">Action</a>) = <a href="#14623" title="(x$1: Unit)Unit">synchronized</a> {
+    <a href="#256034" title="(elems: () =&gt; Unit*)Unit" id="55865">todo</a> enqueue <a href="#256048" title="() =&gt; Unit">action</a>
+    <a href="#14623" title="()Unit" id="6529">notify</a>()
+  }
+  
+  /** Called from client: cancel all queued actions */
+  <span class="keyword">def</span> <a title="()Unit" id="256044">cancelQueued</a>() = <a href="#14623" title="(x$1: Unit)Unit">synchronized</a> {
+    <a href="#256034" title="=&gt; scala.collection.mutable.Queue[() =&gt; Unit]">todo</a>.<a title="()Unit" id="55913">clear</a>()
+  }
+
+  /** Called from client:
+   *  Require an exception to be thrown on next poll.
+   */
+  <span class="keyword">def</span> <a title="(exc: Exception)Unit" id="256045">raise</a>(<a title="Exception" id="256103">exc</a>: <a title="Exception" id="1875">Exception</a>) = <a href="#14623" title="(x$1: Unit)Unit">synchronized</a> {
+    <a href="#256037" title="(x$1: Option[Exception])Unit">except</a> = <span title="(x: Exception)Some[Exception]">Some</span>(<a href="#256103" title="Exception">exc</a>)
+  }
+}
+
+        </pre>
+    </body>
+</html>

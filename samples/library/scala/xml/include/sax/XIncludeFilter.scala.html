@@ -1,0 +1,439 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/xml/include/sax/XIncludeFilter.scala</title>
+        <script type="text/javascript" src="../../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: XIncludeFilter.scala 18387 2009-07-24 15:28:37Z odersky $
+
+<span class="keyword">package</span> scala.xml
+<span class="keyword">package</span> include.sax
+<span class="keyword">import</span> scala.xml.include._
+
+<span class="keyword">import</span> org.xml.sax.Attributes
+<span class="keyword">import</span> org.xml.sax.SAXException
+<span class="keyword">import</span> org.xml.sax.XMLReader
+<span class="keyword">import</span> org.xml.sax.EntityResolver
+<span class="keyword">import</span> org.xml.sax.Locator
+<span class="keyword">import</span> org.xml.sax.helpers.XMLReaderFactory
+<span class="keyword">import</span> org.xml.sax.helpers.XMLFilterImpl
+<span class="keyword">import</span> org.xml.sax.helpers.NamespaceSupport
+<span class="keyword">import</span> org.xml.sax.helpers.AttributesImpl
+
+<span class="keyword">import</span> java.net.URL
+<span class="keyword">import</span> java.net.URLConnection
+<span class="keyword">import</span> java.net.MalformedURLException
+<span class="keyword">import</span> java.io.UnsupportedEncodingException
+<span class="keyword">import</span> java.io.IOException
+<span class="keyword">import</span> java.io.InputStream
+<span class="keyword">import</span> java.io.BufferedInputStream
+<span class="keyword">import</span> java.io.InputStreamReader
+<span class="keyword">import</span> java.util.Stack
+
+/**
+ * &lt;p&gt;
+ *  This is a SAX filter which resolves all XInclude include elements
+ *  before passing them on to the client application. Currently this
+ *  class has the following known deviation from the XInclude specification:
+ * &lt;/p&gt;
+ *  &lt;ol&gt;
+ *   &lt;li&gt;XPointer is not supported.&lt;/li&gt;
+ *  &lt;/ol&gt;
+ *
+ *  &lt;p&gt;
+ *    Furthermore, I would definitely use a new instance of this class
+ *    for each document you want to process. I doubt it can be used
+ *    successfully on multiple documents. Furthermore, I can virtually
+ *    guarantee that this class is not thread safe. You have been
+ *    warned.
+ *  &lt;/p&gt;
+ *
+ *  &lt;p&gt;
+ *    Since this class is not designed to be subclassed, and since
+ *    I have not yet considered how that might affect the methods 
+ *    herein or what other protected methods might be needed to support 
+ *    subclasses, I have declared this class final. I may remove this 
+ *    restriction later, though the use-case for subclassing is weak.
+ *    This class is designed to have its functionality extended via a
+ *    a horizontal chain of filters, not a 
+ *    vertical hierarchy of sub and superclasses.
+ *  &lt;/p&gt;
+ *
+ *  &lt;p&gt;
+ *    To use this class: 
+ *  &lt;/p&gt;
+ *  &lt;ol&gt;
+ *   &lt;li&gt;Construct an &lt;code&gt;XIncludeFilter&lt;/code&gt; object with a known base URL&lt;/li&gt;
+ *   &lt;li&gt;Pass the &lt;code&gt;XMLReader&lt;/code&gt; object from which the raw document will 
+ *       be read to the &lt;code&gt;setParent()&lt;/code&gt; method of this object. &lt;/li&gt;
+ *   &lt;li&gt;Pass your own &lt;code&gt;ContentHandler&lt;/code&gt; object to the 
+ *       &lt;code&gt;setContentHandler()&lt;/code&gt; method of this object. This is the 
+ *       object which will receive events from the parsed and included
+ *       document.
+ *   &lt;/li&gt;
+ *   &lt;li&gt;Optional: if you wish to receive comments, set your own 
+ *       &lt;code&gt;LexicalHandler&lt;/code&gt; object as the value of this object's
+ *       http://xml.org/sax/properties/lexical-handler property.
+ *       Also make sure your &lt;code&gt;LexicalHandler&lt;/code&gt; asks this object 
+ *       for the status of each comment using &lt;code&gt;insideIncludeElement&lt;/code&gt;
+ *       before doing anything with the comment. 
+ *   &lt;/li&gt;
+ *   &lt;li&gt;Pass the URL of the document to read to this object's 
+ *       &lt;code&gt;parse()&lt;/code&gt; method&lt;/li&gt;
+ *  &lt;/ol&gt;
+ * 
+ *  &lt;p&gt; e.g.&lt;/p&gt;
+ *  &lt;pre&gt;&lt;code&gt;XIncludeFilter includer = new XIncludeFilter(base); 
+ *  includer.setParent(parser);
+ *  includer.setContentHandler(new SAXXIncluder(System.out));
+ *  includer.parse(args[i]);&lt;/code&gt;
+ *  &lt;/pre&gt;
+ * &lt;/p&gt;               
+ * translated from Elliotte Rusty Harold's Java source
+ * @author Burak Emir
+ */
+<span class="keyword">class</span> <a title="class XIncludeFilter extends org.xml.sax.helpers.XMLFilterImpl with ScalaObject" id="9909">XIncludeFilter</a> <a href="../../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a title="org.xml.sax.helpers.XMLFilterImpl" id="23926">XMLFilterImpl</a> {
+
+  <span class="keyword">final</span> <span class="keyword">val</span>  <a title="java.lang.String(&quot;http://www.w3.org/2001/XInclude&quot;)" id="25264">XINCLUDE_NAMESPACE</a> = <span title="java.lang.String(&quot;http://www.w3.org/2001/XInclude&quot;)" class="string">&quot;http://www.w3.org/2001/XInclude&quot;</span>;
+  
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="java.util.Stack[java.net.URL]" id="25266">bases</a> = <span title="java.util.Stack[java.net.URL]" class="keyword">new</span> <span title="java.util.Stack[java.net.URL]">Stack</span>[URL]();
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="java.util.Stack[org.xml.sax.Locator]" id="25268">locators</a> = <span title="java.util.Stack[org.xml.sax.Locator]" class="keyword">new</span> <span title="java.util.Stack[org.xml.sax.Locator]">Stack</span>[Locator]();
+
+/*    private EntityResolver resolver;
+    
+    public XIncludeFilter() {
+        this(null);   
+    }    
+    
+    public XIncludeFilter(EntityResolver resolver) {
+        this.resolver = resolver;   
+    }   */ 
+    
+    
+    // what if this isn't called????
+    // do I need to check this in startDocument() and push something
+    // there????
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(locator: org.xml.sax.Locator)Unit" id="25270">setDocumentLocator</a>(<a title="org.xml.sax.Locator" id="216990">locator</a>: <span title="org.xml.sax.Locator">Locator</span>) {
+    <a href="#25268" title="=&gt; java.util.Stack[org.xml.sax.Locator]">locators</a>.<span title="(x$1: org.xml.sax.Locator)org.xml.sax.Locator">push</span>(<a href="#216990" title="org.xml.sax.Locator">locator</a>)
+    <span class="keyword">val</span> <a title="java.lang.String" id="216992">base</a> = <a href="#216990" title="org.xml.sax.Locator">locator</a>.<span title="()java.lang.String">getSystemId</span>()
+    <span class="keyword">try</span> {
+      <a href="#25266" title="=&gt; java.util.Stack[java.net.URL]">bases</a>.<span title="(x$1: java.net.URL)java.net.URL">push</span>(<a title="(x$1: java.lang.String)java.net.URL" id="83328" class="keyword">new</a> <span title="java.net.URL">URL</span>(<a href="#216992" title="java.lang.String">base</a>))
+    }
+    <span class="keyword">catch</span> { 
+      <span title="Nothing" class="keyword">case</span> <a title="java.net.MalformedURLException" id="217005">e</a>:<span title="java.net.MalformedURLException">MalformedURLException</span> =&gt;
+        <span title="Nothing" class="keyword">throw</span> <a title="(x$1: java.lang.String)java.lang.UnsupportedOperationException" id="45864" class="keyword">new</a> <a href="../../../Predef.scala.html#16169" title="java.lang.UnsupportedOperationException">UnsupportedOperationException</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;Unrecognized SYSTEM ID: &quot;</span> + <a href="#216992" title="java.lang.String">base</a>)
+    }
+    <span class="keyword">super</span>.<a title="(x$1: org.xml.sax.Locator)Unit" id="25226">setDocumentLocator</a>(<a href="#216990" title="org.xml.sax.Locator">locator</a>)
+  }
+  
+  
+  // necessary to throw away contents of non-empty XInclude elements
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Int" id="25272">level</a> = <span title="Int(0)" class="int">0</span>
+
+  /**
+    * &lt;p&gt;
+    * This utility method returns true if and only if this reader is 
+    * currently inside a non-empty include element. (This is &lt;strong&gt;
+    * not&lt;/strong&gt; the same as being inside the node set which replaces
+    * the include element.) This is primarily needed for comments
+    * inside include elements. It must be checked by the actual
+    * LexicalHandler to see whether a comment is passed or not.
+    * &lt;/p&gt;
+    *
+    * @return boolean  
+    */
+  <span class="keyword">def</span> <a title="()Boolean" id="25274">insideIncludeElement</a>(): <a title="Boolean" id="1949">Boolean</a> = <a href="#25272" title="(x$1: Int)Boolean">level</a> != <span title="Int(0)" class="int">0</span>
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(uri: String,localName: String,qName: String,atts1: org.xml.sax.Attributes)Unit" id="25275">startElement</a>(<a title="String" id="217027">uri</a>: <span title="String">String</span>, <a title="String" id="217028">localName</a>: <span title="String">String</span>, <a title="String" id="217029">qName</a>: <span title="String">String</span>, <a title="org.xml.sax.Attributes" id="217030">atts1</a>: <a title="org.xml.sax.Attributes" id="23898">Attributes</a>) {
+    <span class="keyword">var</span> <a title="org.xml.sax.Attributes" id="217032">atts</a> = <a href="#217030" title="org.xml.sax.Attributes">atts1</a>
+    <span title="Unit" class="keyword">if</span> (<a href="#25272" title="(x$1: Int)Boolean">level</a> == <span title="Int(0)" class="int">0</span>) { // We're not inside an xi:include element
+
+      // Adjust bases stack by pushing either the new
+      // value of xml:base or the base of the parent
+      <span class="keyword">val</span> <a title="java.lang.String" id="217040">base</a> = <a href="#217032" title="org.xml.sax.Attributes">atts</a>.<a title="(x$1: java.lang.String,x$2: java.lang.String)java.lang.String" id="152670">getValue</a>(NamespaceSupport.<span title="java.lang.String(&quot;http://www.w3.org/XML/1998/namespace&quot;)">XMLNS</span>, <span title="java.lang.String(&quot;base&quot;)" class="string">&quot;base&quot;</span>)
+      <span class="keyword">val</span> <a title="java.net.URL" id="217041">parentBase</a> = <a href="#25266" title="=&gt; java.util.Stack[java.net.URL]">bases</a>.<span title="()java.net.URL">peek</span>().<span title="[T0]T0">asInstanceOf</span><span title="java.net.URL">[</span><span title="java.net.URL">URL</span>]
+      <span class="keyword">var</span> <a title="java.net.URL" id="217042">currentBase</a> = <a href="#217041" title="java.net.URL">parentBase</a>
+      <span title="Unit" class="keyword">if</span> (<a href="#217040" title="(x$1: AnyRef)Boolean">base</a> != <span title="Null(null)" class="keyword">null</span>) {
+        <span class="keyword">try</span> {
+          <a href="#217042" title="java.net.URL">currentBase</a> = <span title="(x$1: java.net.URL,x$2: java.lang.String)java.net.URL" class="keyword">new</span> <span title="java.net.URL">URL</span>(<a href="#217041" title="java.net.URL">parentBase</a>, <a href="#217040" title="java.lang.String">base</a>)
+        }
+        <span class="keyword">catch</span> { 
+          <span title="Nothing" class="keyword">case</span> <a title="java.net.MalformedURLException" id="217106">e</a>: <span title="java.net.MalformedURLException">MalformedURLException</span> =&gt;
+            <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String,x$2: java.lang.Exception)org.xml.sax.SAXException" class="keyword">new</span> <span title="org.xml.sax.SAXException">SAXException</span>(<span title="(x$1: Any)java.lang.String" class="string">&quot;Malformed base URL: &quot;</span> 
+                                   + <a href="#217042" title="java.net.URL">currentBase</a>, <a href="#217106" title="java.net.MalformedURLException">e</a>)
+        }
+      }
+      <a href="#25266" title="=&gt; java.util.Stack[java.net.URL]">bases</a>.<span title="(x$1: java.net.URL)java.net.URL">push</span>(<a href="#217042" title="java.net.URL">currentBase</a>);
+      
+      <span title="Unit" class="keyword">if</span> (<a href="#217027" title="String">uri</a>.<span title="(x$1: Any)Boolean">equals</span><span title="(x$1: Boolean)Boolean">(</span><span title="java.lang.String(&quot;http://www.w3.org/2001/XInclude&quot;)">XINCLUDE_NAMESPACE</span>) &amp;&amp; <a href="#217028" title="String">localName</a>.<span title="(x$1: Any)Boolean">equals</span>(<span title="java.lang.String(&quot;include&quot;)" class="string">&quot;include&quot;</span>)) {
+        // include external document
+        <span class="keyword">val</span> <a title="java.lang.String" id="217130">href</a> = <a href="#217032" title="org.xml.sax.Attributes">atts</a>.<span title="(x$1: java.lang.String)java.lang.String">getValue</span>(<span title="java.lang.String(&quot;href&quot;)" class="string">&quot;href&quot;</span>)
+        // Verify that there is an href attribute
+        <span title="Unit" class="keyword">if</span> (<a href="#217130" title="(x$1: AnyRef)Boolean">href</a>==<span title="Null(null)" class="keyword">null</span>) { 
+          <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)org.xml.sax.SAXException" class="keyword">new</span> <span title="org.xml.sax.SAXException">SAXException</span>(<span title="java.lang.String(&quot;Missing href attribute&quot;)" class="string">&quot;Missing href attribute&quot;</span>)
+        }
+        
+        <span class="keyword">var</span> <a title="java.lang.String" id="217131">parse</a> = <a href="#217032" title="org.xml.sax.Attributes">atts</a>.<span title="(x$1: java.lang.String)java.lang.String">getValue</span>(<span title="java.lang.String(&quot;parse&quot;)" class="string">&quot;parse&quot;</span>)
+        <span title="Unit" class="keyword">if</span> (<a href="#217131" title="(x$1: AnyRef)Boolean">parse</a> == <span title="Null(null)" class="keyword">null</span>) <a href="#217131" title="java.lang.String">parse</a> = <span title="java.lang.String(&quot;xml&quot;)" class="string">&quot;xml&quot;</span>
+        
+        <span title="Unit" class="keyword">if</span> (<a href="#217131" title="java.lang.String">parse</a>.<span title="(x$1: Any)Boolean">equals</span>(<span title="java.lang.String(&quot;text&quot;)" class="string">&quot;text&quot;</span>)) {
+          <span class="keyword">val</span> <a title="java.lang.String" id="217166">encoding</a> = <a href="#217032" title="org.xml.sax.Attributes">atts</a>.<span title="(x$1: java.lang.String)java.lang.String">getValue</span>(<span title="java.lang.String(&quot;encoding&quot;)" class="string">&quot;encoding&quot;</span>);
+          <a href="#25289" title="(url: String,encoding1: String)Unit">includeTextDocument</a>(<a href="#217130" title="java.lang.String">href</a>, <a href="#217166" title="java.lang.String">encoding</a>); 
+        }
+        <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#217131" title="java.lang.String">parse</a>.<span title="(x$1: Any)Boolean">equals</span>(<span title="java.lang.String(&quot;xml&quot;)" class="string">&quot;xml&quot;</span>)) {
+          <a href="#25293" title="(url: String)Unit">includeXMLDocument</a>(<a href="#217130" title="java.lang.String">href</a>); 
+        }
+        // Need to check this also in DOM and JDOM????
+        <span class="keyword">else</span> {
+          <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)org.xml.sax.SAXException" class="keyword">new</span> <span title="org.xml.sax.SAXException">SAXException</span>(
+            <span title="(x$1: Any)java.lang.String" class="string">&quot;Illegal value for parse attribute: &quot;</span> + <a href="#217131" title="java.lang.String">parse</a>);
+        }
+        <a href="#25272" title="(x$1: Int)Unit">level</a> += <span title="Int(1)" class="int">1</span>
+      }
+      <span class="keyword">else</span> {
+        <span title="Unit" class="keyword">if</span> (<a href="#25291" title="=&gt; Boolean">atRoot</a>) {
+          // add xml:base attribute if necessary
+          <span class="keyword">val</span> <a title="org.xml.sax.helpers.AttributesImpl" id="217229">attsImpl</a> = <a title="(x$1: org.xml.sax.Attributes)org.xml.sax.helpers.AttributesImpl" id="217233" class="keyword">new</a> <a title="org.xml.sax.helpers.AttributesImpl" id="23965">AttributesImpl</a>(<a href="#217032" title="org.xml.sax.Attributes">atts</a>)
+          <a href="#217229" title="org.xml.sax.helpers.AttributesImpl">attsImpl</a>.<a title="(x$1: java.lang.String,x$2: java.lang.String,x$3: java.lang.String,x$4: java.lang.String,x$5: java.lang.String)Unit" id="217264">addAttribute</a>(NamespaceSupport.<span title="java.lang.String(&quot;http://www.w3.org/XML/1998/namespace&quot;)">XMLNS</span>, <span title="java.lang.String(&quot;base&quot;)" class="string">&quot;base&quot;</span>,
+                                <span title="java.lang.String(&quot;xml:base&quot;)" class="string">&quot;xml:base&quot;</span>, <span title="java.lang.String(&quot;CDATA&quot;)" class="string">&quot;CDATA&quot;</span>, <a href="#217042" title="java.net.URL">currentBase</a>.<span title="()java.lang.String">toExternalForm</span>())
+          <a href="#217032" title="org.xml.sax.Attributes">atts</a> = <a href="#217229" title="org.xml.sax.helpers.AttributesImpl">attsImpl</a>
+          <a href="#25291" title="(x$1: Boolean)Unit">atRoot</a> = <span title="Boolean(false)" class="keyword">false</span>
+        }
+        <span class="keyword">super</span>.<a title="(x$1: java.lang.String,x$2: java.lang.String,x$3: java.lang.String,x$4: org.xml.sax.Attributes)Unit" id="25235">startElement</a>(<a href="#217027" title="String">uri</a>, <a href="#217028" title="String">localName</a>, <a href="#217029" title="String">qName</a>, <a href="#217032" title="org.xml.sax.Attributes">atts</a>)
+      }
+    }
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(uri: String,localName: String,qName: String)Unit" id="25276">endElement</a>(<a title="String" id="217307">uri</a>: <span title="String">String</span>, <a title="String" id="217308">localName</a>: <span title="String">String</span>, <a title="String" id="217309">qName</a>: <span title="String">String</span>) {
+    <span title="Unit" class="keyword">if</span> (<a href="#217307" title="String">uri</a>.<span title="(x$1: Any)Boolean">equals</span><span title="(x$1: Boolean)Boolean">(</span><span title="java.lang.String(&quot;http://www.w3.org/2001/XInclude&quot;)">XINCLUDE_NAMESPACE</span>) 
+        &amp;&amp; <a href="#217308" title="String">localName</a>.<span title="(x$1: Any)Boolean">equals</span>(<span title="java.lang.String(&quot;include&quot;)" class="string">&quot;include&quot;</span>)) {
+          <a href="#25272" title="(x$1: Int)Unit">level</a> -= <span title="Int(1)" class="int">1</span>;
+    }
+    <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#25272" title="(x$1: Int)Boolean">level</a> == <span title="Int(0)" class="int">0</span>) {
+      <a href="#25266" title="=&gt; java.util.Stack[java.net.URL]">bases</a>.<span title="()java.net.URL">pop</span>()
+      <span class="keyword">super</span>.<a title="(x$1: java.lang.String,x$2: java.lang.String,x$3: java.lang.String)Unit" id="25240">endElement</a>(<a href="#217307" title="String">uri</a>, <a href="#217308" title="String">localName</a>, <a href="#217309" title="String">qName</a>)
+    }
+  }
+
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Int" id="25278">depth</a> = <span title="Int(0)" class="int">0</span>;
+  
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Unit" id="25280">startDocument</a>() {
+    <a href="#25272" title="(x$1: Int)Unit">level</a> = <span title="Int(0)" class="int">0</span>
+    <span title="Unit" class="keyword">if</span> (<a href="#25278" title="(x$1: Int)Boolean">depth</a> == <span title="Int(0)" class="int">0</span>) <span class="keyword">super</span>.<a title="()Unit" id="25228">startDocument</a>()
+    <a href="#25278" title="(x$1: Int)Unit">depth</a> += <span title="Int(1)" class="int">1</span>        
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Unit" id="25281">endDocument</a>() {
+    <a href="#25268" title="=&gt; java.util.Stack[org.xml.sax.Locator]">locators</a>.<span title="()org.xml.sax.Locator">pop</span>()
+    <a href="#25266" title="=&gt; java.util.Stack[java.net.URL]">bases</a>.<span title="()java.net.URL">pop</span>(); // pop the URL for the document itself
+    <a href="#25278" title="(x$1: Int)Unit">depth</a> -= <span title="Int(1)" class="int">1</span>
+    <span title="Unit" class="keyword">if</span> (<a href="#25278" title="(x$1: Int)Boolean">depth</a> == <span title="Int(0)" class="int">0</span>) <span class="keyword">super</span>.<a title="()Unit" id="25229">endDocument</a>()
+  }
+
+  // how do prefix mappings move across documents????
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(prefix: String,uri: String)Unit" id="25282">startPrefixMapping</a>(<a title="String" id="217457">prefix</a>: <span title="String">String</span> , <a title="String" id="217458">uri</a>: <span title="String">String</span>) {
+    <span title="Unit" class="keyword">if</span> (<a href="#25272" title="(x$1: Int)Boolean">level</a> == <span title="Int(0)" class="int">0</span>) <span class="keyword">super</span>.<a title="(x$1: java.lang.String,x$2: java.lang.String)Unit" id="25230">startPrefixMapping</a>(<a href="#217457" title="String">prefix</a>, <a href="#217458" title="String">uri</a>)
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(prefix: String)Unit" id="25283">endPrefixMapping</a>(<a title="String" id="217470">prefix</a>: <span title="String">String</span>) {
+    <span title="Unit" class="keyword">if</span> (<a href="#25272" title="(x$1: Int)Boolean">level</a> == <span title="Int(0)" class="int">0</span>) <span class="keyword">super</span>.<a title="(x$1: java.lang.String)Unit" id="25233">endPrefixMapping</a>(<a href="#217470" title="String">prefix</a>)       
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(ch: Array[Char],start: Int,length: Int)Unit" id="25284">characters</a>(<a title="Array[Char]" id="217482">ch</a>: <a href="../../../Array.scala.html#885" title="Array[Char]">Array</a>[Char], <a title="Int" id="217483">start</a>: <span title="Int">Int</span>, <a title="Int" id="217484">length</a>: <span title="Int">Int</span>) {
+    <span title="Unit" class="keyword">if</span> (<a href="#25272" title="(x$1: Int)Boolean">level</a> == <span title="Int(0)" class="int">0</span>) <span class="keyword">super</span>.<a title="(x$1: Array[Char],x$2: Int,x$3: Int)Unit" id="25244">characters</a>(<a href="#217482" title="Array[Char]">ch</a>, <a href="#217483" title="Int">start</a>, <a href="#217484" title="Int">length</a>)
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(ch: Array[Char],start: Int,length: Int)Unit" id="25285">ignorableWhitespace</a>(<a title="Array[Char]" id="217496">ch</a>: <a href="../../../Array.scala.html#885" title="Array[Char]">Array</a>[Char], <a title="Int" id="217497">start</a>: <span title="Int">Int</span>, <a title="Int" id="217498">length</a>: <span title="Int">Int</span>) {
+    <span title="Unit" class="keyword">if</span> (<a href="#25272" title="(x$1: Int)Boolean">level</a> == <span title="Int(0)" class="int">0</span>) <span class="keyword">super</span>.<a title="(x$1: Array[Char],x$2: Int,x$3: Int)Unit" id="25248">ignorableWhitespace</a>(<a href="#217496" title="Array[Char]">ch</a>, <a href="#217497" title="Int">start</a>, <a href="#217498" title="Int">length</a>)
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(target: String,data: String)Unit" id="25286">processingInstruction</a>(<a title="String" id="217510">target</a>: <span title="String">String</span>, <a title="String" id="217511">data</a>: <span title="String">String</span>) {
+    <span title="Unit" class="keyword">if</span> (<a href="#25272" title="(x$1: Int)Boolean">level</a> == <span title="Int(0)" class="int">0</span>) <span class="keyword">super</span>.<a title="(x$1: java.lang.String,x$2: java.lang.String)Unit" id="25252">processingInstruction</a>(<a href="#217510" title="String">target</a>, <a href="#217511" title="String">data</a>)
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(name: String)Unit" id="25287">skippedEntity</a>(<a title="String" id="217523">name</a>: <span title="String">String</span>) {
+    <span title="Unit" class="keyword">if</span> (<a href="#25272" title="(x$1: Int)Boolean">level</a> == <span title="Int(0)" class="int">0</span>) <span class="keyword">super</span>.<a title="(x$1: java.lang.String)Unit" id="25255">skippedEntity</a>(<a href="#217523" title="String">name</a>)
+  }
+
+  // convenience method for error messages
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="()String" id="25288">getLocation</a>(): <span title="String">String</span> = {
+    <span class="keyword">var</span> <a title="java.lang.String" id="217536">locationString</a> = <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>
+    <span class="keyword">val</span> <a title="org.xml.sax.Locator" id="217537">locator</a> = <a href="#25268" title="=&gt; java.util.Stack[org.xml.sax.Locator]">locators</a>.<span title="()org.xml.sax.Locator">peek</span>().<span title="[T0]T0">asInstanceOf</span><span title="org.xml.sax.Locator">[</span><span title="org.xml.sax.Locator">Locator</span>]
+    <span class="keyword">var</span> <a title="java.lang.String" id="217538">publicID</a> = <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>
+    <span class="keyword">var</span> <a title="java.lang.String" id="217539">systemID</a> = <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>
+    <span class="keyword">var</span> <a title="Int" id="217540">column</a> = <span title="Int(-1)">-</span><span class="int">1</span>
+    <span class="keyword">var</span> <a title="Int" id="217541">line</a> = <span title="Int(-1)">-</span><span class="int">1</span>
+    <span title="Unit" class="keyword">if</span> (<a href="#217537" title="(x$1: AnyRef)Boolean">locator</a> != <span title="Null(null)" class="keyword">null</span>) {
+      <a href="#217538" title="java.lang.String">publicID</a> = <a href="#217537" title="org.xml.sax.Locator">locator</a>.<a title="()java.lang.String" id="152586">getPublicId</a>()
+      <a href="#217539" title="java.lang.String">systemID</a> = <a href="#217537" title="org.xml.sax.Locator">locator</a>.<span title="()java.lang.String">getSystemId</span>()
+      <a href="#217541" title="Int">line</a> = <a href="#217537" title="org.xml.sax.Locator">locator</a>.<a title="()Int" id="152588">getLineNumber</a>()
+      <a href="#217540" title="Int">column</a> = <a href="#217537" title="org.xml.sax.Locator">locator</a>.<a title="()Int" id="152589">getColumnNumber</a>()
+    }
+    <a href="#217536" title="java.lang.String">locationString</a> = (<span title="(x$1: Any)java.lang.String" class="string">&quot; in document included from &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#217538" title="java.lang.String">publicID</a>
+    <span title="(x$1: Any)java.lang.String">+</span> <span title="java.lang.String(&quot; at &quot;)" class="string">&quot; at &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#217539" title="java.lang.String">systemID</a> 
+    <span title="(x$1: Any)java.lang.String">+</span> <span title="java.lang.String(&quot; at line &quot;)" class="string">&quot; at line &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#217541" title="Int">line</a> <span title="(x$1: Any)java.lang.String">+</span> <span title="java.lang.String(&quot;, column &quot;)" class="string">&quot;, column &quot;</span> + <a href="#217540" title="Int">column</a>);
+    
+    <a href="#217536" title="java.lang.String">locationString</a>
+  }
+
+  /**
+    * &lt;p&gt;
+    * This utility method reads a document at a specified URL
+    * and fires off calls to &lt;code&gt;characters()&lt;/code&gt;.
+    * It's used to include files with &lt;code&gt;parse=&quot;text&quot;&lt;/code&gt;
+    * &lt;/p&gt;
+    *
+    * @param  url          URL of the document that will be read
+    * @param  encoding     Encoding of the document; e.g. UTF-8, 
+    *                      ISO-8859-1, etc.
+    * @return void  
+    * @throws SAXException if the requested document cannot
+                           be downloaded from the specified URL
+                           or if the encoding is not recognized
+    */
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(url: String,encoding1: String)Unit" id="25289">includeTextDocument</a>(<a title="String" id="217173">url</a>: <span title="String">String</span>, <a title="String" id="217174">encoding1</a>: <span title="String">String</span>) {
+    <span class="keyword">var</span> <a title="String" id="217572">encoding</a> = <a href="#217174" title="String">encoding1</a>
+    <span title="Unit" class="keyword">if</span> (<a href="#217572" title="(x$1: AnyRef)Boolean">encoding</a> <span title="(x$1: Boolean)Boolean">==</span> <span title="Null(null)" class="keyword">null</span> || <a href="#217572" title="String">encoding</a>.<a title="()java.lang.String" id="7040">trim</a>().<span title="(x$1: Any)Boolean">equals</span>(<span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)) <a href="#217572" title="String">encoding</a> = <span title="java.lang.String(&quot;UTF-8&quot;)" class="string">&quot;UTF-8&quot;</span>; 
+    <span class="keyword">var</span> <a title="java.net.URL" id="217573">source</a>: <span title="java.net.URL">URL</span> = <span title="Null(null)" class="keyword">null</span>
+    <span class="keyword">try</span> {
+      <span class="keyword">val</span> <a title="java.net.URL" id="217588">base</a> = <a href="#25266" title="=&gt; java.util.Stack[java.net.URL]">bases</a>.<span title="()java.net.URL">peek</span>().<span title="[T0]T0">asInstanceOf</span><span title="java.net.URL">[</span><span title="java.net.URL">URL</span>]
+      <a href="#217573" title="java.net.URL">source</a> = <span title="(x$1: java.net.URL,x$2: java.lang.String)java.net.URL" class="keyword">new</span> <span title="java.net.URL">URL</span>(<a href="#217588" title="java.net.URL">base</a>, <a href="#217173" title="String">url</a>)
+    }
+    <span class="keyword">catch</span> { 
+      <span title="Nothing" class="keyword">case</span> <a title="java.net.MalformedURLException" id="217599">e</a>: <span title="java.net.MalformedURLException">MalformedURLException</span> =&gt;
+        <span class="keyword">val</span> <a title="scala.xml.include.UnavailableResourceException" id="217600">ex</a> = <span title="scala.xml.include.UnavailableResourceException" class="keyword">new</span> <a href="../UnavailableResourceException.scala.html#9883" title="scala.xml.include.UnavailableResourceException">UnavailableResourceException</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;Unresolvable URL &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#217173" title="String">url</a>
+                                                  + <a href="#25288" title="()String">getLocation</a>());
+      <a href="#217600" title="scala.xml.include.UnavailableResourceException">ex</a>.<a href="../XIncludeException.scala.html#83561" title="(nestedException: Throwable)Unit">setRootCause</a>(<a href="#217599" title="java.net.MalformedURLException">e</a>);
+      <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String,x$2: java.lang.Exception)org.xml.sax.SAXException" class="keyword">new</span> <span title="org.xml.sax.SAXException">SAXException</span>(<span title="(x$1: Any)java.lang.String" class="string">&quot;Unresolvable URL &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#217173" title="String">url</a> + <a href="#25288" title="()String">getLocation</a>(), <a href="#217600" title="scala.xml.include.UnavailableResourceException">ex</a>);
+    }
+    
+    <span class="keyword">try</span> {
+      <span class="keyword">val</span> <a title="java.net.URLConnection" id="217631">uc</a> = <a href="#217573" title="java.net.URL">source</a>.<a title="()java.net.URLConnection" id="83370">openConnection</a>()
+      <span class="keyword">val</span> <a title="java.io.BufferedInputStream" id="217632">in</a> = <span title="java.io.BufferedInputStream" class="keyword">new</span> <a title="java.io.BufferedInputStream" id="3877">BufferedInputStream</a>(<a href="#217631" title="java.net.URLConnection">uc</a>.<a title="()java.io.InputStream" id="217701">getInputStream</a>())
+      <span class="keyword">var</span> <a title="java.lang.String" id="217633">encodingFromHeader</a> = <a href="#217631" title="java.net.URLConnection">uc</a>.<a title="()java.lang.String" id="217677">getContentEncoding</a>()
+      <span class="keyword">var</span> <a title="java.lang.String" id="217634">contentType</a> = <a href="#217631" title="java.net.URLConnection">uc</a>.<a title="()java.lang.String" id="217676">getContentType</a>()
+      <span title="Unit" class="keyword">if</span> (<a href="#217633" title="(x$1: AnyRef)Boolean">encodingFromHeader</a> != <span title="Null(null)" class="keyword">null</span>)
+        <a href="#217572" title="String">encoding</a> = <a href="#217633" title="java.lang.String">encodingFromHeader</a>
+      <span class="keyword">else</span> {
+        // What if file does not have a MIME type but name ends in .xml????
+        // MIME types are case-insensitive
+        // Java may be picking this up from file URL
+        <span title="Unit" class="keyword">if</span> (<a href="#217634" title="(x$1: AnyRef)Boolean">contentType</a> != <span title="Null(null)" class="keyword">null</span>) {
+          <a href="#217634" title="java.lang.String">contentType</a> = <a href="#217634" title="java.lang.String">contentType</a>.<a title="()java.lang.String" id="7036">toLowerCase</a>();
+          <span title="Unit" class="keyword">if</span> (<a href="#217634" title="java.lang.String">contentType</a>.<span title="(x$1: Any)Boolean">equals</span><span title="(x$1: Boolean)Boolean">(</span><span title="java.lang.String(&quot;text/xml&quot;)" class="string">&quot;text/xml&quot;</span>) 
+              <span title="(x$1: Boolean)Boolean">||</span> <a href="#217634" title="java.lang.String">contentType</a>.<span title="(x$1: Any)Boolean">equals</span>(<span title="java.lang.String(&quot;application/xml&quot;)" class="string">&quot;application/xml&quot;</span>)   
+              <span title="(x$1: Boolean)Boolean">||</span> (<a href="#217634" title="java.lang.String">contentType</a>.<span title="(x$1: java.lang.String)Boolean">startsWith</span><span title="(x$1: Boolean)Boolean">(</span><span title="java.lang.String(&quot;text/&quot;)" class="string">&quot;text/&quot;</span>) &amp;&amp; <a href="#217634" title="java.lang.String">contentType</a>.<span title="(x$1: java.lang.String)Boolean">endsWith</span>(<span title="java.lang.String(&quot;+xml&quot;)" class="string">&quot;+xml&quot;</span>) ) 
+              || (<a href="#217634" title="java.lang.String">contentType</a>.<span title="(x$1: java.lang.String)Boolean">startsWith</span><span title="(x$1: Boolean)Boolean">(</span><span title="java.lang.String(&quot;application/&quot;)" class="string">&quot;application/&quot;</span>) &amp;&amp; <a href="#217634" title="java.lang.String">contentType</a>.<span title="(x$1: java.lang.String)Boolean">endsWith</span>(<span title="java.lang.String(&quot;+xml&quot;)" class="string">&quot;+xml&quot;</span>))) {
+                <a href="#217572" title="String">encoding</a> = <a href="EncodingHeuristics.scala.html#9901" title="object scala.xml.include.sax.EncodingHeuristics">EncodingHeuristics</a>.<a href="EncodingHeuristics.scala.html#217864" title="(in: java.io.InputStream)String">readEncodingFromStream</a>(<a href="#217632" title="java.io.BufferedInputStream">in</a>);
+              }
+        }
+      }
+      <span class="keyword">val</span> <a title="java.io.InputStreamReader" id="217635">reader</a> = <a title="(x$1: java.io.InputStream,x$2: java.lang.String)java.io.InputStreamReader" id="75066" class="keyword">new</a> <a title="java.io.InputStreamReader" id="3886">InputStreamReader</a>(<a href="#217632" title="java.io.BufferedInputStream">in</a>, <a href="#217572" title="String">encoding</a>)
+      <span class="keyword">val</span> <a title="Array[Char]" id="217636">c</a> = <span title="Array[Char]" class="keyword">new</span> <a href="../../../Array.scala.html#885" title="Array[Char]">Array</a>[Char](<span title="Int(1024)" class="int">1024</span>)
+      <span class="keyword">var</span> <a title="Int" id="217637">charsRead</a>: <span title="Int">Int</span> = <span title="Int(0)" class="int">0</span>  // bogus init value
+      <a href="#217902" title="Unit" class="keyword">do</a> {
+        <a href="#217637" title="Int">charsRead</a> = <a href="#217635" title="java.io.InputStreamReader">reader</a>.<a title="(x$1: Array[Char],x$2: Int,x$3: Int)Int" id="75077">read</a>(<a href="#217636" title="Array[Char]">c</a>, <span title="Int(0)" class="int">0</span>, <span title="Int(1024)" class="int">1024</span>);
+        <span title="Unit" class="keyword">if</span> (<a href="#217637" title="(x$1: Int)Boolean" id="2958">charsRead</a> &gt; <span title="Int(0)" class="int">0</span>) <a href="#9909" title="XIncludeFilter.this.type" class="keyword">this</a>.<a href="#25284" title="(ch: Array[Char],start: Int,length: Int)Unit">characters</a>(<a href="#217636" title="Array[Char]">c</a>, <span title="Int(0)" class="int">0</span>, <a href="#217637" title="Int">charsRead</a>);
+      } <span class="keyword">while</span> (<a href="#217637" title="(x$1: Int)Boolean">charsRead</a> != <span title="Int(-1)">-</span><span class="int">1</span>) ;
+    }
+    <span class="keyword">catch</span> {
+      <span title="Nothing" class="keyword">case</span> <a title="java.io.UnsupportedEncodingException" id="217932">e</a>: <a title="java.io.UnsupportedEncodingException" id="3853">UnsupportedEncodingException</a> =&gt;
+        <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String,x$2: java.lang.Exception)org.xml.sax.SAXException" class="keyword">new</span> <span title="org.xml.sax.SAXException">SAXException</span>(<span title="(x$1: Any)java.lang.String" class="string">&quot;Unsupported encoding: &quot;</span> 
+                               <span title="(x$1: Any)java.lang.String">+</span> <a href="#217572" title="String">encoding</a> + <a href="#25288" title="()String">getLocation</a>(), <a href="#217932" title="java.io.UnsupportedEncodingException">e</a>);
+      <span title="Nothing" class="keyword">case</span> <a title="java.io.IOException" id="217954">e</a>: <span title="java.io.IOException">IOException</span> =&gt;
+        <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String,x$2: java.lang.Exception)org.xml.sax.SAXException" class="keyword">new</span> <span title="org.xml.sax.SAXException">SAXException</span>(<span title="(x$1: Any)java.lang.String" class="string">&quot;Document not found: &quot;</span> 
+                               <span title="(x$1: Any)java.lang.String">+</span> <a href="#217573" title="java.net.URL">source</a>.<span title="()java.lang.String">toExternalForm</span>() + <a href="#25288" title="()String">getLocation</a>(), <a href="#217954" title="java.io.IOException">e</a>);
+    }
+    
+  }
+    
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Boolean" id="25291">atRoot</a> = <span title="Boolean(false)" class="keyword">false</span>
+  
+  /**
+    * &lt;p&gt;
+    * This utility method reads a document at a specified URL
+    * and fires off calls to various &lt;code&gt;ContentHandler&lt;/code&gt; methods.
+    * It's used to include files with &lt;code&gt;parse=&quot;xml&quot;&lt;/code&gt;
+    * &lt;/p&gt;
+    *
+    * @param  url          URL of the document that will be read
+    * @return void  
+    * @throws SAXException if the requested document cannot
+                           be downloaded from the specified URL.
+    */
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(url: String)Unit" id="25293">includeXMLDocument</a>(<a title="String" id="217181">url</a>: <span title="String">String</span>) {
+    <span class="keyword">var</span> <a title="java.net.URL" id="217975">source</a>: <span title="java.net.URL">URL</span> = <span title="Null(null)" class="keyword">null</span>
+    <span class="keyword">try</span> {
+      <span class="keyword">val</span> <a title="java.net.URL" id="217976">base</a> = <a href="#25266" title="=&gt; java.util.Stack[java.net.URL]">bases</a>.<span title="()java.net.URL">peek</span>().<span title="[T0]T0">asInstanceOf</span><span title="java.net.URL">[</span><span title="java.net.URL">URL</span>]
+      <a href="#217975" title="java.net.URL">source</a> = <span title="(x$1: java.net.URL,x$2: java.lang.String)java.net.URL" class="keyword">new</span> <span title="java.net.URL">URL</span>(<a href="#217976" title="java.net.URL">base</a>, <a href="#217181" title="String">url</a>)
+    }
+    <span class="keyword">catch</span> { 
+      <span title="Nothing" class="keyword">case</span> <a title="java.net.MalformedURLException" id="217987">e</a>:<span title="java.net.MalformedURLException">MalformedURLException</span> =&gt; 
+        <span class="keyword">val</span> <a title="scala.xml.include.UnavailableResourceException" id="217988">ex</a> = <span title="scala.xml.include.UnavailableResourceException" class="keyword">new</span> <a href="../UnavailableResourceException.scala.html#9883" title="scala.xml.include.UnavailableResourceException">UnavailableResourceException</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;Unresolvable URL &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#217181" title="String">url</a>
+                                                  + <a href="#25288" title="()String">getLocation</a>());
+        <a href="#217988" title="scala.xml.include.UnavailableResourceException">ex</a>.<a href="../XIncludeException.scala.html#83561" title="(nestedException: Throwable)Unit">setRootCause</a>(<a href="#217987" title="java.net.MalformedURLException">e</a>)
+        <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String,x$2: java.lang.Exception)org.xml.sax.SAXException" class="keyword">new</span> <span title="org.xml.sax.SAXException">SAXException</span>(<span title="(x$1: Any)java.lang.String" class="string">&quot;Unresolvable URL &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#217181" title="String">url</a> + <a href="#25288" title="()String">getLocation</a>(), <a href="#217988" title="scala.xml.include.UnavailableResourceException">ex</a>)
+    }
+
+    <span class="keyword">try</span> {
+      // make this more robust
+      <span class="keyword">var</span> <a title="org.xml.sax.XMLReader" id="218019">parser</a>: <a title="org.xml.sax.XMLReader" id="23919">XMLReader</a> = <span title="Null(null)" class="keyword">null</span>
+      <span class="keyword">try</span> {
+        <a href="#218019" title="org.xml.sax.XMLReader">parser</a> = <span title="object org.xml.sax.helpers.XMLReaderFactory">XMLReaderFactory</span>.<a title="()org.xml.sax.XMLReader" id="24005">createXMLReader</a>()       
+      } <span class="keyword">catch</span> {
+        <span title="Unit" class="keyword">case</span> <a title="org.xml.sax.SAXException" id="218028">e</a>:<span title="org.xml.sax.SAXException">SAXException</span> =&gt;
+          <span class="keyword">try</span> {
+            <a href="#218019" title="org.xml.sax.XMLReader">parser</a> = <span title="object org.xml.sax.helpers.XMLReaderFactory">XMLReaderFactory</span>.<a title="(x$1: java.lang.String)org.xml.sax.XMLReader" id="24006">createXMLReader</a>(
+              <span title="java.lang.String(&quot;org.apache.xerces.parsers.SAXParser&quot;)" class="string">&quot;org.apache.xerces.parsers.SAXParser&quot;</span>
+            );
+          } <span class="keyword">catch</span> {
+            <span title="Unit" class="keyword">case</span> <a title="org.xml.sax.SAXException" id="218033">e2</a>: <span title="org.xml.sax.SAXException">SAXException</span> =&gt;
+              <a title="object java.lang.System" id="1628">System</a>.<a title="java.io.PrintStream" id="24042">err</a>.<a title="(x$1: java.lang.String)Unit" id="24283">println</a>(<span title="java.lang.String(&quot;Could not find an XML parser&quot;)" class="string">&quot;Could not find an XML parser&quot;</span>)
+          }
+      }
+      <span title="Unit" class="keyword">if</span>(<a href="#218019" title="(x$1: AnyRef)Boolean">parser</a> != <span title="Null(null)" class="keyword">null</span>) {
+        <a href="#218019" title="org.xml.sax.XMLReader">parser</a>.<a title="(x$1: org.xml.sax.ContentHandler)Unit" id="23995">setContentHandler</a>(<a href="#9909" title="scala.xml.include.sax.XIncludeFilter" class="keyword">this</a>)
+        <span class="keyword">val</span> <a title="org.xml.sax.EntityResolver" id="218047">resolver</a> = <a href="#9909" title="XIncludeFilter.this.type" class="keyword">this</a>.<a title="()org.xml.sax.EntityResolver" id="25200">getEntityResolver</a>()
+        <span title="Unit" class="keyword">if</span> (<a href="#218047" title="(x$1: AnyRef)Boolean">resolver</a> != <span title="Null(null)" class="keyword">null</span>) <a href="#218019" title="org.xml.sax.XMLReader">parser</a>.<a title="(x$1: org.xml.sax.EntityResolver)Unit" id="23989">setEntityResolver</a>(<a href="#218047" title="org.xml.sax.EntityResolver">resolver</a>);
+        // save old level and base
+        <span class="keyword">val</span> <a title="Int" id="218048">previousLevel</a> = <a href="#25272" title="=&gt; Int">level</a>
+        <a href="#9909" title="XIncludeFilter.this.type" class="keyword">this</a>.<a href="#25272" title="(x$1: Int)Unit">level</a> = <span title="Int(0)" class="int">0</span>
+        <span title="Unit" class="keyword">if</span> (<a href="#25266" title="=&gt; java.util.Stack[java.net.URL]">bases</a>.<a title="(x$1: Any)Boolean" id="152418">contains</a>(<a href="#217975" title="java.net.URL">source</a>)) {
+          <span class="keyword">val</span> <a title="scala.xml.include.CircularIncludeException" id="218065">e</a> = <span title="scala.xml.include.CircularIncludeException" class="keyword">new</span> <a href="../CircularIncludeException.scala.html#9880" title="scala.xml.include.CircularIncludeException">CircularIncludeException</a>(
+            <span title="(x$1: Any)java.lang.String" class="string">&quot;Circular XInclude Reference to &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#217975" title="java.net.URL">source</a> + <a href="#25288" title="()String">getLocation</a>()
+          );
+          <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String,x$2: java.lang.Exception)org.xml.sax.SAXException" class="keyword">new</span> <span title="org.xml.sax.SAXException">SAXException</span>(<span title="java.lang.String(&quot;Circular XInclude Reference&quot;)" class="string">&quot;Circular XInclude Reference&quot;</span>, <a href="#218065" title="scala.xml.include.CircularIncludeException">e</a>)
+        }
+        <a href="#25266" title="=&gt; java.util.Stack[java.net.URL]">bases</a>.<span title="(x$1: java.net.URL)java.net.URL">push</span>(<a href="#217975" title="java.net.URL">source</a>)
+        <a href="#25291" title="(x$1: Boolean)Unit">atRoot</a> = <span title="Boolean(true)" class="keyword">true</span>
+        <a href="#218019" title="org.xml.sax.XMLReader">parser</a>.<a title="(x$1: java.lang.String)Unit" id="24003">parse</a>(<a href="#217975" title="java.net.URL">source</a>.<span title="()java.lang.String">toExternalForm</span>())
+        // restore old level and base
+        <a href="#9909" title="XIncludeFilter.this.type" class="keyword">this</a>.<a href="#25272" title="(x$1: Int)Unit">level</a> = <a href="#218048" title="Int">previousLevel</a>
+        <a href="#25266" title="=&gt; java.util.Stack[java.net.URL]">bases</a>.<span title="()java.net.URL">pop</span><span title="Unit">(</span>)
+      }
+    }
+    <span class="keyword">catch</span> { 
+      <span title="Nothing" class="keyword">case</span> <a title="java.io.IOException" id="218105">e</a>:<span title="java.io.IOException">IOException</span> =&gt;
+        <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String,x$2: java.lang.Exception)org.xml.sax.SAXException" class="keyword">new</span> <span title="org.xml.sax.SAXException">SAXException</span>(<span title="(x$1: Any)java.lang.String" class="string">&quot;Document not found: &quot;</span> 
+                               <span title="(x$1: Any)java.lang.String">+</span> <a href="#217975" title="java.net.URL">source</a>.<span title="()java.lang.String">toExternalForm</span>() + <a href="#25288" title="()String">getLocation</a>(), <a href="#218105" title="java.io.IOException">e</a>)
+    }
+    
+  }
+}
+
+        </pre>
+    </body>
+</html>

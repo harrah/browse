@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/concurrent/MailBox.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: MailBox.scala 16893 2009-01-13 13:09:22Z cunei $
+
+
+<span class="keyword">package</span> scala.concurrent
+
+/** This class ...
+ *
+ *  @author  Martin Odersky
+ *  @version 1.0, 12/03/2003
+ */
+//class MailBox with Monitor with LinkedListQueueCreator {
+<span class="keyword">class</span> <a title="class MailBox extends java.lang.Object with scala.concurrent.ListQueueCreator with ScalaObject" id="8305">MailBox</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <span title="java.lang.Object">AnyRef</span> <span class="keyword">with</span> <a href="#8350" title="scala.concurrent.ListQueueCreator">ListQueueCreator</a> {
+
+  <span class="keyword">type</span> <a title="AnyRef" id="197958">Message</a> = <span title="AnyRef">AnyRef</span>
+
+  <span class="keyword">private</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class PreReceiver extends java.lang.Object with ScalaObject" id="197959">PreReceiver</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+    <span class="keyword">var</span> <a title="MailBox.this.Message" id="197995">msg</a>: <span title="MailBox.this.Message">Message</span> = <span title="Null(null)" class="keyword">null</span>
+    <span class="keyword">def</span> <a title="(msg: MailBox.this.Message)Boolean" id="197997">isDefinedAt</a>(<a title="MailBox.this.Message" id="198006">msg</a>: <span title="MailBox.this.Message">Message</span>): <a title="Boolean" id="1949">Boolean</a>
+  }
+
+  <span class="keyword">private</span> <span class="keyword">class</span> <a title="class Receiver[A] extends MailBox.this.PreReceiver with ScalaObject" id="197960">Receiver</a>[<a title="&gt;: Nothing &lt;: Any" id="197961">A</a>]<a href="../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="PartialFunction[MailBox.this.Message,A]" id="198016">receiver</a>: <a href="../PartialFunction.scala.html#1083" title="PartialFunction[MailBox.this.Message,A]">PartialFunction</a>[Message, A]) <span class="keyword">extends</span> <a href="#197959" title="MailBox.this.PreReceiver">PreReceiver</a> {
+
+    <span class="keyword">def</span> <a title="(msg: MailBox.this.Message)Boolean" id="198011">isDefinedAt</a>(<a title="MailBox.this.Message" id="198019">msg</a>: <span title="MailBox.this.Message">Message</span>) = <a href="#198016" title="PartialFunction[MailBox.this.Message,A]">receiver</a>.<a href="../PartialFunction.scala.html#17071" title="(x: MailBox.this.Message)Boolean">isDefinedAt</a>(<a href="#198019" title="MailBox.this.Message">msg</a>)
+
+    <span class="keyword">def</span> <a title="()A" id="198012">receive</a>(): <a href="#197961" title="A">A</a> = <a href="#197960" title="(x$1: A)A">synchronized</a> {
+      <span title="Unit" class="keyword">while</span> (<a href="#197995" title="(x$1: AnyRef)Boolean">msg</a> eq <span title="Null(null)" class="keyword">null</span>) <a href="#197960" title="()Unit" id="6525">wait</a><a href="#198028" title="()Unit">(</a>)
+      <a href="../Function1.scala.html#17119" title="(v1: MailBox.this.Message)A">receiver</a>(<a href="#197995" title="=&gt; MailBox.this.Message">msg</a>)
+    }
+
+    <span class="keyword">def</span> <a title="(msec: Long)A" id="198013">receiveWithin</a>(<a title="Long" id="198051">msec</a>: <span title="Long">Long</span>): <a href="#197961" title="A">A</a> = <a href="#197960" title="(x$1: A)A">synchronized</a> {
+      <span title="Unit" class="keyword">if</span> (<a href="#197995" title="(x$1: AnyRef)Boolean">msg</a> eq <span title="Null(null)" class="keyword">null</span>) <a href="#197960" title="(x$1: Long)Unit" id="6520">wait</a>(<a href="#198051" title="Long">msec</a>)
+      <a href="../Function1.scala.html#17119" title="(v1: MailBox.this.Message)A">receiver</a>(<span title="MailBox.this.Message" class="keyword">if</span> (<a href="#197995" title="(x$1: AnyRef)Boolean">msg</a> ne <span title="Null(null)" class="keyword">null</span>) <a href="#197995" title="=&gt; MailBox.this.Message">msg</a> <span class="keyword">else</span> <a href="TIMEOUT.scala.html#8237" title="object scala.concurrent.TIMEOUT">TIMEOUT</a>)
+    }
+  }
+
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="scala.concurrent.QueueModule[MailBox.this.Message]" id="197962">messageQueue</a> = <a href="#197984" title="[A]scala.concurrent.QueueModule[A]">queueCreate</a><span title="scala.concurrent.QueueModule[MailBox.this.Message]">[</span><span title="MailBox.this.Message">Message</span>]
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="scala.concurrent.QueueModule[MailBox.this.PreReceiver]" id="197964">receiverQueue</a> = <a href="#197984" title="[A]scala.concurrent.QueueModule[A]">queueCreate</a><span title="scala.concurrent.QueueModule[MailBox.this.PreReceiver]">[</span><a href="#197959" title="MailBox.this.PreReceiver">PreReceiver</a>]
+
+  /** Unconsumed messages. */
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="MailBox.this.messageQueue.T" id="197967">sent</a> = <a href="#197962" title="=&gt; scala.concurrent.QueueModule[MailBox.this.Message]">messageQueue</a>.<a href="#197990" title="=&gt; MailBox.this.messageQueue.T">make</a>
+
+  /** Pending receivers. */
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="MailBox.this.receiverQueue.T" id="197970">receivers</a> = <a href="#197964" title="=&gt; scala.concurrent.QueueModule[MailBox.this.PreReceiver]">receiverQueue</a>.<a href="#197990" title="=&gt; MailBox.this.receiverQueue.T">make</a>
+
+  /**
+  * Check whether the receiver can be applied to an unconsumed message.
+  * If yes, the message is extracted and associated with the receiver.
+  * Otherwise the receiver is appended to the list of pending receivers.
+  */
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="[A](receiver: MailBox.this.Receiver[A])Unit" id="197972">scanSentMsgs</a>[<a title="&gt;: Nothing &lt;: Any" id="197974">A</a>](<a title="MailBox.this.Receiver[A]" id="198070">receiver</a>: <a href="#197960" title="MailBox.this.Receiver[A]">Receiver</a>[A]): <span title="Unit">Unit</span> = <a href="#8305" title="(x$1: Unit)Unit">synchronized</a> {
+    <a href="#197962" title="=&gt; scala.concurrent.QueueModule[MailBox.this.Message]">messageQueue</a>.<a href="#197992" title="(l: MailBox.this.messageQueue.T,p: (MailBox.this.Message) =&gt; Boolean)Option[(MailBox.this.Message, MailBox.this.messageQueue.T)]">extractFirst</a>(<a href="#197967" title="=&gt; MailBox.this.messageQueue.T">sent</a>, <a title="MailBox.this.Message" id="198080">msg</a> =&gt; <a href="#198070" title="MailBox.this.Receiver[A]">receiver</a>.<a href="#198011" title="(msg: MailBox.this.Message)Boolean">isDefinedAt</a>(<a href="#198080" title="MailBox.this.Message">msg</a>)) <span title="Unit" class="keyword">match</span> {
+      <span title="Unit" class="keyword">case</span> <a href="../Option.scala.html#463" title="object None">None</a> =&gt;
+        <a href="#197970" title="(x$1: MailBox.this.receiverQueue.T)Unit">receivers</a> = <a href="#197964" title="=&gt; scala.concurrent.QueueModule[MailBox.this.PreReceiver]">receiverQueue</a>.<a href="#197991" title="(l: MailBox.this.receiverQueue.T,x: MailBox.this.PreReceiver)MailBox.this.receiverQueue.T">append</a>(<a href="#197970" title="=&gt; MailBox.this.receiverQueue.T">receivers</a>, <a href="#198070" title="MailBox.this.Receiver[A]">receiver</a>)
+      <span title="Unit" class="keyword">case</span> Some((<a title="MailBox.this.Message" id="198096">msg</a>, <a title="MailBox.this.messageQueue.T" id="198097">withoutMsg</a>)) =&gt;
+        <a href="#197967" title="(x$1: MailBox.this.messageQueue.T)Unit">sent</a> = <a href="#198097" title="MailBox.this.messageQueue.T">withoutMsg</a>
+        <a href="#198070" title="MailBox.this.Receiver[A]">receiver</a>.<a href="#197995" title="(x$1: MailBox.this.Message)Unit">msg</a> = <a href="#198096" title="MailBox.this.Message">msg</a>
+    }
+  }
+
+  /**
+  * First check whether a pending receiver is applicable to the sent
+  * message. If yes, the receiver is notified. Otherwise the message
+  * is appended to the linked list of sent messages.  
+  */
+  <span class="keyword">def</span> <a title="(msg: MailBox.this.Message)Unit" id="197975">send</a>(<a title="MailBox.this.Message" id="198109">msg</a>: <span title="MailBox.this.Message">Message</span>): <span title="Unit">Unit</span> = <a href="#8305" title="(x$1: Unit)Unit">synchronized</a> {
+    <a href="#197964" title="=&gt; scala.concurrent.QueueModule[MailBox.this.PreReceiver]">receiverQueue</a>.<a href="#197992" title="(l: MailBox.this.receiverQueue.T,p: (MailBox.this.PreReceiver) =&gt; Boolean)Option[(MailBox.this.PreReceiver, MailBox.this.receiverQueue.T)]">extractFirst</a>(<a href="#197970" title="=&gt; MailBox.this.receiverQueue.T">receivers</a>, <a title="MailBox.this.PreReceiver" id="198116">r</a> =&gt; <a href="#198116" title="MailBox.this.PreReceiver">r</a>.<a href="#197997" title="(msg: MailBox.this.Message)Boolean">isDefinedAt</a>(<a href="#198109" title="MailBox.this.Message">msg</a>)) <span title="Unit" class="keyword">match</span> {
+      <span title="Unit" class="keyword">case</span> <a href="../Option.scala.html#463" title="object None">None</a> =&gt;
+        <a href="#197967" title="(x$1: MailBox.this.messageQueue.T)Unit">sent</a> = <a href="#197962" title="=&gt; scala.concurrent.QueueModule[MailBox.this.Message]">messageQueue</a>.<a href="#197991" title="(l: MailBox.this.messageQueue.T,x: MailBox.this.Message)MailBox.this.messageQueue.T">append</a>(<a href="#197967" title="=&gt; MailBox.this.messageQueue.T">sent</a>, <a href="#198109" title="MailBox.this.Message">msg</a>)
+      <span title="Unit" class="keyword">case</span> Some((<a title="MailBox.this.PreReceiver" id="198130">receiver</a>, <a title="MailBox.this.receiverQueue.T" id="198131">withoutReceiver</a>)) =&gt;
+        <a href="#197970" title="(x$1: MailBox.this.receiverQueue.T)Unit">receivers</a> = <a href="#198131" title="MailBox.this.receiverQueue.T">withoutReceiver</a>
+        <a href="#198130" title="MailBox.this.PreReceiver">receiver</a>.<a href="#197995" title="(x$1: MailBox.this.Message)Unit">msg</a> = <a href="#198109" title="MailBox.this.Message">msg</a>
+        <a href="#198130" title="(x$1: Unit)Unit">receiver</a> synchronized { <a href="#198130" title="MailBox.this.PreReceiver">receiver</a>.<a title="()Unit" id="6518">notify</a>() }
+    }
+  }
+
+  /**
+  * Block until there is a message in the mailbox for which the processor
+  * &lt;code&gt;f&lt;/code&gt; is defined.
+  */
+  <span class="keyword">def</span> <a title="[A](f: PartialFunction[MailBox.this.Message,A])A" id="197976">receive</a>[<a title="&gt;: Nothing &lt;: Any" id="197978">A</a>](<a title="PartialFunction[MailBox.this.Message,A]" id="198150">f</a>: <a href="../PartialFunction.scala.html#1083" title="PartialFunction[MailBox.this.Message,A]">PartialFunction</a>[Message, A]): <a href="#197978" title="A">A</a> = {
+    <span class="keyword">val</span> <a title="MailBox.this.Receiver[A]" id="198153">r</a> = <span title="MailBox.this.Receiver[A]" class="keyword">new</span> <a href="#197960" title="MailBox.this.Receiver[A]">Receiver</a>(<a href="#198150" title="PartialFunction[MailBox.this.Message,A]">f</a>)
+    <a href="#197972" title="(receiver: MailBox.this.Receiver[A])Unit">scanSentMsgs</a>(<a href="#198153" title="MailBox.this.Receiver[A]">r</a>)
+    <a href="#198153" title="MailBox.this.Receiver[A]">r</a>.<a href="#198012" title="()A">receive</a>()
+  }
+
+  /**
+  * Block until there is a message in the mailbox for which the processor
+  * &lt;code&gt;f&lt;/code&gt; is defined or the timeout is over.
+  */
+  <span class="keyword">def</span> <a title="[A](msec: Long)(f: PartialFunction[MailBox.this.Message,A])A" id="197979">receiveWithin</a>[<a title="&gt;: Nothing &lt;: Any" id="197981">A</a>](<a title="Long" id="198166">msec</a>: <span title="Long">Long</span>)(<a title="PartialFunction[MailBox.this.Message,A]" id="198167">f</a>: <a href="../PartialFunction.scala.html#1083" title="PartialFunction[MailBox.this.Message,A]">PartialFunction</a>[Message, A]): <a href="#197981" title="A">A</a> = {
+    <span class="keyword">val</span> <a title="MailBox.this.Receiver[A]" id="198170">r</a> = <span title="MailBox.this.Receiver[A]" class="keyword">new</span> <a href="#197960" title="MailBox.this.Receiver[A]">Receiver</a>(<a href="#198167" title="PartialFunction[MailBox.this.Message,A]">f</a>)
+    <a href="#197972" title="(receiver: MailBox.this.Receiver[A])Unit">scanSentMsgs</a>(<a href="#198170" title="MailBox.this.Receiver[A]">r</a>)
+    <a href="#198170" title="MailBox.this.Receiver[A]">r</a>.<a href="#198013" title="(msec: Long)A">receiveWithin</a>(<a href="#198166" title="Long">msec</a>)
+  }
+
+}
+
+/////////////////////////////////////////////////////////////////
+
+/**
+* Module for dealing with queues.
+*/
+<span class="keyword">trait</span> <a title="trait QueueModule[A] extends java.lang.Object" id="8251">QueueModule</a>[<a title="&gt;: Nothing &lt;: Any" id="15529">A</a>] <span title="java.lang.Object">{</span>
+  /** Type of queues. */
+  <span class="keyword">type</span> <a title="&gt;: Nothing &lt;: Any" id="197989">T</a>
+  /** Create an empty queue. */
+  <span class="keyword">def</span> <a title="=&gt; QueueModule.this.T" id="197990">make</a>: <a href="#197989" title="QueueModule.this.T">T</a>
+  /** Append an element to a queue. */
+  <span class="keyword">def</span> <a title="(l: QueueModule.this.T,x: A)QueueModule.this.T" id="197991">append</a>(<a title="QueueModule.this.T" id="198085">l</a>: <a href="#197989" title="QueueModule.this.T">T</a>, <a title="A" id="198086">x</a>: <a href="#15529" title="A">A</a>): <a href="#197989" title="QueueModule.this.T">T</a>
+  /** Extract an element satisfying a predicate from a queue. */
+  <span class="keyword">def</span> <a title="(l: QueueModule.this.T,p: (A) =&gt; Boolean)Option[(A, QueueModule.this.T)]" id="197992">extractFirst</a>(<a title="QueueModule.this.T" id="198075">l</a>: <a href="#197989" title="QueueModule.this.T">T</a>, <a title="(A) =&gt; Boolean" id="198076">p</a>: A =&gt; Boolean): <a href="../Option.scala.html#777" title="Option[(A, QueueModule.this.T)]">Option</a>[(A, T)]
+}
+
+/** Inefficient but simple queue module creator. */
+<span class="keyword">trait</span> <a title="trait ListQueueCreator extends java.lang.Object with ScalaObject" id="8350">ListQueueCreator</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  <span class="keyword">def</span> <a title="[A]scala.concurrent.QueueModule[A]" id="197984">queueCreate</a>[<a title="&gt;: Nothing &lt;: Any" id="197986">A</a>]: <a href="#8251" title="scala.concurrent.QueueModule[A]">QueueModule</a>[A] = <a href="#198186" title="java.lang.Object with scala.concurrent.QueueModule[A]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with scala.concurrent.QueueModule[A]" id="198186">QueueModule</a>[A] {
+    <span class="keyword">type</span> <a title="List[A]" id="198188">T</a> = <a href="../collection/immutable/List.scala.html#8973" title="List[A]">List</a>[A]
+    <span class="keyword">def</span> <a title="=&gt; this.T" id="198189">make</a>: <a href="../collection/immutable/List.scala.html#8973" title="this.T">T</a> = <a href="../collection/immutable/List.scala.html#9259" title="object Nil">Nil</a>
+    <span class="keyword">def</span> <a title="(l: this.T,x: A)this.T" id="198190">append</a>(<a title="this.T" id="198198">l</a>: <a href="../collection/immutable/List.scala.html#8973" title="this.T">T</a>, <a title="A" id="198199">x</a>: <a href="#197986" title="A">A</a>): <a href="../collection/immutable/List.scala.html#8973" title="this.T">T</a> = <a href="#198198" title="this.T">l</a> <a href="#198203" title="this.T">:::</a> <a href="#198199" title="A">x</a> <a href="../collection/immutable/List.scala.html#17633" title="(prefix: List[A])List[A]">::</a> <a href="../collection/immutable/List.scala.html#17630" title="(x: A)List[A]">Nil</a>
+    <span class="keyword">def</span> <a title="(l: this.T,p: (A) =&gt; Boolean)Option[(A, this.T)]" id="198191">extractFirst</a>(<a title="this.T" id="198224">l</a>: <a href="../collection/immutable/List.scala.html#8973" title="this.T">T</a>, <a title="(A) =&gt; Boolean" id="198225">p</a>: A =&gt; Boolean): <a href="../Option.scala.html#777" title="Option[(A, this.T)]">Option</a>[(A, T)] =
+      <a href="#198224" title="this.T">l</a> <span title="Option[(A, this.T)]" class="keyword">match</span> {
+        <span title="None.type" class="keyword">case</span> <a href="../collection/immutable/List.scala.html#9259" title="object Nil">Nil</a> =&gt; <a href="../Option.scala.html#463" title="object None">None</a>
+        <span title="Option[(A, this.T)]" class="keyword">case</span> <a title="A" id="198233">head</a> :: <a title="List[A]" id="198234">tail</a> =&gt;
+          <span title="Option[(A, this.T)]" class="keyword">if</span> (<a href="../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#198233" title="A">head</a>))
+            <a href="../Option.scala.html#19800" title="(x: (A, List[A]))Some[(A, List[A])]">Some</a>(<a href="../Tuple2.scala.html#20670" title="(_1: A,_2: List[A])(A, List[A])">(</a><a href="#198233" title="A">head</a>, <a href="#198234" title="List[A]">tail</a>))
+          <span class="keyword">else</span>
+            <a href="#198191" title="(l: this.T,p: (A) =&gt; Boolean)Option[(A, this.T)]">extractFirst</a>(<a href="#198234" title="List[A]">tail</a>, <a href="#198225" title="(A) =&gt; Boolean">p</a>) <span title="Option[(A, this.T)]" class="keyword">match</span> {
+              <span title="None.type" class="keyword">case</span> <a href="../Option.scala.html#463" title="object None">None</a> =&gt; <a href="../Option.scala.html#463" title="object None">None</a>
+              <span title="Some[(A, List[A])]" class="keyword">case</span> Some((<a title="A" id="198260">x</a>, <a title="this.T" id="198261">without_x</a>)) =&gt; <a href="../Option.scala.html#19800" title="(x: (A, List[A]))Some[(A, List[A])]">Some</a>(<a href="../Tuple2.scala.html#20670" title="(_1: A,_2: List[A])(A, List[A])">(</a><a href="#198260" title="A">x</a>, <a href="#198233" title="A">head</a> <a href="#198272" title="A">::</a> <a href="../collection/immutable/List.scala.html#17630" title="(x: A)List[A]">without_x</a>))
+            }
+      }
+  }
+}
+
+/** Efficient queue module creator based on linked lists. */
+<span class="keyword">trait</span> <a title="trait LinkedListQueueCreator extends java.lang.Object with ScalaObject" id="8188">LinkedListQueueCreator</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  <span class="keyword">import</span> scala.collection.mutable.LinkedList
+  <span class="keyword">def</span> <a title="[A &gt;: Null &lt;: AnyRef]scala.concurrent.QueueModule[A]" id="198291">queueCreate</a>[<a title="&gt;: Null &lt;: AnyRef" id="198293">A</a> &gt;: Null &lt;: AnyRef]: <a href="#8251" title="scala.concurrent.QueueModule[A]">QueueModule</a>[A] = <a href="#198298" title="java.lang.Object with scala.concurrent.QueueModule[A]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with scala.concurrent.QueueModule[A]" id="198298">QueueModule</a>[A] {
+    <span class="keyword">type</span> <a title="(scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A])" id="198300">T</a> = <a href="../Tuple2.scala.html#1152" title="(scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A])">(</a>LinkedList[A], LinkedList[A]) // fst = the list, snd = last elem
+    <span class="keyword">def</span> <a title="=&gt; (scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A])" id="198301">make</a>: <a href="../Tuple2.scala.html#1152" title="(scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A])">T</a> = {
+      <span class="keyword">val</span> <a title="scala.collection.mutable.LinkedList[A]" id="198310">l</a> = <span title="scala.collection.mutable.LinkedList[A]" class="keyword">new</span> <a href="../collection/mutable/LinkedList.scala.html#7839" title="scala.collection.mutable.LinkedList[A]">LinkedList</a>[A](<span title="Null(null)" class="keyword">null</span>, <span title="Null(null)" class="keyword">null</span>)
+      <a href="../Tuple2.scala.html#20670" title="(_1: scala.collection.mutable.LinkedList[A],_2: scala.collection.mutable.LinkedList[A])(scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A])">(</a><a href="#198310" title="scala.collection.mutable.LinkedList[A]">l</a>, <a href="#198310" title="scala.collection.mutable.LinkedList[A]">l</a>)
+    }
+    <span class="keyword">def</span> <a title="(l: (scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A]),x: A)(scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A])" id="198302">append</a>(<a title="(scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A])" id="198327">l</a>: <a href="../Tuple2.scala.html#1152" title="(scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A])">T</a>, <a title="A" id="198328">x</a>: <a href="#198293" title="A">A</a>): <a href="../Tuple2.scala.html#1152" title="(scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A])">T</a> = {
+      <span class="keyword">val</span> <a title="scala.collection.mutable.LinkedList[A]" id="198332">atTail</a> = <span title="scala.collection.mutable.LinkedList[A]" class="keyword">new</span> <a href="../collection/mutable/LinkedList.scala.html#7839" title="scala.collection.mutable.LinkedList[A]">LinkedList</a>(<a href="#198328" title="A">x</a>, <span title="Null(null)" class="keyword">null</span>)
+      <a href="#198327" title="(scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A])">l</a>.<a href="../collection/generic/LinkedListTemplate.scala.html#19650" title="(that: scala.collection.mutable.LinkedList[A])Unit">_2</a> append <a href="#198332" title="scala.collection.mutable.LinkedList[A]">atTail</a>;
+      <a href="../Tuple2.scala.html#20670" title="(_1: scala.collection.mutable.LinkedList[A],_2: scala.collection.mutable.LinkedList[A])(scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A])">(</a><a href="#198327" title="(scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A])">l</a>.<a href="../Tuple2.scala.html#20472" title="=&gt; scala.collection.mutable.LinkedList[A]">_1</a>, <a href="#198332" title="scala.collection.mutable.LinkedList[A]">atTail</a>)
+    }
+    <span class="keyword">def</span> <a title="(l: (scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A]),p: (A) =&gt; Boolean)Option[(A, (scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A]))]" id="198303">extractFirst</a>(<a title="(scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A])" id="198355">l</a>: <a href="../Tuple2.scala.html#1152" title="(scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A])">T</a>, <a title="(A) =&gt; Boolean" id="198356">p</a>: A =&gt; Boolean): <a href="../Option.scala.html#777" title="Option[(A, (scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A]))]">Option</a>[(A, T)] = {
+      <span class="keyword">var</span> <a title="scala.collection.mutable.LinkedList[A]" id="198360">xs</a> = <a href="#198355" title="(scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A])">l</a>.<a href="../Tuple2.scala.html#20472" title="=&gt; scala.collection.mutable.LinkedList[A]">_1</a>
+      <span class="keyword">var</span> <a title="scala.collection.mutable.LinkedList[A]" id="198361">xs1</a> = <a href="#198360" title="scala.collection.mutable.LinkedList[A]">xs</a>.<a href="../collection/generic/LinkedListTemplate.scala.html#19643" title="=&gt; scala.collection.mutable.LinkedList[A]">next</a>
+      <span title="Unit" class="keyword">while</span> (<a title="(x$1: Boolean)Boolean" id="2210">(</a><a href="#198361" title="(x$1: AnyRef)Boolean">xs1</a> ne <span title="Null(null)" class="keyword">null</span>) &amp;&amp; <a title="=&gt; Boolean" id="2203">!</a><a href="../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#198361" title="scala.collection.mutable.LinkedList[A]">xs1</a>.<a href="../collection/generic/LinkedListTemplate.scala.html#19640" title="=&gt; A">elem</a>)) <a href="#198362" title="()Unit">{</a>
+        <a href="#198360" title="scala.collection.mutable.LinkedList[A]">xs</a> = <a href="#198361" title="scala.collection.mutable.LinkedList[A]">xs1</a>
+        <a href="#198361" title="scala.collection.mutable.LinkedList[A]">xs1</a> = <a href="#198361" title="scala.collection.mutable.LinkedList[A]">xs1</a>.<a href="../collection/generic/LinkedListTemplate.scala.html#19643" title="=&gt; scala.collection.mutable.LinkedList[A]">next</a>
+      }
+      <span title="Option[(A, (scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A]))]" class="keyword">if</span> (<a href="#198361" title="(x$1: AnyRef)Boolean">xs1</a> ne <span title="Null(null)" class="keyword">null</span>) {
+        <a href="#198360" title="scala.collection.mutable.LinkedList[A]">xs</a>.<a href="../collection/generic/LinkedListTemplate.scala.html#19644" title="(x$1: scala.collection.mutable.LinkedList[A])Unit">next</a> = <a href="#198361" title="scala.collection.mutable.LinkedList[A]">xs1</a>.<a href="../collection/generic/LinkedListTemplate.scala.html#19643" title="=&gt; scala.collection.mutable.LinkedList[A]">next</a>
+        <span title="Option[(A, (scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A]))]" class="keyword">if</span> (<a href="#198360" title="scala.collection.mutable.LinkedList[A]">xs</a>.<a href="../collection/generic/LinkedListTemplate.scala.html#19643" title="(x$1: AnyRef)Boolean">next</a> eq <span title="Null(null)" class="keyword">null</span>)
+          <a href="../Option.scala.html#19800" title="(x: (A, (scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A])))Some[(A, (scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A]))]">Some</a>(<a href="../Tuple2.scala.html#20670" title="(_1: A,_2: (scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A]))(A, (scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A]))">(</a><a href="#198361" title="scala.collection.mutable.LinkedList[A]">xs1</a>.<a href="../collection/generic/LinkedListTemplate.scala.html#19640" title="=&gt; A">elem</a>, <a href="../Tuple2.scala.html#20670" title="(_1: scala.collection.mutable.LinkedList[A],_2: scala.collection.mutable.LinkedList[A])(scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A])">(</a><a href="#198355" title="(scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A])">l</a>.<a href="../Tuple2.scala.html#20472" title="=&gt; scala.collection.mutable.LinkedList[A]">_1</a>, <a href="#198360" title="scala.collection.mutable.LinkedList[A]">xs</a>)))
+        <span class="keyword">else</span>
+          <a href="../Option.scala.html#19800" title="(x: (A, (scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A])))Some[(A, (scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A]))]">Some</a>(<a href="../Tuple2.scala.html#20670" title="(_1: A,_2: (scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A]))(A, (scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A]))">(</a><a href="#198361" title="scala.collection.mutable.LinkedList[A]">xs1</a>.<a href="../collection/generic/LinkedListTemplate.scala.html#19640" title="=&gt; A">elem</a>, <a href="#198355" title="(scala.collection.mutable.LinkedList[A], scala.collection.mutable.LinkedList[A])">l</a>))
+      }
+      <span class="keyword">else</span>
+        <a href="../Option.scala.html#463" title="object None">None</a>
+    }
+  }
+}
+
+
+        </pre>
+    </body>
+</html>
