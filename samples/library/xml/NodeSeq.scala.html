@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>xml/NodeSeq.scala</title>
+        <script type="text/javascript" src="../jquery-all.js"></script>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: NodeSeq.scala 17988 2009-06-03 12:31:59Z extempore $
+
+
+<span class="keyword">package</span> scala.xml
+
+<span class="keyword">import</span> collection.immutable
+<span class="keyword">import</span> collection.generic._
+<span class="keyword">import</span> collection.mutable.ListBuffer
+
+/** This object ...
+ *
+ *  @author  Burak Emir
+ *  @version 1.0
+ */
+<span class="keyword">object</span> <a title="object scala.xml.NodeSeq" id="8523">NodeSeq</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  <span class="keyword">final</span> <span class="keyword">val</span> <a title="scala.xml.NodeSeq" id="26524">Empty</a> = <a href="#26526" title="(s: Seq[scala.xml.Node])scala.xml.NodeSeq">fromSeq</a>(<a href="../collection/immutable/List.scala.html#9259" title="object Nil">Nil</a>)
+  <span class="keyword">def</span> <a title="(s: Seq[scala.xml.Node])scala.xml.NodeSeq" id="26526">fromSeq</a>(<a title="Seq[scala.xml.Node]" id="127548">s</a>: <a href="../collection/Sequence.scala.html#4346" title="Seq[scala.xml.Node]">Seq</a>[Node]): <a href="#8522" title="scala.xml.NodeSeq">NodeSeq</a> = <a href="#252542" title="scala.xml.NodeSeq{ ... }" class="keyword">new</a> <a href="#8522" title="anonymous class $anon extends scala.xml.NodeSeq" id="252542">NodeSeq</a> {
+    <span class="keyword">def</span> <a title="=&gt; Seq[scala.xml.Node]" id="252544">theSeq</a> = <a href="#127548" title="Seq[scala.xml.Node]">s</a>
+  }
+  <span class="keyword">type</span> <a title="scala.xml.NodeSeq" id="26527">Coll</a> = <a href="#8522" title="scala.xml.NodeSeq">NodeSeq</a>
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="=&gt; scala.collection.generic.BuilderFactory[scala.xml.Node,scala.xml.NodeSeq,scala.xml.NodeSeq.Coll]" id="26528">builderFactory</a>: <a href="../collection/generic/BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[scala.xml.Node,scala.xml.NodeSeq,scala.xml.NodeSeq.Coll]">BuilderFactory</a>[Node, NodeSeq, Coll] = <a href="#252550" title="java.lang.Object with scala.collection.generic.BuilderFactory[scala.xml.Node,scala.xml.NodeSeq,scala.xml.NodeSeq.Coll]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with scala.collection.generic.BuilderFactory[scala.xml.Node,scala.xml.NodeSeq,scala.xml.NodeSeq.Coll]" id="252550">BuilderFactory</a>[Node, NodeSeq, Coll] { <span class="keyword">def</span> <a title="(from: scala.xml.NodeSeq.Coll)scala.collection.generic.Builder[scala.xml.Node,scala.xml.NodeSeq]" id="252552">apply</a>(<a title="scala.xml.NodeSeq.Coll" id="252557">from</a>: <a href="#8522" title="scala.xml.NodeSeq.Coll">Coll</a>) = <a href="#26529" title="=&gt; scala.collection.generic.Builder[scala.xml.Node,scala.xml.NodeSeq]">newBuilder</a> }
+  <span class="keyword">def</span> <a title="=&gt; scala.collection.generic.Builder[scala.xml.Node,scala.xml.NodeSeq]" id="26529">newBuilder</a>: <a href="../collection/generic/Builder.scala.html#10028" title="scala.collection.generic.Builder[scala.xml.Node,scala.xml.NodeSeq]">Builder</a>[Node, NodeSeq] = <a href="../collection/generic/Builder.scala.html#19593" title="(f: (List[scala.xml.Node]) =&gt; scala.xml.NodeSeq)scala.collection.generic.Builder[scala.xml.Node,scala.xml.NodeSeq]" class="keyword">new</a> <a href="../collection/mutable/ListBuffer.scala.html#7620" title="scala.collection.mutable.ListBuffer[scala.xml.Node]">ListBuffer</a>[Node] mapResult <a href="#26526" title="(s: Seq[scala.xml.Node])scala.xml.NodeSeq">fromSeq</a>
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="implicit scala.xml.NodeSeq.seqToNodeSeq : (s: Seq[scala.xml.Node])scala.xml.NodeSeq" id="26530">seqToNodeSeq</a>(<a title="Seq[scala.xml.Node]" id="56517">s</a>: <a href="../collection/Sequence.scala.html#4346" title="Seq[scala.xml.Node]">Seq</a>[Node]): <a href="#8522" title="scala.xml.NodeSeq">NodeSeq</a> = <a href="#26526" title="(s: Seq[scala.xml.Node])scala.xml.NodeSeq">fromSeq</a>(<a href="#56517" title="Seq[scala.xml.Node]">s</a>)
+}
+
+/** This class implements a wrapper around &lt;code&gt;Seq[Node]&lt;/code&gt; that
+ *  adds XPath and comprehension methods.
+ *
+ *  @author  Burak Emir
+ *  @version 1.0
+ */
+<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class NodeSeq extends java.lang.Object with scala.collection.immutable.Sequence[scala.xml.Node] with scala.collection.generic.SequenceTemplate[scala.xml.Node,scala.xml.NodeSeq] with ScalaObject" id="8522">NodeSeq</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> immutable.<a href="../collection/immutable/Sequence.scala.html#9150" title="scala.collection.immutable.Sequence[scala.xml.Node]">Sequence</a>[Node] <span class="keyword">with</span> <a href="../collection/generic/SequenceTemplate.scala.html#10952" title="scala.collection.generic.SequenceTemplate[scala.xml.Node,scala.xml.NodeSeq]">SequenceTemplate</a>[Node, NodeSeq] {
+  <span class="keyword">import</span> NodeSeq.seqToNodeSeq // import view magic for NodeSeq wrappers
+
+  /** Creates a list buffer as builder for this class */
+  <span class="keyword">override</span> <span class="keyword">protected</span>[<span class="keyword">this</span>] <span class="keyword">def</span> <a title="=&gt; scala.collection.generic.Builder[scala.xml.Node,scala.xml.NodeSeq]" id="20979">newBuilder</a> = <a href="#8523" title="object scala.xml.NodeSeq">NodeSeq</a>.<a href="#26529" title="=&gt; scala.collection.generic.Builder[scala.xml.Node,scala.xml.NodeSeq]">newBuilder</a>
+
+  <span class="keyword">def</span> <a title="=&gt; Seq[scala.xml.Node]" id="20980">theSeq</a>: <a href="../collection/Sequence.scala.html#4346" title="Seq[scala.xml.Node]">Seq</a>[Node]
+  <span class="keyword">def</span> <a title="=&gt; Int" id="20981">length</a> = <a href="#20980" title="=&gt; Seq[scala.xml.Node]">theSeq</a>.<a href="../collection/generic/SequenceTemplate.scala.html#17338" title="=&gt; Int">length</a>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Iterator[scala.xml.Node]" id="20982">iterator</a> = <a href="#20980" title="=&gt; Seq[scala.xml.Node]">theSeq</a>.<a href="../collection/generic/IterableTemplate.scala.html#17285" title="=&gt; Iterator[scala.xml.Node]">iterator</a>
+  
+  <span class="keyword">def</span> <a title="(i: Int)scala.xml.Node" id="20983">apply</a>(<a title="Int" id="179115">i</a>: <a title="Int" id="2175">Int</a>): <a href="Node.scala.html#8654" title="scala.xml.Node">Node</a> = <a href="../collection/generic/SequenceTemplate.scala.html#17339" title="(idx: Int)scala.xml.Node">theSeq</a>(<a href="#179115" title="Int">i</a>)
+  <span class="keyword">def</span> <a title="(f: (scala.xml.Node) =&gt; Boolean)scala.xml.NodeSeq" id="20984">apply</a>(<a title="(scala.xml.Node) =&gt; Boolean" id="179122">f</a>: Node =&gt; Boolean): <a href="#8522" title="scala.xml.NodeSeq">NodeSeq</a> = <a href="../collection/generic/TraversableTemplate.scala.html#17171" title="(p: (scala.xml.Node) =&gt; Boolean)scala.xml.NodeSeq">filter</a>(<a href="#179122" title="(scala.xml.Node) =&gt; Boolean">f</a>)
+
+  /** structural equality */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(x: Any)Boolean" id="20985">equals</a>(<a title="Any" id="26522">x</a>: <a title="Any" id="47">Any</a>): <a title="Boolean" id="1949">Boolean</a> = <a href="#26522" title="Any">x</a> <span title="Boolean" class="keyword">match</span> {
+    <span title="Boolean" class="keyword">case</span> <a title="scala.xml.Node" id="252603">z</a>:<a href="Node.scala.html#8654" title="scala.xml.Node">Node</a>      =&gt; <span title="(x$1: Boolean)Boolean">(</span><a href="#20981" title="(x$1: Int)Boolean">length</a> == <span title="Int(1)" class="int">1</span>) &amp;&amp; <a href="#252603" title="(x$1: AnyRef)Boolean">z</a> == <a href="#20983" title="(i: Int)scala.xml.Node">apply</a>(<span title="Int(0)" class="int">0</span>)
+    <span title="Boolean" class="keyword">case</span> <a title="Seq[_]" id="252627">z</a>:<a href="../collection/Sequence.scala.html#4346" title="Seq[_]">Seq</a>[_]    =&gt; <a href="../collection/generic/IterableTemplate.scala.html#17321" title="(that: Iterable[Any])Boolean">sameElements</a>(<a href="#252627" title="Seq[_]">z</a>)
+    <span title="Boolean" class="keyword">case</span> <a title="String" id="252645">z</a>:<span title="String">String</span>    =&gt; <a href="#20989" title="(x$1: AnyRef)Boolean">text</a> == <a href="#252645" title="String">z</a>
+    <span title="Boolean(false)" class="keyword">case</span> _           =&gt; <span title="Boolean(false)" class="keyword">false</span>
+  }
+
+  /** Projection function. Similar to XPath, use &lt;code&gt;this \ &quot;foo&quot;&lt;/code&gt;
+   *  to get a list of all elements of this sequence that are labelled with
+   *  &lt;code&gt;&quot;foo&quot;&lt;/code&gt;. Use &lt;code&gt;\ &quot;_&quot;&lt;/code&gt; as a wildcard. Use 
+   *  &lt;code&gt;ns \ &quot;@foo&quot;&lt;/code&gt; to get the unprefixed attribute &quot;foo&quot;. 
+   *  Use &lt;code&gt;ns \ &quot;@{uri}foo&quot;&lt;/code&gt; to get the prefixed attribute 
+   *  &quot;pre:foo&quot; whose prefix &quot;pre&quot; is resolved to the namespace &quot;uri&quot;. 
+   *  For attribute projections, the resulting NodeSeq attribute values are
+   *  wrapped in a Group.
+   *  There is no support for searching a prefixed attribute by
+   *  its literal prefix.
+   *  The document order is preserved.
+   *
+   *  @param that ...
+   *  @return     ...
+   */
+  <span class="keyword">def</span> <a title="(that: String)scala.xml.NodeSeq" id="20986">\</a>(<a title="String" id="252653">that</a>: <span title="String">String</span>): <a href="#8522" title="scala.xml.NodeSeq">NodeSeq</a> = {
+    <span class="keyword">def</span> <a title="=&gt; scala.xml.NodeSeq" id="252655">atResult</a> = {
+      <span class="keyword">def</span> <a title="=&gt; Nothing" id="252657">fail</a> = <span title="Nothing" class="keyword">throw</span> <a title="(x$1: java.lang.String)java.lang.IllegalArgumentException" id="26503" class="keyword">new</a> <a href="../Predef.scala.html#16170" title="java.lang.IllegalArgumentException">IllegalArgumentException</a>(<a href="#252653" title="String">that</a>)
+      <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="scala.xml.Node" id="252659">y</a> = <a href="#20983" title="(i: Int)scala.xml.Node" class="keyword">this</a>(<span title="Int(0)" class="int">0</span>)
+      <span class="keyword">val</span> <a title="Option[Seq[scala.xml.Node]]" id="252660">attr</a> = 
+        <span title="Option[Seq[scala.xml.Node]]" class="keyword">if</span> (<a href="#252653" title="String">that</a>.<span title="(x$1: Int)Boolean">length</span> == <span title="Int(1)" class="int">1</span>) <a href="#252657" title="=&gt; Nothing">fail</a>
+        <span class="keyword">else</span> <span title="Option[Seq[scala.xml.Node]]" class="keyword">if</span> (<a href="../runtime/RichString.scala.html#18032" title="(n: Int)Char">that</a><span title="(x$1: Char)Boolean">(</span><span title="Int(1)" class="int">1</span>) == <span title="Char('{')" class="char">'{'</span>) {
+          <span class="keyword">val</span> <a title="Int" id="252744">i</a> = <a href="#252653" title="(x$1: Int)Int" id="6967">that</a> indexOf <span title="Int(125)" class="char">'}'</span>
+          <span title="Unit" class="keyword">if</span> (<a href="#252744" title="(x$1: Int)Boolean">i</a> == <span title="Int(-1)">-</span><span class="int">1</span>) <a href="#252657" title="=&gt; Nothing">fail</a>            
+          <span class="keyword">val</span> <a href="../Tuple2.scala.html#20670" title="(java.lang.String, java.lang.String)">(</a><a href="../Tuple2.scala.html#20472" title="java.lang.String" id="252746">uri</a>, <a href="../Tuple2.scala.html#20474" title="java.lang.String" id="252747">key</a>) = <a href="../Tuple2.scala.html#20670" title="(_1: java.lang.String,_2: java.lang.String)(java.lang.String, java.lang.String)">(</a><a href="#252653" title="String">that</a>.<span title="(x$1: Int,x$2: Int)java.lang.String">substring</span>(<span title="Int(2)" class="int">2</span>,<a href="#252744" title="Int">i</a>), <a href="#252653" title="String">that</a>.<span title="(x$1: Int,x$2: Int)java.lang.String">substring</span>(<a href="#252744" title="(x$1: Int)Int" id="2962">i</a>+<span title="Int(1)" class="int">1</span>, <a href="#252653" title="String">that</a>.<span title="()Int">length</span>()))
+          <span title="Option[Seq[scala.xml.Node]]" class="keyword">if</span> (<a href="#252746" title="(x$1: AnyRef)Boolean">uri</a> <a title="(x$1: Boolean)Boolean" id="2208">==</a> <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span> || <a href="#252747" title="(x$1: AnyRef)Boolean">key</a> == <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>) <a href="#252657" title="=&gt; Nothing">fail</a>
+          <span class="keyword">else</span> <a href="#252658" title="=&gt; scala.xml.Node">y</a>.<a href="Node.scala.html#21000" title="(uri: String,key: String)Option[Seq[scala.xml.Node]]">attribute</a>(<a href="#252746" title="java.lang.String">uri</a>, <a href="#252747" title="java.lang.String">key</a>)
+        }
+        <span class="keyword">else</span> <a href="#252658" title="=&gt; scala.xml.Node">y</a>.<a href="Node.scala.html#20999" title="(key: String)Option[Seq[scala.xml.Node]]">attribute</a>(<a href="#252653" title="String">that</a>.<a title="(x$1: Int)java.lang.String" id="7003">substring</a>(<span title="Int(1)" class="int">1</span>))
+        
+      <a href="#252660" title="Option[Seq[scala.xml.Node]]">attr</a> <span title="scala.xml.NodeSeq" class="keyword">match</span> {
+        <span title="scala.xml.Group" class="keyword">case</span> <a id="1">Some</a>(<a title="Seq[scala.xml.Node]" id="252863">x</a>)  =&gt; <a href="Group.scala.html#179239" title="(nodes: Seq[scala.xml.Node])scala.xml.Group">Group</a>(<a href="#252863" title="Seq[scala.xml.Node]">x</a>)
+        <span title="scala.xml.NodeSeq" class="keyword">case</span> _        =&gt; <a href="#8523" title="object scala.xml.NodeSeq">NodeSeq</a>.<a href="#26524" title="=&gt; scala.xml.NodeSeq">Empty</a>
+      }
+    }
+    
+    <span class="keyword">def</span> <a title="(cond: (scala.xml.Node) =&gt; Boolean)scala.xml.NodeSeq" id="252656">makeSeq</a>(<a title="(scala.xml.Node) =&gt; Boolean" id="252872">cond</a>: (Node) =&gt; Boolean) =
+      <a href="#26526" title="(s: Seq[scala.xml.Node])scala.xml.NodeSeq">NodeSeq</a> fromSeq (<a href="../collection/generic/TraversableTemplate.scala.html#17166" title="(f: (scala.xml.Node) =&gt; Traversable[scala.xml.Node])(implicit bf: scala.collection.generic.BuilderFactory[scala.xml.Node,scala.xml.NodeSeq,scala.xml.NodeSeq])scala.xml.NodeSeq" class="keyword">this</a> <a href="../collection/generic/TraversableTemplate.scala.html#17171" title="(p: (scala.xml.Node) =&gt; Boolean)scala.xml.NodeSeq">flatMap</a> (<a href="#252881" title="scala.xml.Node">_</a>.<a href="Node.scala.html#21002" title="=&gt; Seq[scala.xml.Node]">child</a>) filter <a href="#252872" title="(scala.xml.Node) =&gt; Boolean">cond</a>)
+      
+    <a href="#252653" title="String">that</a> <span title="scala.xml.NodeSeq" class="keyword">match</span> {
+      <span title="scala.xml.NodeSeq" class="keyword">case</span> <span title="java.lang.String(&quot;_&quot;)" class="string">&quot;_&quot;</span>                                        =&gt; <a href="#252656" title="(cond: (scala.xml.Node) =&gt; Boolean)scala.xml.NodeSeq">makeSeq</a>(<span title="=&gt; Boolean">!</span><a href="#252942" title="scala.xml.Node">_</a>.<a href="Node.scala.html#20993" title="=&gt; Boolean">isAtom</a>)
+      <span title="scala.xml.NodeSeq" class="keyword">case</span> _ <span class="keyword">if</span> (<a href="../runtime/RichString.scala.html#18032" title="(n: Int)Char">that</a><span title="(x$1: Char)Boolean">(</span><span title="Int(0)" class="int">0</span>) <span title="(x$1: Boolean)Boolean">==</span> <span title="Char('@')" class="char">'@'</span> &amp;&amp; <a href="#8522" title="NodeSeq.this.type" class="keyword">this</a>.<a href="#20981" title="(x$1: Int)Boolean">length</a> == <span title="Int(1)" class="int">1</span>)  =&gt; <a href="#252655" title="=&gt; scala.xml.NodeSeq">atResult</a>
+      <span title="scala.xml.NodeSeq" class="keyword">case</span> _                                          =&gt; <a href="#252656" title="(cond: (scala.xml.Node) =&gt; Boolean)scala.xml.NodeSeq">makeSeq</a>(<a href="#253002" title="scala.xml.Node">_</a>.<a href="Node.scala.html#20992" title="(x$1: AnyRef)Boolean">label</a> == <a href="#252653" title="String">that</a>)
+    }
+  }
+
+  /** projection function. Similar to XPath, use &lt;code&gt;this \\ 'foo&lt;/code&gt;
+   *  to get a list of all elements of this sequence that are labelled with
+   *  &lt;code&gt;&quot;foo&quot;&lt;/code&gt;. Use &lt;code&gt;\\ &quot;_&quot;&lt;/code&gt; as a wildcard.  Use 
+   *  &lt;code&gt;ns \\ &quot;@foo&quot;&lt;/code&gt; to get the unprefixed attribute &quot;foo&quot;. 
+   *  Use &lt;code&gt;ns \\ &quot;@{uri}foo&quot;&lt;/code&gt; to get each prefixed attribute 
+   *  &quot;pre:foo&quot; whose prefix &quot;pre&quot; is resolved to the namespace &quot;uri&quot;. 
+   *  For attribute projections, the resulting NodeSeq attribute values are
+   *  wrapped in a Group.
+   *  There is no support for searching a prefixed attribute by
+   *  its literal prefix.
+   *  The document order is preserved.
+   *
+   *  @param that ...
+   *  @return     ...
+   */
+  <span class="keyword">def</span> <a title="(that: String)scala.xml.NodeSeq" id="20987">\\</a> (<a title="String" id="253012">that</a>: <span title="String">String</span>): <a href="#8522" title="scala.xml.NodeSeq">NodeSeq</a> = {
+    <span class="keyword">def</span> <a title="(cond: (scala.xml.Node) =&gt; Boolean)scala.xml.NodeSeq" id="253014">filt</a>(<a title="(scala.xml.Node) =&gt; Boolean" id="253015">cond</a>: (Node) =&gt; Boolean) = <a href="../collection/generic/TraversableTemplate.scala.html#17166" title="(f: (scala.xml.Node) =&gt; Traversable[scala.xml.Node])(implicit bf: scala.collection.generic.BuilderFactory[scala.xml.Node,scala.xml.NodeSeq,scala.xml.NodeSeq])scala.xml.NodeSeq" class="keyword">this</a> <a href="../collection/generic/TraversableTemplate.scala.html#17171" title="(p: (scala.xml.Node) =&gt; Boolean)scala.xml.NodeSeq">flatMap</a> (<a href="#253024" title="scala.xml.Node">_</a>.<a href="Node.scala.html#21004" title="=&gt; List[scala.xml.Node]">descendant_or_self</a>) filter <a href="#253015" title="(scala.xml.Node) =&gt; Boolean">cond</a>
+    <a href="#253012" title="String">that</a> <span title="scala.xml.NodeSeq" class="keyword">match</span> {
+      <span title="scala.xml.NodeSeq" class="keyword">case</span> <span title="java.lang.String(&quot;_&quot;)" class="string">&quot;_&quot;</span>                  =&gt; <a href="#253014" title="(cond: (scala.xml.Node) =&gt; Boolean)scala.xml.NodeSeq">filt</a>(<span title="=&gt; Boolean">!</span><a href="#253083" title="scala.xml.Node">_</a>.<a href="Node.scala.html#20993" title="=&gt; Boolean">isAtom</a>)
+      <span title="scala.xml.NodeSeq" class="keyword">case</span> _ <span class="keyword">if</span> <a href="../runtime/RichString.scala.html#18032" title="(n: Int)Char">that</a><span title="(x$1: Char)Boolean">(</span><span title="Int(0)" class="int">0</span>) == <span title="Char('@')" class="char">'@'</span>  =&gt; <a href="#253014" title="(cond: (scala.xml.Node) =&gt; Boolean)scala.xml.NodeSeq">filt</a><a href="../collection/generic/TraversableTemplate.scala.html#17166" title="(f: (scala.xml.Node) =&gt; Traversable[scala.xml.Node])(implicit bf: scala.collection.generic.BuilderFactory[scala.xml.Node,scala.xml.NodeSeq,scala.xml.NodeSeq])scala.xml.NodeSeq">(</a><span title="=&gt; Boolean">!</span><a href="#253134" title="scala.xml.Node">_</a>.<a href="Node.scala.html#20993" title="=&gt; Boolean">isAtom</a>) <a href="#26528" title="=&gt; scala.collection.generic.BuilderFactory[scala.xml.Node,scala.xml.NodeSeq,scala.xml.NodeSeq#Coll]">flatMap</a> (<a href="#20986" title="(that: String)scala.xml.NodeSeq">_</a> \ <a href="#253012" title="String">that</a>)
+      <span title="scala.xml.NodeSeq" class="keyword">case</span> _                    =&gt; <a href="#253014" title="(cond: (scala.xml.Node) =&gt; Boolean)scala.xml.NodeSeq">filt</a>(<a title="scala.xml.Node" id="253169">x</a> =&gt; <span title="(x$1: Boolean)Boolean">!</span><a href="#253169" title="scala.xml.Node">x</a>.<a href="Node.scala.html#20993" title="=&gt; Boolean">isAtom</a> &amp;&amp; <a href="#253169" title="scala.xml.Node">x</a>.<a href="Node.scala.html#20992" title="(x$1: AnyRef)Boolean">label</a> == <a href="#253012" title="String">that</a>)
+    }
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="20988">toString</a>(): <span title="String">String</span> = <a href="#20980" title="=&gt; Seq[scala.xml.Node]">theSeq</a>.<a href="../collection/generic/TraversableTemplate.scala.html#17248" title="=&gt; String">mkString</a>
+  <span class="keyword">def</span> <a title="=&gt; String" id="20989">text</a>: <span title="String">String</span>                = <a href="../collection/generic/TraversableTemplate.scala.html#17161" title="(f: (scala.xml.Node) =&gt; String)(implicit bf: scala.collection.generic.BuilderFactory[String,scala.collection.immutable.Sequence[String],scala.xml.NodeSeq])scala.collection.immutable.Sequence[String]" class="keyword">this</a> <a href="../collection/immutable/Sequence.scala.html#21747" title="scala.collection.generic.BuilderFactory[String,scala.collection.immutable.Sequence[String],scala.collection.immutable.Sequence#Coll]">map</a> (<a href="#253191" title="scala.xml.Node">_</a>.<a href="Node.scala.html#21013" title="=&gt; String">text</a>) <a href="../collection/generic/TraversableTemplate.scala.html#17248" title="=&gt; String">mkString</a>
+}
+
+        </pre>
+    </body>
+</html>

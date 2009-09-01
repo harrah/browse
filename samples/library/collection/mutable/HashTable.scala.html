@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>collection/mutable/HashTable.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://www.scala-lang.org/           **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: HashTable.scala 18015 2009-06-10 13:34:35Z rytz $
+
+
+<span class="keyword">package</span> scala.collection.mutable
+
+/** This class can be used to construct data structures that are based
+ *  on hashtables. Class &lt;code&gt;HashTable[A]&lt;/code&gt; implements a hashtable
+ *  that maps keys of type &lt;code&gt;A&lt;/code&gt; to values of the fully abstract
+ *  member type &lt;code&gt;Entry&lt;/code&gt;. Classes that make use of &lt;code&gt;HashTable&lt;/code&gt;
+ *  have to provide an implementation for &lt;code&gt;Entry&lt;/code&gt; 
+ *
+ *  There are mainly two parameters that affect the performance of a hashtable:
+ *  the &lt;i&gt;initial size&lt;/i&gt; and the &lt;i&gt;load factor&lt;/i&gt;. The &lt;i&gt;size&lt;/i&gt;
+ *  refers to the number of &lt;i&gt;buckets&lt;/i&gt; in the hashtable, and the &lt;i&gt;load
+ *  factor&lt;/i&gt; is a measure of how full the hashtable is allowed to get before
+ *  its size is automatically doubled. Both parameters may be changed by
+ *  overriding the corresponding values in class &lt;code&gt;HashTable&lt;/code&gt;.
+ *
+ *  @author  Matthias Zenger
+ *  @author  Martin Odersky
+ *  @version 2.0, 31/12/2006
+ */
+<span class="keyword">trait</span> <a title="trait HashTable[A] extends java.lang.Object with ScalaObject" id="7845">HashTable</a>[<a title="&gt;: Nothing &lt;: Any" id="15916">A</a>] <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a title="java.lang.Object" id="3623">AnyRef</a> {
+
+  <span class="keyword">protected</span> <span class="keyword">type</span> <a title="&gt;: Null &lt;: scala.collection.mutable.HashEntry[A,HashTable.this.Entry]" id="43338">Entry</a> &gt;: Null &lt;: HashEntry[A, Entry]
+
+  /** The load factor for the hash table (in 0.001 step).
+   */
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; Int" id="43339">loadFactor</a>: <span title="Int">Int</span> = <span title="Int(750)" class="int">750</span> // corresponds to 75%
+  <span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">val</span> <a title="Int(1000)" id="43340">loadFactorDenum</a> = <span title="Int(1000)" class="int">1000</span>;
+
+  /** The initial size of the hash table.
+   */
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; Int" id="43342">initialSize</a>: <span title="Int">Int</span> = <span title="Int(16)" class="int">16</span>
+
+  /** The initial threshold
+   */
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; Int" id="43343">initialThreshold</a>: <span title="Int">Int</span> = <a href="#43360" title="(size: Int)Int">newThreshold</a>(<a href="#43342" title="=&gt; Int">initialSize</a>)
+
+  /** The actual hash table.
+   */
+  <span class="keyword">protected</span> <span class="keyword">var</span> <a title="Array[scala.collection.mutable.HashEntry[A,HashTable.this.Entry]]" id="43345">table</a>: <a href="../../Array.scala.html#885" title="Array[scala.collection.mutable.HashEntry[A,HashTable.this.Entry]]">Array</a>[HashEntry[A, Entry]] = 
+    <span title="Array[scala.collection.mutable.HashEntry[A,HashTable.this.Entry]]" class="keyword">if</span> (<a href="#43342" title="(x$1: Int)Boolean" id="2950">initialSize</a> == <span title="Int(0)" class="int">0</span>) <span title="Null(null)" class="keyword">null</span> <span class="keyword">else</span> <span title="Array[scala.collection.mutable.HashEntry[A,HashTable.this.Entry]]" class="keyword">new</span> <a href="../../Array.scala.html#885" title="Array[scala.collection.mutable.HashEntry[A,HashTable.this.Entry]]">Array</a>(<a href="#43342" title="=&gt; Int">initialSize</a>)
+
+  /** The number of mappings contained in this hash table.
+   */
+  <span class="keyword">protected</span> <span class="keyword">var</span> <a title="Int" id="43348">tableSize</a>: <span title="Int">Int</span> = <span title="Int(0)" class="int">0</span>
+
+  /** The next size value at which to resize (capacity * load factor).
+   */
+  <span class="keyword">protected</span> <span class="keyword">var</span> <a title="Int" id="43351">threshold</a>: <span title="Int">Int</span> = <a href="#43343" title="=&gt; Int">initialThreshold</a>
+
+  /** Returns the size of this hash table.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Int" id="43353">size</a> = <a href="#43348" title="=&gt; Int">tableSize</a>
+
+  /** Find entry with given key in table, null if not found
+   */
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(key: A)HashTable.this.Entry" id="43354">findEntry</a>(<a title="A" id="143135">key</a>: <a href="#15916" title="A">A</a>): <a href="#43338" title="HashTable.this.Entry">Entry</a> = {
+    <span class="keyword">val</span> <a title="Int" id="222810">h</a> = <a href="#43365" title="(hcode: Int)Int">index</a>(<a href="#43363" title="(key: A)Int">elemHashCode</a>(<a href="#143135" title="A">key</a>))
+    <span class="keyword">var</span> <a title="HashTable.this.Entry" id="222811">e</a> = <a href="../../Array.scala.html#17716" title="(i: Int)scala.collection.mutable.HashEntry[A,HashTable.this.Entry]">table</a>(<a href="#222810" title="Int">h</a>).<span title="[T0]T0">asInstanceOf</span><span title="HashTable.this.Entry">[</span><a href="#43338" title="HashTable.this.Entry">Entry</a>]
+    <span title="Unit" class="keyword">while</span> (<a href="#222811" title="(x$1: AnyRef)Boolean">e</a> <span title="(x$1: Boolean)Boolean">!=</span> <span title="Null(null)" class="keyword">null</span> &amp;&amp; <span title="=&gt; Boolean">!</span><a href="#43362" title="(key1: A,key2: A)Boolean">elemEquals</a>(<a href="#222811" title="HashTable.this.Entry">e</a>.<a href="HashEntry.scala.html#50398" title="=&gt; A">key</a>, <a href="#143135" title="A">key</a>)) <a href="#222811" title="HashTable.this.Entry">e</a> = <a href="#222811" title="HashTable.this.Entry">e</a>.<a href="HashEntry.scala.html#50399" title="=&gt; HashTable.this.Entry">next</a>
+    <a href="#222811" title="HashTable.this.Entry">e</a>
+  }
+
+  /** Add entry to table
+   *  pre: no entry with same key exists
+   */
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(e: HashTable.this.Entry)Unit" id="43355">addEntry</a>(<a title="HashTable.this.Entry" id="143241">e</a>: <a href="#43338" title="HashTable.this.Entry">Entry</a>) {
+    <span class="keyword">val</span> <a title="Int" id="222957">h</a> = <a href="#43365" title="(hcode: Int)Int">index</a>(<a href="#43363" title="(key: A)Int">elemHashCode</a>(<a href="#143241" title="HashTable.this.Entry">e</a>.<a href="HashEntry.scala.html#50398" title="=&gt; A">key</a>))
+    <a href="#143241" title="HashTable.this.Entry">e</a>.<a href="HashEntry.scala.html#50400" title="(x$1: HashTable.this.Entry)Unit">next</a> = <a href="../../Array.scala.html#17716" title="(i: Int)scala.collection.mutable.HashEntry[A,HashTable.this.Entry]">table</a>(<a href="#222957" title="Int">h</a>).<span title="[T0]T0">asInstanceOf</span><span title="HashTable.this.Entry">[</span><a href="#43338" title="HashTable.this.Entry">Entry</a>]
+    <a href="../../Array.scala.html#17717" title="(i: Int,x: scala.collection.mutable.HashEntry[A,HashTable.this.Entry])Unit">table</a>(<a href="#222957" title="Int">h</a>) = <a href="#143241" title="HashTable.this.Entry">e</a>
+    <a href="#43348" title="(x$1: Int)Unit">tableSize</a> = <a href="#43348" title="(x$1: Int)Int">tableSize</a> + <span title="Int(1)" class="int">1</span>
+    <span title="Unit" class="keyword">if</span> (<a href="#43348" title="(x$1: Int)Boolean">tableSize</a> &gt; <a href="#43351" title="=&gt; Int">threshold</a>)
+      <a href="#43361" title="(newSize: Int)Unit">resize</a>(<a title="(x$1: Int)Int" id="2966" class="int">2</a> * <a href="#43345" title="=&gt; Array[scala.collection.mutable.HashEntry[A,HashTable.this.Entry]]">table</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>)
+  }
+
+  /** Remove entry from table if present
+   */
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(key: A)HashTable.this.Entry" id="43356">removeEntry</a>(<a title="A" id="143807">key</a>: <a href="#15916" title="A">A</a>) : <a href="#43338" title="HashTable.this.Entry">Entry</a> = {
+    <span class="keyword">val</span> <a title="Int" id="223143">h</a> = <a href="#43365" title="(hcode: Int)Int">index</a>(<a href="#43363" title="(key: A)Int">elemHashCode</a>(<a href="#143807" title="A">key</a>))
+    <span class="keyword">var</span> <a title="HashTable.this.Entry" id="223144">e</a> = <a href="../../Array.scala.html#17716" title="(i: Int)scala.collection.mutable.HashEntry[A,HashTable.this.Entry]">table</a>(<a href="#223143" title="Int">h</a>).<span title="[T0]T0">asInstanceOf</span><span title="HashTable.this.Entry">[</span><a href="#43338" title="HashTable.this.Entry">Entry</a>]
+    <span title="Unit" class="keyword">if</span> (<a href="#223144" title="(x$1: AnyRef)Boolean">e</a> != <span title="Null(null)" class="keyword">null</span>) {
+      <span title="Unit" class="keyword">if</span> (<a href="#43362" title="(key1: A,key2: A)Boolean">elemEquals</a>(<a href="#223144" title="HashTable.this.Entry">e</a>.<a href="HashEntry.scala.html#50398" title="=&gt; A">key</a>, <a href="#143807" title="A">key</a>)) {
+        <a href="../../Array.scala.html#17717" title="(i: Int,x: scala.collection.mutable.HashEntry[A,HashTable.this.Entry])Unit">table</a>(<a href="#223143" title="Int">h</a>) = <a href="#223144" title="HashTable.this.Entry">e</a>.<a href="HashEntry.scala.html#50399" title="=&gt; HashTable.this.Entry">next</a>
+        <a href="#43348" title="(x$1: Int)Unit">tableSize</a> = <a href="#43348" title="(x$1: Int)Int">tableSize</a> - <span title="Int(1)" class="int">1</span>
+        <span title="Nothing" class="keyword">return</span> <a href="#223144" title="HashTable.this.Entry">e</a>
+      } <span class="keyword">else</span> {
+        <span class="keyword">var</span> <a title="HashTable.this.Entry" id="223201">e1</a> = <a href="#223144" title="HashTable.this.Entry">e</a>.<a href="HashEntry.scala.html#50399" title="=&gt; HashTable.this.Entry">next</a>
+        <span title="Unit" class="keyword">while</span> (<a href="#223201" title="(x$1: AnyRef)Boolean">e1</a> <span title="(x$1: Boolean)Boolean">!=</span> <span title="Null(null)" class="keyword">null</span> &amp;&amp; <span title="=&gt; Boolean">!</span><a href="#43362" title="(key1: A,key2: A)Boolean">elemEquals</a>(<a href="#223201" title="HashTable.this.Entry">e1</a>.<a href="HashEntry.scala.html#50398" title="=&gt; A">key</a>, <a href="#143807" title="A">key</a>)) <a href="#223202" title="()Unit">{</a>
+          <a href="#223144" title="HashTable.this.Entry">e</a> = <a href="#223201" title="HashTable.this.Entry">e1</a>
+          <a href="#223201" title="HashTable.this.Entry">e1</a> = <a href="#223201" title="HashTable.this.Entry">e1</a>.<a href="HashEntry.scala.html#50399" title="=&gt; HashTable.this.Entry">next</a>
+        }
+        <span title="Unit" class="keyword">if</span> (<a href="#223201" title="(x$1: AnyRef)Boolean">e1</a> != <span title="Null(null)" class="keyword">null</span>) {
+          <a href="#223144" title="HashTable.this.Entry">e</a>.<a href="HashEntry.scala.html#50400" title="(x$1: HashTable.this.Entry)Unit">next</a> = <a href="#223201" title="HashTable.this.Entry">e1</a>.<a href="HashEntry.scala.html#50399" title="=&gt; HashTable.this.Entry">next</a>
+          <a href="#43348" title="(x$1: Int)Unit">tableSize</a> = <a href="#43348" title="(x$1: Int)Int">tableSize</a> - <span title="Int(1)" class="int">1</span>
+          <span title="Nothing" class="keyword">return</span> <a href="#223201" title="HashTable.this.Entry">e1</a>
+        }
+      }
+    }
+    <span title="Null(null)" class="keyword">null</span>
+  }
+
+  /** An iterator returning all entries
+   */
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; Iterator[HashTable.this.Entry]" id="43357">entriesIterator</a>: <a href="../Iterator.scala.html#4274" title="Iterator[HashTable.this.Entry]">Iterator</a>[Entry] = <a href="#223246" title="java.lang.Object with Iterator[HashTable.this.Entry]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with Iterator[HashTable.this.Entry]" id="223246">Iterator</a>[Entry] {
+    <span class="keyword">val</span> <a title="Array[scala.collection.mutable.HashEntry[A,HashTable.this.Entry]]" id="223248">iterTable</a> = <a href="#43345" title="=&gt; Array[scala.collection.mutable.HashEntry[A,HashTable.this.Entry]]">table</a>
+    <span class="keyword">var</span> <a title="Int" id="223251">idx</a> = <a href="#43345" title="=&gt; Array[scala.collection.mutable.HashEntry[A,HashTable.this.Entry]]">table</a>.<a href="../../Array.scala.html#17715" title="(x$1: Int)Int">length</a> - <span title="Int(1)" class="int">1</span>
+    <span class="keyword">var</span> <a title="HashTable.this.Entry" id="223254">es</a> = <a href="../../Array.scala.html#17716" title="(i: Int)scala.collection.mutable.HashEntry[A,HashTable.this.Entry]">iterTable</a>(<a href="#223251" title="=&gt; Int">idx</a>).<span title="[T0]T0">asInstanceOf</span><span title="HashTable.this.Entry">[</span><a href="#43338" title="HashTable.this.Entry">Entry</a>]
+    <a href="#223258" title="()Unit">scan</a>()
+    <span class="keyword">def</span> <a title="=&gt; Boolean" id="223256">hasNext</a> = <a href="#223254" title="(x$1: AnyRef)Boolean">es</a> != <span title="Null(null)" class="keyword">null</span>
+    <span class="keyword">def</span> <a title="()HashTable.this.Entry" id="223257">next</a> = {
+      <span class="keyword">val</span> <a title="HashTable.this.Entry" id="223297">res</a> = <a href="#223254" title="=&gt; HashTable.this.Entry">es</a>
+      <a href="#223254" title="(x$1: HashTable.this.Entry)Unit">es</a> = <a href="#223254" title="=&gt; HashTable.this.Entry">es</a>.<a href="HashEntry.scala.html#50399" title="=&gt; HashTable.this.Entry">next</a>
+      <a href="#223258" title="()Unit">scan</a>()
+      <a href="#223297" title="HashTable.this.Entry">res</a>
+    }
+    <span class="keyword">def</span> <a title="()Unit" id="223258">scan</a>() {
+      <span title="Unit" class="keyword">while</span> (<a href="#223254" title="(x$1: AnyRef)Boolean" id="3624">es</a> <span title="(x$1: Boolean)Boolean">==</span> <span title="Null(null)" class="keyword">null</span> &amp;&amp; <a href="#223251" title="(x$1: Int)Boolean">idx</a> &gt; <span title="Int(0)" class="int">0</span>) <a href="#223302" title="()Unit">{</a>
+        <a href="#223251" title="(x$1: Int)Unit">idx</a> = <a href="#223251" title="(x$1: Int)Int">idx</a> - <span title="Int(1)" class="int">1</span>
+        <a href="#223254" title="(x$1: HashTable.this.Entry)Unit">es</a> = <a href="../../Array.scala.html#17716" title="(i: Int)scala.collection.mutable.HashEntry[A,HashTable.this.Entry]">iterTable</a>(<a href="#223251" title="=&gt; Int">idx</a>).<span title="[T0]T0">asInstanceOf</span><span title="HashTable.this.Entry">[</span><a href="#43338" title="HashTable.this.Entry">Entry</a>]
+      }
+    }
+  }
+
+  /** An iterator returning all entries */
+  @deprecated(<span class="string">&quot;use entriesIterator instead&quot;</span>)
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; Iterator[HashTable.this.Entry]" id="43358">entries</a>: <a href="../Iterator.scala.html#4274" title="Iterator[HashTable.this.Entry]">Iterator</a>[Entry] = <a href="#43357" title="=&gt; Iterator[HashTable.this.Entry]">entriesIterator</a>
+
+  /** Remove all entries from table
+   */
+  <span class="keyword">def</span> <a title="()Unit" id="43359">clear</a>() {
+    <span class="keyword">var</span> <a title="Int" id="223355">i</a> = <a href="#43345" title="=&gt; Array[scala.collection.mutable.HashEntry[A,HashTable.this.Entry]]">table</a>.<a href="../../Array.scala.html#17715" title="(x$1: Int)Int">length</a> - <span title="Int(1)" class="int">1</span>
+    <span title="Unit" class="keyword">while</span> (<a href="#223355" title="(x$1: Int)Boolean">i</a> &gt;= <span title="Int(0)" class="int">0</span>) <a href="#223356" title="()Unit">{</a> <a href="../../Array.scala.html#17717" title="(i: Int,x: scala.collection.mutable.HashEntry[A,HashTable.this.Entry])Unit">table</a>(<a href="#223355" title="Int">i</a>) = <span title="Null(null)" class="keyword">null</span>; <a href="#223355" title="Int">i</a> = <a href="#223355" title="(x$1: Int)Int">i</a> - <span title="Int(1)" class="int">1</span> }
+    <a href="#43348" title="(x$1: Int)Unit">tableSize</a> = <span title="Int(0)" class="int">0</span>
+  }
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(size: Int)Int" id="43360">newThreshold</a>(<a title="Int" id="222781">size</a>: <span title="Int">Int</span>) =
+    (<a title="(x$1: Int)Long" id="3176">(</a><a href="#222781" title="Int">size</a>.<a title="(x$1: Int)Long" id="2846">toLong</a> * <a href="#43339" title="=&gt; Int">loadFactor</a>)/<span title="Int(1000)">loadFactorDenum</span>).<a title="=&gt; Int" id="3053">toInt</a>
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(newSize: Int)Unit" id="43361">resize</a>(<a title="Int" id="223021">newSize</a>: <span title="Int">Int</span>) = {
+    <span class="keyword">val</span> <a title="Array[scala.collection.mutable.HashEntry[A,HashTable.this.Entry]]" id="223024">oldTable</a> = <a href="#43345" title="=&gt; Array[scala.collection.mutable.HashEntry[A,HashTable.this.Entry]]">table</a>
+    <a href="#43345" title="(x$1: Array[scala.collection.mutable.HashEntry[A,HashTable.this.Entry]])Unit">table</a> = <span title="Array[scala.collection.mutable.HashEntry[A,HashTable.this.Entry]]" class="keyword">new</span> <a href="../../Array.scala.html#885" title="Array[scala.collection.mutable.HashEntry[A,HashTable.this.Entry]]">Array</a>(<a href="#223021" title="Int">newSize</a>)
+    <span class="keyword">var</span> <a title="Int" id="223025">i</a> = <a href="#223024" title="Array[scala.collection.mutable.HashEntry[A,HashTable.this.Entry]]">oldTable</a>.<a href="../../Array.scala.html#17715" title="(x$1: Int)Int">length</a> - <span title="Int(1)" class="int">1</span>
+    <span title="Unit" class="keyword">while</span> (<a href="#223025" title="(x$1: Int)Boolean">i</a> &gt;= <span title="Int(0)" class="int">0</span>) <a href="#223026" title="()Unit">{</a>
+      <span class="keyword">var</span> <a title="scala.collection.mutable.HashEntry[A,HashTable.this.Entry]" id="223046">e</a> = <a href="../../Array.scala.html#17716" title="(i: Int)scala.collection.mutable.HashEntry[A,HashTable.this.Entry]">oldTable</a>(<a href="#223025" title="Int">i</a>)
+      <span title="Unit" class="keyword">while</span> (<a href="#223046" title="(x$1: AnyRef)Boolean">e</a> != <span title="Null(null)" class="keyword">null</span>) <a href="#223047" title="()Unit">{</a>
+        <span class="keyword">val</span> <a title="Int" id="223064">h</a> = <a href="#43365" title="(hcode: Int)Int">index</a>(<a href="#43363" title="(key: A)Int">elemHashCode</a>(<a href="#223046" title="scala.collection.mutable.HashEntry[A,HashTable.this.Entry]">e</a>.<a href="HashEntry.scala.html#50398" title="=&gt; A">key</a>))
+        <span class="keyword">val</span> <a title="HashTable.this.Entry" id="223065">e1</a> = <a href="#223046" title="scala.collection.mutable.HashEntry[A,HashTable.this.Entry]">e</a>.<a href="HashEntry.scala.html#50399" title="=&gt; HashTable.this.Entry">next</a>
+        <a href="#223046" title="scala.collection.mutable.HashEntry[A,HashTable.this.Entry]">e</a>.<a href="HashEntry.scala.html#50400" title="(x$1: HashTable.this.Entry)Unit">next</a> = <a href="../../Array.scala.html#17716" title="(i: Int)scala.collection.mutable.HashEntry[A,HashTable.this.Entry]">table</a>(<a href="#223064" title="Int">h</a>).<span title="[T0]T0">asInstanceOf</span><span title="HashTable.this.Entry">[</span><a href="#43338" title="HashTable.this.Entry">Entry</a>]
+        <a href="../../Array.scala.html#17717" title="(i: Int,x: scala.collection.mutable.HashEntry[A,HashTable.this.Entry])Unit">table</a>(<a href="#223064" title="Int">h</a>) = <a href="#223046" title="scala.collection.mutable.HashEntry[A,HashTable.this.Entry]">e</a>
+        <a href="#223046" title="scala.collection.mutable.HashEntry[A,HashTable.this.Entry]">e</a> = <a href="#223065" title="HashTable.this.Entry">e1</a>
+      }
+      <a href="#223025" title="Int">i</a> = <a href="#223025" title="(x$1: Int)Int">i</a> - <span title="Int(1)" class="int">1</span>
+    }
+    <a href="#43351" title="(x$1: Int)Unit">threshold</a> = <a href="#43360" title="(size: Int)Int">newThreshold</a>(<a href="#223021" title="Int">newSize</a>)
+  }
+
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(key1: A,key2: A)Boolean" id="43362">elemEquals</a>(<a title="A" id="222948">key1</a>: <a href="#15916" title="A">A</a>, <a title="A" id="222949">key2</a>: <a href="#15916" title="A">A</a>): <a title="Boolean" id="1949">Boolean</a> = (<a href="#222948" title="(x$1: Any)Boolean" id="3610">key1</a> == <a href="#222949" title="A">key2</a>)
+
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(key: A)Int" id="43363">elemHashCode</a>(<a title="A" id="222922">key</a>: <a href="#15916" title="A">A</a>) = <a href="#222922" title="A">key</a>.<a title="()Int" id="3616">hashCode</a>()
+
+  <span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">def</span> <a title="(hcode: Int)Int" id="43364">improve</a>(<a title="Int" id="222816">hcode</a>: <span title="Int">Int</span>) = {
+    <span class="keyword">var</span> <a title="Int" id="222819">h</a>: <span title="Int">Int</span> = <a href="#222816" title="(x$1: Int)Int">hcode</a> + <a title="=&gt; Int" id="2865">~</a>(<a href="#222816" title="(x$1: Int)Int">hcode</a> &lt;&lt; <span title="Int(9)" class="int">9</span>)
+    <a href="#222819" title="Int">h</a> = <a href="#222819" title="(x$1: Int)Int">h</a> ^ (<a href="#222819" title="(x$1: Int)Int">h</a> &gt;&gt;&gt; <span title="Int(14)" class="int">14</span>)
+    <a href="#222819" title="Int">h</a> = <a href="#222819" title="(x$1: Int)Int">h</a> + (<a href="#222819" title="(x$1: Int)Int">h</a> &lt;&lt; <span title="Int(4)" class="int">4</span>)
+    <a href="#222819" title="(x$1: Int)Int">h</a> ^ (<a href="#222819" title="(x$1: Int)Int">h</a> &gt;&gt;&gt; <span title="Int(10)" class="int">10</span>)
+  }
+
+  <span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">def</span> <a title="(hcode: Int)Int" id="43365">index</a>(<a title="Int" id="222813">hcode</a>: <span title="Int">Int</span>) = <a href="#43364" title="(hcode: Int)Int">improve</a><a title="(x$1: Int)Int" id="2974">(</a><a href="#222813" title="Int">hcode</a>) &amp; (<a href="#43345" title="=&gt; Array[scala.collection.mutable.HashEntry[A,HashTable.this.Entry]]">table</a>.<a href="../../Array.scala.html#17715" title="(x$1: Int)Int">length</a> - <span title="Int(1)" class="int">1</span>)
+}
+
+
+
+        </pre>
+    </body>
+</html>

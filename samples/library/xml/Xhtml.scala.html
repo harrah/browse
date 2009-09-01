@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>xml/Xhtml.scala</title>
+        <script type="text/javascript" src="../jquery-all.js"></script>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+// $Id: Xhtml.scala 18004 2009-06-07 13:55:47Z extempore $
+
+<span class="keyword">package</span> scala.xml
+
+<span class="keyword">import</span> parsing.XhtmlEntities
+<span class="keyword">import</span> Utility.{ sbToString, isAtomAndNotText }
+
+/* (c) David Pollak  2007 WorldWide Conferencing, LLC */
+
+<span class="keyword">object</span> <a title="object scala.xml.Xhtml" id="8595">Xhtml</a>
+<a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  /**
+   * Convenience function: same as toXhtml(node, false, false)
+   * 
+   * @param node      the node
+   */
+  <span class="keyword">def</span> <a title="(node: scala.xml.Node)String" id="133558">toXhtml</a>(<a title="scala.xml.Node" id="133576">node</a>: <a href="Node.scala.html#8654" title="scala.xml.Node">Node</a>): <span title="String">String</span> = <a href="Utility.scala.html#26573" title="(f: (StringBuilder) =&gt; Unit)String">sbToString</a>(<a href="#133591" title="scala.xml.NamespaceBinding" id="133675">toXhtml</a>(x = <a href="#133576" title="scala.xml.Node" id="133669">node</a>, sb = _))
+  
+  /**
+   * Convenience function: amounts to calling toXhtml(node) on each
+   * node in the sequence.
+   * 
+   * @param nodeSeq   the node sequence
+   */  
+  <span class="keyword">def</span> <a title="(nodeSeq: scala.xml.NodeSeq)String" id="133559">toXhtml</a>(<a title="scala.xml.NodeSeq" id="133597">nodeSeq</a>: <a href="NodeSeq.scala.html#8522" title="scala.xml.NodeSeq">NodeSeq</a>): <span title="String">String</span> = <a href="Utility.scala.html#26573" title="(f: (StringBuilder) =&gt; Unit)String">sbToString</a>(<a href="#133690" title="scala.xml.NamespaceBinding" id="133713">sequenceToXML</a>(<a href="#133597" title="scala.xml.NodeSeq">nodeSeq</a>: <a href="../collection/Sequence.scala.html#4346" title="Seq[scala.xml.Node]">Seq</a>[Node], sb = _))    
+   
+  /** Elements which we believe are safe to minimize if minimizeTags is true.
+   *  See http://www.w3.org/TR/xhtml1/guidelines.html#C_3 
+   */
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="List[java.lang.String]" id="133560">minimizableElements</a> =
+    <a href="../collection/immutable/List.scala.html#17535" title="(xs: java.lang.String*)List[java.lang.String]">List</a>(<span title="java.lang.String(&quot;base&quot;)" class="string">&quot;base&quot;</span>, <span title="java.lang.String(&quot;meta&quot;)" class="string">&quot;meta&quot;</span>, <span title="java.lang.String(&quot;link&quot;)" class="string">&quot;link&quot;</span>, <span title="java.lang.String(&quot;hr&quot;)" class="string">&quot;hr&quot;</span>, <span title="java.lang.String(&quot;br&quot;)" class="string">&quot;br&quot;</span>, <span title="java.lang.String(&quot;param&quot;)" class="string">&quot;param&quot;</span>, <span title="java.lang.String(&quot;img&quot;)" class="string">&quot;img&quot;</span>, <span title="java.lang.String(&quot;area&quot;)" class="string">&quot;area&quot;</span>, <span title="java.lang.String(&quot;input&quot;)" class="string">&quot;input&quot;</span>, <span title="java.lang.String(&quot;col&quot;)" class="string">&quot;col&quot;</span>)
+ 
+  <span class="keyword">def</span> <a title="(x: scala.xml.Node,pscope: scala.xml.NamespaceBinding,sb: StringBuilder,stripComments: Boolean,decodeEntities: Boolean,preserveWhitespace: Boolean,minimizeTags: Boolean)Unit" id="133562">toXhtml</a>(
+    <a title="scala.xml.Node" id="133583">x</a>: <a href="Node.scala.html#8654" title="scala.xml.Node">Node</a>, 
+    <a title="scala.xml.NamespaceBinding" id="133591">pscope</a>: <a href="NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a> = <a href="TopScope.scala.html#8562" title="object scala.xml.TopScope">TopScope</a>,
+    <a title="StringBuilder" id="133592">sb</a>: <a href="../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a> = <a href="../collection/mutable/StringBuilder.scala.html#23348" title="()StringBuilder" class="keyword">new</a> <a href="../package.scala.html#14791" title="StringBuilder">StringBuilder</a>,
+    <a title="Boolean" id="133593">stripComments</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>,
+    <a title="Boolean" id="133594">decodeEntities</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>,
+    <a title="Boolean" id="133595">preserveWhitespace</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>,
+    <a title="Boolean" id="133596">minimizeTags</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(true)" class="keyword">true</span>): <span title="Unit">Unit</span> =
+  {    
+    <span class="keyword">def</span> <a title="(er: scala.xml.EntityRef)StringBuilder" id="133730">decode</a>(<a title="scala.xml.EntityRef" id="133732">er</a>: <a href="EntityRef.scala.html#8495" title="scala.xml.EntityRef">EntityRef</a>) = <a href="parsing/XhtmlEntities.scala.html#12147" title="object scala.xml.parsing.XhtmlEntities">XhtmlEntities</a>.<a href="parsing/XhtmlEntities.scala.html#94839" title="=&gt; Map[String,Char]">entMap</a>.<a href="../collection/generic/MapTemplate.scala.html#35273" title="(key: String)Option[Char]">get</a>(<a href="#133732" title="scala.xml.EntityRef">er</a>.<a href="EntityRef.scala.html#50362" title="=&gt; String">entityName</a>) <span title="StringBuilder" class="keyword">match</span> {
+      <span title="StringBuilder" class="keyword">case</span> <a id="1">Some</a>(<a title="Char" id="133737">chr</a>) <span class="keyword">if</span> <a href="#133737" title="Char">chr</a>.<a title="(x$1: Int)Boolean" id="2637">toInt</a> &gt;= <span title="Int(128)" class="int">128</span>  =&gt; <a href="#133592" title="StringBuilder">sb</a>.<a href="../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<a href="#133737" title="Char">chr</a>)
+      <span title="StringBuilder" class="keyword">case</span> _                              =&gt; <a href="#133732" title="scala.xml.EntityRef">er</a>.<a href="EntityRef.scala.html#50369" title="(sb: StringBuilder)StringBuilder">buildString</a>(<a href="#133592" title="StringBuilder">sb</a>)
+    }
+    <span class="keyword">def</span> <a title="=&gt; Boolean" id="133731">shortForm</a> = 
+      <a href="#133596" title="(x$1: Boolean)Boolean">minimizeTags</a> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span>
+      (<a href="#133583" title="scala.xml.Node">x</a>.<a href="Node.scala.html#21002" title="(x$1: AnyRef)Boolean" id="3624">child</a> <a title="(x$1: Boolean)Boolean" id="2208">==</a> <span title="Null(null)" class="keyword">null</span> || <a href="#133583" title="scala.xml.Node">x</a>.<a href="Node.scala.html#21002" title="=&gt; Seq[scala.xml.Node]">child</a>.<a href="../collection/generic/SequenceTemplate.scala.html#17338" title="(x$1: Int)Boolean" id="2950">length</a> == <span title="Int(0)" class="int">0</span>) &amp;&amp; 
+      (<a href="../collection/generic/SequenceTemplate.scala.html#17386" title="(elem: Any)Boolean">minimizableElements</a> contains <a href="#133583" title="scala.xml.Node">x</a>.<a href="Node.scala.html#20992" title="=&gt; String">label</a>)
+    
+    <a href="#133583" title="scala.xml.Node">x</a> <span title="Unit" class="keyword">match</span> {
+      <span title="Unit" class="keyword">case</span> <a title="scala.xml.Comment" id="133803">c</a>: <a href="Comment.scala.html#8408" title="scala.xml.Comment">Comment</a> <span class="keyword">if</span> <a title="=&gt; Boolean" id="2203">!</a><a href="#133593" title="Boolean">stripComments</a>     =&gt; <a href="Comment.scala.html#50340" title="(sb: StringBuilder)StringBuilder">c</a> <span title="Unit">buildString</span> <a href="#133592" title="StringBuilder">sb</a>
+      <span title="Unit" class="keyword">case</span> <a title="scala.xml.EntityRef" id="133825">er</a>: <a href="EntityRef.scala.html#8495" title="scala.xml.EntityRef">EntityRef</a> <span class="keyword">if</span> <a href="#133594" title="Boolean">decodeEntities</a>  =&gt; <a href="#133730" title="(er: scala.xml.EntityRef)StringBuilder">decode</a><span title="Unit">(</span><a href="#133825" title="scala.xml.EntityRef">er</a>)
+      <span title="Unit" class="keyword">case</span> <a title="scala.xml.SpecialNode" id="133828">x</a>: <a href="SpecialNode.scala.html#8711" title="scala.xml.SpecialNode">SpecialNode</a>                   =&gt; <a href="SpecialNode.scala.html#26457" title="(sb: StringBuilder)StringBuilder">x</a> <span title="Unit">buildString</span> <a href="#133592" title="StringBuilder">sb</a>
+      <span title="Unit" class="keyword">case</span> <a title="scala.xml.Group" id="133835">g</a>: <a href="Group.scala.html#8435" title="scala.xml.Group">Group</a>                         =&gt;
+        <a href="#133835" title="scala.xml.Group">g</a>.<a href="../collection/generic/IterableTemplate.scala.html#17287" title="(f: (scala.xml.Node) =&gt; Unit)Unit">nodes</a> foreach { <a href="#133562" title="(x: scala.xml.Node,pscope: scala.xml.NamespaceBinding,sb: StringBuilder,stripComments: Boolean,decodeEntities: Boolean,preserveWhitespace: Boolean,minimizeTags: Boolean)Unit">toXhtml</a>(<a href="#133863" title="scala.xml.Node">_</a>, <a href="#133583" title="scala.xml.Node">x</a>.<a href="Node.scala.html#20996" title="=&gt; scala.xml.NamespaceBinding">scope</a>, <a href="#133592" title="StringBuilder">sb</a>) }
+
+      <span title="Unit" class="keyword">case</span> _  =&gt;
+        <a href="#133592" title="StringBuilder">sb</a>.<a href="../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<span title="Char('&lt;')" class="char">'&lt;'</span>)
+        <a href="#133583" title="scala.xml.Node">x</a>.<a href="Node.scala.html#21011" title="(sb: StringBuilder)StringBuilder">nameToString</a>(<a href="#133592" title="StringBuilder">sb</a>)
+        <span title="Any" class="keyword">if</span> (<a href="#133583" title="scala.xml.Node">x</a>.<a href="Node.scala.html#21001" title="(x$1: AnyRef)Boolean" id="6533">attributes</a> ne <span title="Null(null)" class="keyword">null</span>) <a href="#133583" title="scala.xml.Node">x</a>.<a href="Node.scala.html#21001" title="=&gt; scala.xml.MetaData">attributes</a>.<a href="MetaData.scala.html#31893" title="(sb: StringBuilder)StringBuilder">buildString</a>(<a href="#133592" title="StringBuilder">sb</a>)
+        <a href="#133583" title="scala.xml.Node">x</a>.<a href="Node.scala.html#20996" title="=&gt; scala.xml.NamespaceBinding">scope</a>.<a href="NamespaceBinding.scala.html#32367" title="(sb: StringBuilder,stop: scala.xml.NamespaceBinding)Unit">buildString</a>(<a href="#133592" title="StringBuilder">sb</a>, <a href="#133591" title="scala.xml.NamespaceBinding">pscope</a>)
+        
+        <span title="Unit" class="keyword">if</span> (<a href="#133731" title="=&gt; Boolean">shortForm</a>) <a href="#133592" title="StringBuilder">sb</a>.<a href="../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">append</a><span title="Unit">(</span><span title="java.lang.String(&quot; /&gt;&quot;)" class="string">&quot; /&gt;&quot;</span>)
+        <span class="keyword">else</span> {
+          <a href="#133592" title="StringBuilder">sb</a>.<a href="../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<span title="Char('&gt;')" class="char">'&gt;'</span>)
+          <a href="#133563" title="(children: Seq[scala.xml.Node],pscope: scala.xml.NamespaceBinding,sb: StringBuilder,stripComments: Boolean,decodeEntities: Boolean,preserveWhitespace: Boolean,minimizeTags: Boolean)Unit">sequenceToXML</a>(<a href="#133583" title="scala.xml.Node">x</a>.<a href="Node.scala.html#21002" title="=&gt; Seq[scala.xml.Node]">child</a>, <a href="#133583" title="scala.xml.Node">x</a>.<a href="Node.scala.html#20996" title="=&gt; scala.xml.NamespaceBinding">scope</a>, <a href="#133592" title="StringBuilder">sb</a>)
+          <a href="#133592" title="StringBuilder">sb</a>.<a href="../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">append</a>(<span title="java.lang.String(&quot;&lt;/&quot;)" class="string">&quot;&lt;/&quot;</span>)
+          <a href="#133583" title="scala.xml.Node">x</a>.<a href="Node.scala.html#21011" title="(sb: StringBuilder)StringBuilder">nameToString</a>(<a href="#133592" title="StringBuilder">sb</a>)
+          <a href="#133592" title="StringBuilder">sb</a>.<a href="../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a><span title="Unit">(</span><span title="Char('&gt;')" class="char">'&gt;'</span>)
+        }
+    }
+  }
+
+  /**
+   * Amounts to calling toXhtml(node, ...) with the given parameters on each node.
+   */
+  <span class="keyword">def</span> <a title="(children: Seq[scala.xml.Node],pscope: scala.xml.NamespaceBinding,sb: StringBuilder,stripComments: Boolean,decodeEntities: Boolean,preserveWhitespace: Boolean,minimizeTags: Boolean)Unit" id="133563">sequenceToXML</a>(
+    <a title="Seq[scala.xml.Node]" id="133682">children</a>: <a href="../collection/Sequence.scala.html#4346" title="Seq[scala.xml.Node]">Seq</a>[Node],
+    <a title="scala.xml.NamespaceBinding" id="133690">pscope</a>: <a href="NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a> = <a href="TopScope.scala.html#8562" title="object scala.xml.TopScope">TopScope</a>,
+    <a title="StringBuilder" id="133691">sb</a>: <a href="../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a> = <a href="../collection/mutable/StringBuilder.scala.html#23348" title="()StringBuilder" class="keyword">new</a> <a href="../package.scala.html#14791" title="StringBuilder">StringBuilder</a>,
+    <a title="Boolean" id="133692">stripComments</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>,
+    <a title="Boolean" id="133693">decodeEntities</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>,
+    <a title="Boolean" id="133694">preserveWhitespace</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>,
+    <a title="Boolean" id="133695">minimizeTags</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(true)" class="keyword">true</span>): <span title="Unit">Unit</span> =
+  {
+    <span title="Unit" class="keyword">if</span> (<a href="#133682" title="Seq[scala.xml.Node]">children</a>.<a href="../collection/generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>)
+      <span title="Nothing" class="keyword">return</span>
+      
+    <span class="keyword">val</span> <a title="Boolean" id="133999">doSpaces</a> = <a href="../collection/generic/TraversableTemplate.scala.html#17183" title="(p: (scala.xml.Node) =&gt; Boolean)Boolean">children</a> forall <a href="Utility.scala.html#26574" title="(x: scala.xml.Node)Boolean">isAtomAndNotText</a> // interleave spaces
+    <span class="keyword">for</span> (<a title="scala.xml.Node" id="134049">c</a> &lt;- <a href="#133682" title="Seq[scala.xml.Node]">children</a>.<a href="../collection/generic/TraversableTemplate.scala.html#17217" title="(n: Int)Sequence[scala.xml.Node]">take</a><a href="../collection/generic/IterableTemplate.scala.html#17287" title="(f: (scala.xml.Node) =&gt; Any)Unit">(</a><a href="#133682" title="Seq[scala.xml.Node]">children</a>.<a href="../collection/generic/SequenceTemplate.scala.html#17338" title="(x$1: Int)Int" id="2964">length</a> - <span title="Int(1)" class="int">1</span>)) {
+      <a href="#133562" title="(x: scala.xml.Node,pscope: scala.xml.NamespaceBinding,sb: StringBuilder,stripComments: Boolean,decodeEntities: Boolean,preserveWhitespace: Boolean,minimizeTags: Boolean)Unit">toXhtml</a>(<a href="#134049" title="scala.xml.Node">c</a>, <a href="#133690" title="scala.xml.NamespaceBinding">pscope</a>, <a href="#133691" title="StringBuilder">sb</a>)
+      <span title="Any" class="keyword">if</span> (<a href="#133999" title="Boolean">doSpaces</a>) <a href="../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">sb</a> append <span title="Char(' ')" class="char">' '</span>
+    }
+    <a href="#133562" title="(x: scala.xml.Node,pscope: scala.xml.NamespaceBinding,sb: StringBuilder,stripComments: Boolean,decodeEntities: Boolean,preserveWhitespace: Boolean,minimizeTags: Boolean)Unit">toXhtml</a>(<a href="#133682" title="Seq[scala.xml.Node]">children</a>.<a href="../collection/generic/TraversableTemplate.scala.html#17214" title="=&gt; scala.xml.Node">last</a>, <a href="#133690" title="scala.xml.NamespaceBinding">pscope</a>, <a href="#133691" title="StringBuilder">sb</a>)
+  }
+}
+
+        </pre>
+    </body>
+</html>

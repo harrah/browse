@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>collection/immutable/PagedSeq.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2006-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: PagedSeq.scala 14497 2008-04-04 12:09:06Z washburn $
+
+
+<span class="keyword">package</span> scala.collection.immutable
+
+<span class="keyword">import</span> java.io._
+<span class="keyword">import</span> util.matching.Regex
+
+/** The PagedSeq object defines a lazy implementations of 
+ *  a random access sequence. 
+ */  
+<span class="keyword">object</span> <a title="object scala.collection.immutable.PagedSeq" id="9271">PagedSeq</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  <span class="keyword">final</span> <span class="keyword">val</span> <a title="Int" id="21952">UndeterminedEnd</a> = <a href="../../Math.scala.html#526" title="object Math">Math</a>.<a href="../../Math.scala.html#22672" title="=&gt; Int">MAX_INT</a>
+
+  /** Constructs a character sequence from a character iterator */
+  <span class="keyword">def</span> <a title="[T](source: Iterator[T])scala.collection.immutable.PagedSeq[T]" id="21954">fromIterator</a>[<a title="&gt;: Nothing &lt;: Any" id="21956">T</a>](<a title="Iterator[T]" id="123550">source</a>: <a href="../Iterator.scala.html#4274" title="Iterator[T]">Iterator</a>[T]): <a href="#9270" title="scala.collection.immutable.PagedSeq[T]">PagedSeq</a>[T] = 
+    <a href="#21979" title="(more: (Array[T], Int, Int) =&gt; Int)scala.collection.immutable.PagedSeq[T]" class="keyword">new</a> <a href="#9270" title="scala.collection.immutable.PagedSeq[T]">PagedSeq</a>[T]((data: <a href="../../Array.scala.html#885" title="Array[T]">Array</a>[T], start: <span title="Int">Int</span>, len: <span title="Int">Int</span>) =&gt; {
+      <span class="keyword">var</span> <a title="Int" id="123565">i</a> = <span title="Int(0)" class="int">0</span>
+      <span title="Unit" class="keyword">while</span> (<a href="#123565" title="(x$1: Int)Boolean">i</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <a href="#123564" title="Int">len</a> &amp;&amp; <a href="#123550" title="Iterator[T]">source</a>.<a href="../Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>) <a href="#123566" title="()Unit">{</a>
+        <a href="../../Array.scala.html#17717" title="(i: Int,x: T)Unit">data</a>(<a href="#123563" title="(x$1: Int)Int">start</a> + <a href="#123565" title="Int">i</a>) = <a href="#123550" title="Iterator[T]">source</a>.<a href="../Iterator.scala.html#19185" title="()T">next</a>
+        <a href="#123565" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+      }
+      <span title="Int" class="keyword">if</span> (<a href="#123565" title="(x$1: Int)Boolean">i</a> == <span title="Int(0)" class="int">0</span>) <span title="Int(-1)">-</span><span class="int">1</span> <span class="keyword">else</span> <a href="#123565" title="Int">i</a>
+    })
+
+  /** Constructs a character sequence from a character iterable */
+  <span class="keyword">def</span> <a title="[T](source: scala.collection.immutable.Iterable[T])scala.collection.immutable.PagedSeq[T]" id="21957">fromIterable</a>[<a title="&gt;: Nothing &lt;: Any" id="21959">T</a>](<a title="scala.collection.immutable.Iterable[T]" id="123659">source</a>: <a href="Iterable.scala.html#9402" title="scala.collection.immutable.Iterable[T]">Iterable</a>[T]): <a href="#9270" title="scala.collection.immutable.PagedSeq[T]">PagedSeq</a>[T] = 
+    <a href="#21954" title="(source: Iterator[T])scala.collection.immutable.PagedSeq[T]">fromIterator</a>(<a href="#123659" title="scala.collection.immutable.Iterable[T]">source</a>.<a href="../generic/IterableTemplate.scala.html#17285" title="=&gt; Iterator[T]">iterator</a>)
+
+  /** Constructs a character sequence from a string iterator */
+  <span class="keyword">def</span> <a title="(source: Iterator[String])scala.collection.immutable.PagedSeq[Char]" id="21960">fromStrings</a>(<a title="Iterator[String]" id="123667">source</a>: <a href="../Iterator.scala.html#4274" title="Iterator[String]">Iterator</a>[String]): <a href="#9270" title="scala.collection.immutable.PagedSeq[Char]">PagedSeq</a>[Char] = {
+    <span class="keyword">var</span> <a title="String" id="123669">current</a>: <span title="String">String</span> = <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>
+    <span class="keyword">def</span> <a title="(data: Array[Char],start: Int,len: Int)Int" id="123670">more</a>(<a title="Array[Char]" id="123671">data</a>: <a href="../../Array.scala.html#885" title="Array[Char]">Array</a>[Char], <a title="Int" id="123672">start</a>: <span title="Int">Int</span>, <a title="Int" id="123673">len</a>: <span title="Int">Int</span>): <span title="Int">Int</span> =
+      <span title="Int" class="keyword">if</span> (<a href="#123669" title="String">current</a>.<a title="(x$1: Int)Boolean" id="2952">length</a> != <span title="Int(0)" class="int">0</span>) {
+        <span class="keyword">val</span> <a title="Int" id="123684">cnt</a> = <a href="#123669" title="String">current</a>.<a href="../../runtime/RichInt.scala.html#19064" title="(that: Int)Int">length</a> min <a href="#123673" title="Int">len</a>
+        <a href="#123669" title="String">current</a>.<a title="(x$1: Int,x$2: Int,x$3: Array[Char],x$4: Int)Unit" id="6921">getChars</a>(<span title="Int(0)" class="int">0</span>, <a href="#123684" title="Int">cnt</a>, <a href="#123671" title="Array[Char]">data</a>, <a href="#123672" title="Int">start</a>)
+        <a href="#123669" title="String">current</a> = <a href="#123669" title="String">current</a>.<a title="(x$1: Int)java.lang.String" id="7003">substring</a>(<a href="#123684" title="Int">cnt</a>)
+        <span title="Int" class="keyword">if</span> (<a href="#123684" title="(x$1: Int)Boolean">cnt</a> == <a href="#123673" title="Int">len</a>) <a href="#123684" title="Int">cnt</a>
+        <span class="keyword">else</span> <span title="(x$1: Int)Int">(</span><a href="#123670" title="(data: Array[Char],start: Int,len: Int)Int">more</a><a href="../../runtime/RichInt.scala.html#19065" title="(that: Int)Int">(</a><a href="#123671" title="Array[Char]">data</a>, <a href="#123672" title="(x$1: Int)Int">start</a> + <a href="#123684" title="Int">cnt</a>, <a href="#123673" title="(x$1: Int)Int">len</a> - <a href="#123684" title="Int">cnt</a>) max <span title="Int(0)" class="int">0</span>) + <a href="#123684" title="Int">cnt</a>
+      } <span class="keyword">else</span> <span title="Int" class="keyword">if</span> (<a href="#123667" title="Iterator[String]">source</a>.<a href="../Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>) {
+        <a href="#123669" title="String">current</a> = <a href="#123667" title="Iterator[String]">source</a>.<a href="../Iterator.scala.html#19185" title="()String">next</a>
+        <a href="#123670" title="(data: Array[Char],start: Int,len: Int)Int">more</a>(<a href="#123671" title="Array[Char]">data</a>, <a href="#123672" title="Int">start</a>, <a href="#123673" title="Int">len</a>)
+      } <span class="keyword">else</span> <span title="Int(-1)">-</span><span class="int">1</span>
+    <a href="#21979" title="(more: (Array[Char], Int, Int) =&gt; Int)scala.collection.immutable.PagedSeq[Char]" class="keyword">new</a> <a href="#9270" title="scala.collection.immutable.PagedSeq[Char]">PagedSeq</a>(<a href="#123670" title="(data: Array[Char],start: Int,len: Int)Int">more</a>(<a href="#123807" title="Array[Char]">_</a>: <a href="../../Array.scala.html#885" title="Array[Char]">Array</a>[Char], <a href="#123808" title="Int">_</a>: <span title="Int">Int</span>, <a href="#123809" title="Int">_</a>: <span title="Int">Int</span>))
+  }
+
+  /** Constructs a character sequence from a string iterable */
+  <span class="keyword">def</span> <a title="(source: scala.collection.immutable.Iterable[String])scala.collection.immutable.PagedSeq[Char]" id="21961">fromStrings</a>(<a title="scala.collection.immutable.Iterable[String]" id="123815">source</a>: <a href="Iterable.scala.html#9402" title="scala.collection.immutable.Iterable[String]">Iterable</a>[String]): <a href="#9270" title="scala.collection.immutable.PagedSeq[Char]">PagedSeq</a>[Char] = 
+    <a href="#21960" title="(source: Iterator[String])scala.collection.immutable.PagedSeq[Char]">fromStrings</a>(<a href="#123815" title="scala.collection.immutable.Iterable[String]">source</a>.<a href="../generic/IterableTemplate.scala.html#17285" title="=&gt; Iterator[String]">iterator</a>)
+
+  /** Constructs a character sequence from a line iterator
+   *  Lines do not contain trailing `\n' characters; The method inserts
+   *  a line separator `\n' between any two lines in the sequence.
+   */
+  <span class="keyword">def</span> <a title="(source: Iterator[String])scala.collection.immutable.PagedSeq[Char]" id="21962">fromLines</a>(<a title="Iterator[String]" id="123824">source</a>: <a href="../Iterator.scala.html#4274" title="Iterator[String]">Iterator</a>[String]): <a href="#9270" title="scala.collection.immutable.PagedSeq[Char]">PagedSeq</a>[Char] = {
+    <span class="keyword">var</span> <a title="Boolean" id="123826">isFirst</a> = <span title="Boolean(true)" class="keyword">true</span>
+    <a href="#21960" title="(source: Iterator[String])scala.collection.immutable.PagedSeq[Char]">fromStrings</a>(<a href="../Iterator.scala.html#19189" title="(f: (String) =&gt; String)Iterator[String]">source</a> map { <a title="String" id="123836">line</a> =&gt;
+      <span title="String" class="keyword">if</span> (<a href="#123826" title="Boolean">isFirst</a>) <a href="#123836" title="String">line</a> 
+      <span class="keyword">else</span> { 
+        <a href="#123826" title="Boolean">isFirst</a> = <span title="Boolean(false)" class="keyword">false</span>
+        <a title="(x$1: Any)java.lang.String" id="6542" class="string">&quot;\n&quot;</a>+<a href="#123836" title="String">line</a>
+      }
+    }) 
+  }                    
+
+  /** Constructs a character sequence from a line iterable
+   *  Lines do not contain trailing `\n' characters; The method inserts
+   *  a line separator `\n' between any two lines in the sequence.
+   */
+  <span class="keyword">def</span> <a title="(source: scala.collection.immutable.Iterable[String])scala.collection.immutable.PagedSeq[Char]" id="21963">fromLines</a>(<a title="scala.collection.immutable.Iterable[String]" id="123844">source</a>: <a href="Iterable.scala.html#9402" title="scala.collection.immutable.Iterable[String]">Iterable</a>[String]): <a href="#9270" title="scala.collection.immutable.PagedSeq[Char]">PagedSeq</a>[Char] =
+    <a href="#21962" title="(source: Iterator[String])scala.collection.immutable.PagedSeq[Char]">fromLines</a>(<a href="#123844" title="scala.collection.immutable.Iterable[String]">source</a>.<a href="../generic/IterableTemplate.scala.html#17285" title="=&gt; Iterator[String]">iterator</a>)
+
+  /** Constructs a character sequence from an input reader
+   */
+  <span class="keyword">def</span> <a title="(source: java.io.Reader)scala.collection.immutable.PagedSeq[Char]" id="21964">fromReader</a>(<a title="java.io.Reader" id="21968">source</a>: <a title="java.io.Reader" id="3676">Reader</a>): <a href="#9270" title="scala.collection.immutable.PagedSeq[Char]">PagedSeq</a>[Char] =
+    <a href="#21979" title="(more: (Array[Char], Int, Int) =&gt; Int)scala.collection.immutable.PagedSeq[Char]" class="keyword">new</a> <a href="#9270" title="scala.collection.immutable.PagedSeq[Char]">PagedSeq</a>(<a href="#21968" title="java.io.Reader">source</a>.<a title="(x$1: Array[Char],x$2: Int,x$3: Int)Int" id="21939">read</a>(<a href="#123863" title="Array[Char]">_</a>: <a href="../../Array.scala.html#885" title="Array[Char]">Array</a>[Char], <a href="#123864" title="Int">_</a>: <span title="Int">Int</span>, <a href="#123865" title="Int">_</a>: <span title="Int">Int</span>))
+
+  /** Constructs a character sequence from an input file
+   */
+  <span class="keyword">def</span> <a title="(source: java.io.File)scala.collection.immutable.PagedSeq[Char]" id="21965">fromFile</a>(<a title="java.io.File" id="124030">source</a>: <span title="java.io.File">File</span>): <a href="#9270" title="scala.collection.immutable.PagedSeq[Char]">PagedSeq</a>[Char] = 
+    <a href="#21964" title="(source: java.io.Reader)scala.collection.immutable.PagedSeq[Char]">fromReader</a>(<a title="(x$1: java.io.File)java.io.FileReader" id="124034" class="keyword">new</a> <a title="java.io.FileReader" id="3976">FileReader</a>(<a href="#124030" title="java.io.File">source</a>))
+    
+  /** Constructs a character sequence from a file with given name
+   */
+  <span class="keyword">def</span> <a title="(source: String)scala.collection.immutable.PagedSeq[Char]" id="21966">fromFile</a>(<a title="String" id="124046">source</a>: <span title="String">String</span>): <a href="#9270" title="scala.collection.immutable.PagedSeq[Char]">PagedSeq</a>[Char] = 
+    <a href="#21965" title="(source: java.io.File)scala.collection.immutable.PagedSeq[Char]">fromFile</a>(<span title="java.io.File" class="keyword">new</span> <span title="java.io.File">File</span>(<a href="#124046" title="String">source</a>))
+
+  /** Constructs a character sequence from a scala.io.Source value
+   */
+  <span class="keyword">def</span> <a title="(source: scala.io.Source)scala.collection.immutable.PagedSeq[Char]" id="21967">fromSource</a>(<a title="scala.io.Source" id="124187">source</a>: io.<a href="../../io/Source.scala.html#9826" title="scala.io.Source">Source</a>) = 
+    <a href="#21962" title="(source: Iterator[String])scala.collection.immutable.PagedSeq[Char]">fromLines</a>(<a href="#124187" title="scala.io.Source">source</a>.<a href="../../io/Source.scala.html#83267" title="(separator: String)Iterator[String]">getLines</a>())
+}
+
+
+<span class="keyword">import</span> PagedSeq._
+
+/** An implementation of lazily computed sequences, where elements are stored
+ *  in ``pages'', i.e. arrays of fixed size.
+ *
+ * @author Martin Odersky 
+ */
+<span class="keyword">class</span> <a title="class PagedSeq[T] extends java.lang.Object with Vector[T] with ScalaObject" id="9270">PagedSeq</a>[<a title="&gt;: Nothing &lt;: Any" id="13653">T</a>] <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">protected</a>(
+  <a title="(Array[T], Int, Int) =&gt; Int" id="123542">more</a>: (Array[T], Int, Int) =&gt; Int, 
+  <a title="scala.collection.immutable.Page[T]" id="123543">first1</a>: <a href="#9132" title="scala.collection.immutable.Page[T]">Page</a>[T],
+  <a title="Int" id="123544">start</a>: <span title="Int">Int</span>,
+  <a title="Int" id="123545">end</a>: <span title="Int">Int</span>)
+<span class="keyword">extends</span> collection.<a href="../Vector.scala.html#4361" title="Vector[T]">Vector</a>[T]
+{
+  /**  A paged sequence is constructed from a method that produces more characters when asked.
+   *  The producer method is analogous to the read method in java.io.Reader.
+   *  It takes three parameters: an array of characters, a start index, and an end index.
+   *  It should try to fill the array between start and end indices (not including end index).
+   *  It returns the number of characters produced, or -1 if end of logical input stream was reached
+   *  before any character was read.
+   */  
+  <span class="keyword">def</span> <a title="(more: (Array[T], Int, Int) =&gt; Int)scala.collection.immutable.PagedSeq[T]" id="21979" class="keyword">this</a>(<a title="(Array[T], Int, Int) =&gt; Int" id="123546">more</a>: (Array[T], Int, Int) =&gt; Int) = <a href="#9270" title="PagedSeq.this.type" class="keyword">this</a>(<a href="#123546" title="(Array[T], Int, Int) =&gt; Int">more</a>, <span title="scala.collection.immutable.Page[T]" class="keyword">new</span> <a href="#9132" title="scala.collection.immutable.Page[T]">Page</a>[T](<span title="Int(0)" class="int">0</span>), <span title="Int(0)" class="int">0</span>, <a href="#21952" title="=&gt; Int">UndeterminedEnd</a>)
+  
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="scala.collection.immutable.Page[T]" id="21981">current</a>: <a href="#9132" title="scala.collection.immutable.Page[T]">Page</a>[T] = <a href="#123543" title="scala.collection.immutable.Page[T]">first1</a>
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="=&gt; scala.collection.immutable.Page[T]" id="21983">latest</a> = <a href="#123543" title="scala.collection.immutable.Page[T]">first1</a>.<a href="#22201" title="=&gt; scala.collection.immutable.Page[T]">latest</a>
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="()scala.collection.immutable.Page[T]" id="21984">addMore</a>() = <a href="#21983" title="=&gt; scala.collection.immutable.Page[T]">latest</a>.<a href="#22203" title="(more: (Array[T], Int, Int) =&gt; Int)scala.collection.immutable.Page[T]">addMore</a>(<a href="#123542" title="(Array[T], Int, Int) =&gt; Int">more</a>)
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(absindex: Int)scala.collection.immutable.Page[T]" id="21985">page</a>(<a title="Int" id="22170">absindex</a>: <span title="Int">Int</span>) = {
+    <span title="Unit" class="keyword">if</span> (<a href="#22170" title="(x$1: Int)Boolean">absindex</a> &lt; <a href="#21981" title="=&gt; scala.collection.immutable.Page[T]">current</a>.<a href="#22199" title="=&gt; Int">start</a>) 
+      <a href="#21981" title="(x$1: scala.collection.immutable.Page[T])Unit">current</a> = <a href="#123543" title="scala.collection.immutable.Page[T]">first1</a>
+    <span title="Unit" class="keyword">while</span> (<a href="#22170" title="(x$1: Int)Boolean">absindex</a> <span title="(x$1: Boolean)Boolean">&gt;=</span> <a href="#21981" title="=&gt; scala.collection.immutable.Page[T]">current</a>.<a href="#22200" title="=&gt; Int">end</a> &amp;&amp; <a href="#21981" title="=&gt; scala.collection.immutable.Page[T]">current</a>.<a href="#22186" title="(x$1: AnyRef)Boolean">next</a> != <span title="Null(null)" class="keyword">null</span>)
+      <a href="#21981" title="(x$1: scala.collection.immutable.Page[T])Unit">current</a> = <a href="#21981" title="=&gt; scala.collection.immutable.Page[T]">current</a>.<a href="#22186" title="=&gt; scala.collection.immutable.Page[T]">next</a>
+    <span title="Unit" class="keyword">while</span> (<a href="#22170" title="(x$1: Int)Boolean">absindex</a> <span title="(x$1: Boolean)Boolean">&gt;=</span> <a href="#21981" title="=&gt; scala.collection.immutable.Page[T]">current</a>.<a href="#22200" title="=&gt; Int">end</a> &amp;&amp; <span title="=&gt; Boolean">!</span><a href="#21981" title="=&gt; scala.collection.immutable.Page[T]">current</a>.<a href="#22195" title="=&gt; Boolean">isLast</a>) {
+      <a href="#21981" title="(x$1: scala.collection.immutable.Page[T])Unit">current</a> = <a href="#21984" title="()scala.collection.immutable.Page[T]">addMore</a>()
+    }
+    <a href="#21981" title="=&gt; scala.collection.immutable.Page[T]">current</a>
+  }
+
+  /** The length of the character sequence
+   *  Note: calling this method will force sequence to be read until the end.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Int" id="21986">length</a>: <span title="Int">Int</span> = {
+    <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span><a href="#21983" title="=&gt; scala.collection.immutable.Page[T]">latest</a>.<a href="#22195" title="=&gt; Boolean">isLast</a>) <a href="#21984" title="()scala.collection.immutable.Page[T]">addMore</a><a href="#124253" title="()Unit">(</a>)
+    <span title="(x$1: Int)Int">(</span><a href="#21983" title="=&gt; scala.collection.immutable.Page[T]">latest</a>.<a href="../../runtime/RichInt.scala.html#19064" title="(that: Int)Int">end</a> min <a href="#123545" title="Int">end</a>) - <a href="#123544" title="Int">start</a>
+  }
+
+  /** The character at position `index'. 
+   */
+  <span class="keyword">def</span> <a title="(index: Int)T" id="21987">apply</a>(<a title="Int" id="22135">index</a>: <span title="Int">Int</span>) =
+    <span title="T" class="keyword">if</span> (<a href="#21988" title="(index: Int)Boolean">isDefinedAt</a>(<a href="#22135" title="Int">index</a>)) <a href="#21985" title="(absindex: Int)scala.collection.immutable.Page[T]">page</a><a href="#22202" title="(index: Int)T">(</a><a href="#22135" title="(x$1: Int)Int">index</a> + <a href="#123544" title="Int">start</a>)(<a href="#22135" title="(x$1: Int)Int">index</a> + <a href="#123544" title="Int">start</a>)
+    <span class="keyword">else</span> <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.IndexOutOfBoundsException" class="keyword">new</span> <a href="../../Predef.scala.html#16166" title="java.lang.IndexOutOfBoundsException">IndexOutOfBoundsException</a>(<a href="#22135" title="Int">index</a>.<span title="()java.lang.String">toString</span>)
+
+  /** Is character sequence defined at `index'?
+   *  Unlike `length' this operation does not force reading
+   *  a lazy sequence to the end.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(index: Int)Boolean" id="21988">isDefinedAt</a>(<a title="Int" id="22140">index</a>: <span title="Int">Int</span>) = 
+    <a href="#22140" title="(x$1: Int)Boolean">index</a> <span title="(x$1: Boolean)Boolean">&gt;=</span> <span title="Int(0)" class="int">0</span> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <a href="#22140" title="(x$1: Int)Boolean">index</a> &lt; <a href="#123545" title="(x$1: Int)Int">end</a> - <a href="#123544" title="Int">start</a> &amp;&amp; {
+      <span class="keyword">val</span> <a title="scala.collection.immutable.Page[T]" id="22169">p</a> = <a href="#21985" title="(absindex: Int)scala.collection.immutable.Page[T]">page</a>(<a href="#22140" title="(x$1: Int)Int">index</a> + <a href="#123544" title="Int">start</a>); <a href="#22140" title="(x$1: Int)Int">index</a> <span title="(x$1: Int)Boolean">+</span> <a href="#123544" title="Int">start</a> &lt; <a href="#22169" title="scala.collection.immutable.Page[T]">p</a>.<a href="#22200" title="=&gt; Int">end</a>
+    }
+    
+  /** the subsequence from index `start' up to and excluding 
+   *  the minimum of index `end' and the length of the current sequence.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(_start: Int,_end: Int)scala.collection.immutable.PagedSeq[T]" id="21989">slice</a>(<a title="Int" id="22498">_start</a>: <span title="Int">Int</span>, <a title="Int" id="22499">_end</a>: <span title="Int">Int</span>): <a href="#9270" title="scala.collection.immutable.PagedSeq[T]">PagedSeq</a>[T] = {
+    <a href="#21985" title="(absindex: Int)scala.collection.immutable.Page[T]">page</a>(<a href="#123544" title="Int">start</a>)
+    <span class="keyword">val</span> <a title="Int" id="124290">s</a> = <a href="#123544" title="(x$1: Int)Int">start</a> + <a href="#22498" title="Int">_start</a>
+    <span class="keyword">val</span> <a title="Int" id="124291">e</a> = <span title="Int" class="keyword">if</span> (<a href="#22499" title="(x$1: Int)Boolean">_end</a> == <a href="#21952" title="=&gt; Int">UndeterminedEnd</a>) <a href="#22499" title="Int">_end</a> <span class="keyword">else</span> <a href="#123544" title="(x$1: Int)Int">start</a> + <a href="#22499" title="Int">_end</a>
+    <span class="keyword">var</span> <a title="scala.collection.immutable.Page[T]" id="124292">f</a> = <a href="#123543" title="scala.collection.immutable.Page[T]">first1</a>
+    <span title="Unit" class="keyword">while</span> (<a href="#124292" title="scala.collection.immutable.Page[T]">f</a>.<a href="#22200" title="(x$1: Int)Boolean" id="2956">end</a> <span title="(x$1: Boolean)Boolean">&lt;=</span> <a href="#124290" title="Int">s</a> &amp;&amp; <span title="=&gt; Boolean">!</span><a href="#124292" title="scala.collection.immutable.Page[T]">f</a>.<a href="#22195" title="=&gt; Boolean">isLast</a>) <a href="#124292" title="scala.collection.immutable.Page[T]">f</a> = <a href="#124292" title="scala.collection.immutable.Page[T]">f</a>.<a href="#22186" title="=&gt; scala.collection.immutable.Page[T]">next</a>
+    <span title="scala.collection.immutable.PagedSeq[T]" class="keyword">new</span> <a href="#9270" title="scala.collection.immutable.PagedSeq[T]">PagedSeq</a>(<a href="#123542" title="(Array[T], Int, Int) =&gt; Int">more</a>, <a href="#124292" title="scala.collection.immutable.Page[T]">f</a>, <a href="#124290" title="Int">s</a>, <a href="#124291" title="Int">e</a>)
+  }
+
+  /** the subsequence from index `start' up to the  
+   *  length of the current sequence.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(start: Int)scala.collection.immutable.PagedSeq[T]" id="21990">slice</a>(<a title="Int" id="22511">start</a>: <span title="Int">Int</span>) = <a href="#21989" title="(_start: Int,_end: Int)scala.collection.immutable.PagedSeq[T]">slice</a>(<a href="#22511" title="Int">start</a>, <a href="#21952" title="=&gt; Int">UndeterminedEnd</a>)
+
+  /** Convert sequence to string */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="21991">toString</a> = {
+    <span class="keyword">val</span> <a title="StringBuilder" id="23109">buf</a> = <a href="../mutable/StringBuilder.scala.html#23348" title="()StringBuilder" class="keyword">new</a> <a href="../../package.scala.html#14791" title="StringBuilder">StringBuilder</a>
+    <span class="keyword">for</span> (<a title="T" id="23438">ch</a> &lt;- <a href="#9270" title="PagedSeq.this.type">PagedSeq</a>.<span class="keyword">this</span>.<a href="../Iterator.scala.html#19219" title="(f: (T) =&gt; StringBuilder)Unit">iterator</a>) <a href="../mutable/StringBuilder.scala.html#23369" title="(x: Any)StringBuilder">buf</a> append <a href="#23438" title="T">ch</a>
+    <a href="#23109" title="StringBuilder">buf</a>.<a href="../mutable/StringBuilder.scala.html#23409" title="()String">toString</a>
+  }
+}
+
+
+/** Page containing up to PageSize characters of the input sequence. 
+ */
+<span class="keyword">private</span> <span class="keyword">class</span> <a title="class Page[T] extends java.lang.Object with ScalaObject" id="9132">Page</a>[<a title="&gt;: Nothing &lt;: Any" id="13654">T</a>]<a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><span class="keyword">val</span> <a title="Int" id="124247">num</a>: <span title="Int">Int</span>) {
+
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">val</span> <a title="Int(4096)" id="22183">PageSize</a> = <span title="Int(4096)" class="int">4096</span>
+
+  /** The next page in the sequence */
+  <span class="keyword">var</span> <a title="scala.collection.immutable.Page[T]" id="22186">next</a>  : <a href="#9132" title="scala.collection.immutable.Page[T]">Page</a>[T] = <span title="Null(null)" class="keyword">null</span>
+
+  /** A later page in the sequence, serves a cachae for pointing to last page */
+  <span class="keyword">var</span> <a title="scala.collection.immutable.Page[T]" id="22189">later</a> : <a href="#9132" title="scala.collection.immutable.Page[T]">Page</a>[T] = <a href="#9132" title="scala.collection.immutable.Page[T]" class="keyword">this</a>
+
+  /** The number of characters read into this page */
+  <span class="keyword">var</span> <a title="Int" id="22192">filled</a>: <span title="Int">Int</span> = <span title="Int(0)" class="int">0</span>
+
+  /** Is this page the permamnently last one in the sequence? Only true once `more'
+   *  method has returned -1 to signal end of input. */
+  <span class="keyword">var</span> <a title="Boolean" id="22195">isLast</a>: <a title="Boolean" id="1949">Boolean</a> = <span title="Boolean(false)" class="keyword">false</span>
+
+  /** The character array */
+  <span class="keyword">final</span> <span class="keyword">val</span> <a title="Array[T]" id="22197">data</a> = <span title="Array[T]" class="keyword">new</span> <a href="../../Array.scala.html#885" title="Array[T]">Array</a>[T](<span title="Int(4096)">PageSize</span>)
+
+  /** The index of the first character in this page relative to the whole sequence */ 
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; Int" id="22199">start</a> = <a href="#124247" title="(x$1: Int)Int" id="2966">num</a> * <span title="Int(4096)">PageSize</span>
+
+  /** The index of the character following the last charcater in this page relative 
+   *  to the whole sequence */ 
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; Int" id="22200">end</a> = <a href="#22199" title="(x$1: Int)Int">start</a> + <a href="#22192" title="=&gt; Int">filled</a>
+
+  /** The currently last page in the sequence; might change as more charcaters are appended */
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; scala.collection.immutable.Page[T]" id="22201">latest</a>: <a href="#9132" title="scala.collection.immutable.Page[T]">Page</a>[T] = {
+    <span title="Unit" class="keyword">if</span> (<a href="#22189" title="=&gt; scala.collection.immutable.Page[T]">later</a>.<a href="#22186" title="(x$1: AnyRef)Boolean">next</a> != <span title="Null(null)" class="keyword">null</span>) <a href="#22189" title="(x$1: scala.collection.immutable.Page[T])Unit">later</a> = <a href="#22189" title="=&gt; scala.collection.immutable.Page[T]">later</a>.<a href="#22186" title="=&gt; scala.collection.immutable.Page[T]">next</a>.<a href="#22201" title="=&gt; scala.collection.immutable.Page[T]">latest</a>
+    <a href="#22189" title="=&gt; scala.collection.immutable.Page[T]">later</a>
+  }
+
+  /** The character at given sequence index. 
+   *  That index is relative to the whole sequence, not the page. */
+  <span class="keyword">def</span> <a title="(index: Int)T" id="22202">apply</a>(<a title="Int" id="22340">index</a>: <span title="Int">Int</span>) = {
+    <span title="Unit" class="keyword">if</span> (<a href="#22340" title="(x$1: Int)Boolean">index</a> <a title="(x$1: Boolean)Boolean" id="2208">&lt;</a> <a href="#22199" title="=&gt; Int">start</a> || <a href="#22340" title="(x$1: Int)Int">index</a> <span title="(x$1: Int)Boolean">-</span> <a href="#22199" title="=&gt; Int">start</a> &gt;= <a href="#22192" title="=&gt; Int">filled</a>) <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.IndexOutOfBoundsException" class="keyword">new</span> <a href="../../Predef.scala.html#16166" title="java.lang.IndexOutOfBoundsException">IndexOutOfBoundsException</a>(<a href="#22340" title="Int">index</a>.<span title="()java.lang.String">toString</span>)
+    <a href="../../Array.scala.html#17716" title="(i: Int)T">data</a>(<a href="#22340" title="(x$1: Int)Int">index</a> - <a href="#22199" title="=&gt; Int">start</a>)
+  }
+
+  /** produces more characters by calling `more' and appends them on the current page, 
+   *  or fills a subsequent page if current page is full 
+   *  pre: if current page is full, it is the last one in the sequence.
+   */
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(more: (Array[T], Int, Int) =&gt; Int)scala.collection.immutable.Page[T]" id="22203">addMore</a>(<a title="(Array[T], Int, Int) =&gt; Int" id="22261">more</a>: (Array[T], Int, Int) =&gt; Int): <a href="#9132" title="scala.collection.immutable.Page[T]">Page</a>[T] =
+    <span title="scala.collection.immutable.Page[T]" class="keyword">if</span> (<a href="#22192" title="(x$1: Int)Boolean">filled</a> == <span title="Int(4096)">PageSize</span>) {
+      <a href="#22186" title="(x$1: scala.collection.immutable.Page[T])Unit">next</a> = <span title="scala.collection.immutable.Page[T]" class="keyword">new</span> <a href="#9132" title="scala.collection.immutable.Page[T]">Page</a>[T](<a href="#124247" title="(x$1: Int)Int">num</a> + <span title="Int(1)" class="int">1</span>)
+      <a href="#22186" title="=&gt; scala.collection.immutable.Page[T]">next</a>.<a href="#22203" title="(more: (Array[T], Int, Int) =&gt; Int)scala.collection.immutable.Page[T]">addMore</a>(<a href="#22261" title="(Array[T], Int, Int) =&gt; Int">more</a>)
+    } <span class="keyword">else</span> {
+      <span class="keyword">val</span> <a title="Int" id="124424">count</a> = <a href="../../Function3.scala.html#27146" title="(v1: Array[T],v2: Int,v3: Int)Int">more</a>(<a href="#22197" title="=&gt; Array[T]">data</a>, <a href="#22192" title="=&gt; Int">filled</a>, <span title="(x$1: Int)Int">PageSize</span> - <a href="#22192" title="=&gt; Int">filled</a>) 
+      <span title="Unit" class="keyword">if</span> (<a href="#124424" title="(x$1: Int)Boolean">count</a> &lt; <span title="Int(0)" class="int">0</span>) <a href="#22195" title="(x$1: Boolean)Unit">isLast</a> = <span title="Boolean(true)" class="keyword">true</span>
+      <span class="keyword">else</span> <a href="#22192" title="(x$1: Int)Unit">filled</a> += <a href="#124424" title="Int">count</a>
+      <a href="#9132" title="scala.collection.immutable.Page[T]" class="keyword">this</a>
+    }
+}
+
+        </pre>
+    </body>
+</html>

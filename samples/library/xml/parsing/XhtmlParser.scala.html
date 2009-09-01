@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>xml/parsing/XhtmlParser.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: XhtmlParser.scala 18387 2009-07-24 15:28:37Z odersky $
+
+
+<span class="keyword">package</span> scala.xml
+<span class="keyword">package</span> parsing
+
+<span class="keyword">import</span> scala.io.Source
+
+/** &lt;p&gt;
+ *    Extends the Markup Parser to do the right thing (tm) with PCData blocks.
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    (c) David Pollak, 2007 WorldWide Conferencing, LLC.
+ *  &lt;/p&gt;
+ */
+<span class="keyword">trait</span> <a title="trait PCDataMarkupParser[PCM &lt;: scala.xml.parsing.MarkupParser with scala.xml.parsing.MarkupHandler] extends java.lang.Object with scala.xml.parsing.MarkupParser with ScalaObject" id="12065">PCDataMarkupParser</a>[<a title="&gt;: Nothing &lt;: scala.xml.parsing.MarkupParser with scala.xml.parsing.MarkupHandler" id="16435">PCM</a> &lt;: <a id="1">MarkupParser</a> <span class="keyword">with</span> MarkupHandler] <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="MarkupParser.scala.html#12074" title="scala.xml.parsing.MarkupParser">MarkupParser</a> { self: PCM =&gt;
+
+  /** '&amp;lt;! CharData ::= [CDATA[ ( {char} - {char}&quot;]]&amp;gt;&quot;{char} ) ']]&amp;gt;'
+   *
+   * see [15]
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; scala.xml.NodeSeq" id="234040">xCharData</a>: <a href="../NodeSeq.scala.html#8522" title="scala.xml.NodeSeq">NodeSeq</a> = {
+    <a href="MarkupParser.scala.html#83211" title="(that: Seq[Char])Unit">xToken</a>(<a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;[CDATA[&quot;</a>)
+    <span class="keyword">val</span> <a title="Int" id="234047">pos1</a> = <a href="MarkupParser.scala.html#83181" title="=&gt; Int">pos</a>
+    <span class="keyword">val</span> <a title="StringBuilder" id="234048">sb</a>: <a href="../../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a> = <a href="../../collection/mutable/StringBuilder.scala.html#23348" title="()StringBuilder" class="keyword">new</a> <a href="../../package.scala.html#14791" title="StringBuilder">StringBuilder</a>()
+    <span title="Unit" class="keyword">while</span> (<span title="Boolean(true)" class="keyword">true</span>) <a href="#234049" title="()Unit">{</a>
+      <span title="StringBuilder" class="keyword">if</span> (<a href="MarkupParser.scala.html#83190" title="(x$1: Char)Boolean">ch</a><span title="(x$1: Boolean)Boolean">==</span><span title="Char(']')" class="char">']'</span> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span>
+          { <a href="#234048" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<a href="MarkupParser.scala.html#83190" title="=&gt; Char">ch</a>); <a href="MarkupParser.scala.html#83209" title="=&gt; Unit">nextch</a>; <a href="MarkupParser.scala.html#83190" title="(x$1: Char)Boolean">ch</a> == <span title="Char(']')" class="char">']'</span> } &amp;&amp;
+          { <a href="#234048" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<a href="MarkupParser.scala.html#83190" title="=&gt; Char">ch</a>); <a href="MarkupParser.scala.html#83209" title="=&gt; Unit">nextch</a>; <a href="MarkupParser.scala.html#83190" title="(x$1: Char)Boolean">ch</a> == <span title="Char('&gt;')" class="char">'&gt;'</span> } ) {
+            <a href="#234048" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23355" title="(n: Int)Unit">setLength</a>(<a href="#234048" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23352" title="(x$1: Int)Int" id="2964">length</a> - <span title="Int(2)" class="int">2</span>);
+            <a href="MarkupParser.scala.html#83209" title="=&gt; Unit">nextch</a>; 
+            <span title="Nothing" class="keyword">return</span> <a href="../PCData.scala.html#68058" title="(_data: String)scala.xml.PCData">PCData</a>(<a href="#234048" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23409" title="()String">toString</a>)
+          } <span class="keyword">else</span> <a href="#234048" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>( <a href="MarkupParser.scala.html#83190" title="=&gt; Char">ch</a> );
+      <a href="MarkupParser.scala.html#83209" title="=&gt; Unit">nextch</a>; 
+    }
+    // bq: (todo) increase grace when meeting CDATA section
+    <span title="Nothing" class="keyword">throw</span> <a href="FatalError.scala.html#119995" title="(msg: String)scala.xml.parsing.FatalError">FatalError</a>(<span title="java.lang.String(&quot;this cannot happen&quot;)" class="string">&quot;this cannot happen&quot;</span>);
+  }
+}
+
+/** &lt;p&gt;
+ *    An XML Parser that preserves CDATA blocks and knows about HtmlEntities.
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    (c) David Pollak, 2007 WorldWide Conferencing, LLC.
+ *  &lt;/p&gt;
+ */
+<span class="keyword">class</span> <a title="class XhtmlParser extends scala.xml.parsing.ConstructingHandler with scala.xml.parsing.PCDataMarkupParser[scala.xml.parsing.XhtmlParser] with scala.xml.parsing.ExternalSources with ScalaObject" id="12161">XhtmlParser</a><a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><span class="keyword">val</span> <a title="scala.io.Source" id="234176">input</a>: <a href="../../io/Source.scala.html#9826" title="scala.io.Source">Source</a>) <span class="keyword">extends</span> <a href="ConstructingHandler.scala.html#12110" title="scala.xml.parsing.ConstructingHandler">ConstructingHandler</a> <span class="keyword">with</span> <a href="#12065" title="scala.xml.parsing.PCDataMarkupParser[scala.xml.parsing.XhtmlParser]">PCDataMarkupParser</a>[XhtmlParser] <span class="keyword">with</span> <a href="ExternalSources.scala.html#12128" title="scala.xml.parsing.ExternalSources">ExternalSources</a>  {
+  <span class="keyword">val</span> <a title="Boolean" id="234171">preserveWS</a> = <span title="Boolean(true)" class="keyword">true</span>
+  <a href="../../collection/generic/Growable.scala.html#19586" title="(iter: Traversable[(java.lang.String, scala.xml.dtd.EntityDecl)])scala.collection.mutable.Map[String,scala.xml.dtd.EntityDecl]">ent</a> ++= <a href="XhtmlEntities.scala.html#94843" title="()List[(java.lang.String, scala.xml.dtd.ParsedEntityDecl)]">XhtmlEntities</a>()
+}
+
+/** &lt;p&gt;
+ *    Convenience method that instantiates, initializes and runs an XhtmlParser.
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    (c) Burak Emir
+ *  &lt;/p&gt;
+ */
+<span class="keyword">object</span> <a title="object scala.xml.parsing.XhtmlParser" id="12162">XhtmlParser</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  <span class="keyword">def</span> <a title="(source: scala.io.Source)scala.xml.NodeSeq" id="234208">apply</a>(<a title="scala.io.Source" id="234212">source</a>: <a href="../../io/Source.scala.html#9826" title="scala.io.Source">Source</a>): <a href="../NodeSeq.scala.html#8522" title="scala.xml.NodeSeq">NodeSeq</a> = {
+    <span class="keyword">val</span> <a title="scala.xml.parsing.XhtmlParser" id="234214">p</a> = <span title="scala.xml.parsing.XhtmlParser" class="keyword">new</span> <a href="#12161" title="scala.xml.parsing.XhtmlParser">XhtmlParser</a>(<a href="#234212" title="scala.io.Source">source</a>)
+    <a href="#234214" title="scala.xml.parsing.XhtmlParser">p</a>.<a href="MarkupParser.scala.html#83209" title="=&gt; Unit">nextch</a>
+    <a href="#234214" title="scala.xml.parsing.XhtmlParser">p</a>.<a href="MarkupParser.scala.html#83207" title="()scala.xml.Document">document</a>
+  }
+}
+
+        </pre>
+    </body>
+</html>

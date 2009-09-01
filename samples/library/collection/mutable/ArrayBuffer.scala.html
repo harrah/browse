@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>collection/mutable/ArrayBuffer.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: ArrayBuffer.scala 18387 2009-07-24 15:28:37Z odersky $
+
+
+<span class="keyword">package</span> scala.collection.mutable
+
+<span class="keyword">import</span> scala.collection.generic._
+
+/** An implementation of the &lt;code&gt;Buffer&lt;/code&gt; class using an array to
+ *  represent the assembled sequence internally. Append, update and random
+ *  access take constant time (amortized time). Prepends and removes are
+ *  linear in the buffer size.
+ *
+ *  @author  Matthias Zenger
+ *  @author  Martin Odersky
+ *  @version 2.8
+ */
+@serializable
+<span class="keyword">class</span> <a title="class ArrayBuffer[A] extends java.lang.Object with scala.collection.mutable.Buffer[A] with scala.collection.generic.TraversableClass[A,scala.collection.mutable.ArrayBuffer] with scala.collection.generic.BufferTemplate[A,scala.collection.mutable.ArrayBuffer[A]] with scala.collection.generic.VectorTemplate[A,scala.collection.mutable.ArrayBuffer[A]] with scala.collection.generic.Builder[A,scala.collection.mutable.ArrayBuffer[A]] with scala.collection.mutable.ResizableArray[A] with ScalaObject" id="7797">ArrayBuffer</a>[<a title="&gt;: Nothing &lt;: Any" id="12941">A</a>]<a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><span class="keyword">override</span> <span class="keyword">protected</span> <span class="keyword">val</span> <a title="Int" id="20041">initialSize</a>: <span title="Int">Int</span>) 
+  <span class="keyword">extends</span> <a href="Buffer.scala.html#7641" title="scala.collection.mutable.Buffer[A]">Buffer</a>[A] 
+     <span class="keyword">with</span> <a href="../generic/TraversableClass.scala.html#10655" title="scala.collection.generic.TraversableClass[A,scala.collection.mutable.ArrayBuffer]">TraversableClass</a>[A, ArrayBuffer]
+     <span class="keyword">with</span> <a href="../generic/BufferTemplate.scala.html#10541" title="scala.collection.generic.BufferTemplate[A,scala.collection.mutable.ArrayBuffer[A]]">BufferTemplate</a>[A, ArrayBuffer[A]]
+     <span class="keyword">with</span> <a href="../generic/VectorTemplate.scala.html#10595" title="scala.collection.generic.VectorTemplate[A,scala.collection.mutable.ArrayBuffer[A]]">VectorTemplate</a>[A, ArrayBuffer[A]]
+     <span class="keyword">with</span> <a href="../generic/Builder.scala.html#10028" title="scala.collection.generic.Builder[A,scala.collection.mutable.ArrayBuffer[A]]">Builder</a>[A, ArrayBuffer[A]] 
+     <span class="keyword">with</span> <a href="ResizableArray.scala.html#7680" title="scala.collection.mutable.ResizableArray[A]">ResizableArray</a>[A] {
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; scala.collection.generic.Companion[scala.collection.mutable.ArrayBuffer]" id="19912">companion</a>: <a href="../generic/Companion.scala.html#10781" title="scala.collection.generic.Companion[scala.collection.mutable.ArrayBuffer]">Companion</a>[ArrayBuffer] = <a href="#7798" title="object scala.collection.mutable.ArrayBuffer">ArrayBuffer</a>
+
+  <span class="keyword">import</span> collection.Traversable
+
+  <span class="keyword">def</span> <a title="()scala.collection.mutable.ArrayBuffer[A]" id="19914" class="keyword">this</a>() = <a href="#7797" title="ArrayBuffer.this.type" class="keyword">this</a>(<span title="Int(16)" class="int">16</span>)
+
+  <span class="keyword">def</span> <a title="()Unit" id="19915">clear</a>() { <a href="ResizableArray.scala.html#20007" title="(sz: Int)Unit">reduceToSize</a>(<span title="Int(0)" class="int">0</span>) }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(len: Int)Unit" id="19916">sizeHint</a>(<a title="Int" id="65731">len</a>: <span title="Int">Int</span>) {
+    <span class="keyword">val</span> <a title="Array[AnyRef]" id="65733">newarray</a> = <span title="Array[AnyRef]" class="keyword">new</span> <a href="../../Array.scala.html#885" title="Array[AnyRef]">Array</a>[AnyRef](<a href="../../runtime/RichInt.scala.html#19064" title="(that: Int)Int">len</a> min <span title="Int(1)" class="int">1</span>)
+    <a href="../../Array.scala.html#886" title="object Array">Array</a>.<a href="../../Array.scala.html#29214" title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">copy</a>(<a href="ResizableArray.scala.html#19992" title="=&gt; Array[AnyRef]">array</a>, <span title="Int(0)" class="int">0</span>, <a href="#65733" title="Array[AnyRef]">newarray</a>, <span title="Int(0)" class="int">0</span>, <a href="ResizableArray.scala.html#19995" title="=&gt; Int">size0</a>)
+    <a href="ResizableArray.scala.html#19993" title="(x$1: Array[AnyRef])Unit">array</a> = <a href="#65733" title="Array[AnyRef]">newarray</a>
+  }
+  
+  /** Appends a single element to this buffer and returns
+   *  the identity of the buffer. It takes constant time.
+   *
+   *  @param elem  the element to append.
+   */
+  <span class="keyword">def</span> <a title="(elem: A)ArrayBuffer.this.type" id="19917">+=</a>(<a title="A" id="20057">elem</a>: <a href="#12941" title="A">A</a>): <span class="keyword">this</span>.<span class="keyword">type</span> = {
+    <a href="ResizableArray.scala.html#20008" title="(n: Int)Unit">ensureSize</a>(<a href="ResizableArray.scala.html#19995" title="(x$1: Int)Int">size0</a> + <span title="Int(1)" class="int">1</span>)
+    <a href="../../Array.scala.html#17717" title="(i: Int,x: AnyRef)Unit">array</a>(<a href="ResizableArray.scala.html#19995" title="=&gt; Int">size0</a>) = <a href="#20057" title="A">elem</a>.<span title="[T0]T0">asInstanceOf</span><span title="AnyRef">[</span><span title="AnyRef">AnyRef</span>]
+    <a href="ResizableArray.scala.html#19996" title="(x$1: Int)Unit">size0</a> += <span title="Int(1)" class="int">1</span>
+    <a href="#7797" title="ArrayBuffer.this.type" class="keyword">this</a>
+  }
+
+  /** Appends a number of elements provided by an iterable object
+   *  via its &lt;code&gt;iterator&lt;/code&gt; method. The identity of the
+   *  buffer is returned.
+   *
+   *  @param iter  the iterfable object.
+   *  @return      the updated buffer.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(iter: Traversable[A])ArrayBuffer.this.type" id="19918">++=</a>(<a title="Traversable[A]" id="34930">iter</a>: <a href="../Traversable.scala.html#4436" title="Traversable[A]">Traversable</a>[A]): <span class="keyword">this</span>.<span class="keyword">type</span> = <a href="#34930" title="Traversable[A]">iter</a> <span title="ArrayBuffer.this.type" class="keyword">match</span> {
+    <span title="ArrayBuffer.this.type" class="keyword">case</span> <a title="scala.collection.mutable.Vector[_]" id="65836">v</a>: <a href="Vector.scala.html#7818" title="scala.collection.mutable.Vector[_]">Vector</a>[_] =&gt;
+      <span class="keyword">val</span> <a title="Int" id="65838">n</a> = <a href="#65836" title="scala.collection.mutable.Vector[_]">v</a>.<a href="../generic/SequenceTemplate.scala.html#17338" title="=&gt; Int">length</a>
+      <a href="ResizableArray.scala.html#20008" title="(n: Int)Unit">ensureSize</a>(<a href="ResizableArray.scala.html#19995" title="(x$1: Int)Int">size0</a> + <a href="#65838" title="Int">n</a>)
+      <a href="#65836" title="scala.collection.mutable.Vector[_]">v</a>.<a href="../generic/VectorTemplate.scala.html#17804" title="(xs: Array[Any],start: Int,len: Int)Unit">copyToArray</a>(<a href="ResizableArray.scala.html#19992" title="=&gt; Array[AnyRef]">array</a>.<span title="[T0]T0">asInstanceOf</span><span title="Array[Any]">[</span>scala.<a href="../../Array.scala.html#885" title="Array[Any]">Array</a>[Any]], <a href="ResizableArray.scala.html#19995" title="=&gt; Int">size0</a>, <a href="#65838" title="Int">n</a>)
+      <a href="ResizableArray.scala.html#19996" title="(x$1: Int)Unit">size0</a> += <a href="#65838" title="Int">n</a>
+      <a href="#7797" title="ArrayBuffer.this.type" class="keyword">this</a>
+    <span title="ArrayBuffer.this.type" class="keyword">case</span> _ =&gt;
+      <span class="keyword">super</span>.<a href="../generic/Growable.scala.html#19586" title="(iter: Traversable[A])ArrayBuffer.this.type">++=</a>(<a href="#34930" title="Traversable[A]">iter</a>)
+  }
+
+  /** Prepends a single element to this buffer and return
+   *  the identity of the buffer. It takes time linear in 
+   *  the buffer size.
+   *
+   *  @param elem  the element to append.
+   *  @return      the updated buffer. 
+   */
+  <span class="keyword">def</span> <a title="(elem: A)ArrayBuffer.this.type" id="19919">+:</a>(<a title="A" id="65998">elem</a>: <a href="#12941" title="A">A</a>): <span class="keyword">this</span>.<span class="keyword">type</span> = {
+    <a href="ResizableArray.scala.html#20008" title="(n: Int)Unit">ensureSize</a>(<a href="ResizableArray.scala.html#19995" title="(x$1: Int)Int">size0</a> + <span title="Int(1)" class="int">1</span>)
+    <a href="ResizableArray.scala.html#20010" title="(m: Int,n: Int,len: Int)Unit">copy</a>(<span title="Int(0)" class="int">0</span>, <span title="Int(1)" class="int">1</span>, <a href="ResizableArray.scala.html#19995" title="=&gt; Int">size0</a>)
+    <a href="../../Array.scala.html#17717" title="(i: Int,x: AnyRef)Unit">array</a>(<span title="Int(0)" class="int">0</span>) = <a href="#65998" title="A">elem</a>.<span title="[T0]T0">asInstanceOf</span><span title="AnyRef">[</span><span title="AnyRef">AnyRef</span>]
+    <a href="ResizableArray.scala.html#19996" title="(x$1: Int)Unit">size0</a> += <span title="Int(1)" class="int">1</span>
+    <a href="#7797" title="ArrayBuffer.this.type" class="keyword">this</a>
+  }
+   
+  /** Prepends a number of elements provided by an iterable object
+   *  via its &lt;code&gt;iterator&lt;/code&gt; method. The identity of the
+   *  buffer is returned.
+   *
+   *  @param iter  the iterable object.
+   *  @return      the updated buffer.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(iter: Traversable[A])ArrayBuffer.this.type" id="19920">++:</a>(<a title="Traversable[A]" id="66082">iter</a>: <a href="../Traversable.scala.html#4436" title="Traversable[A]">Traversable</a>[A]): <span class="keyword">this</span>.<span class="keyword">type</span> = { <a href="#19921" title="(n: Int,seq: Traversable[A])Unit">insertAll</a>(<span title="Int(0)" class="int">0</span>, <a href="#66082" title="Traversable[A]">iter</a>); <a href="#7797" title="ArrayBuffer.this.type" class="keyword">this</a> }
+  
+  /** Inserts new elements at the index &lt;code&gt;n&lt;/code&gt;. Opposed to method
+   *  &lt;code&gt;update&lt;/code&gt;, this method will not replace an element with a
+   *  one. Instead, it will insert a new element at index &lt;code&gt;n&lt;/code&gt;.
+   *
+   *  @param n     the index where a new element will be inserted.
+   *  @param iter  the iterable object providing all elements to insert.
+   *  @throws Predef.IndexOutOfBoundsException if &lt;code&gt;n&lt;/code&gt; is out of bounds.
+   */
+  <span class="keyword">def</span> <a title="(n: Int,seq: Traversable[A])Unit" id="19921">insertAll</a>(<a title="Int" id="66091">n</a>: <span title="Int">Int</span>, <a title="Traversable[A]" id="66092">seq</a>: <a href="../Traversable.scala.html#4436" title="Traversable[A]">Traversable</a>[A]) {
+    <span title="Unit" class="keyword">if</span> (<span title="(x$1: Boolean)Boolean">(</span><a href="#66091" title="(x$1: Int)Boolean">n</a> &lt; <span title="Int(0)" class="int">0</span>) || (<a href="#66091" title="(x$1: Int)Boolean">n</a> &gt; <a href="ResizableArray.scala.html#19995" title="=&gt; Int">size0</a>))
+      <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.IndexOutOfBoundsException" class="keyword">new</span> <a href="../../Predef.scala.html#16166" title="java.lang.IndexOutOfBoundsException">IndexOutOfBoundsException</a>(<a href="#66091" title="Int">n</a>.<span title="()java.lang.String">toString</span>)
+    <span class="keyword">val</span> <a title="List[A]" id="66103">xs</a> = <a href="#66092" title="Traversable[A]">seq</a>.<a href="../generic/TraversableTemplate.scala.html#17236" title="=&gt; List[A]">toList</a>
+    <span class="keyword">val</span> <a title="Int" id="66104">len</a> = <a href="#66103" title="List[A]">xs</a>.<a href="../generic/LinearSequenceTemplate.scala.html#19399" title="=&gt; Int">length</a>
+    <a href="ResizableArray.scala.html#20008" title="(n: Int)Unit">ensureSize</a>(<a href="ResizableArray.scala.html#19995" title="(x$1: Int)Int">size0</a> + <a href="#66104" title="Int">len</a>)
+    <a href="ResizableArray.scala.html#20010" title="(m: Int,n: Int,len: Int)Unit">copy</a>(<a href="#66091" title="Int">n</a>, <a href="#66091" title="(x$1: Int)Int">n</a> + <a href="#66104" title="Int">len</a>, <a href="ResizableArray.scala.html#19995" title="(x$1: Int)Int">size0</a> - <a href="#66091" title="Int">n</a>)
+    <a href="#66103" title="List[A]">xs</a>.<a href="../generic/TraversableTemplate.scala.html#17230" title="(xs: Array[Any],start: Int)Unit">copyToArray</a>(<a href="ResizableArray.scala.html#19992" title="=&gt; Array[AnyRef]">array</a>.<span title="[T0]T0">asInstanceOf</span><span title="Array[Any]">[</span>scala.<a href="../../Array.scala.html#885" title="Array[Any]">Array</a>[Any]], <a href="#66091" title="Int">n</a>)
+    <a href="ResizableArray.scala.html#19996" title="(x$1: Int)Unit">size0</a> += <a href="#66104" title="Int">len</a>
+  }
+  
+  /** Removes the element on a given index position. It takes time linear in
+   *  the buffer size.
+   *
+   *  @param n  the index which refers to the first element to delete.
+   *  @param count   the number of elemenets to delete
+   *  @return   the updated array buffer.
+   *  @throws Predef.IndexOutOfBoundsException if &lt;code&gt;n&lt;/code&gt; is out of bounds.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(n: Int,count: Int)Unit" id="19922">remove</a>(<a title="Int" id="66253">n</a>: <span title="Int">Int</span>, <a title="Int" id="66254">count</a>: <span title="Int">Int</span>) {
+    <span title="Unit" class="keyword">if</span> (<span title="(x$1: Boolean)Boolean">(</span><a href="#66253" title="(x$1: Int)Boolean">n</a> &lt; <span title="Int(0)" class="int">0</span>) || <a title="(x$1: Boolean)Boolean" id="2210">(</a><a href="#66253" title="(x$1: Int)Boolean" id="2960">n</a> &gt;= <a href="ResizableArray.scala.html#19995" title="=&gt; Int">size0</a>) &amp;&amp; <a href="#66254" title="(x$1: Int)Boolean">count</a> &gt; <span title="Int(0)" class="int">0</span>)
+      <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.IndexOutOfBoundsException" class="keyword">new</span> <a href="../../Predef.scala.html#16166" title="java.lang.IndexOutOfBoundsException">IndexOutOfBoundsException</a>(<a href="#66253" title="Int">n</a>.<span title="()java.lang.String">toString</span>)
+    <a href="ResizableArray.scala.html#20010" title="(m: Int,n: Int,len: Int)Unit">copy</a>(<a href="#66253" title="(x$1: Int)Int">n</a> + <a href="#66254" title="Int">count</a>, <a href="#66253" title="Int">n</a>, <a href="ResizableArray.scala.html#19995" title="(x$1: Int)Int">size0</a> - (<a href="#66253" title="(x$1: Int)Int">n</a> + <a href="#66254" title="Int">count</a>))
+    <a href="ResizableArray.scala.html#19996" title="(x$1: Int)Unit">size0</a> -= <a href="#66254" title="Int">count</a>
+  }
+
+  /** Removes the element on a given index position
+   *  
+   *  @param n  the index which refers to the element to delete.
+   *  @return  The element that was formerly at position `n`
+   */
+  <span class="keyword">def</span> <a title="(n: Int)A" id="19923">remove</a>(<a title="Int" id="66377">n</a>: <span title="Int">Int</span>): <a href="#12941" title="A">A</a> = {
+    <span class="keyword">val</span> <a title="A" id="66385">result</a> = <a href="ResizableArray.scala.html#19999" title="(idx: Int)A">apply</a>(<a href="#66377" title="Int">n</a>)
+    <a href="#19922" title="(n: Int,count: Int)Unit">remove</a>(<a href="#66377" title="Int">n</a>, <span title="Int(1)" class="int">1</span>)
+    <a href="#66385" title="A">result</a>
+  }
+
+  /** Return a clone of this buffer.
+   *
+   *  @return an &lt;code&gt;ArrayBuffer&lt;/code&gt; with the same elements.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()scala.collection.mutable.ArrayBuffer[A]" id="19924">clone</a>(): <a href="#7797" title="scala.collection.mutable.ArrayBuffer[A]">ArrayBuffer</a>[A] = <a href="#19918" title="(iter: Traversable[A])scala.collection.mutable.ArrayBuffer[A]" class="keyword">new</a> <a href="#7797" title="scala.collection.mutable.ArrayBuffer[A]">ArrayBuffer</a>[A] ++= <a href="#7797" title="scala.collection.mutable.ArrayBuffer[A]" class="keyword">this</a>
+
+  <span class="keyword">def</span> <a title="()scala.collection.mutable.ArrayBuffer[A]" id="19925">result</a>: <a href="#7797" title="scala.collection.mutable.ArrayBuffer[A]">ArrayBuffer</a>[A] = <a href="#7797" title="scala.collection.mutable.ArrayBuffer[A]" class="keyword">this</a>
+  
+  /** Defines the prefix of the string representation.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; String" id="19926">stringPrefix</a>: <a title="String" id="1603">String</a> = <span title="java.lang.String(&quot;ArrayBuffer&quot;)" class="string">&quot;ArrayBuffer&quot;</span>
+}
+
+/* Factory object for `ArrayBuffer` class */
+<span class="keyword">object</span> <a title="object scala.collection.mutable.ArrayBuffer" id="7798">ArrayBuffer</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="../generic/SequenceFactory.scala.html#10295" title="scala.collection.generic.SequenceFactory[scala.collection.mutable.ArrayBuffer]">SequenceFactory</a>[ArrayBuffer] {
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="[A]scala.collection.generic.BuilderFactory[A,scala.collection.mutable.ArrayBuffer[A],scala.collection.mutable.ArrayBuffer.Coll]" id="54425">builderFactory</a>[<a title="&gt;: Nothing &lt;: Any" id="54427">A</a>]: <a href="../generic/BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[A,scala.collection.mutable.ArrayBuffer[A],scala.collection.mutable.ArrayBuffer.Coll]">BuilderFactory</a>[A, ArrayBuffer[A], Coll] = <span title="scala.collection.mutable.ArrayBuffer.VirtualBuilderFactory[A]" class="keyword">new</span> <a href="../generic/TraversableFactory.scala.html#17476" title="scala.collection.mutable.ArrayBuffer.VirtualBuilderFactory[A]">VirtualBuilderFactory</a>[A]
+  <span class="keyword">def</span> <a title="[A]scala.collection.generic.Builder[A,scala.collection.mutable.ArrayBuffer[A]]" id="54428">newBuilder</a>[<a title="&gt;: Nothing &lt;: Any" id="54430">A</a>]: <a href="../generic/Builder.scala.html#10028" title="scala.collection.generic.Builder[A,scala.collection.mutable.ArrayBuffer[A]]">Builder</a>[A, ArrayBuffer[A]] = <a href="#19914" title="()scala.collection.mutable.ArrayBuffer[A]" class="keyword">new</a> <a href="#7797" title="scala.collection.mutable.ArrayBuffer[A]">ArrayBuffer</a>[A]
+}
+
+
+        </pre>
+    </body>
+</html>

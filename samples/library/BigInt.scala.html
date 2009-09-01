@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>BigInt.scala</title>
+        <script type="text/javascript" src="jquery-all.js"></script>
+        <script type="text/javascript" src="linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2006-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: BigInt.scala 18604 2009-08-29 19:05:10Z extempore $
+
+
+<span class="keyword">package</span> scala
+
+<span class="keyword">import</span> java.math.BigInteger
+<span class="keyword">import</span> java.{ lang =&gt; jl }
+
+/** 
+ *  @author  Martin Odersky
+ *  @version 1.0, 15/07/2003
+ *  @since 2.1
+ */
+<span class="keyword">object</span> <a title="object BigInt" id="427">BigInt</a> <a href="ScalaObject.scala.html#957" title="ScalaObject">{</a>
+
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="Int" id="29462">minCached</a> = <span title="Int(-1024)">-</span><span class="int">1024</span>
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="Int" id="29464">maxCached</a> = <span title="Int(1024)" class="int">1024</span>
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="Array[BigInt]" id="29466">cache</a> = <span title="Array[BigInt]" class="keyword">new</span> <a href="Array.scala.html#885" title="Array[BigInt]">Array</a>[BigInt](<a href="#29464" title="(x$1: Int)Int">maxCached</a> <a title="(x$1: Int)Int" id="2962">-</a> <a href="#29462" title="=&gt; Int">minCached</a> + <span title="Int(1)" class="int">1</span>)
+
+  /** Constructs a &lt;code&gt;BigInt&lt;/code&gt; whose value is equal to that of the
+   *  specified integer value.
+   *
+   *  @param i the specified integer value
+   *  @return  the constructed &lt;code&gt;BigInt&lt;/code&gt;
+   */
+  <span class="keyword">def</span> <a title="(i: Int)BigInt" id="29468">apply</a>(<a title="Int" id="29993">i</a>: <span title="Int">Int</span>): <a href="#426" title="BigInt">BigInt</a> =
+    <span title="BigInt" class="keyword">if</span> (<a href="#29462" title="(x$1: Int)Boolean">minCached</a> <span title="(x$1: Boolean)Boolean">&lt;=</span> <a href="#29993" title="Int">i</a> &amp;&amp; <a href="#29993" title="(x$1: Int)Boolean">i</a> &lt;= <a href="#29464" title="=&gt; Int">maxCached</a>) {
+      <span class="keyword">val</span> <a title="Int" id="159600">offset</a> = <a href="#29993" title="(x$1: Int)Int">i</a> - <a href="#29462" title="=&gt; Int">minCached</a>
+      <span class="keyword">var</span> <a title="BigInt" id="159601">n</a> = <a href="Array.scala.html#17716" title="(i: Int)BigInt">cache</a>(<a href="#159600" title="Int">offset</a>)
+      <span title="Unit" class="keyword">if</span> (<a href="#159601" title="(x$1: AnyRef)Boolean" id="6531">n</a> eq <span title="Null(null)" class="keyword">null</span>) { <a href="#159601" title="BigInt">n</a> = <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<span title="object java.math.BigInteger">BigInteger</span>.<span title="(x$1: Long)java.math.BigInteger">valueOf</span>(<a href="Predef.scala.html#16385" title="implicit scala.Predef.int2long : (x: Int)Long">i</a>)); <a href="Array.scala.html#17717" title="(i: Int,x: BigInt)Unit">cache</a>(<a href="#159600" title="Int">offset</a>) = <a href="#159601" title="BigInt">n</a> }
+      <a href="#159601" title="BigInt">n</a>
+    } <span class="keyword">else</span> <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<span title="object java.math.BigInteger">BigInteger</span>.<span title="(x$1: Long)java.math.BigInteger">valueOf</span>(<a href="Predef.scala.html#16385" title="implicit scala.Predef.int2long : (x: Int)Long">i</a>))
+
+  /** Constructs a &lt;code&gt;BigInt&lt;/code&gt; whose value is equal to that of the
+   *  specified long value.
+   *
+   *  @param l the specified long value
+   *  @return  the constructed &lt;code&gt;BigInt&lt;/code&gt;
+   */
+  <span class="keyword">def</span> <a title="(l: Long)BigInt" id="29469">apply</a>(<a title="Long" id="29991">l</a>: <span title="Long">Long</span>): <a href="#426" title="BigInt">BigInt</a> =
+    <span title="BigInt" class="keyword">if</span> (<a href="#29462" title="(x$1: Long)Boolean" id="2984">minCached</a> <span title="(x$1: Boolean)Boolean">&lt;=</span> <a href="#29991" title="Long">l</a> &amp;&amp; <a href="#29991" title="(x$1: Int)Boolean" id="3164">l</a> &lt;= <a href="#29464" title="=&gt; Int">maxCached</a>) <a href="#29468" title="(i: Int)BigInt">apply</a>(<a href="#29991" title="Long">l</a>.<a title="=&gt; Int" id="3053">toInt</a>)
+    <span class="keyword">else</span> <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<span title="object java.math.BigInteger">BigInteger</span>.<span title="(x$1: Long)java.math.BigInteger">valueOf</span>(<a href="#29991" title="Long">l</a>))
+
+  /** Translates a byte array containing the two's-complement binary 
+   *  representation of a BigInt into a BigInt.
+   */
+  <span class="keyword">def</span> <a title="(x: Array[Byte])BigInt" id="29470">apply</a>(<a title="Array[Byte]" id="29989">x</a>: <a href="Array.scala.html#885" title="Array[Byte]">Array</a>[Byte]): <a href="#426" title="BigInt">BigInt</a> = 
+    <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<span title="java.math.BigInteger" class="keyword">new</span> <span title="java.math.BigInteger">BigInteger</span>(<a href="#29989" title="Array[Byte]">x</a>))
+
+  /** Translates the sign-magnitude representation of a BigInt into a BigInt.
+   */
+  <span class="keyword">def</span> <a title="(signum: Int,magnitude: Array[Byte])BigInt" id="29471">apply</a>(<a title="Int" id="29986">signum</a>: <span title="Int">Int</span>, <a title="Array[Byte]" id="29987">magnitude</a>: <a href="Array.scala.html#885" title="Array[Byte]">Array</a>[Byte]): <a href="#426" title="BigInt">BigInt</a> =
+    <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a title="(x$1: Int,x$2: Array[Byte])java.math.BigInteger" id="29773" class="keyword">new</a> <span title="java.math.BigInteger">BigInteger</span>(<a href="#29986" title="Int">signum</a>, <a href="#29987" title="Array[Byte]">magnitude</a>))
+  
+  /** Constructs a randomly generated positive BigInt that is probably prime, 
+   *  with the specified bitLength.
+   */
+  <span class="keyword">def</span> <a title="(bitlength: Int,certainty: Int,rnd: scala.util.Random)BigInt" id="29472">apply</a>(<a title="Int" id="29982">bitlength</a>: <span title="Int">Int</span>, <a title="Int" id="29983">certainty</a>: <span title="Int">Int</span>, <a title="scala.util.Random" id="29984">rnd</a>: scala.util.<a href="util/Random.scala.html#8101" title="scala.util.Random">Random</a>): <a href="#426" title="BigInt">BigInt</a> =
+    <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a title="(x$1: Int,x$2: Int,x$3: java.util.Random)java.math.BigInteger" id="29786" class="keyword">new</a> <span title="java.math.BigInteger">BigInteger</span>(<a href="#29982" title="Int">bitlength</a>, <a href="#29983" title="Int">certainty</a>, <a href="#29984" title="scala.util.Random">rnd</a>.<a href="util/Random.scala.html#32779" title="=&gt; java.util.Random">self</a>))
+
+  /** Constructs a randomly generated BigInt, uniformly distributed over the
+   *  range 0 to (2 ^ numBits - 1), inclusive.
+   *
+   *  @param numbits ...
+   *  @param rnd     ...
+   *  @return        ...
+   */
+  <span class="keyword">def</span> <a title="(numbits: Int,rnd: scala.util.Random)BigInt" id="29473">apply</a>(<a title="Int" id="29979">numbits</a>: <span title="Int">Int</span>, <a title="scala.util.Random" id="29980">rnd</a>: scala.util.<a href="util/Random.scala.html#8101" title="scala.util.Random">Random</a>): <a href="#426" title="BigInt">BigInt</a> =
+    <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a title="(x$1: Int,x$2: java.util.Random)java.math.BigInteger" id="29783" class="keyword">new</a> <span title="java.math.BigInteger">BigInteger</span>(<a href="#29979" title="Int">numbits</a>, <a href="#29980" title="scala.util.Random">rnd</a>.<a href="util/Random.scala.html#32779" title="=&gt; java.util.Random">self</a>))
+
+  /** Translates the decimal String representation of a BigInt into a BigInt.
+   */
+  <span class="keyword">def</span> <a title="(x: String)BigInt" id="29474">apply</a>(<a title="String" id="29977">x</a>: <span title="String">String</span>): <a href="#426" title="BigInt">BigInt</a> = 
+    <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a title="(x$1: java.lang.String)java.math.BigInteger" id="29781" class="keyword">new</a> <span title="java.math.BigInteger">BigInteger</span>(<a href="#29977" title="String">x</a>))
+
+  /** Translates the string representation of a BigInt in the
+   *  specified &lt;code&gt;radix&lt;/code&gt; into a BigInt.
+   *
+   *  @param x     ...
+   *  @param radix ...
+   *  @return      ...
+   */
+  <span class="keyword">def</span> <a title="(x: String,radix: Int)BigInt" id="29475">apply</a>(<a title="String" id="29974">x</a>: <span title="String">String</span>, <a title="Int" id="29975">radix</a>: <span title="Int">Int</span>): <a href="#426" title="BigInt">BigInt</a> =
+    <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a title="(x$1: java.lang.String,x$2: Int)java.math.BigInteger" id="29776" class="keyword">new</a> <span title="java.math.BigInteger">BigInteger</span>(<a href="#29974" title="String">x</a>, <a href="#29975" title="Int">radix</a>))
+
+  /** Returns a positive BigInt that is probably prime, with the specified bitLength.
+   */
+  <span class="keyword">def</span> <a title="(bitLength: Int,rnd: scala.util.Random)BigInt" id="29476">probablePrime</a>(<a title="Int" id="159758">bitLength</a>: <span title="Int">Int</span>, <a title="scala.util.Random" id="159759">rnd</a>: scala.util.<a href="util/Random.scala.html#8101" title="scala.util.Random">Random</a>): <a href="#426" title="BigInt">BigInt</a> =
+    <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<span title="object java.math.BigInteger">BigInteger</span>.<a title="(x$1: Int,x$2: java.util.Random)java.math.BigInteger" id="29790">probablePrime</a>(<a href="#159758" title="Int">bitLength</a>, <a href="#159759" title="scala.util.Random">rnd</a>.<a href="util/Random.scala.html#32779" title="=&gt; java.util.Random">self</a>))
+
+  /** Implicit conversion from &lt;code&gt;int&lt;/code&gt; to &lt;code&gt;BigInt&lt;/code&gt;.
+   */
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="implicit scala.BigInt.int2bigInt : (i: Int)BigInt" id="29477">int2bigInt</a>(<a title="Int" id="29482">i</a>: <span title="Int">Int</span>): <a href="#426" title="BigInt">BigInt</a> = <a href="#29468" title="(i: Int)BigInt">apply</a>(<a href="#29482" title="Int">i</a>)
+
+  /** Implicit copnversion from long to BigInt
+   */
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="implicit scala.BigInt.long2bigInt : (l: Long)BigInt" id="29478">long2bigInt</a>(<a title="Long" id="29480">l</a>: <span title="Long">Long</span>): <a href="#426" title="BigInt">BigInt</a> = <a href="#29469" title="(l: Long)BigInt">apply</a>(<a href="#29480" title="Long">l</a>)
+}
+
+/** 
+ *  @author  Martin Odersky
+ *  @version 1.0, 15/07/2003
+ */
+@serializable
+<span class="keyword">class</span> <a title="class BigInt extends java.lang.Number with ScalaNumericConversions with ScalaObject" id="426">BigInt</a><a href="ScalaObject.scala.html#957" title="ScalaObject">(</a><span class="keyword">val</span> <a title="java.math.BigInteger" id="31835">bigInteger</a>: <span title="java.math.BigInteger">BigInteger</span>) <span class="keyword">extends</span> jl.<a title="java.lang.Number" id="1642">Number</a> <span class="keyword">with</span> <a href="BigDecimal.scala.html#165" title="ScalaNumericConversions">ScalaNumericConversions</a>
+{
+  /** Returns the hash code for this BigInt. */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Int" id="28936">hashCode</a>(): <span title="Int">Int</span> = <a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="()Int" id="29891">hashCode</a>()
+
+  /** Compares this BigInt with the specified value for equality.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(that: Any)Boolean" id="28937">equals</a>(<a title="Any" id="159786">that</a>: <a title="Any" id="47">Any</a>): <span title="Boolean">Boolean</span> = <a href="#159786" title="Any">that</a> <span title="Boolean" class="keyword">match</span> {
+    <span title="Boolean" class="keyword">case</span> <a title="BigInt" id="159788">that</a>: <a href="#426" title="BigInt">BigInt</a>               =&gt; <a href="#28938" title="(that: BigInt)Boolean" class="keyword">this</a> equals <a href="#159788" title="BigInt">that</a>
+    <span title="Boolean" class="keyword">case</span> <a title="java.math.BigInteger" id="159797">that</a>: <span title="java.math.BigInteger">BigInteger</span>           =&gt; <a href="#28938" title="(that: BigInt)Boolean" class="keyword">this</a> equals <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="#159797" title="java.math.BigInteger">that</a>)
+    <span title="Boolean(false)" class="keyword">case</span> _                          =&gt; <span title="Boolean(false)" class="keyword">false</span>
+  }
+
+  /** Compares this BigInt with the specified BigInt for equality.
+   */
+  <span class="keyword">def</span> <a title="(that: BigInt)Boolean" id="28938">equals</a> (<a title="BigInt" id="159791">that</a>: <a href="#426" title="BigInt">BigInt</a>): <span title="Boolean">Boolean</span> = <a href="#28939" title="(that: BigInt)Int">compare</a><a title="(x$1: Int)Boolean" id="2950">(</a><a href="#159791" title="BigInt">that</a>) == <span title="Int(0)" class="int">0</span>
+
+  /** Compares this BigInt with the specified BigInt
+   */
+  <span class="keyword">def</span> <a title="(that: BigInt)Int" id="28939">compare</a> (<a title="BigInt" id="159806">that</a>: <a href="#426" title="BigInt">BigInt</a>): <span title="Int">Int</span> = <a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: java.math.BigInteger)Int" id="29881">compareTo</a>(<a href="#159806" title="BigInt">that</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>)
+
+  /** Less-than-or-equals comparison of BigInts
+   */
+  <span class="keyword">def</span> <a title="(that: BigInt)Boolean" id="28940">&lt;=</a> (<a title="BigInt" id="159820">that</a>: <a href="#426" title="BigInt">BigInt</a>): <span title="Boolean">Boolean</span> = <a href="#28939" title="(that: BigInt)Int">compare</a><span title="(x$1: Int)Boolean">(</span><a href="#159820" title="BigInt">that</a>) &lt;= <span title="Int(0)" class="int">0</span>
+
+  /** Greater-than-or-equals comparison of BigInts
+   */
+  <span class="keyword">def</span> <a title="(that: BigInt)Boolean" id="28941">&gt;=</a> (<a title="BigInt" id="159830">that</a>: <a href="#426" title="BigInt">BigInt</a>): <span title="Boolean">Boolean</span> = <a href="#28939" title="(that: BigInt)Int">compare</a><a title="(x$1: Int)Boolean" id="2960">(</a><a href="#159830" title="BigInt">that</a>) &gt;= <span title="Int(0)" class="int">0</span>
+
+  /** Less-than of BigInts
+   */
+  <span class="keyword">def</span> <a title="(that: BigInt)Boolean" id="28942">&lt;</a>  (<a title="BigInt" id="159840">that</a>: <a href="#426" title="BigInt">BigInt</a>): <span title="Boolean">Boolean</span> = <a href="#28939" title="(that: BigInt)Int">compare</a><a title="(x$1: Int)Boolean" id="2954">(</a><a href="#159840" title="BigInt">that</a>) &lt;  <span title="Int(0)" class="int">0</span>
+
+  /** Greater-than comparison of BigInts
+   */
+  <span class="keyword">def</span> <a title="(that: BigInt)Boolean" id="28943">&gt;</a>  (<a title="BigInt" id="159850">that</a>: <a href="#426" title="BigInt">BigInt</a>): <span title="Boolean">Boolean</span> = <a href="#28939" title="(that: BigInt)Int">compare</a><a title="(x$1: Int)Boolean" id="2958">(</a><a href="#159850" title="BigInt">that</a>) &gt; <span title="Int(0)" class="int">0</span>
+
+  /** Addition of BigInts
+   */
+  <span class="keyword">def</span> <a title="(that: BigInt)BigInt" id="28944">+</a>  (<a title="BigInt" id="159860">that</a>: <a href="#426" title="BigInt">BigInt</a>): <a href="#426" title="BigInt">BigInt</a> = <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: java.math.BigInteger)java.math.BigInteger" id="29802">add</a>(<a href="#159860" title="BigInt">that</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>))
+
+  /** Subtraction of BigInts
+   */
+  <span class="keyword">def</span> <a title="(that: BigInt)BigInt" id="28945">-</a>  (<a title="BigInt" id="159866">that</a>: <a href="#426" title="BigInt">BigInt</a>): <a href="#426" title="BigInt">BigInt</a> = <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: java.math.BigInteger)java.math.BigInteger" id="29804">subtract</a>(<a href="#159866" title="BigInt">that</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>))
+
+  /** Multiplication of BigInts
+   */
+  <span class="keyword">def</span> <a title="(that: BigInt)BigInt" id="28946">*</a>  (<a title="BigInt" id="159872">that</a>: <a href="#426" title="BigInt">BigInt</a>): <a href="#426" title="BigInt">BigInt</a> = <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: java.math.BigInteger)java.math.BigInteger" id="29806">multiply</a>(<a href="#159872" title="BigInt">that</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>))
+
+  /** Division of BigInts
+   */
+  <span class="keyword">def</span> <a title="(that: BigInt)BigInt" id="28947">/</a>  (<a title="BigInt" id="159879">that</a>: <a href="#426" title="BigInt">BigInt</a>): <a href="#426" title="BigInt">BigInt</a> = <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: java.math.BigInteger)java.math.BigInteger" id="29810">divide</a>(<a href="#159879" title="BigInt">that</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>))
+
+  /** Remainder of BigInts
+   */
+  <span class="keyword">def</span> <a title="(that: BigInt)BigInt" id="28948">%</a>  (<a title="BigInt" id="159885">that</a>: <a href="#426" title="BigInt">BigInt</a>): <a href="#426" title="BigInt">BigInt</a> = <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: java.math.BigInteger)java.math.BigInteger" id="29814">remainder</a>(<a href="#159885" title="BigInt">that</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>))
+
+  /** Returns a pair of two BigInts containing (this / that) and (this % that).
+   */
+  <span class="keyword">def</span> <a title="(that: BigInt)(BigInt, BigInt)" id="28949">/%</a> (<a title="BigInt" id="159891">that</a>: <a href="#426" title="BigInt">BigInt</a>): <a href="Tuple2.scala.html#1152" title="(BigInt, BigInt)">(</a>BigInt, BigInt) = {
+    <span class="keyword">val</span> <a title="Array[java.math.BigInteger]" id="159893">dr</a> = <a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: java.math.BigInteger)Array[java.math.BigInteger]" id="29812">divideAndRemainder</a>(<a href="#159891" title="BigInt">that</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>)
+    <a href="Tuple2.scala.html#20670" title="(_1: BigInt,_2: BigInt)(BigInt, BigInt)">(</a><span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="Array.scala.html#17716" title="(i: Int)java.math.BigInteger">dr</a>(<span title="Int(0)" class="int">0</span>)), <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="Array.scala.html#17716" title="(i: Int)java.math.BigInteger">dr</a>(<span title="Int(1)" class="int">1</span>)))
+  }
+
+  /** Leftshift of BigInt
+   */
+  <span class="keyword">def</span> <a title="(n: Int)BigInt" id="28950">&lt;&lt;</a> (<a title="Int" id="159926">n</a>: <span title="Int">Int</span>): <a href="#426" title="BigInt">BigInt</a> = <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: Int)java.math.BigInteger" id="29851">shiftLeft</a>(<a href="#159926" title="Int">n</a>))
+
+  /** (Signed) rightshift of BigInt
+   */
+  <span class="keyword">def</span> <a title="(n: Int)BigInt" id="28951">&gt;&gt;</a> (<a title="Int" id="159932">n</a>: <span title="Int">Int</span>): <a href="#426" title="BigInt">BigInt</a> = <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: Int)java.math.BigInteger" id="29853">shiftRight</a>(<a href="#159932" title="Int">n</a>))
+
+  /** Bitwise and of BigInts
+   */
+  <span class="keyword">def</span> <a title="(that: BigInt)BigInt" id="28952">&amp;</a>  (<a title="BigInt" id="159938">that</a>: <a href="#426" title="BigInt">BigInt</a>): <a href="#426" title="BigInt">BigInt</a> = <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: java.math.BigInteger)java.math.BigInteger" id="29857">and</a>(<a href="#159938" title="BigInt">that</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>))
+
+  /** Bitwise or of BigInts
+   */
+  <span class="keyword">def</span> <a title="(that: BigInt)BigInt" id="28953">|</a>  (<a title="BigInt" id="159944">that</a>: <a href="#426" title="BigInt">BigInt</a>): <a href="#426" title="BigInt">BigInt</a> = <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: java.math.BigInteger)java.math.BigInteger" id="29859">or</a> (<a href="#159944" title="BigInt">that</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>))
+
+  /** Bitwise exclusive-or of BigInts
+   */
+  <span class="keyword">def</span> <a title="(that: BigInt)BigInt" id="28954">^</a>  (<a title="BigInt" id="159950">that</a>: <a href="#426" title="BigInt">BigInt</a>): <a href="#426" title="BigInt">BigInt</a> = <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: java.math.BigInteger)java.math.BigInteger" id="29861">xor</a>(<a href="#159950" title="BigInt">that</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>))
+
+  /** Bitwise and-not of BigInts. Returns a BigInt whose value is (this &amp; ~that).
+   */
+  <span class="keyword">def</span> <a title="(that: BigInt)BigInt" id="28955">&amp;~</a> (<a title="BigInt" id="159956">that</a>: <a href="#426" title="BigInt">BigInt</a>): <a href="#426" title="BigInt">BigInt</a> = <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: java.math.BigInteger)java.math.BigInteger" id="29864">andNot</a>(<a href="#159956" title="BigInt">that</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>))
+
+  /** Returns the greatest common divisor of abs(this) and abs(that)
+   */
+  <span class="keyword">def</span> <a title="(that: BigInt)BigInt" id="28956">gcd</a> (<a title="BigInt" id="159962">that</a>: <a href="#426" title="BigInt">BigInt</a>): <a href="#426" title="BigInt">BigInt</a> = <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: java.math.BigInteger)java.math.BigInteger" id="29818">gcd</a>(<a href="#159962" title="BigInt">that</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>))
+
+  /** Returns a BigInt whose value is (this mod m).
+   *  This method differs from `%' in that it always returns a non-negative BigInt.
+   */
+  <span class="keyword">def</span> <a title="(that: BigInt)BigInt" id="28957">mod</a> (<a title="BigInt" id="159968">that</a>: <a href="#426" title="BigInt">BigInt</a>): <a href="#426" title="BigInt">BigInt</a> = <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: java.math.BigInteger)java.math.BigInteger" id="29833">mod</a>(<a href="#159968" title="BigInt">that</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>))
+
+  /** Returns the minimum of this and that
+   */
+  <span class="keyword">def</span> <a title="(that: BigInt)BigInt" id="28958">min</a> (<a title="BigInt" id="159974">that</a>: <a href="#426" title="BigInt">BigInt</a>): <a href="#426" title="BigInt">BigInt</a> = <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: java.math.BigInteger)java.math.BigInteger" id="29887">min</a>(<a href="#159974" title="BigInt">that</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>))
+
+  /** Returns the maximum of this and that
+   */
+  <span class="keyword">def</span> <a title="(that: BigInt)BigInt" id="28959">max</a> (<a title="BigInt" id="159980">that</a>: <a href="#426" title="BigInt">BigInt</a>): <a href="#426" title="BigInt">BigInt</a> = <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: java.math.BigInteger)java.math.BigInteger" id="29889">max</a>(<a href="#159980" title="BigInt">that</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>))
+  
+  /** Returns a BigInt whose value is (&lt;tt&gt;this&lt;/tt&gt; raised to the power of &lt;tt&gt;exp&lt;/tt&gt;).
+   */
+  <span class="keyword">def</span> <a title="(exp: Int)BigInt" id="28960">pow</a> (<a title="Int" id="159986">exp</a>: <span title="Int">Int</span>): <a href="#426" title="BigInt">BigInt</a> = <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: Int)java.math.BigInteger" id="29816">pow</a>(<a href="#159986" title="Int">exp</a>))
+
+  /** Returns a BigInt whose value is
+   *  (&lt;tt&gt;this&lt;/tt&gt; raised to the power of &lt;tt&gt;exp&lt;/tt&gt; modulo &lt;tt&gt;m&lt;/tt&gt;).
+   */
+  <span class="keyword">def</span> <a title="(exp: BigInt,m: BigInt)BigInt" id="28961">modPow</a> (<a title="BigInt" id="159992">exp</a>: <a href="#426" title="BigInt">BigInt</a>, <a title="BigInt" id="159993">m</a>: <a href="#426" title="BigInt">BigInt</a>): <a href="#426" title="BigInt">BigInt</a> =
+    <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: java.math.BigInteger,x$2: java.math.BigInteger)java.math.BigInteger" id="29835">modPow</a>(<a href="#159992" title="BigInt">exp</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>, <a href="#159993" title="BigInt">m</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>))
+
+  /** Returns a BigInt whose value is (the inverse of &lt;tt&gt;this&lt;/tt&gt; modulo &lt;tt&gt;m&lt;/tt&gt;).
+   */
+  <span class="keyword">def</span> <a title="(m: BigInt)BigInt" id="28962">modInverse</a> (<a title="BigInt" id="159999">m</a>: <a href="#426" title="BigInt">BigInt</a>): <a href="#426" title="BigInt">BigInt</a> = <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: java.math.BigInteger)java.math.BigInteger" id="29849">modInverse</a>(<a href="#159999" title="BigInt">m</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>))
+
+  /** Returns a BigInt whose value is the negation of this BigInt
+   */
+  <span class="keyword">def</span> <a title="=&gt; BigInt" id="28963">unary_-</a> : <a href="#426" title="BigInt">BigInt</a>   = <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="()java.math.BigInteger" id="29831">negate</a>())
+  
+  /** Returns the absolute value of this BigInt
+   */
+  <span class="keyword">def</span> <a title="=&gt; BigInt" id="28964">abs</a>: <a href="#426" title="BigInt">BigInt</a> = <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="()java.math.BigInteger" id="29830">abs</a>())
+
+  /** Returns the sign of this BigInt, i.e. 
+   *   -1 if it is less than 0, 
+   *   +1 if it is greater than 0
+   *   0  if it is equal to 0
+   */
+  <span class="keyword">def</span> <a title="=&gt; Int" id="28965">signum</a>: <span title="Int">Int</span> = <a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="()Int" id="29832">signum</a>()
+
+  /** Returns the bitwise complement of this BigNum
+   */
+  <span class="keyword">def</span> <a title="=&gt; BigInt" id="28966">~</a> : <a href="#426" title="BigInt">BigInt</a>   = <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="()java.math.BigInteger" id="29863">not</a>())
+
+  /** Returns true if and only if the designated bit is set.
+   */
+  <span class="keyword">def</span> <a title="(n: Int)Boolean" id="28967">testBit</a> (<a title="Int" id="160028">n</a>: <span title="Int">Int</span>): <span title="Boolean">Boolean</span> = <a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: Int)Boolean" id="29866">testBit</a>(<a href="#160028" title="Int">n</a>)
+
+  /** Returns a BigInt whose value is equivalent to this BigInt with the designated bit set.
+   */
+  <span class="keyword">def</span> <a title="(n: Int)BigInt" id="28968">setBit</a>  (<a title="Int" id="160032">n</a>: <span title="Int">Int</span>): <a href="#426" title="BigInt">BigInt</a>  = <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: Int)java.math.BigInteger" id="29868">setBit</a>(<a href="#160032" title="Int">n</a>))
+
+  /** Returns a BigInt whose value is equivalent to this BigInt with the designated bit cleared.
+   */
+  <span class="keyword">def</span> <a title="(n: Int)BigInt" id="28969">clearBit</a>(<a title="Int" id="160038">n</a>: <span title="Int">Int</span>): <a href="#426" title="BigInt">BigInt</a>  = <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: Int)java.math.BigInteger" id="29870">clearBit</a>(<a href="#160038" title="Int">n</a>))
+
+  /** Returns a BigInt whose value is equivalent to this BigInt with the designated bit flipped.
+   */
+  <span class="keyword">def</span> <a title="(n: Int)BigInt" id="28970">flipBit</a> (<a title="Int" id="160044">n</a>: <span title="Int">Int</span>): <a href="#426" title="BigInt">BigInt</a>  = <span title="BigInt" class="keyword">new</span> <a href="#426" title="BigInt">BigInt</a>(<a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: Int)java.math.BigInteger" id="29872">flipBit</a>(<a href="#160044" title="Int">n</a>))
+
+  /** Returns the index of the rightmost (lowest-order) one bit in this BigInt
+   * (the number of zero bits to the right of the rightmost one bit).
+   */
+  <span class="keyword">def</span> <a title="=&gt; Int" id="28971">lowestSetBit</a>: <span title="Int">Int</span>         = <a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="()Int" id="29874">getLowestSetBit</a>()
+
+  /** Returns the number of bits in the minimal two's-complement representation of this BigInt, 
+   *  excluding a sign bit.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Int" id="28972">bitLength</a>: <span title="Int">Int</span>            = <a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="()Int" id="29875">bitLength</a>()
+  
+  /** Returns the number of bits in the two's complement representation of this BigInt 
+   *  that differ from its sign bit.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Int" id="28973">bitCount</a>: <span title="Int">Int</span>             = <a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="()Int" id="29876">bitCount</a>()
+
+  /** Returns true if this BigInt is probably prime, false if it's definitely composite.
+   *  @param certainty  a measure of the uncertainty that the caller is willing to tolerate: 
+   *                    if the call returns true the probability that this BigInt is prime 
+   *                    exceeds (1 - 1/2 ^ certainty). 
+   *                    The execution time of this method is proportional to the value of 
+   *                    this parameter.
+   */
+  <span class="keyword">def</span> <a title="(certainty: Int)Boolean" id="28974">isProbablePrime</a>(<a title="Int" id="160062">certainty</a>: <span title="Int">Int</span>) = <a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: Int)Boolean" id="29879">isProbablePrime</a>(<a href="#160062" title="Int">certainty</a>)
+  
+  /** Converts this BigInt to a &lt;tt&gt;byte&lt;/tt&gt;. 
+   *  If the BigInt is too big to fit in a byte, only the low-order 8 bits are returned. 
+   *  Note that this conversion can lose information about the overall magnitude of the 
+   *  BigInt value as well as return a result with the opposite sign.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Byte" id="28975">byteValue</a>   = <a href="#28978" title="()Int">intValue</a>.<a title="=&gt; Byte" id="2842">toByte</a>
+
+  /** Converts this BigInt to a &lt;tt&gt;short&lt;/tt&gt;. 
+   *  If the BigInt is too big to fit in a byte, only the low-order 16 bits are returned. 
+   *  Note that this conversion can lose information about the overall magnitude of the 
+   *  BigInt value as well as return a result with the opposite sign.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Short" id="28976">shortValue</a>  = <a href="#28978" title="()Int">intValue</a>.<a title="=&gt; Short" id="2843">toShort</a>
+
+  /** Converts this BigInt to a &lt;tt&gt;char&lt;/tt&gt;. 
+   *  If the BigInt is too big to fit in a char, only the low-order 16 bits are returned. 
+   *  Note that this conversion can lose information about the overall magnitude of the 
+   *  BigInt value and that it always returns a positive result.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Char" id="28977">charValue</a>   = <a href="#28978" title="()Int">intValue</a>.<a title="=&gt; Char" id="2844">toChar</a>
+
+  /** Converts this BigInt to an &lt;tt&gt;int&lt;/tt&gt;. 
+   *  If the BigInt is too big to fit in a char, only the low-order 32 bits
+   *  are returned. Note that this conversion can lose information about the
+   *  overall magnitude of the BigInt value as well as return a result with
+   *  the opposite sign.
+   */
+  <span class="keyword">def</span> <a title="()Int" id="28978">intValue</a>    = <a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="()Int" id="29896">intValue</a>
+
+  /** Converts this BigInt to a &lt;tt&gt;long&lt;/tt&gt;.
+   *  If the BigInt is too big to fit in a char, only the low-order 64 bits
+   *  are returned. Note that this conversion can lose information about the
+   *  overall magnitude of the BigInt value as well as return a result with
+   *  the opposite sign.
+   */
+  <span class="keyword">def</span> <a title="()Long" id="28979">longValue</a>   = <a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="()Long" id="29897">longValue</a>
+
+  /** Converts this BigInt to a &lt;tt&gt;float&lt;/tt&gt;.
+   *  if this BigInt has too great a magnitude to represent as a float,
+   *  it will be converted to &lt;code&gt;Float.NEGATIVE_INFINITY&lt;/code&gt; or
+   *  &lt;code&gt;Float.POSITIVE_INFINITY&lt;/code&gt; as appropriate.
+   */
+  <span class="keyword">def</span> <a title="()Float" id="28980">floatValue</a>  = <a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="()Float" id="29898">floatValue</a>
+
+  /** Converts this BigInt to a &lt;tt&gt;double&lt;/tt&gt;. 
+   *  if this BigInt has too great a magnitude to represent as a float, 
+   *  it will be converted to &lt;code&gt;Float.NEGATIVE_INFINITY&lt;/code&gt; or
+   *  &lt;code&gt;Float.POSITIVE_INFINITY&lt;/code&gt; as appropriate. 
+   */
+  <span class="keyword">def</span> <a title="()Double" id="28981">doubleValue</a> = <a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="()Double" id="29899">doubleValue</a>
+
+  /** Create a GenericRange[BigInt] in range &lt;code&gt;[start;end)&lt;/code&gt;
+   *  with the specified step, where start is the target BigInt.
+   *
+   *  @param end    the end value of the range (exclusive)
+   *  @param step   the distance between elements (defaults to 1)
+   *  @return       the range
+   */
+  <span class="keyword">def</span> <a title="(end: BigInt,step: BigInt)GenericRange.Exclusive[BigInt]" id="28982">until</a>(<a title="BigInt" id="160102">end</a>: <a href="#426" title="BigInt">BigInt</a>, <a title="BigInt" id="160106">step</a>: <a href="#426" title="BigInt">BigInt</a> = <a href="#29468" title="(i: Int)BigInt">BigInt</a>(<span title="Int(1)" class="int">1</span>)) = <a href="Range.scala.html#1282" title="object Range">Range</a>.<a href="Range.scala.html#90702" title="(start: BigInt,end: BigInt,step: BigInt)GenericRange.Exclusive[BigInt]">BigInt</a>(<a href="#426" title="BigInt" class="keyword">this</a>, <a href="#160102" title="BigInt">end</a>, <a href="#160106" title="BigInt">step</a>)
+  
+  /** Like until, but inclusive of the end value.
+   */
+  <span class="keyword">def</span> <a title="(end: BigInt,step: BigInt)GenericRange.Inclusive[BigInt]" id="28983">to</a>(<a title="BigInt" id="160121">end</a>: <a href="#426" title="BigInt">BigInt</a>, <a title="BigInt" id="160125">step</a>: <a href="#426" title="BigInt">BigInt</a> = <a href="#29468" title="(i: Int)BigInt">BigInt</a>(<span title="Int(1)" class="int">1</span>)) = <a href="Range.scala.html#1282" title="object Range">Range</a>.<a href="Range.scala.html#31190" title="object Range.BigInt">BigInt</a>.<a href="Range.scala.html#90703" title="(start: BigInt,end: BigInt,step: BigInt)GenericRange.Inclusive[BigInt]">inclusive</a>(<a href="#426" title="BigInt" class="keyword">this</a>, <a href="#160121" title="BigInt">end</a>, <a href="#160125" title="BigInt">step</a>)
+
+  /** Returns the decimal String representation of this BigInt.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="28984">toString</a>(): <span title="String">String</span> = <a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="()java.lang.String" id="29894">toString</a>()
+
+  /** Returns the String representation in the specified radix of this BigInt.
+   */
+  <span class="keyword">def</span> <a title="(radix: Int)String" id="28985">toString</a>(<a title="Int" id="160149">radix</a>: <span title="Int">Int</span>): <span title="String">String</span> = <a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="(x$1: Int)java.lang.String" id="29892">toString</a>(<a href="#160149" title="Int">radix</a>)
+
+  /** Returns a byte array containing the two's-complement representation of
+   *  this BigInt. The byte array will be in big-endian byte-order: the most
+   *  significant byte is in the zeroth element. The array will contain the
+   *  minimum number of bytes required to represent this BigInt, including at
+   *  least one sign bit.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Array[Byte]" id="28986">toByteArray</a>: <a href="Array.scala.html#885" title="Array[Byte]">Array</a>[Byte] = <a href="#426" title="BigInt.this.type" class="keyword">this</a>.<a href="#31835" title="=&gt; java.math.BigInteger">bigInteger</a>.<a title="()Array[Byte]" id="29895">toByteArray</a>()
+}
+
+        </pre>
+    </body>
+</html>

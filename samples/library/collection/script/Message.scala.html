@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>collection/script/Message.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |                                         **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: Message.scala 18387 2009-07-24 15:28:37Z odersky $
+
+
+<span class="keyword">package</span> scala.collection.script
+<span class="keyword">import</span> scala.collection._
+
+<span class="keyword">import</span> Predef._
+<span class="keyword">import</span> mutable.ArrayBuffer
+
+/** Class &lt;code&gt;Message&lt;/code&gt; represents messages that are issued by observable
+ *  collection classes whenever a data structure is changed. Class &lt;code&gt;Message&lt;/code&gt;
+ *  has several subclasses for the various kinds of events: &lt;code&gt;Update&lt;/code&gt;
+ *  &lt;code&gt;Remove&lt;/code&gt;, &lt;code&gt;Include&lt;/code&gt;, &lt;code&gt;Reset&lt;/code&gt;, and
+ *  &lt;code&gt;Script&lt;/code&gt;.
+ *
+ *  @author  Matthias Zenger
+ *  @version 1.0, 08/07/2003
+ */
+<span class="keyword">trait</span> <a title="trait Message[+A] extends java.lang.Object" id="15333">Message</a>[+<a title="&gt;: Nothing &lt;: Any" id="15840">A</a>]
+
+/** This observable update refers to inclusion operations that add new elements
+ *  to collection classes.
+ *
+ *  @author  Matthias Zenger
+ *  @version 1.0, 08/07/2003
+ */
+case <span class="keyword">class</span> <a title="class Include[+A] extends java.lang.Object with scala.collection.script.Message[A] with ScalaObject with Product" id="66978">Include</a>[+<a title="&gt;: Nothing &lt;: Any" id="66980">A</a>]<a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="scala.collection.script.Location" id="216894">location</a>: <a href="Location.scala.html#15372" title="scala.collection.script.Location">Location</a>, <a title="A" id="216895">elem</a>: <a href="#66980" title="A">A</a>) <span class="keyword">extends</span> <a href="#15333" title="scala.collection.script.Message[A]">Message</a>[A] {
+  <span class="keyword">def</span> <a title="(elem: A)scala.collection.script.Include[A]" id="66988" class="keyword">this</a>(<a title="A" id="134209">elem</a>: <a href="#66980" title="A">A</a>) = <a href="#66978" title="Include.this.type" class="keyword">this</a>(<a href="Location.scala.html#15331" title="object scala.collection.script.NoLo">NoLo</a>, <a href="#134209" title="A">elem</a>)
+}
+
+/** This observable update refers to destructive modification operations
+ *  of elements from collection classes.
+ *
+ *  @author  Matthias Zenger
+ *  @version 1.0, 08/07/2003
+ */
+case <span class="keyword">class</span> <a title="class Update[+A] extends java.lang.Object with scala.collection.script.Message[A] with ScalaObject with Product" id="67083">Update</a>[+<a title="&gt;: Nothing &lt;: Any" id="67085">A</a>]<a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="scala.collection.script.Location" id="216924">location</a>: <a href="Location.scala.html#15372" title="scala.collection.script.Location">Location</a>, <a title="A" id="216925">elem</a>: <a href="#67085" title="A">A</a>) <span class="keyword">extends</span> <a href="#15333" title="scala.collection.script.Message[A]">Message</a>[A] {
+  <span class="keyword">def</span> <a title="(elem: A)scala.collection.script.Update[A]" id="67093" class="keyword">this</a>(<a title="A" id="148077">elem</a>: <a href="#67085" title="A">A</a>) = <a href="#67083" title="Update.this.type" class="keyword">this</a>(<a href="Location.scala.html#15331" title="object scala.collection.script.NoLo">NoLo</a>, <a href="#148077" title="A">elem</a>)
+}
+
+/** This observable update refers to removal operations of elements
+ *  from collection classes.
+ *
+ *  @author  Matthias Zenger
+ *  @version 1.0, 08/07/2003
+ */
+case <span class="keyword">class</span> <a title="class Remove[+A] extends java.lang.Object with scala.collection.script.Message[A] with ScalaObject with Product" id="67165">Remove</a>[+<a title="&gt;: Nothing &lt;: Any" id="67167">A</a>]<a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="scala.collection.script.Location" id="216954">location</a>: <a href="Location.scala.html#15372" title="scala.collection.script.Location">Location</a>, <a title="A" id="216955">elem</a>: <a href="#67167" title="A">A</a>) <span class="keyword">extends</span> <a href="#15333" title="scala.collection.script.Message[A]">Message</a>[A] {
+  <span class="keyword">def</span> <a title="(elem: A)scala.collection.script.Remove[A]" id="67175" class="keyword">this</a>(<a title="A" id="134312">elem</a>: <a href="#67167" title="A">A</a>) = <a href="#67165" title="Remove.this.type" class="keyword">this</a>(<a href="Location.scala.html#15331" title="object scala.collection.script.NoLo">NoLo</a>, <a href="#134312" title="A">elem</a>)
+}
+
+/** This command refers to reset operations.
+ *
+ *  @author  Matthias Zenger
+ *  @version 1.0, 08/07/2003
+ */
+case <span class="keyword">class</span> <a href="../../runtime/ScalaRunTime.scala.html#20630" title="class Reset[+A] extends java.lang.Object with scala.collection.script.Message[A] with ScalaObject with Product" id="67330">Reset</a>[+<a title="&gt;: Nothing &lt;: Any" id="67332">A</a>]<a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a>) <span class="keyword">extends</span> <a href="#15333" title="scala.collection.script.Message[A]">Message</a>[A]
+
+/** Objects of this class represent compound messages consisting
+ *  of a sequence of other messages.
+ *
+ *  @author  Matthias Zenger
+ *  @version 1.0, 10/05/2004
+ */
+<span class="keyword">class</span> <a title="class Script[A] extends scala.collection.mutable.ArrayBuffer[scala.collection.script.Message[A]] with scala.collection.script.Message[A] with ScalaObject" id="15342">Script</a>[<a title="&gt;: Nothing &lt;: Any" id="15845">A</a>] <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="../mutable/ArrayBuffer.scala.html#7797" title="scala.collection.mutable.ArrayBuffer[scala.collection.script.Message[A]]">ArrayBuffer</a>[Message[A]] <span class="keyword">with</span> <a href="#15333" title="scala.collection.script.Message[A]">Message</a>[A] {
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="67348">toString</a>(): <a title="String" id="1603">String</a> = {
+    <span class="keyword">var</span> <a title="java.lang.String" id="216835">res</a> = <span title="java.lang.String(&quot;Script(&quot;)" class="string">&quot;Script(&quot;</span>
+    <span class="keyword">var</span> <a title="Iterator[scala.collection.script.Message[A]]" id="216836">it</a> = <a href="#15342" title="Script.this.type" class="keyword">this</a>.<a href="../generic/VectorTemplate.scala.html#17750" title="=&gt; Iterator[scala.collection.script.Message[A]]">iterator</a>
+    <span class="keyword">var</span> <a title="Int" id="216837">i</a> = <span title="Int(1)" class="int">1</span>
+    <span title="Unit" class="keyword">while</span> (<a href="#216836" title="Iterator[scala.collection.script.Message[A]]">it</a>.<a href="../Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>) <a href="#216838" title="()Unit">{</a>
+      <span title="Unit" class="keyword">if</span> (<a href="#216837" title="(x$1: Int)Boolean" id="2958">i</a> &gt; <span title="Int(1)" class="int">1</span>)
+        <a href="#216835" title="java.lang.String">res</a> = <a href="#216835" title="(x$1: Any)java.lang.String">res</a> + <span title="java.lang.String(&quot;, &quot;)" class="string">&quot;, &quot;</span>
+      <a href="#216835" title="java.lang.String">res</a> = <a href="#216835" title="(x$1: Any)java.lang.String">res</a> <span title="(x$1: Any)java.lang.String">+</span> <span title="java.lang.String(&quot;[&quot;)" class="string">&quot;[&quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#216837" title="Int">i</a> <span title="(x$1: Any)java.lang.String">+</span> <span title="java.lang.String(&quot;] &quot;)" class="string">&quot;] &quot;</span> + <a href="#216836" title="Iterator[scala.collection.script.Message[A]]">it</a>.<a href="../Iterator.scala.html#19185" title="()scala.collection.script.Message[A]">next</a>
+      <a href="#216837" title="Int">i</a> = <a href="#216837" title="(x$1: Int)Int" id="2962">i</a> + <span title="Int(1)" class="int">1</span>
+    }
+    <a href="#216835" title="(x$1: Any)java.lang.String">res</a> + <span title="java.lang.String(&quot;)&quot;)" class="string">&quot;)&quot;</span>
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Int" id="67349">hashCode</a>(): <a title="Int" id="2175">Int</a> =
+    <span title="Nothing" class="keyword">throw</span> <a title="(x$1: java.lang.String)java.lang.UnsupportedOperationException" id="45864" class="keyword">new</a> <a href="../../Predef.scala.html#16169" title="java.lang.UnsupportedOperationException">UnsupportedOperationException</a>(<span title="java.lang.String(&quot;scripts are not suitable as hash keys&quot;)" class="string">&quot;scripts are not suitable as hash keys&quot;</span>)
+}
+
+        </pre>
+    </body>
+</html>

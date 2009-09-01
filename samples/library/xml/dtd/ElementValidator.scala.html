@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>xml/dtd/ElementValidator.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://www.scala-lang.org/           **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: ElementValidator.scala 18387 2009-07-24 15:28:37Z odersky $
+
+
+<span class="keyword">package</span> scala.xml
+<span class="keyword">package</span> dtd
+
+<span class="keyword">import</span> ContentModel.ElemName
+<span class="keyword">import</span> scala.util.automata._
+
+/** validate children and/or attributes of an element
+ *  exceptions are created but not thrown.
+ */
+<span class="keyword">class</span> <a title="class ElementValidator extends java.lang.Object with (scala.xml.Node) =&gt; Boolean with ScalaObject" id="11146">ElementValidator</a><a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a>) <span class="keyword">extends</span> <a href="../../Function1.scala.html#159" title="(scala.xml.Node) =&gt; Boolean">Function1</a>[Node,Boolean] {
+
+  <span class="keyword">var</span> <a title="List[scala.xml.dtd.ValidationException]" id="56224">exc</a>: <a href="../../collection/immutable/List.scala.html#8973" title="List[scala.xml.dtd.ValidationException]">List</a>[ValidationException] = <a href="../../collection/immutable/List.scala.html#9259" title="object Nil">Nil</a>
+
+  <span class="keyword">protected</span> <span class="keyword">var</span> <a title="scala.xml.dtd.ContentModel" id="56227">contentModel</a>: <a href="ContentModel.scala.html#11092" title="scala.xml.dtd.ContentModel">ContentModel</a>           = _
+  <span class="keyword">protected</span> <span class="keyword">var</span> <a title="scala.util.automata.DetWordAutom[scala.xml.dtd.ContentModel.ElemName]" id="56230">dfa</a>:          <a href="../../util/automata/DetWordAutom.scala.html#14056" title="scala.util.automata.DetWordAutom[scala.xml.dtd.ContentModel.ElemName]">DetWordAutom</a>[ElemName] = _
+  <span class="keyword">protected</span> <span class="keyword">var</span> <a title="List[scala.xml.dtd.AttrDecl]" id="56233">adecls</a>:       <a href="../../collection/immutable/List.scala.html#8973" title="List[scala.xml.dtd.AttrDecl]">List</a>[AttrDecl]         = _
+
+  /** set content model, enabling element validation */
+  <span class="keyword">def</span> <a title="(cm: scala.xml.dtd.ContentModel)Unit" id="56235">setContentModel</a>(<a title="scala.xml.dtd.ContentModel" id="56263">cm</a>:<a href="ContentModel.scala.html#11092" title="scala.xml.dtd.ContentModel">ContentModel</a>) = {
+    <a href="#56227" title="(x$1: scala.xml.dtd.ContentModel)Unit">contentModel</a> = <a href="#56263" title="scala.xml.dtd.ContentModel">cm</a>; <a href="#56263" title="scala.xml.dtd.ContentModel">cm</a> <span title="Unit" class="keyword">match</span> {
+      <span title="Unit" class="keyword">case</span> ELEMENTS(<a title="scala.xml.dtd.ContentModel.RegExp" id="56291">r</a>) =&gt;
+        <span class="keyword">val</span> <a title="scala.util.automata.NondetWordAutom[scala.xml.dtd.ContentModel.Translator._labelT]" id="56294">nfa</a> = <a href="ContentModel.scala.html#11093" title="object scala.xml.dtd.ContentModel">ContentModel</a>.<a href="ContentModel.scala.html#26784" title="object scala.xml.dtd.ContentModel.Translator">Translator</a>.<a href="../../util/automata/WordBerrySethi.scala.html#56349" title="(pat: scala.xml.dtd.ContentModel.Translator.lang.RegExp,finalTag: Int)scala.util.automata.NondetWordAutom[scala.xml.dtd.ContentModel.Translator._labelT]">automatonFrom</a>(<a href="#56291" title="scala.xml.dtd.ContentModel.RegExp">r</a>, <span title="Int(1)" class="int">1</span>)
+        <a href="#56230" title="(x$1: scala.util.automata.DetWordAutom[scala.xml.dtd.ContentModel.ElemName])Unit">dfa</a> = <span title="scala.util.automata.SubsetConstruction[scala.xml.dtd.ContentModel.Translator._labelT]" class="keyword">new</span> <a href="../../util/automata/SubsetConstruction.scala.html#13996" title="scala.util.automata.SubsetConstruction[scala.xml.dtd.ContentModel.Translator._labelT]">SubsetConstruction</a>(<a href="#56294" title="scala.util.automata.NondetWordAutom[scala.xml.dtd.ContentModel.Translator._labelT]">nfa</a>).<a href="../../util/automata/SubsetConstruction.scala.html#56390" title="=&gt; scala.util.automata.DetWordAutom[scala.xml.dtd.ContentModel.Translator._labelT]">determinize</a>
+      <span title="Unit" class="keyword">case</span> _ =&gt;
+        <a href="#56230" title="(x$1: scala.util.automata.DetWordAutom[scala.xml.dtd.ContentModel.ElemName])Unit">dfa</a> = <span title="Null(null)" class="keyword">null</span>
+    }
+  }
+
+  <span class="keyword">def</span> <a title="=&gt; scala.xml.dtd.ContentModel" id="56236">getContentModel</a> = <a href="#56227" title="=&gt; scala.xml.dtd.ContentModel">contentModel</a>
+
+  /** set meta data, enabling attribute validation */
+  <span class="keyword">def</span> <a title="(adecls: List[scala.xml.dtd.AttrDecl])Unit" id="56237">setMetaData</a>(<a title="List[scala.xml.dtd.AttrDecl]" id="56406">adecls</a>: <a href="../../collection/immutable/List.scala.html#8973" title="List[scala.xml.dtd.AttrDecl]">List</a>[AttrDecl]) { <a href="#11146" title="ElementValidator.this.type" class="keyword">this</a>.<a href="#56233" title="(x$1: List[scala.xml.dtd.AttrDecl])Unit">adecls</a> = <a href="#56406" title="List[scala.xml.dtd.AttrDecl]">adecls</a> }
+
+  <span class="keyword">def</span> <a title="(nodes: Seq[scala.xml.Node],skipPCDATA: Boolean)Iterator[scala.xml.dtd.ContentModel.ElemName]" id="56238">getIterator</a>(<a title="Seq[scala.xml.Node]" id="56410">nodes</a>: <a href="../../collection/Sequence.scala.html#4346" title="Seq[scala.xml.Node]">Seq</a>[Node], <a title="Boolean" id="56411">skipPCDATA</a>: <span title="Boolean">Boolean</span>): <a href="../../collection/Iterator.scala.html#4274" title="Iterator[scala.xml.dtd.ContentModel.ElemName]">Iterator</a>[ElemName] = 
+    <a href="#56410" title="Seq[scala.xml.Node]">nodes</a>.<a href="../../collection/generic/TraversableTemplate.scala.html#17236" title="=&gt; List[scala.xml.Node]">toList</a>
+	 .<a href="../../collection/generic/TraversableTemplate.scala.html#17171" title="(p: (scala.xml.Node) =&gt; Boolean)List[scala.xml.Node]">filter</a> { <a title="scala.xml.Node" id="56415">x</a> =&gt; <a href="#56415" title="scala.xml.Node">x</a> <span title="Boolean" class="keyword">match</span> {
+           <span title="Boolean" class="keyword">case</span> <a title="scala.xml.SpecialNode" id="56416">y</a>:<a href="../SpecialNode.scala.html#8711" title="scala.xml.SpecialNode">SpecialNode</a> =&gt; <a href="#56416" title="scala.xml.SpecialNode">y</a> <span title="Boolean" class="keyword">match</span> { 
+             
+             <span title="Boolean(false)" class="keyword">case</span> <a title="scala.xml.Atom[_]" id="56417">a</a>:<a href="../Atom.scala.html#8462" title="scala.xml.Atom[_]">Atom</a>[_] <span class="keyword">if</span> (<a href="#56417" title="scala.xml.Atom[_]">a</a>.<a href="../Atom.scala.html#26459" title="=&gt; _">data</a>.<a title="[T0]Boolean" id="3618">isInstanceOf</a><span title="(x$1: Boolean)Boolean">[</span><span title="String">String</span>] &amp;&amp; 
+                                <a href="#56417" title="scala.xml.Atom[_]">a</a>.<a href="../Atom.scala.html#26459" title="=&gt; _">data</a>.<a title="[T0]T0" id="3621">asInstanceOf</a><span title="String">[</span><span title="String">String</span>].<a title="()java.lang.String" id="7040">trim</a>.<a title="(x$1: Int)Boolean" id="6904">length</a> == <span title="Int(0)" class="int">0</span> ) =&gt; 
+                <span title="Boolean(false)" class="keyword">false</span>; // always skip all-whitespace nodes
+
+              <span title="Boolean" class="keyword">case</span> _ =&gt; 
+                <span title="=&gt; Boolean">!</span><a href="#56411" title="Boolean">skipPCDATA</a>
+
+            }
+            <span title="Boolean" class="keyword">case</span> _ =&gt;
+              <a href="#56415" title="scala.xml.Node">x</a>.<a href="../Node.scala.html#20997" title="(x$1: AnyRef)Boolean" id="6531">namespace</a> eq <span title="Null(null)" class="keyword">null</span>
+          }}
+          .<a href="../../collection/generic/TraversableTemplate.scala.html#17161" title="(f: (scala.xml.Node) =&gt; scala.xml.dtd.ContentModel.ElemName)(implicit bf: scala.collection.generic.BuilderFactory[scala.xml.dtd.ContentModel.ElemName,List[scala.xml.dtd.ContentModel.ElemName],List[scala.xml.Node]])List[scala.xml.dtd.ContentModel.ElemName]">map</a> <a href="../../collection/immutable/List.scala.html#17526" title="scala.collection.generic.BuilderFactory[scala.xml.dtd.ContentModel.ElemName,List[scala.xml.dtd.ContentModel.ElemName],List#Coll]">{</a> <a title="scala.xml.Node" id="56454">x</a> =&gt; <a href="ContentModel.scala.html#56456" title="(name: String)scala.xml.dtd.ContentModel.ElemName">ElemName</a>(<a href="#56454" title="scala.xml.Node">x</a>.<a href="../Node.scala.html#20992" title="=&gt; String">label</a>) }
+          .<a href="../../collection/generic/LinearSequenceTemplate.scala.html#19401" title="=&gt; Iterator[scala.xml.dtd.ContentModel.ElemName]">iterator</a>;
+
+  /** check attributes, return true if md corresponds to attribute declarations in adecls.
+   */
+  <span class="keyword">def</span> <a title="(md: scala.xml.MetaData)Boolean" id="56239">check</a>(<a title="scala.xml.MetaData" id="56580">md</a>: <a href="../MetaData.scala.html#8585" title="scala.xml.MetaData">MetaData</a>): <span title="Boolean">Boolean</span> = {
+    //@todo other exceptions
+    <span class="keyword">import</span> MakeValidationException._;
+    <span class="keyword">val</span> <a title="Int" id="56583">len</a>: <a title="Int" id="2175">Int</a> = <a href="#56224" title="=&gt; List[scala.xml.dtd.ValidationException]">exc</a>.<a href="../../collection/generic/LinearSequenceTemplate.scala.html#19399" title="=&gt; Int">length</a>;
+    <span class="keyword">var</span> <a title="Int" id="56584">j</a> = <span title="Int(0)" class="int">0</span>;
+    <span class="keyword">var</span> <a title="scala.collection.mutable.BitSet" id="56585">ok</a> = <a href="../../collection/mutable/BitSet.scala.html#56605" title="(initSize: Int)scala.collection.mutable.BitSet" class="keyword">new</a> scala.collection.mutable.<a href="../../collection/mutable/BitSet.scala.html#7629" title="scala.collection.mutable.BitSet">BitSet</a>(<a href="#56233" title="=&gt; List[scala.xml.dtd.AttrDecl]">adecls</a>.<a href="../../collection/generic/LinearSequenceTemplate.scala.html#19399" title="=&gt; Int">length</a>);
+    <span class="keyword">def</span> <a title="(Key: String)scala.xml.dtd.AttrDecl" id="56586">find</a>(<a title="String" id="56627">Key</a>:<span title="String">String</span>): <a href="Decl.scala.html#11134" title="scala.xml.dtd.AttrDecl">AttrDecl</a> = {
+      <span class="keyword">var</span> <a title="scala.xml.dtd.AttrDecl" id="56628">attr</a>: <a href="Decl.scala.html#11134" title="scala.xml.dtd.AttrDecl">AttrDecl</a> = <span title="Null(null)" class="keyword">null</span>;
+      <span class="keyword">val</span> <a title="Iterator[scala.xml.dtd.AttrDecl]" id="56629">jt</a> = <a href="#56233" title="=&gt; List[scala.xml.dtd.AttrDecl]">adecls</a>.<a href="../../collection/generic/LinearSequenceTemplate.scala.html#19401" title="=&gt; Iterator[scala.xml.dtd.AttrDecl]">iterator</a>; <span title="Unit" class="keyword">while</span>(<a href="#56584" title="(x$1: Int)Boolean" id="2954">j</a> &lt; <a href="#56233" title="=&gt; List[scala.xml.dtd.AttrDecl]">adecls</a>.<a href="../../collection/generic/LinearSequenceTemplate.scala.html#19399" title="=&gt; Int">length</a>) {
+        <a href="#56629" title="Iterator[scala.xml.dtd.AttrDecl]">jt</a>.<a href="../../collection/Iterator.scala.html#19185" title="()scala.xml.dtd.AttrDecl">next</a> <a href="#56630" title="Unit" class="keyword">match</a> {
+          <span title="Unit" class="keyword">case</span> <a title="scala.xml.dtd.AttrDecl" id="56641">a</a> @ AttrDecl(<a href="#56627" title="String">Key</a>, _, _) =&gt; <a href="#56628" title="scala.xml.dtd.AttrDecl">attr</a> = <a href="#56641" title="scala.xml.dtd.AttrDecl">a</a>; <a href="../../collection/mutable/BitSet.scala.html#56613" title="(elem: Int)scala.collection.mutable.BitSet">ok</a> += <a href="#56584" title="Int">j</a>; <a href="#56584" title="Int">j</a> = <a href="#56233" title="=&gt; List[scala.xml.dtd.AttrDecl]">adecls</a>.<a href="../../collection/generic/LinearSequenceTemplate.scala.html#19399" title="=&gt; Int">length</a>;
+          <span title="Unit" class="keyword">case</span> _                       =&gt; <a href="#56584" title="Int">j</a> = <a href="#56584" title="(x$1: Int)Int">j</a> + <span title="Int(1)" class="int">1</span>;
+        }
+      }
+      <a href="#56628" title="scala.xml.dtd.AttrDecl">attr</a>
+    }
+    <span class="keyword">val</span> <a title="Iterator[scala.xml.MetaData]" id="56587">it</a> = <a href="#56580" title="scala.xml.MetaData">md</a>.<a href="../MetaData.scala.html#31878" title="=&gt; Iterator[scala.xml.MetaData]">iterator</a>; <span title="Unit" class="keyword">while</span>(<a href="#56587" title="Iterator[scala.xml.MetaData]">it</a>.<a href="../../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>) <a href="#56589" title="()Unit">{</a>
+      <span class="keyword">val</span> <a title="scala.xml.MetaData" id="56747">attr</a> = <a href="#56587" title="Iterator[scala.xml.MetaData]">it</a>.<a href="../../collection/Iterator.scala.html#19185" title="()scala.xml.MetaData">next</a>
+      <a href="#56584" title="Int">j</a> = <span title="Int(0)" class="int">0</span>
+      <a href="#56586" title="(Key: String)scala.xml.dtd.AttrDecl">find</a>(<a href="#56747" title="scala.xml.MetaData">attr</a>.<a href="../MetaData.scala.html#31882" title="=&gt; String">key</a>) <span title="Unit" class="keyword">match</span> {
+
+        <span title="Unit" class="keyword">case</span> <span title="Null(null)" class="keyword">null</span> =&gt; 
+          //Console.println(&quot;exc&quot;);
+          <a href="#56224" title="(x$1: List[scala.xml.dtd.ValidationException])Unit">exc</a> = <a href="ValidationException.scala.html#56595" title="(key: String)scala.xml.dtd.ValidationException">fromUndefinedAttribute</a>( <a href="#56747" title="scala.xml.MetaData">attr</a>.<a href="../MetaData.scala.html#31882" title="=&gt; String">key</a> ) <a href="#56752" title="scala.xml.dtd.ValidationException">::</a> <a href="../../collection/immutable/List.scala.html#17630" title="(x: scala.xml.dtd.ValidationException)List[scala.xml.dtd.ValidationException]">exc</a>;
+
+        <span title="Unit" class="keyword">case</span> AttrDecl(_, <a title="String" id="56774">tpe</a>, DEFAULT(<span title="Boolean(true)" class="keyword">true</span>, <a title="String" id="56775">fixedValue</a>)) <span class="keyword">if</span> <a href="#56747" title="scala.xml.MetaData">attr</a>.<a href="../MetaData.scala.html#31883" title="=&gt; Seq[scala.xml.Node]">value</a>.<a href="../../collection/generic/SequenceTemplate.scala.html#17430" title="(x$1: AnyRef)Boolean" id="6529">toString</a> != <a href="#56775" title="String">fixedValue</a> =&gt; 
+          <a href="#56224" title="(x$1: List[scala.xml.dtd.ValidationException])Unit">exc</a> = <a href="ValidationException.scala.html#56592" title="(k: String,value: String,actual: String)scala.xml.dtd.ValidationException">fromFixedAttribute</a>( <a href="#56747" title="scala.xml.MetaData">attr</a>.<a href="../MetaData.scala.html#31882" title="=&gt; String">key</a>, <a href="#56775" title="String">fixedValue</a>, <a href="#56747" title="scala.xml.MetaData">attr</a>.<a href="../MetaData.scala.html#31883" title="=&gt; Seq[scala.xml.Node]">value</a>.<a href="../../collection/generic/SequenceTemplate.scala.html#17430" title="()String">toString</a>) <a href="#56790" title="scala.xml.dtd.ValidationException">::</a> <a href="../../collection/immutable/List.scala.html#17630" title="(x: scala.xml.dtd.ValidationException)List[scala.xml.dtd.ValidationException]">exc</a>;
+
+        <span title="Unit" class="keyword">case</span> <a title="scala.xml.dtd.AttrDecl" id="56834">s</a> =&gt;
+          //Console.println(&quot;s: &quot;+s);
+
+      }
+    }
+    
+    //val missing = ok.toSet(false); FIXME: it doesn't seem to be used anywhere
+    <a href="#56584" title="Int">j</a> = <span title="Int(0)" class="int">0</span>
+    <span class="keyword">var</span> <a title="Iterator[scala.xml.dtd.AttrDecl]" id="56588">kt</a> = <a href="#56233" title="=&gt; List[scala.xml.dtd.AttrDecl]">adecls</a>.<a href="../../collection/generic/LinearSequenceTemplate.scala.html#19401" title="=&gt; Iterator[scala.xml.dtd.AttrDecl]">iterator</a>
+    <span title="Unit" class="keyword">while</span> (<a href="#56588" title="Iterator[scala.xml.dtd.AttrDecl]">kt</a>.<a href="../../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>) {
+      <a href="#56588" title="Iterator[scala.xml.dtd.AttrDecl]">kt</a>.<a href="../../collection/Iterator.scala.html#19185" title="()scala.xml.dtd.AttrDecl">next</a> <a href="#56590" title="Unit" class="keyword">match</a> {
+        <span title="Unit" class="keyword">case</span> AttrDecl(<a title="String" id="56840">key</a>, <a title="String" id="56841">tpe</a>, <a href="Decl.scala.html#11177" title="object scala.xml.dtd.REQUIRED">REQUIRED</a>) <span class="keyword">if</span> <span title="=&gt; Boolean">!</span><a href="../../collection/generic/SetTemplate.scala.html#34280" title="(elem: Int)Boolean">ok</a>(<a href="#56584" title="Int">j</a>) =&gt; 
+          <a href="#56224" title="(x$1: List[scala.xml.dtd.ValidationException])Unit">exc</a> = <a href="ValidationException.scala.html#56597" title="(key: String,tpe: String)scala.xml.dtd.ValidationException">fromMissingAttribute</a>( <a href="#56840" title="String">key</a>, <a href="#56841" title="String">tpe</a> ) <a href="#56861" title="scala.xml.dtd.ValidationException">::</a> <a href="../../collection/immutable/List.scala.html#17630" title="(x: scala.xml.dtd.ValidationException)List[scala.xml.dtd.ValidationException]">exc</a>;
+          <a href="#56584" title="Int">j</a> = <a href="#56584" title="(x$1: Int)Int">j</a> + <span title="Int(1)" class="int">1</span>;
+        <span title="Unit" class="keyword">case</span> _ =&gt;
+          <a href="#56584" title="Int">j</a> = <a href="#56584" title="(x$1: Int)Int">j</a> + <span title="Int(1)" class="int">1</span>;
+      }
+    }
+    <a href="#56224" title="=&gt; List[scala.xml.dtd.ValidationException]">exc</a>.<a href="../../collection/generic/LinearSequenceTemplate.scala.html#19399" title="(x$1: Int)Boolean">length</a> == <a href="#56583" title="Int">len</a> //- true if no new exception
+  }
+
+  /** check children, return true if conform to content model
+   *  @pre contentModel != null
+   */
+  <span class="keyword">def</span> <a title="(nodes: Seq[scala.xml.Node])Boolean" id="56240">check</a>(<a title="Seq[scala.xml.Node]" id="57090">nodes</a>: <a href="../../collection/Sequence.scala.html#4346" title="Seq[scala.xml.Node]">Seq</a>[Node]): <span title="Boolean">Boolean</span> = <a href="#56227" title="=&gt; scala.xml.dtd.ContentModel">contentModel</a> <span title="Boolean" class="keyword">match</span> {
+    <span title="Boolean(true)" class="keyword">case</span> <a href="ContentModel.scala.html#11189" title="object scala.xml.dtd.ANY">ANY</a> =&gt;
+      <span title="Boolean(true)" class="keyword">true</span>
+
+    <span title="Boolean" class="keyword">case</span> <a href="ContentModel.scala.html#11141" title="object scala.xml.dtd.EMPTY">EMPTY</a> =&gt;
+      <span title="=&gt; Boolean">!</span><a href="#56238" title="(nodes: Seq[scala.xml.Node],skipPCDATA: Boolean)Iterator[scala.xml.dtd.ContentModel.ElemName]">getIterator</a>(<a href="#57090" title="Seq[scala.xml.Node]">nodes</a>, <span title="Boolean(false)" class="keyword">false</span>).<a href="../../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>
+
+    <span title="Boolean" class="keyword">case</span> <a href="ContentModel.scala.html#11171" title="object scala.xml.dtd.PCDATA">PCDATA</a> =&gt;
+      <span title="=&gt; Boolean">!</span><a href="#56238" title="(nodes: Seq[scala.xml.Node],skipPCDATA: Boolean)Iterator[scala.xml.dtd.ContentModel.ElemName]">getIterator</a>(<a href="#57090" title="Seq[scala.xml.Node]">nodes</a>, <span title="Boolean(true)" class="keyword">true</span>).<a href="../../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>
+
+    <span title="Boolean" class="keyword">case</span> MIXED(ContentModel.Alt(<a title="Sequence[scala.xml.dtd.ContentModel._regexpT]" id="57141">branches</a> @ _*))  =&gt; //@todo
+      <span class="keyword">val</span> <a title="Int" id="57146">j</a> = <a href="#56224" title="=&gt; List[scala.xml.dtd.ValidationException]">exc</a>.<a href="../../collection/generic/LinearSequenceTemplate.scala.html#19399" title="=&gt; Int">length</a>
+      <span class="keyword">def</span> <a title="(Key: String)Boolean" id="57147">find</a>(<a title="String" id="57151">Key</a>: <span title="String">String</span>): <span title="Boolean">Boolean</span> = {
+        <span class="keyword">var</span> <a title="Boolean" id="57152">res</a> = <span title="Boolean(false)" class="keyword">false</span>
+        <span class="keyword">val</span> <a title="Iterator[scala.xml.dtd.ContentModel._regexpT]" id="57153">jt</a> = <a href="#57141" title="Sequence[scala.xml.dtd.ContentModel._regexpT]">branches</a>.<a href="../../collection/generic/IterableTemplate.scala.html#17285" title="=&gt; Iterator[scala.xml.dtd.ContentModel._regexpT]">iterator</a>
+        <span title="Unit" class="keyword">while</span> (<a href="#57153" title="Iterator[scala.xml.dtd.ContentModel._regexpT]">jt</a>.<a href="../../collection/Iterator.scala.html#19184" title="(x$1: Boolean)Boolean">hasNext</a> &amp;&amp; <span title="=&gt; Boolean">!</span><a href="#57152" title="Boolean">res</a>) 
+          <a href="#57153" title="Iterator[scala.xml.dtd.ContentModel._regexpT]">jt</a>.<a href="../../collection/Iterator.scala.html#19185" title="()scala.xml.dtd.ContentModel._regexpT">next</a> <a href="#57154" title="Unit" class="keyword">match</a> { // !!! check for match translation problem
+            <span title="Unit" class="keyword">case</span> ContentModel.Letter(ElemName(<a href="#57151" title="String">Key</a>)) =&gt; <a href="#57152" title="Boolean">res</a> = <span title="Boolean(true)" class="keyword">true</span>;
+            <span title="Unit" class="keyword">case</span> _                                  =&gt;
+          }
+        <a href="#57152" title="Boolean">res</a>
+      }
+    
+      <span class="keyword">var</span> <a title="Iterator[scala.xml.dtd.ContentModel.ElemName]" id="57148">it</a> = <a href="#56238" title="(nodes: Seq[scala.xml.Node],skipPCDATA: Boolean)Iterator[scala.xml.dtd.ContentModel.ElemName]">getIterator</a>(<a href="#57090" title="Seq[scala.xml.Node]">nodes</a>, <span title="Boolean(true)" class="keyword">true</span>); <span title="Unit" class="keyword">while</span>(<a href="#57148" title="Iterator[scala.xml.dtd.ContentModel.ElemName]">it</a>.<a href="../../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>) <a href="#57149" title="()Unit">{</a>
+        <span class="keyword">var</span> <a title="String" id="57199">label</a> = <a href="#57148" title="Iterator[scala.xml.dtd.ContentModel.ElemName]">it</a>.<a href="../../collection/Iterator.scala.html#19185" title="()scala.xml.dtd.ContentModel.ElemName">next</a>.<a href="ContentModel.scala.html#56377" title="=&gt; String">name</a>;
+        <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#57147" title="(Key: String)Boolean">find</a>(<a href="#57199" title="String">label</a>)) {
+          <a href="#56224" title="(x$1: List[scala.xml.dtd.ValidationException])Unit">exc</a> = <a href="ValidationException.scala.html#11159" title="object scala.xml.dtd.MakeValidationException">MakeValidationException</a>.<a href="ValidationException.scala.html#56594" title="(label: String)scala.xml.dtd.ValidationException">fromUndefinedElement</a>(<a href="#57199" title="String">label</a>) <a href="#57204" title="scala.xml.dtd.ValidationException">::</a> <a href="../../collection/immutable/List.scala.html#17630" title="(x: scala.xml.dtd.ValidationException)List[scala.xml.dtd.ValidationException]">exc</a>;
+        }
+      }
+
+      (<a href="#56224" title="=&gt; List[scala.xml.dtd.ValidationException]">exc</a>.<a href="../../collection/generic/LinearSequenceTemplate.scala.html#19399" title="(x$1: Int)Boolean">length</a> == <a href="#57146" title="Int">j</a>) //- true if no new exception
+
+    <span title="Boolean" class="keyword">case</span> _:<a href="ContentModel.scala.html#11047" title="scala.xml.dtd.ELEMENTS">ELEMENTS</a> =&gt; 
+      <span class="keyword">var</span> <a title="Int" id="57235">q</a> = <span title="Int(0)" class="int">0</span>
+      <span class="keyword">val</span> <a title="Iterator[scala.xml.dtd.ContentModel.ElemName]" id="57236">it</a> = <a href="#56238" title="(nodes: Seq[scala.xml.Node],skipPCDATA: Boolean)Iterator[scala.xml.dtd.ContentModel.ElemName]">getIterator</a>(<a href="#57090" title="Seq[scala.xml.Node]">nodes</a>, <span title="Boolean(false)" class="keyword">false</span>)
+      <span title="Unit" class="keyword">while</span> (<a href="#57236" title="Iterator[scala.xml.dtd.ContentModel.ElemName]">it</a>.<a href="../../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>) <a href="#57237" title="()Unit">{</a>
+        <span class="keyword">val</span> <a title="scala.xml.dtd.ContentModel.ElemName" id="57240">e</a> = <a href="#57236" title="Iterator[scala.xml.dtd.ContentModel.ElemName]">it</a>.<a href="../../collection/Iterator.scala.html#19185" title="()scala.xml.dtd.ContentModel.ElemName">next</a>      
+        <a href="#56230" title="=&gt; scala.util.automata.DetWordAutom[scala.xml.dtd.ContentModel.ElemName]">dfa</a>.<a href="../../Array.scala.html#17716" title="(i: Int)scala.collection.Map[scala.xml.dtd.ContentModel.ElemName,Int]">delta</a>(<a href="#57235" title="Int">q</a>).<a href="../../collection/generic/MapTemplate.scala.html#35273" title="(key: scala.xml.dtd.ContentModel.ElemName)Option[Int]">get</a>(<a href="#57240" title="scala.xml.dtd.ContentModel.ElemName">e</a>) <span title="Unit" class="keyword">match</span> {
+          <span title="Unit" class="keyword">case</span> Some(<a title="Int" id="57257">p</a>) =&gt; <a href="#57235" title="Int">q</a> = <a href="#57257" title="Int">p</a>
+          <span title="Nothing" class="keyword">case</span> _       =&gt; <span title="Nothing" class="keyword">throw</span> <a href="ValidationException.scala.html#56797" title="(e: String)scala.xml.dtd.ValidationException">ValidationException</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;element &quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#57240" title="scala.xml.dtd.ContentModel.ElemName">e</a>+<span title="java.lang.String(&quot; not allowed here&quot;)" class="string">&quot; not allowed here&quot;</span>)
+        }
+      }
+      <a href="#56230" title="=&gt; scala.util.automata.DetWordAutom[scala.xml.dtd.ContentModel.ElemName]">dfa</a>.<a href="../../util/automata/DetWordAutom.scala.html#56250" title="(q: Int)Boolean">isFinal</a>(<a href="#57235" title="Int">q</a>) //- true if arrived in final state
+  }
+
+  /** applies various validations - accumulates error messages in exc
+   *  @todo: fail on first error, ignore other errors (rearranging conditions)
+   */
+  <span class="keyword">def</span> <a title="(n: scala.xml.Node)Boolean" id="56241">apply</a>(<a title="scala.xml.Node" id="57293">n</a>: <a href="../Node.scala.html#8654" title="scala.xml.Node">Node</a>): <span title="Boolean">Boolean</span> = {
+    //- ? check children
+    <span class="keyword">var</span> <a title="Boolean" id="57296">res</a> = <span title="(x$1: Boolean)Boolean">(</span><span title="(x$1: AnyRef)Boolean" class="keyword">null</span> == <a href="#56227" title="=&gt; scala.xml.dtd.ContentModel">contentModel</a>) || <a href="#56240" title="(nodes: Seq[scala.xml.Node])Boolean">check</a>( <a href="#57293" title="scala.xml.Node">n</a>.<a href="../Node.scala.html#21002" title="=&gt; Seq[scala.xml.Node]">child</a> );	  
+      
+    //- ? check attributes
+    <a href="#57296" title="Boolean">res</a> = <span title="(x$1: Boolean)Boolean">(</span><span title="(x$1: Boolean)Boolean">(</span><span title="(x$1: AnyRef)Boolean" class="keyword">null</span> == <a href="#56233" title="=&gt; List[scala.xml.dtd.AttrDecl]">adecls</a>) || <a href="#56239" title="(md: scala.xml.MetaData)Boolean">check</a>( <a href="#57293" title="scala.xml.Node">n</a>.<a href="../Node.scala.html#21001" title="=&gt; scala.xml.MetaData">attributes</a> )) &amp;&amp; <a href="#57296" title="Boolean">res</a>;      
+
+    <a href="#57296" title="Boolean">res</a>
+  }	
+}
+
+        </pre>
+    </body>
+</html>

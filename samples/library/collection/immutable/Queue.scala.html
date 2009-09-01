@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>collection/immutable/Queue.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: Queue.scala 18387 2009-07-24 15:28:37Z odersky $
+
+
+<span class="keyword">package</span> scala.collection.immutable
+
+<span class="keyword">import</span> scala.annotation.tailrec
+
+<span class="keyword">object</span> <a title="object scala.collection.immutable.Queue" id="9292">Queue</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  <span class="keyword">val</span> <a title="scala.collection.immutable.Queue[Nothing]" id="21084">Empty</a>: <a href="#9291" title="scala.collection.immutable.Queue[Nothing]">Queue</a>[Nothing] = <span title="scala.collection.immutable.Queue[Nothing]" class="keyword">new</span> <a href="#9291" title="scala.collection.immutable.Queue[Nothing]">Queue</a>(<a href="List.scala.html#9259" title="object Nil">Nil</a>, <a href="List.scala.html#9259" title="object Nil">Nil</a>)
+  <span class="keyword">def</span> <a title="[A](elems: A*)scala.collection.immutable.Queue[A]" id="21086">apply</a>[<a title="&gt;: Nothing &lt;: Any" id="21088">A</a>](<a title="A*" id="21158">elems</a>: <a title="A*" id="4176">A</a>*) = <span title="scala.collection.immutable.Queue[A]" class="keyword">new</span> <a href="#9291" title="scala.collection.immutable.Queue[A]">Queue</a>(<a href="List.scala.html#9259" title="object Nil">Nil</a>, <a href="#21158" title="A*">elems</a>.<a href="../generic/TraversableTemplate.scala.html#17236" title="=&gt; List[A]">toList</a>)
+}
+
+/** &lt;code&gt;Queue&lt;/code&gt; objects implement data structures that allow to
+ *  insert and retrieve elements in a first-in-first-out (FIFO) manner.
+ *
+ *  @author  Erik Stenman
+ *  @version 1.0, 08/07/2003
+ */
+@serializable
+<span class="keyword">class</span> <a title="class Queue[+A] extends java.lang.Object with scala.collection.immutable.Sequence[A] with ScalaObject" id="9291">Queue</a>[+<a title="&gt;: Nothing &lt;: Any" id="9415">A</a>] <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">protected</a>(
+  <span class="keyword">protected</span> <span class="keyword">val</span>  <a title="List[A]" id="21118">in</a>: <a href="List.scala.html#8973" title="List[A]">List</a>[A],
+  <span class="keyword">protected</span> <span class="keyword">val</span> <a title="List[A]" id="21119">out</a>: <a href="List.scala.html#8973" title="List[A]">List</a>[A]) <span class="keyword">extends</span> <a href="Sequence.scala.html#9150" title="scala.collection.immutable.Sequence[A]">Sequence</a>[A]
+{
+  /** Returns the &lt;code&gt;n&lt;/code&gt;-th element of this queue. 
+   *  The first element is at position 0.
+   *
+   *  @param  n index of the element to return
+   *  @return   the element at position &lt;code&gt;n&lt;/code&gt; in this queue.
+   *  @throws Predef.NoSuchElementException if the queue is too short.
+   */
+  <span class="keyword">def</span> <a title="(n: Int)A" id="21096">apply</a>(<a title="Int" id="21184">n</a>: <span title="Int">Int</span>): <a href="#9415" title="A">A</a> = {
+    @tailrec
+    <span class="keyword">def</span> <a title="(i: Int,inlist: List[A],outlist: List[A])A" id="21187">walk</a>(<a title="Int" id="21188">i</a>: <span title="Int">Int</span>, <a title="List[A]" id="21189">inlist</a>: <a href="List.scala.html#8973" title="List[A]">List</a>[A], <a title="List[A]" id="21190">outlist</a>: <a href="List.scala.html#8973" title="List[A]">List</a>[A]): <a href="#9415" title="A">A</a> =
+      <a href="../../Tuple3.scala.html#19124" title="(_1: Boolean,_2: Boolean,_3: Boolean)(Boolean, Boolean, Boolean)">(</a><a href="#21188" title="(x$1: Int)Boolean" id="2950">i</a> == <span title="Int(0)" class="int">0</span>, <a href="#21189" title="List[A]">inlist</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>, <a href="#21190" title="List[A]">outlist</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <span title="A" class="keyword">match</span> {
+        <span title="Nothing" class="keyword">case</span> (_, <span title="Boolean(true)" class="keyword">true</span>, <span title="Boolean(true)" class="keyword">true</span>)       =&gt; <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.util.NoSuchElementException" class="keyword">new</span> <a href="../../Predef.scala.html#16171" title="java.util.NoSuchElementException">NoSuchElementException</a>(<span title="java.lang.String(&quot;index out of range&quot;)" class="string">&quot;index out of range&quot;</span>)
+        <span title="A" class="keyword">case</span> (<span title="Boolean(true)" class="keyword">true</span>, _, <span title="Boolean(false)" class="keyword">false</span>)      =&gt; <a href="#21190" title="List[A]">outlist</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>
+        <span title="A" class="keyword">case</span> (<span title="Boolean(true)" class="keyword">true</span>, _, <span title="Boolean(true)" class="keyword">true</span>)       =&gt; <a href="#21189" title="List[A]">inlist</a>.<a href="../generic/LinearSequenceTemplate.scala.html#19421" title="=&gt; A">last</a>
+        <span title="A" class="keyword">case</span> (<span title="Boolean(false)" class="keyword">false</span>, _, <span title="Boolean(false)" class="keyword">false</span>)     =&gt; <a href="#21187" title="(i: Int,inlist: List[A],outlist: List[A])A">walk</a>(<a href="#21188" title="(x$1: Int)Int">i</a> - <span title="Int(1)" class="int">1</span>, <a href="#21189" title="List[A]">inlist</a>, <a href="#21190" title="List[A]">outlist</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>)
+        <span title="A" class="keyword">case</span> (<span title="Boolean(false)" class="keyword">false</span>, <span title="Boolean(false)" class="keyword">false</span>, <span title="Boolean(true)" class="keyword">true</span>)  =&gt; <a href="#21187" title="(i: Int,inlist: List[A],outlist: List[A])A">walk</a>(<a href="#21188" title="(x$1: Int)Int">i</a> - <span title="Int(1)" class="int">1</span>, <a href="List.scala.html#9259" title="object Nil">Nil</a>, <a href="#21189" title="List[A]">inlist</a>.<a href="List.scala.html#17664" title="=&gt; List[A]">reverse</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>)
+      }
+    
+    <a href="#21187" title="(i: Int,inlist: List[A],outlist: List[A])A">walk</a>(<a href="#21184" title="Int">n</a>, <a href="#21118" title="=&gt; List[A]">in</a>, <a href="#21119" title="=&gt; List[A]">out</a>)
+  }
+
+  /** Returns the elements in the list as an iterator
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Iterator[A]" id="21097">iterator</a>: <a href="../Iterator.scala.html#4274" title="Iterator[A]">Iterator</a>[A] = (<a href="#21119" title="=&gt; List[A]">out</a> <a href="#21341" title="List[A]">:::</a> <a href="#21118" title="=&gt; List[A]">in</a>.<a href="List.scala.html#17633" title="(prefix: List[A])List[A]">reverse</a>).<a href="../generic/LinearSequenceTemplate.scala.html#19401" title="=&gt; Iterator[A]">iterator</a>
+
+  /** Checks if the queue is empty.
+   *
+   *  @return true, iff there is no element in the queue.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Boolean" id="21098">isEmpty</a>: <span title="Boolean">Boolean</span> = <a href="#21118" title="=&gt; List[A]">in</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="(x$1: Boolean)Boolean" id="2210">isEmpty</a> &amp;&amp; <a href="#21119" title="=&gt; List[A]">out</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>
+
+  /** Returns the length of the queue.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Int" id="21099">length</a> = <a href="#21118" title="=&gt; List[A]">in</a>.<a href="../generic/LinearSequenceTemplate.scala.html#19399" title="(x$1: Int)Int">length</a> + <a href="#21119" title="=&gt; List[A]">out</a>.<a href="../generic/LinearSequenceTemplate.scala.html#19399" title="=&gt; Int">length</a>
+
+  /** Creates a new queue with element added at the end 
+   *  of the old queue.
+   *
+   *  @param  elem        the element to insert
+   */
+  @deprecated(<span class="string">&quot;Use the method &lt;code&gt;enqueue&lt;/code&gt; from now on.&quot;</span>)
+  <span class="keyword">def</span> <a title="[B &gt;: A](elem: B)scala.collection.immutable.Queue[B]" id="21100">+</a>[<a title="&gt;: A &lt;: Any" id="21102">B</a> &gt;: A](<a title="B" id="21395">elem</a>: <a href="#21102" title="B">B</a>) = <a href="#21103" title="(elem: B)scala.collection.immutable.Queue[B]">enqueue</a>(<a href="#21395" title="B">elem</a>)
+
+  /** Creates a new queue with element added at the end 
+   *  of the old queue.
+   *
+   *  @param  elem        the element to insert
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A](elem: B)scala.collection.immutable.Queue[B]" id="21103">enqueue</a>[<a title="&gt;: A &lt;: Any" id="21105">B</a> &gt;: A](<a title="B" id="21476">elem</a>: <a href="#21105" title="B">B</a>) = <span title="scala.collection.immutable.Queue[B]" class="keyword">new</span> <a href="#9291" title="scala.collection.immutable.Queue[B]">Queue</a>(<a href="#21476" title="B">elem</a> <a href="#21482" title="B">::</a> <a href="List.scala.html#17630" title="(x: B)List[B]">in</a>, <a href="#21119" title="=&gt; List[A]">out</a>)
+
+  /** Returns a new queue with all all elements provided by 
+   *  an &lt;code&gt;Iterable&lt;/code&gt; object added at the end of 
+   *  the queue. 
+   *  The elements are prepended in the order they
+   *  are given out by the iterator.
+   *
+   *  @param  iter        an iterable object
+   */
+  @deprecated(<span class="string">&quot;Use the method &lt;code&gt;enqueue&lt;/code&gt; from now on.&quot;</span>)
+  <span class="keyword">def</span> <a title="[B &gt;: A](iter: scala.collection.immutable.Iterable[B])scala.collection.immutable.Queue[B]" id="21106">+</a>[<a title="&gt;: A &lt;: Any" id="21108">B</a> &gt;: A](<a title="scala.collection.immutable.Iterable[B]" id="21514">iter</a>: <a href="Iterable.scala.html#9402" title="scala.collection.immutable.Iterable[B]">Iterable</a>[B]) = <a href="#21109" title="(iter: scala.collection.immutable.Iterable[B])scala.collection.immutable.Queue[B]">enqueue</a>(<a href="#21514" title="scala.collection.immutable.Iterable[B]">iter</a>)
+
+  /** Returns a new queue with all elements provided by 
+   *  an &lt;code&gt;Iterable&lt;/code&gt; object added at the end of 
+   *  the queue. 
+   *  The elements are prepended in the order they
+   *  are given out by the iterator.
+   *
+   *  @param  iter        an iterable object
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A](iter: scala.collection.immutable.Iterable[B])scala.collection.immutable.Queue[B]" id="21109">enqueue</a>[<a title="&gt;: A &lt;: Any" id="21111">B</a> &gt;: A](<a title="scala.collection.immutable.Iterable[B]" id="21401">iter</a>: <a href="Iterable.scala.html#9402" title="scala.collection.immutable.Iterable[B]">Iterable</a>[B]) =
+    <span title="scala.collection.immutable.Queue[B]" class="keyword">new</span> <a href="#9291" title="scala.collection.immutable.Queue[B]">Queue</a>(<a href="#21401" title="scala.collection.immutable.Iterable[B]">iter</a>.<a href="../generic/IterableTemplate.scala.html#17285" title="=&gt; Iterator[B]">iterator</a>.<a href="../Iterator.scala.html#19281" title="=&gt; List[B]">toList</a>.<a href="List.scala.html#17664" title="=&gt; List[B]">reverse</a> <a href="#21407" title="List[B]">:::</a> <a href="List.scala.html#17633" title="(prefix: List[B])List[B]">in</a>, <a href="#21119" title="=&gt; List[A]">out</a>)
+
+  /** Returns a tuple with the first element in the queue,
+   *  and a new queue with this element removed.
+   *
+   *  @throws Predef.NoSuchElementException
+   *  @return the first element of the queue.
+   */
+  <span class="keyword">def</span> <a title="=&gt; (A, scala.collection.immutable.Queue[A])" id="21112">dequeue</a>: <a href="../../Tuple2.scala.html#1152" title="(A, scala.collection.immutable.Queue[A])">(</a>A, Queue[A]) = <a href="#21119" title="=&gt; List[A]">out</a> <span title="(A, scala.collection.immutable.Queue[A])" class="keyword">match</span> {
+    <span title="(A, scala.collection.immutable.Queue[A])" class="keyword">case</span> <a href="List.scala.html#9259" title="object Nil">Nil</a> <span class="keyword">if</span> <span title="=&gt; Boolean">!</span><a href="#21118" title="=&gt; List[A]">in</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a> =&gt; <span class="keyword">val</span> <a title="List[A]" id="21576">rev</a> = <a href="#21118" title="=&gt; List[A]">in</a>.<a href="List.scala.html#17664" title="=&gt; List[A]">reverse</a> ; <a href="../../Tuple2.scala.html#20670" title="(_1: A,_2: scala.collection.immutable.Queue[A])(A, scala.collection.immutable.Queue[A])">(</a><a href="#21576" title="List[A]">rev</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>, <span title="scala.collection.immutable.Queue[A]" class="keyword">new</span> <a href="#9291" title="scala.collection.immutable.Queue[A]">Queue</a>(<a href="List.scala.html#9259" title="object Nil">Nil</a>, <a href="#21576" title="List[A]">rev</a>.<a href="../generic/TraversableTemplate.scala.html#17213" title="=&gt; List[A]">tail</a>))
+    <span title="(A, scala.collection.immutable.Queue[A])" class="keyword">case</span> <a title="A" id="21630">x</a> :: <a title="List[A]" id="21631">xs</a>            =&gt; <a href="../../Tuple2.scala.html#20670" title="(_1: A,_2: scala.collection.immutable.Queue[A])(A, scala.collection.immutable.Queue[A])">(</a><a href="#21630" title="A">x</a>, <span title="scala.collection.immutable.Queue[A]" class="keyword">new</span> <a href="#9291" title="scala.collection.immutable.Queue[A]">Queue</a>(<a href="#21118" title="=&gt; List[A]">in</a>, <a href="#21631" title="List[A]">xs</a>))
+    <span title="Nothing" class="keyword">case</span> _                  =&gt; <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.util.NoSuchElementException" class="keyword">new</span> <a href="../../Predef.scala.html#16171" title="java.util.NoSuchElementException">NoSuchElementException</a>(<span title="java.lang.String(&quot;queue empty&quot;)" class="string">&quot;queue empty&quot;</span>)
+  }
+
+  /** Returns the first element in the queue, or throws an error if there
+   *  is no element contained in the queue.
+   *
+   *  @throws Predef.NoSuchElementException
+   *  @return the first element.
+   */
+  <span class="keyword">def</span> <a title="=&gt; A" id="21113">front</a>: <a href="#9415" title="A">A</a> = 
+    <span title="A" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#21119" title="=&gt; List[A]">out</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#21119" title="=&gt; List[A]">out</a>.<a href="../generic/IterableTemplate.scala.html#17298" title="=&gt; A">head</a>
+    <span class="keyword">else</span> <span title="A" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#21118" title="=&gt; List[A]">in</a>.<a href="../generic/IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#21118" title="=&gt; List[A]">in</a>.<a href="../generic/LinearSequenceTemplate.scala.html#19421" title="=&gt; A">last</a>
+    <span class="keyword">else</span> <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.util.NoSuchElementException" class="keyword">new</span> <a href="../../Predef.scala.html#16171" title="java.util.NoSuchElementException">NoSuchElementException</a>(<span title="java.lang.String(&quot;queue empty&quot;)" class="string">&quot;queue empty&quot;</span>)
+
+  /** Returns a string representation of this queue. 
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="21114">toString</a>() = <a href="../generic/TraversableTemplate.scala.html#17246" title="(start: String,sep: String,end: String)String">mkString</a>(<span title="java.lang.String(&quot;Queue(&quot;)" class="string">&quot;Queue(&quot;</span>, <span title="java.lang.String(&quot;, &quot;)" class="string">&quot;, &quot;</span>, <span title="java.lang.String(&quot;)&quot;)" class="string">&quot;)&quot;</span>)
+
+  /** Compares two queues for equality by comparing 
+   *  each element in the queues.
+   *
+   *  @return true, iff the two queues are structurally equal.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(o: Any)Boolean" id="21115">equals</a>(<a title="Any" id="21670">o</a>: <a title="Any" id="47">Any</a>): <span title="Boolean">Boolean</span> = <a href="#21670" title="Any">o</a> <span title="Boolean" class="keyword">match</span> {
+    <span title="Boolean" class="keyword">case</span> <a title="scala.collection.immutable.Queue[_]" id="21674">q</a>: <a href="#9291" title="scala.collection.immutable.Queue[_]">Queue</a>[_]  =&gt; <a href="../generic/IterableTemplate.scala.html#17321" title="(that: Iterable[Any])Boolean" class="keyword">this</a> sameElements <a href="#21674" title="scala.collection.immutable.Queue[_]">q</a>
+    <span title="Boolean(false)" class="keyword">case</span> _            =&gt; <span title="Boolean(false)" class="keyword">false</span>
+  }
+  
+  <span class="keyword">override</span> <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="Int" id="21117">hashCode</a>: <span title="Int">Int</span> =
+    <span title="Int" class="keyword">if</span> (<a href="#21098" title="=&gt; Boolean">isEmpty</a>) <span title="Int(0)" class="int">0</span>
+    <span class="keyword">else</span> <a href="#21112" title="=&gt; (A, scala.collection.immutable.Queue[A])">dequeue</a> <span title="Int" class="keyword">match</span> { <span title="Int" class="keyword">case</span> (<a title="A" id="21714">x</a>,<a title="scala.collection.immutable.Queue[A]" id="21715">y</a>) =&gt; <a href="#21714" title="A">x</a>.<a title="(x$1: Int)Int" id="3616">hashCode</a> + <a href="#21715" title="scala.collection.immutable.Queue[A]">y</a>.<a href="#21116" title="=&gt; Int">hashCode</a> }
+}
+
+        </pre>
+    </body>
+</html>

@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>xml/parsing/FactoryAdapter.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: FactoryAdapter.scala 18387 2009-07-24 15:28:37Z odersky $
+
+
+<span class="keyword">package</span> scala.xml
+<span class="keyword">package</span> parsing
+
+<span class="keyword">import</span> java.io.{InputStream, Reader, File, FileDescriptor, FileInputStream}
+<span class="keyword">import</span> scala.collection.mutable.Stack
+
+<span class="keyword">import</span> org.xml.sax.{ Attributes, InputSource }
+<span class="keyword">import</span> org.xml.sax.helpers.DefaultHandler
+<span class="keyword">import</span> javax.xml.parsers.{ SAXParser, SAXParserFactory }
+
+// can be mixed into FactoryAdapter if desired
+<span class="keyword">trait</span> <a title="trait ConsoleErrorHandler extends org.xml.sax.helpers.DefaultHandler with ScalaObject" id="12155">ConsoleErrorHandler</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <span title="org.xml.sax.helpers.DefaultHandler">DefaultHandler</span>
+{
+  <span class="keyword">import</span> org.xml.sax.SAXParseException
+  
+  // ignore warning, crimson warns even for entity resolution!
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(ex: org.xml.sax.SAXParseException)Unit" id="242593">warning</a>(<a title="org.xml.sax.SAXParseException" id="242599">ex</a>: <span title="org.xml.sax.SAXParseException">SAXParseException</span>): <span title="Unit">Unit</span> = <span title="Unit">{</span> }
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(ex: org.xml.sax.SAXParseException)Unit" id="242594">error</a>(<a title="org.xml.sax.SAXParseException" id="242601">ex</a>: <span title="org.xml.sax.SAXParseException">SAXParseException</span>): <span title="Unit">Unit</span> = <a href="#242596" title="(errtype: String,ex: org.xml.sax.SAXParseException)Unit">printError</a>(<span title="java.lang.String(&quot;Error&quot;)" class="string">&quot;Error&quot;</span>, <a href="#242601" title="org.xml.sax.SAXParseException">ex</a>) 
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(ex: org.xml.sax.SAXParseException)Unit" id="242595">fatalError</a>(<a title="org.xml.sax.SAXParseException" id="242608">ex</a>: <span title="org.xml.sax.SAXParseException">SAXParseException</span>): <span title="Unit">Unit</span> = <a href="#242596" title="(errtype: String,ex: org.xml.sax.SAXParseException)Unit">printError</a>(<span title="java.lang.String(&quot;Fatal Error&quot;)" class="string">&quot;Fatal Error&quot;</span>, <a href="#242608" title="org.xml.sax.SAXParseException">ex</a>)
+
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(errtype: String,ex: org.xml.sax.SAXParseException)Unit" id="242596">printError</a>(<a title="String" id="242603">errtype</a>: <span title="String">String</span>, <a title="org.xml.sax.SAXParseException" id="242604">ex</a>: <span title="org.xml.sax.SAXParseException">SAXParseException</span>): <span title="Unit">Unit</span> =
+    <a href="../../Console.scala.html#388" title="object Console">Console</a>.<a href="../../Console.scala.html#58845" title="(out: java.io.PrintStream)(thunk: =&gt; Unit)Unit">withOut</a>(<a href="../../Console.scala.html#388" title="object Console">Console</a>.<a href="../../Console.scala.html#58842" title="=&gt; java.io.PrintStream">err</a>) {
+      <span class="keyword">val</span> <a title="String" id="242652">s</a> = <a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;[%s]:%d:%d: %s&quot;</a>.<a href="../../runtime/RichString.scala.html#18060" title="(args: Any*)String">format</a>(
+        <a href="#242603" title="String">errtype</a>, <a href="#242604" title="org.xml.sax.SAXParseException">ex</a>.<a title="()Int" id="25504">getLineNumber</a>, <a href="#242604" title="org.xml.sax.SAXParseException">ex</a>.<a title="()Int" id="25505">getColumnNumber</a>, <a href="#242604" title="org.xml.sax.SAXParseException">ex</a>.<a title="()java.lang.String" id="24031">getMessage</a>)
+      <a href="../../Console.scala.html#388" title="object Console">Console</a>.<a href="../../Console.scala.html#58871" title="(x: Any)Unit">println</a>(<a href="#242652" title="String">s</a>)
+      <a href="../../Console.scala.html#388" title="object Console">Console</a>.<a href="../../Console.scala.html#58869" title="()Unit">flush</a>
+    }
+}
+
+/** SAX adapter class, for use with Java SAX parser. Keeps track of 
+ *  namespace bindings, without relying on namespace handling of the 
+ *  underlying SAX parser.
+ */
+<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class FactoryAdapter extends org.xml.sax.helpers.DefaultHandler with scala.xml.factory.XMLLoader[scala.xml.Node] with ScalaObject" id="12134">FactoryAdapter</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <span title="org.xml.sax.helpers.DefaultHandler">DefaultHandler</span> <span class="keyword">with</span> factory.<a href="../factory/XMLLoader.scala.html#15299" title="scala.xml.factory.XMLLoader[scala.xml.Node]">XMLLoader</a>[Node]
+{
+  <span class="keyword">var</span> <a title="scala.xml.Node" id="242695">rootElem</a>: <a href="../Node.scala.html#8654" title="scala.xml.Node">Node</a> = <span title="Null(null)" class="keyword">null</span>
+  
+  <span class="keyword">val</span> <a title="StringBuilder" id="242697">buffer</a>      = <a href="../../collection/mutable/StringBuilder.scala.html#23348" title="()StringBuilder" class="keyword">new</a> <a href="../../package.scala.html#14791" title="StringBuilder">StringBuilder</a>()
+  <span class="keyword">val</span> <a title="scala.collection.mutable.Stack[scala.xml.MetaData]" id="242699">attribStack</a> = <a href="../../collection/mutable/Stack.scala.html#17087" title="()scala.collection.mutable.Stack[scala.xml.MetaData]" class="keyword">new</a> <a href="../../collection/mutable/Stack.scala.html#7737" title="scala.collection.mutable.Stack[scala.xml.MetaData]">Stack</a>[MetaData]
+  <span class="keyword">val</span> <a title="scala.collection.mutable.Stack[scala.xml.Node]" id="242701">hStack</a>      = <a href="../../collection/mutable/Stack.scala.html#17087" title="()scala.collection.mutable.Stack[scala.xml.Node]" class="keyword">new</a> <a href="../../collection/mutable/Stack.scala.html#7737" title="scala.collection.mutable.Stack[scala.xml.Node]">Stack</a>[Node]   // [ element ] contains siblings
+  <span class="keyword">val</span> <a title="scala.collection.mutable.Stack[String]" id="242703">tagStack</a>    = <a href="../../collection/mutable/Stack.scala.html#17087" title="()scala.collection.mutable.Stack[String]" class="keyword">new</a> <a href="../../collection/mutable/Stack.scala.html#7737" title="scala.collection.mutable.Stack[String]">Stack</a>[String]
+  <span class="keyword">var</span> <a title="scala.collection.mutable.Stack[scala.xml.NamespaceBinding]" id="242706">scopeStack</a>  = <a href="../../collection/mutable/Stack.scala.html#17087" title="()scala.collection.mutable.Stack[scala.xml.NamespaceBinding]" class="keyword">new</a> <a href="../../collection/mutable/Stack.scala.html#7737" title="scala.collection.mutable.Stack[scala.xml.NamespaceBinding]">Stack</a>[NamespaceBinding]
+
+  <span class="keyword">var</span> <a title="String" id="242709">curTag</a> : <span title="String">String</span> = <span title="Null(null)" class="keyword">null</span>
+  <span class="keyword">var</span> <a title="Boolean" id="242712">capture</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>
+
+  // abstract methods
+
+  /** Tests if an XML element contains text.
+   * @return true if element named &lt;code&gt;localName&lt;/code&gt; contains text.
+   */
+  <span class="keyword">def</span> <a title="(localName: String)Boolean" id="242714">nodeContainsText</a>(<a title="String" id="242759">localName</a>: <span title="String">String</span>): <span title="Boolean">Boolean</span> // abstract
+  
+  /** creates an new non-text(tree) node.
+   * @param elemName
+   * @param attribs
+   * @param chIter
+   * @return a new XML element.
+   */
+  <span class="keyword">def</span> <a title="(pre: String,elemName: String,attribs: scala.xml.MetaData,scope: scala.xml.NamespaceBinding,chIter: List[scala.xml.Node])scala.xml.Node" id="242715">createNode</a>(<a title="String" id="242761">pre</a>: <span title="String">String</span>, <a title="String" id="242762">elemName</a>: <span title="String">String</span>, <a title="scala.xml.MetaData" id="242763">attribs</a>: <a href="../MetaData.scala.html#8585" title="scala.xml.MetaData">MetaData</a>,
+                 <a title="scala.xml.NamespaceBinding" id="242764">scope</a>: <a href="../NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>, <a title="List[scala.xml.Node]" id="242765">chIter</a>: <a href="../../collection/immutable/List.scala.html#8973" title="List[scala.xml.Node]">List</a>[Node]): <a href="../Node.scala.html#8654" title="scala.xml.Node">Node</a> //abstract 
+  
+  /** creates a Text node.
+   * @param text
+   * @return a new Text node.
+   */
+  <span class="keyword">def</span> <a title="(text: String)scala.xml.Text" id="242716">createText</a>(<a title="String" id="242767">text</a>: <span title="String">String</span>): <a href="../Text.scala.html#8633" title="scala.xml.Text">Text</a> // abstract
+
+  /** creates a new processing instruction node.
+  */
+  <span class="keyword">def</span> <a title="(target: String,data: String)Seq[scala.xml.ProcInstr]" id="242717">createProcInstr</a>(<a title="String" id="242769">target</a>: <span title="String">String</span>, <a title="String" id="242770">data</a>: <span title="String">String</span>): <a href="../../collection/Sequence.scala.html#4346" title="Seq[scala.xml.ProcInstr]">Seq</a>[ProcInstr] 
+    
+  //
+  // ContentHandler methods
+  //
+  
+  <span class="keyword">val</span> <a title="Boolean" id="242718">normalizeWhitespace</a> = <span title="Boolean(false)" class="keyword">false</span>
+
+  /** Characters.
+  * @param ch
+  * @param offset
+  * @param length
+  */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(ch: Array[Char],offset: Int,length: Int)Unit" id="242720">characters</a>(<a title="Array[Char]" id="242772">ch</a>: <a href="../../Array.scala.html#885" title="Array[Char]">Array</a>[Char], <a title="Int" id="242773">offset</a>: <span title="Int">Int</span>, <a title="Int" id="242774">length</a>: <span title="Int">Int</span>): <span title="Unit">Unit</span> = {
+    <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#242712" title="=&gt; Boolean">capture</a>) <span title="Nothing" class="keyword">return</span>
+    <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#242718" title="=&gt; Boolean">normalizeWhitespace</a>) {
+      // compliant: report every character
+      <span title="Nothing" class="keyword">return</span> <a href="#242697" title="=&gt; StringBuilder">buffer</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23376" title="(x: Array[Char],offset: Int,len: Int)StringBuilder">appendAll</a><span title="Unit">(</span><a href="#242772" title="Array[Char]">ch</a>, <a href="#242773" title="Int">offset</a>, <a href="#242774" title="Int">length</a>)
+    }
+    
+    // normalizing whitespace is not compliant, but useful
+    <span class="keyword">var</span> <a title="Int" id="242776">i</a>: <span title="Int">Int</span> = <a href="#242773" title="Int">offset</a>
+    <span title="Unit" class="keyword">while</span> (<a href="#242776" title="(x$1: Int)Boolean" id="2954">i</a> &lt; <a href="#242773" title="(x$1: Int)Int">offset</a> + <a href="#242774" title="Int">length</a>) <a href="#242789" title="()Unit">{</a>
+      <span class="keyword">val</span> <a title="Char" id="242802">c</a> = <span title="Char" class="keyword">if</span> (<a href="../../Array.scala.html#17716" title="(i: Int)Char">ch</a><a href="../../Predef.scala.html#16361" title="implicit scala.Predef.charWrapper : (c: Char)scala.runtime.RichChar">(</a><a href="#242776" title="Int">i</a>).<a href="../../runtime/RichChar.scala.html#19043" title="=&gt; Boolean">isWhitespace</a>) <span title="Char(' ')" class="char">' '</span> <span class="keyword">else</span> <a href="../../Array.scala.html#17716" title="(i: Int)Char">ch</a>(<a href="#242776" title="Int">i</a>)
+      <a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">buffer</a> append <a href="#242802" title="Char">c</a>
+      <a href="#242776" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+      // if that was whitespace, drop until non whitespace
+      <span title="Unit" class="keyword">if</span> (<a href="#242802" title="(x$1: Char)Boolean" id="2714">c</a> == <span title="Char(' ')" class="char">' '</span>) <span title="Unit" class="keyword">while</span> (<a href="../../Array.scala.html#17716" title="(i: Int)Char">ch</a><a href="../../Predef.scala.html#16361" title="implicit scala.Predef.charWrapper : (c: Char)scala.runtime.RichChar">(</a><a href="#242776" title="Int">i</a>).<a href="../../runtime/RichChar.scala.html#19043" title="=&gt; Boolean">isWhitespace</a>) <a href="#242776" title="Int">i</a> <a href="#242881" title="()Unit">+=</a> <span title="Int(1)" class="int">1</span>
+    }
+  }
+
+  /* ContentHandler methods */
+
+  /* Start element. */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(uri: String,_localName: String,qname: String,attributes: org.xml.sax.Attributes)Unit" id="242721">startElement</a>(
+    <a title="String" id="242941">uri</a>: <span title="String">String</span>,
+    <a title="String" id="242942">_localName</a>: <span title="String">String</span>,
+    <a title="String" id="242943">qname</a>: <span title="String">String</span>,
+    <a title="org.xml.sax.Attributes" id="242944">attributes</a>: <a title="org.xml.sax.Attributes" id="23898">Attributes</a>): <span title="Unit">Unit</span> =
+  {
+    /*elemCount = elemCount + 1; STATISTICS */
+    <a href="#242722" title="()Unit">captureText</a>()
+    //Console.println(&quot;FactoryAdapter::startElement(&quot;+uri+&quot;,&quot;+_localName+&quot;,&quot;+qname+&quot;,&quot;+attributes+&quot;)&quot;);
+    <a href="#242703" title="=&gt; scala.collection.mutable.Stack[String]">tagStack</a>.<a href="../../collection/mutable/Stack.scala.html#17091" title="(elem: String)FactoryAdapter.this.tagStack.type">push</a>(<a href="#242709" title="=&gt; String">curTag</a>)
+    <a href="#242709" title="(x$1: String)Unit">curTag</a> = <a href="#242943" title="String">qname</a>; //localName ;
+
+    <span class="keyword">val</span> <a title="Int" id="242946">colon</a> = <a href="#242943" title="String">qname</a>.<span title="(x$1: Int)Int">indexOf</span>(<span title="Char(':')" class="char">':'</span>.<span title="[T0]T0">asInstanceOf</span><span title="Int">[</span><span title="Int">Int</span>])
+    <span class="keyword">val</span> <a title="String" id="242947">localName</a> = <span title="String" class="keyword">if</span>(<span title="(x$1: Int)Boolean">-</span><span class="int">1</span> == <a href="#242946" title="Int">colon</a>) <a href="#242943" title="String">qname</a> <span class="keyword">else</span> <a href="#242943" title="String">qname</a>.<span title="(x$1: Int,x$2: Int)java.lang.String">substring</span>(<a href="#242946" title="(x$1: Int)Int">colon</a>+<span title="Int(1)" class="int">1</span>,<a href="#242943" title="String">qname</a>.<span title="()Int">length</span>())
+
+    //Console.println(&quot;FactoryAdapter::startElement - localName =&quot;+localName);
+
+    <a href="#242712" title="(x$1: Boolean)Unit">capture</a> = <a href="#242714" title="(localName: String)Boolean">nodeContainsText</a>(<a href="#242947" title="String">localName</a>)
+
+    <a href="#242701" title="=&gt; scala.collection.mutable.Stack[scala.xml.Node]">hStack</a>.<a href="../../collection/mutable/Stack.scala.html#17091" title="(elem: scala.xml.Node)FactoryAdapter.this.hStack.type">push</a>(<span title="Null(null)" class="keyword">null</span>)
+    <span class="keyword">var</span> <a title="scala.xml.MetaData" id="242948">m</a>: <a href="../MetaData.scala.html#8585" title="scala.xml.MetaData">MetaData</a> = <a href="../Null.scala.html#8526" title="object scala.xml.Null">Null</a>
+
+    <span class="keyword">var</span> <a title="scala.xml.NamespaceBinding" id="242949">scpe</a> = <a href="#242706" title="=&gt; scala.collection.mutable.Stack[scala.xml.NamespaceBinding]">scopeStack</a>.<a href="../../collection/mutable/Stack.scala.html#17097" title="=&gt; scala.xml.NamespaceBinding">top</a>
+    <span class="keyword">for</span> (<a title="Int" id="243045">i</a> &lt;- <a href="../../collection/immutable/List.scala.html#8974" title="object List">List</a>.<a href="../../collection/generic/TraversableFactory.scala.html#17511" title="(start: Int,end: Int)List[Int]">range</a><a href="../../collection/generic/LinearSequenceTemplate.scala.html#19402" title="(f: (Int) =&gt; Unit)Unit">(</a><span title="Int(0)" class="int">0</span>, <a href="#242944" title="org.xml.sax.Attributes">attributes</a>.<a title="()Int" id="152675">getLength</a>())) {
+      //val attrType = attributes.getType(i); // unused for now
+      <span class="keyword">val</span> <a title="java.lang.String" id="243046">qname</a> = <a href="#242944" title="org.xml.sax.Attributes">attributes</a>.<a title="(x$1: Int)java.lang.String" id="152680">getQName</a>(<a href="#243045" title="Int">i</a>)
+      <span class="keyword">val</span> <a title="java.lang.String" id="243047">value</a> = <a href="#242944" title="org.xml.sax.Attributes">attributes</a>.<a title="(x$1: Int)java.lang.String" id="152684">getValue</a>(<a href="#243045" title="Int">i</a>)
+      <span class="keyword">val</span> <a title="Int" id="243048">colon</a> = <a href="#243046" title="java.lang.String">qname</a>.<span title="(x$1: Int)Int">indexOf</span>(<span title="Char(':')" class="char">':'</span>.<span title="[T0]T0">asInstanceOf</span><span title="Int">[</span><span title="Int">Int</span>])
+      <span title="Unit" class="keyword">if</span> (<a title="(x$1: Int)Boolean" id="2952">-</a><span class="int">1</span> != <a href="#243048" title="Int">colon</a>) {                     // prefixed attribute
+        <span class="keyword">val</span> <a title="java.lang.String" id="243070">pre</a> = <a href="#243046" title="java.lang.String">qname</a>.<span title="(x$1: Int,x$2: Int)java.lang.String">substring</span>(<span title="Int(0)" class="int">0</span>, <a href="#243048" title="Int">colon</a>)
+        <span class="keyword">val</span> <a title="java.lang.String" id="243071">key</a> = <a href="#243046" title="java.lang.String">qname</a>.<span title="(x$1: Int,x$2: Int)java.lang.String">substring</span>(<a href="#243048" title="(x$1: Int)Int">colon</a>+<span title="Int(1)" class="int">1</span>, <a href="#243046" title="java.lang.String">qname</a>.<span title="()Int">length</span>())
+        <span title="Unit" class="keyword">if</span> (<span title="(x$1: AnyRef)Boolean" class="string">&quot;xmlns&quot;</span> /*XML.xmlns*/ == <a href="#243070" title="java.lang.String">pre</a>)
+          <a href="#242949" title="scala.xml.NamespaceBinding">scpe</a> = <a href="#243047" title="java.lang.String">value</a>.<span title="()Int">length</span>() <span title="scala.xml.NamespaceBinding" class="keyword">match</span> {
+            <span title="scala.xml.NamespaceBinding" class="keyword">case</span> <span title="Int(0)" class="int">0</span> =&gt; <span title="scala.xml.NamespaceBinding" class="keyword">new</span> <a href="../NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>(<a href="#243071" title="java.lang.String">key</a>, <span title="Null(null)" class="keyword">null</span>,  <a href="#242949" title="scala.xml.NamespaceBinding">scpe</a>)
+            <span title="scala.xml.NamespaceBinding" class="keyword">case</span> _ =&gt; <span title="scala.xml.NamespaceBinding" class="keyword">new</span> <a href="../NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>(<a href="#243071" title="java.lang.String">key</a>, <a href="#243047" title="java.lang.String">value</a>, <a href="#242949" title="scala.xml.NamespaceBinding">scpe</a>)
+          }
+        <span class="keyword">else</span>
+          <a href="#242948" title="scala.xml.MetaData">m</a> = <span title="scala.xml.PrefixedAttribute" class="keyword">new</span> <a href="../PrefixedAttribute.scala.html#8705" title="scala.xml.PrefixedAttribute">PrefixedAttribute</a>(<a href="#243070" title="java.lang.String">pre</a>, <a href="#243071" title="java.lang.String">key</a>, <a href="../Text.scala.html#26684" title="(_data: String)scala.xml.Text">Text</a>(<a href="#243047" title="java.lang.String">value</a>), <a href="#242948" title="scala.xml.MetaData">m</a>)
+      } <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<span title="(x$1: AnyRef)Boolean" class="string">&quot;xmlns&quot;</span> /*XML.xmlns*/ == <a href="#243046" title="java.lang.String">qname</a>)
+        <a href="#242949" title="scala.xml.NamespaceBinding">scpe</a> = <a href="#243047" title="java.lang.String">value</a>.<span title="()Int">length</span>() <span title="scala.xml.NamespaceBinding" class="keyword">match</span> {
+          <span title="scala.xml.NamespaceBinding" class="keyword">case</span> <span title="Int(0)" class="int">0</span> =&gt; <span title="scala.xml.NamespaceBinding" class="keyword">new</span> <a href="../NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>(<span title="Null(null)" class="keyword">null</span>, <span title="Null(null)" class="keyword">null</span>,  <a href="#242949" title="scala.xml.NamespaceBinding">scpe</a>)
+          <span title="scala.xml.NamespaceBinding" class="keyword">case</span> _ =&gt; <span title="scala.xml.NamespaceBinding" class="keyword">new</span> <a href="../NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>(<span title="Null(null)" class="keyword">null</span>, <a href="#243047" title="java.lang.String">value</a>, <a href="#242949" title="scala.xml.NamespaceBinding">scpe</a>)
+        }
+      <span class="keyword">else</span>
+        <a href="#242948" title="scala.xml.MetaData">m</a> = <span title="scala.xml.UnprefixedAttribute" class="keyword">new</span> <a href="../UnprefixedAttribute.scala.html#8474" title="scala.xml.UnprefixedAttribute">UnprefixedAttribute</a>(<a href="#243046" title="java.lang.String">qname</a>, <a href="../Text.scala.html#26684" title="(_data: String)scala.xml.Text">Text</a>(<a href="#243047" title="java.lang.String">value</a>), <a href="#242948" title="scala.xml.MetaData">m</a>)
+    }
+    <a href="#242706" title="=&gt; scala.collection.mutable.Stack[scala.xml.NamespaceBinding]">scopeStack</a>.<a href="../../collection/mutable/Stack.scala.html#17091" title="(elem: scala.xml.NamespaceBinding)scala.collection.mutable.Stack[scala.xml.NamespaceBinding]">push</a>(<a href="#242949" title="scala.xml.NamespaceBinding">scpe</a>)
+    <a href="#242699" title="=&gt; scala.collection.mutable.Stack[scala.xml.MetaData]">attribStack</a>.<a href="../../collection/mutable/Stack.scala.html#17091" title="(elem: scala.xml.MetaData)FactoryAdapter.this.attribStack.type">push</a>(<a href="#242948" title="scala.xml.MetaData">m</a>)
+    <span title="Unit">(</span>)
+  } // startElement(String,String,String,Attributes)
+  
+
+  /** captures text, possibly normalizing whitespace
+   */
+  <span class="keyword">def</span> <a title="()Unit" id="242722">captureText</a>(): <span title="Unit">Unit</span> = {
+    <span title="Any" class="keyword">if</span> (<a href="#242712" title="=&gt; Boolean">capture</a>) {
+      <span class="keyword">val</span> <a title="String" id="243189">text</a> = <a href="#242697" title="=&gt; StringBuilder">buffer</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23409" title="()String">toString</a>()
+      <span title="Any" class="keyword">if</span> (<a href="#243189" title="String">text</a>.<span title="()Int">length</span><a title="(x$1: Int)Boolean" id="2958">(</a>) &gt; <span title="Int(0)" class="int">0</span>)
+        <a href="#242701" title="=&gt; scala.collection.mutable.Stack[scala.xml.Node]">hStack</a>.<a href="../../collection/mutable/Stack.scala.html#17091" title="(elem: scala.xml.Node)FactoryAdapter.this.hStack.type">push</a>(<a href="#242716" title="(text: String)scala.xml.Text">createText</a>(<a href="#243189" title="String">text</a>))
+    }
+    <a href="#242697" title="=&gt; StringBuilder">buffer</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23355" title="(n: Int)Unit">setLength</a>(<span title="Int(0)" class="int">0</span>)
+  }
+
+  /** End element.
+   * @param uri
+   * @param localName
+   * @param qname
+   * @throws org.xml.sax.SAXException if ..
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(uri: String,_localName: String,qname: String)Unit" id="242723">endElement</a>(<a title="String" id="243221">uri</a>: <span title="String">String</span> , <a title="String" id="243222">_localName</a>: <span title="String">String</span> , <a title="String" id="243223">qname</a>: <span title="String">String</span>): <span title="Unit">Unit</span> = {
+    <a href="#242722" title="()Unit">captureText</a>()
+
+    <span class="keyword">val</span> <a title="scala.xml.MetaData" id="243225">metaData</a> = <a href="#242699" title="=&gt; scala.collection.mutable.Stack[scala.xml.MetaData]">attribStack</a>.<a href="../../collection/mutable/Stack.scala.html#17098" title="()scala.xml.MetaData">pop</a>
+
+    // reverse order to get it right
+    <span class="keyword">var</span> <a title="List[scala.xml.Node]" id="243226">v</a>: <a href="../../collection/immutable/List.scala.html#8973" title="List[scala.xml.Node]">List</a>[Node] = <a href="../../collection/immutable/List.scala.html#9259" title="object Nil">Nil</a>
+    <span class="keyword">var</span> <a title="scala.xml.Node" id="243227">child</a>: <a href="../Node.scala.html#8654" title="scala.xml.Node">Node</a> = <a href="#242701" title="=&gt; scala.collection.mutable.Stack[scala.xml.Node]">hStack</a>.<a href="../../collection/mutable/Stack.scala.html#17098" title="()scala.xml.Node">pop</a>
+    <span title="Unit" class="keyword">while</span> (<a href="#243227" title="(x$1: AnyRef)Boolean">child</a> ne <span title="Null(null)" class="keyword">null</span>) <a href="#243232" title="()Unit">{</a>
+      <a href="#243226" title="List[scala.xml.Node]">v</a> = <a href="#243227" title="scala.xml.Node">child</a><a href="#243241" title="scala.xml.Node">::</a><a href="../../collection/immutable/List.scala.html#17630" title="(x: scala.xml.Node)List[scala.xml.Node]">v</a>
+      <a href="#243227" title="scala.xml.Node">child</a> = <a href="#242701" title="=&gt; scala.collection.mutable.Stack[scala.xml.Node]">hStack</a>.<a href="../../collection/mutable/Stack.scala.html#17098" title="()scala.xml.Node">pop</a>
+    }
+
+    <span class="keyword">val</span> <a title="Int" id="243228">colon</a> = <a href="#243223" title="String">qname</a>.<span title="(x$1: Int)Int">indexOf</span>(<span title="Char(':')" class="char">':'</span>.<span title="[T0]T0">asInstanceOf</span><span title="Int">[</span><span title="Int">Int</span>])
+    <span class="keyword">val</span> <a title="String" id="243229">localName</a> =
+      <span title="String" class="keyword">if</span> (<span title="(x$1: Int)Boolean">-</span><span class="int">1</span> == <a href="#243228" title="Int">colon</a>) <a href="#243223" title="String">qname</a>
+      <span class="keyword">else</span> <a href="#243223" title="String">qname</a>.<span title="(x$1: Int,x$2: Int)java.lang.String">substring</span>(<a href="#243228" title="(x$1: Int)Int">colon</a>+<span title="Int(1)" class="int">1</span>, <a href="#243223" title="String">qname</a>.<span title="()Int">length</span>())  
+
+    <span class="keyword">val</span> <a title="scala.xml.NamespaceBinding" id="243230">scp</a> = <a href="#242706" title="=&gt; scala.collection.mutable.Stack[scala.xml.NamespaceBinding]">scopeStack</a>.<a href="../../collection/mutable/Stack.scala.html#17098" title="()scala.xml.NamespaceBinding">pop</a>
+    // create element
+    <span class="keyword">val</span> <a title="java.lang.String" id="243231">pre</a> = <span title="java.lang.String" class="keyword">if</span> (<span title="(x$1: Int)Boolean">-</span><span class="int">1</span> == <a href="#243228" title="Int">colon</a>) <span title="Null(null)" class="keyword">null</span> <span class="keyword">else</span> <a href="#243223" title="String">qname</a>.<span title="(x$1: Int,x$2: Int)java.lang.String">substring</span>(<span title="Int(0)" class="int">0</span>, <a href="#243228" title="Int">colon</a>)
+    <a href="#242695" title="(x$1: scala.xml.Node)Unit">rootElem</a> = <a href="#242715" title="(pre: String,elemName: String,attribs: scala.xml.MetaData,scope: scala.xml.NamespaceBinding,chIter: List[scala.xml.Node])scala.xml.Node">createNode</a>(<a href="#243231" title="java.lang.String">pre</a>, <a href="#243229" title="String">localName</a>, <a href="#243225" title="scala.xml.MetaData">metaData</a>, <a href="#243230" title="scala.xml.NamespaceBinding">scp</a>, <a href="#243226" title="List[scala.xml.Node]">v</a>)
+
+    <a href="#242701" title="=&gt; scala.collection.mutable.Stack[scala.xml.Node]">hStack</a>.<a href="../../collection/mutable/Stack.scala.html#17091" title="(elem: scala.xml.Node)FactoryAdapter.this.hStack.type">push</a>(<a href="#242695" title="=&gt; scala.xml.Node">rootElem</a>)
+
+    // set
+    <a href="#242709" title="(x$1: String)Unit">curTag</a> = <a href="#242703" title="=&gt; scala.collection.mutable.Stack[String]">tagStack</a>.<a href="../../collection/mutable/Stack.scala.html#17098" title="()String">pop</a>
+
+    <a href="#242712" title="(x$1: Boolean)Unit">capture</a> =
+      <span title="Boolean" class="keyword">if</span> (<a href="#242709" title="(x$1: AnyRef)Boolean">curTag</a> ne <span title="Null(null)" class="keyword">null</span>) <a href="#242714" title="(localName: String)Boolean">nodeContainsText</a>(<a href="#242709" title="=&gt; String">curTag</a>) // root level
+      <span class="keyword">else</span> <span title="Boolean(false)" class="keyword">false</span>
+  } // endElement(String,String,String)
+  
+  /** Processing instruction.
+  */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(target: String,data: String)Unit" id="242724">processingInstruction</a>(<a title="String" id="243338">target</a>: <span title="String">String</span>, <a title="String" id="243339">data</a>: <span title="String">String</span>) {
+    <span class="keyword">for</span> (<a title="scala.xml.ProcInstr" id="243354">pi</a> &lt;- <a href="#242717" title="(target: String,data: String)Seq[scala.xml.ProcInstr]">createProcInstr</a><a href="../../collection/generic/IterableTemplate.scala.html#17287" title="(f: (scala.xml.ProcInstr) =&gt; scala.collection.mutable.Stack[scala.xml.Node])Unit">(</a><a href="#243338" title="String">target</a>, <a href="#243339" title="String">data</a>))
+      <a href="#242701" title="=&gt; scala.collection.mutable.Stack[scala.xml.Node]">hStack</a>.<a href="../../collection/mutable/Stack.scala.html#17091" title="(elem: scala.xml.Node)FactoryAdapter.this.hStack.type">push</a>(<a href="#243354" title="scala.xml.ProcInstr">pi</a>)
+  }
+}
+
+        </pre>
+    </body>
+</html>

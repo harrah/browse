@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>collection/immutable/TreeHashMap.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/* TODO: Reintegrate
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2008-2009, David MacIver         **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: $
+
+package scala.collection.immutable
+
+object TreeHashMap {
+  private[TreeHashMap] val _empty = new TreeHashMap[Any, Nothing](IntMap.empty[Nothing]);
+  def empty[Key, Value] : TreeHashMap[Key, Value] = _empty.asInstanceOf[TreeHashMap[Key, Value]];
+
+  def apply[Key, Value](elems : (Key, Value)*) : TreeHashMap[Key, Value] = fromIterable(elems)
+
+  def fromIterable[Key, Value](elems : Iterable[(Key, Value)]) : TreeHashMap[Key, Value] =
+    elems.foldLeft(TreeHashMap.empty[Key, Value])((m, entry) =&gt; m.update(entry._1, entry._2))
+
+  private def apply[Key, Value](underlying : IntMap[AssocMap[Key, Value]]) = new TreeHashMap(underlying);
+}
+
+/** 
+ * An immutable Map which is based on an IntMap mapping hash codes to lists of (Key, Value) pairs with the
+ * same hashCode. 
+ * 
+ * Unlike the usual immutable.HashMap it is truly immutable behind the scenes. Consequently it is entirely
+ * safe to share between multiple threads and should achieve a much greater degree of sharing between instances.
+ * 
+ * Performancewise, get and update seem to be somewhat slower than with a traditional hash map, but bulk operations
+ * such as filter, foreach and transform appear to get something of a speedup.
+ * 
+ * @author David MacIver
+ */
+class TreeHashMap[Key, +Value] private (private val underlying : IntMap[AssocMap[Key, Value]]) extends scala.collection.immutable.Map[Key, Value]{
+  def iterator : Iterator[(Key, Value)] = new Iterator[(Key, Value)]{
+    val assocIt = new AssocMapIterator(AssocMap.empty[Key, Value]);
+    val intIterator = underlying.values;
+
+    def hasNext = assocIt.hasNext || intIterator.hasNext;
+    def next = {
+      if (!assocIt.hasNext) assocIt.it = intIterator.next;
+      assocIt.next
+    }
+  }
+
+  def empty[V] = TreeHashMap.empty[Key, V]
+ 
+  private def hash(key : Key) = {
+    var h = key.hashCode;
+    h ^= ((h &gt;&gt;&gt; 20) ^ (h &gt;&gt;&gt; 12));
+    h ^ (h &gt;&gt;&gt; 7) ^ (h &gt;&gt;&gt; 4);
+  }
+
+  override def stringPrefix = &quot;TreeHashMap&quot;  
+
+  override lazy val size = underlying.values.foldLeft(0)((x, y) =&gt; x + y.size);
+
+  // todo: probably drop to make conform with general equals/hashcode policy
+  override def equals(that : Any) = that match {
+    case (that : TreeHashMap[_, _]) =&gt; 
+      if (this eq that) true 
+      else if (this.size != that.size) false;
+      else this.underlying == that.underlying;
+    case _ =&gt; false
+  }
+
+  // todo: probably drop to make conform with general equals/hashcode policy
+  override def hashCode = underlying.hashCode
+
+  override def foreach[U](f : ((Key, Value)) =&gt;  U) = underlying.foreachValue(_.foreach(f));     
+
+  override def toList : List[(Key, Value)] = {
+    val buffer = new scala.collection.mutable.ListBuffer[(Key, Value)];
+    foreach(buffer += _);
+    buffer.toList;
+  }
+
+  override def apply(key : Key) = 
+    underlying.get(hash(key)) match {
+      case None =&gt; default(key);
+      case Some(table) =&gt; table.getOrElse(key, default(key));
+  }
+
+  override def isEmpty = underlying.isEmpty;
+
+  override def filter(f : ((Key, Value)) =&gt; Boolean) : TreeHashMap[Key, Value]= {
+    val newunderlying = underlying.modifyOrRemove(
+      (key, x) =&gt; {
+        val newtable = x.filter(f);
+        if (newtable.isEmpty) None;
+        else Some(newtable);
+      }
+    )
+    if (newunderlying eq underlying) this;
+    else TreeHashMap(newunderlying);
+  }
+
+  override def transform[C](f : (Key, Value) =&gt; C) = {
+    val newunderlying = underlying.transform(
+      (key, value) =&gt; value.transform(f)
+    )
+    if (underlying eq newunderlying) this.asInstanceOf[TreeHashMap[Key, C]];
+    else TreeHashMap(newunderlying);
+  }
+
+  def get(key : Key) = underlying.get(hash(key)).flatMap(_.get(key));
+  def update[S &gt;: Value](key : Key, value : S) : TreeHashMap[Key, S] = TreeHashMap(
+    underlying.updateWith[AssocMap[Key, S]](hash(key), AssocMap.singleton[Key, S](key, value), (x, y) =&gt; y.merge(x))
+  )
+
+  def -(key : Key) : TreeHashMap[Key, Value] = {
+    val h = hash(key);
+    underlying.get(h) match {
+      case None =&gt; this;
+      case Some(table) =&gt; {
+        val newtable = table - key;
+        if (table eq newtable) this;
+        else if (newtable.isEmpty) TreeHashMap(underlying - h)
+        else TreeHashMap(underlying.update(h, newtable)); 
+      }
+    } 
+  }
+
+  override def ++[V &gt;: Value](that : Iterable[(Key, V)]) : TreeHashMap[Key, V] = that match {
+    case (that : TreeHashMap[_, _]) =&gt; this ++ TreeHashMap.fromIterable(that.asInstanceOf[TreeHashMap[Key, V]])
+    case that =&gt; that.foldLeft(this : TreeHashMap[Key, V])((m, e) =&gt; m.update(e._1, e._2));
+  }
+
+  def ++[V &gt;: Value](that : TreeHashMap[Key, V]) : TreeHashMap[Key, V] = 
+    TreeHashMap(this.underlying.unionWith[AssocMap[Key, V]](that.underlying, (key, x, y) =&gt; x ++ y));
+}
+
+
+private [collection] object AssocMap {
+  val _empty = Nil[Any]
+  def empty[Key, Value] : AssocMap[Key, Value] = _empty.asInstanceOf[AssocMap[Key, Value]]
+  def singleton[Key, Value](key : Key, value : Value) = Cons(key, value, empty);
+  def apply[Key, Value](maps : (Key, Value)*) = 
+    maps.foldLeft(empty[Key, Value])((x, y) =&gt; x.update(y._1, y._2));
+
+  private[collection] case class Nil[Key]() extends AssocMap[Key, Nothing]
+  private[collection] case class Cons[S, +T](key: S, value: T, tail: AssocMap[S, T]) extends AssocMap[S, T]
+}
+
+import AssocMap._
+
+// AssocMap is very similar to ListMap. I don't want to patch ListMap right
+// now, so I've got a separate implementation here to make tweaks to. Long
+// term any of these changes should be merged into ListMap
+// Short term it doesn't really matter because there are almost no viable
+// use cases for ListMap compared to one of the alternatives.
+private[collection] sealed abstract class AssocMap[Key, +Value] extends immutable.Map[Key, Value]{
+  def empty[V] = AssocMap.empty[Key, V]
+
+  final def get(key : Key) : Option[Value] = this match {
+    case Nil() =&gt; None;
+    case Cons(key2, value, tail) =&gt; if (key == key2) Some(value) 
+                                    else tail.get(key);
+  }
+
+  override final def getOrElse[V &gt;: Value](key : Key, default : =&gt;V) : V = this match {
+    case Nil() =&gt; default;
+    case Cons(key2, value, tail) =&gt; if (key == key2) value
+                                    else tail.getOrElse(key, default);
+  }
+
+  override final def apply(key : Key) : Value = getOrElse(key, default(key));
+
+  override def filter(f : ((Key, Value)) =&gt; Boolean) : AssocMap[Key, Value] = this match {
+    case Cons(key, value, tail) =&gt; {
+      val filteredtail = tail.filter(f);
+
+      if (f((key, value))) {
+        if (tail eq filteredtail) this;
+        else Cons(key, value, filteredtail);
+      } else filteredtail;
+    }
+    case Nil() =&gt; AssocMap.empty;
+  }
+
+  def iterator : Iterator[(Key, Value)] = new AssocMapIterator(this)
+
+  @deprecated(&quot;use `iterator' instead&quot;) def elements = iterator
+
+  override final def foreach[U](f : ((Key, Value)) =&gt;  U) = this match {
+    case Cons(key, value, tail) =&gt; { f((key, value)); tail.foreach(f); }
+    case Nil() =&gt; {}
+  }
+
+  def size = this match {
+    case Nil() =&gt; 0;
+    case Cons(_, _, tail) =&gt; 1 + tail.size;
+  } 
+
+  override def isEmpty = this match {
+    case Nil() =&gt; true;
+    case _ =&gt; false;
+  }
+
+  private def removeKeyValue(key : Any, value : Any) : Option[AssocMap[Key, Value]] = this match {
+    case Nil() =&gt; None;
+    case Cons(key2, value2, tail) =&gt; 
+      if (key == key2){
+        if (value == value2) Some(tail);
+        else None;
+      } else tail.removeKeyValue(key, value) match {
+        case None =&gt; None;
+        case Some(x) =&gt; Some(Cons(key2, value2, x)); 
+      }
+  }
+
+  private def sameMappings(that : AssocMap[_, _]) : Boolean = (this, that) match {
+    case (Nil(), Nil()) =&gt; true;
+    case (Nil(), _) =&gt; false;
+    case (_, Nil()) =&gt; false;
+    case (Cons(key, value, tail), that) =&gt;  that.removeKeyValue(key, value) match {
+        case None =&gt; false;
+        case Some(x) =&gt; tail.sameMappings(x);        
+      }
+  }
+
+  override def equals(that : Any) = 
+    if (this eq that.asInstanceOf[AnyRef]) true;
+    else that match {
+      case (that : AssocMap[_, _]) =&gt; 
+        if (this.size != that.size) false;
+        else this.sameMappings(that); 
+      case _ =&gt; false;
+    } 
+
+  final def merge[S &gt;: Value](that : AssocMap[Key, S]) : AssocMap[Key, S] = (this, that) match {
+    case (Nil(), that) =&gt; that;
+    case (_, Nil()) =&gt; this;
+    case (Cons(key, value, tail), that) =&gt; 
+      tail.merge[S](that).update(key, value); 
+  }
+
+  def update[S &gt;: Value](key : Key, value : S) : AssocMap[Key, S] = this match {
+    case Nil() =&gt; Cons(key, value, empty);
+    case Cons(key2, value2, tail) =&gt; 
+      if (key2 == key) Cons(key, value, tail)
+      else Cons(key2, value2, tail.update(key, value));
+  }  
+
+  override def transform[C](f: (Key, Value) =&gt; C): AssocMap[Key, C] = this match {
+    case Nil() =&gt;
+      AssocMap.empty[Key, C]
+    case Cons(key, value, tail) =&gt;
+      val newtail = tail.transform(f)
+      val newval = f(key, value)
+      if ((tail eq newtail) &amp;&amp; (value.asInstanceOf[AnyRef] eq newval.asInstanceOf[AnyRef])) this.asInstanceOf[AssocMap[Key, C]];
+      else Cons(key, newval, newtail);
+  }
+
+  def -(key : Key) : AssocMap[Key, Value]= this match {
+    case Nil() =&gt; this;
+    case Cons(key2, value, tail) =&gt; 
+      if (key == key2) tail;
+      else {
+        val newtail = tail - key;
+        if (tail eq newtail) this;
+        else Cons(key2, value, newtail);
+      }
+  } 
+
+  final def ++[V &gt;: Value](that : AssocMap[Key, V]) : AssocMap[Key, V] = (this, that) match {
+    case (Nil(), that) =&gt; that;
+    case (_, Nil()) =&gt; this;
+    case (t1, Cons(key, value, tail)) =&gt; t1.update(key, value.asInstanceOf[Value] /* evil hack to work around bug 1140 */) ++ tail;
+  }
+}
+
+private[collection] class AssocMapIterator[Key, Value](var it : AssocMap[Key, Value]) extends Iterator[(Key, Value)]{
+  def hasNext = it match {
+    case Nil() =&gt; false;
+    case _ =&gt; true;
+  }  
+
+  def next = {
+    val Cons(key, value, next) = it;
+    it = next;
+    (key, value);
+  }
+}
+
+*/
+
+        </pre>
+    </body>
+</html>

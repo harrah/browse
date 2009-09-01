@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>xml/dtd/ValidationException.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://www.scala-lang.org/           **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: ValidationException.scala 18615 2009-08-31 13:21:58Z extempore $
+
+
+<span class="keyword">package</span> scala.xml
+<span class="keyword">package</span> dtd
+
+
+case <span class="keyword">class</span> <a title="class ValidationException extends java.lang.Exception with ScalaObject with Product" id="56797">ValidationException</a><a href="../../ScalaObject.scala.html#957" title="ScalaObject" id="19679">(</a><a title="String" id="56799">e</a>: <span title="String">String</span>) <span class="keyword">extends</span> <a href="../../Predef.scala.html#16161" title="java.lang.Exception">Exception</a>(<a href="#56799" title="String">e</a>)
+
+/**
+ *  @author Burak Emir
+ */
+<span class="keyword">object</span> <a title="object scala.xml.dtd.MakeValidationException" id="11159">MakeValidationException</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  <span class="keyword">def</span> <a title="(k: String,value: String,actual: String)scala.xml.dtd.ValidationException" id="56592">fromFixedAttribute</a>(<a title="String" id="56791">k</a>: <span title="String">String</span>, <a title="String" id="56792">value</a>: <span title="String">String</span>, <a title="String" id="56793">actual</a>: <span title="String">String</span>) =
+    <a href="#56797" title="(e: String)scala.xml.dtd.ValidationException">ValidationException</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;value of attribute &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#56791" title="String">k</a> <span title="(x$1: Any)java.lang.String">+</span> <span title="java.lang.String(&quot; FIXED to &quot;&quot;)" class="string">&quot; FIXED to \&quot;&quot;</span><span title="(x$1: Any)java.lang.String">+</span>
+                        <a href="#56792" title="String">value</a><span title="(x$1: Any)java.lang.String">+</span><span title="java.lang.String(&quot;&quot;, but document tries &quot;&quot;)" class="string">&quot;\&quot;, but document tries \&quot;&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#56793" title="String">actual</a>+<span title="java.lang.String(&quot;&quot;&quot;)" class="string">&quot;\&quot;&quot;</span>)
+
+  <span class="keyword">def</span> <a title="()scala.xml.dtd.ValidationException" id="56593">fromNonEmptyElement</a>() =
+    <span title="scala.xml.dtd.ValidationException" class="keyword">new</span> <a href="#56797" title="scala.xml.dtd.ValidationException">ValidationException</a>(<span title="java.lang.String(&quot;element should be *empty*&quot;)" class="string">&quot;element should be *empty*&quot;</span>)
+
+  <span class="keyword">def</span> <a title="(label: String)scala.xml.dtd.ValidationException" id="56594">fromUndefinedElement</a>(<a title="String" id="57205">label</a>: <span title="String">String</span>) = 
+    <span title="scala.xml.dtd.ValidationException" class="keyword">new</span> <a href="#56797" title="scala.xml.dtd.ValidationException">ValidationException</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;element \&quot;&quot;</span><span title="(x$1: Any)java.lang.String">+</span> <a href="#57205" title="String">label</a> +<span title="java.lang.String(&quot;&quot; not allowed here&quot;)" class="string">&quot;\&quot; not allowed here&quot;</span>)
+
+  <span class="keyword">def</span> <a title="(key: String)scala.xml.dtd.ValidationException" id="56595">fromUndefinedAttribute</a>(<a title="String" id="56753">key</a>: <span title="String">String</span>) = 
+    <span title="scala.xml.dtd.ValidationException" class="keyword">new</span> <a href="#56797" title="scala.xml.dtd.ValidationException">ValidationException</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;attribute &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#56753" title="String">key</a> +<span title="java.lang.String(&quot; not allowed here&quot;)" class="string">&quot; not allowed here&quot;</span>)
+
+  <span class="keyword">def</span> <a title="(allKeys: Set[String])scala.xml.dtd.ValidationException" id="56596">fromMissingAttribute</a>(<a title="Set[String]" id="56894">allKeys</a>: <a href="../../collection/immutable/Set.scala.html#9171" title="Set[String]">Set</a>[String]) = {
+    <span class="keyword">val</span> <a title="StringBuilder" id="56897">sb</a> = <a href="../../collection/mutable/StringBuilder.scala.html#23350" title="(str: String)StringBuilder" class="keyword">new</a> <a href="../../package.scala.html#14791" title="StringBuilder">StringBuilder</a>(<span title="java.lang.String(&quot;missing value for REQUIRED attribute&quot;)" class="string">&quot;missing value for REQUIRED attribute&quot;</span>)
+    <span title="Any" class="keyword">if</span> (<a href="#56894" title="Set[String]">allKeys</a>.<a href="../../collection/generic/TraversableTemplate.scala.html#17137" title="(x$1: Int)Boolean" id="2958">size</a> &gt; <span title="Int(1)" class="int">1</span>) <a href="#56897" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<span title="Char('s')" class="char">'s'</span>);
+    <a href="../../collection/generic/IterableTemplate.scala.html#17287" title="(f: (String) =&gt; StringBuilder)Unit">allKeys</a> foreach (<a title="String" id="56932">k</a> =&gt; <a href="../../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">sb</a> append <a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;'%s'&quot;</a>.<a href="../../runtime/RichString.scala.html#18060" title="(args: Any*)String">format</a>(<a href="#56932" title="String">k</a>))
+    <span title="scala.xml.dtd.ValidationException" class="keyword">new</span> <a href="#56797" title="scala.xml.dtd.ValidationException">ValidationException</a>(<a href="#56897" title="StringBuilder">sb</a>.<a href="../../collection/mutable/StringBuilder.scala.html#23409" title="()String">toString</a>())
+  }
+
+  <span class="keyword">def</span> <a title="(key: String,tpe: String)scala.xml.dtd.ValidationException" id="56597">fromMissingAttribute</a>(<a title="String" id="56864">key</a>: <span title="String">String</span>, <a title="String" id="56865">tpe</a>: <span title="String">String</span>) =
+    <span title="scala.xml.dtd.ValidationException" class="keyword">new</span> <a href="#56797" title="scala.xml.dtd.ValidationException">ValidationException</a>(<a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;missing value for REQUIRED attribute %s of type %s&quot;</a>.<a href="../../runtime/RichString.scala.html#18060" title="(args: Any*)String">format</a>(<a href="#56864" title="String">key</a>, <a href="#56865" title="String">tpe</a>))
+}
+
+        </pre>
+    </body>
+</html>

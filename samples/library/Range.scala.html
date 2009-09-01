@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Range.scala</title>
+        <script type="text/javascript" src="jquery-all.js"></script>
+        <script type="text/javascript" src="linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2006-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: Range.scala 18478 2009-08-13 21:30:20Z stepancheg $
+
+<span class="keyword">package</span> scala
+
+<span class="keyword">import</span> annotation.experimental
+<span class="keyword">import</span> collection.immutable.Vector
+<span class="keyword">import</span> collection.generic.VectorView
+<span class="keyword">import</span> util.control.Exception.catching
+<span class="keyword">import</span> util.Hashable
+
+/** &lt;p&gt;
+ *    &lt;code&gt;GenericRange&lt;/code&gt; is a generified version of the
+ *    &lt;code&gt;Range&lt;/code&gt; class which works with arbitrary types.
+ *    It must be supplied with an Integral implementation of the
+ *    range type.
+ *
+ *    Factories for likely types include Range.BigInt, Range.Long,
+ *    and Range.BigDecimal.  Range.Int exists for completeness, but
+ *    the Int-based scala.Range should be more performant.
+ *  &lt;/p&gt;&lt;pre&gt;
+ *     &lt;b&gt;val&lt;/b&gt; r1 = new Range(0, 100, 1)
+ *     &lt;b&gt;val&lt;/b&gt; veryBig = Math.MAX_INT.toLong + 1
+ *     &lt;b&gt;val&lt;/b&gt; r2 = Range.Long(veryBig, veryBig + 100, 1)
+ *     assert(r1 sameElements r2.map(_ - veryBig))
+ *  &lt;/pre&gt;
+ *
+ *  @author  Paul Phillips
+ *  @version 2.8
+ */
+@experimental
+<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class GenericRange[T] extends java.lang.Object with scala.collection.generic.VectorView[T,scala.collection.immutable.Vector[T]] with RangeToString[T] with scala.util.Hashable with ScalaObject" id="1203">GenericRange</a>[<a title="&gt;: Nothing &lt;: Any" id="31342">T</a>]
+  (<span class="keyword">val</span> <a title="T" id="31335">start</a>: <a href="#31342" title="T">T</a>, <span class="keyword">val</span> <a title="T" id="31336">end</a>: <a href="#31342" title="T">T</a>, <span class="keyword">val</span> <a title="T" id="31337">step</a>: <a href="#31342" title="T">T</a>, <span class="keyword">val</span> <a title="Boolean" id="31340">isInclusive</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>)
+  (<span class="keyword">implicit</span> <a title="Integral[T]" id="31339">num</a>: <a href="Integral.scala.html#1191" title="Integral[T]">Integral</a>[T])
+<span class="keyword">extends</span> <a href="collection/generic/VectorView.scala.html#10235" title="scala.collection.generic.VectorView[T,scala.collection.immutable.Vector[T]]">VectorView</a>[T, Vector[T]] <span class="keyword">with</span> <a href="#1029" title="RangeToString[T]">RangeToString</a>[T] <span class="keyword">with</span> <a href="util/Hashable.scala.html#8077" title="scala.util.Hashable">Hashable</a> {
+  <span class="keyword">import</span> num._
+      
+  // todo? - we could lift the length restriction by implementing a range as a sequence of
+  // subranges and limiting the subranges to MAX_INT.  There's no other way around it because
+  // the generics we inherit assume integer-based indexing (as well they should.)
+  <a href="Predef.scala.html#16217" title="(requirement: Boolean)Unit">require</a>(<a title="=&gt; Boolean" id="2203">!</a>(<a href="Ordering.scala.html#84906" title="(rhs: T)Boolean">step</a> equiv <a href="Numeric.scala.html#31415" title="=&gt; T">zero</a>))
+  <a href="Predef.scala.html#16218" title="(requirement: Boolean,message: =&gt; Any)Unit">require</a>(<a href="Ordering.scala.html#84903" title="(rhs: T)Boolean">genericLength</a> &lt;= <a href="Numeric.scala.html#31410" title="(x: Int)T">fromInt</a>(<a href="Math.scala.html#526" title="object Math">Math</a>.<a href="Math.scala.html#22672" title="=&gt; Int">MAX_INT</a>), <span title="java.lang.String(&quot;Implementation restricts ranges to Math.MAX_INT elements.&quot;)" class="string">&quot;Implementation restricts ranges to Math.MAX_INT elements.&quot;</span>)
+    
+  // By adjusting end based on isInclusive, we can treat all ranges as exclusive.
+  <span class="keyword">private</span> <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="T" id="31286">trueEnd</a>: <a href="#31342" title="T">T</a> = <span title="T" class="keyword">if</span> (<a href="#31340" title="=&gt; Boolean">isInclusive</a>) <a href="Numeric.scala.html#88840" title="(rhs: T)T">end</a> + <a href="#31337" title="=&gt; T">step</a> <span class="keyword">else</span> <a href="#31336" title="=&gt; T">end</a>
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; scala.collection.immutable.Vector[T]" id="31287">underlying</a> = <a href="collection/immutable/Vector.scala.html#9190" title="object scala.collection.immutable.Vector">Vector</a>.<a href="collection/generic/Companion.scala.html#17468" title="[A]scala.collection.immutable.Vector[A]">empty</a><span title="scala.collection.immutable.Vector[T]">[</span><a href="#31342" title="T">T</a>]
+
+  /** Create a new range with the start and end values of this range and
+   *  a new &lt;code&gt;step&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="(newStep: T)GenericRange[T]" id="31288">by</a>(<a title="T" id="89028">newStep</a>: <a href="#31342" title="T">T</a>): <a href="#1203" title="GenericRange[T]">GenericRange</a>[T] = <a href="#31289" title="(start: T,end: T,step: T)GenericRange[T]">copy</a>(<a href="#31335" title="=&gt; T">start</a>, <a href="#31336" title="=&gt; T">end</a>, <a href="#89028" title="T">newStep</a>)
+  
+  /** Create a copy of this range.
+   */
+  <span class="keyword">def</span> <a title="(start: T,end: T,step: T)GenericRange[T]" id="31289">copy</a>(<a title="T" id="89030">start</a>: <a href="#31342" title="T">T</a>, <a title="T" id="89031">end</a>: <a href="#31342" title="T">T</a>, <a title="T" id="89032">step</a>: <a href="#31342" title="T">T</a>): <a href="#1203" title="GenericRange[T]">GenericRange</a>[T]  
+  
+  /** Shift or multiply the entire range by some constant.
+   */
+  <span class="keyword">def</span> <a title="(shift: T)GenericRange[T]" id="31290">-</a>(<a title="T" id="89036">shift</a>: <a href="#31342" title="T">T</a>) = <a href="#31291" title="(shift: T)GenericRange[T]" class="keyword">this</a> + <a href="Numeric.scala.html#31409" title="(x: T)T">negate</a>(<a href="#89036" title="T">shift</a>)
+  <span class="keyword">def</span> <a title="(shift: T)GenericRange[T]" id="31291">+</a>(<a title="T" id="89039">shift</a>: <a href="#31342" title="T">T</a>) = <a href="#31289" title="(start: T,end: T,step: T)GenericRange[T]">copy</a>(<a href="#1203" title="GenericRange.this.type" class="keyword">this</a>.<a href="Numeric.scala.html#88840" title="(rhs: T)T">start</a> + <a href="#89039" title="T">shift</a>, <a href="#1203" title="GenericRange.this.type" class="keyword">this</a>.<a href="Numeric.scala.html#88840" title="(rhs: T)T">end</a> + <a href="#89039" title="T">shift</a>, <a href="#31337" title="=&gt; T">step</a>)
+  <span class="keyword">def</span> <a title="(mult: T)GenericRange[T]" id="31292">*</a>(<a title="T" id="89104">mult</a>: <a href="#31342" title="T">T</a>) = <a href="#31289" title="(start: T,end: T,step: T)GenericRange[T]">copy</a>(<a href="#1203" title="GenericRange.this.type" class="keyword">this</a>.<a href="Numeric.scala.html#88842" title="(rhs: T)T">start</a> * <a href="#89104" title="T">mult</a>, <a href="#1203" title="GenericRange.this.type" class="keyword">this</a>.<a href="Numeric.scala.html#88842" title="(rhs: T)T">end</a> * <a href="#89104" title="T">mult</a>, <a href="Numeric.scala.html#88842" title="(rhs: T)T">step</a> * <a href="#89104" title="T">mult</a>)
+  
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[U](f: (T) =&gt; U)Unit" id="31293">foreach</a>[<a title="&gt;: Nothing &lt;: Any" id="31295">U</a>](<a title="(T) =&gt; U" id="89177">f</a>: T =&gt; U) {
+    <span class="keyword">var</span> <a title="T" id="89195">i</a> = <a href="#31335" title="=&gt; T">start</a>
+    <span title="Unit" class="keyword">if</span> (<a href="Ordering.scala.html#84904" title="(rhs: T)Boolean">step</a> &gt; <a href="Numeric.scala.html#31415" title="=&gt; T">zero</a>) {
+      <span title="Unit" class="keyword">while</span> (<a href="Ordering.scala.html#84902" title="(rhs: T)Boolean">i</a> &lt; <a href="#31285" title="=&gt; T">trueEnd</a>) <a href="#89256" title="()Unit">{</a>
+        <a href="Function1.scala.html#17119" title="(v1: T)U">f</a>(<a href="#89195" title="T">i</a>)
+        <a href="#89195" title="T">i</a> = <a href="Numeric.scala.html#88840" title="(rhs: T)T">i</a> + <a href="#31337" title="=&gt; T">step</a>
+      }
+    } <span class="keyword">else</span> {
+      <span title="Unit" class="keyword">while</span> (<a href="Ordering.scala.html#84904" title="(rhs: T)Boolean">i</a> &gt; <a href="#31285" title="=&gt; T">trueEnd</a>) <a href="#89331" title="()Unit">{</a>
+        <a href="Function1.scala.html#17119" title="(v1: T)U">f</a>(<a href="#89195" title="T">i</a>)
+        <a href="#89195" title="T">i</a> = <a href="Numeric.scala.html#88840" title="(rhs: T)T">i</a> + <a href="#31337" title="=&gt; T">step</a>
+      }
+    }
+  }
+  
+  <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="T" id="31297">genericLength</a>: <a href="#31342" title="T">T</a> = {
+    <span class="keyword">def</span> <a title="(s: T,e: T,stp: T)T" id="89406">plen</a>(<a title="T" id="89407">s</a>: <a href="#31342" title="T">T</a>, <a title="T" id="89408">e</a>: <a href="#31342" title="T">T</a>, <a title="T" id="89409">stp</a>: <a href="#31342" title="T">T</a>) = 
+      <span title="T" class="keyword">if</span> (<a href="Ordering.scala.html#84903" title="(rhs: T)Boolean">e</a> &lt;= <a href="#89407" title="T">s</a>) <a href="Numeric.scala.html#31415" title="=&gt; T">zero</a> <span class="keyword">else</span> (<a href="Integral.scala.html#88853" title="(rhs: T)T">(</a><a href="Numeric.scala.html#88841" title="(rhs: T)T">e</a> <a href="Integral.scala.html#31425" title="implicit scala.Integral.mkNumericOps : (lhs: T)GenericRange.this.num.IntegralOps">-</a> <a href="#89407" title="T">s</a>) / <a href="#89409" title="T">stp</a>)
+
+    <span title="T" class="keyword">if</span> (<a href="Ordering.scala.html#84904" title="(rhs: T)Boolean">step</a> &gt; <a href="Numeric.scala.html#31415" title="=&gt; T">zero</a>) <a href="#89406" title="(s: T,e: T,stp: T)T">plen</a>(<a href="#31335" title="=&gt; T">start</a>, <a href="#31285" title="=&gt; T">trueEnd</a>, <a href="#31337" title="=&gt; T">step</a>)
+    <span class="keyword">else</span> <a href="#89406" title="(s: T,e: T,stp: T)T">plen</a>(<a href="#31285" title="=&gt; T">trueEnd</a>, <a href="#31335" title="=&gt; T">start</a>, <a href="Numeric.scala.html#88843" title="()T">-</a><a href="Integral.scala.html#31425" title="implicit scala.Integral.mkNumericOps : (lhs: T)GenericRange.this.num.IntegralOps">step</a>)
+  }
+  <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="Int" id="31299">length</a>: <span title="Int">Int</span> = <a href="Numeric.scala.html#31411" title="(x: T)Int">toInt</a>(<a href="#31296" title="=&gt; T">genericLength</a>)
+  
+  // Since apply(Int) already exists, we are not allowed apply(T) since
+  // they erase to the same thing.
+  <span class="keyword">def</span> <a title="(idx: Int)T" id="31300">apply</a>(<a title="Int" id="89586">idx</a>: <span title="Int">Int</span>): <a href="#31342" title="T">T</a> = <a href="#31301" title="(idx: T)T">applyAt</a>(<a href="Numeric.scala.html#31410" title="(x: Int)T">fromInt</a>(<a href="#89586" title="Int">idx</a>))
+  <span class="keyword">def</span> <a title="(idx: T)T" id="31301">applyAt</a>(<a title="T" id="89589">idx</a>: <a href="#31342" title="T">T</a>): <a href="#31342" title="T">T</a> = {
+    <span title="Unit" class="keyword">if</span> (<a href="Ordering.scala.html#84902" title="(rhs: T)Boolean">idx</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <a href="Numeric.scala.html#31415" title="=&gt; T">zero</a> || <a href="Ordering.scala.html#84905" title="(rhs: T)Boolean">idx</a> &gt;= <a href="#31296" title="=&gt; T">genericLength</a>) <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.IndexOutOfBoundsException" class="keyword">new</span> <a href="Predef.scala.html#16166" title="java.lang.IndexOutOfBoundsException">IndexOutOfBoundsException</a>(<a href="#89589" title="T">idx</a>.<span title="()java.lang.String">toString</span>)
+    <a href="Numeric.scala.html#88840" title="(rhs: T)T">start</a> + (<a href="Numeric.scala.html#88842" title="(rhs: T)T">idx</a> * <a href="#31337" title="=&gt; T">step</a>)
+  }
+  
+  // The contains situation makes for some interesting code.
+  // This attempts to check containerhood in a range-sensible way, but
+  // falls back on super.contains if the cast ends up failing.
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(_x: Any)Boolean" id="31302">contains</a>(<a title="Any" id="89737">_x</a>: <span title="Any">Any</span>): <span title="Boolean">Boolean</span> = {
+    <span class="keyword">def</span> <a title="=&gt; Boolean" id="89739">doContains</a> = {
+      // checking for Int is important so for instance BigIntRange from
+      // 1 to Googlefinity can see if 5 is in there without calling super.
+      <span class="keyword">val</span> <a title="T" id="89740">x</a> = <a href="#89737" title="Any">_x</a> <span title="T" class="keyword">match</span> {
+        <span title="T" class="keyword">case</span> <a title="Int" id="89743">i</a>: <span title="Int">Int</span> =&gt; <a href="Numeric.scala.html#31410" title="(x: Int)T">fromInt</a>(<a href="#89743" title="Int">i</a>)
+        <span title="T" class="keyword">case</span> _      =&gt; <a href="#89737" title="Any">_x</a>.<a title="[T0]T0" id="3621">asInstanceOf</a><span title="T">[</span><a href="#31342" title="T">T</a>]
+      }      
+      <span class="keyword">def</span> <a title="=&gt; Boolean" id="89741">matchesStep</a> = <a href="Integral.scala.html#88854" title="(rhs: T)T">(</a><a href="Numeric.scala.html#88841" title="(rhs: T)T">x</a> <a href="Integral.scala.html#31425" title="implicit scala.Integral.mkNumericOps : (lhs: T)GenericRange.this.num.IntegralOps">-</a> <a href="#31335" title="=&gt; T">start</a>) <a title="(x$1: Any)Boolean" id="3610">%</a> <a href="#31337" title="=&gt; T">step</a> == <a href="Numeric.scala.html#31415" title="=&gt; T">zero</a>
+      <span class="keyword">def</span> <a title="=&gt; Boolean" id="89742">withinRange</a> =
+        <span title="Boolean" class="keyword">if</span> (<a href="Ordering.scala.html#84904" title="(rhs: T)Boolean">step</a> &gt; <a href="Numeric.scala.html#31415" title="=&gt; T">zero</a>) <a href="Ordering.scala.html#84903" title="(rhs: T)Boolean">start</a> <span title="(x$1: Boolean)Boolean">&lt;=</span> <a href="#89740" title="T">x</a> &amp;&amp; <a href="Ordering.scala.html#84902" title="(rhs: T)Boolean">x</a> &lt; <a href="#31285" title="=&gt; T">trueEnd</a>
+        <span class="keyword">else</span> <a href="Ordering.scala.html#84905" title="(rhs: T)Boolean">start</a> <span title="(x$1: Boolean)Boolean">&gt;=</span> <a href="#89740" title="T">x</a> &amp;&amp; <a href="Ordering.scala.html#84904" title="(rhs: T)Boolean">x</a> &gt; <a href="#31285" title="=&gt; T">trueEnd</a>
+      
+      <a href="#89742" title="(x$1: Boolean)Boolean">withinRange</a> &amp;&amp; <a href="#89741" title="=&gt; Boolean">matchesStep</a>
+    }
+
+    <a href="util/control/Exception.scala.html#31240" title="(exceptions: Class[_]*)util.control.Exception.Catch[Nothing]">catching</a><a href="util/control/Exception.scala.html#47482" title="(body: =&gt; Boolean)Option[Boolean]">(</a>classOf<span title="java.lang.Class[ClassCastException]">[</span>ClassCastException]) <a href="Option.scala.html#19763" title="(default: =&gt; Boolean)Boolean">opt</a> <a href="#89739" title="=&gt; Boolean">doContains</a> getOrElse <a href="#270721" title="(elem: Any)Boolean" class="keyword">super</a>.<a title="(elem: Any)Boolean" id="270721">contains</a>(<a href="#89737" title="Any">_x</a>)
+  }
+  
+  // Using trueEnd gives us Range(1, 10, 1).inclusive == Range(1, 11, 1)
+  <span class="keyword">val</span> <a title="List[T]" id="31303">hashValues</a> = <a href="collection/immutable/List.scala.html#17535" title="(xs: T*)List[T]">List</a>(<a href="#31335" title="=&gt; T">start</a>, <a href="#31285" title="=&gt; T">trueEnd</a>, <a href="#31337" title="=&gt; T">step</a>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(other: Any)Boolean" id="31305">equals</a>(<a title="Any" id="90062">other</a>: <span title="Any">Any</span>) = <a href="#90062" title="Any">other</a> <span title="Boolean" class="keyword">match</span> {
+    <span title="Boolean" class="keyword">case</span> <a title="GenericRange[_]" id="90065">x</a>: <a href="#1203" title="GenericRange[_]">GenericRange</a>[_] =&gt; <a href="util/Hashable.scala.html#31334" title="(other: Any)Boolean" class="keyword">this</a> equalHashValues <a href="#90065" title="GenericRange[_]">x</a>
+    <span title="Boolean(false)" class="keyword">case</span> _                  =&gt; <span title="Boolean(false)" class="keyword">false</span>
+  }
+}
+
+<span class="keyword">private</span>[scala] <span class="keyword">trait</span> <a title="trait RangeToString[T] extends java.lang.Object with scala.collection.generic.VectorView[T,scala.collection.immutable.Vector[T]] with ScalaObject" id="1029">RangeToString</a>[<a title="&gt;: Nothing &lt;: Any" id="13384">T</a>] <a href="ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="collection/generic/VectorView.scala.html#10235" title="scala.collection.generic.VectorView[T,scala.collection.immutable.Vector[T]]">VectorView</a>[T, Vector[T]] {
+  // The default toString() tries to print every element and will exhaust memory
+  // if the Range is unduly large.  This interacts poorly with the REPL.
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="31312">toString</a>() = {
+    <span class="keyword">val</span> <a title="Int" id="90095">MAX_PRINT</a> = <span title="Int(512)" class="int">512</span>  // some arbitrary value
+    <span class="keyword">val</span> <a title="String" id="90096">str</a> = (<a href="collection/generic/TraversableViewTemplate.scala.html#25981" title="(n: Int)scala.collection.generic.VectorView[T,scala.collection.immutable.Vector[T]]" class="keyword">this</a> take <a href="#90095" title="Int">MAX_PRINT</a>).<a href="collection/generic/TraversableTemplate.scala.html#17247" title="(sep: String)String">mkString</a>(<span title="java.lang.String(&quot;, &quot;)" class="string">&quot;, &quot;</span>)
+
+    <span title="String" class="keyword">if</span> (<a href="collection/generic/SequenceTemplate.scala.html#17338" title="(x$1: Int)Boolean">length</a> &gt; <a href="#90095" title="Int">MAX_PRINT</a>) <a href="#90096" title="String">str</a>.<a title="(x$1: java.lang.String,x$2: java.lang.String)java.lang.String" id="7023">replaceAll</a>(<span title="java.lang.String(&quot;\)$&quot;)" class="string">&quot;&quot;&quot;\)$&quot;&quot;&quot;</span>, <span title="java.lang.String(&quot;, ...)&quot;)" class="string">&quot;, ...)&quot;</span>) 
+    <span class="keyword">else</span> <a href="#90096" title="String">str</a>
+  }
+}
+
+
+<span class="keyword">object</span> <a title="object GenericRange" id="1204">GenericRange</a>
+<a href="ScalaObject.scala.html#957" title="ScalaObject">{</a>   
+  <span class="keyword">class</span> <a title="class Inclusive[T] extends GenericRange[T] with ScalaObject" id="31204">Inclusive</a>[<a title="&gt;: Nothing &lt;: Any" id="31205">T</a>]<a href="ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="T" id="90139">start</a>: <a href="#31205" title="T">T</a>, <a title="T" id="90140">end</a>: <a href="#31205" title="T">T</a>, <a title="T" id="90141">step</a>: <a href="#31205" title="T">T</a>)(<span class="keyword">implicit</span> <a title="Integral[T]" id="90142">num</a>: <a href="Integral.scala.html#1191" title="Integral[T]">Integral</a>[T])
+  <span class="keyword">extends</span> <a href="#1203" title="GenericRange[T]">GenericRange</a>(<a href="#90139" title="T">start</a>, <a href="#90140" title="T">end</a>, <a href="#90141" title="T">step</a>, <span title="Boolean(true)" class="keyword">true</span>) {
+    <span class="keyword">def</span> <a title="=&gt; scala.GenericRange.Exclusive[T]" id="31756">exclusive</a>: <a href="#31206" title="scala.GenericRange.Exclusive[T]">Exclusive</a>[T] = <a href="#31208" title="(start: T,end: T,step: T)(implicit num: Integral[T])GenericRange.Exclusive[T]">GenericRange</a><a href="#90142" title="Integral[T]">(</a><a href="#31335" title="=&gt; T">start</a>, <a href="#31336" title="=&gt; T">end</a>, <a href="#31337" title="=&gt; T">step</a>)
+    <span class="keyword">def</span> <a title="(start: T,end: T,step: T)scala.GenericRange.Inclusive[T]" id="31757">copy</a>(<a title="T" id="90169">start</a>: <a href="#31205" title="T">T</a>, <a title="T" id="90170">end</a>: <a href="#31205" title="T">T</a>, <a title="T" id="90171">step</a>: <a href="#31205" title="T">T</a>): <a href="#31204" title="scala.GenericRange.Inclusive[T]">Inclusive</a>[T] = <a href="#1204" title="object GenericRange">GenericRange</a>.<a href="#31211" title="(start: T,end: T,step: T)(implicit num: Integral[T])GenericRange.Inclusive[T]">inclusive</a><a href="#90142" title="Integral[T]">(</a><a href="#90169" title="T">start</a>, <a href="#90170" title="T">end</a>, <a href="#90171" title="T">step</a>)
+  }
+  
+  <span class="keyword">class</span> <a title="class Exclusive[T] extends GenericRange[T] with ScalaObject" id="31206">Exclusive</a>[<a title="&gt;: Nothing &lt;: Any" id="31207">T</a>]<a href="ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="T" id="90214">start</a>: <a href="#31207" title="T">T</a>, <a title="T" id="90215">end</a>: <a href="#31207" title="T">T</a>, <a title="T" id="90216">step</a>: <a href="#31207" title="T">T</a>)(<span class="keyword">implicit</span> <a title="Integral[T]" id="90217">num</a>: <a href="Integral.scala.html#1191" title="Integral[T]">Integral</a>[T])
+  <span class="keyword">extends</span> <a href="#1203" title="GenericRange[T]">GenericRange</a>(<a href="#90214" title="T">start</a>, <a href="#90215" title="T">end</a>, <a href="#90216" title="T">step</a>, <span title="Boolean(false)" class="keyword">false</span>) {
+    <span class="keyword">def</span> <a title="=&gt; scala.GenericRange.Inclusive[T]" id="31445">inclusive</a>: <a href="#31204" title="scala.GenericRange.Inclusive[T]">Inclusive</a>[T] = <a href="#1204" title="object GenericRange">GenericRange</a>.<a href="#31211" title="(start: T,end: T,step: T)(implicit num: Integral[T])GenericRange.Inclusive[T]">inclusive</a><a href="#90217" title="Integral[T]">(</a><a href="#31335" title="=&gt; T">start</a>, <a href="#31336" title="=&gt; T">end</a>, <a href="#31337" title="=&gt; T">step</a>)
+    <span class="keyword">def</span> <a title="(start: T,end: T,step: T)scala.GenericRange.Exclusive[T]" id="31446">copy</a>(<a title="T" id="90244">start</a>: <a href="#31207" title="T">T</a>, <a title="T" id="90245">end</a>: <a href="#31207" title="T">T</a>, <a title="T" id="90246">step</a>: <a href="#31207" title="T">T</a>): <a href="#31206" title="scala.GenericRange.Exclusive[T]">Exclusive</a>[T] = <a href="#31208" title="(start: T,end: T,step: T)(implicit num: Integral[T])GenericRange.Exclusive[T]">GenericRange</a><a href="#90217" title="Integral[T]">(</a><a href="#90244" title="T">start</a>, <a href="#90245" title="T">end</a>, <a href="#90246" title="T">step</a>)
+  }
+  
+  <span class="keyword">def</span> <a title="[T](start: T,end: T,step: T)(implicit num: Integral[T])scala.GenericRange.Exclusive[T]" id="31208">apply</a>[<a title="&gt;: Nothing &lt;: Any" id="31210">T</a>](<a title="T" id="31494">start</a>: <a href="#31210" title="T">T</a>, <a title="T" id="31495">end</a>: <a href="#31210" title="T">T</a>, <a title="T" id="31496">step</a>: <a href="#31210" title="T">T</a>)(<span class="keyword">implicit</span> <a title="Integral[T]" id="31497">num</a>: <a href="Integral.scala.html#1191" title="Integral[T]">Integral</a>[T]): <a href="#31206" title="scala.GenericRange.Exclusive[T]">Exclusive</a>[T] =
+    <a href="#31497" title="scala.GenericRange.Exclusive[T]" class="keyword">new</a> <a href="#31206" title="scala.GenericRange.Exclusive[T]">Exclusive</a>(<a href="#31494" title="T">start</a>, <a href="#31495" title="T">end</a>, <a href="#31496" title="T">step</a>)
+  <span class="keyword">def</span> <a title="[T](start: T,end: T,step: T)(implicit num: Integral[T])scala.GenericRange.Inclusive[T]" id="31211">inclusive</a>[<a title="&gt;: Nothing &lt;: Any" id="31213">T</a>](<a title="T" id="31799">start</a>: <a href="#31213" title="T">T</a>, <a title="T" id="31800">end</a>: <a href="#31213" title="T">T</a>, <a title="T" id="31801">step</a>: <a href="#31213" title="T">T</a>)(<span class="keyword">implicit</span> <a title="Integral[T]" id="31802">num</a>: <a href="Integral.scala.html#1191" title="Integral[T]">Integral</a>[T]): <a href="#31204" title="scala.GenericRange.Inclusive[T]">Inclusive</a>[T] = 
+    <a href="#31802" title="scala.GenericRange.Inclusive[T]" class="keyword">new</a> <a href="#31204" title="scala.GenericRange.Inclusive[T]">Inclusive</a>(<a href="#31799" title="T">start</a>, <a href="#31800" title="T">end</a>, <a href="#31801" title="T">step</a>)
+}
+
+
+/** &lt;p&gt;
+ *    The &lt;code&gt;Range&lt;/code&gt; class represents integer values in range
+ *    &lt;code&gt;[start;end)&lt;/code&gt; with non-zero step value &lt;code&gt;step&lt;/code&gt;.
+ *    Sort of acts like a sequence also (supports length and contains).
+ *    For example:
+ *  &lt;/p&gt;&lt;pre&gt;
+ *     &lt;b&gt;val&lt;/b&gt; r1 = 0 until 10
+ *     &lt;b&gt;val&lt;/b&gt; r2 = r1.start until r1.end by r1.step + 1
+ *     println(r2.length) // = 5
+ *  &lt;/pre&gt;
+ *
+ *  @author Martin Odersky
+ *  @version 2.8
+ *  @since   2.5
+ */
+<span class="keyword">class</span> <a title="class Range extends java.lang.Object with scala.collection.generic.VectorView[Int,scala.collection.immutable.Vector[Int]] with RangeToString[Int] with ScalaObject" id="1281">Range</a><a href="ScalaObject.scala.html#957" title="ScalaObject">(</a><span class="keyword">val</span> <a title="Int" id="72698">start</a>: <span title="Int">Int</span>, <span class="keyword">val</span> <a title="Int" id="72699">end</a>: <span title="Int">Int</span>, <span class="keyword">val</span> <a title="Int" id="72700">step</a>: <span title="Int">Int</span>)
+<span class="keyword">extends</span> <a href="collection/generic/VectorView.scala.html#10235" title="scala.collection.generic.VectorView[Int,scala.collection.immutable.Vector[Int]]">VectorView</a>[Int, Vector[Int]] <span class="keyword">with</span> <a href="#1029" title="RangeToString[Int]">RangeToString</a>[Int]
+{
+  <a href="Predef.scala.html#16217" title="(requirement: Boolean)Unit">require</a>(<a href="#72700" title="(x$1: Int)Boolean" id="2952">step</a> != <span title="Int(0)" class="int">0</span>)
+
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; scala.collection.immutable.Vector[Int]" id="38254">underlying</a> = <a href="collection/immutable/Vector.scala.html#9190" title="object scala.collection.immutable.Vector">Vector</a>.<a href="collection/generic/Companion.scala.html#17468" title="[A]scala.collection.immutable.Vector[A]">empty</a><span title="scala.collection.immutable.Vector[Int]">[</span><span title="Int">Int</span>]
+
+  /** Create a new range with the start and end values of this range and
+   *  a new &lt;code&gt;step&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="(step: Int)Range" id="38255">by</a>(<a title="Int" id="90315">step</a>: <span title="Int">Int</span>): <a href="#1281" title="Range">Range</a> = <span title="Range" class="keyword">new</span> <a href="#1281" title="Range">Range</a>(<a href="#72698" title="=&gt; Int">start</a>, <a href="#72699" title="=&gt; Int">end</a>, <a href="#90315" title="Int">step</a>)
+
+  <span class="keyword">final</span> <span class="keyword">override</span> <span class="keyword">def</span> <a title="[U](f: (Int) =&gt; U)Unit" id="38256">foreach</a>[<a title="&gt;: Nothing &lt;: Any" id="38258">U</a>](<a title="(Int) =&gt; U" id="38267">f</a>: Int =&gt; U) {
+    <span class="keyword">var</span> <a title="Int" id="90319">i</a> = <a href="#72698" title="=&gt; Int">start</a>
+    <span title="Unit" class="keyword">if</span> (<a href="#72700" title="(x$1: Int)Boolean">step</a> &gt; <span title="Int(0)" class="int">0</span>) {
+      <span title="Unit" class="keyword">while</span> (<a href="#90319" title="(x$1: Int)Boolean">i</a> &lt; <a href="#72699" title="=&gt; Int">end</a>) <a href="#90326" title="()Unit">{</a>
+        <a href="Function1.scala.html#17119" title="(v1: Int)U">f</a>(<a href="#90319" title="Int">i</a>)
+        <a href="#90319" title="Int">i</a> += <a href="#72700" title="=&gt; Int">step</a>
+      }
+    } <span class="keyword">else</span> {
+      <span title="Unit" class="keyword">while</span> (<a href="#90319" title="(x$1: Int)Boolean">i</a> &gt; <a href="#72699" title="=&gt; Int">end</a>) <a href="#90372" title="()Unit">{</a>
+        <a href="Function1.scala.html#17119" title="(v1: Int)U">f</a>(<a href="#90319" title="Int">i</a>)
+        <a href="#90319" title="Int">i</a> += <a href="#72700" title="=&gt; Int">step</a>
+      }
+    }
+  }
+
+  <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="Int" id="38260">length</a>: <span title="Int">Int</span> = {
+    <span class="keyword">def</span> <a title="(start: Int,end: Int,step: Int)Int" id="90418">plen</a>(<a title="Int" id="90419">start</a>: <span title="Int">Int</span>, <a title="Int" id="90420">end</a>: <span title="Int">Int</span>, <a title="Int" id="90421">step</a>: <span title="Int">Int</span>) =
+      <span title="Int" class="keyword">if</span> (<a href="#90420" title="(x$1: Int)Boolean">end</a> &lt;= <a href="#90419" title="Int">start</a>) <span title="Int(0)" class="int">0</span> <span class="keyword">else</span> <a title="(x$1: Int)Int" id="2968">(</a><a href="#90420" title="(x$1: Int)Int">end</a> <span title="(x$1: Int)Int">-</span> <a href="#90419" title="Int">start</a> - <span title="Int(1)" class="int">1</span>) <span title="(x$1: Int)Int">/</span> <a href="#90421" title="Int">step</a> + <span title="Int(1)" class="int">1</span>
+    <span title="Int" class="keyword">if</span> (<a href="#72700" title="(x$1: Int)Boolean">step</a> &gt; <span title="Int(0)" class="int">0</span>) <a href="#90418" title="(start: Int,end: Int,step: Int)Int">plen</a>(<a href="#72698" title="=&gt; Int">start</a>, <a href="#72699" title="=&gt; Int">end</a>, <a href="#72700" title="=&gt; Int">step</a>) 
+    <span class="keyword">else</span> <a href="#90418" title="(start: Int,end: Int,step: Int)Int">plen</a>(<a href="#72699" title="=&gt; Int">end</a>, <a href="#72698" title="=&gt; Int">start</a>, <a title="=&gt; Int" id="2864">-</a><a href="#72700" title="=&gt; Int">step</a>)
+  }
+
+  @inline
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(idx: Int)Int" id="38261">apply</a>(<a title="Int" id="90462">idx</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = {
+    <span title="Unit" class="keyword">if</span> (<a href="#90462" title="(x$1: Int)Boolean">idx</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <span title="Int(0)" class="int">0</span> || <a href="#90462" title="(x$1: Int)Boolean">idx</a> &gt;= <a href="#38259" title="=&gt; Int">length</a>) <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.IndexOutOfBoundsException" class="keyword">new</span> <a href="Predef.scala.html#16166" title="java.lang.IndexOutOfBoundsException">IndexOutOfBoundsException</a>(<a href="#90462" title="Int">idx</a>.<span title="()java.lang.String">toString</span>)
+    <a href="#72698" title="(x$1: Int)Int">start</a> + <a href="#90462" title="(x$1: Int)Int" id="2966">idx</a> * <a href="#72700" title="=&gt; Int">step</a>
+  }
+
+  <span class="keyword">def</span> <a title="(x: Int)Boolean" id="38262">contains</a>(<a title="Int" id="90513">x</a>: <span title="Int">Int</span>): <span title="Boolean">Boolean</span> = 
+    <span title="Boolean" class="keyword">if</span> (<a href="#72700" title="(x$1: Int)Boolean">step</a> &gt; <span title="Int(0)" class="int">0</span>) <a href="#72698" title="(x$1: Int)Boolean">start</a> <span title="(x$1: Boolean)Boolean">&lt;=</span> <a href="#90513" title="Int">x</a> &amp;&amp; <a href="#90513" title="(x$1: Int)Boolean">x</a> &lt; <a href="#72699" title="=&gt; Int">end</a>
+    <span class="keyword">else</span> <a href="#72698" title="(x$1: Int)Boolean">start</a> <span title="(x$1: Boolean)Boolean">&gt;=</span> <a href="#90513" title="Int">x</a> &amp;&amp; <a href="#90513" title="(x$1: Int)Boolean">x</a> &gt; <a href="#72699" title="=&gt; Int">end</a>
+
+  <span class="keyword">def</span> <a title="=&gt; Range" id="38263">inclusive</a> = <a href="#1282" title="object Range">Range</a>.<a href="#31189" title="(start: Int,end: Int,step: Int)Range">inclusive</a>(<a href="#72698" title="=&gt; Int">start</a>, <a href="#72699" title="=&gt; Int">end</a>, <a href="#72700" title="=&gt; Int">step</a>)
+  // XXX right now (1 to 10).toList == (1 to 10) but their hashCodes are unequal.
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(other: Any)Boolean" id="38264">equals</a>(<a title="Any" id="90554">other</a>: <span title="Any">Any</span>) = <a href="#90554" title="Any">other</a> <span title="Boolean" class="keyword">match</span> {
+    <span title="Boolean" class="keyword">case</span> <a title="Range" id="90557">x</a>: <a href="#1281" title="Range">Range</a> =&gt; <a href="#72698" title="(x$1: Int)Boolean">start</a> <span title="(x$1: Boolean)Boolean">==</span> <a href="#90557" title="Range">x</a>.<a href="#72698" title="=&gt; Int">start</a> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <a href="#72699" title="(x$1: Int)Boolean">end</a> == <a href="#90557" title="Range">x</a>.<a href="#72699" title="=&gt; Int">end</a> &amp;&amp; <a href="#72700" title="(x$1: Int)Boolean">step</a> == <a href="#90557" title="Range">x</a>.<a href="#72700" title="=&gt; Int">step</a>
+    <span title="Boolean" class="keyword">case</span> _        =&gt; <span class="keyword">super</span>.<a href="collection/generic/VectorTemplate.scala.html#17820" title="(that: Any)Boolean">equals</a>(<a href="#90554" title="Any">other</a>)
+  }
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Int" id="38265">hashCode</a> = <a href="#72698" title="(x$1: Int)Int">start</a> <span title="(x$1: Int)Int">+</span> <a href="#72699" title="=&gt; Int">end</a> + <a href="#72700" title="=&gt; Int">step</a>
+}
+
+<span class="keyword">object</span> <a title="object Range" id="1282">Range</a> <a href="ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  @deprecated(<span class="string">&quot;use Range.inclusive instead&quot;</span>)
+  <span class="keyword">final</span> <span class="keyword">class</span> <a title="class Inclusive extends Range with ScalaObject" id="31187">Inclusive</a><a href="ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="Int" id="90637">start</a>: <span title="Int">Int</span>, <a title="Int" id="90638">end0</a>: <span title="Int">Int</span>, <a title="Int" id="90639">step</a>: <span title="Int">Int</span>) 
+      <span class="keyword">extends</span> <a href="#1281" title="Range">Range</a>(<a href="#90637" title="Int">start</a>, <span title="Int" class="keyword">if</span> (<a href="#90639" title="(x$1: Int)Boolean">step</a> &gt; <span title="Int(0)" class="int">0</span>) <a href="#90638" title="(x$1: Int)Int">end0</a> + <span title="Int(1)" class="int">1</span> <span class="keyword">else</span> <a href="#90638" title="(x$1: Int)Int">end0</a> - <span title="Int(1)" class="int">1</span>, <a href="#90639" title="Int">step</a>) { self =&gt;
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="(step: Int)Range" id="90625">by</a>(<a title="Int" id="90688">step</a>: <span title="Int">Int</span>): <a href="#1281" title="Range">Range</a> = <span title="scala.Range.Inclusive" class="keyword">new</span> <a href="#31187" title="scala.Range.Inclusive">Inclusive</a>(<a href="#72698" title="=&gt; Int">start</a>, <a href="#90638" title="Int">end0</a>, <a href="#90688" title="Int">step</a>)
+  }
+
+  // The standard / Int-specific Range.
+  <span class="keyword">def</span> <a title="(start: Int,end: Int,step: Int)Range" id="31188">apply</a>(<a title="Int" id="90692">start</a>: <span title="Int">Int</span>, <a title="Int" id="90693">end</a>: <span title="Int">Int</span>, <a title="Int" id="90694">step</a>: <span title="Int">Int</span>) = 
+    <span title="Range" class="keyword">new</span> <a href="#1281" title="Range">Range</a>(<a href="#90692" title="Int">start</a>, <a href="#90693" title="Int">end</a>, <a href="#90694" title="Int">step</a>)
+  <span class="keyword">def</span> <a title="(start: Int,end: Int,step: Int)Range" id="31189">inclusive</a>(<a title="Int" id="72705">start</a>: <span title="Int">Int</span>, <a title="Int" id="72706">end</a>: <span title="Int">Int</span>, <a title="Int" id="72707">step</a>: <span title="Int">Int</span>): <a href="#1281" title="Range">Range</a> = 
+    <span title="Range.Inclusive" class="keyword">new</span> <a href="#1282" title="object Range">Range</a>.<a href="#31187" title="Range.Inclusive">Inclusive</a>(<a href="#72705" title="Int">start</a>, <a href="#72706" title="Int">end</a>, <a href="#72707" title="Int">step</a>)
+  
+  // BigInt and Long are straightforward generic ranges.
+  <span class="keyword">object</span> <a title="object scala.Range.BigInt" id="31190">BigInt</a> <a href="ScalaObject.scala.html#957" title="ScalaObject">{</a>
+    <span class="keyword">def</span> <a title="(start: BigInt,end: BigInt,step: BigInt)GenericRange.Exclusive[BigInt]" id="90702">apply</a>(<a title="BigInt" id="90707">start</a>: <a href="BigInt.scala.html#426" title="BigInt">BigInt</a>, <a title="BigInt" id="90708">end</a>: <a href="BigInt.scala.html#426" title="BigInt">BigInt</a>, <a title="BigInt" id="90709">step</a>: <a href="BigInt.scala.html#426" title="BigInt">BigInt</a>) = <a href="#31208" title="(start: BigInt,end: BigInt,step: BigInt)(implicit num: Integral[BigInt])GenericRange.Exclusive[BigInt]">GenericRange</a><a href="Numeric.scala.html#31518" title="object Numeric#BigIntIsIntegral">(</a><a href="#90707" title="BigInt">start</a>, <a href="#90708" title="BigInt">end</a>, <a href="#90709" title="BigInt">step</a>)
+    <span class="keyword">def</span> <a title="(start: BigInt,end: BigInt,step: BigInt)GenericRange.Inclusive[BigInt]" id="90703">inclusive</a>(<a title="BigInt" id="90776">start</a>: <a href="BigInt.scala.html#426" title="BigInt">BigInt</a>, <a title="BigInt" id="90777">end</a>: <a href="BigInt.scala.html#426" title="BigInt">BigInt</a>, <a title="BigInt" id="90778">step</a>: <a href="BigInt.scala.html#426" title="BigInt">BigInt</a>) = <a href="#1204" title="object GenericRange">GenericRange</a>.<a href="#31211" title="(start: BigInt,end: BigInt,step: BigInt)(implicit num: Integral[BigInt])GenericRange.Inclusive[BigInt]">inclusive</a><a href="Numeric.scala.html#31518" title="object Numeric#BigIntIsIntegral">(</a><a href="#90776" title="BigInt">start</a>, <a href="#90777" title="BigInt">end</a>, <a href="#90778" title="BigInt">step</a>)
+  }
+  <span class="keyword">object</span> <a title="object scala.Range.Long" id="31192">Long</a> <a href="ScalaObject.scala.html#957" title="ScalaObject">{</a>
+    <span class="keyword">def</span> <a title="(start: Long,end: Long,step: Long)GenericRange.Exclusive[Long]" id="58930">apply</a>(<a title="Long" id="58932">start</a>: <span title="Long">Long</span>, <a title="Long" id="58933">end</a>: <span title="Long">Long</span>, <a title="Long" id="58934">step</a>: <span title="Long">Long</span>) = <a href="#31208" title="(start: Long,end: Long,step: Long)(implicit num: Integral[Long])GenericRange.Exclusive[Long]">GenericRange</a><a href="Numeric.scala.html#31530" title="object Numeric#LongIsIntegral">(</a><a href="#58932" title="Long">start</a>, <a href="#58933" title="Long">end</a>, <a href="#58934" title="Long">step</a>)
+    <span class="keyword">def</span> <a title="(start: Long,end: Long,step: Long)GenericRange.Inclusive[Long]" id="58931">inclusive</a>(<a title="Long" id="59436">start</a>: <span title="Long">Long</span>, <a title="Long" id="59437">end</a>: <span title="Long">Long</span>, <a title="Long" id="59438">step</a>: <span title="Long">Long</span>) = <a href="#1204" title="object GenericRange">GenericRange</a>.<a href="#31211" title="(start: Long,end: Long,step: Long)(implicit num: Integral[Long])GenericRange.Inclusive[Long]">inclusive</a><a href="Numeric.scala.html#31530" title="object Numeric#LongIsIntegral">(</a><a href="#59436" title="Long">start</a>, <a href="#59437" title="Long">end</a>, <a href="#59438" title="Long">step</a>)
+  }
+  
+  // BigDecimal uses an alternative implementation of Numeric in which
+  // it pretends to be Integral[T] instead of Fractional[T].  See Numeric for
+  // details.  The intention is for it to throw an exception anytime
+  // imprecision or surprises might result from anything, although this may
+  // not yet be fully implemented.
+  <span class="keyword">object</span> <a title="object scala.Range.BigDecimal" id="31194">BigDecimal</a> <a href="ScalaObject.scala.html#957" title="ScalaObject">{</a>
+    <span class="keyword">implicit</span> <span class="keyword">val</span> <a title="Numeric.BigDecimalAsIfIntegral.type" id="31485">bigDecAsIntegral</a> = scala.<a href="Numeric.scala.html#163" title="object Numeric">Numeric</a>.<a href="Numeric.scala.html#31543" title="object Numeric.BigDecimalAsIfIntegral">BigDecimalAsIfIntegral</a>
+    
+    <span class="keyword">def</span> <a title="(start: BigDecimal,end: BigDecimal,step: BigDecimal)GenericRange.Exclusive[BigDecimal]" id="31487">apply</a>(<a title="BigDecimal" id="31489">start</a>: <a href="BigDecimal.scala.html#333" title="BigDecimal">BigDecimal</a>, <a title="BigDecimal" id="31490">end</a>: <a href="BigDecimal.scala.html#333" title="BigDecimal">BigDecimal</a>, <a title="BigDecimal" id="31491">step</a>: <a href="BigDecimal.scala.html#333" title="BigDecimal">BigDecimal</a>) =
+      <a href="#31208" title="(start: BigDecimal,end: BigDecimal,step: BigDecimal)(implicit num: Integral[BigDecimal])GenericRange.Exclusive[BigDecimal]">GenericRange</a><a href="#31485" title="=&gt; Numeric.BigDecimalAsIfIntegral.type">(</a><a href="#31489" title="BigDecimal">start</a>, <a href="#31490" title="BigDecimal">end</a>, <a href="#31491" title="BigDecimal">step</a>)
+    <span class="keyword">def</span> <a title="(start: BigDecimal,end: BigDecimal,step: BigDecimal)GenericRange.Inclusive[BigDecimal]" id="31488">inclusive</a>(<a title="BigDecimal" id="31794">start</a>: <a href="BigDecimal.scala.html#333" title="BigDecimal">BigDecimal</a>, <a title="BigDecimal" id="31795">end</a>: <a href="BigDecimal.scala.html#333" title="BigDecimal">BigDecimal</a>, <a title="BigDecimal" id="31796">step</a>: <a href="BigDecimal.scala.html#333" title="BigDecimal">BigDecimal</a>) = 
+      <a href="#1204" title="object GenericRange">GenericRange</a>.<a href="#31211" title="(start: BigDecimal,end: BigDecimal,step: BigDecimal)(implicit num: Integral[BigDecimal])GenericRange.Inclusive[BigDecimal]">inclusive</a><a href="#31485" title="=&gt; Numeric.BigDecimalAsIfIntegral.type">(</a><a href="#31794" title="BigDecimal">start</a>, <a href="#31795" title="BigDecimal">end</a>, <a href="#31796" title="BigDecimal">step</a>)
+  }
+  // Double re-uses BigDecimal's range.
+  <span class="keyword">object</span> <a title="object scala.Range.Double" id="31196">Double</a> <a href="ScalaObject.scala.html#957" title="ScalaObject">{</a>
+    <span class="keyword">def</span> <a title="(start: Double,end: Double,step: Double)GenericRange.Exclusive[BigDecimal]" id="90803">apply</a>(<a title="Double" id="90808">start</a>: <span title="Double">Double</span>, <a title="Double" id="90809">end</a>: <span title="Double">Double</span>, <a title="Double" id="90810">step</a>: <span title="Double">Double</span>) = scala.<a href="BigDecimal.scala.html#28618" title="(d: Double)BigDecimal">BigDecimal</a><a href="BigDecimal.scala.html#28685" title="(end: BigDecimal)Range.Partial[BigDecimal,GenericRange.Exclusive[BigDecimal]]">(</a><a href="#90808" title="Double">start</a>) <a href="#31218" title="(x: BigDecimal)GenericRange.Exclusive[BigDecimal]">until</a> <a href="BigDecimal.scala.html#28633" title="implicit scala.BigDecimal.double2bigDecimal : (d: Double)BigDecimal">end</a> by <a href="BigDecimal.scala.html#28633" title="implicit scala.BigDecimal.double2bigDecimal : (d: Double)BigDecimal">step</a>
+    <span class="keyword">def</span> <a title="(start: Double,end: Double,step: Double)GenericRange.Inclusive[BigDecimal]" id="90804">inclusive</a>(<a title="Double" id="90844">start</a>: <span title="Double">Double</span>, <a title="Double" id="90845">end</a>: <span title="Double">Double</span>, <a title="Double" id="90846">step</a>: <span title="Double">Double</span>) = scala.<a href="BigDecimal.scala.html#28618" title="(d: Double)BigDecimal">BigDecimal</a><a href="BigDecimal.scala.html#28687" title="(end: BigDecimal)Range.Partial[BigDecimal,GenericRange.Inclusive[BigDecimal]]">(</a><a href="#90844" title="Double">start</a>) <a href="#31218" title="(x: BigDecimal)GenericRange.Inclusive[BigDecimal]">to</a> <a href="BigDecimal.scala.html#28633" title="implicit scala.BigDecimal.double2bigDecimal : (d: Double)BigDecimal">end</a> by <a href="BigDecimal.scala.html#28633" title="implicit scala.BigDecimal.double2bigDecimal : (d: Double)BigDecimal">step</a>
+  }
+  
+  // As there is no appealing default step size for not-really-integral ranges,
+  // we offer a partially constructed object.
+  <span class="keyword">class</span> <a title="class Partial[T, U] extends java.lang.Object with ScalaObject" id="31198">Partial</a>[<a title="&gt;: Nothing &lt;: Any" id="31199">T</a>, <a title="&gt;: Nothing &lt;: Any" id="31200">U</a>]<a href="ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="(T) =&gt; U" id="31449">f</a>: T =&gt; U) {
+    <span class="keyword">def</span> <a title="(x: T)U" id="31218">by</a>(<a title="T" id="90835">x</a>: <a href="#31199" title="T">T</a>): <a href="#31200" title="U">U</a> = <a href="Function1.scala.html#17119" title="(v1: T)U">f</a>(<a href="#90835" title="T">x</a>)
+  }
+  
+  // Illustrating genericity with Int Range, which should have the same behavior
+  // as the original Range class.  However we leave the original Range
+  // indefinitely, for performance and because the compiler seems to bootstrap
+  // off it and won't do so with our parameterized version without modifications.
+  <span class="keyword">object</span> <a title="object scala.Range.Int" id="31201">Int</a> <a href="ScalaObject.scala.html#957" title="ScalaObject">{</a>
+    <span class="keyword">def</span> <a title="(start: Int,end: Int,step: Int)GenericRange.Exclusive[Int]" id="90882">apply</a>(<a title="Int" id="90887">start</a>: <span title="Int">Int</span>, <a title="Int" id="90888">end</a>: <span title="Int">Int</span>, <a title="Int" id="90889">step</a>: <span title="Int">Int</span>) = <a href="#31208" title="(start: Int,end: Int,step: Int)(implicit num: Integral[Int])GenericRange.Exclusive[Int]">GenericRange</a><a href="Numeric.scala.html#31521" title="object Numeric#IntIsIntegral">(</a><a href="#90887" title="Int">start</a>, <a href="#90888" title="Int">end</a>, <a href="#90889" title="Int">step</a>)
+    <span class="keyword">def</span> <a title="(start: Int,end: Int,step: Int)GenericRange.Inclusive[Int]" id="90883">inclusive</a>(<a title="Int" id="90956">start</a>: <span title="Int">Int</span>, <a title="Int" id="90957">end</a>: <span title="Int">Int</span>, <a title="Int" id="90958">step</a>: <span title="Int">Int</span>) = <a href="#1204" title="object GenericRange">GenericRange</a>.<a href="#31211" title="(start: Int,end: Int,step: Int)(implicit num: Integral[Int])GenericRange.Inclusive[Int]">inclusive</a><a href="Numeric.scala.html#31521" title="object Numeric#IntIsIntegral">(</a><a href="#90956" title="Int">start</a>, <a href="#90957" title="Int">end</a>, <a href="#90958" title="Int">step</a>)
+  }
+}
+
+        </pre>
+    </body>
+</html>

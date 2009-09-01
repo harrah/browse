@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>util/parsing/combinator/PackratParsers.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2006-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id:$
+
+<span class="keyword">package</span> scala.util.parsing.combinator
+
+<span class="keyword">import</span> scala.collection.mutable._
+<span class="keyword">import</span> scala.util.parsing.combinator._
+<span class="keyword">import</span> scala.util.parsing.input.Position
+<span class="keyword">import</span> scala.util.parsing.input.Reader
+
+/**
+ *  &lt;p&gt;
+ *    &lt;code&gt;PackratParsers&lt;/code&gt; is a component that extends the parser combinators
+ *    provided by &lt;a href=&quot;Parsers.html&quot;&gt;&lt;code&gt;Parsers&lt;/code&gt;&lt;/a&gt; with a memoization facility
+ *    (``Packrat Parsing'').
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    Packrat Parsing is a technique for implementing backtracking, recursive-descent parsers, with the
+ *    advantage that it guarantees unlimited lookahead and a linear parse time. Using this technique,
+ *    left recursive grammars can also be accepted.
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    Using &lt;code&gt;PackratParsers&lt;/code&gt; is very similar to using &lt;code&gt;Parsers&lt;/code&gt;:
+ *  &lt;ul&gt;
+ *    &lt;li&gt; any class/trait that extends &lt;code&gt;Parsers&lt;/code&gt; (directly or through a subclass) can
+ *         mix in &lt;code&gt;PackratParsers&lt;/code&gt;. Example:
+ *         &lt;code&gt;object MyGrammar extends StandardTokenParsers with PackratParsers &lt;/code&gt;
+ *    &lt;li&gt; each grammar production previously declared as a &lt;code&gt;def&lt;/code&gt; without formal parameters
+ *         becomes a &lt;code&gt;lazy val&lt;/code&gt;, and its type is changed from &lt;code&gt;Parser[Elem]&lt;/code&gt;
+ *         to &lt;code&gt;PackratParser[Elem]&lt;/code&gt;. So, for example, &lt;code&gt;def production: Parser[Int] = {...}&lt;/code&gt; 
+ *         becomes &lt;code&gt;lazy val production: PackratParser[Int] = {...}&lt;/code&gt;
+ *    &lt;li&gt; Important: using &lt;code&gt;PackratParser&lt;/code&gt;s is not an ``all or nothing'' decision. They
+ *         can be free mixed with regular &lt;code&gt;Parser&lt;/code&gt;s in a single grammar.
+ *  &lt;/ul&gt;
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    Cached parse results are attached to the &lt;i&gt;input&lt;/i&gt;, not the grammar.
+ *    Therefore, &lt;code&gt;PackratsParser&lt;/code&gt;s require a &lt;code&gt;PackratReader&lt;/code&gt; as input, which
+ *    adds memoization to an underlying &lt;code&gt;Reader&lt;/code&gt;. Programmers can create &lt;code&gt;PackratReader&lt;/code&gt;
+ *    objects either manually, as in &lt;code&gt;production(new PackratReader(new lexical.Scanner(&quot;input&quot;)))&lt;/code&gt;,
+ *    but the common way should be to rely on the combinator &lt;code&gt;phrase&lt;/code&gt; to wrap a given
+ *    input with a &lt;code&gt;PackratReader&lt;/code&gt; if the input is not one itself.
+ *  &lt;/p&gt;
+ *
+ * @see Bryan Ford: &quot;Packrat Parsing: Simple, Powerful, Lazy, Linear Time.&quot; ICFP'02
+ * @see Alessandro Warth, James R. Douglass, Todd Millstein: &quot;Packrat Parsers Can Support Left Recursion.&quot; PEPM'08
+ *  
+ * @since 2.8
+ * @author Manohar Jonnalagedda, Tiark Rompf
+ */
+
+<span class="keyword">trait</span> <a title="trait PackratParsers extends java.lang.Object with scala.util.parsing.combinator.Parsers with ScalaObject" id="12370">PackratParsers</a> <a href="../../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="Parsers.scala.html#12544" title="scala.util.parsing.combinator.Parsers">Parsers</a> {
+  
+  //type Input = PackratReader[Elem]
+  
+  /**
+   * A specialized &lt;code&gt;Reader&lt;/code&gt; class that wraps an underlying &lt;code&gt;Reader&lt;/code&gt;
+   * and provides memoization of parse results.
+   */
+  <span class="keyword">class</span> <a title="class PackratReader[+T] extends scala.util.parsing.input.Reader[T] with ScalaObject" id="135496">PackratReader</a>[+<a title="&gt;: Nothing &lt;: Any" id="135497">T</a>]<a href="../../../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="scala.util.parsing.input.Reader[T]" id="135567">underlying</a>: <a href="../input/Reader.scala.html#9440" title="scala.util.parsing.input.Reader[T]">Reader</a>[T]) <span class="keyword">extends</span> <a href="../input/Reader.scala.html#9440" title="scala.util.parsing.input.Reader[T]">Reader</a>[T]  { outer =&gt;
+    
+    /*
+     * caching of intermediate parse results and information about recursion
+     */
+     
+    <span class="keyword">private</span>[PackratParsers] <span class="keyword">val</span> <a title="scala.collection.mutable.HashMap[(PackratParsers.this.Parser[_], scala.util.parsing.input.Position),PackratParsers.this.MemoEntry[_]]" id="135535">cache</a>: <a href="../../../collection/mutable/HashMap.scala.html#7755" title="scala.collection.mutable.HashMap[(PackratParsers.this.Parser[_], scala.util.parsing.input.Position),PackratParsers.this.MemoEntry[_]]">HashMap</a>[(Parser[_], Position), MemoEntry[_]] = <a href="../../../collection/mutable/HashMap.scala.html#7756" title="object scala.collection.mutable.HashMap">HashMap</a>.<a href="../../../collection/mutable/HashMap.scala.html#135578" title="scala.collection.mutable.HashMap[(PackratParsers.this.Parser[_], scala.util.parsing.input.Position),PackratParsers.this.MemoEntry[_]]">empty</a>
+  
+
+    <span class="keyword">private</span>[PackratParsers] <span class="keyword">def</span> <a title="[T](p: PackratParsers.this.Parser[T])Option[PackratParsers.this.MemoEntry[T]]" id="135537">getFromCache</a>[<a title="&gt;: Nothing &lt;: Any" id="135539">T</a>](<a title="PackratParsers.this.Parser[T]" id="135599">p</a>: <a href="Parsers.scala.html#57399" title="PackratParsers.this.Parser[T]">Parser</a>[T]): <a href="../../../Option.scala.html#777" title="Option[PackratParsers.this.MemoEntry[T]]">Option</a>[MemoEntry[T]] = {
+      <a href="#135535" title="=&gt; scala.collection.mutable.HashMap[(PackratParsers.this.Parser[_], scala.util.parsing.input.Position),PackratParsers.this.MemoEntry[_]]">cache</a>.<a href="../../../collection/mutable/HashMap.scala.html#91077" title="(key: (PackratParsers.this.Parser[_], scala.util.parsing.input.Position))Option[PackratParsers.this.MemoEntry[_]]">get</a>(<a href="../../../Tuple2.scala.html#20670" title="(_1: PackratParsers.this.Parser[T],_2: scala.util.parsing.input.Position)(PackratParsers.this.Parser[T], scala.util.parsing.input.Position)">(</a><a href="#135599" title="PackratParsers.this.Parser[T]">p</a>, <a href="#135552" title="=&gt; scala.util.parsing.input.Position">pos</a>)).<span title="[T0]T0">asInstanceOf</span><span title="Option[PackratParsers.this.MemoEntry[T]]">[</span><a href="../../../Option.scala.html#777" title="Option[PackratParsers.this.MemoEntry[T]]">Option</a>[MemoEntry[T]]]
+    }
+    
+    <span class="keyword">private</span>[PackratParsers] <span class="keyword">def</span> <a title="[T](p: PackratParsers.this.Parser[T],w: PackratParsers.this.MemoEntry[T])PackratParsers.this.MemoEntry[T]" id="135540">updateCacheAndGet</a>[<a title="&gt;: Nothing &lt;: Any" id="135542">T</a>](<a title="PackratParsers.this.Parser[T]" id="135617">p</a>: <a href="Parsers.scala.html#57399" title="PackratParsers.this.Parser[T]">Parser</a>[T], <a title="PackratParsers.this.MemoEntry[T]" id="135618">w</a>: <a href="#135906" title="PackratParsers.this.MemoEntry[T]">MemoEntry</a>[T]): <a href="#135906" title="PackratParsers.this.MemoEntry[T]">MemoEntry</a>[T] = {
+      <a href="#135535" title="=&gt; scala.collection.mutable.HashMap[(PackratParsers.this.Parser[_], scala.util.parsing.input.Position),PackratParsers.this.MemoEntry[_]]">cache</a>.<a href="../../../collection/mutable/HashMap.scala.html#91078" title="(key: (PackratParsers.this.Parser[_], scala.util.parsing.input.Position),value: PackratParsers.this.MemoEntry[_])Option[PackratParsers.this.MemoEntry[_]]">put</a>(<a href="../../../Tuple2.scala.html#20670" title="(_1: PackratParsers.this.Parser[T],_2: scala.util.parsing.input.Position)(PackratParsers.this.Parser[T], scala.util.parsing.input.Position)">(</a><a href="#135617" title="PackratParsers.this.Parser[T]">p</a>, <a href="#135552" title="=&gt; scala.util.parsing.input.Position">pos</a>),<a href="#135618" title="PackratParsers.this.MemoEntry[T]">w</a>)
+      <a href="#135618" title="PackratParsers.this.MemoEntry[T]">w</a>
+    }
+
+    /* a cache for storing parser heads: allows to know which parser is involved
+       in a recursion*/
+    <span class="keyword">private</span>[PackratParsers] <span class="keyword">val</span> <a title="scala.collection.mutable.HashMap[scala.util.parsing.input.Position,PackratParsers.this.Head]" id="135543">recursionHeads</a>: <a href="../../../collection/mutable/HashMap.scala.html#7755" title="scala.collection.mutable.HashMap[scala.util.parsing.input.Position,PackratParsers.this.Head]">HashMap</a>[Position, Head] = <a href="../../../collection/mutable/HashMap.scala.html#7756" title="object scala.collection.mutable.HashMap">HashMap</a>.<a href="../../../collection/mutable/HashMap.scala.html#135578" title="scala.collection.mutable.HashMap[scala.util.parsing.input.Position,PackratParsers.this.Head]">empty</a>
+
+    //a stack that keeps a list of all involved rules
+    <span class="keyword">private</span>[PackratParsers] <span class="keyword">var</span> <a title="List[PackratParsers.this.LR]" id="135546">lrStack</a>: <a href="../../../collection/immutable/List.scala.html#8973" title="List[PackratParsers.this.LR]">List</a>[LR] = <a href="../../../collection/immutable/List.scala.html#9259" title="object Nil">Nil</a>
+
+
+
+ 
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; java.lang.CharSequence" id="135548">source</a>: java.lang.<a title="java.lang.CharSequence" id="1864">CharSequence</a> = <a href="#135567" title="scala.util.parsing.input.Reader[T]">underlying</a>.<a href="../input/Reader.scala.html#21888" title="=&gt; java.lang.CharSequence">source</a>
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Int" id="135549">offset</a>: <a title="Int" id="2175">Int</a> = <a href="#135567" title="scala.util.parsing.input.Reader[T]">underlying</a>.<a href="../input/Reader.scala.html#21889" title="=&gt; Int">offset</a>
+
+    <span class="keyword">def</span> <a title="=&gt; T" id="135550">first</a>: <a href="#135497" title="T">T</a> = <a href="#135567" title="scala.util.parsing.input.Reader[T]">underlying</a>.<a href="../input/Reader.scala.html#21890" title="=&gt; T">first</a>
+    <span class="keyword">def</span> <a title="=&gt; scala.util.parsing.input.Reader[T]" id="135551">rest</a>: <a href="../input/Reader.scala.html#9440" title="scala.util.parsing.input.Reader[T]">Reader</a>[T] = <a href="#135689" title="PackratParsers.this.PackratReader[T]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends PackratParsers.this.PackratReader[T]" id="135689">PackratReader</a>(<a href="#135567" title="scala.util.parsing.input.Reader[T]">underlying</a>.<a href="../input/Reader.scala.html#21891" title="=&gt; scala.util.parsing.input.Reader[T]">rest</a>) {
+      <span class="keyword">override</span> <span class="keyword">private</span>[PackratParsers] <span class="keyword">val</span> <a title="scala.collection.mutable.HashMap[(PackratParsers.this.Parser[_], scala.util.parsing.input.Position),PackratParsers.this.MemoEntry[_]]" id="135696">cache</a> = <a href="#135496" title="PackratReader.this.type">outer</a>.<a href="#135535" title="=&gt; scala.collection.mutable.HashMap[(PackratParsers.this.Parser[_], scala.util.parsing.input.Position),PackratParsers.this.MemoEntry[_]]">cache</a>
+      <span class="keyword">override</span> <span class="keyword">private</span>[PackratParsers] <span class="keyword">val</span> <a title="scala.collection.mutable.HashMap[scala.util.parsing.input.Position,PackratParsers.this.Head]" id="135698">recursionHeads</a> = <a href="#135496" title="PackratReader.this.type">outer</a>.<a href="#135543" title="=&gt; scala.collection.mutable.HashMap[scala.util.parsing.input.Position,PackratParsers.this.Head]">recursionHeads</a>
+      <a href="#135546" title="(x$1: List[PackratParsers.this.LR])Unit">lrStack</a> = <a href="#135496" title="PackratReader.this.type">outer</a>.<a href="#135546" title="=&gt; List[PackratParsers.this.LR]">lrStack</a>
+    }
+  
+    <span class="keyword">def</span> <a title="=&gt; scala.util.parsing.input.Position" id="135552">pos</a>: <a href="../input/Position.scala.html#9479" title="scala.util.parsing.input.Position">Position</a> = <a href="#135567" title="scala.util.parsing.input.Reader[T]">underlying</a>.<a href="../input/Reader.scala.html#21893" title="=&gt; scala.util.parsing.input.Position">pos</a>
+    <span class="keyword">def</span> <a title="=&gt; Boolean" id="135553">atEnd</a>: <a title="Boolean" id="1949">Boolean</a> = <a href="#135567" title="scala.util.parsing.input.Reader[T]">underlying</a>.<a href="../input/Reader.scala.html#21894" title="=&gt; Boolean">atEnd</a>
+  }
+
+  
+  /**
+   *  &lt;p&gt;
+   *    A parser generator delimiting whole phrases (i.e. programs).
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    Overridden to make sure any input passed to the argument parser
+   *    is wrapped in a &lt;code&gt;PackratReader&lt;/code&gt;.
+   *  &lt;/p&gt;
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[T](p: PackratParsers.this.Parser[T])PackratParsers.this.PackratParser[T]" id="135498">phrase</a>[<a title="&gt;: Nothing &lt;: Any" id="135500">T</a>](<a title="PackratParsers.this.Parser[T]" id="135714">p</a>: <a href="Parsers.scala.html#57399" title="PackratParsers.this.Parser[T]">Parser</a>[T]) = {
+    <span class="keyword">val</span> <a title="PackratParsers.this.Parser[T]" id="135725">q</a> = <a href="#271106" title="[T](p: PackratParsers.this.Parser[T])PackratParsers.this.Parser[T]" class="keyword">super</a>.<a title="[T](p: PackratParsers.this.Parser[T])PackratParsers.this.Parser[T]" id="271106">phrase</a>(<a href="#135714" title="PackratParsers.this.Parser[T]">p</a>)
+    <a href="#135733" title="PackratParsers.this.PackratParser[T]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends PackratParsers.this.PackratParser[T]" id="135733">PackratParser</a>[T] {
+      <span class="keyword">def</span> <a title="(in: PackratParsers.this.Input)PackratParsers.this.ParseResult[T]" id="135737">apply</a>(<a title="PackratParsers.this.Input" id="135741">in</a>: <a href="../input/Reader.scala.html#9440" title="PackratParsers.this.Input">Input</a>) = <a href="#135741" title="PackratParsers.this.Input">in</a> <span title="PackratParsers.this.ParseResult[T]" class="keyword">match</span> {
+        <span title="PackratParsers.this.ParseResult[T]" class="keyword">case</span> <a title="PackratParsers.this.PackratReader[_]" id="135751">in</a>: <a href="#135496" title="PackratParsers.this.PackratReader[_]">PackratReader</a>[_] =&gt; <a href="Parsers.scala.html#57568" title="(in: PackratParsers.this.Input)PackratParsers.this.ParseResult[T]">q</a>(<a href="#135751" title="PackratParsers.this.PackratReader[_]">in</a>)
+        <span title="PackratParsers.this.ParseResult[T]" class="keyword">case</span> <a title="PackratParsers.this.Input" id="135767">in</a> =&gt; <a href="Parsers.scala.html#57568" title="(in: PackratParsers.this.Input)PackratParsers.this.ParseResult[T]">q</a>(<span title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]" class="keyword">new</span> <a href="#135496" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">PackratReader</a>(<a href="#135767" title="PackratParsers.this.Input">in</a>))
+      }
+    }
+  }
+
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(r: PackratParsers.this.ParseResult[_])scala.util.parsing.input.Position" id="135501">getPosFromResult</a>(<a title="PackratParsers.this.ParseResult[_]" id="135803">r</a>: <a href="Parsers.scala.html#57375" title="PackratParsers.this.ParseResult[_]">ParseResult</a>[_]): <a href="../input/Position.scala.html#9479" title="scala.util.parsing.input.Position">Position</a> = <a href="#135803" title="PackratParsers.this.ParseResult[_]">r</a>.<a href="Parsers.scala.html#84410" title="=&gt; PackratParsers.this.Input">next</a>.<a href="../input/Reader.scala.html#21893" title="=&gt; scala.util.parsing.input.Position">pos</a>
+ 
+  // auxiliary data structures
+ 
+  <span class="keyword">private</span> case <span class="keyword">class</span> <a title="class MemoEntry[+T] extends java.lang.Object with ScalaObject with Product" id="135906">MemoEntry</a>[+<a title="&gt;: Nothing &lt;: Any" id="135908">T</a>]<a href="../../../ScalaObject.scala.html#957" title="ScalaObject">(</a><span class="keyword">var</span> <a title="Either[PackratParsers.this.LR,PackratParsers.this.ParseResult[_]]" id="136350">r</a>: <a href="../../../Either.scala.html#306" title="Either[PackratParsers.this.LR,PackratParsers.this.ParseResult[_]]">Either</a>[LR,ParseResult[_]]){
+    <span class="keyword">def</span> <a title="=&gt; PackratParsers.this.ParseResult[T]" id="135627">getResult</a>: <a href="Parsers.scala.html#57375" title="PackratParsers.this.ParseResult[T]">ParseResult</a>[T] = <a href="#136350" title="=&gt; Either[PackratParsers.this.LR,PackratParsers.this.ParseResult[_]]">r</a> <span title="PackratParsers.this.ParseResult[T]" class="keyword">match</span> {
+      <span title="PackratParsers.this.ParseResult[T]" class="keyword">case</span> Left(LR(<a title="PackratParsers.this.ParseResult[Any]" id="135868">res</a>,_,_)) =&gt; <a href="#135868" title="PackratParsers.this.ParseResult[Any]">res</a>.<span title="[T0]T0">asInstanceOf</span><span title="PackratParsers.this.ParseResult[T]">[</span><a href="Parsers.scala.html#57375" title="PackratParsers.this.ParseResult[T]">ParseResult</a>[T]]
+      <span title="PackratParsers.this.ParseResult[T]" class="keyword">case</span> Right(<a title="PackratParsers.this.ParseResult[Any]" id="135879">res</a>) =&gt; <a href="#135879" title="PackratParsers.this.ParseResult[Any]">res</a>.<span title="[T0]T0">asInstanceOf</span><span title="PackratParsers.this.ParseResult[T]">[</span><a href="Parsers.scala.html#57375" title="PackratParsers.this.ParseResult[T]">ParseResult</a>[T]]
+    }
+  }
+  
+  <span class="keyword">private</span> case <span class="keyword">class</span> <a title="class LR extends java.lang.Object with ScalaObject with Product" id="135832">LR</a><a href="../../../ScalaObject.scala.html#957" title="ScalaObject">(</a><span class="keyword">var</span> <a title="PackratParsers.this.ParseResult[_]" id="136709">seed</a>: <a href="Parsers.scala.html#57375" title="PackratParsers.this.ParseResult[_]">ParseResult</a>[_], <span class="keyword">var</span> <a title="PackratParsers.this.Parser[_]" id="136710">rule</a>: <a href="Parsers.scala.html#57399" title="PackratParsers.this.Parser[_]">Parser</a>[_], <span class="keyword">var</span> <a title="Option[PackratParsers.this.Head]" id="136711">head</a>: <a href="../../../Option.scala.html#777" title="Option[PackratParsers.this.Head]">Option</a>[Head]){
+    <span class="keyword">def</span> <a title="=&gt; scala.util.parsing.input.Position" id="135679">getPos</a>: <a href="../input/Position.scala.html#9479" title="scala.util.parsing.input.Position">Position</a> = <a href="#135501" title="(r: PackratParsers.this.ParseResult[_])scala.util.parsing.input.Position">getPosFromResult</a>(<a href="#136709" title="=&gt; PackratParsers.this.ParseResult[_]">seed</a>)
+  }
+  
+  <span class="keyword">private</span> case <span class="keyword">class</span> <a title="class Head extends java.lang.Object with ScalaObject with Product" id="136166">Head</a><a href="../../../ScalaObject.scala.html#957" title="ScalaObject">(</a><span class="keyword">var</span> <a title="PackratParsers.this.Parser[_]" id="136457">headParser</a>: <a href="Parsers.scala.html#57399" title="PackratParsers.this.Parser[_]">Parser</a>[_], <span class="keyword">var</span> <a title="List[PackratParsers.this.Parser[_]]" id="136458">involvedSet</a>: <a href="../../../collection/immutable/List.scala.html#8973" title="List[PackratParsers.this.Parser[_]]">List</a>[Parser[_]], <span class="keyword">var</span> <a title="List[PackratParsers.this.Parser[_]]" id="136459">evalSet</a>: <a href="../../../collection/immutable/List.scala.html#8973" title="List[PackratParsers.this.Parser[_]]">List</a>[Parser[_]]){
+    <span class="keyword">def</span> <a title="=&gt; PackratParsers.this.Parser[Any]" id="136078">getHead</a> = <a href="#136457" title="=&gt; PackratParsers.this.Parser[_]">headParser</a>
+  }
+  
+  /** 
+   * The root class of packrat parsers. 
+   */
+  <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class PackratParser[+T] extends PackratParsers.this.Parser[T] with ScalaObject" id="135512">PackratParser</a>[+<a title="&gt;: Nothing &lt;: Any" id="135513">T</a>] <a href="../../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <span class="keyword">super</span>.<a href="Parsers.scala.html#57399" title="PackratParsers.this.Parser[T]">Parser</a>[T]
+  
+  /**
+   * Implicitly convert a parser to a packrat parser.
+   * The conversion is triggered by giving the appropriate target type: 
+   * val myParser: PackratParser[MyResult] = aParser
+   */
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="[T](p: =&gt; PackratParsers.this.Parser[T])PackratParsers.this.PackratParser[T]" id="135514">parser2packrat</a>[<a title="&gt;: Nothing &lt;: Any" id="135516">T</a>](<a title="=&gt; PackratParsers.this.Parser[T]" id="136252">p</a>: =&gt; <span class="keyword">super</span>.Parser[T]): <a href="#135512" title="PackratParsers.this.PackratParser[T]">PackratParser</a>[T] = {
+    <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="PackratParsers.this.Parser[T]" id="136257">q</a> = <a href="#136252" title="=&gt; PackratParsers.this.Parser[T]">p</a>
+    <a href="#135522" title="(p: PackratParsers.this.Parser[T])PackratParsers.this.PackratParser[T]">memo</a>(<a href="#271111" title="[T](f: (PackratParsers.this.Input) =&gt; PackratParsers.this.ParseResult[T])PackratParsers.this.Parser[T]" class="keyword">super</a>.<a title="[T](f: (PackratParsers.this.Input) =&gt; PackratParsers.this.ParseResult[T])PackratParsers.this.Parser[T]" id="271111">Parser</a> {<a title="PackratParsers.this.Input" id="136269">in</a> =&gt; <a href="Parsers.scala.html#57568" title="(in: PackratParsers.this.Input)PackratParsers.this.ParseResult[T]">q</a>(<a href="#136269" title="PackratParsers.this.Input">in</a>)})
+  }
+
+
+  /*
+   * An unspecified function that is called when a packrat reader is applied.
+   * It verifies whether we are in the process of growing a parse or not. 
+   * In the former case, it makes sure that rules involved in the recursion are evaluated. 
+   * It also prevents non-involved rules from getting evaluated further
+   */
+  
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(p: PackratParsers.this.Parser[_],in: PackratParsers.this.PackratReader[PackratParsers.this.Elem])Option[PackratParsers.this.MemoEntry[_]]" id="135517">recall</a>(<a title="PackratParsers.this.Parser[_]" id="136290">p</a>: <span class="keyword">super</span>.<a href="Parsers.scala.html#57399" title="PackratParsers.this.Parser[_]">Parser</a>[_], <a title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]" id="136291">in</a>: <a href="#135496" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">PackratReader</a>[Elem]): <a href="../../../Option.scala.html#777" title="Option[PackratParsers.this.MemoEntry[_]]">Option</a>[MemoEntry[_]] = {
+    <span class="keyword">val</span> <a title="Option[PackratParsers.this.MemoEntry[Any]]" id="136301">cached</a> = <a href="#136291" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">in</a>.<a href="#135537" title="(p: PackratParsers.this.Parser[_$10])Option[PackratParsers.this.MemoEntry[_$10]]">getFromCache</a>(<a href="#136290" title="PackratParsers.this.Parser[_]">p</a>)
+    <span class="keyword">val</span> <a title="Option[PackratParsers.this.Head]" id="136302">head</a> = <a href="#136291" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">in</a>.<a href="#135543" title="=&gt; scala.collection.mutable.HashMap[scala.util.parsing.input.Position,PackratParsers.this.Head]">recursionHeads</a>.<a href="../../../collection/mutable/HashMap.scala.html#91077" title="(key: scala.util.parsing.input.Position)Option[PackratParsers.this.Head]">get</a>(<a href="#136291" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">in</a>.<a href="#135552" title="=&gt; scala.util.parsing.input.Position">pos</a>)
+    
+    <a href="#136302" title="Option[PackratParsers.this.Head]">head</a> <span title="Option[PackratParsers.this.MemoEntry[_]]" class="keyword">match</span> {
+      <span title="Option[PackratParsers.this.MemoEntry[Any]]" class="keyword">case</span> <a href="../../../Option.scala.html#463" title="object None">None</a> =&gt; /*no heads*/ <a href="#136301" title="Option[PackratParsers.this.MemoEntry[Any]]">cached</a>
+      <span title="Option[PackratParsers.this.MemoEntry[Any]]" class="keyword">case</span> Some(<a title="PackratParsers.this.Head" id="136316">h</a>@Head(<a title="PackratParsers.this.Parser[Any]" id="136317">hp</a>, <a title="List[PackratParsers.this.Parser[_]]" id="136321">involved</a>, <a title="List[PackratParsers.this.Parser[_]]" id="136322">evalSet</a>)) =&gt; {
+        //heads found
+        <span title="Unit" class="keyword">if</span>(<a href="#136301" title="(x$1: AnyRef)Boolean">cached</a> <span title="(x$1: Boolean)Boolean">==</span> <a href="../../../Option.scala.html#463" title="object None">None</a> &amp;&amp; <a title="=&gt; Boolean" id="2203">!</a>(<a href="#136317" title="PackratParsers.this.Parser[Any]">hp</a><a href="../../../collection/generic/SequenceTemplate.scala.html#17386" title="(elem: Any)Boolean">::</a><a href="../../../collection/immutable/List.scala.html#17630" title="(x: PackratParsers.this.Parser[_])List[PackratParsers.this.Parser[_]]">involved</a> contains <a href="#136290" title="PackratParsers.this.Parser[_]">p</a>)) {
+          //Nothing in the cache, and p is not involved
+          <span title="Nothing" class="keyword">return</span> <a href="../../../Option.scala.html#19800" title="(x: PackratParsers.this.MemoEntry[Nothing])Some[PackratParsers.this.MemoEntry[Nothing]]">Some</a>(<a href="#135906" title="(r: Either[PackratParsers.this.LR,PackratParsers.this.ParseResult[_]])PackratParsers.this.MemoEntry[Nothing]">MemoEntry</a>(<a href="../../../Either.scala.html#71406" title="(b: PackratParsers.this.Failure)Right[Nothing,PackratParsers.this.Failure]">Right</a>(<a href="Parsers.scala.html#84391" title="(msg: String,next: PackratParsers.this.Input)PackratParsers.this.Failure">Failure</a>(<span title="java.lang.String(&quot;dummy &quot;)" class="string">&quot;dummy &quot;</span>,<a href="#136291" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">in</a>))))
+        }
+        <span title="Unit" class="keyword">if</span>(<a href="../../../collection/generic/SequenceTemplate.scala.html#17386" title="(elem: Any)Boolean">evalSet</a> contains <a href="#136290" title="PackratParsers.this.Parser[_]">p</a>){
+          //something in cache, and p is in the evalSet
+          //remove the rule from the evalSet of the Head
+          <a href="#136316" title="PackratParsers.this.Head">h</a>.<a href="#136459" title="(x$1: List[PackratParsers.this.Parser[_]])Unit">evalSet</a> = <a href="#136316" title="PackratParsers.this.Head">h</a>.<a href="#136459" title="=&gt; List[PackratParsers.this.Parser[_]]">evalSet</a>.<a href="../../../collection/generic/TraversableTemplate.scala.html#17177" title="(p: (PackratParsers.this.Parser[_]) =&gt; Boolean)List[PackratParsers.this.Parser[_]]">filterNot</a>(<a href="#136393" title="(x$1: AnyRef)Boolean">_</a>==<a href="#136290" title="PackratParsers.this.Parser[_]">p</a>)
+          <span class="keyword">val</span> <a title="PackratParsers.this.ParseResult[Any]" id="136389">tempRes</a> = <a href="Parsers.scala.html#57568" title="(in: scala.util.parsing.input.Reader[PackratParsers.this.Elem])PackratParsers.this.ParseResult[Any]">p</a>(<a href="#136291" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">in</a>)
+          //we know that cached has an entry here
+          <span class="keyword">val</span> <a title="PackratParsers.this.MemoEntry[_]" id="136390">tempEntry</a>: <a href="#135906" title="PackratParsers.this.MemoEntry[_]">MemoEntry</a>[_] = <a href="#136301" title="Option[PackratParsers.this.MemoEntry[Any]]">cached</a>.<a href="../../../Option.scala.html#19759" title="=&gt; PackratParsers.this.MemoEntry[Any]">get</a> // match {case Some(x: MemoEntry[_]) =&gt; x}
+          //cache is modified
+          <a href="#136390" title="PackratParsers.this.MemoEntry[_]">tempEntry</a>.<a href="#136350" title="(x$1: Either[PackratParsers.this.LR,PackratParsers.this.ParseResult[_]])Unit">r</a> = <a href="../../../Either.scala.html#71406" title="(b: PackratParsers.this.ParseResult[Any])Right[Nothing,PackratParsers.this.ParseResult[Any]]">Right</a>(<a href="#136389" title="PackratParsers.this.ParseResult[Any]">tempRes</a>)
+        }
+        <a href="#136301" title="Option[PackratParsers.this.MemoEntry[Any]]">cached</a>
+      }
+    }
+  }
+  
+  /*
+   * setting up the left-recursion. We have the LR for the rule head
+   * we modify the involvedSets of all LRs in the stack, till we see
+   * the current parser again
+   */
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(p: PackratParsers.this.Parser[_],in: PackratParsers.this.PackratReader[_],recDetect: PackratParsers.this.LR)Unit" id="135518">setupLR</a>(<a title="PackratParsers.this.Parser[_]" id="136438">p</a>: <a href="Parsers.scala.html#57399" title="PackratParsers.this.Parser[_]">Parser</a>[_], <a title="PackratParsers.this.PackratReader[_]" id="136439">in</a>: <a href="#135496" title="PackratParsers.this.PackratReader[_]">PackratReader</a>[_], <a title="PackratParsers.this.LR" id="136440">recDetect</a>: <a href="#135832" title="PackratParsers.this.LR">LR</a>): <a title="Unit" id="1948">Unit</a> = {
+    <span title="Unit" class="keyword">if</span>(<a href="#136440" title="PackratParsers.this.LR">recDetect</a>.<a href="#136711" title="(x$1: AnyRef)Boolean">head</a> == <a href="../../../Option.scala.html#463" title="object None">None</a>) <a href="#136440" title="PackratParsers.this.LR">recDetect</a>.<a href="#136711" title="(x$1: Option[PackratParsers.this.Head])Unit">head</a> = <a href="../../../Option.scala.html#19800" title="(x: PackratParsers.this.Head)Some[PackratParsers.this.Head]">Some</a>(<a href="#136166" title="(headParser: PackratParsers.this.Parser[_],involvedSet: List[PackratParsers.this.Parser[_]],evalSet: List[PackratParsers.this.Parser[_]])PackratParsers.this.Head">Head</a>(<a href="#136438" title="PackratParsers.this.Parser[_]">p</a>, <a href="../../../collection/immutable/List.scala.html#9259" title="object Nil">Nil</a>, <a href="../../../collection/immutable/List.scala.html#9259" title="object Nil">Nil</a>))
+    
+    <a href="#136439" title="PackratParsers.this.PackratReader[_]">in</a>.<a href="#135546" title="=&gt; List[PackratParsers.this.LR]">lrStack</a>.<a href="../../../collection/immutable/List.scala.html#17661" title="(p: (PackratParsers.this.LR) =&gt; Boolean)List[PackratParsers.this.LR]">takeWhile</a>(<a href="#136495" title="PackratParsers.this.LR">_</a>.<a href="#136710" title="(x$1: AnyRef)Boolean">rule</a> != <a href="#136438" title="PackratParsers.this.Parser[_]">p</a>).<a href="../../../collection/generic/LinearSequenceTemplate.scala.html#19402" title="(f: (PackratParsers.this.LR) =&gt; Option[Unit])Unit">foreach</a> {<a title="PackratParsers.this.LR" id="136524">x</a> =&gt;
+      <a href="#136524" title="PackratParsers.this.LR">x</a>.<a href="#136711" title="(x$1: Option[PackratParsers.this.Head])Unit">head</a> = <a href="#136440" title="PackratParsers.this.LR">recDetect</a>.<a href="#136711" title="=&gt; Option[PackratParsers.this.Head]">head</a>
+      <a href="#136440" title="PackratParsers.this.LR">recDetect</a>.<a href="#136711" title="=&gt; Option[PackratParsers.this.Head]">head</a>.<a href="../../../Option.scala.html#19766" title="(f: (PackratParsers.this.Head) =&gt; Unit)Option[Unit]">map</a>(<a title="PackratParsers.this.Head" id="136531">h</a> =&gt; <a href="#136531" title="PackratParsers.this.Head">h</a>.<a href="#136458" title="(x$1: List[PackratParsers.this.Parser[_]])Unit">involvedSet</a> = <a href="#136524" title="PackratParsers.this.LR">x</a>.<a href="#136710" title="=&gt; PackratParsers.this.Parser[_]">rule</a><a href="#136532" title="PackratParsers.this.Parser[Any]">::</a><a href="#136531" title="PackratParsers.this.Head">h</a>.<a href="../../../collection/immutable/List.scala.html#17630" title="(x: PackratParsers.this.Parser[_])List[PackratParsers.this.Parser[_]]">involvedSet</a>)
+    }
+  }
+  
+  /*
+   * growing, if needed the recursion
+   * check whether the parser we are growing is the head of the rule.
+   * Not =&gt; no grow
+   */
+   
+  /*
+   * Once the result of the recall function is known, if it is nil, then we need to store a dummy
+failure into the cache (much like in the previous listings) and compute the future parse. If it
+is not, however, this means we have detected a recursion, and we use the setupLR function
+to update each parser involved in the recursion.
+   */
+  
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="[T](p: PackratParsers.this.Parser[T],in: PackratParsers.this.PackratReader[PackratParsers.this.Elem],growable: PackratParsers.this.LR)PackratParsers.this.ParseResult[T]" id="135519">lrAnswer</a>[<a title="&gt;: Nothing &lt;: Any" id="135521">T</a>](<a title="PackratParsers.this.Parser[T]" id="136554">p</a>: <a href="Parsers.scala.html#57399" title="PackratParsers.this.Parser[T]">Parser</a>[T], <a title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]" id="136555">in</a>: <a href="#135496" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">PackratReader</a>[Elem], <a title="PackratParsers.this.LR" id="136556">growable</a>: <a href="#135832" title="PackratParsers.this.LR">LR</a>): <a href="Parsers.scala.html#57375" title="PackratParsers.this.ParseResult[T]">ParseResult</a>[T] = <a href="#136556" title="PackratParsers.this.LR">growable</a> <span title="PackratParsers.this.ParseResult[T]" class="keyword">match</span> {
+    //growable will always be having a head, we can't enter lrAnswer otherwise
+    <span title="PackratParsers.this.ParseResult[T]" class="keyword">case</span> LR(<a title="PackratParsers.this.ParseResult[Any]" id="136561">seed</a> ,<a title="PackratParsers.this.Parser[Any]" id="136565">rule</a>, Some(<a title="PackratParsers.this.Head" id="136570">head</a>)) =&gt; 
+      <span title="PackratParsers.this.ParseResult[T]" class="keyword">if</span>(<a href="#136570" title="PackratParsers.this.Head">head</a>.<a href="#136078" title="(x$1: AnyRef)Boolean">getHead</a> != <a href="#136554" title="PackratParsers.this.Parser[T]">p</a>) /*not head rule, so not growing*/ <a href="#136561" title="PackratParsers.this.ParseResult[Any]">seed</a>.<span title="[T0]T0">asInstanceOf</span><span title="PackratParsers.this.ParseResult[T]">[</span><a href="Parsers.scala.html#57375" title="PackratParsers.this.ParseResult[T]">ParseResult</a>[T]]
+      <span class="keyword">else</span> {
+        <a href="#136555" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">in</a>.<a href="#135540" title="(p: PackratParsers.this.Parser[T],w: PackratParsers.this.MemoEntry[T])PackratParsers.this.MemoEntry[T]">updateCacheAndGet</a>(<a href="#136554" title="PackratParsers.this.Parser[T]">p</a>, <a href="#135906" title="(r: Either[PackratParsers.this.LR,PackratParsers.this.ParseResult[_]])PackratParsers.this.MemoEntry[Nothing]">MemoEntry</a>(<a href="../../../Either.scala.html#71406" title="[A, B](b: B)Right[A,B]">Right</a><span title="(b: PackratParsers.this.ParseResult[T])Right[PackratParsers.this.LR,PackratParsers.this.ParseResult[T]]">[</span><a href="#135832" title="PackratParsers.this.LR">LR</a>, <a href="Parsers.scala.html#57375" title="PackratParsers.this.ParseResult[T]">ParseResult</a>[T]](<a href="#136561" title="PackratParsers.this.ParseResult[Any]">seed</a>.<span title="[T0]T0">asInstanceOf</span><span title="PackratParsers.this.ParseResult[T]">[</span><a href="Parsers.scala.html#57375" title="PackratParsers.this.ParseResult[T]">ParseResult</a>[T]])))
+        <a href="#136561" title="PackratParsers.this.ParseResult[Any]">seed</a> <span title="PackratParsers.this.ParseResult[T]" class="keyword">match</span> {
+          <span title="PackratParsers.this.Failure" class="keyword">case</span> <a title="PackratParsers.this.Failure" id="136596">f</a>@Failure(_,_) =&gt; <a href="#136596" title="PackratParsers.this.Failure">f</a>
+          <span title="PackratParsers.this.Error" class="keyword">case</span> <a title="PackratParsers.this.Error" id="136619">e</a>@Error(_,_) =&gt; <a href="#136619" title="PackratParsers.this.Error">e</a>
+          <span title="PackratParsers.this.ParseResult[T]" class="keyword">case</span> <a title="PackratParsers.this.Success[Any]" id="136657">s</a>@Success(_,_) =&gt; /*growing*/ <a href="#135525" title="(p: PackratParsers.this.Parser[T],rest: PackratParsers.this.PackratReader[PackratParsers.this.Elem],head: PackratParsers.this.Head)PackratParsers.this.ParseResult[T]">grow</a>(<a href="#136554" title="PackratParsers.this.Parser[T]">p</a>, <a href="#136555" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">in</a>, <a href="#136570" title="PackratParsers.this.Head">head</a>)
+        }
+      }
+    <span title="Nothing" class="keyword">case</span> _=&gt; <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.Exception" class="keyword">new</span> <a href="../../../Predef.scala.html#16161" title="java.lang.Exception">Exception</a>(<span title="java.lang.String(&quot;lrAnswer with no head !!&quot;)" class="string">&quot;lrAnswer with no head !!&quot;</span>)
+  }
+
+  //p here should be strict (cannot be non-strict) !!
+  //failing left-recursive grammars: This is done by simply storing a failure if nothing is found
+
+  /** 
+   * Explicitly convert a given parser to a memoizing packrat parser.
+   * In most cases, client code should avoid calling &lt;code&gt;memo&lt;/code&gt; directly
+   * and rely on implicit conversion instead.
+   */
+  <span class="keyword">def</span> <a title="[T](p: PackratParsers.this.Parser[T])PackratParsers.this.PackratParser[T]" id="135522">memo</a>[<a title="&gt;: Nothing &lt;: Any" id="135524">T</a>](<a title="PackratParsers.this.Parser[T]" id="136258">p</a>: <span class="keyword">super</span>.<a href="Parsers.scala.html#57399" title="PackratParsers.this.Parser[T]">Parser</a>[T]): <a href="#135512" title="PackratParsers.this.PackratParser[T]">PackratParser</a>[T] = {
+    <a href="#136687" title="PackratParsers.this.PackratParser[T]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends PackratParsers.this.PackratParser[T]" id="136687">PackratParser</a>[T] {
+      <span class="keyword">def</span> <a title="(in: PackratParsers.this.Input)PackratParsers.this.ParseResult[T]" id="136689">apply</a>(<a title="PackratParsers.this.Input" id="136693">in</a>: <a href="../input/Reader.scala.html#9440" title="PackratParsers.this.Input">Input</a>) = {
+        /*
+         * transformed reader
+         */
+        <span class="keyword">val</span> <a title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]" id="136703">inMem</a> = <a href="#136693" title="PackratParsers.this.Input">in</a>.<span title="[T0]T0">asInstanceOf</span><span title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">[</span><a href="#135496" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">PackratReader</a>[Elem]]
+        
+        //look in the global cache if in a recursion
+        <span class="keyword">val</span> <a title="Option[PackratParsers.this.MemoEntry[_]]" id="136704">m</a> = <a href="#135517" title="(p: PackratParsers.this.Parser[_],in: PackratParsers.this.PackratReader[PackratParsers.this.Elem])Option[PackratParsers.this.MemoEntry[_]]">recall</a>(<a href="#136258" title="PackratParsers.this.Parser[T]">p</a>, <a href="#136703" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">inMem</a>)
+        <a href="#136704" title="Option[PackratParsers.this.MemoEntry[_]]">m</a> <span title="PackratParsers.this.ParseResult[T]" class="keyword">match</span> {
+          //nothing has been done due to recall
+          <span title="PackratParsers.this.ParseResult[T]" class="keyword">case</span> <a href="../../../Option.scala.html#463" title="object None">None</a> =&gt;
+            <span class="keyword">val</span> <a title="PackratParsers.this.LR" id="136707">base</a> = <a href="#135832" title="(seed: PackratParsers.this.ParseResult[_],rule: PackratParsers.this.Parser[_],head: Option[PackratParsers.this.Head])PackratParsers.this.LR">LR</a>(<a href="Parsers.scala.html#84391" title="(msg: String,next: PackratParsers.this.Input)PackratParsers.this.Failure">Failure</a>(<span title="java.lang.String(&quot;Base Failure&quot;)" class="string">&quot;Base Failure&quot;</span>,<a href="#136693" title="PackratParsers.this.Input">in</a>), <a href="#136258" title="PackratParsers.this.Parser[T]">p</a>, <a href="../../../Option.scala.html#463" title="object None">None</a>)
+            <a href="#136703" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">inMem</a>.<a href="#135546" title="(x$1: List[PackratParsers.this.LR])Unit">lrStack</a> = <a href="#136707" title="PackratParsers.this.LR">base</a><a href="#136754" title="PackratParsers.this.LR">::</a><a href="#136703" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">inMem</a>.<a href="../../../collection/immutable/List.scala.html#17630" title="(x: PackratParsers.this.LR)List[PackratParsers.this.LR]">lrStack</a>
+            //cache base result
+            <a href="#136703" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">inMem</a>.<a href="#135540" title="(p: PackratParsers.this.Parser[T],w: PackratParsers.this.MemoEntry[T])PackratParsers.this.MemoEntry[T]">updateCacheAndGet</a>(<a href="#136258" title="PackratParsers.this.Parser[T]">p</a>,<a href="#135906" title="(r: Either[PackratParsers.this.LR,PackratParsers.this.ParseResult[_]])PackratParsers.this.MemoEntry[Nothing]">MemoEntry</a>(<a href="../../../Either.scala.html#71437" title="(a: PackratParsers.this.LR)Left[PackratParsers.this.LR,Nothing]">Left</a>(<a href="#136707" title="PackratParsers.this.LR">base</a>)))
+            //parse the input
+            <span class="keyword">val</span> <a title="PackratParsers.this.ParseResult[T]" id="136708">tempRes</a> = <a href="Parsers.scala.html#57568" title="(in: PackratParsers.this.Input)PackratParsers.this.ParseResult[T]">p</a>(<a href="#136693" title="PackratParsers.this.Input">in</a>)
+            //the base variable has passed equality tests with the cache
+            <a href="#136703" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">inMem</a>.<a href="#135546" title="(x$1: List[PackratParsers.this.LR])Unit">lrStack</a> = <a href="#136703" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">inMem</a>.<a href="#135546" title="=&gt; List[PackratParsers.this.LR]">lrStack</a>.<a href="../../../collection/generic/TraversableTemplate.scala.html#17213" title="=&gt; List[PackratParsers.this.LR]">tail</a>
+            //check whether base has changed, if yes, we will have a head
+            <a href="#136707" title="PackratParsers.this.LR">base</a>.<a href="#136711" title="=&gt; Option[PackratParsers.this.Head]">head</a> <span title="PackratParsers.this.ParseResult[T]" class="keyword">match</span> {
+              <span title="PackratParsers.this.ParseResult[T]" class="keyword">case</span> <a href="../../../Option.scala.html#463" title="object None">None</a> =&gt; 
+                /*simple result*/
+                <a href="#136703" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">inMem</a>.<a href="#135540" title="(p: PackratParsers.this.Parser[T],w: PackratParsers.this.MemoEntry[T])PackratParsers.this.MemoEntry[T]">updateCacheAndGet</a>(<a href="#136258" title="PackratParsers.this.Parser[T]">p</a>,<a href="#135906" title="(r: Either[PackratParsers.this.LR,PackratParsers.this.ParseResult[_]])PackratParsers.this.MemoEntry[Nothing]">MemoEntry</a>(<a href="../../../Either.scala.html#71406" title="(b: PackratParsers.this.ParseResult[T])Right[Nothing,PackratParsers.this.ParseResult[T]]">Right</a>(<a href="#136708" title="PackratParsers.this.ParseResult[T]">tempRes</a>)))
+                <a href="#136708" title="PackratParsers.this.ParseResult[T]">tempRes</a>
+              <span title="PackratParsers.this.ParseResult[T]" class="keyword">case</span> <a title="Some[PackratParsers.this.Head]" id="136813">s</a>@Some(_) =&gt;
+                /*non simple result*/
+                <a href="#136707" title="PackratParsers.this.LR">base</a>.<a href="#136709" title="(x$1: PackratParsers.this.ParseResult[_])Unit">seed</a> = <a href="#136708" title="PackratParsers.this.ParseResult[T]">tempRes</a>
+                //the base variable has passed equality tests with the cache
+                <span class="keyword">val</span> <a title="PackratParsers.this.ParseResult[T]" id="136817">res</a> = <a href="#135519" title="(p: PackratParsers.this.Parser[T],in: PackratParsers.this.PackratReader[PackratParsers.this.Elem],growable: PackratParsers.this.LR)PackratParsers.this.ParseResult[T]">lrAnswer</a>(<a href="#136258" title="PackratParsers.this.Parser[T]">p</a>, <a href="#136703" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">inMem</a>, <a href="#136707" title="PackratParsers.this.LR">base</a>)
+                <a href="#136817" title="PackratParsers.this.ParseResult[T]">res</a>
+            }
+            
+          <span title="PackratParsers.this.ParseResult[T]" class="keyword">case</span> Some(<a title="PackratParsers.this.MemoEntry[Any]" id="136830">mEntry</a>) =&gt; {
+            //entry found in cache
+            <a href="#136830" title="PackratParsers.this.MemoEntry[Any]">mEntry</a> <span title="PackratParsers.this.ParseResult[T]" class="keyword">match</span> {
+              <span title="PackratParsers.this.ParseResult[T]" class="keyword">case</span> MemoEntry(Left(<a title="PackratParsers.this.LR" id="136838">recDetect</a>)) =&gt; {
+                <a href="#135518" title="(p: PackratParsers.this.Parser[_],in: PackratParsers.this.PackratReader[_],recDetect: PackratParsers.this.LR)Unit">setupLR</a>(<a href="#136258" title="PackratParsers.this.Parser[T]">p</a>, <a href="#136703" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">inMem</a>, <a href="#136838" title="PackratParsers.this.LR">recDetect</a>)
+                //all setupLR does is change the heads of the recursions, so the seed will stay the same
+                <a href="#136838" title="PackratParsers.this.LR">recDetect</a> <span title="PackratParsers.this.ParseResult[T]" class="keyword">match</span> {<span title="PackratParsers.this.ParseResult[T]" class="keyword">case</span> LR(<a title="PackratParsers.this.ParseResult[Any]" id="136845">seed</a>, _, _) =&gt; <a href="#136845" title="PackratParsers.this.ParseResult[Any]">seed</a>.<span title="[T0]T0">asInstanceOf</span><span title="PackratParsers.this.ParseResult[T]">[</span><a href="Parsers.scala.html#57375" title="PackratParsers.this.ParseResult[T]">ParseResult</a>[T]]}
+              }
+              <span title="PackratParsers.this.ParseResult[?]" class="keyword">case</span> MemoEntry(Right(<a title="PackratParsers.this.ParseResult[?]" id="136854">res</a>: <a href="Parsers.scala.html#57375" title="PackratParsers.this.ParseResult[T]">ParseResult</a>[T])) =&gt; <a href="#136854" title="PackratParsers.this.ParseResult[?]">res</a>
+            }
+          }
+        }
+      }
+    }
+  } 
+  
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="[T](p: PackratParsers.this.Parser[T],rest: PackratParsers.this.PackratReader[PackratParsers.this.Elem],head: PackratParsers.this.Head)PackratParsers.this.ParseResult[T]" id="135525">grow</a>[<a title="&gt;: Nothing &lt;: Any" id="135527">T</a>](<a title="PackratParsers.this.Parser[T]" id="136664">p</a>: <span class="keyword">super</span>.<a href="Parsers.scala.html#57399" title="PackratParsers.this.Parser[T]">Parser</a>[T], <a title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]" id="136665">rest</a>: <a href="#135496" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">PackratReader</a>[Elem], <a title="PackratParsers.this.Head" id="136666">head</a>: <a href="#136166" title="PackratParsers.this.Head">Head</a>): <a href="Parsers.scala.html#57375" title="PackratParsers.this.ParseResult[T]">ParseResult</a>[T] = {
+    //store the head into the recursionHeads
+    <a href="#136665" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">rest</a>.<a href="#135543" title="=&gt; scala.collection.mutable.HashMap[scala.util.parsing.input.Position,PackratParsers.this.Head]">recursionHeads</a>.<a href="../../../collection/mutable/HashMap.scala.html#91078" title="(key: scala.util.parsing.input.Position,value: PackratParsers.this.Head)Option[PackratParsers.this.Head]">put</a>(<a href="#136665" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">rest</a>.<a href="#135552" title="=&gt; scala.util.parsing.input.Position">pos</a>, <a href="#136666" title="PackratParsers.this.Head">head</a> /*match {case Head(hp,involved,_) =&gt; Head(hp,involved,involved)}*/)
+    <span class="keyword">val</span> <a title="PackratParsers.this.ParseResult[T]" id="136864">oldRes</a>: <a href="Parsers.scala.html#57375" title="PackratParsers.this.ParseResult[T]">ParseResult</a>[T] = <a href="#136665" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">rest</a>.<a href="#135537" title="(p: PackratParsers.this.Parser[T])Option[PackratParsers.this.MemoEntry[T]]">getFromCache</a>(<a href="#136664" title="PackratParsers.this.Parser[T]">p</a>).<a href="../../../Option.scala.html#19759" title="=&gt; PackratParsers.this.MemoEntry[T]">get</a> <span title="PackratParsers.this.ParseResult[T]" class="keyword">match</span> {
+      <span title="PackratParsers.this.ParseResult[T]" class="keyword">case</span> MemoEntry(Right(<a title="PackratParsers.this.ParseResult[Any]" id="136888">x</a>)) =&gt; <a href="#136888" title="PackratParsers.this.ParseResult[Any]">x</a>.<span title="[T0]T0">asInstanceOf</span><span title="PackratParsers.this.ParseResult[T]">[</span><a href="Parsers.scala.html#57375" title="PackratParsers.this.ParseResult[T]">ParseResult</a>[T]]
+      <span title="Nothing" class="keyword">case</span> _ =&gt; <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.Exception" class="keyword">new</span> <a href="../../../Predef.scala.html#16161" title="java.lang.Exception">Exception</a>(<span title="java.lang.String(&quot;impossible match&quot;)" class="string">&quot;impossible match&quot;</span>)
+    }
+
+    //resetting the evalSet of the head of the recursion at each beginning of growth
+    <a href="#136666" title="PackratParsers.this.Head">head</a>.<a href="#136459" title="(x$1: List[PackratParsers.this.Parser[_]])Unit">evalSet</a> = <a href="#136666" title="PackratParsers.this.Head">head</a>.<a href="#136458" title="=&gt; List[PackratParsers.this.Parser[_]]">involvedSet</a>
+    <span class="keyword">val</span> <a title="PackratParsers.this.ParseResult[T]" id="136865">tempRes</a> = <a href="Parsers.scala.html#57568" title="(in: PackratParsers.this.Input)PackratParsers.this.ParseResult[T]">p</a>(<a href="#136665" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">rest</a>); <a href="#136865" title="PackratParsers.this.ParseResult[T]">tempRes</a> <span title="PackratParsers.this.ParseResult[T]" class="keyword">match</span> {
+      <span title="PackratParsers.this.ParseResult[T]" class="keyword">case</span> <a title="PackratParsers.this.Success[T]" id="136919">s</a>@Success(_,_) =&gt; 
+        <span title="PackratParsers.this.ParseResult[T]" class="keyword">if</span>(<a href="#135501" title="(r: PackratParsers.this.ParseResult[_])scala.util.parsing.input.Position">getPosFromResult</a><a href="../input/Position.scala.html#23050" title="(that: scala.util.parsing.input.Position)Boolean">(</a><a href="#136864" title="PackratParsers.this.ParseResult[T]">oldRes</a>) &lt; <a href="#135501" title="(r: PackratParsers.this.ParseResult[_])scala.util.parsing.input.Position">getPosFromResult</a>(<a href="#136865" title="PackratParsers.this.ParseResult[T]">tempRes</a>)) {
+          <a href="#136665" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">rest</a>.<a href="#135540" title="(p: PackratParsers.this.Parser[T],w: PackratParsers.this.MemoEntry[T])PackratParsers.this.MemoEntry[T]">updateCacheAndGet</a>(<a href="#136664" title="PackratParsers.this.Parser[T]">p</a>, <a href="#135906" title="(r: Either[PackratParsers.this.LR,PackratParsers.this.ParseResult[_]])PackratParsers.this.MemoEntry[Nothing]">MemoEntry</a>(<a href="../../../Either.scala.html#71406" title="(b: PackratParsers.this.Success[T])Right[Nothing,PackratParsers.this.Success[T]]">Right</a>(<a href="#136919" title="PackratParsers.this.Success[T]">s</a>)))
+          <a href="#135525" title="(p: PackratParsers.this.Parser[T],rest: PackratParsers.this.PackratReader[PackratParsers.this.Elem],head: PackratParsers.this.Head)PackratParsers.this.ParseResult[T]">grow</a>(<a href="#136664" title="PackratParsers.this.Parser[T]">p</a>, <a href="#136665" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">rest</a>, <a href="#136666" title="PackratParsers.this.Head">head</a>)
+        } <span class="keyword">else</span> {
+          //we're done with growing, we can remove data from recursion head
+          <a href="#136665" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">rest</a>.<a href="../../../collection/mutable/HashMap.scala.html#91082" title="(key: scala.util.parsing.input.Position)rest.scala$util$parsing$combinator$PackratParsers$$recursionHeads.type">recursionHeads</a> -= <a href="#136665" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">rest</a>.<a href="#135552" title="=&gt; scala.util.parsing.input.Position">pos</a>
+          <a href="#136665" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">rest</a>.<a href="#135537" title="(p: PackratParsers.this.Parser[T])Option[PackratParsers.this.MemoEntry[T]]">getFromCache</a>(<a href="#136664" title="PackratParsers.this.Parser[T]">p</a>).<a href="../../../Option.scala.html#19759" title="=&gt; PackratParsers.this.MemoEntry[T]">get</a> <span title="PackratParsers.this.ParseResult[T]" class="keyword">match</span> {
+            <span title="PackratParsers.this.ParseResult[?]" class="keyword">case</span> MemoEntry(Right(<a title="PackratParsers.this.ParseResult[?]" id="137013">x</a>: <a href="Parsers.scala.html#57375" title="PackratParsers.this.ParseResult[T]">ParseResult</a>[T])) =&gt; <a href="#137013" title="PackratParsers.this.ParseResult[?]">x</a>
+            <span title="Nothing" class="keyword">case</span> _ =&gt; <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.Exception" class="keyword">new</span> <a href="../../../Predef.scala.html#16161" title="java.lang.Exception">Exception</a>(<span title="java.lang.String(&quot;impossible match&quot;)" class="string">&quot;impossible match&quot;</span>)
+          }
+        }
+      <span title="PackratParsers.this.ParseResult[T]" class="keyword">case</span> <a title="PackratParsers.this.ParseResult[T]" id="137027">f</a> =&gt; 
+        <a href="#136665" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">rest</a>.<a href="../../../collection/mutable/HashMap.scala.html#91082" title="(key: scala.util.parsing.input.Position)rest.scala$util$parsing$combinator$PackratParsers$$recursionHeads.type">recursionHeads</a> -= <a href="#136665" title="PackratParsers.this.PackratReader[PackratParsers.this.Elem]">rest</a>.<a href="#135552" title="=&gt; scala.util.parsing.input.Position">pos</a>
+        /*rest.updateCacheAndGet(p, MemoEntry(Right(f)));*/<a href="#136864" title="PackratParsers.this.ParseResult[T]">oldRes</a>
+    }
+  }
+}
+
+        </pre>
+    </body>
+</html>

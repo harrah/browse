@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Symbol.scala</title>
+        <script type="text/javascript" src="jquery-all.js"></script>
+        <script type="text/javascript" src="linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: Symbol.scala 17690 2009-05-08 22:02:14Z extempore $
+
+
+<span class="keyword">package</span> scala
+
+/** &lt;p&gt;
+ *    This class provides a simple way to get unique objects for
+ *    equal strings. Since symbols are interned, they can be compared using
+ *    reference equality. Instances of 
+ *    &lt;code&gt;Symbol&lt;/code&gt; can be created easily with Scala's built-in
+*     quote mechanism.
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    For instance, the &lt;a href=&quot;http://scala-lang.org/&quot; target=&quot;_top&quot;&gt;Scala&lt;/a&gt;
+ *    term &lt;code&gt;'mysym&lt;/code&gt; will invoke the constructor of the
+ *    &lt;code&gt;Symbol&lt;/code&gt; class in the following way:
+ *    &lt;code&gt;Symbol(&quot;mysym&quot;)&lt;/code&gt;.
+ *  &lt;/p&gt;
+ *  
+ *  @author  Martin Odersky, Iulian Dragos
+ *  @version 1.8
+ */
+@serializable
+<span class="keyword">final</span> <span class="keyword">class</span> <a title="class Symbol extends java.lang.Object with ScalaObject" id="732">Symbol</a> <a href="ScalaObject.scala.html#957" title="ScalaObject" class="keyword">private</a> (<span class="keyword">val</span> <a title="String" id="44371">name</a>: <span title="String">String</span>) {
+  /** Converts this symbol to a string.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="44367">toString</a>(): <span title="String">String</span> = <a title="(x$1: Any)java.lang.String" id="6542" class="string">&quot;'&quot;</a> + <a href="#44371" title="=&gt; String">name</a>
+
+  @throws(classOf[java.io.ObjectStreamException])
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="()Any" id="44368">readResolve</a>(): <a title="Any" id="47">Any</a> = <a href="#733" title="object Symbol">Symbol</a>.<a href="#44394" title="(name: String)Symbol">apply</a>(<a href="#44371" title="=&gt; String">name</a>)
+}
+
+<span class="keyword">object</span> <a title="object Symbol" id="733">Symbol</a> <a href="ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="#969" title="UniquenessCache[String,Symbol]">UniquenessCache</a>[String, Symbol]
+{
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(name: String)Symbol" id="44397">valueFromKey</a>(<a title="String" id="44939">name</a>: <span title="String">String</span>): <a href="#732" title="Symbol">Symbol</a> = <span title="Symbol" class="keyword">new</span> <a href="#732" title="Symbol">Symbol</a>(<a href="#44939" title="String">name</a>)
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(sym: Symbol)Option[String]" id="44398">keyFromValue</a>(<a title="Symbol" id="44946">sym</a>: <a href="#732" title="Symbol">Symbol</a>): <a href="Option.scala.html#777" title="Option[String]">Option</a>[String] = <a href="Option.scala.html#19800" title="(x: String)Some[String]">Some</a>(<a href="#44946" title="Symbol">sym</a>.<a href="#44371" title="=&gt; String">name</a>)
+}
+
+/** This is private so it won't appear in the library API, but
+  * abstracted to offer some hope of reusability.  */
+<span class="keyword">private</span>[scala] <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class UniquenessCache[K, V &gt;: Null] extends java.lang.Object with ScalaObject" id="969">UniquenessCache</a>[<a title="&gt;: Nothing &lt;: Any" id="11839">K</a>, <a title="&gt;: Null &lt;: Any" id="11840">V</a> &gt;: Null<a id="1">]</a>
+<a href="ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  <span class="keyword">import</span> java.lang.ref.{ ReferenceQueue, WeakReference }
+  <span class="keyword">import</span> java.util.WeakHashMap
+  <span class="keyword">import</span> java.util.concurrent.locks.ReentrantReadWriteLock
+  
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="java.lang.ref.ReferenceQueue[V]" id="44382">queue</a> = <span title="java.lang.ref.ReferenceQueue[V]" class="keyword">new</span> <a title="java.lang.ref.ReferenceQueue[V]" id="44421">ReferenceQueue</a>[V]
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="java.util.concurrent.locks.ReentrantReadWriteLock" id="44384">rwl</a> = <span title="java.util.concurrent.locks.ReentrantReadWriteLock" class="keyword">new</span> <a title="java.util.concurrent.locks.ReentrantReadWriteLock" id="44929">ReentrantReadWriteLock</a>()
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock" id="44386">rlock</a> = <a href="#44384" title="=&gt; java.util.concurrent.locks.ReentrantReadWriteLock">rwl</a>.<a title="()java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock" id="45040">readLock</a>
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock" id="44388">wlock</a> = <a href="#44384" title="=&gt; java.util.concurrent.locks.ReentrantReadWriteLock">rwl</a>.<a title="()java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock" id="45039">writeLock</a>
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="java.util.WeakHashMap[K,java.lang.ref.WeakReference[V]]" id="44390">map</a> = <a title="()java.util.WeakHashMap[K,java.lang.ref.WeakReference[V]]" id="45141" class="keyword">new</a> <a title="java.util.WeakHashMap[K,java.lang.ref.WeakReference[V]]" id="5842">WeakHashMap</a>[K, WeakReference[V]]
+  
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(k: K)V" id="44392">valueFromKey</a>(<a title="K" id="44941">k</a>: <a href="#11839" title="K">K</a>): <a href="#11840" title="V">V</a>
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(v: V)Option[K]" id="44393">keyFromValue</a>(<a title="V" id="44948">v</a>: <a href="#11840" title="V">V</a>): <a href="Option.scala.html#777" title="Option[K]">Option</a>[K]
+  
+  <span class="keyword">def</span> <a title="(name: K)V" id="44394">apply</a>(<a title="K" id="44399">name</a>: <a href="#11839" title="K">K</a>): <a href="#11840" title="V">V</a> = {
+    <span class="keyword">def</span> <a title="()V" id="45323">cached</a>(): <a href="#11840" title="V">V</a> = {
+      <a href="#44386" title="=&gt; java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock">rlock</a>.<a title="()Unit" id="45084">lock</a>
+      <span class="keyword">try</span> {
+        <span class="keyword">val</span> <a title="java.lang.ref.WeakReference[V]" id="45336">reference</a> = <a href="#44390" title="(x$1: Any)java.lang.ref.WeakReference[V]" id="45191">map</a> get <a href="#44399" title="K">name</a>
+        <span title="V" class="keyword">if</span> (<a href="#45336" title="(x$1: AnyRef)Boolean" id="3624">reference</a> == <span title="Null(null)" class="keyword">null</span>) <span title="Null(null)" class="keyword">null</span>
+        <span class="keyword">else</span> <a href="#45336" title="java.lang.ref.WeakReference[V]">reference</a>.<a title="()V" id="44984">get</a>  // will be null if we were gc-ed
+      }
+      <span class="keyword">finally</span> <a href="#44386" title="=&gt; java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock">rlock</a>.<a title="()Unit" id="45090">unlock</a>
+    }
+    <span class="keyword">def</span> <a title="()V" id="45324">updateCache</a>(): <a href="#11840" title="V">V</a> = {
+      <a href="#44388" title="=&gt; java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock">wlock</a>.<a title="()Unit" id="45097">lock</a>
+      <span class="keyword">try</span> {
+        <span class="keyword">val</span> <a title="V" id="45351">res</a> = <a href="#45323" title="()V">cached</a>()
+        <span title="V" class="keyword">if</span> (<a href="#45351" title="(x$1: Any)Boolean" id="3612">res</a> != <span title="Null(null)" class="keyword">null</span>) <a href="#45351" title="V">res</a>
+        <span class="keyword">else</span> {        
+          <span class="keyword">val</span> <a title="V" id="45356">sym</a> = <a href="#44392" title="(k: K)V">valueFromKey</a>(<a href="#44399" title="K">name</a>)
+          <a href="#44390" title="=&gt; java.util.WeakHashMap[K,java.lang.ref.WeakReference[V]]">map</a>.<a title="(x$1: K,x$2: java.lang.ref.WeakReference[V])java.lang.ref.WeakReference[V]" id="45199">put</a>(<a href="#44399" title="K">name</a>, <a title="(x$1: V,x$2: java.lang.ref.ReferenceQueue[_ &gt;: V])java.lang.ref.WeakReference[V]" id="45240" class="keyword">new</a> <a title="java.lang.ref.WeakReference[V]" id="44409">WeakReference</a>(<a href="#45356" title="V">sym</a>, <a href="#44382" title="=&gt; java.lang.ref.ReferenceQueue[V]">queue</a>))
+          <a href="#45356" title="V">sym</a>
+        }
+      }
+      <span class="keyword">finally</span> <a href="#44388" title="=&gt; java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock">wlock</a>.<a title="()Unit" id="45103">unlock</a>
+    }
+    
+    <span class="keyword">val</span> <a title="V" id="45325">res</a> = <a href="#45323" title="()V">cached</a>()
+    <span title="V" class="keyword">if</span> (<a href="#45325" title="(x$1: Any)Boolean" id="3610">res</a> == <span title="Null(null)" class="keyword">null</span>) <a href="#45324" title="()V">updateCache</a>()
+    <span class="keyword">else</span> <a href="#45325" title="V">res</a>
+  }
+  <span class="keyword">def</span> <a title="(other: V)Option[K]" id="44395">unapply</a>(<a title="V" id="45469">other</a>: <a href="#11840" title="V">V</a>): <a href="Option.scala.html#777" title="Option[K]">Option</a>[K] = <a href="#44393" title="(v: V)Option[K]">keyFromValue</a>(<a href="#45469" title="V">other</a>)
+}
+
+        </pre>
+    </body>
+</html>

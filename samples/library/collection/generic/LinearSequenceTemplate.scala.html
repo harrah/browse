@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>collection/generic/LinearSequenceTemplate.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: LinearSequenceTemplate.scala 18553 2009-08-23 14:58:41Z extempore $
+
+
+<span class="keyword">package</span> scala.collection.generic
+<span class="keyword">import</span> scala.collection._
+
+<span class="keyword">import</span> mutable.ListBuffer
+// import immutable.{List, Nil, ::}
+<span class="keyword">import</span> generic._
+<span class="keyword">import</span> util.control.Breaks._
+
+/** Class &lt;code&gt;Linear[A]&lt;/code&gt; represents linear sequences of elements.
+ *  For such sequences `isEmpty`, `head` and `tail` are guaranteed to be
+ *  efficient constant time (or near so) operations.
+ *  It does not add any methods to &lt;code&gt;Sequence&lt;/code&gt; but overrides 
+ *  several methods with optimized implementations.
+ * 
+ *  @author  Martin Odersky
+ *  @author  Matthias Zenger
+ *  @version 1.0, 16/07/2003
+ */
+<span class="keyword">trait</span> <a title="trait LinearSequenceTemplate[+A, +This &lt;: scala.collection.generic.LinearSequenceTemplate[A,This] with scala.collection.LinearSequence[A]] extends java.lang.Object with scala.collection.generic.SequenceTemplate[A,This] with ScalaObject" id="10703">LinearSequenceTemplate</a>[+<a title="&gt;: Nothing &lt;: Any" id="11865">A</a>, +<a title="&gt;: Nothing &lt;: scala.collection.generic.LinearSequenceTemplate[A,This] with scala.collection.LinearSequence[A]" id="11866">This</a> &lt;: LinearSequenceTemplate[A, This] <span class="keyword">with</span> LinearSequence[A]] <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="SequenceTemplate.scala.html#10952" title="scala.collection.generic.SequenceTemplate[A,This]">SequenceTemplate</a>[A, This] { self =&gt;
+
+  /** Abstract method to be implemented in a subclass */
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="19396">isEmpty</a>: <span title="Boolean">Boolean</span>
+
+  /** Abstract method to be implemented in a subclass */
+  <span class="keyword">def</span> <a title="=&gt; A" id="19397">head</a>: <a href="#11865" title="A">A</a>
+
+  /** Abstract method to be implemented in a subclass */
+  <span class="keyword">def</span> <a title="=&gt; This" id="19398">tail</a>: <a href="#11866" title="This">This</a>
+  
+   /** Returns the number of elements in the linear sequence.
+    */	
+  <span class="keyword">def</span> <a title="=&gt; Int" id="19399">length</a>: <span title="Int">Int</span> = {
+    <span class="keyword">var</span> <a title="scala.collection.generic.LinearSequenceTemplate[A,This]" id="45569">these</a> = <a href="#10703" title="scala.collection.generic.LinearSequenceTemplate[A,This]">self</a>
+    <span class="keyword">var</span> <a title="Int" id="45570">len</a> = <span title="Int(0)" class="int">0</span>
+    <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span><a href="#45569" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#45571" title="()Unit">{</a>
+      <a href="#45570" title="Int">len</a> += <span title="Int(1)" class="int">1</span>
+      <a href="#45569" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a> = <a href="#45569" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="TraversableTemplate.scala.html#17213" title="=&gt; This">tail</a>
+    }
+    <a href="#45570" title="Int">len</a>
+  }
+
+  /** Returns the &lt;code&gt;n&lt;/code&gt;-th element of this linear sequence. The first element
+   *  (head of the linear sequence) is at position 0.
+   *
+   *  @param n index of the element to return
+   *  @return  the element at position &lt;code&gt;n&lt;/code&gt; in this linear sequence.
+   *  @throws Predef.NoSuchElementException if the linear sequence is too short.
+   */
+  <span class="keyword">def</span> <a title="(n: Int)A" id="19400">apply</a>(<a title="Int" id="45617">n</a>: <span title="Int">Int</span>): <a href="#11865" title="A">A</a> = <a href="#19423" title="(n: Int)This">drop</a>(<a href="#45617" title="Int">n</a>).<a href="IterableTemplate.scala.html#17298" title="=&gt; A">head</a>
+
+  /** Returns the elements in the sequence as an iterator
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Iterator[A]" id="19401">iterator</a>: <a href="../Iterator.scala.html#4274" title="Iterator[A]">Iterator</a>[A] = <a href="#45629" title="java.lang.Object with Iterator[A]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with Iterator[A]" id="45629">Iterator</a>[A] {
+    <span class="keyword">var</span> <a title="scala.collection.generic.LinearSequenceTemplate[A,This]" id="45632">these</a> = <a href="#10703" title="scala.collection.generic.LinearSequenceTemplate[A,This]">self</a>
+    <span class="keyword">def</span> <a title="=&gt; Boolean" id="45634">hasNext</a>: <span title="Boolean">Boolean</span> = <span title="=&gt; Boolean">!</span><a href="#45632" title="=&gt; scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>
+    <span class="keyword">def</span> <a title="()A" id="45635">next</a>: <a href="#11865" title="A">A</a> = 
+      <span title="A" class="keyword">if</span> (<a href="#45634" title="=&gt; Boolean">hasNext</a>) {
+        <span class="keyword">val</span> <a title="A" id="45647">result</a> = <a href="#45632" title="=&gt; scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="IterableTemplate.scala.html#17298" title="=&gt; A">head</a>; <a href="#45632" title="(x$1: scala.collection.generic.LinearSequenceTemplate[A,This])Unit">these</a> = <a href="#45632" title="=&gt; scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="TraversableTemplate.scala.html#17213" title="=&gt; This">tail</a>; <a href="#45647" title="A">result</a>
+      } <span class="keyword">else</span> <a href="../Iterator.scala.html#4275" title="object Iterator">Iterator</a>.<a href="../Iterator.scala.html#21409" title="=&gt; &lt;refinement&gt; extends java.lang.Object with Iterator[Nothing]">empty</a>.<a href="../Iterator.scala.html#19185" title="()Nothing">next</a>
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; List[A]" id="45636">toList</a>: <a href="../immutable/List.scala.html#8973" title="List[A]">List</a>[A] = <a href="#45632" title="=&gt; scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="TraversableTemplate.scala.html#17236" title="=&gt; List[A]">toList</a>
+  }
+
+  /** Apply the given function &lt;code&gt;f&lt;/code&gt; to each element of this linear sequence
+   *  (while respecting the order of the elements).
+   *
+   *  @param f the treatment to apply to each element.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[B](f: (A) =&gt; B)Unit" id="19402">foreach</a>[<a title="&gt;: Nothing &lt;: Any" id="19404">B</a>](<a title="(A) =&gt; B" id="45658">f</a>: A =&gt; B) {
+    <span class="keyword">var</span> <a title="scala.collection.generic.LinearSequenceTemplate[A,This]" id="45667">these</a> = <a href="#10703" title="scala.collection.generic.LinearSequenceTemplate[A,This]" class="keyword">this</a>
+    <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span><a href="#45667" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#45668" title="()Unit">{</a>
+      <a href="../../Function1.scala.html#17119" title="(v1: A)B">f</a>(<a href="#45667" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="IterableTemplate.scala.html#17298" title="=&gt; A">head</a>)
+      <a href="#45667" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a> = <a href="#45667" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="TraversableTemplate.scala.html#17213" title="=&gt; This">tail</a>
+    }
+  }
+
+  /** Tests if the predicate &lt;code&gt;p&lt;/code&gt; is satisfied by all elements
+   *  in this list.
+   *
+   *  @param p the test predicate.
+   *  @return  &lt;code&gt;true&lt;/code&gt; iff all elements of this list satisfy the
+   *           predicate &lt;code&gt;p&lt;/code&gt;.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)Boolean" id="19405">forall</a>(<a title="(A) =&gt; Boolean" id="45677">p</a>: A =&gt; Boolean): <span title="Boolean">Boolean</span> = {
+    <span class="keyword">var</span> <a title="scala.collection.generic.LinearSequenceTemplate[A,This]" id="45682">these</a> = <a href="#10703" title="scala.collection.generic.LinearSequenceTemplate[A,This]" class="keyword">this</a>
+    <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span><a href="#45682" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#45683" title="()Unit">{</a>
+      <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#45682" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="IterableTemplate.scala.html#17298" title="=&gt; A">head</a>)) <span title="Nothing" class="keyword">return</span> <span title="Boolean(false)" class="keyword">false</span>
+      <a href="#45682" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a> = <a href="#45682" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="TraversableTemplate.scala.html#17213" title="=&gt; This">tail</a>
+    }
+    <span title="Boolean(true)" class="keyword">true</span>
+  }
+
+  /** Tests the existence in this list of an element that satisfies the
+   *  predicate &lt;code&gt;p&lt;/code&gt;.
+   *
+   *  @param p the test predicate.
+   *  @return  &lt;code&gt;true&lt;/code&gt; iff there exists an element in this list that
+   *           satisfies the predicate &lt;code&gt;p&lt;/code&gt;.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)Boolean" id="19406">exists</a>(<a title="(A) =&gt; Boolean" id="45692">p</a>: A =&gt; Boolean): <span title="Boolean">Boolean</span> = {
+    <span class="keyword">var</span> <a title="scala.collection.generic.LinearSequenceTemplate[A,This]" id="45697">these</a> = <a href="#10703" title="scala.collection.generic.LinearSequenceTemplate[A,This]" class="keyword">this</a>
+    <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span><a href="#45697" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#45698" title="()Unit">{</a>
+      <span title="Unit" class="keyword">if</span> (<a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#45697" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="IterableTemplate.scala.html#17298" title="=&gt; A">head</a>)) <span title="Nothing" class="keyword">return</span> <span title="Boolean(true)" class="keyword">true</span>
+      <a href="#45697" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a> = <a href="#45697" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="TraversableTemplate.scala.html#17213" title="=&gt; This">tail</a>
+    }
+    <span title="Boolean(false)" class="keyword">false</span>
+  }
+
+  /** Count the number of elements in the iterable which satisfy a predicate.
+   *
+   *  @param p the predicate for which to count
+   *  @return  the number of elements satisfying the predicate &lt;code&gt;p&lt;/code&gt;.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)Int" id="19407">count</a>(<a title="(A) =&gt; Boolean" id="45707">p</a>: A =&gt; Boolean): <span title="Int">Int</span> = {
+    <span class="keyword">var</span> <a title="scala.collection.generic.LinearSequenceTemplate[A,This]" id="45712">these</a> = <a href="#10703" title="scala.collection.generic.LinearSequenceTemplate[A,This]" class="keyword">this</a>
+    <span class="keyword">var</span> <a title="Int" id="45713">cnt</a> = <span title="Int(0)" class="int">0</span>
+    <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span><a href="#45712" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#45714" title="()Unit">{</a>
+      <span title="Unit" class="keyword">if</span> (<a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#45712" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="IterableTemplate.scala.html#17298" title="=&gt; A">head</a>)) <a href="#45713" title="Int">cnt</a> += <span title="Int(1)" class="int">1</span>
+      <a href="#45712" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a> = <a href="#45712" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="TraversableTemplate.scala.html#17213" title="=&gt; This">tail</a>
+    }
+    <a href="#45713" title="Int">cnt</a>
+  }
+
+  /** Find and return the first element of the list satisfying a
+   *  predicate, if any.
+   *
+   *  @param p the predicate
+   *  @return the first element in the list satisfying &lt;code&gt;p&lt;/code&gt;,
+   *  or &lt;code&gt;None&lt;/code&gt; if none exists.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)Option[A]" id="19408">find</a>(<a title="(A) =&gt; Boolean" id="45757">p</a>: A =&gt; Boolean): <a href="../../Option.scala.html#777" title="Option[A]">Option</a>[A] = {
+    <span class="keyword">var</span> <a title="scala.collection.generic.LinearSequenceTemplate[A,This]" id="45762">these</a> = <a href="#10703" title="scala.collection.generic.LinearSequenceTemplate[A,This]" class="keyword">this</a>
+    <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span><a href="#45762" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#45763" title="()Unit">{</a>
+      <span title="Unit" class="keyword">if</span> (<a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#45762" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="IterableTemplate.scala.html#17298" title="=&gt; A">head</a>)) <span title="Nothing" class="keyword">return</span> <a href="../../Option.scala.html#19800" title="(x: A)Some[A]">Some</a>(<a href="#45762" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="IterableTemplate.scala.html#17298" title="=&gt; A">head</a>)
+      <a href="#45762" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a> = <a href="#45762" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="TraversableTemplate.scala.html#17213" title="=&gt; This">tail</a>
+    }
+    <a href="../../Option.scala.html#463" title="object None">None</a>
+  }
+
+  /** Combines the elements of this list together using the binary
+   *  function &lt;code&gt;f&lt;/code&gt;, from left to right, and starting with
+   *  the value &lt;code&gt;z&lt;/code&gt;.
+   *
+   *  @return &lt;code&gt;f(... (f(f(z, a&lt;sub&gt;0&lt;/sub&gt;), a&lt;sub&gt;1&lt;/sub&gt;) ...),
+   *          a&lt;sub&gt;n&lt;/sub&gt;)&lt;/code&gt; if the list is
+   *          &lt;code&gt;[a&lt;sub&gt;0&lt;/sub&gt;, a&lt;sub&gt;1&lt;/sub&gt;, ..., a&lt;sub&gt;n&lt;/sub&gt;]&lt;/code&gt;.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[B](z: B)(f: (B, A) =&gt; B)B" id="19409">foldLeft</a>[<a title="&gt;: Nothing &lt;: Any" id="19411">B</a>](<a title="B" id="45778">z</a>: <a href="#19411" title="B">B</a>)(<a title="(B, A) =&gt; B" id="45779">f</a>: (B, A) =&gt; B): <a href="#19411" title="B">B</a> = {
+    <span class="keyword">var</span> <a title="B" id="45788">acc</a> = <a href="#45778" title="B">z</a>
+    <span class="keyword">var</span> <a title="scala.collection.generic.LinearSequenceTemplate[A,This]" id="45789">these</a> = <a href="#10703" title="scala.collection.generic.LinearSequenceTemplate[A,This]" class="keyword">this</a>
+    <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span><a href="#45789" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#45790" title="()Unit">{</a>
+      <a href="#45788" title="B">acc</a> = <a href="../../Function2.scala.html#20443" title="(v1: B,v2: A)B">f</a>(<a href="#45788" title="B">acc</a>, <a href="#45789" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="IterableTemplate.scala.html#17298" title="=&gt; A">head</a>)
+      <a href="#45789" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a> = <a href="#45789" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="TraversableTemplate.scala.html#17213" title="=&gt; This">tail</a>
+    }
+    <a href="#45788" title="B">acc</a>
+  }
+
+  /** Combines the elements of this list together using the binary
+   *  function &lt;code&gt;f&lt;/code&gt;, from right to left, and starting with
+   *  the value &lt;code&gt;z&lt;/code&gt;.
+   *
+   *  @return &lt;code&gt;f(a&lt;sub&gt;0&lt;/sub&gt;, f(a&lt;sub&gt;1&lt;/sub&gt;, f(..., f(a&lt;sub&gt;n&lt;/sub&gt;, z)...)))&lt;/code&gt;
+   *          if the list is &lt;code&gt;[a&lt;sub&gt;0&lt;/sub&gt;, a1, ..., a&lt;sub&gt;n&lt;/sub&gt;]&lt;/code&gt;.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[B](z: B)(f: (A, B) =&gt; B)B" id="19412">foldRight</a>[<a title="&gt;: Nothing &lt;: Any" id="19414">B</a>](<a title="B" id="45800">z</a>: <a href="#19414" title="B">B</a>)(<a title="(A, B) =&gt; B" id="45801">f</a>: (A, B) =&gt; B): <a href="#19414" title="B">B</a> = 
+    <span title="B" class="keyword">if</span> (<a href="#10703" title="LinearSequenceTemplate.this.type" class="keyword">this</a>.<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#45800" title="B">z</a>
+    <span class="keyword">else</span> <a href="../../Function2.scala.html#20443" title="(v1: A,v2: B)B">f</a>(<a href="IterableTemplate.scala.html#17298" title="=&gt; A">head</a>, <a href="TraversableTemplate.scala.html#17213" title="=&gt; This">tail</a>.<a href="#19412" title="(z: B)(f: (A, B) =&gt; B)B">foldRight</a>(<a href="#45800" title="B">z</a>)(<a href="#45801" title="(A, B) =&gt; B">f</a>))
+
+  /** Combines the elements of this list together using the binary
+   *  operator &lt;code&gt;op&lt;/code&gt;, from left to right
+   *  @param op  The operator to apply
+   *  @return &lt;code&gt;op(... op(a&lt;sub&gt;0&lt;/sub&gt;,a&lt;sub&gt;1&lt;/sub&gt;), ..., a&lt;sub&gt;n&lt;/sub&gt;)&lt;/code&gt; 
+      if the list has elements
+   *          &lt;code&gt;a&lt;sub&gt;0&lt;/sub&gt;, a&lt;sub&gt;1&lt;/sub&gt;, ..., a&lt;sub&gt;n&lt;/sub&gt;&lt;/code&gt;.
+   *  @throws Predef.UnsupportedOperationException if the list is empty.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[B &gt;: A](f: (B, A) =&gt; B)B" id="19415">reduceLeft</a>[<a title="&gt;: A &lt;: Any" id="19417">B</a> &gt;: A](<a title="(B, A) =&gt; B" id="45851">f</a>: (B, A) =&gt; B): <a href="#19417" title="B">B</a> = 
+    <span title="B" class="keyword">if</span> (<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.UnsupportedOperationException" class="keyword">new</span> <a href="../../Predef.scala.html#16169" title="java.lang.UnsupportedOperationException">UnsupportedOperationException</a>(<span title="java.lang.String(&quot;empty.reduceLeft&quot;)" class="string">&quot;empty.reduceLeft&quot;</span>)
+    <span class="keyword">else</span> <a href="TraversableTemplate.scala.html#17213" title="=&gt; This">tail</a>.<a href="#19409" title="[B](z: B)(f: (B, A) =&gt; B)B">foldLeft</a><span title="(z: B)(f: (B, A) =&gt; B)B">[</span><a href="#19417" title="B">B</a>](<a href="IterableTemplate.scala.html#17298" title="=&gt; A">head</a>)(<a href="#45851" title="(B, A) =&gt; B">f</a>)
+
+  /** Combines the elements of this iterable object together using the binary
+   *  operator &lt;code&gt;op&lt;/code&gt;, from right to left
+   *  @note Will not terminate for infinite-sized collections.
+   *  @param op  The operator to apply
+   *
+   *  @return &lt;code&gt;a&lt;sub&gt;0&lt;/sub&gt; op (... op (a&lt;sub&gt;n-1&lt;/sub&gt; op a&lt;sub&gt;n&lt;/sub&gt;)...)&lt;/code&gt;
+   *          if the iterable object has elements &lt;code&gt;a&lt;sub&gt;0&lt;/sub&gt;, a&lt;sub&gt;1&lt;/sub&gt;, ...,
+   *          a&lt;sub&gt;n&lt;/sub&gt;&lt;/code&gt;.
+   *
+   *  @throws Predef.UnsupportedOperationException if the iterator is empty.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[B &gt;: A](op: (A, B) =&gt; B)B" id="19418">reduceRight</a>[<a title="&gt;: A &lt;: Any" id="19420">B</a> &gt;: A](<a title="(A, B) =&gt; B" id="45887">op</a>: (A, B) =&gt; B): <a href="#19420" title="B">B</a> = 
+    <span title="B" class="keyword">if</span> (<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.UnsupportedOperationException" class="keyword">new</span> <a href="../../Predef.scala.html#16169" title="java.lang.UnsupportedOperationException">UnsupportedOperationException</a>(<span title="java.lang.String(&quot;Nil.reduceRight&quot;)" class="string">&quot;Nil.reduceRight&quot;</span>)
+    <span class="keyword">else</span> <span title="B" class="keyword">if</span> (<a href="TraversableTemplate.scala.html#17213" title="=&gt; This">tail</a>.<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="IterableTemplate.scala.html#17298" title="=&gt; A">head</a>
+    <span class="keyword">else</span> <a href="../../Function2.scala.html#20443" title="(v1: A,v2: B)B">op</a>(<a href="IterableTemplate.scala.html#17298" title="=&gt; A">head</a>, <a href="TraversableTemplate.scala.html#17213" title="=&gt; This">tail</a>.<a href="#19418" title="(op: (A, B) =&gt; B)B">reduceRight</a>(<a href="#45887" title="(A, B) =&gt; B">op</a>))
+  
+  /** The last element of this linear sequence.
+   *
+   *  @throws Predef.NoSuchElementException if the linear sequence is empty.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; A" id="19421">last</a>: <a href="#11865" title="A">A</a> = {
+    <span title="Unit" class="keyword">if</span> (<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <span title="Nothing" class="keyword">throw</span> <span title="java.util.NoSuchElementException" class="keyword">new</span> <a href="../../Predef.scala.html#16171" title="java.util.NoSuchElementException">NoSuchElementException</a>
+    <span class="keyword">var</span> <a title="scala.collection.generic.LinearSequenceTemplate[A,This]" id="45938">these</a> = <a href="#10703" title="scala.collection.generic.LinearSequenceTemplate[A,This]" class="keyword">this</a>
+    <span class="keyword">var</span> <a title="This" id="45939">nx</a> = <a href="#45938" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="TraversableTemplate.scala.html#17213" title="=&gt; This">tail</a>
+    <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span><a href="#45939" title="This">nx</a>.<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#45940" title="()Unit">{</a>
+      <a href="#45938" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a> = <a href="#45939" title="This">nx</a>
+      <a href="#45939" title="This">nx</a> = <a href="#45939" title="This">nx</a>.<a href="TraversableTemplate.scala.html#17213" title="=&gt; This">tail</a>
+    }
+    <a href="#45938" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="IterableTemplate.scala.html#17298" title="=&gt; A">head</a>
+  }
+  
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(n: Int)This" id="19422">take</a>(<a title="Int" id="45955">n</a>: <span title="Int">Int</span>): <a href="#11866" title="This">This</a> = {
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[A,This]" id="45957">b</a> = <a href="TraversableTemplate.scala.html#17131" title="=&gt; scala.collection.generic.Builder[A,This]">newBuilder</a>
+    <span class="keyword">var</span> <a title="Int" id="45958">i</a> = <span title="Int(0)" class="int">0</span>
+    <span class="keyword">var</span> <a title="scala.collection.generic.LinearSequenceTemplate[A,This]" id="45959">these</a> = <a href="#10703" title="scala.collection.generic.LinearSequenceTemplate[A,This]" class="keyword">this</a>
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">!</span><a href="#45959" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a> &amp;&amp; <a href="#45958" title="(x$1: Int)Boolean" id="2954">i</a> &lt; <a href="#45955" title="Int">n</a>) <a href="#45960" title="()Unit">{</a>
+      <a href="#45958" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+      <a href="Builder.scala.html#19589" title="(elem: A)b.type">b</a> += <a href="#45959" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="IterableTemplate.scala.html#17298" title="=&gt; A">head</a>
+      <a href="#45959" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a> = <a href="#45959" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="TraversableTemplate.scala.html#17213" title="=&gt; This">tail</a>
+    }
+    <a href="#45957" title="scala.collection.generic.Builder[A,This]">b</a>.<a href="Builder.scala.html#19591" title="()This">result</a>
+  }
+  
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(n: Int)This" id="19423">drop</a>(<a title="Int" id="45619">n</a>: <span title="Int">Int</span>): <a href="#11866" title="This">This</a> = {
+    <span class="keyword">var</span> <a title="This" id="46032">these</a>: <a href="#11866" title="This">This</a> = <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+    <span class="keyword">var</span> <a title="Int" id="46033">count</a> = <a href="#45619" title="Int">n</a>
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">!</span><a href="#46032" title="This">these</a>.<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a> &amp;&amp; <a href="#46033" title="(x$1: Int)Boolean">count</a> &gt; <span title="Int(0)" class="int">0</span>) <a href="#46034" title="()Unit">{</a>
+      <a href="#46032" title="This">these</a> = <a href="#46032" title="This">these</a>.<a href="TraversableTemplate.scala.html#17213" title="=&gt; This">tail</a>
+      <a href="#46033" title="Int">count</a> -= <span title="Int(1)" class="int">1</span>
+    }
+    <a href="#46032" title="This">these</a>
+  }
+  
+  /** Returns the rightmost &lt;code&gt;n&lt;/code&gt; elements from this iterable.
+   *  @param n the number of elements to take
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(n: Int)This" id="19424">dropRight</a>(<a title="Int" id="46079">n</a>: <span title="Int">Int</span>): <a href="#11866" title="This">This</a> = {
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[A,This]" id="46083">b</a> = <a href="TraversableTemplate.scala.html#17131" title="=&gt; scala.collection.generic.Builder[A,This]">newBuilder</a>
+    <span class="keyword">var</span> <a title="scala.collection.generic.LinearSequenceTemplate[A,This]" id="46084">these</a> = <a href="#10703" title="scala.collection.generic.LinearSequenceTemplate[A,This]" class="keyword">this</a>
+    <span class="keyword">var</span> <a title="This" id="46085">lead</a> = <a href="#19423" title="(n: Int)This" class="keyword">this</a> drop <a href="#46079" title="Int">n</a>
+    <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span><a href="#46085" title="This">lead</a>.<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#46086" title="()Unit">{</a>
+      <a href="Builder.scala.html#19589" title="(elem: A)b.type">b</a> += <a href="#46084" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="IterableTemplate.scala.html#17298" title="=&gt; A">head</a>
+      <a href="#46084" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a> = <a href="#46084" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="TraversableTemplate.scala.html#17213" title="=&gt; This">tail</a>
+      <a href="#46085" title="This">lead</a> = <a href="#46085" title="This">lead</a>.<a href="TraversableTemplate.scala.html#17213" title="=&gt; This">tail</a>
+    }
+    <a href="#46083" title="scala.collection.generic.Builder[A,This]">b</a>.<a href="Builder.scala.html#19591" title="()This">result</a>
+  }
+
+  /** Returns a pair consisting of the longest prefix of the linear sequence whose
+   *  elements all satisfy the given predicate, and the rest of the linear sequence.
+   *
+   *  @param p the test predicate
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)(This, This)" id="19425">span</a>(<a title="(A) =&gt; Boolean" id="46116">p</a>: A =&gt; Boolean): <a href="../../Tuple2.scala.html#1152" title="(This, This)">(</a>This, This) = {
+    <span class="keyword">var</span> <a title="This" id="46121">these</a>: <a href="#11866" title="This">This</a> = <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[A,This]" id="46122">b</a> = <a href="TraversableTemplate.scala.html#17131" title="=&gt; scala.collection.generic.Builder[A,This]">newBuilder</a>
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">!</span><a href="#46121" title="This">these</a>.<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a> &amp;&amp; <a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#46121" title="This">these</a>.<a href="IterableTemplate.scala.html#17298" title="=&gt; A">head</a>)) <a href="#46123" title="()Unit">{</a>
+      <a href="Builder.scala.html#19589" title="(elem: A)b.type">b</a> += <a href="#46121" title="This">these</a>.<a href="IterableTemplate.scala.html#17298" title="=&gt; A">head</a>
+      <a href="#46121" title="This">these</a> = <a href="#46121" title="This">these</a>.<a href="TraversableTemplate.scala.html#17213" title="=&gt; This">tail</a>
+    }
+    <a href="../../Tuple2.scala.html#20670" title="(_1: This,_2: This)(This, This)">(</a><a href="#46122" title="scala.collection.generic.Builder[A,This]">b</a>.<a href="Builder.scala.html#19591" title="()This">result</a>, <a href="#46121" title="This">these</a>)
+  }  
+
+  /** Returns true iff the other linear sequence contains the same elements as this one.
+   *
+   *  @note will not terminate for two infinite-sized linear sequences.
+   *  @param that  the other linear sequence
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[B &gt;: A](that: Iterable[B])Boolean" id="19426">sameElements</a>[<a title="&gt;: A &lt;: Any" id="19428">B</a> &gt;: A](<a title="Iterable[B]" id="46164">that</a>: <a href="../Iterable.scala.html#4460" title="Iterable[B]">Iterable</a>[B]): <span title="Boolean">Boolean</span> = <a href="#46164" title="Iterable[B]">that</a> <span title="Boolean" class="keyword">match</span> {
+    <span title="Boolean" class="keyword">case</span> <a title="scala.collection.LinearSequence[_]" id="46171">that1</a>: <a href="../LinearSequence.scala.html#4262" title="scala.collection.LinearSequence[_]">LinearSequence</a>[_] =&gt;
+      // !!! todo: do the LinearSequence methods need to assume null might be
+      // used to indicate termination or not? The fact that null is checked for
+      // here would seem to indicate &quot;yes&quot;, but the comment in LinkedListTemplate is
+      //   !!! todo: integrate with LinearSequence, need to drop null then.
+      // which contradicts the need for null checking here in two different ways:
+      //   1) LinkedList does not currently inherit from LinearSequenceTemplate
+      //   2) According to that comment, if it does it will stop using null
+      //      (but what is the alternative?)
+      <span class="keyword">def</span> <a title="(xs: scala.collection.LinearSequence[_])Boolean" id="46173">isEmpty</a>(<a title="scala.collection.LinearSequence[_]" id="46177">xs</a>: <a href="../LinearSequence.scala.html#4262" title="scala.collection.LinearSequence[_]">LinearSequence</a>[_]) = <a href="#46177" title="(x$1: AnyRef)Boolean" id="3624">xs</a> <a title="(x$1: Boolean)Boolean" id="2208">==</a> <span title="Null(null)" class="keyword">null</span> || <a href="#46177" title="scala.collection.LinearSequence[_]">xs</a>.<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>
+      <span class="keyword">var</span> <a title="This" id="46174">these</a> = <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+      <span class="keyword">var</span> <a title="scala.collection.LinearSequence[_]" id="46175">those</a> = <a href="#46171" title="scala.collection.LinearSequence[_]">that1</a>
+      
+      <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">!</span><a href="#46173" title="(xs: scala.collection.LinearSequence[_])Boolean">isEmpty</a>(<a href="#46174" title="This">these</a>) <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <span title="=&gt; Boolean">!</span><a href="#46173" title="(xs: scala.collection.LinearSequence[_])Boolean">isEmpty</a>(<a href="#46175" title="scala.collection.LinearSequence[_]">those</a>) &amp;&amp; <a href="#46174" title="This">these</a>.<a href="IterableTemplate.scala.html#17298" title="(x$1: Any)Boolean" id="3610">head</a> == <a href="#46175" title="scala.collection.LinearSequence[_]">those</a>.<a href="IterableTemplate.scala.html#17298" title="=&gt; _">head</a>) <a href="#46176" title="()Unit">{</a>
+        <a href="#46174" title="This">these</a> = <a href="#46174" title="This">these</a>.<a href="TraversableTemplate.scala.html#17213" title="=&gt; This">tail</a>
+        <a href="#46175" title="scala.collection.LinearSequence[_]">those</a> = <a href="#46175" title="scala.collection.LinearSequence[_]">those</a>.<a href="TraversableTemplate.scala.html#17213" title="=&gt; scala.collection.LinearSequence[_]">tail</a>
+      }
+      <a href="#46173" title="(xs: scala.collection.LinearSequence[_])Boolean">isEmpty</a><span title="(x$1: Boolean)Boolean">(</span><a href="#46174" title="This">these</a>) &amp;&amp; <a href="#46173" title="(xs: scala.collection.LinearSequence[_])Boolean">isEmpty</a>(<a href="#46175" title="scala.collection.LinearSequence[_]">those</a>)
+    <span title="Boolean" class="keyword">case</span> _ =&gt; <a href="#270105" title="[B &gt;: A](that: Iterable[B])Boolean" class="keyword">super</a>.<a title="[B &gt;: A](that: Iterable[B])Boolean" id="270105">sameElements</a>(<a href="#46164" title="Iterable[B]">that</a>)
+  }
+  
+  // Overridden methods from Sequence
+
+  /** Result of comparing &lt;code&gt;length&lt;/code&gt; with operand &lt;code&gt;len&lt;/code&gt;.
+   *  returns &lt;code&gt;x&lt;/code&gt; where
+   *  &lt;code&gt;x &amp;lt; 0&lt;/code&gt;    iff    &lt;code&gt;this.length &amp;lt; len&lt;/code&gt;
+   *  &lt;code&gt;x == 0&lt;/code&gt;   iff    &lt;code&gt;this.length == len&lt;/code&gt;
+   *  &lt;code&gt;x &amp;gt; 0&lt;/code&gt;    iff    &lt;code&gt;this.length &amp;gt; len&lt;/code&gt;.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(len: Int)Int" id="19429">lengthCompare</a>(<a title="Int" id="46219">len</a>: <span title="Int">Int</span>): <span title="Int">Int</span> =  {
+    <span class="keyword">var</span> <a title="Int" id="46223">i</a> = <span title="Int(0)" class="int">0</span>
+    <span class="keyword">var</span> <a title="scala.collection.generic.LinearSequenceTemplate[A,This]" id="46224">these</a> = <a href="#10703" title="scala.collection.generic.LinearSequenceTemplate[A,This]">self</a>
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">!</span><a href="#46224" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a> &amp;&amp; <a href="#46223" title="(x$1: Int)Boolean">i</a> &lt;= <a href="#46219" title="Int">len</a>) <a href="#46225" title="()Unit">{</a>
+      <a href="#46223" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+      <a href="#46224" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a> = <a href="#46224" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="TraversableTemplate.scala.html#17213" title="=&gt; This">tail</a>
+    }
+    <a href="#46223" title="(x$1: Int)Int">i</a> - <a href="#46219" title="Int">len</a>
+  }
+
+  /** Is this partial function defined for the index &lt;code&gt;x&lt;/code&gt;?
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(x: Int)Boolean" id="19430">isDefinedAt</a>(<a title="Int" id="46290">x</a>: <span title="Int">Int</span>): <span title="Boolean">Boolean</span> = <a href="#46290" title="(x$1: Int)Boolean" id="2960">x</a> <span title="(x$1: Boolean)Boolean">&gt;=</span> <span title="Int(0)" class="int">0</span> &amp;&amp; <a href="#19429" title="(len: Int)Int">lengthCompare</a><span title="(x$1: Int)Boolean">(</span><a href="#46290" title="Int">x</a>) &gt; <span title="Int(0)" class="int">0</span>
+
+  /** Returns length of longest segment starting from a start index `from`
+   *  such that every element of the segment satisfies predicate `p`.
+   *  @note may not terminate for infinite-sized collections.
+   *  @param  p the predicate
+   *  @param  from  the start index
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean,from: Int)Int" id="19431">segmentLength</a>(<a title="(A) =&gt; Boolean" id="46308">p</a>: A =&gt; Boolean, <a title="Int" id="46309">from</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = {
+    <span class="keyword">var</span> <a title="Int" id="46313">i</a> = <span title="Int(0)" class="int">0</span>
+    <span class="keyword">var</span> <a title="This" id="46314">these</a> = <a href="#19423" title="(n: Int)This" class="keyword">this</a> drop <a href="#46309" title="Int">from</a>
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">!</span><a href="#46314" title="This">these</a>.<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a> &amp;&amp; <a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#46314" title="This">these</a>.<a href="IterableTemplate.scala.html#17298" title="=&gt; A">head</a>)) <a href="#46315" title="()Unit">{</a>
+      <a href="#46313" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+      <a href="#46314" title="This">these</a> = <a href="#46314" title="This">these</a>.<a href="TraversableTemplate.scala.html#17213" title="=&gt; This">tail</a>
+    }
+    <a href="#46313" title="Int">i</a>
+  }
+
+  /** Returns index of the first element starting from a start index
+   *  satisying a predicate, or -1, if none exists.
+   *
+   *  @note may not terminate for infinite-sized linear sequences.
+   *  @param  p the predicate
+   *  @param  from  the start index
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean,from: Int)Int" id="19432">indexWhere</a>(<a title="(A) =&gt; Boolean" id="46362">p</a>: A =&gt; Boolean, <a title="Int" id="46363">from</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = {
+    <span class="keyword">var</span> <a title="Int" id="46374">i</a> = <a href="#46363" title="Int">from</a>
+    <span class="keyword">var</span> <a title="This" id="46375">these</a> = <a href="#19423" title="(n: Int)This" class="keyword">this</a> drop <a href="#46363" title="Int">from</a>
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">!</span><a href="#46375" title="This">these</a>.<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a> &amp;&amp; <span title="=&gt; Boolean">!</span><a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#46375" title="This">these</a>.<a href="IterableTemplate.scala.html#17298" title="=&gt; A">head</a>)) <a href="#46376" title="()Unit">{</a>
+      <a href="#46374" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+      <a href="#46375" title="This">these</a> = <a href="#46375" title="This">these</a>.<a href="TraversableTemplate.scala.html#17213" title="=&gt; This">tail</a>
+    }
+    <span title="Int" class="keyword">if</span> (<a href="#46375" title="This">these</a>.<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <span title="Int(-1)">-</span><span class="int">1</span> <span class="keyword">else</span> <a href="#46374" title="Int">i</a>
+  }
+
+  /** Returns index of the last element satisying a predicate, or -1, if none exists.
+   *
+   *  @param  p the predicate
+   *  @return   the index of the last element satisfying &lt;code&gt;p&lt;/code&gt;,
+   *            or -1 if such an element does not exist
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean,end: Int)Int" id="19433">lastIndexWhere</a>(<a title="(A) =&gt; Boolean" id="46424">p</a>: A =&gt; Boolean, <a title="Int" id="46425">end</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = {
+    <span class="keyword">var</span> <a title="Int" id="46436">i</a> = <span title="Int(0)" class="int">0</span>
+    <span class="keyword">var</span> <a title="scala.collection.generic.LinearSequenceTemplate[A,This]" id="46437">these</a> = <a href="#10703" title="scala.collection.generic.LinearSequenceTemplate[A,This]" class="keyword">this</a>
+    <span class="keyword">var</span> <a title="Int" id="46438">last</a> = <span title="Int(-1)">-</span><span class="int">1</span>
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">!</span><a href="#46437" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a> &amp;&amp; <a href="#46436" title="(x$1: Int)Boolean">i</a> &lt;= <a href="#46425" title="Int">end</a>) <a href="#46439" title="()Unit">{</a>
+      <span title="Unit" class="keyword">if</span> (<a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#46437" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="IterableTemplate.scala.html#17298" title="=&gt; A">head</a>)) <a href="#46438" title="Int">last</a> = <a href="#46436" title="Int">i</a>
+      <a href="#46437" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a> = <a href="#46437" title="scala.collection.generic.LinearSequenceTemplate[A,This]">these</a>.<a href="TraversableTemplate.scala.html#17213" title="=&gt; This">tail</a>
+      <a href="#46436" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+    }
+    <a href="#46438" title="Int">last</a>
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(that: Any)Boolean" id="19434">equals</a>(<a title="Any" id="46490">that</a>: <a title="Any" id="47">Any</a>): <span title="Boolean">Boolean</span> = <a href="#46490" title="Any">that</a> <span title="Boolean" class="keyword">match</span> {
+    <span title="Boolean" class="keyword">case</span> <a title="scala.collection.LinearSequence[_]" id="46492">that</a>: <a href="../LinearSequence.scala.html#4262" title="scala.collection.LinearSequence[_]">LinearSequence</a>[_]  =&gt; <a href="#19426" title="(that: Iterable[Any])Boolean" class="keyword">this</a> sameElements <a href="#46492" title="scala.collection.LinearSequence[_]">that</a>
+    <span title="Boolean" class="keyword">case</span> _                        =&gt; <a href="#270111" title="(that: Any)Boolean" class="keyword">super</a>.<a title="(that: Any)Boolean" id="270111">equals</a>(<a href="#46490" title="Any">that</a>)
+  }
+}
+
+        </pre>
+    </body>
+</html>

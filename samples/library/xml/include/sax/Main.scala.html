@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>xml/include/sax/Main.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: Main.scala 18387 2009-07-24 15:28:37Z odersky $
+
+<span class="keyword">package</span> scala.xml
+<span class="keyword">package</span> include.sax
+<span class="keyword">import</span> scala.xml.include._
+
+<span class="keyword">import</span> org.xml.sax.SAXException
+<span class="keyword">import</span> org.xml.sax.SAXParseException
+<span class="keyword">import</span> org.xml.sax.EntityResolver
+<span class="keyword">import</span> org.xml.sax.helpers.XMLReaderFactory
+<span class="keyword">import</span> org.xml.sax.XMLReader
+
+<span class="keyword">object</span> <a title="object scala.xml.include.sax.Main" id="9907">Main</a> <a href="../../../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  
+    /**
+      * The driver method for xinc
+      * Output is written to System.out via Conolse
+      * &lt;/p&gt;
+      *
+      * @param args  contains the URLs and/or filenames
+      *              of the documents to be procesed.
+      */
+    <span class="keyword">def</span> <a title="(args: Array[String])Unit" id="23969">main</a>(<a title="Array[String]" id="23973">args</a>: <a href="../../../Array.scala.html#885" title="Array[String]">Array</a>[String]) {
+      <span class="keyword">var</span> <a title="org.xml.sax.XMLReader" id="23975">parser</a>: <a title="org.xml.sax.XMLReader" id="23919">XMLReader</a> = <span title="Null(null)" class="keyword">null</span>
+      <span class="keyword">var</span> <a title="Boolean" id="23976">err</a> = <span title="Boolean(false)" class="keyword">false</span>
+      <span class="keyword">try</span> {
+        <a href="#23975" title="org.xml.sax.XMLReader">parser</a> = <span title="object org.xml.sax.helpers.XMLReaderFactory">XMLReaderFactory</span>.<a title="()org.xml.sax.XMLReader" id="24005">createXMLReader</a>()
+      } 
+      <span class="keyword">catch</span> { 
+        <span title="Unit" class="keyword">case</span> <a title="org.xml.sax.SAXException" id="24021">e</a>:<span title="org.xml.sax.SAXException">SAXException</span> =&gt;
+          <span class="keyword">try</span> {
+            <a href="#23975" title="org.xml.sax.XMLReader">parser</a> = <span title="object org.xml.sax.helpers.XMLReaderFactory">XMLReaderFactory</span>.<a title="(x$1: java.lang.String)org.xml.sax.XMLReader" id="24006">createXMLReader</a>(
+              <span title="java.lang.String(&quot;org.apache.xerces.parsers.SAXParser&quot;)" class="string">&quot;org.apache.xerces.parsers.SAXParser&quot;</span>)
+          } <span class="keyword">catch</span> {
+            <span title="Unit" class="keyword">case</span> <a title="org.xml.sax.SAXException" id="24039">e2</a>:<span title="org.xml.sax.SAXException">SAXException</span> =&gt;
+              <span title="object java.lang.System">System</span>.<span title="java.io.PrintStream">err</span>.<span title="(x$1: java.lang.String)Unit">println</span>(<span title="java.lang.String(&quot;Could not find an XML parser&quot;)" class="string">&quot;Could not find an XML parser&quot;</span>)
+              <a href="#23976" title="Boolean">err</a> = <span title="Boolean(true)" class="keyword">true</span>
+          }
+      }
+
+      <span title="Unit" class="keyword">if</span>(<a href="#23976" title="Boolean">err</a>) <span title="Nothing" class="keyword">return</span>;
+      // Need better namespace handling
+      <span class="keyword">try</span> {
+        <a href="#23975" title="org.xml.sax.XMLReader">parser</a>.<a title="(x$1: java.lang.String,x$2: Boolean)Unit" id="23981">setFeature</a>(<span title="java.lang.String(&quot;http://xml.org/sax/features/namespace-prefixes&quot;)" class="string">&quot;http://xml.org/sax/features/namespace-prefixes&quot;</span>, <span title="Boolean(true)" class="keyword">true</span>);
+      }
+      <span class="keyword">catch</span> { 
+        <span title="Unit" class="keyword">case</span> <a title="org.xml.sax.SAXException" id="24369">e</a>:<span title="org.xml.sax.SAXException">SAXException</span> =&gt;
+          <span title="object java.lang.System">System</span>.<span title="java.io.PrintStream">err</span>.<span title="(x$1: Any)Unit">println</span>(<a href="#24369" title="org.xml.sax.SAXException">e</a>)
+          <a href="#23976" title="Boolean">err</a> = <span title="Boolean(true)" class="keyword">true</span>
+      }   
+      <span title="Unit" class="keyword">if</span> (<a href="#23976" title="Boolean">err</a>) <span title="Nothing" class="keyword">return</span>
+      
+      <span title="Unit" class="keyword">if</span> (<a href="#23973" title="Array[String]">args</a>.<a href="../../../Array.scala.html#17715" title="(x$1: Int)Boolean" id="2950">length</a> == <span title="Int(0)" class="int">0</span>) <span title="Nothing" class="keyword">return</span>
+      <span class="keyword">var</span> <a title="org.xml.sax.EntityResolver" id="23977">resolver</a>: <span title="org.xml.sax.EntityResolver">EntityResolver</span> = <span title="Null(null)" class="keyword">null</span>
+      <span class="keyword">var</span> <a title="Int" id="23978">arg</a>: <a title="Int" id="2175">Int</a> = <span title="Int(0)" class="int">0</span>
+      <span title="Unit" class="keyword">if</span> (<a href="../../../Array.scala.html#17716" title="(i: Int)String">args</a>(<span title="Int(0)" class="int">0</span>).<a title="(x$1: Any)Boolean" id="6936">equals</a>(<span title="java.lang.String(&quot;-r&quot;)" class="string">&quot;-r&quot;</span>)) {
+        <span class="keyword">try</span> {
+          <a href="#23977" title="org.xml.sax.EntityResolver">resolver</a> = <a title="object java.lang.Class" id="1415">Class</a>.<a title="(x$1: java.lang.String)java.lang.Class[_]" id="4080">forName</a>(<a href="../../../Array.scala.html#17716" title="(i: Int)String">args</a>(<span title="Int(1)" class="int">1</span>)).<a title="()?0" id="4094">newInstance</a>().<a title="[T0]T0" id="3621">asInstanceOf</a><span title="org.xml.sax.EntityResolver">[</span><span title="org.xml.sax.EntityResolver">EntityResolver</span>];
+          <a href="#23975" title="org.xml.sax.XMLReader">parser</a>.<a title="(x$1: org.xml.sax.EntityResolver)Unit" id="23989">setEntityResolver</a>(<a href="#23977" title="org.xml.sax.EntityResolver">resolver</a>);
+        }
+        <span class="keyword">catch</span> { 
+          <span title="Unit" class="keyword">case</span> <a title="Exception" id="25166">ex</a>:<span title="Exception">Exception</span> =&gt; 
+            <span title="object java.lang.System">System</span>.<span title="java.io.PrintStream">err</span>.<span title="(x$1: java.lang.String)Unit">println</span>(<span title="java.lang.String(&quot;Could not load requested EntityResolver&quot;)" class="string">&quot;Could not load requested EntityResolver&quot;</span>)
+            <a href="#23976" title="Boolean">err</a> = <span title="Boolean(true)" class="keyword">true</span>
+        }
+        <a href="#23978" title="Int">arg</a> = <span title="Int(2)" class="int">2</span>
+      }
+      <span title="Unit" class="keyword">if</span> (<a href="#23976" title="Boolean">err</a>) <span title="Nothing" class="keyword">return</span>
+      
+      <span title="Unit" class="keyword">while</span> (<a href="#23978" title="(x$1: Int)Boolean" id="2954">arg</a> &lt; <a href="#23973" title="Array[String]">args</a>.<a href="../../../Array.scala.html#17715" title="=&gt; Int">length</a>) <a href="#25173" title="()Unit">{</a>
+        <span class="keyword">try</span> {
+          <span class="keyword">val</span> <a title="scala.xml.include.sax.XIncludeFilter" id="25180">includer</a> = <span title="scala.xml.include.sax.XIncludeFilter" class="keyword">new</span> <a href="XIncludeFilter.scala.html#9909" title="scala.xml.include.sax.XIncludeFilter">XIncludeFilter</a>();
+          <a href="#25180" title="scala.xml.include.sax.XIncludeFilter">includer</a>.<a title="(x$1: org.xml.sax.XMLReader)Unit" id="25185">setParent</a>(<a href="#23975" title="org.xml.sax.XMLReader">parser</a>)
+          <span class="keyword">val</span> <a title="scala.xml.include.sax.XIncluder" id="25181">s</a> = <span title="scala.xml.include.sax.XIncluder" class="keyword">new</span> <a href="XIncluder.scala.html#9903" title="scala.xml.include.sax.XIncluder">XIncluder</a>(<span title="object java.lang.System">System</span>.<a title="java.io.PrintStream" id="24041">out</a>, <span title="java.lang.String(&quot;UTF-8&quot;)" class="string">&quot;UTF-8&quot;</span>)
+          <a href="#25180" title="scala.xml.include.sax.XIncludeFilter">includer</a>.<a title="(x$1: org.xml.sax.ContentHandler)Unit" id="25204">setContentHandler</a>(<a href="#25181" title="scala.xml.include.sax.XIncluder">s</a>)
+          <span title="Unit" class="keyword">if</span> (<a href="#23977" title="(x$1: AnyRef)Boolean" id="6529">resolver</a> != <span title="Null(null)" class="keyword">null</span>) <a href="#25180" title="scala.xml.include.sax.XIncludeFilter">includer</a>.<a title="(x$1: org.xml.sax.EntityResolver)Unit" id="25198">setEntityResolver</a>(<a href="#23977" title="org.xml.sax.EntityResolver">resolver</a>)
+          <span class="keyword">try</span> {
+            <a href="#25180" title="scala.xml.include.sax.XIncludeFilter">includer</a>.<a title="(x$1: java.lang.String,x$2: Any)Unit" id="25193">setProperty</a>(
+              <span title="java.lang.String(&quot;http://xml.org/sax/properties/lexical-handler&quot;)" class="string">&quot;http://xml.org/sax/properties/lexical-handler&quot;</span>,
+              <a href="#25181" title="scala.xml.include.sax.XIncluder">s</a>)
+            <a href="#25181" title="scala.xml.include.sax.XIncluder">s</a>.<a href="XIncluder.scala.html#25419" title="(filter: scala.xml.include.sax.XIncludeFilter)Unit">setFilter</a>(<a href="#25180" title="scala.xml.include.sax.XIncludeFilter">includer</a>)
+          }
+          <span class="keyword">catch</span> { 
+            <span title="Unit" class="keyword">case</span> <a title="org.xml.sax.SAXException" id="25442">e</a>:<span title="org.xml.sax.SAXException">SAXException</span> =&gt; // Will not support comments
+          }
+          <a href="#25180" title="scala.xml.include.sax.XIncludeFilter">includer</a>.<a title="(x$1: java.lang.String)Unit" id="25212">parse</a>(<a href="../../../Array.scala.html#17716" title="(i: Int)String">args</a>(<a href="#23978" title="Int">arg</a>))
+        }
+        <span class="keyword">catch</span> { 
+          <span title="Unit" class="keyword">case</span> <a title="org.xml.sax.SAXParseException" id="25480">e</a>:<a title="org.xml.sax.SAXParseException" id="23886">SAXParseException</a> =&gt;
+            <span title="object java.lang.System">System</span>.<span title="java.io.PrintStream">err</span>.<span title="(x$1: Any)Unit">println</span>(<a href="#25480" title="org.xml.sax.SAXParseException">e</a>)
+            <span title="object java.lang.System">System</span>.<span title="java.io.PrintStream">err</span>.<span title="(x$1: java.lang.String)Unit">println</span>(<span title="(x$1: Any)java.lang.String" class="string">&quot;Problem in &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#25480" title="org.xml.sax.SAXParseException">e</a>.<a title="()java.lang.String" id="25503">getSystemId</a>() 
+                               <span title="(x$1: Any)java.lang.String">+</span> <span title="java.lang.String(&quot; at line &quot;)" class="string">&quot; at line &quot;</span> + <a href="#25480" title="org.xml.sax.SAXParseException">e</a>.<a title="()Int" id="25504">getLineNumber</a>())
+          <span title="Unit" class="keyword">case</span> <a title="Exception" id="25528">e</a>: <span title="Exception">Exception</span> =&gt; // be specific about exceptions????
+            <span title="object java.lang.System">System</span>.<span title="java.io.PrintStream">err</span>.<span title="(x$1: Any)Unit">println</span>(<a href="#25528" title="Exception">e</a>)
+            <a href="#25528" title="Exception">e</a>.<a title="()Unit" id="18918">printStackTrace</a>()
+        }
+        <a href="#23978" title="Int" id="2962">arg</a> += <span title="Int(1)" class="int">1</span>
+      }
+    }
+}
+
+        </pre>
+    </body>
+</html>

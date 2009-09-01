@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>xml/dtd/ContentModelParser.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://www.scala-lang.org/           **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: ContentModelParser.scala 18614 2009-08-31 10:27:23Z extempore $
+
+
+<span class="keyword">package</span> scala.xml
+<span class="keyword">package</span> dtd
+
+
+/** Parser for regexps (content models in DTD element declarations) */
+
+<span class="keyword">object</span> <a title="object scala.xml.dtd.ContentModelParser" id="11102">ContentModelParser</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="Scanner.scala.html#11026" title="scala.xml.dtd.Scanner">Scanner</a> { // a bit too permissive concerning #PCDATA
+  <span class="keyword">import</span> ContentModel._
+
+  /** parses the argument to a regexp */
+  <span class="keyword">def</span> <a title="(s: String)scala.xml.dtd.ContentModel" id="238733">parse</a>(<a title="String" id="238743">s</a>: <a title="String" id="1603">String</a>): <a href="ContentModel.scala.html#11092" title="scala.xml.dtd.ContentModel">ContentModel</a> = { <a href="Scanner.scala.html#231257" title="(s: String)Unit">initScanner</a>(<a href="#238743" title="String">s</a>); <a href="#238736" title="=&gt; scala.xml.dtd.ContentModel">contentspec</a> }
+
+  <span class="keyword">def</span> <a title="(tok: Int)Unit" id="238734">accept</a>(<a title="Int" id="266478">tok</a>: <a title="Int" id="2175">Int</a>) = {
+    <span title="Unit" class="keyword">if</span> (<a href="Scanner.scala.html#231245" title="(x$1: Int)Boolean">token</a> != <a href="#266478" title="Int">tok</a>) {
+      <span title="Nothing" class="keyword">if</span> (<a title="(x$1: Boolean)Boolean" id="2210">(</a><a href="#266478" title="(x$1: Int)Boolean">tok</a> == <span title="Int(6)">STAR</span>) &amp;&amp; (<a href="Scanner.scala.html#231245" title="(x$1: Int)Boolean">token</a> == <span title="Int(10)">END</span>))                  // common mistake
+        <a href="../../Predef.scala.html#16210" title="(message: String)Nothing">error</a>(<span class="string">&quot;in DTDs, \n&quot;</span><span title="java.lang.String(&quot;in DTDs, \012mixed content models must be like (#PCDATA|Name|Name|...)*&quot;)">+</span>
+              <span class="string">&quot;mixed content models must be like (#PCDATA|Name|Name|...)*&quot;</span>);
+      <span class="keyword">else</span>
+        <a href="../../Predef.scala.html#16210" title="(message: String)Nothing">error</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;expected &quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="Tokens.scala.html#121620" title="(i: Int)String">token2string</a>(<a href="#266478" title="Int">tok</a>)<span title="(x$1: Any)java.lang.String">+</span>
+              <span title="java.lang.String(&quot;, got unexpected token:&quot;)" class="string">&quot;, got unexpected token:&quot;</span>+<a href="Tokens.scala.html#121620" title="(i: Int)String">token2string</a>(<a href="Scanner.scala.html#231245" title="=&gt; Int">token</a>));
+    }
+    <a href="Scanner.scala.html#231258" title="=&gt; Unit">nextToken</a>
+  }
+
+  // s [ '+' | '*' | '?' ]
+  <span class="keyword">def</span> <a title="(s: scala.xml.dtd.ContentModel.RegExp)scala.xml.dtd.ContentModel.RegExp" id="238735">maybeSuffix</a>(<a title="scala.xml.dtd.ContentModel.RegExp" id="266521">s</a>: <a href="../../util/regexp/Base.scala.html#26757" title="scala.xml.dtd.ContentModel.RegExp">RegExp</a>) = <a href="Scanner.scala.html#231245" title="=&gt; Int">token</a> <span title="scala.xml.dtd.ContentModel.RegExp" class="keyword">match</span> {	
+    <span title="scala.xml.dtd.ContentModel.Star" class="keyword">case</span> <span title="Int(6)">STAR</span> =&gt; <a href="Scanner.scala.html#231258" title="=&gt; Unit">nextToken</a>; <a href="../../util/regexp/Base.scala.html#238763" title="(r: scala.xml.dtd.ContentModel._regexpT)scala.xml.dtd.ContentModel.Star">Star</a>(<a href="#266521" title="scala.xml.dtd.ContentModel.RegExp">s</a>) 
+    <span title="scala.xml.dtd.ContentModel.Sequ" class="keyword">case</span> <span title="Int(7)">PLUS</span> =&gt; <a href="Scanner.scala.html#231258" title="=&gt; Unit">nextToken</a>; <a href="../../util/regexp/Base.scala.html#132201" title="(rs: scala.xml.dtd.ContentModel._regexpT*)scala.xml.dtd.ContentModel.Sequ">Sequ</a>(<a href="#266521" title="scala.xml.dtd.ContentModel.RegExp">s</a>, <a href="../../util/regexp/Base.scala.html#238763" title="(r: scala.xml.dtd.ContentModel._regexpT)scala.xml.dtd.ContentModel.Star">Star</a>(<a href="#266521" title="scala.xml.dtd.ContentModel.RegExp">s</a>)) 
+    <span title="scala.xml.dtd.ContentModel.Alt" class="keyword">case</span> <span title="Int(8)">OPT</span>  =&gt; <a href="Scanner.scala.html#231258" title="=&gt; Unit">nextToken</a>; <a href="../../util/regexp/Base.scala.html#57122" title="(rs: scala.xml.dtd.ContentModel._regexpT*)scala.xml.dtd.ContentModel.Alt">Alt</a>(<a href="../../util/regexp/Base.scala.html#26767" title="object scala.xml.dtd.ContentModel.Eps">Eps</a>, <a href="#266521" title="scala.xml.dtd.ContentModel.RegExp">s</a>)
+    <span title="scala.xml.dtd.ContentModel.RegExp" class="keyword">case</span> _    =&gt; <a href="#266521" title="scala.xml.dtd.ContentModel.RegExp">s</a>
+  }
+
+  // contentspec ::= EMPTY | ANY | (#PCDATA) | &quot;(#PCDATA|&quot;regexp)
+
+  <span class="keyword">def</span> <a title="=&gt; scala.xml.dtd.ContentModel" id="238736">contentspec</a>: <a href="ContentModel.scala.html#11092" title="scala.xml.dtd.ContentModel">ContentModel</a> = <a href="Scanner.scala.html#231245" title="=&gt; Int">token</a> <span title="scala.xml.dtd.ContentModel" class="keyword">match</span> {
+
+    <span title="scala.xml.dtd.ContentModel" class="keyword">case</span> <span title="Int(1)">NAME</span> =&gt; <a href="Scanner.scala.html#231248" title="=&gt; String">value</a> <span title="scala.xml.dtd.ContentModel" class="keyword">match</span> {
+      <span title="scala.xml.dtd.ANY.type" class="keyword">case</span> <span title="java.lang.String(&quot;ANY&quot;)" class="string">&quot;ANY&quot;</span>   =&gt; <a href="ContentModel.scala.html#11189" title="object scala.xml.dtd.ANY">ANY</a> 
+      <span title="scala.xml.dtd.EMPTY.type" class="keyword">case</span> <span title="java.lang.String(&quot;EMPTY&quot;)" class="string">&quot;EMPTY&quot;</span> =&gt; <a href="ContentModel.scala.html#11141" title="object scala.xml.dtd.EMPTY">EMPTY</a>
+      <span title="Nothing" class="keyword">case</span> _       =&gt; <a href="../../Predef.scala.html#16210" title="(message: String)Nothing">error</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;expected ANY, EMPTY or '(' instead of &quot;</span> + <a href="Scanner.scala.html#231248" title="=&gt; String">value</a> );
+    }
+    <span title="scala.xml.dtd.ContentModel" class="keyword">case</span> <span title="Int(3)">LPAREN</span> =&gt; 
+
+      <a href="Scanner.scala.html#231258" title="=&gt; Unit">nextToken</a>; 
+      <a href="#238737" title="=&gt; Unit">sOpt</a>;
+      <span title="scala.xml.dtd.ContentModel" class="keyword">if</span> (<a href="Scanner.scala.html#231245" title="(x$1: Int)Boolean">token</a> != <span title="Int(0)">TOKEN_PCDATA</span>)
+        <a href="ContentModel.scala.html#56269" title="(r: scala.xml.dtd.ContentModel.RegExp)scala.xml.dtd.ELEMENTS">ELEMENTS</a>(<a href="#238738" title="=&gt; scala.xml.dtd.ContentModel.RegExp">regexp</a>);
+      <span class="keyword">else</span> {
+        <a href="Scanner.scala.html#231258" title="=&gt; Unit">nextToken</a>;
+        <a href="Scanner.scala.html#231245" title="=&gt; Int">token</a> <span title="scala.xml.dtd.ContentModel" class="keyword">match</span> {
+        <span title="scala.xml.dtd.PCDATA.type" class="keyword">case</span> <span title="Int(4)">RPAREN</span> =&gt;
+          <a href="ContentModel.scala.html#11171" title="object scala.xml.dtd.PCDATA">PCDATA</a>
+        <span title="scala.xml.dtd.MIXED" class="keyword">case</span> <span title="Int(9)">CHOICE</span> =&gt;
+          <span class="keyword">val</span> <a title="scala.xml.dtd.MIXED" id="266598">res</a> = <a href="ContentModel.scala.html#57103" title="(r: scala.xml.dtd.ContentModel.RegExp)scala.xml.dtd.MIXED">MIXED</a>(<a href="#238740" title="(p: scala.xml.dtd.ContentModel.RegExp)scala.xml.dtd.ContentModel.Alt">choiceRest</a>(<a href="../../util/regexp/Base.scala.html#26767" title="object scala.xml.dtd.ContentModel.Eps">Eps</a>));
+          <a href="#238737" title="=&gt; Unit">sOpt</a>;
+          <a href="#238734" title="(tok: Int)Unit">accept</a>( <span title="Int(4)">RPAREN</span> );
+          <a href="#238734" title="(tok: Int)Unit">accept</a>( <span title="Int(6)">STAR</span> );
+          <a href="#266598" title="scala.xml.dtd.MIXED">res</a>
+        <span title="Nothing" class="keyword">case</span> _ =&gt;
+          <a href="../../Predef.scala.html#16210" title="(message: String)Nothing">error</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;unexpected token:&quot;</span> + <a href="Tokens.scala.html#121620" title="(i: Int)String">token2string</a>(<a href="Scanner.scala.html#231245" title="=&gt; Int">token</a>) );
+        }
+      }
+
+    <span title="Nothing" class="keyword">case</span> _ =&gt;
+      <a href="../../Predef.scala.html#16210" title="(message: String)Nothing">error</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;unexpected token:&quot;</span> + <a href="Tokens.scala.html#121620" title="(i: Int)String">token2string</a>(<a href="Scanner.scala.html#231245" title="=&gt; Int">token</a>) );
+    }
+  //                                  sopt ::= S?
+  <span class="keyword">def</span> <a title="=&gt; Unit" id="238737">sOpt</a> = <span title="Unit" class="keyword">if</span>( <a href="Scanner.scala.html#231245" title="(x$1: Int)Boolean">token</a> == <span title="Int(13)">S</span> ) <a href="Scanner.scala.html#231258" title="=&gt; Unit">nextToken</a>;
+
+  //                      (' S? mixed ::= '#PCDATA' S? ')'
+  //                                    | '#PCDATA' (S? '|' S? atom)* S? ')*'
+
+  //       '(' S? regexp ::= cp S? [seqRest|choiceRest] ')' [ '+' | '*' | '?' ]
+  <span class="keyword">def</span> <a title="=&gt; scala.xml.dtd.ContentModel.RegExp" id="238738">regexp</a>: <a href="../../util/regexp/Base.scala.html#26757" title="scala.xml.dtd.ContentModel.RegExp">RegExp</a> = {
+    <span class="keyword">val</span> <a title="scala.xml.dtd.ContentModel.RegExp" id="266698">p</a> = <a href="#238741" title="=&gt; scala.xml.dtd.ContentModel.RegExp">particle</a>;
+    <a href="#238737" title="=&gt; Unit">sOpt</a>;
+    <a href="#238735" title="(s: scala.xml.dtd.ContentModel.RegExp)scala.xml.dtd.ContentModel.RegExp">maybeSuffix</a>(<a href="Scanner.scala.html#231245" title="=&gt; Int">token</a> <span title="scala.xml.dtd.ContentModel.RegExp" class="keyword">match</span> {
+      <span title="scala.xml.dtd.ContentModel.RegExp" class="keyword">case</span> <span title="Int(4)">RPAREN</span>  =&gt; <a href="Scanner.scala.html#231258" title="=&gt; Unit">nextToken</a>; <a href="#266698" title="scala.xml.dtd.ContentModel.RegExp">p</a>
+      <span title="scala.xml.dtd.ContentModel.Alt" class="keyword">case</span> <span title="Int(9)">CHOICE</span>  =&gt; <span class="keyword">val</span> <a title="scala.xml.dtd.ContentModel.Alt" id="266699">q</a> = <a href="#238740" title="(p: scala.xml.dtd.ContentModel.RegExp)scala.xml.dtd.ContentModel.Alt">choiceRest</a>( <a href="#266698" title="scala.xml.dtd.ContentModel.RegExp">p</a> );<a href="#238734" title="(tok: Int)Unit">accept</a>( <span title="Int(4)">RPAREN</span> ); <a href="#266699" title="scala.xml.dtd.ContentModel.Alt">q</a>
+      <span title="scala.xml.dtd.ContentModel.Sequ" class="keyword">case</span> <span title="Int(5)">COMMA</span>   =&gt; <span class="keyword">val</span> <a title="scala.xml.dtd.ContentModel.Sequ" id="266704">q</a> = <a href="#238739" title="(p: scala.xml.dtd.ContentModel.RegExp)scala.xml.dtd.ContentModel.Sequ">seqRest</a>( <a href="#266698" title="scala.xml.dtd.ContentModel.RegExp">p</a> );   <a href="#238734" title="(tok: Int)Unit">accept</a>( <span title="Int(4)">RPAREN</span> ); <a href="#266704" title="scala.xml.dtd.ContentModel.Sequ">q</a>
+    })
+  }
+
+  //                                             seqRest ::= (',' S? cp S?)+
+  <span class="keyword">def</span> <a title="(p: scala.xml.dtd.ContentModel.RegExp)scala.xml.dtd.ContentModel.Sequ" id="238739">seqRest</a>(<a title="scala.xml.dtd.ContentModel.RegExp" id="266705">p</a>: <a href="../../util/regexp/Base.scala.html#26757" title="scala.xml.dtd.ContentModel.RegExp">RegExp</a>) = { 
+    <span class="keyword">var</span> <a title="List[scala.xml.dtd.ContentModel.RegExp]" id="266708">k</a> = <a href="../../collection/immutable/List.scala.html#17535" title="(xs: scala.xml.dtd.ContentModel.RegExp*)List[scala.xml.dtd.ContentModel.RegExp]">List</a>(<a href="#266705" title="scala.xml.dtd.ContentModel.RegExp">p</a>);
+    <span title="Unit" class="keyword">while</span>( <a href="Scanner.scala.html#231245" title="(x$1: Int)Boolean">token</a> == <span title="Int(5)">COMMA</span> ) <a href="#266709" title="()Unit">{</a>
+      <a href="Scanner.scala.html#231258" title="=&gt; Unit">nextToken</a>;
+      <a href="#238737" title="=&gt; Unit">sOpt</a>;
+      <a href="#266708" title="List[scala.xml.dtd.ContentModel.RegExp]">k</a> = <a href="#238741" title="=&gt; scala.xml.dtd.ContentModel.RegExp">particle</a><a href="#266726" title="scala.xml.dtd.ContentModel.RegExp">::</a><a href="../../collection/immutable/List.scala.html#17630" title="(x: scala.xml.dtd.ContentModel.RegExp)List[scala.xml.dtd.ContentModel.RegExp]">k</a>;
+      <a href="#238737" title="=&gt; Unit">sOpt</a>;
+    }
+    <a href="../../util/regexp/Base.scala.html#132201" title="(rs: scala.xml.dtd.ContentModel._regexpT*)scala.xml.dtd.ContentModel.Sequ">Sequ</a>( <a href="#266708" title="List[scala.xml.dtd.ContentModel.RegExp]">k</a>.<a href="../../collection/immutable/List.scala.html#17664" title="=&gt; List[scala.xml.dtd.ContentModel.RegExp]">reverse</a>:_* )
+  }
+
+  //                                          choiceRest ::= ('|' S? cp S?)+
+  <span class="keyword">def</span> <a title="(p: scala.xml.dtd.ContentModel.RegExp)scala.xml.dtd.ContentModel.Alt" id="238740">choiceRest</a>( <a title="scala.xml.dtd.ContentModel.RegExp" id="266603">p</a>:<a href="../../util/regexp/Base.scala.html#26757" title="scala.xml.dtd.ContentModel.RegExp">RegExp</a> ) = { 
+    <span class="keyword">var</span> <a title="List[scala.xml.dtd.ContentModel.RegExp]" id="266606">k</a> = <a href="../../collection/immutable/List.scala.html#17535" title="(xs: scala.xml.dtd.ContentModel.RegExp*)List[scala.xml.dtd.ContentModel.RegExp]">List</a>( <a href="#266603" title="scala.xml.dtd.ContentModel.RegExp">p</a> );
+    <span title="Unit" class="keyword">while</span>( <a href="Scanner.scala.html#231245" title="(x$1: Int)Boolean">token</a> == <span title="Int(9)">CHOICE</span> ) <a href="#266607" title="()Unit">{</a>
+      <a href="Scanner.scala.html#231258" title="=&gt; Unit">nextToken</a>;
+      <a href="#238737" title="=&gt; Unit">sOpt</a>;
+      <a href="#266606" title="List[scala.xml.dtd.ContentModel.RegExp]">k</a> = <a href="#238741" title="=&gt; scala.xml.dtd.ContentModel.RegExp">particle</a><a href="#266624" title="scala.xml.dtd.ContentModel.RegExp">::</a><a href="../../collection/immutable/List.scala.html#17630" title="(x: scala.xml.dtd.ContentModel.RegExp)List[scala.xml.dtd.ContentModel.RegExp]">k</a>;
+      <a href="#238737" title="=&gt; Unit">sOpt</a>;
+    }
+    <a href="../../util/regexp/Base.scala.html#57122" title="(rs: scala.xml.dtd.ContentModel._regexpT*)scala.xml.dtd.ContentModel.Alt">Alt</a>( <a href="#266606" title="List[scala.xml.dtd.ContentModel.RegExp]">k</a>.<a href="../../collection/immutable/List.scala.html#17664" title="=&gt; List[scala.xml.dtd.ContentModel.RegExp]">reverse</a>:_* )
+  }
+
+  //                                  particle ::=  '(' S? regexp
+  //                                             |  name [ '+' | '*' | '?' ]
+  <span class="keyword">def</span> <a title="=&gt; scala.xml.dtd.ContentModel.RegExp" id="238741">particle</a> = <a href="Scanner.scala.html#231245" title="=&gt; Int">token</a> <span title="scala.xml.dtd.ContentModel.RegExp" class="keyword">match</span> {
+    <span title="scala.xml.dtd.ContentModel.RegExp" class="keyword">case</span> <span title="Int(3)">LPAREN</span> =&gt; <a href="Scanner.scala.html#231258" title="=&gt; Unit">nextToken</a>; <a href="#238737" title="=&gt; Unit">sOpt</a>; <a href="#238738" title="=&gt; scala.xml.dtd.ContentModel.RegExp">regexp</a>; 
+    <span title="scala.xml.dtd.ContentModel.RegExp" class="keyword">case</span> <span title="Int(1)">NAME</span>   =&gt; <span class="keyword">val</span> <a title="scala.xml.dtd.ContentModel.Letter" id="266628">a</a> = <a href="../../util/regexp/WordExp.scala.html#57160" title="(a: scala.xml.dtd.ContentModel._labelT)scala.xml.dtd.ContentModel.Letter">Letter</a>(<a href="ContentModel.scala.html#56456" title="(name: String)scala.xml.dtd.ContentModel.ElemName">ElemName</a>(<a href="Scanner.scala.html#231248" title="=&gt; String">value</a>)); <a href="Scanner.scala.html#231258" title="=&gt; Unit">nextToken</a>; <a href="#238735" title="(s: scala.xml.dtd.ContentModel.RegExp)scala.xml.dtd.ContentModel.RegExp">maybeSuffix</a>(<a href="#266628" title="scala.xml.dtd.ContentModel.Letter">a</a>)
+    <span title="Nothing" class="keyword">case</span> _      =&gt; <a href="../../Predef.scala.html#16210" title="(message: String)Nothing">error</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;expected '(' or Name, got:&quot;</span>+<a href="Tokens.scala.html#121620" title="(i: Int)String">token2string</a>(<a href="Scanner.scala.html#231245" title="=&gt; Int">token</a>));
+  }
+
+  //                                     atom ::= name
+  <span class="keyword">def</span> <a title="=&gt; scala.xml.dtd.ContentModel.Letter" id="238742">atom</a> = <a href="Scanner.scala.html#231245" title="=&gt; Int">token</a> <span title="scala.xml.dtd.ContentModel.Letter" class="keyword">match</span> {
+    <span title="scala.xml.dtd.ContentModel.Letter" class="keyword">case</span> <span title="Int(1)">NAME</span>   =&gt; <span class="keyword">val</span> <a title="scala.xml.dtd.ContentModel.Letter" id="266757">a</a> = <a href="../../util/regexp/WordExp.scala.html#57160" title="(a: scala.xml.dtd.ContentModel._labelT)scala.xml.dtd.ContentModel.Letter">Letter</a>(<a href="ContentModel.scala.html#56456" title="(name: String)scala.xml.dtd.ContentModel.ElemName">ElemName</a>(<a href="Scanner.scala.html#231248" title="=&gt; String">value</a>)); <a href="Scanner.scala.html#231258" title="=&gt; Unit">nextToken</a>; <a href="#266757" title="scala.xml.dtd.ContentModel.Letter">a</a>
+    <span title="Nothing" class="keyword">case</span> _      =&gt; <a href="../../Predef.scala.html#16210" title="(message: String)Nothing">error</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;expected Name, got:&quot;</span>+<a href="Tokens.scala.html#121620" title="(i: Int)String">token2string</a>(<a href="Scanner.scala.html#231245" title="=&gt; Int">token</a>));
+  }
+}
+
+        </pre>
+    </body>
+</html>

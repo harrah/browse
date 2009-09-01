@@ -1,0 +1,573 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>collection/generic/SequenceTemplate.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: SequenceTemplate.scala 18613 2009-08-31 03:02:27Z extempore $
+
+
+<span class="keyword">package</span> scala.collection.generic
+<span class="keyword">import</span> scala.collection._
+
+<span class="keyword">import</span> mutable.{ListBuffer, HashMap}
+
+// import immutable.{List, Nil, ::}
+<span class="keyword">import</span> generic._
+
+/** Class &lt;code&gt;Sequence[A]&lt;/code&gt; represents sequences of elements
+ *  of type &lt;code&gt;A&lt;/code&gt;.
+ *  It adds the following methods to class Iterable:
+ *   `length`, `lengthCompare`, `apply`, `isDefinedAt`, `segmentLength`, `prefixLength`,
+ *   `indexWhere`, `indexOf`, `lastIndexWhere`, `lastIndexOf`, `reverse`, `reverseIterator`,
+ *   `startsWith`, `endsWith`, `indexOfSeq`, , `zip`, `zipAll`, `zipWithIndex`.
+ * 
+ *
+ *  @author  Martin Odersky
+ *  @author  Matthias Zenger
+ *  @version 1.0, 16/07/2003
+ */
+<span class="keyword">trait</span> <a title="trait SequenceTemplate[+A, +This &lt;: scala.collection.generic.SequenceTemplate[A,This] with Sequence[A]] extends java.lang.Object with scala.collection.generic.IterableTemplate[A,This] with ScalaObject" id="10952">SequenceTemplate</a>[+<a title="&gt;: Nothing &lt;: Any" id="13499">A</a>, +<a title="&gt;: Nothing &lt;: scala.collection.generic.SequenceTemplate[A,This] with Sequence[A]" id="13500">This</a> &lt;: SequenceTemplate[A, This] <span class="keyword">with</span> Sequence[A]] <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="IterableTemplate.scala.html#10949" title="scala.collection.generic.IterableTemplate[A,This]">IterableTemplate</a>[A, This] { self =&gt;
+  
+  <span class="keyword">import</span> Traversable.breaks._
+
+  /** Returns the length of the sequence.
+   *
+   *  @return the sequence length.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Int" id="17338">length</a>: <span title="Int">Int</span>
+
+  /** Returns the elements at position `idx`
+   */
+  <span class="keyword">def</span> <a title="(idx: Int)A" id="17339">apply</a>(<a title="Int" id="17850">idx</a>: <span title="Int">Int</span>): <a href="#13499" title="A">A</a>
+
+  /** Result of comparing &lt;code&gt;length&lt;/code&gt; with operand &lt;code&gt;len&lt;/code&gt;.
+   *  returns &lt;code&gt;x&lt;/code&gt; where
+   *  &lt;code&gt;x &amp;lt; 0&lt;/code&gt;    iff    &lt;code&gt;this.length &amp;lt; len&lt;/code&gt;
+   *  &lt;code&gt;x == 0&lt;/code&gt;   iff    &lt;code&gt;this.length == len&lt;/code&gt;
+   *  &lt;code&gt;x &amp;gt; 0&lt;/code&gt;    iff    &lt;code&gt;this.length &amp;gt; len&lt;/code&gt;.
+   *
+   *  The method as implemented here does not call length directly; its running time
+   *  is O(length min len) instead of O(length). The method should be overwritten
+   *  if computing length is cheap.
+   */
+  <span class="keyword">def</span> <a title="(len: Int)Int" id="17340">lengthCompare</a>(<a title="Int" id="46221">len</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = {
+    <span class="keyword">var</span> <a title="Int" id="97250">i</a> = <span title="Int(0)" class="int">0</span>
+    <a href="../../util/control/Breaks.scala.html#17067" title="(op: =&gt; Unit)Unit">breakable</a> {
+      <span class="keyword">for</span> (<a title="A" id="97260">_</a> &lt;- <a href="IterableTemplate.scala.html#17287" title="(f: (A) =&gt; Unit)Unit" class="keyword">this</a>) {
+        <a href="#97250" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+        <span title="Unit" class="keyword">if</span> (<a href="#97250" title="(x$1: Int)Boolean">i</a> &gt; <a href="#46221" title="Int">len</a>) <a href="../../util/control/Breaks.scala.html#17068" title="=&gt; Unit">break</a>
+      }
+    }
+    <a href="#97250" title="(x$1: Int)Int">i</a> - <a href="#46221" title="Int">len</a>
+  }
+
+  /** Should always be &lt;code&gt;length&lt;/code&gt; */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Int" id="17341">size</a> = <a href="#17338" title="=&gt; Int">length</a>
+
+  /** Is this partial function defined for the index &lt;code&gt;x&lt;/code&gt;?
+   */
+  <span class="keyword">def</span> <a title="(x: Int)Boolean" id="17342">isDefinedAt</a>(<a title="Int" id="22142">x</a>: <span title="Int">Int</span>): <span title="Boolean">Boolean</span> = <span title="(x$1: Boolean)Boolean">(</span><a href="#22142" title="(x$1: Int)Boolean">x</a> &gt;= <span title="Int(0)" class="int">0</span>) &amp;&amp; (<a href="#22142" title="(x$1: Int)Boolean">x</a> &lt; <a href="#17338" title="=&gt; Int">length</a>)
+
+  /** Returns length of longest segment starting from a start index `from`
+   *  such that every element of the segment satisfies predicate `p`.
+   *  @note may not terminate for infinite-sized collections.
+   *  @param  p the predicate
+   *  @param  from  the start index
+   */
+  <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean,from: Int)Int" id="17343">segmentLength</a>(<a title="(A) =&gt; Boolean" id="38947">p</a>: A =&gt; Boolean, <a title="Int" id="38948">from</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = {
+    <span class="keyword">var</span> <a title="Int" id="97343">result</a> = <span title="Int(0)" class="int">0</span>
+    <span class="keyword">var</span> <a title="Int" id="97344">i</a> = <span title="Int(0)" class="int">0</span>
+    <a href="../../util/control/Breaks.scala.html#17067" title="(op: =&gt; Unit)Unit">breakable</a> {
+      <span class="keyword">for</span> (<a title="A" id="97352">x</a> &lt;- <a href="IterableTemplate.scala.html#17287" title="(f: (A) =&gt; Unit)Unit" class="keyword">this</a>) {
+        <span title="Unit" class="keyword">if</span> (<a href="#97344" title="(x$1: Int)Boolean">i</a> <span title="(x$1: Boolean)Boolean">&gt;=</span> <a href="#38948" title="Int">from</a> &amp;&amp; <span title="=&gt; Boolean">!</span><a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#97352" title="A">x</a>)) { <a href="#97343" title="Int">result</a> = <a href="#97344" title="(x$1: Int)Int">i</a> - <a href="#38948" title="Int">from</a>; <a href="../../util/control/Breaks.scala.html#17068" title="=&gt; Unit">break</a> }
+        <span class="keyword">else</span> <a href="#97344" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+      }
+    }
+    <a href="#97343" title="Int">result</a>
+  }
+
+  /** Returns length of longest prefix of this seqence
+   *  such that every element of the prefix satisfies predicate `p`.
+   *  @note may not terminate for infinite-sized collections.
+   *  @param  p the predicate
+   */
+  <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)Int" id="17344">prefixLength</a>(<a title="(A) =&gt; Boolean" id="38944">p</a>: A =&gt; Boolean) = <a href="#17343" title="(p: (A) =&gt; Boolean,from: Int)Int">segmentLength</a>(<a href="#38944" title="(A) =&gt; Boolean">p</a>, <span title="Int(0)" class="int">0</span>)
+
+  /** Returns index of the first element satisfying a predicate, or -1, if none exists.
+   *
+   *  @note may not terminate for infinite-sized collections.
+   *  @param  p the predicate
+   */
+  <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)Int" id="17345">indexWhere</a>(<a title="(A) =&gt; Boolean" id="46371">p</a>: A =&gt; Boolean): <span title="Int">Int</span> = <a href="#17346" title="(p: (A) =&gt; Boolean,from: Int)Int">indexWhere</a>(<a href="#46371" title="(A) =&gt; Boolean">p</a>, <span title="Int(0)" class="int">0</span>)
+
+  /** Returns index of the first element starting from a start index
+   *  satisying a predicate, or -1, if none exists.
+   *
+   *  @note may not terminate for infinite-sized collections.
+   *  @param  p the predicate
+   *  @param  from  the start index
+   */
+  <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean,from: Int)Int" id="17346">indexWhere</a>(<a title="(A) =&gt; Boolean" id="46366">p</a>: A =&gt; Boolean, <a title="Int" id="46367">from</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = {
+    <span class="keyword">var</span> <a title="Int" id="97436">result</a> = <span title="Int(-1)">-</span><span class="int">1</span>
+    <span class="keyword">var</span> <a title="Int" id="97437">i</a> = <a href="#46367" title="Int">from</a>
+    <a href="../../util/control/Breaks.scala.html#17067" title="(op: =&gt; Unit)Unit">breakable</a> {
+      <span class="keyword">for</span> (<a title="A" id="97445">x</a> &lt;- <a href="IterableTemplate.scala.html#17287" title="(f: (A) =&gt; Unit)Unit" class="keyword">this</a>) {
+        <span title="Unit" class="keyword">if</span> (<a href="#97437" title="(x$1: Int)Boolean">i</a> <span title="(x$1: Boolean)Boolean">&gt;=</span> <a href="#46367" title="Int">from</a> &amp;&amp; <a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#97445" title="A">x</a>)) { <a href="#97436" title="Int">result</a> = <a href="#97437" title="Int">i</a>; <a href="../../util/control/Breaks.scala.html#17068" title="=&gt; Unit">break</a> }
+        <span class="keyword">else</span> <a href="#97437" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+      }
+    }
+    <a href="#97436" title="Int">result</a>
+  }
+
+  /** Returns index of the first element satisying a predicate, or -1. */
+  @deprecated(<span class="string">&quot;Use `indexWhere' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)Int" id="17347">findIndexOf</a>(<a title="(A) =&gt; Boolean" id="97496">p</a>: A =&gt; Boolean): <span title="Int">Int</span> = <a href="#17345" title="(p: (A) =&gt; Boolean)Int">indexWhere</a>(<a href="#97496" title="(A) =&gt; Boolean">p</a>)
+
+  /** Returns the index of the first occurence of the specified
+   *  object in this iterable object.
+   *
+   *  @note may not terminate for infinite-sized collections.
+   *  @param  elem  element to search for.
+   *  @return the index in this sequence of the first occurence of the
+   *          specified element, or -1 if the sequence does not contain
+   *          this element.
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A](elem: B)Int" id="17348">indexOf</a>[<a title="&gt;: A &lt;: Any" id="17350">B</a> &gt;: A](<a title="B" id="66771">elem</a>: <a href="#17350" title="B">B</a>): <span title="Int">Int</span> = <a href="#17351" title="(elem: B,from: Int)Int">indexOf</a>(<a href="#66771" title="B">elem</a>, <span title="Int(0)" class="int">0</span>)
+
+  /** Returns the index of the first occurence of the specified
+   *  object in this iterable object,  starting from a start index, or
+   *  -1, if none exists.
+   *
+   *  @note may not terminate for infinite-sized collections.
+   *  @param  elem  element to search for.
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A](elem: B,from: Int)Int" id="17351">indexOf</a>[<a title="&gt;: A &lt;: Any" id="17353">B</a> &gt;: A](<a title="B" id="66760">elem</a>: <a href="#17353" title="B">B</a>, <a title="Int" id="66761">from</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = <a href="#17346" title="(p: (A) =&gt; Boolean,from: Int)Int">indexWhere</a>(<a href="#66760" title="B">elem</a> <a href="#97531" title="(x$1: Any)Boolean">==</a>, <a href="#66761" title="Int">from</a>)
+
+ /** Returns the index of the last occurence of the specified element
+   *  in this sequence, or -1 if the sequence does not contain this element.
+   *
+   *  @param  elem   element to search for.
+   *  @return the index in this sequence of the last occurence of the
+   *          specified element, or -1 if the sequence does not contain
+   *          this element.
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A](elem: B)Int" id="17354">lastIndexOf</a>[<a title="&gt;: A &lt;: Any" id="17356">B</a> &gt;: A](<a title="B" id="97536">elem</a>: <a href="#17356" title="B">B</a>): <span title="Int">Int</span> = <a href="#17360" title="(p: (A) =&gt; Boolean)Int">lastIndexWhere</a>(<a href="#97536" title="B">elem</a> <a href="#97543" title="(x$1: Any)Boolean">==</a>)
+
+  /** Returns the index of the last
+    *  occurence of the specified element in this sequence
+    *  before or at a given end index,
+    *  or -1 if the sequence does not contain this element.
+    *
+    *  @param  elem   element to search for.
+    *  @param  end    the end index
+    */
+  <span class="keyword">def</span> <a title="[B &gt;: A](elem: B,end: Int)Int" id="17357">lastIndexOf</a>[<a title="&gt;: A &lt;: Any" id="17359">B</a> &gt;: A](<a title="B" id="97548">elem</a>: <a href="#17359" title="B">B</a>, <a title="Int" id="97549">end</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = <a href="#17361" title="(p: (A) =&gt; Boolean,end: Int)Int">lastIndexWhere</a>(<a href="#97548" title="B">elem</a> <a href="#97561" title="(x$1: Any)Boolean">==</a>, <a href="#97549" title="Int">end</a>)
+
+  /** Returns index of the last element satisying a predicate, or -1, if none exists.
+   *
+   *  @param  p the predicate
+   *  @return   the index of the last element satisfying &lt;code&gt;p&lt;/code&gt;,
+   *            or -1 if such an element does not exist
+   */
+  <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)Int" id="17360">lastIndexWhere</a>(<a title="(A) =&gt; Boolean" id="46433">p</a>: A =&gt; Boolean): <span title="Int">Int</span> = <a href="#17361" title="(p: (A) =&gt; Boolean,end: Int)Int">lastIndexWhere</a>(<a href="#46433" title="(A) =&gt; Boolean">p</a>, <a href="#17338" title="(x$1: Int)Int">length</a> - <span title="Int(1)" class="int">1</span>)
+
+  /** Returns index of the last element not exceeding a given end index
+   *  and satisying a predicate, or -1 if none exists.
+   *
+   *  @param  end the end index
+   *  @param  p the predicate
+   */
+  <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean,end: Int)Int" id="17361">lastIndexWhere</a>(<a title="(A) =&gt; Boolean" id="46428">p</a>: A =&gt; Boolean, <a title="Int" id="46429">end</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = {
+    <span class="keyword">var</span> <a title="Int" id="97593">i</a> = <a href="#17338" title="(x$1: Int)Int">length</a> - <span title="Int(1)" class="int">1</span>
+    <span class="keyword">val</span> <a title="Iterator[A]" id="97594">it</a> = <a href="#17363" title="=&gt; Iterator[A]">reverseIterator</a>
+    <span title="Unit" class="keyword">while</span> (<a href="#97594" title="Iterator[A]">it</a>.<a href="../Iterator.scala.html#19184" title="(x$1: Boolean)Boolean">hasNext</a> &amp;&amp; { <span class="keyword">val</span> <a title="A" id="97602">elem</a> = <a href="#97594" title="Iterator[A]">it</a>.<a href="../Iterator.scala.html#19185" title="()A">next</a>; (<a href="#97593" title="(x$1: Int)Boolean">i</a> <span title="(x$1: Boolean)Boolean">&gt;</span> <a href="#46429" title="Int">end</a> || <span title="=&gt; Boolean">!</span><a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#97602" title="A">elem</a>)) }) <a href="#97593" title="Int">i</a> <a href="#97595" title="()Unit">-=</a> <span title="Int(1)" class="int">1</span>
+    <a href="#97593" title="Int">i</a>
+  }
+
+  /** A sequence of type &lt;code&gt;C&lt;/code&gt; consisting of all elements of 
+   *  this sequence in reverse order.
+   *  @note  the operation is implemented by building a new sequence
+   *         from &lt;code&gt;this(length - 1), ..., this(0)&lt;/code&gt;
+   *  If random access is inefficient for the given sequence implementation, 
+   *  this operation should be overridden.
+   */
+  <span class="keyword">def</span> <a title="=&gt; This" id="17362">reverse</a>: <a href="#13500" title="This">This</a> = {
+    <span class="keyword">var</span> <a title="List[A]" id="97650">xs</a>: <a href="../immutable/List.scala.html#8973" title="List[A]">List</a>[A] = List<a href="../immutable/List.scala.html#9259" title="object Nil">(</a>)
+    <span class="keyword">for</span> (<a title="A" id="97668">x</a> &lt;- <a href="IterableTemplate.scala.html#17287" title="(f: (A) =&gt; Unit)Unit" class="keyword">this</a>) 
+      <a href="#97650" title="List[A]">xs</a> = <a href="#97668" title="A">x</a> <a href="#97669" title="A">::</a> <a href="../immutable/List.scala.html#17630" title="(x: A)List[A]">xs</a>
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[A,This]" id="97651">b</a> = <a href="TraversableTemplate.scala.html#17131" title="=&gt; scala.collection.generic.Builder[A,This]">newBuilder</a>
+    <span class="keyword">for</span> (<a title="A" id="97697">x</a> &lt;- <a href="LinearSequenceTemplate.scala.html#19402" title="(f: (A) =&gt; scala.collection.generic.Builder[A,This])Unit">xs</a>)
+      <a href="Builder.scala.html#19589" title="(elem: A)b.type">b</a> += <a href="#97697" title="A">x</a>
+    <a href="#97651" title="scala.collection.generic.Builder[A,This]">b</a>.<a href="Builder.scala.html#19591" title="()This">result</a>
+  }
+
+  /** The elements of this sequence in reversed order
+   */
+  <span class="keyword">def</span> <a title="=&gt; Iterator[A]" id="17363">reverseIterator</a>: <a href="../Iterator.scala.html#4274" title="Iterator[A]">Iterator</a>[A] = <a href="#17362" title="=&gt; This">reverse</a>.<a href="IterableTemplate.scala.html#17285" title="=&gt; Iterator[A]">iterator</a>
+
+  @deprecated(<span class="string">&quot;use `reverseIterator' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="=&gt; Iterator[A]" id="17364">reversedElements</a> = <a href="#17363" title="=&gt; Iterator[A]">reverseIterator</a>
+
+  /**
+   * Checks whether the argument sequence is contained at the 
+   * specified index within the receiver object. 
+   * 
+   * If the both the receiver object, &lt;code&gt;this&lt;/code&gt; and 
+   * the argument, &lt;code&gt;that&lt;/code&gt; are infinite sequences 
+   * this method may not terminate.
+   *
+   * @return true if &lt;code&gt;that&lt;/code&gt; is contained in 
+   * &lt;code&gt;this&lt;/code&gt;, at the specified index, otherwise false 
+   *
+   * @see String.startsWith
+   */
+  <span class="keyword">def</span> <a title="[B](that: Sequence[B],offset: Int)Boolean" id="17365">startsWith</a>[<a title="&gt;: Nothing &lt;: Any" id="17367">B</a>](<a title="Sequence[B]" id="97728">that</a>: <a href="../Sequence.scala.html#4346" title="Sequence[B]">Sequence</a>[B], <a title="Int" id="97729">offset</a>: <span title="Int">Int</span>): <span title="Boolean">Boolean</span> = {  
+    <span class="keyword">val</span> <a title="Iterator[A]" id="97733">i</a> = <a href="#10952" title="SequenceTemplate.this.type" class="keyword">this</a>.<a href="../Iterator.scala.html#19187" title="(n: Int)Iterator[A]">iterator</a> drop <a href="#97729" title="Int">offset</a>
+    <span class="keyword">val</span> <a title="Iterator[B]" id="97734">j</a> = <a href="#97728" title="Sequence[B]">that</a>.<a href="IterableTemplate.scala.html#17285" title="=&gt; Iterator[B]">iterator</a>
+    <span title="Unit" class="keyword">while</span> (<a href="#97734" title="Iterator[B]">j</a>.<a href="../Iterator.scala.html#19184" title="(x$1: Boolean)Boolean">hasNext</a> &amp;&amp; <a href="#97733" title="Iterator[A]">i</a>.<a href="../Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>)
+      <a href="#97735" title="Unit" class="keyword">if</a> (<a href="#97733" title="Iterator[A]">i</a>.<a href="../Iterator.scala.html#19185" title="(x$1: Any)Boolean">next</a> != <a href="#97734" title="Iterator[B]">j</a>.<a href="../Iterator.scala.html#19185" title="()B">next</a>)
+        <span title="Nothing" class="keyword">return</span> <span title="Boolean(false)" class="keyword">false</span>
+
+    <span title="=&gt; Boolean">!</span><a href="#97734" title="Iterator[B]">j</a>.<a href="../Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>
+  }
+
+  /**
+   * Check whether the receiver object starts with the argument sequence.
+   *
+   * @return true if &lt;code&gt;that&lt;/code&gt; is a prefix of &lt;code&gt;this&lt;/code&gt;,
+   * otherwise false 
+   */
+  <span class="keyword">def</span> <a title="[B](that: Sequence[B])Boolean" id="17368">startsWith</a>[<a title="&gt;: Nothing &lt;: Any" id="17370">B</a>](<a title="Sequence[B]" id="97748">that</a>: <a href="../Sequence.scala.html#4346" title="Sequence[B]">Sequence</a>[B]): <span title="Boolean">Boolean</span> = <a href="#17365" title="(that: Sequence[B],offset: Int)Boolean">startsWith</a>(<a href="#97748" title="Sequence[B]">that</a>, <span title="Int(0)" class="int">0</span>)
+
+  /** @return true if this sequence end with that sequence 
+   *  @see String.endsWith 
+   */
+  <span class="keyword">def</span> <a title="[B](that: Sequence[B])Boolean" id="17371">endsWith</a>[<a title="&gt;: Nothing &lt;: Any" id="17373">B</a>](<a title="Sequence[B]" id="97784">that</a>: <a href="../Sequence.scala.html#4346" title="Sequence[B]">Sequence</a>[B]): <span title="Boolean">Boolean</span> = {
+    <span class="keyword">val</span> <a title="Iterator[A]" id="97787">i</a> = <a href="#10952" title="SequenceTemplate.this.type" class="keyword">this</a>.<a href="IterableTemplate.scala.html#17285" title="=&gt; Iterator[A]">iterator</a>.<a href="../Iterator.scala.html#19187" title="(n: Int)Iterator[A]">drop</a>(<a href="#17338" title="(x$1: Int)Int">length</a> - <a href="#97784" title="Sequence[B]">that</a>.<a href="#17338" title="=&gt; Int">length</a>)
+    <span class="keyword">val</span> <a title="Iterator[B]" id="97788">j</a> = <a href="#97784" title="Sequence[B]">that</a>.<a href="IterableTemplate.scala.html#17285" title="=&gt; Iterator[B]">iterator</a>
+    <span title="Unit" class="keyword">while</span> (<a href="#97787" title="Iterator[A]">i</a>.<a href="../Iterator.scala.html#19184" title="(x$1: Boolean)Boolean">hasNext</a> &amp;&amp; <a href="#97788" title="Iterator[B]">j</a>.<a href="../Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>)
+      <a href="#97789" title="Unit" class="keyword">if</a> (<a href="#97787" title="Iterator[A]">i</a>.<a href="../Iterator.scala.html#19185" title="(x$1: Any)Boolean">next</a> != <a href="#97788" title="Iterator[B]">j</a>.<a href="../Iterator.scala.html#19185" title="()B">next</a>)
+        <span title="Nothing" class="keyword">return</span> <span title="Boolean(false)" class="keyword">false</span>
+    
+    <span title="=&gt; Boolean">!</span><a href="#97788" title="Iterator[B]">j</a>.<a href="../Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>
+  }
+
+  /** @return -1 if &lt;code&gt;that&lt;/code&gt; not contained in this, otherwise the
+   *  first index where &lt;code&gt;that&lt;/code&gt; is contained.
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A](that: Sequence[B])Int" id="17374">indexOfSeq</a>[<a title="&gt;: A &lt;: Any" id="17376">B</a> &gt;: A](<a title="Sequence[B]" id="97820">that</a>: <a href="../Sequence.scala.html#4346" title="Sequence[B]">Sequence</a>[B]): <span title="Int">Int</span> = <a href="#17377" title="(that: Sequence[B],fromIndex: Int)Int">indexOfSeq</a>(<a href="#97820" title="Sequence[B]">that</a>, <span title="Int(0)" class="int">0</span>)
+  
+  <span class="keyword">def</span> <a title="[B &gt;: A](that: Sequence[B],fromIndex: Int)Int" id="17377">indexOfSeq</a>[<a title="&gt;: A &lt;: Any" id="17379">B</a> &gt;: A](<a title="Sequence[B]" id="97826">that</a>: <a href="../Sequence.scala.html#4346" title="Sequence[B]">Sequence</a>[B], <a title="Int" id="97827">fromIndex</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = 
+    <span title="Int" class="keyword">if</span> (<a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>.<a href="TraversableTemplate.scala.html#17150" title="(x$1: Boolean)Boolean">hasDefiniteSize</a> &amp;&amp; <a href="#97826" title="Sequence[B]">that</a>.<a href="TraversableTemplate.scala.html#17150" title="=&gt; Boolean">hasDefiniteSize</a>)
+      <a href="#17423" title="(source: Seq[B],sourceOffset: Int,sourceCount: Int,target: Seq[B],targetOffset: Int,targetCount: Int,fromIndex: Int)Int">indexOf_KMP</a>(<a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>, <span title="Int(0)" class="int">0</span>, <a href="#17338" title="=&gt; Int">length</a>, <a href="#97826" title="Sequence[B]">that</a>, <span title="Int(0)" class="int">0</span>, <a href="#97826" title="Sequence[B]">that</a>.<a href="#17338" title="=&gt; Int">length</a>, <a href="#97827" title="Int">fromIndex</a>)
+    <span class="keyword">else</span> {
+      <span class="keyword">var</span> <a title="Int" id="97898">i</a> = <a href="#97827" title="Int">fromIndex</a>
+      <span class="keyword">var</span> <a title="Sequence[A]" id="97899">s</a>: <a href="../Sequence.scala.html#4346" title="Sequence[A]">Sequence</a>[A] = <a href="TraversableTemplate.scala.html#17218" title="(n: Int)This">thisCollection</a> drop <a href="#97898" title="Int">i</a>
+      <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span><a href="#97899" title="Sequence[A]">s</a>.<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <a href="#97900" title="()Unit">{</a>
+        <span title="Unit" class="keyword">if</span> (<a href="#17368" title="(that: Sequence[B])Boolean">s</a> startsWith <a href="#97826" title="Sequence[B]">that</a>)
+          <span title="Nothing" class="keyword">return</span> <a href="#97898" title="Int">i</a>
+        
+        <a href="#97898" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+        <a href="#97899" title="Sequence[A]">s</a> = <a href="#97899" title="Sequence[A]">s</a>.<a href="TraversableTemplate.scala.html#17213" title="=&gt; Sequence[A]">tail</a>
+      }
+      <span title="Int(-1)">-</span><span class="int">1</span>
+    }
+      
+  /** @return -1 if &lt;code&gt;that&lt;/code&gt; not contained in this, otherwise the
+  *  last index where &lt;code&gt;that&lt;/code&gt; is contained.
+  *  @note may not terminate for infinite-sized collections.
+  */
+  <span class="keyword">def</span> <a title="[B &gt;: A](that: Sequence[B])Int" id="17380">lastIndexOfSeq</a>[<a title="&gt;: A &lt;: Any" id="17382">B</a> &gt;: A](<a title="Sequence[B]" id="97952">that</a>: <a href="../Sequence.scala.html#4346" title="Sequence[B]">Sequence</a>[B]): <span title="Int">Int</span> = <a href="#17383" title="(that: Sequence[B],fromIndex: Int)Int">lastIndexOfSeq</a>(<a href="#97952" title="Sequence[B]">that</a>, <a href="#97952" title="Sequence[B]">that</a>.<a href="#17338" title="=&gt; Int">length</a>)
+
+  // since there's no way to find the last index in an infinite sequence,
+  // we just document it may not terminate and assume it will.
+  <span class="keyword">def</span> <a title="[B &gt;: A](that: Sequence[B],fromIndex: Int)Int" id="17383">lastIndexOfSeq</a>[<a title="&gt;: A &lt;: Any" id="17385">B</a> &gt;: A](<a title="Sequence[B]" id="97958">that</a>: <a href="../Sequence.scala.html#4346" title="Sequence[B]">Sequence</a>[B], <a title="Int" id="97959">fromIndex</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = 
+    <a href="#17426" title="(source: Seq[B],sourceOffset: Int,sourceCount: Int,target: Seq[B],targetOffset: Int,targetCount: Int,fromIndex: Int)Int">lastIndexOf_KMP</a>(<a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>, <span title="Int(0)" class="int">0</span>, <a href="#17338" title="=&gt; Int">length</a>, <a href="#97958" title="Sequence[B]">that</a>, <span title="Int(0)" class="int">0</span>, <a href="#97958" title="Sequence[B]">that</a>.<a href="#17338" title="=&gt; Int">length</a>, <a href="#97959" title="Int">fromIndex</a>)
+
+  /** Tests if the given value &lt;code&gt;elem&lt;/code&gt; is a member of this 
+   *  sequence.
+   *
+   *  @param elem element whose membership has to be tested.
+   *  @return     &lt;code&gt;true&lt;/code&gt; iff there is an element of this sequence
+   *              which is equal (w.r.t. &lt;code&gt;==&lt;/code&gt;) to &lt;code&gt;elem&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="(elem: Any)Boolean" id="17386">contains</a>(<a title="Any" id="27951">elem</a>: <span title="Any">Any</span>): <span title="Boolean">Boolean</span> = <a href="TraversableTemplate.scala.html#17184" title="(p: (A) =&gt; Boolean)Boolean">exists</a> (<a href="#98030" title="(x$1: Any)Boolean">_</a> == <a href="#27951" title="Any">elem</a>)
+
+  /** &lt;p&gt;
+   *    Computes the multiset union of this sequence and the given sequence
+   *    &lt;code&gt;that&lt;/code&gt;. For example:
+   *  &lt;/p&gt;&lt;pre&gt;
+   *    &lt;b&gt;val&lt;/b&gt; xs = List(1, 1, 2)
+   *    &lt;b&gt;val&lt;/b&gt; ys = List(1, 2, 2, 3)
+   *    println(xs union ys)  // prints &quot;List(1, 1, 2, 1, 2, 2, 3)&quot;
+   *    println(ys union xs)  // prints &quot;List(1, 2, 2, 3, 1, 1, 2)&quot;
+   *  &lt;/pre&gt;
+   *
+   *  @param that the sequence of elements to add to the sequence.
+   *  @return     a sequence containing the elements of this
+   *              sequence and those of the given sequence &lt;code&gt;that&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A, That](that: Sequence[B])(implicit bf: scala.collection.generic.BuilderFactory[B,That,This])That" id="17387">union</a>[<a title="&gt;: A &lt;: Any" id="17390">B</a> &gt;: A, <a title="&gt;: Nothing &lt;: Any" id="17391">That</a>](<a title="Sequence[B]" id="98035">that</a>: <a href="../Sequence.scala.html#4346" title="Sequence[B]">Sequence</a>[B])(<span class="keyword">implicit</span> <a title="scala.collection.generic.BuilderFactory[B,That,This]" id="98036">bf</a>: <a href="BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[B,That,This]">BuilderFactory</a>[B, That, This]): <a href="#17391" title="That">That</a> = 
+    <a href="TraversableTemplate.scala.html#17151" title="(that: Traversable[B])(implicit bf: scala.collection.generic.BuilderFactory[B,That,This])That">thisCollection</a> <a href="#98036" title="scala.collection.generic.BuilderFactory[B,That,This]">++</a> <a href="#98035" title="Sequence[B]">that</a>
+
+  /** &lt;p&gt;
+   *    Computes the multiset difference between this sequence and the
+   *    given sequence &lt;code&gt;that&lt;/code&gt;. If an element appears more
+   *    than once in both sequences, the difference contains &lt;i&gt;m&lt;/i&gt; copies
+   *    of that element, where &lt;i&gt;m&lt;/i&gt; is the difference between the
+   *    number of times the element appears in this sequence and the number
+   *    of times it appears in &lt;code&gt;that&lt;/code&gt;. For example:
+   *  &lt;/p&gt;&lt;pre&gt;
+   *    &lt;b&gt;val&lt;/b&gt; xs = List(1, 1, 2)
+   *    &lt;b&gt;val&lt;/b&gt; ys = List(1, 2, 2, 3)
+   *    println(xs diff ys)  // prints &quot;List(1)&quot;
+   *    println(xs -- ys)    // prints &quot;List()&quot;
+   *  &lt;/pre&gt;
+   *
+   *  @param that the sequence of elements to remove from this sequence.
+   *  @return     the sequence of elements contained only in this sequence plus
+   *              &lt;i&gt;m&lt;/i&gt; copies of each element present in both sequences,
+   *              where &lt;i&gt;m&lt;/i&gt; is defined as above.
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A, That](that: Sequence[B])This" id="17392">diff</a>[<a title="&gt;: A &lt;: Any" id="17395">B</a> &gt;: A, <a title="&gt;: Nothing &lt;: Any" id="17396">That</a>](<a title="Sequence[B]" id="98110">that</a>: <a href="../Sequence.scala.html#4346" title="Sequence[B]">Sequence</a>[B]): <a href="#13500" title="This">This</a> = {
+    <span class="keyword">val</span> <a title="scala.collection.mutable.Map[B,Int]" id="98113">occ</a> = <a href="#17402" title="(seq: Sequence[B])scala.collection.mutable.Map[B,Int]">occCounts</a>(<a href="#98110" title="Sequence[B]">that</a>)
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[A,This]" id="98114">b</a> = <a href="TraversableTemplate.scala.html#17131" title="=&gt; scala.collection.generic.Builder[A,This]">newBuilder</a>
+    <span class="keyword">for</span> (<a title="A" id="98130">x</a> &lt;- <a href="IterableTemplate.scala.html#17287" title="(f: (A) =&gt; Any)Unit" class="keyword">this</a>)
+      <span title="Any" class="keyword">if</span> (<a href="MapTemplate.scala.html#35283" title="(key: B)Int">occ</a><span title="(x$1: Int)Boolean">(</span><a href="#98130" title="A">x</a>) == <span title="Int(0)" class="int">0</span>) <a href="Builder.scala.html#19589" title="(elem: A)b.type">b</a> += <a href="#98130" title="A">x</a>
+      <span class="keyword">else</span> <a href="MutableMapTemplate.scala.html#57774" title="(key: B,value: Int)Unit">occ</a><span title="(x$1: Int)Int">(</span><a href="#98130" title="A">x</a>) -= <span title="Int(1)" class="int">1</span> 
+    <a href="#98114" title="scala.collection.generic.Builder[A,This]">b</a>.<a href="Builder.scala.html#19591" title="()This">result</a>
+  }
+
+  /** &lt;p&gt;
+   *    Computes the multiset intersection between this sequence and the
+   *    given sequence &lt;code&gt;that&lt;/code&gt;; the intersection contains &lt;i&gt;m&lt;/i&gt;
+   *    copies of an element contained in both sequences, where &lt;i&gt;m&lt;/i&gt; is
+   *    the smaller of the number of times the element appears in this
+   *    sequence or in &lt;code&gt;that&lt;/code&gt;. For example:
+   *  &lt;/p&gt;&lt;pre&gt;
+   *    &lt;b&gt;val&lt;/b&gt; xs = List(1, 1, 2)
+   *    &lt;b&gt;val&lt;/b&gt; ys = List(3, 2, 2, 1)
+   *    println(xs intersect ys)  // prints &quot;List(1, 2)&quot;
+   *    println(ys intersect xs)  // prints &quot;List(2, 1)&quot;
+   *  &lt;/pre&gt;
+   *
+   *  @param that the sequence to intersect.
+   *  @return     the sequence of elements contained both in this sequence and
+   *              in the given sequence &lt;code&gt;that&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A, That](that: Sequence[B])This" id="17397">intersect</a>[<a title="&gt;: A &lt;: Any" id="17400">B</a> &gt;: A, <a title="&gt;: Nothing &lt;: Any" id="17401">That</a>](<a title="Sequence[B]" id="98246">that</a>: <a href="../Sequence.scala.html#4346" title="Sequence[B]">Sequence</a>[B]): <a href="#13500" title="This">This</a> = {
+    <span class="keyword">val</span> <a title="scala.collection.mutable.Map[B,Int]" id="98249">occ</a> = <a href="#17402" title="(seq: Sequence[B])scala.collection.mutable.Map[B,Int]">occCounts</a>(<a href="#98246" title="Sequence[B]">that</a>)
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[A,This]" id="98250">b</a> = <a href="TraversableTemplate.scala.html#17131" title="=&gt; scala.collection.generic.Builder[A,This]">newBuilder</a>
+    <span class="keyword">for</span> (<a title="A" id="98263">x</a> &lt;- <a href="IterableTemplate.scala.html#17287" title="(f: (A) =&gt; Unit)Unit" class="keyword">this</a>)
+      <span title="Unit" class="keyword">if</span> (<a href="MapTemplate.scala.html#35283" title="(key: B)Int">occ</a><span title="(x$1: Int)Boolean">(</span><a href="#98263" title="A">x</a>) &gt; <span title="Int(0)" class="int">0</span>) {
+        <a href="Builder.scala.html#19589" title="(elem: A)b.type">b</a> += <a href="#98263" title="A">x</a>
+        <a href="MutableMapTemplate.scala.html#57774" title="(key: B,value: Int)Unit">occ</a><span title="(x$1: Int)Int">(</span><a href="#98263" title="A">x</a>) -= <span title="Int(1)" class="int">1</span>
+      }
+    <a href="#98250" title="scala.collection.generic.Builder[A,This]">b</a>.<a href="Builder.scala.html#19591" title="()This">result</a>
+  }
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="[B](seq: Sequence[B])scala.collection.mutable.Map[B,Int]" id="17402">occCounts</a>[<a title="&gt;: Nothing &lt;: Any" id="17404">B</a>](<a title="Sequence[B]" id="98115">seq</a>: <a href="../Sequence.scala.html#4346" title="Sequence[B]">Sequence</a>[B]): mutable.<a href="../mutable/Map.scala.html#7590" title="scala.collection.mutable.Map[B,Int]">Map</a>[B, Int] = {
+    <span class="keyword">val</span> <a title="scala.collection.mutable.Map[B,Int]" id="98372">occ</a> = 
+      <span title="scala.collection.mutable.Map[B,Int]" class="keyword">if</span> (<a href="#98115" title="Sequence[B]">seq</a>.<a href="IterableTemplate.scala.html#17290" title="(x$1: Boolean)Boolean">isEmpty</a> || <a href="#98115" title="Sequence[B]">seq</a>.<a href="IterableTemplate.scala.html#17298" title="=&gt; B">head</a>.<a title="[T0]Boolean" id="3618">isInstanceOf</a><span title="Boolean">[</span><a href="../../Unhashable.scala.html#168" title="Unhashable">Unhashable</a>]) 
+        <a href="#98375" title="scala.collection.mutable.ListMap[B,Int]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends scala.collection.mutable.ListMap[B,Int]" id="98375">mutable</a>.<a href="../mutable/ListMap.scala.html#7665" title="scala.collection.mutable.ListMap[B,Int]">ListMap</a>[B, Int] { <span class="keyword">override</span> <span class="keyword">def</span> <a title="(k: B)Int" id="98392">default</a>(<a title="B" id="98420">k</a>: <a href="#17404" title="B">B</a>) = <span title="Int(0)" class="int">0</span> }
+      <span class="keyword">else</span>         
+        <a href="#98426" title="scala.collection.mutable.HashMap[B,Int]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends scala.collection.mutable.HashMap[B,Int]" id="98426">mutable</a>.<a href="../mutable/HashMap.scala.html#7755" title="scala.collection.mutable.HashMap[B,Int]">HashMap</a>[B, Int] { <span class="keyword">override</span> <span class="keyword">def</span> <a title="(k: B)Int" id="98428">default</a>(<a title="B" id="98448">k</a>: <a href="#17404" title="B">B</a>) = <span title="Int(0)" class="int">0</span> }
+    <span class="keyword">for</span> (<a title="B" id="114474">y</a> &lt;- <a href="IterableTemplate.scala.html#17287" title="(f: (B) =&gt; Unit)Unit">seq</a>) <a href="MutableMapTemplate.scala.html#57774" title="(key: B,value: Int)Unit">occ</a><span title="(x$1: Int)Int">(</span><a href="#114474" title="B">y</a>) += <span title="Int(1)" class="int">1</span>
+    <a href="#98372" title="scala.collection.mutable.Map[B,Int]">occ</a>
+  }
+
+  /** Builds a new sequence from this sequence in which any duplicates (wrt to ==) removed.
+   *  Among duplicate elements, only the first one is retained in the result sequence
+   */
+  <span class="keyword">def</span> <a title="=&gt; This" id="17405">removeDuplicates</a>: <a href="#13500" title="This">This</a> = {
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[A,This]" id="114548">b</a> = <a href="TraversableTemplate.scala.html#17131" title="=&gt; scala.collection.generic.Builder[A,This]">newBuilder</a>
+    <span class="keyword">var</span> <a title="scala.collection.Set[A]" id="114549">seen</a> = <a href="Companion.scala.html#17471" title="[A](args: A*)scala.collection.Set[A]">Set</a><span title="(args: A*)scala.collection.Set[A]">[</span><a href="#13499" title="A">A</a>]()
+    <span class="keyword">for</span> (<a title="A" id="114560">x</a> &lt;- <a href="IterableTemplate.scala.html#17287" title="(f: (A) =&gt; Unit)Unit" class="keyword">this</a>) {
+      <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span>(<a href="SetTemplate.scala.html#34276" title="(elem: A)Boolean">seen</a> contains <a href="#114560" title="A">x</a>)) {
+        <a href="Builder.scala.html#19589" title="(elem: A)b.type">b</a> += <a href="#114560" title="A">x</a>
+        <a href="#114549" title="scala.collection.Set[A]">seen</a> = (<a href="SetTemplate.scala.html#34277" title="(elem: A)scala.collection.Set[A]">seen</a> + <a href="#114560" title="A">x</a>)
+      }
+    }
+    <a href="#114548" title="scala.collection.generic.Builder[A,This]">b</a>.<a href="Builder.scala.html#19591" title="()This">result</a>
+  }
+
+  /** A new sequence, consisting of all elements of current sequence 
+   *  except that `replaced` elements starting from `from` are replaced
+   *  by `patch`.
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A, That](from: Int,patch: Sequence[B],replaced: Int)(implicit bf: scala.collection.generic.BuilderFactory[B,That,This])That" id="17406">patch</a>[<a title="&gt;: A &lt;: Any" id="17409">B</a> &gt;: A, <a title="&gt;: Nothing &lt;: Any" id="17410">That</a>](<a title="Int" id="39172">from</a>: <span title="Int">Int</span>, <a title="Sequence[B]" id="39173">patch</a>: <a href="../Sequence.scala.html#4346" title="Sequence[B]">Sequence</a>[B], <a title="Int" id="39174">replaced</a>: <span title="Int">Int</span>)(<span class="keyword">implicit</span> <a title="scala.collection.generic.BuilderFactory[B,That,This]" id="39175">bf</a>: <a href="BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[B,That,This]">BuilderFactory</a>[B, That, This]): <a href="#17410" title="That">That</a> = {
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[B,That]" id="114608">b</a> = <a href="BuilderFactory.scala.html#20484" title="(from: This)scala.collection.generic.Builder[B,That]">bf</a>(<a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>)
+    <span class="keyword">val</span> <a href="../../Tuple2.scala.html#20670" title="(This, This)">(</a><a href="../../Tuple2.scala.html#20472" title="This" id="114610">prefix</a>, <a href="../../Tuple2.scala.html#20474" title="This" id="114611">rest</a>) = <a href="#10952" title="SequenceTemplate.this.type" class="keyword">this</a>.<a href="TraversableTemplate.scala.html#17223" title="(n: Int)(This, This)">splitAt</a><a href="../../Tuple2.scala.html#1152" title="(This, This) @unchecked">(</a><a href="#39172" title="Int">from</a>)
+    <a href="Growable.scala.html#19586" title="(iter: Traversable[B])b.type">b</a> ++= <a href="#114610" title="This">prefix</a>
+    <a href="Growable.scala.html#19586" title="(iter: Traversable[B])b.type">b</a> ++= <a href="#39173" title="Sequence[B]">patch</a>
+    <a href="Growable.scala.html#19586" title="(iter: Traversable[B])b.type">b</a> ++= <a href="TraversableTemplate.scala.html#17218" title="(n: Int)This">rest</a> drop <a href="#39174" title="Int">replaced</a>
+    <a href="#114608" title="scala.collection.generic.Builder[B,That]">b</a>.<a href="Builder.scala.html#19591" title="()That">result</a>
+  }
+
+  /** Returns a new sequence of given length containing the elements of this sequence followed by zero
+   *  or more occurrences of given elements. 
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A, That](len: Int,elem: B)(implicit bf: scala.collection.generic.BuilderFactory[B,That,This])That" id="17411">padTo</a>[<a title="&gt;: A &lt;: Any" id="17414">B</a> &gt;: A, <a title="&gt;: Nothing &lt;: Any" id="17415">That</a>](<a title="Int" id="39957">len</a>: <span title="Int">Int</span>, <a title="B" id="39958">elem</a>: <a href="#17414" title="B">B</a>)(<span class="keyword">implicit</span> <a title="scala.collection.generic.BuilderFactory[B,That,This]" id="39959">bf</a>: <a href="BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[B,That,This]">BuilderFactory</a>[B, That, This]): <a href="#17415" title="That">That</a> = {
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[B,That]" id="114670">b</a> = <a href="BuilderFactory.scala.html#20484" title="(from: This)scala.collection.generic.Builder[B,That]">bf</a>(<a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>)
+    <span class="keyword">var</span> <a title="Int" id="114671">diff</a> = <a href="#39957" title="(x$1: Int)Int">len</a> - <a href="#17338" title="=&gt; Int">length</a>
+    <a href="Growable.scala.html#19586" title="(iter: Traversable[B])b.type">b</a> ++= <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+    <span title="Unit" class="keyword">while</span> (<a href="#114671" title="(x$1: Int)Boolean">diff</a> &gt; <span title="Int(0)" class="int">0</span>) <a href="#114672" title="()Unit">{</a>
+      <a href="Builder.scala.html#19589" title="(elem: B)b.type">b</a> += <a href="#39958" title="B">elem</a>
+      <a href="#114671" title="Int">diff</a> -=<span title="Int(1)" class="int">1</span> 
+    }
+    <a href="#114670" title="scala.collection.generic.Builder[B,That]">b</a>.<a href="Builder.scala.html#19591" title="()That">result</a>
+  }
+
+  /**
+   *  Overridden for efficiency.
+   *
+   *  @return  the sequence itself
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Sequence[A]" id="17416">toSequence</a>: <a href="../Sequence.scala.html#4346" title="Sequence[A]">Sequence</a>[A] = <a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+
+  <span class="keyword">def</span> <a title="=&gt; Range" id="17417">indices</a>: <a href="../../Range.scala.html#1281" title="Range">Range</a> = <a href="../../runtime/RichInt.scala.html#19060" title="(end: Int)Range" class="int">0</a> until <a href="#17338" title="=&gt; Int">length</a>
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; &lt;refinement&gt; extends java.lang.Object with scala.collection.generic.SequenceView[A,This]" id="17418">view</a> = <a href="#114793" title="java.lang.Object with scala.collection.generic.SequenceView[A,This]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with scala.collection.generic.SequenceView[A,This]" id="114793">SequenceView</a>[A, This] {
+    <span class="keyword">protected</span> <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="This" id="114796">underlying</a> = <a href="#10952" title="SequenceTemplate.this.type">self</a>.<a href="TraversableTemplate.scala.html#17130" title="=&gt; This">thisCollection</a>
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Iterator[A]" id="114797">iterator</a> = <a href="#10952" title="SequenceTemplate.this.type">self</a>.<a href="IterableTemplate.scala.html#17285" title="=&gt; Iterator[A]">iterator</a>
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Int" id="114798">length</a> = <a href="#10952" title="SequenceTemplate.this.type">self</a>.<a href="#17338" title="=&gt; Int">length</a>
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="(idx: Int)A" id="114799">apply</a>(<a title="Int" id="114810">idx</a>: <span title="Int">Int</span>) = <a href="#10952" title="SequenceTemplate.this.type">self</a>.<a href="#17339" title="(idx: Int)A">apply</a>(<a href="#114810" title="Int">idx</a>)
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(from: Int,until: Int)scala.collection.generic.SequenceView[A,This]" id="17419">view</a>(<a title="Int" id="114833">from</a>: <span title="Int">Int</span>, <a title="Int" id="114834">until</a>: <span title="Int">Int</span>) = <a href="#17418" title="=&gt; &lt;refinement&gt; extends java.lang.Object with scala.collection.generic.SequenceView[A,This]">view</a>.<a href="TraversableViewTemplate.scala.html#25982" title="(from: Int,until: Int)scala.collection.generic.SequenceView[A,This]">slice</a>(<a href="#114833" title="Int">from</a>, <a href="#114834" title="Int">until</a>)
+    
+  // KMP implementation by paulp, based on the undoubtedly reliable wikipedia entry
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="[B](S: Seq[B],W: Seq[B])Option[Int]" id="17420">KMP</a>[<a title="&gt;: Nothing &lt;: Any" id="17422">B</a>](<a title="Seq[B]" id="114863">S</a>: <a href="../Sequence.scala.html#4346" title="Seq[B]">Seq</a>[B], <a title="Seq[B]" id="114864">W</a>: <a href="../Sequence.scala.html#4346" title="Seq[B]">Seq</a>[B]): <a href="../../Option.scala.html#777" title="Option[Int]">Option</a>[Int] = {
+    // trivial cases
+    <span title="Unit" class="keyword">if</span> (<a href="#114864" title="Seq[B]">W</a>.<a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <span title="Nothing" class="keyword">return</span> <a href="../../Option.scala.html#19800" title="(x: Int)Some[Int]">Some</a>(<span title="Int(0)" class="int">0</span>)
+    <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="TraversableTemplate.scala.html#17218" title="(n: Int)Sequence[B]">W</a> drop <span title="Int(1)" class="int">1</span> <a href="IterableTemplate.scala.html#17290" title="=&gt; Boolean">isEmpty</a>) <span title="Nothing" class="keyword">return</span> (<a href="#17348" title="(elem: B)Int">S</a> indexOf <a href="#17339" title="(idx: Int)B">W</a>(<span title="Int(0)" class="int">0</span>)) <span title="Option[Int]" class="keyword">match</span> {
+      <span title="None.type" class="keyword">case</span> <span title="Int(-1)">-</span><span class="int">1</span> =&gt; <a href="../../Option.scala.html#463" title="object None">None</a>
+      <span title="Some[Int]" class="keyword">case</span> <a title="Int" id="114909">x</a>  =&gt; <a href="../../Option.scala.html#19800" title="(x: Int)Some[Int]">Some</a>(<a href="#114909" title="Int">x</a>)
+    }
+    
+    <span class="keyword">val</span> <a title="Array[Int]" id="114868">T</a>: <a href="../../Array.scala.html#885" title="Array[Int]">Array</a>[Int] = {
+      <span class="keyword">val</span> <a title="Array[Int]" id="114915">arr</a> = <span title="Array[Int]" class="keyword">new</span> <a href="../../Array.scala.html#885" title="Array[Int]">Array</a>[Int](<a href="#114864" title="Seq[B]">W</a>.<a href="#17338" title="=&gt; Int">length</a>)
+      <span class="keyword">var</span> <a title="Int" id="114916">pos</a> = <span title="Int(2)" class="int">2</span>
+      <span class="keyword">var</span> <a title="Int" id="114917">cnd</a> = <span title="Int(0)" class="int">0</span>
+      <a href="../../Array.scala.html#17717" title="(i: Int,x: Int)Unit">arr</a>(<span title="Int(0)" class="int">0</span>) = <span title="Int(-1)">-</span><span class="int">1</span>
+      <a href="../../Array.scala.html#17717" title="(i: Int,x: Int)Unit">arr</a>(<span title="Int(1)" class="int">1</span>) = <span title="Int(0)" class="int">0</span>
+      <span title="Unit" class="keyword">while</span> (<a href="#114916" title="(x$1: Int)Boolean">pos</a> &lt; <a href="#114864" title="Seq[B]">W</a>.<a href="#17338" title="=&gt; Int">length</a>) {
+        <a href="#114918" title="Unit" class="keyword">if</a> (<a href="#17339" title="(idx: Int)B">W</a><span title="(x$1: Any)Boolean">(</span><a href="#114916" title="(x$1: Int)Int">pos</a> - <span title="Int(1)" class="int">1</span>) == <a href="#17339" title="(idx: Int)B">W</a>(<a href="#114917" title="Int">cnd</a>)) {
+          <a href="../../Array.scala.html#17717" title="(i: Int,x: Int)Unit">arr</a>(<a href="#114916" title="Int">pos</a>) = <a href="#114917" title="(x$1: Int)Int">cnd</a> + <span title="Int(1)" class="int">1</span>
+          <a href="#114916" title="Int">pos</a> += <span title="Int(1)" class="int">1</span>
+          <a href="#114917" title="Int">cnd</a> += <span title="Int(1)" class="int">1</span>
+        }
+        <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#114917" title="(x$1: Int)Boolean">cnd</a> &gt; <span title="Int(0)" class="int">0</span>) {
+          <a href="#114917" title="Int">cnd</a> = <a href="../../Array.scala.html#17716" title="(i: Int)Int">arr</a>(<a href="#114917" title="Int">cnd</a>)
+        }
+        <span class="keyword">else</span> {
+          <a href="../../Array.scala.html#17717" title="(i: Int,x: Int)Unit">arr</a>(<a href="#114916" title="Int">pos</a>) = <span title="Int(0)" class="int">0</span>
+          <a href="#114916" title="Int">pos</a> += <span title="Int(1)" class="int">1</span>
+        }
+      }
+      <a href="#114915" title="Array[Int]">arr</a>
+    }
+    
+    <span class="keyword">var</span> <a title="Int" id="114869">m</a>, <a title="Int" id="114870">i</a> = <span title="Int(0)" class="int">0</span>
+    <span class="keyword">def</span> <a title="=&gt; Int" id="114871">mi</a> = <a href="#114869" title="(x$1: Int)Int">m</a> + <a href="#114870" title="Int">i</a>
+    
+    <span title="Unit" class="keyword">while</span> (<a href="#114871" title="(x$1: Int)Boolean">mi</a> &lt; <a href="#114863" title="Seq[B]">S</a>.<a href="#17338" title="=&gt; Int">length</a>) {
+      <a href="#114872" title="Unit" class="keyword">if</a> (<a href="#17339" title="(idx: Int)B">W</a><span title="(x$1: Any)Boolean">(</span><a href="#114870" title="Int">i</a>) == <a href="#17339" title="(idx: Int)B">S</a>(<a href="#114871" title="=&gt; Int">mi</a>)) {
+        <a href="#114870" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+        <span title="Unit" class="keyword">if</span> (<a href="#114870" title="(x$1: Int)Boolean">i</a> == <a href="#114864" title="Seq[B]">W</a>.<a href="#17338" title="=&gt; Int">length</a>)
+          <span title="Nothing" class="keyword">return</span> <a href="../../Option.scala.html#19800" title="(x: Int)Some[Int]">Some</a>(<a href="#114869" title="Int">m</a>)
+      }
+      <span class="keyword">else</span> {
+        <a href="#114869" title="Int">m</a> = <a href="#114871" title="(x$1: Int)Int">mi</a> - <a href="../../Array.scala.html#17716" title="(i: Int)Int">T</a>(<a href="#114870" title="Int">i</a>)
+        <span title="Unit" class="keyword">if</span> (<a href="#114870" title="(x$1: Int)Boolean">i</a> &gt; <span title="Int(0)" class="int">0</span>)
+          <a href="#114870" title="Int">i</a> = <a href="../../Array.scala.html#17716" title="(i: Int)Int">T</a>(<a href="#114870" title="Int">i</a>)
+      }
+    }
+    <a href="../../Option.scala.html#463" title="object None">None</a>
+  }
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="[B](source: Seq[B],sourceOffset: Int,sourceCount: Int,target: Seq[B],targetOffset: Int,targetCount: Int,fromIndex: Int)Int" id="17423">indexOf_KMP</a>[<a title="&gt;: Nothing &lt;: Any" id="17425">B</a>](
+    <a title="Seq[B]" id="97863">source</a>: <a href="../Sequence.scala.html#4346" title="Seq[B]">Seq</a>[B], <a title="Int" id="97864">sourceOffset</a>: <span title="Int">Int</span>, <a title="Int" id="97865">sourceCount</a>: <span title="Int">Int</span>,
+    <a title="Seq[B]" id="97866">target</a>: <a href="../Sequence.scala.html#4346" title="Seq[B]">Seq</a>[B], <a title="Int" id="97867">targetOffset</a>: <span title="Int">Int</span>, <a title="Int" id="97868">targetCount</a>: <span title="Int">Int</span>,
+    <a title="Int" id="97869">fromIndex</a>: <span title="Int">Int</span>): <span title="Int">Int</span> =
+      <a href="#17420" title="(S: Seq[B],W: Seq[B])Option[Int]">KMP</a>(<a href="#97863" title="Seq[B]">source</a>.<a href="TraversableTemplate.scala.html#17219" title="(from: Int,until: Int)Sequence[B]">slice</a><a href="TraversableTemplate.scala.html#17218" title="(n: Int)Sequence[B]">(</a><a href="#97864" title="Int">sourceOffset</a>, <a href="#97865" title="Int">sourceCount</a>) drop <a href="#97869" title="Int">fromIndex</a>, <a href="#97866" title="Seq[B]">target</a>.<a href="TraversableTemplate.scala.html#17219" title="(from: Int,until: Int)Sequence[B]">slice</a>(<a href="#97867" title="Int">targetOffset</a>, <a href="#97868" title="Int">targetCount</a>)) <span title="Int" class="keyword">match</span> {
+        <span title="Int(-1)" class="keyword">case</span> <a href="../../Option.scala.html#463" title="object None">None</a>     =&gt; <span title="Int(-1)">-</span><span class="int">1</span>
+        <span title="Int" class="keyword">case</span> Some(<a title="Int" id="115307">x</a>)  =&gt; <a href="#115307" title="(x$1: Int)Int">x</a> + <a href="#97869" title="Int">fromIndex</a>
+      }
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="[B](source: Seq[B],sourceOffset: Int,sourceCount: Int,target: Seq[B],targetOffset: Int,targetCount: Int,fromIndex: Int)Int" id="17426">lastIndexOf_KMP</a>[<a title="&gt;: Nothing &lt;: Any" id="17428">B</a>](
+    <a title="Seq[B]" id="97993">source</a>: <a href="../Sequence.scala.html#4346" title="Seq[B]">Seq</a>[B], <a title="Int" id="97994">sourceOffset</a>: <span title="Int">Int</span>, <a title="Int" id="97995">sourceCount</a>: <span title="Int">Int</span>,
+    <a title="Seq[B]" id="97996">target</a>: <a href="../Sequence.scala.html#4346" title="Seq[B]">Seq</a>[B], <a title="Int" id="97997">targetOffset</a>: <span title="Int">Int</span>, <a title="Int" id="97998">targetCount</a>: <span title="Int">Int</span>,
+    <a title="Int" id="97999">fromIndex</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = {
+      <span class="keyword">val</span> <a title="Sequence[B]" id="115332">src</a> = (<a href="#97993" title="Seq[B]">source</a>.<a href="TraversableTemplate.scala.html#17219" title="(from: Int,until: Int)Sequence[B]">slice</a><a href="TraversableTemplate.scala.html#17217" title="(n: Int)Sequence[B]">(</a><a href="#97994" title="Int">sourceOffset</a>, <a href="#97995" title="Int">sourceCount</a>) take <a href="#97999" title="Int">fromIndex</a>).<a href="#17362" title="=&gt; Sequence[B]">reverse</a>
+      <span class="keyword">val</span> <a title="Sequence[B]" id="115333">tgt</a> = <a href="#97996" title="Seq[B]">target</a>.<a href="TraversableTemplate.scala.html#17219" title="(from: Int,until: Int)Sequence[B]">slice</a>(<a href="#97997" title="Int">targetOffset</a>, <a href="#97998" title="Int">targetCount</a>).<a href="#17362" title="=&gt; Sequence[B]">reverse</a>
+
+      <a href="#17420" title="(S: Seq[B],W: Seq[B])Option[Int]">KMP</a>(<a href="#115332" title="Sequence[B]">src</a>, <a href="#115333" title="Sequence[B]">tgt</a>) <span title="Int" class="keyword">match</span> {
+        <span title="Int(-1)" class="keyword">case</span> <a href="../../Option.scala.html#463" title="object None">None</a>     =&gt; <span title="Int(-1)">-</span><span class="int">1</span>
+        <span title="Int" class="keyword">case</span> Some(<a title="Int" id="115363">x</a>)  =&gt; <span title="(x$1: Int)Int">(</span><a href="#115332" title="Sequence[B]">src</a>.<a href="#17338" title="(x$1: Int)Int">length</a> <span title="(x$1: Int)Int">-</span> <a href="#115333" title="Sequence[B]">tgt</a>.<a href="#17338" title="=&gt; Int">length</a> - <a href="#115363" title="Int">x</a>) + <a href="#97994" title="Int">sourceOffset</a>
+      }
+    }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(that: Any)Boolean" id="17429">equals</a>(<a title="Any" id="21672">that</a>: <span title="Any">Any</span>): <span title="Boolean">Boolean</span> = <a href="#21672" title="Any">that</a> <span title="Boolean" class="keyword">match</span> {
+    <span title="Boolean" class="keyword">case</span> <a title="Sequence[_]" id="115400">that</a>: <a href="../Sequence.scala.html#4346" title="Sequence[_]">Sequence</a>[_]  =&gt; <a href="IterableTemplate.scala.html#17321" title="(that: Iterable[Any])Boolean" class="keyword">this</a> sameElements <a href="#115400" title="Sequence[_]">that</a>
+    <span title="Boolean(false)" class="keyword">case</span> _                  =&gt; <span title="Boolean(false)" class="keyword">false</span>
+  }
+
+  /** Need to override string, so that it's not the Function1's string that gets mixed in.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="17430">toString</a> = <span class="keyword">super</span>[IterableTemplate].<a href="TraversableTemplate.scala.html#17252" title="()String">toString</a>
+
+  /** Returns index of the last element satisying a predicate, or -1. */
+  @deprecated(<span class="string">&quot;use `lastIndexWhere' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)Int" id="17431">findLastIndexOf</a>(<a title="(A) =&gt; Boolean" id="115413">p</a>: A =&gt; Boolean): <span title="Int">Int</span> = <a href="#17360" title="(p: (A) =&gt; Boolean)Int">lastIndexWhere</a>(<a href="#115413" title="(A) =&gt; Boolean">p</a>)
+  
+  /** A sub-sequence starting at index &lt;code&gt;from&lt;/code&gt; 
+    *  and extending up to the length of the current sequence
+    *
+    *  @param from   The index of the first element of the slice
+    *  @throws IndexOutOfBoundsException if &lt;code&gt;from &amp;lt; 0&lt;/code&gt;
+    */
+  @deprecated(<span class="string">&quot;use `drop' instead&quot;</span>)
+  <span class="keyword">def</span> <a title="(from: Int)Sequence[A]" id="17432">slice</a>(<a title="Int" id="22504">from</a>: <span title="Int">Int</span>): <a href="../Sequence.scala.html#4346" title="Sequence[A]">Sequence</a>[A] = <a href="TraversableTemplate.scala.html#17219" title="(from: Int,until: Int)This">slice</a>(<a href="#22504" title="Int">from</a>, <a href="#17338" title="=&gt; Int">length</a>)
+
+  @deprecated(<span class="string">&quot;Should be replaced by &lt;code&gt;(s1, s2) forall { case (x, y) =&gt; f(x, y) }&lt;/code&gt;&quot;</span>)
+  <span class="keyword">def</span> <a title="[B](that: Sequence[B])(f: (A, B) =&gt; Boolean)Boolean" id="17433">equalsWith</a>[<a title="&gt;: Nothing &lt;: Any" id="17435">B</a>](<a title="Sequence[B]" id="115429">that</a>: <a href="../Sequence.scala.html#4346" title="Sequence[B]">Sequence</a>[B])(<a title="(A, B) =&gt; Boolean" id="115430">f</a>: (A,B) =&gt; Boolean): <span title="Boolean">Boolean</span> = {
+    <span class="keyword">val</span> <a title="Iterator[A]" id="115434">i</a> = <a href="#10952" title="SequenceTemplate.this.type" class="keyword">this</a>.<a href="IterableTemplate.scala.html#17285" title="=&gt; Iterator[A]">iterator</a>
+    <span class="keyword">val</span> <a title="Iterator[B]" id="115435">j</a> = <a href="#115429" title="Sequence[B]">that</a>.<a href="IterableTemplate.scala.html#17285" title="=&gt; Iterator[B]">iterator</a>
+    <span title="Unit" class="keyword">while</span> (<a href="#115434" title="Iterator[A]">i</a>.<a href="../Iterator.scala.html#19184" title="(x$1: Boolean)Boolean">hasNext</a> &amp;&amp; <a href="#115435" title="Iterator[B]">j</a>.<a href="../Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>)
+      <a href="#115436" title="Unit" class="keyword">if</a> (<span title="=&gt; Boolean">!</span><a href="../../Function2.scala.html#20443" title="(v1: A,v2: B)Boolean">f</a>(<a href="#115434" title="Iterator[A]">i</a>.<a href="../Iterator.scala.html#19185" title="()A">next</a>, <a href="#115435" title="Iterator[B]">j</a>.<a href="../Iterator.scala.html#19185" title="()B">next</a>))
+        <span title="Nothing" class="keyword">return</span> <span title="Boolean(false)" class="keyword">false</span>
+    
+    <span title="(x$1: Boolean)Boolean">!</span><a href="#115434" title="Iterator[A]">i</a>.<a href="../Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a> &amp;&amp; <span title="=&gt; Boolean">!</span><a href="#115435" title="Iterator[B]">j</a>.<a href="../Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>
+  }
+
+  /** Is &lt;code&gt;that&lt;/code&gt; a slice in this? */
+  @deprecated(<span class="string">&quot;Should be replaced by &lt;code&gt;indexOfSeq(that) != -1&lt;/code&gt;&quot;</span>)
+  <span class="keyword">def</span> <a title="[B](that: Sequence[B])Boolean" id="17436">containsSlice</a>[<a title="&gt;: Nothing &lt;: Any" id="17438">B</a>](<a title="Sequence[B]" id="115451">that</a>: <a href="../Sequence.scala.html#4346" title="Sequence[B]">Sequence</a>[B]): <span title="Boolean">Boolean</span> = <a href="#17374" title="(that: Sequence[Any])Int">indexOfSeq</a><a title="(x$1: Int)Boolean" id="2952">(</a><a href="#115451" title="Sequence[B]">that</a>) != <span title="Int(-1)">-</span><span class="int">1</span> 
+
+ /**
+   * returns a projection that can be used to call non-strict &lt;code&gt;filter&lt;/code&gt;,
+   * &lt;code&gt;map&lt;/code&gt;, and &lt;code&gt;flatMap&lt;/code&gt; methods that build projections
+   * of the collection.
+   */
+  @deprecated(<span class="string">&quot;use `view' instead&quot;</span>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; &lt;refinement&gt; extends java.lang.Object with scala.collection.generic.SequenceView[A,This]" id="17439">projection</a> = <a href="#17418" title="=&gt; &lt;refinement&gt; extends java.lang.Object with scala.collection.generic.SequenceView[A,This]">view</a>
+}
+
+
+        </pre>
+    </body>
+</html>

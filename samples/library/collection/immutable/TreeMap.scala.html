@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>collection/immutable/TreeMap.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: TreeMap.scala 18387 2009-07-24 15:28:37Z odersky $
+
+<span class="keyword">package</span> scala.collection.immutable
+
+<span class="keyword">import</span> scala.collection.generic._
+
+/** The canonical factory of &lt;a href=&quot;TreeMap.html&quot;&gt;TreeMap&lt;/a&gt;'s. */
+<span class="keyword">object</span> <a title="object scala.collection.immutable.TreeMap" id="9193">TreeMap</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="../generic/ImmutableSortedMapFactory.scala.html#10292" title="scala.collection.generic.ImmutableSortedMapFactory[scala.collection.immutable.TreeMap]">ImmutableSortedMapFactory</a>[TreeMap] {
+  <span class="keyword">def</span> <a title="[A, B](implicit ord: Ordering[A])scala.collection.immutable.TreeMap[A,B]" id="176888">empty</a>[<a title="&gt;: Nothing &lt;: Any" id="176891">A</a>, <a title="&gt;: Nothing &lt;: Any" id="176892">B</a>](<span class="keyword">implicit</span> <a title="Ordering[A]" id="176903">ord</a>: <a href="../../Ordering.scala.html#807" title="Ordering[A]">Ordering</a>[A]) = <a href="#176915" title="()(implicit ordering: Ordering[A])scala.collection.immutable.TreeMap[A,B]" class="keyword">new</a> <a href="#9192" title="scala.collection.immutable.TreeMap[A,B]">TreeMap</a>[A, B]()(<a href="#176903" title="Ordering[A]">ord</a>)
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="[A, B](implicit ord: Ordering[A])scala.collection.generic.BuilderFactory[(A, B),scala.collection.immutable.TreeMap[A,B],scala.collection.immutable.TreeMap.Coll]" id="176893">builderFactory</a>[<a title="&gt;: Nothing &lt;: Any" id="176896">A</a>, <a title="&gt;: Nothing &lt;: Any" id="176897">B</a>](<span class="keyword">implicit</span> <a title="Ordering[A]" id="211277">ord</a>: <a href="../../Ordering.scala.html#807" title="Ordering[A]">Ordering</a>[A]): <a href="../generic/BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[(A, B),scala.collection.immutable.TreeMap[A,B],scala.collection.immutable.TreeMap.Coll]">BuilderFactory</a>[(A, B), TreeMap[A, B], Coll] = <a href="#211277" title="scala.collection.immutable.TreeMap.SortedMapBuilderFactory[A,B]" class="keyword">new</a> <a href="../generic/SortedMapFactory.scala.html#70539" title="scala.collection.immutable.TreeMap.SortedMapBuilderFactory[A,B]">SortedMapBuilderFactory</a>[A, B]
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="[A, B](s: Int,t: scala.collection.immutable.RedBlack[A]#Tree[B])(implicit ord: Ordering[A])scala.collection.immutable.TreeMap[A,B]" id="176898">make</a>[<a title="&gt;: Nothing &lt;: Any" id="176901">A</a>, <a title="&gt;: Nothing &lt;: Any" id="176902">B</a>](<a title="Int" id="211289">s</a>: <span title="Int">Int</span>, <a title="scala.collection.immutable.RedBlack[A]#Tree[B]" id="211290">t</a>: RedBlack[A]#<a href="RedBlack.scala.html#40120" title="scala.collection.immutable.RedBlack[A]#Tree[B]">Tree</a>[B])(<span class="keyword">implicit</span> <a title="Ordering[A]" id="211291">ord</a>: <a href="../../Ordering.scala.html#807" title="Ordering[A]">Ordering</a>[A]) = <span title="scala.collection.immutable.TreeMap[A,B]" class="keyword">new</span> <a href="#9192" title="scala.collection.immutable.TreeMap[A,B]">TreeMap</a>[A, B](<a href="#211289" title="Int">s</a>, <a href="#211290" title="scala.collection.immutable.RedBlack[A]#Tree[B]">t</a>)(<a href="#211291" title="Ordering[A]">ord</a>)
+}
+
+/** This class implements immutable maps using a tree.
+ *
+ *  @author  Erik Stenman
+ *  @author  Matthias Zenger
+ *  @version 1.1, 03/05/2004
+ */
+@serializable
+<span class="keyword">class</span> <a title="class TreeMap[A, +B] extends scala.collection.immutable.RedBlack[A] with scala.collection.immutable.SortedMap[A,B] with scala.collection.generic.SortedMapTemplate[A,B,scala.collection.immutable.TreeMap[A,B]] with scala.collection.generic.ImmutableMapTemplate[A,B,scala.collection.immutable.TreeMap[A,B]] with ScalaObject" id="9192">TreeMap</a>[<a title="&gt;: Nothing &lt;: Any" id="15746">A</a>, +<a title="&gt;: Nothing &lt;: Any" id="15747">B</a>]<a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><span class="keyword">override</span> <span class="keyword">val</span> <a title="Int" id="176963">size</a>: <span title="Int">Int</span>, <a title="scala.collection.immutable.RedBlack[A]#Tree[B]" id="176964">t</a>: RedBlack[A]#<a href="RedBlack.scala.html#40120" title="scala.collection.immutable.RedBlack[A]#Tree[B]">Tree</a>[B])(<span class="keyword">implicit</span> <span class="keyword">val</span> <a title="Ordering[A]" id="176965">ordering</a>: <a href="../../Ordering.scala.html#807" title="Ordering[A]">Ordering</a>[A])
+  <span class="keyword">extends</span> <a href="RedBlack.scala.html#9387" title="scala.collection.immutable.RedBlack[A]">RedBlack</a>[A] 
+     <span class="keyword">with</span> <a href="SortedMap.scala.html#8847" title="scala.collection.immutable.SortedMap[A,B]">SortedMap</a>[A, B] 
+     <span class="keyword">with</span> <a href="../generic/SortedMapTemplate.scala.html#10901" title="scala.collection.generic.SortedMapTemplate[A,B,scala.collection.immutable.TreeMap[A,B]]">SortedMapTemplate</a>[A, B, TreeMap[A, B]] 
+     <span class="keyword">with</span> <a href="../generic/ImmutableMapTemplate.scala.html#10313" title="scala.collection.generic.ImmutableMapTemplate[A,B,scala.collection.immutable.TreeMap[A,B]]">ImmutableMapTemplate</a>[A, B, TreeMap[A, B]] {
+       
+  <span class="keyword">def</span> <a title="(x: A,y: A)Boolean" id="176913">isSmaller</a>(<a title="A" id="211332">x</a>: <a href="#15746" title="A">A</a>, <a title="A" id="211333">y</a>: <a href="#15746" title="A">A</a>) = <a href="#176965" title="=&gt; Ordering[A]">ordering</a>.<a href="../../Ordering.scala.html#31397" title="(x: A,y: A)Boolean">lt</a>(<a href="#211332" title="A">x</a>, <a href="#211333" title="A">y</a>)
+
+  <span class="keyword">override</span> <span class="keyword">protected</span>[<span class="keyword">this</span>] <span class="keyword">def</span> <a title="=&gt; scala.collection.generic.Builder[(A, B),scala.collection.immutable.TreeMap[A,B]]" id="176914">newBuilder</a> : <a href="../generic/Builder.scala.html#10028" title="scala.collection.generic.Builder[(A, B),scala.collection.immutable.TreeMap[A,B]]">Builder</a>[(A, B), TreeMap[A, B]] = 
+    <a href="#9193" title="object scala.collection.immutable.TreeMap">TreeMap</a>.<a href="../generic/ImmutableSortedMapFactory.scala.html#70546" title="[A, B](implicit ord: Ordering[A])scala.collection.generic.Builder[(A, B),scala.collection.immutable.TreeMap[A,B]]">newBuilder</a><a href="#176965" title="(implicit ord: Ordering[A])scala.collection.generic.Builder[(A, B),scala.collection.immutable.TreeMap[A,B]]">[</a><a href="#15746" title="A">A</a>, <a href="#15747" title="B">B</a>]
+
+  <span class="keyword">def</span> <a title="()(implicit ordering: Ordering[A])scala.collection.immutable.TreeMap[A,B]" id="176915" class="keyword">this</a>()(<span class="keyword">implicit</span> <a title="Ordering[A]" id="176951">ordering</a>: <a href="../../Ordering.scala.html#807" title="Ordering[A]">Ordering</a>[A]) = <a href="#9192" title="TreeMap.this.type" class="keyword">this</a>(<span title="Int(0)" class="int">0</span>, <span title="Null(null)" class="keyword">null</span>)(<a href="#176951" title="Ordering[A]">ordering</a>)
+  
+  <span class="keyword">protected</span> <span class="keyword">val</span> <a title="scala.collection.immutable.RedBlack[A]#Tree[B]" id="176916">tree</a>: RedBlack[A]#<a href="RedBlack.scala.html#40120" title="scala.collection.immutable.RedBlack[A]#Tree[B]">Tree</a>[B] = <span title="scala.collection.immutable.RedBlack[A]#Tree[B]" class="keyword">if</span> (<a href="#176963" title="(x$1: Int)Boolean" id="2950">size</a> == <span title="Int(0)" class="int">0</span>) <a href="RedBlack.scala.html#40124" title="object TreeMap.this.Empty">Empty</a> <span class="keyword">else</span> <a href="#176964" title="scala.collection.immutable.RedBlack[A]#Tree[B]">t</a>
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(from: Option[A],until: Option[A])scala.collection.immutable.TreeMap[A,B]" id="176918">rangeImpl</a>(<a title="Option[A]" id="211373">from</a> : <a href="../../Option.scala.html#777" title="Option[A]">Option</a>[A], <a title="Option[A]" id="211374">until</a> : <a href="../../Option.scala.html#777" title="Option[A]">Option</a>[A]): <a href="#9192" title="scala.collection.immutable.TreeMap[A,B]">TreeMap</a>[A,B] = {
+    <span class="keyword">val</span> <a title="scala.collection.immutable.RedBlack[A]#Tree[B]" id="211382">ntree</a> = <a href="#176916" title="=&gt; scala.collection.immutable.RedBlack[A]#Tree[B]">tree</a>.<a href="RedBlack.scala.html#40248" title="(from: Option[A],until: Option[A])scala.collection.immutable.RedBlack[A]#Tree[B]">range</a>(<a href="#211373" title="Option[A]">from</a>,<a href="#211374" title="Option[A]">until</a>)
+    <a href="#176965" title="scala.collection.immutable.TreeMap[A,B]" class="keyword">new</a> <a href="#9192" title="scala.collection.immutable.TreeMap[A,B]">TreeMap</a>[A,B](<a href="#211382" title="scala.collection.immutable.RedBlack[A]#Tree[B]">ntree</a>.<a href="RedBlack.scala.html#40251" title="=&gt; Int">count</a>, <a href="#211382" title="scala.collection.immutable.RedBlack[A]#Tree[B]">ntree</a>)
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; A" id="176919">firstKey</a> = <a href="#176964" title="scala.collection.immutable.RedBlack[A]#Tree[B]">t</a>.<a href="RedBlack.scala.html#40249" title="=&gt; A">first</a>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; A" id="176920">lastKey</a> = <a href="#176964" title="scala.collection.immutable.RedBlack[A]#Tree[B]">t</a>.<a href="RedBlack.scala.html#40250" title="=&gt; A">last</a>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(k0: A,k1: A)Int" id="176921">compare</a>(<a title="A" id="211401">k0</a>: <a href="#15746" title="A">A</a>, <a title="A" id="211402">k1</a>: <a href="#15746" title="A">A</a>): <span title="Int">Int</span> = <a href="#176965" title="=&gt; Ordering[A]">ordering</a>.<a href="../../Ordering.scala.html#31394" title="(x: A,y: A)Int">compare</a>(<a href="#211401" title="A">k0</a>, <a href="#211402" title="A">k1</a>)
+
+  /** A factory to create empty maps of the same type of keys.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; scala.collection.immutable.TreeMap[A,B]" id="176922">empty</a>: <a href="#9192" title="scala.collection.immutable.TreeMap[A,B]">TreeMap</a>[A, B] = <a href="#9193" title="object scala.collection.immutable.TreeMap">TreeMap</a>.<a href="#176888" title="[A, B](implicit ord: Ordering[A])scala.collection.immutable.TreeMap[A,B]">empty</a><span title="(implicit ord: Ordering[A])scala.collection.immutable.TreeMap[A,B]">[</span><a href="#15746" title="A">A</a>, <a href="#15747" title="B">B</a>](<a href="#176965" title="=&gt; Ordering[A]">ordering</a>)
+
+  /** A new TreeMap with the entry added is returned,
+   *  if key is &lt;em&gt;not&lt;/em&gt; in the TreeMap, otherwise
+   *  the key is updated with the new entry.
+   *
+   *  @param key ...
+   *  @param value ...
+   *  @return ...
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[B1 &gt;: B](key: A,value: B1)scala.collection.immutable.TreeMap[A,B1]" id="176923">updated</a> [<a title="&gt;: B &lt;: Any" id="176925">B1</a> &gt;: B](<a title="A" id="211420">key</a>: <a href="#15746" title="A">A</a>, <a title="B1" id="211421">value</a>: <a href="#176925" title="B1">B1</a>): <a href="#9192" title="scala.collection.immutable.TreeMap[A,B1]">TreeMap</a>[A, B1] = {
+    <span class="keyword">val</span> <a title="Int" id="211518">newsize</a> = <span title="Int" class="keyword">if</span> (<a href="#176916" title="=&gt; scala.collection.immutable.RedBlack[A]#Tree[B]">tree</a>.<a href="RedBlack.scala.html#40229" title="(x: A)scala.collection.immutable.RedBlack[A]#Tree[B]">lookup</a>(<a href="#211420" title="A">key</a>).<a href="RedBlack.scala.html#40227" title="=&gt; Boolean">isEmpty</a>) <a href="#176963" title="(x$1: Int)Int">size</a> + <span title="Int(1)" class="int">1</span> <span class="keyword">else</span> <a href="#176963" title="=&gt; Int">size</a>
+    <a href="#9193" title="object scala.collection.immutable.TreeMap">TreeMap</a>.<a href="#176898" title="(s: Int,t: scala.collection.immutable.RedBlack[A]#Tree[B1])(implicit ord: Ordering[A])scala.collection.immutable.TreeMap[A,B1]">make</a><a href="#176965" title="=&gt; Ordering[A]">(</a><a href="#211518" title="Int">newsize</a>, <a href="#176916" title="=&gt; scala.collection.immutable.RedBlack[A]#Tree[B]">tree</a>.<a href="RedBlack.scala.html#40230" title="(k: A,v: B1)scala.collection.immutable.RedBlack[A]#Tree[B1]">update</a>(<a href="#211420" title="A">key</a>, <a href="#211421" title="B1">value</a>))
+  }
+
+    /** Add a key/value pair to this map. 
+   *  @param    kv the key/value pair
+   *  @return   A new map with the new binding added to this map
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[B1 &gt;: B](kv: (A, B1))scala.collection.immutable.TreeMap[A,B1]" id="176926">+</a> [<a title="&gt;: B &lt;: Any" id="176928">B1</a> &gt;: B] (<a title="(A, B1)" id="211562">kv</a>: <a href="../../Tuple2.scala.html#1152" title="(A, B1)">(</a>A, B1)): <a href="#9192" title="scala.collection.immutable.TreeMap[A,B1]">TreeMap</a>[A, B1] = <a href="#176923" title="(key: A,value: B1)scala.collection.immutable.TreeMap[A,B1]">updated</a>(<a href="#211562" title="(A, B1)">kv</a>.<a href="../../Tuple2.scala.html#20472" title="=&gt; A">_1</a>, <a href="#211562" title="(A, B1)">kv</a>.<a href="../../Tuple2.scala.html#20474" title="=&gt; B1">_2</a>)
+
+  /** Adds two or more elements to this collection and returns
+   *  either the collection itself (if it is mutable), or a new collection
+   *  with the added elements.
+   *
+   *  @param elem1 the first element to add.
+   *  @param elem2 the second element to add.
+   *  @param elems the remaining elements to add.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[B1 &gt;: B](elem1: (A, B1),elem2: (A, B1),elems: (A, B1)*)scala.collection.immutable.TreeMap[A,B1]" id="176929">+</a> [<a title="&gt;: B &lt;: Any" id="176931">B1</a> &gt;: B] (<a title="(A, B1)" id="211858">elem1</a>: <a href="../../Tuple2.scala.html#1152" title="(A, B1)">(</a>A, B1), <a title="(A, B1)" id="211859">elem2</a>: <a href="../../Tuple2.scala.html#1152" title="(A, B1)">(</a>A, B1), <a title="(A, B1)*" id="211860">elems</a>: <a title="(A, B1)*" id="4176">(</a>A, B1) *): <a href="#9192" title="scala.collection.immutable.TreeMap[A,B1]">TreeMap</a>[A, B1] =
+    <a href="#176926" title="(kv: (A, B1))scala.collection.immutable.TreeMap[A,B1]" class="keyword">this</a> <a href="#176926" title="(kv: (A, B1))scala.collection.immutable.TreeMap[A,B1]">+</a> <a href="#211858" title="(A, B1)">elem1</a> <a href="../generic/TraversableTemplate.scala.html#17151" title="(that: Traversable[(A, B1)])(implicit bf: scala.collection.generic.BuilderFactory[(A, B1),scala.collection.immutable.TreeMap[A,B1],scala.collection.immutable.TreeMap[A,B1]])scala.collection.immutable.TreeMap[A,B1]">+</a> <a href="#211859" title="(A, B1)">elem2</a> <a href="#176893" title="(implicit ord: Ordering[A])scala.collection.generic.BuilderFactory[(A, B1),scala.collection.immutable.TreeMap[A,B1],scala.collection.immutable.TreeMap#Coll]">++</a> <a href="#211860" title="(A, B1)*">elems</a>
+
+  /** A new TreeMap with the entry added is returned,
+   *  assuming that key is &lt;em&gt;not&lt;/em&gt; in the TreeMap.
+   */
+  <span class="keyword">def</span> <a title="[B1 &gt;: B](key: A,value: B1)scala.collection.immutable.TreeMap[A,B1]" id="176932">insert</a> [<a title="&gt;: B &lt;: Any" id="176934">B1</a> &gt;: B](<a title="A" id="212840">key</a>: <a href="#15746" title="A">A</a>, <a title="B1" id="212841">value</a>: <a href="#176934" title="B1">B1</a>): <a href="#9192" title="scala.collection.immutable.TreeMap[A,B1]">TreeMap</a>[A, B1] = {
+    <a href="../../Predef.scala.html#16213" title="(assertion: Boolean)Unit">assert</a>(<a href="#176916" title="=&gt; scala.collection.immutable.RedBlack[A]#Tree[B]">tree</a>.<a href="RedBlack.scala.html#40229" title="(x: A)scala.collection.immutable.RedBlack[A]#Tree[B]">lookup</a>(<a href="#212840" title="A">key</a>).<a href="RedBlack.scala.html#40227" title="=&gt; Boolean">isEmpty</a>)
+    <a href="#9193" title="object scala.collection.immutable.TreeMap">TreeMap</a>.<a href="#176898" title="(s: Int,t: scala.collection.immutable.RedBlack[A]#Tree[B1])(implicit ord: Ordering[A])scala.collection.immutable.TreeMap[A,B1]">make</a><a href="#176965" title="=&gt; Ordering[A]">(</a><a href="#176963" title="(x$1: Int)Int">size</a> + <span title="Int(1)" class="int">1</span>, <a href="#176916" title="=&gt; scala.collection.immutable.RedBlack[A]#Tree[B]">tree</a>.<a href="RedBlack.scala.html#40230" title="(k: A,v: B1)scala.collection.immutable.RedBlack[A]#Tree[B1]">update</a>(<a href="#212840" title="A">key</a>, <a href="#212841" title="B1">value</a>))
+  }
+
+  <span class="keyword">def</span> <a title="(key: A)scala.collection.immutable.TreeMap[A,B]" id="176935">-</a> (<a title="A" id="212908">key</a>:<a href="#15746" title="A">A</a>): <a href="#9192" title="scala.collection.immutable.TreeMap[A,B]">TreeMap</a>[A, B] = 
+    <span title="scala.collection.immutable.TreeMap[A,B]" class="keyword">if</span> (<a href="#176916" title="=&gt; scala.collection.immutable.RedBlack[A]#Tree[B]">tree</a>.<a href="RedBlack.scala.html#40229" title="(x: A)scala.collection.immutable.RedBlack[A]#Tree[B]">lookup</a>(<a href="#212908" title="A">key</a>).<a href="RedBlack.scala.html#40227" title="=&gt; Boolean">isEmpty</a>) <a href="#9192" title="scala.collection.immutable.TreeMap[A,B]" class="keyword">this</a>
+    <span class="keyword">else</span> <a href="#9193" title="object scala.collection.immutable.TreeMap">TreeMap</a>.<a href="#176898" title="(s: Int,t: scala.collection.immutable.RedBlack[A]#Tree[B])(implicit ord: Ordering[A])scala.collection.immutable.TreeMap[A,B]">make</a><a href="#176965" title="=&gt; Ordering[A]">(</a><a href="#176963" title="(x$1: Int)Int" id="2964">size</a> - <span title="Int(1)" class="int">1</span>, <a href="#176916" title="=&gt; scala.collection.immutable.RedBlack[A]#Tree[B]">tree</a>.<a href="RedBlack.scala.html#40233" title="(k: A)scala.collection.immutable.RedBlack[A]#Tree[B]">delete</a>(<a href="#212908" title="A">key</a>))
+
+  /** Check if this map maps &lt;code&gt;key&lt;/code&gt; to a value and return the
+   *  value if it exists.
+   *
+   *  @param  key     the key of the mapping of interest
+   *  @return the value of the mapping, if it exists
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(key: A)Option[B]" id="176936">get</a>(<a title="A" id="212971">key</a>: <a href="#15746" title="A">A</a>): <a href="../../Option.scala.html#777" title="Option[B]">Option</a>[B] = <a href="#176916" title="=&gt; scala.collection.immutable.RedBlack[A]#Tree[B]">tree</a>.<a href="RedBlack.scala.html#40229" title="(x: A)scala.collection.immutable.RedBlack[A]#Tree[B]">lookup</a>(<a href="#212971" title="A">key</a>) <span title="Option[B]" class="keyword">match</span> {
+    <span title="Option[B]" class="keyword">case</span> <a title="TreeMap.this.NonEmpty[b]" id="212979">n</a>: <a href="RedBlack.scala.html#40122" title="TreeMap.this.NonEmpty[b]">NonEmpty</a>[b] =&gt; <a href="../../Option.scala.html#19800" title="(x: b)Some[b]">Some</a><a title="Option[B]" id="3621">(</a><a href="#212979" title="TreeMap.this.NonEmpty[b]">n</a>.<a href="RedBlack.scala.html#212984" title="=&gt; b">value</a>)
+    <span title="None.type" class="keyword">case</span> _ =&gt; <a href="../../Option.scala.html#463" title="object None">None</a>
+  }
+
+  /** Creates a new iterator over all elements contained in this
+   *  object.
+   *
+   *  @return the new iterator
+   */
+  <span class="keyword">def</span> <a title="=&gt; Iterator[(A, B)]" id="176937">iterator</a>: <a href="../Iterator.scala.html#4274" title="Iterator[(A, B)]">Iterator</a>[(A, B)] = <a href="#176916" title="=&gt; scala.collection.immutable.RedBlack[A]#Tree[B]">tree</a>.<a href="RedBlack.scala.html#40240" title="=&gt; scala.collection.immutable.Stream[(A, B)]">toStream</a>.<a href="../generic/LinearSequenceTemplate.scala.html#19401" title="=&gt; Iterator[(A, B)]">iterator</a>
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; scala.collection.immutable.Stream[(A, B)]" id="176938">toStream</a>: <a href="Stream.scala.html#9156" title="scala.collection.immutable.Stream[(A, B)]">Stream</a>[(A, B)] = <a href="#176916" title="=&gt; scala.collection.immutable.RedBlack[A]#Tree[B]">tree</a>.<a href="RedBlack.scala.html#40240" title="=&gt; scala.collection.immutable.Stream[(A, B)]">toStream</a>
+  
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[U](f: ((A, B)) =&gt; U)Unit" id="176939">foreach</a>[<a title="&gt;: Nothing &lt;: Any" id="176941">U</a>](<a title="((A, B)) =&gt; U" id="213017">f</a> : ((A,B)) =&gt;  U) = <a href="RedBlack.scala.html#40234" title="(f: (A, B) =&gt; U)Unit">tree</a> foreach <a href="../../Tuple2.scala.html#20670" title="U">{</a> <span title="U" class="keyword">case</span> (<a title="A" id="213056">x</a>, <a title="B" id="213057">y</a>) =&gt; <a href="../../Function1.scala.html#17119" title="(v1: (A, B))U">f</a><a href="../../Tuple2.scala.html#20670" title="(_1: A,_2: B)(A, B)">(</a><a href="#213056" title="A">x</a>, <a href="#213057" title="B">y</a>) }
+}        
+      
+
+
+
+
+        </pre>
+    </body>
+</html>

@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>runtime/RichString.scala</title>
+        <script type="text/javascript" src="../jquery-all.js"></script>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: RichString.scala 18589 2009-08-27 14:45:35Z odersky $
+
+
+<span class="keyword">package</span> scala.runtime
+
+<span class="keyword">import</span> scala.util.matching.Regex
+<span class="keyword">import</span> collection.generic._
+//import collection.mutable.StringBuilder
+<span class="keyword">import</span> collection.immutable.Vector
+
+<span class="keyword">object</span> <a title="object scala.runtime.RichString" id="2059">RichString</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+
+  <span class="keyword">def</span> <a title="=&gt; scala.collection.generic.Builder[Char,scala.runtime.RichString]" id="18011">newBuilder</a>: <a href="../collection/generic/Builder.scala.html#10028" title="scala.collection.generic.Builder[Char,scala.runtime.RichString]">Builder</a>[Char, RichString] = <a href="../collection/generic/Builder.scala.html#19593" title="(f: (String) =&gt; scala.runtime.RichString)scala.collection.generic.Builder[Char,scala.runtime.RichString]" class="keyword">new</a> <a href="../package.scala.html#14791" title="StringBuilder">StringBuilder</a>() mapResult (<span title="scala.runtime.RichString" class="keyword">new</span> <a href="#2058" title="scala.runtime.RichString">RichString</a>(<a href="#226604" title="String">_</a>))
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="=&gt; scala.collection.generic.BuilderFactory[Char,scala.runtime.RichString,scala.runtime.RichString]" id="18012">builderFactory</a>: <a href="../collection/generic/BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[Char,scala.runtime.RichString,scala.runtime.RichString]">BuilderFactory</a>[Char, RichString, RichString] = <a href="#226610" title="java.lang.Object with scala.collection.generic.BuilderFactory[Char,scala.runtime.RichString,scala.runtime.RichString]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with scala.collection.generic.BuilderFactory[Char,scala.runtime.RichString,scala.runtime.RichString]" id="226610">BuilderFactory</a>[Char, RichString, RichString] { <span class="keyword">def</span> <a title="(from: scala.runtime.RichString)scala.collection.generic.Builder[Char,scala.runtime.RichString]" id="226612">apply</a>(<a title="scala.runtime.RichString" id="226617">from</a>: <a href="#2058" title="scala.runtime.RichString">RichString</a>) = <a href="#18011" title="=&gt; scala.collection.generic.Builder[Char,scala.runtime.RichString]">newBuilder</a> }
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="=&gt; scala.collection.generic.BuilderFactory[Char,scala.runtime.RichString,String]" id="18013">builderFactory2</a>: <a href="../collection/generic/BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[Char,scala.runtime.RichString,String]">BuilderFactory</a>[Char, RichString, String] = <a href="#226625" title="java.lang.Object with scala.collection.generic.BuilderFactory[Char,scala.runtime.RichString,String]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with scala.collection.generic.BuilderFactory[Char,scala.runtime.RichString,String]" id="226625">BuilderFactory</a>[Char, RichString, String] { <span class="keyword">def</span> <a title="(from: String)scala.collection.generic.Builder[Char,scala.runtime.RichString]" id="226627">apply</a>(<a title="String" id="226632">from</a>: <span title="String">String</span>) = <a href="#18011" title="=&gt; scala.collection.generic.Builder[Char,scala.runtime.RichString]">newBuilder</a> }
+
+  // just statics for rich string.
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">val</span> <a title="Char" id="18014">LF</a>: <span title="Char">Char</span> = <span title="Char('\012')" class="int">0x0A</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">val</span> <a title="Char" id="18016">FF</a>: <span title="Char">Char</span> = <span title="Char('\014')" class="int">0x0C</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">val</span> <a title="Char" id="18018">CR</a>: <span title="Char">Char</span> = <span title="Char('\015')" class="int">0x0D</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">val</span> <a title="Char" id="18020">SU</a>: <span title="Char">Char</span> = <span title="Char('\032')" class="int">0x1A</span>
+}
+
+<span class="keyword">import</span> RichString._
+
+<span class="keyword">class</span> <a title="class RichString extends java.lang.Object with Proxy with scala.collection.immutable.Vector[Char] with scala.collection.generic.VectorTemplate[Char,scala.runtime.RichString] with PartialFunction[Int,Char] with Ordered[String] with scala.runtime.Boxed with ScalaObject" id="2058">RichString</a><a href="../ScalaObject.scala.html#957" title="ScalaObject">(</a><span class="keyword">val</span> <a title="String" id="18944">self</a>: <span title="String">String</span>) <span class="keyword">extends</span> <a href="../Proxy.scala.html#180" title="Proxy">Proxy</a> <span class="keyword">with</span> <a href="../collection/immutable/Vector.scala.html#9189" title="scala.collection.immutable.Vector[Char]">Vector</a>[Char] <span class="keyword">with</span> <a href="../collection/generic/VectorTemplate.scala.html#10595" title="scala.collection.generic.VectorTemplate[Char,scala.runtime.RichString]">VectorTemplate</a>[Char, RichString] <span class="keyword">with</span> <a href="../PartialFunction.scala.html#1083" title="PartialFunction[Int,Char]">PartialFunction</a>[Int, Char] <span class="keyword">with</span> <a href="../Ordered.scala.html#1218" title="Ordered[String]">Ordered</a>[String] <span class="keyword">with</span> <a href="Boxed.scala.html#2079" title="scala.runtime.Boxed">Boxed</a> {
+
+  /** Creates a string builder buffer as builder for this class */
+  <span class="keyword">override</span> <span class="keyword">protected</span>[<span class="keyword">this</span>] <span class="keyword">def</span> <a title="=&gt; scala.collection.generic.Builder[Char,scala.runtime.RichString]" id="18031">newBuilder</a> = <a href="#2059" title="object scala.runtime.RichString">RichString</a>.<a href="#18011" title="=&gt; scala.collection.generic.Builder[Char,scala.runtime.RichString]">newBuilder</a>
+
+  /** Return element at index `n`
+   *  @throws   IndexOutofBoundsException if the index is not valid
+   */
+  <span class="keyword">def</span> <a title="(n: Int)Char" id="18032">apply</a>(<a title="Int" id="226647">n</a>: <span title="Int">Int</span>): <span title="Char">Char</span> = <a href="#18944" title="(x$1: Int)Char">self</a> charAt <a href="#226647" title="Int">n</a>
+
+  <span class="keyword">def</span> <a title="=&gt; Int" id="18033">length</a>: <span title="Int">Int</span> = <a href="#18944" title="=&gt; String">self</a>.<span title="()Int">length</span>
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; String" id="18034">mkString</a> = <a href="#18944" title="=&gt; String">self</a>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="18035">toString</a> = <a href="#18944" title="=&gt; String">self</a>
+
+  /** return n times the current string 
+   */
+  <span class="keyword">def</span> <a title="(n: Int)String" id="18036">*</a> (<a title="Int" id="147625">n</a>: <span title="Int">Int</span>): <span title="String">String</span> = {
+    <span class="keyword">val</span> <a title="StringBuilder" id="226665">buf</a> = <a href="../collection/mutable/StringBuilder.scala.html#23348" title="()StringBuilder" class="keyword">new</a> <a href="../package.scala.html#14791" title="StringBuilder">StringBuilder</a>
+    <span class="keyword">for</span> (<a title="Int" id="226713">i</a> &lt;- <a href="RichInt.scala.html#19060" title="(end: Int)Range" class="int">0</a> <a href="../Range.scala.html#38256" title="(f: (Int) =&gt; StringBuilder)Unit">until</a> <a href="#147625" title="Int">n</a>) <a href="../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">buf</a> append <a href="#18944" title="=&gt; String">self</a>
+    <a href="#226665" title="StringBuilder">buf</a>.<a href="../collection/mutable/StringBuilder.scala.html#23409" title="()String">toString</a>
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(other: String)Int" id="18037">compare</a>(<a title="String" id="226725">other</a>: <span title="String">String</span>) = <a href="#18944" title="(x$1: java.lang.String)Int" id="6944">self</a> compareTo <a href="#226725" title="String">other</a>
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(c: Char)Boolean" id="18038">isLineBreak</a>(<a title="Char" id="226734">c</a>: <span title="Char">Char</span>) = <a href="#226734" title="(x$1: Char)Boolean">c</a> <a title="(x$1: Boolean)Boolean" id="2208">==</a> <a href="#18014" title="=&gt; Char">LF</a> || <a href="#226734" title="(x$1: Char)Boolean">c</a> == <a href="#18016" title="=&gt; Char">FF</a>
+
+  /** &lt;p&gt;
+   *    Strip trailing line end character from this string if it has one.
+   *    A line end character is one of
+   *  &lt;/p&gt;
+   *  &lt;ul style=&quot;list-style-type: none;&quot;&gt;
+   *    &lt;li&gt;LF - line feed   (0x0A hex)&lt;/li&gt;
+   *    &lt;li&gt;FF - form feed   (0x0C hex)&lt;/li&gt;
+   *  &lt;/ul&gt;
+   *  &lt;p&gt;
+   *    If a line feed character LF is preceded by a carriage return CR
+   *    (0x0D hex), the CR character is also stripped (Windows convention).
+   *  &lt;/p&gt;
+   */
+  <span class="keyword">def</span> <a title="=&gt; String" id="18039">stripLineEnd</a>: <span title="String">String</span> = {
+    <span class="keyword">val</span> <a title="Int" id="226753">len</a> = <a href="#18944" title="=&gt; String">self</a>.<span title="()Int">length</span>
+    <span title="String" class="keyword">if</span> (<a href="#226753" title="(x$1: Int)Boolean">len</a> == <span title="Int(0)" class="int">0</span>) <a href="#18944" title="=&gt; String">self</a>
+    <span class="keyword">else</span> {
+      <span class="keyword">val</span> <a title="Char" id="226762">last</a> = <a href="#18032" title="(n: Int)Char">apply</a>(<a href="#226753" title="(x$1: Int)Int">len</a> - <span title="Int(1)" class="int">1</span>)
+      <span title="String" class="keyword">if</span> (<a href="#18038" title="(c: Char)Boolean">isLineBreak</a>(<a href="#226762" title="Char">last</a>))
+        <a href="#18944" title="=&gt; String">self</a>.<span title="(x$1: Int,x$2: Int)java.lang.String">substring</span>(<span title="Int(0)" class="int">0</span>, <span title="Int" class="keyword">if</span> (<a href="#226762" title="(x$1: Char)Boolean">last</a> <span title="(x$1: Boolean)Boolean">==</span> <a href="#18014" title="=&gt; Char">LF</a> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <a href="#226753" title="(x$1: Int)Boolean">len</a> &gt;= <span title="Int(2)" class="int">2</span> &amp;&amp; <a href="#18032" title="(n: Int)Char">apply</a><span title="(x$1: Char)Boolean">(</span><a href="#226753" title="(x$1: Int)Int">len</a> - <span title="Int(2)" class="int">2</span>) == <a href="#18018" title="=&gt; Char">CR</a>) <a href="#226753" title="(x$1: Int)Int">len</a> - <span title="Int(2)" class="int">2</span> <span class="keyword">else</span> <a href="#226753" title="(x$1: Int)Int">len</a> - <span title="Int(1)" class="int">1</span>)
+      <span class="keyword">else</span> 
+        <a href="#18944" title="=&gt; String">self</a>
+    }
+  }
+
+  /** &lt;p&gt;
+   *    Return all lines in this string in an iterator, including trailing
+   *    line end characters.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The number of strings returned is one greater than the number of line
+   *    end characters in this string. For an empty string, a single empty
+   *    line is returned. A line end character is one of
+   *  &lt;/p&gt;
+   *  &lt;ul style=&quot;list-style-type: none;&quot;&gt;
+   *    &lt;li&gt;LF - line feed   (0x0A hex)&lt;/li&gt;
+   *    &lt;li&gt;FF - form feed   (0x0C hex)&lt;/li&gt;
+   *  &lt;/ul&gt;
+   */
+  <span class="keyword">def</span> <a title="=&gt; Iterator[String]" id="18040">linesWithSeparators</a>: <a href="../collection/Iterator.scala.html#4274" title="Iterator[String]">Iterator</a>[String] = <a href="#226876" title="java.lang.Object with Iterator[String]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with Iterator[String]" id="226876">Iterator</a>[String] {
+    <span class="keyword">private</span> <span class="keyword">val</span> <a title="Int" id="226878">len</a> = <a href="#18944" title="=&gt; String">self</a>.<span title="()Int">length</span>
+    <span class="keyword">private</span> <span class="keyword">var</span> <a title="Int" id="226881">index</a> = <span title="Int(0)" class="int">0</span>
+    <span class="keyword">def</span> <a title="=&gt; Boolean" id="226883">hasNext</a>: <span title="Boolean">Boolean</span> = <a href="#226881" title="(x$1: Int)Boolean">index</a> &lt; <a href="#226878" title="=&gt; Int">len</a>
+    <span class="keyword">def</span> <a title="()String" id="226884">next</a>(): <span title="String">String</span> = {
+      <span title="Unit" class="keyword">if</span> (<a href="#226881" title="(x$1: Int)Boolean">index</a> &gt;= <a href="#226878" title="=&gt; Int">len</a>) <span title="Nothing" class="keyword">throw</span> <a title="(x$1: java.lang.String)java.util.NoSuchElementException" id="19666" class="keyword">new</a> <a href="../Predef.scala.html#16171" title="java.util.NoSuchElementException">NoSuchElementException</a>(<span title="java.lang.String(&quot;next on empty iterator&quot;)" class="string">&quot;next on empty iterator&quot;</span>)
+      <span class="keyword">val</span> <a title="Int" id="226901">start</a> = <a href="#226881" title="=&gt; Int">index</a>
+      <span title="Unit" class="keyword">while</span> (<a href="#226881" title="(x$1: Int)Boolean">index</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <a href="#226878" title="=&gt; Int">len</a> &amp;&amp; <a title="=&gt; Boolean" id="2203">!</a><a href="#18038" title="(c: Char)Boolean">isLineBreak</a>(<a href="#18032" title="(n: Int)Char">apply</a>(<a href="#226881" title="=&gt; Int">index</a>))) <a href="#226881" title="(x$1: Int)Unit">index</a> <a href="#226902" title="()Unit">+=</a> <span title="Int(1)" class="int">1</span>
+      <a href="#226881" title="(x$1: Int)Unit">index</a> += <span title="Int(1)" class="int">1</span>
+      <a href="#18944" title="=&gt; String">self</a>.<span title="(x$1: Int,x$2: Int)java.lang.String">substring</span>(<a href="#226901" title="Int">start</a>, <a href="RichInt.scala.html#19064" title="(that: Int)Int">index</a> min <a href="#226878" title="=&gt; Int">len</a>)
+    }
+  }
+
+  /** Return all lines in this string in an iterator, excluding trailing line
+   *  end characters, i.e. apply &lt;code&gt;.stripLineEnd&lt;/code&gt; to all lines
+   *  returned by &lt;code&gt;linesWithSeparators&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Iterator[String]" id="18041">lines</a>: <a href="../collection/Iterator.scala.html#4274" title="Iterator[String]">Iterator</a>[String] = 
+    <a href="../collection/Iterator.scala.html#19189" title="(f: (String) =&gt; String)Iterator[String]">linesWithSeparators</a> map (<a title="String" id="227030">line</a> =&gt; <span title="scala.runtime.RichString" class="keyword">new</span> <a href="#2058" title="scala.runtime.RichString">RichString</a>(<a href="#227030" title="String">line</a>).<a href="#18039" title="=&gt; String">stripLineEnd</a>)
+
+  /** Return all lines in this string in an iterator, excluding trailing line
+   *  end characters, i.e. apply &lt;code&gt;.stripLineEnd&lt;/code&gt; to all lines
+   *  returned by &lt;code&gt;linesWithSeparators&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Iterator[String]" id="18042">linesIterator</a>: <a href="../collection/Iterator.scala.html#4274" title="Iterator[String]">Iterator</a>[String] = 
+    <a href="../collection/Iterator.scala.html#19189" title="(f: (String) =&gt; String)Iterator[String]">linesWithSeparators</a> map (<a title="String" id="227042">line</a> =&gt; <span title="scala.runtime.RichString" class="keyword">new</span> <a href="#2058" title="scala.runtime.RichString">RichString</a>(<a href="#227042" title="String">line</a>).<a href="#18039" title="=&gt; String">stripLineEnd</a>)
+
+  /** Returns this string with first character converted to upper case */
+  <span class="keyword">def</span> <a title="=&gt; String" id="18043">capitalize</a>: <span title="String">String</span> =
+    <span title="String" class="keyword">if</span> (<a href="#18944" title="(x$1: AnyRef)Boolean" id="3624">self</a> == <span title="Null(null)" class="keyword">null</span>) <span title="Null(null)" class="keyword">null</span>
+    <span class="keyword">else</span> <span title="String" class="keyword">if</span> (<a href="#18944" title="=&gt; String">self</a>.<span title="(x$1: Int)Boolean">length</span> == <span title="Int(0)" class="int">0</span>) <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>
+    <span class="keyword">else</span> {
+      <span class="keyword">val</span> <a title="Array[Char]" id="227065">chars</a> = <a href="#18944" title="=&gt; String">self</a>.<a title="()Array[Char]" id="7042">toCharArray</a>
+      <a href="../Array.scala.html#17717" title="(i: Int,x: Char)Unit">chars</a>(<span title="Int(0)" class="int">0</span>) = <a href="../Array.scala.html#17716" title="(i: Int)Char">chars</a><a href="../Predef.scala.html#16361" title="implicit scala.Predef.charWrapper : (c: Char)scala.runtime.RichChar">(</a><span title="Int(0)" class="int">0</span>).<a href="RichChar.scala.html#19045" title="=&gt; Char">toUpperCase</a>
+      <a title="(x$1: Array[Char])java.lang.String" id="6550" class="keyword">new</a> <a href="../Predef.scala.html#16156" title="java.lang.String">String</a>(<a href="#227065" title="Array[Char]">chars</a>)
+    }
+
+  /** Returns this string with the given &lt;code&gt;prefix&lt;/code&gt; stripped. */
+  <span class="keyword">def</span> <a title="(prefix: String)java.lang.String" id="18044">stripPrefix</a>(<a title="String" id="227109">prefix</a>: <span title="String">String</span>) =
+    <span title="java.lang.String" class="keyword">if</span> (<a href="#18944" title="=&gt; String">self</a>.<a title="(x$1: java.lang.String)Boolean" id="6962">startsWith</a>(<a href="#227109" title="String">prefix</a>)) <a href="#18944" title="=&gt; String">self</a>.<span title="(x$1: Int)java.lang.String">substring</span>(<a href="#227109" title="String">prefix</a>.<span title="()Int">length</span>)
+    <span class="keyword">else</span> <a href="#18944" title="=&gt; String">self</a>
+
+  /** Returns this string with the given &lt;code&gt;suffix&lt;/code&gt; stripped. */
+  <span class="keyword">def</span> <a title="(suffix: String)java.lang.String" id="18045">stripSuffix</a>(<a title="String" id="227122">suffix</a>: <span title="String">String</span>) =
+    <span title="java.lang.String" class="keyword">if</span> (<a href="#18944" title="=&gt; String">self</a>.<a title="(x$1: java.lang.String)Boolean" id="6964">endsWith</a>(<a href="#227122" title="String">suffix</a>)) <a href="#18944" title="=&gt; String">self</a>.<span title="(x$1: Int,x$2: Int)java.lang.String">substring</span>(<span title="Int(0)" class="int">0</span>, <a href="#18944" title="=&gt; String">self</a>.<span title="()Int">length</span><span title="(x$1: Int)Int">(</span>) - <a href="#227122" title="String">suffix</a>.<span title="()Int">length</span>)
+    <span class="keyword">else</span> <a href="#18944" title="=&gt; String">self</a>
+
+  /** &lt;p&gt;
+   *    For every line in this string:
+   *  &lt;/p&gt;
+   *  &lt;blockquote&gt;
+   *     Strip a leading prefix consisting of blanks or control characters
+   *     followed by &lt;code&gt;marginChar&lt;/code&gt; from the line.
+   *  &lt;/blockquote&gt;
+   */
+  <span class="keyword">def</span> <a title="(marginChar: Char)String" id="18046">stripMargin</a>(<a title="Char" id="227161">marginChar</a>: <span title="Char">Char</span>): <span title="String">String</span> = {
+    <span class="keyword">val</span> <a title="StringBuilder" id="227163">buf</a> = <a href="../collection/mutable/StringBuilder.scala.html#23348" title="()StringBuilder" class="keyword">new</a> <a href="../package.scala.html#14791" title="StringBuilder">StringBuilder</a>
+    <span class="keyword">for</span> (<a title="String" id="227180">line</a> &lt;- <a href="../collection/Iterator.scala.html#19219" title="(f: (String) =&gt; StringBuilder)Unit">linesWithSeparators</a>) {
+      <span class="keyword">val</span> <a title="Int" id="227181">len</a> = <a href="#227180" title="String">line</a>.<span title="()Int">length</span>
+      <span class="keyword">var</span> <a title="Int" id="227182">index</a> = <span title="Int(0)" class="int">0</span>
+      <span title="Unit" class="keyword">while</span> (<a href="#227182" title="(x$1: Int)Boolean">index</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <a href="#227181" title="Int">len</a> &amp;&amp; <a href="#227180" title="String">line</a>.<span title="(x$1: Int)Char">charAt</span><a title="(x$1: Char)Boolean" id="2720">(</a><a href="#227182" title="Int">index</a>) &lt;= <span title="Char(' ')" class="char">' '</span>) <a href="#227182" title="Int">index</a> <a href="#227183" title="()Unit">+=</a> <span title="Int(1)" class="int">1</span>
+      <a href="../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">buf</a> append
+        (<span title="java.lang.String" class="keyword">if</span> (<a href="#227182" title="(x$1: Int)Boolean">index</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <a href="#227181" title="Int">len</a> &amp;&amp; <a href="#227180" title="String">line</a>.<span title="(x$1: Int)Char">charAt</span><span title="(x$1: Char)Boolean">(</span><a href="#227182" title="Int">index</a>) == <a href="#227161" title="Char">marginChar</a>) <a href="#227180" title="String">line</a>.<span title="(x$1: Int)java.lang.String">substring</span>(<a href="#227182" title="(x$1: Int)Int">index</a> + <span title="Int(1)" class="int">1</span>) <span class="keyword">else</span> <a href="#227180" title="String">line</a>)
+    }
+    <a href="#227163" title="StringBuilder">buf</a>.<a href="../collection/mutable/StringBuilder.scala.html#23409" title="()String">toString</a>
+  }
+
+  /** &lt;p&gt;
+   *    For every line in this string:
+   *  &lt;/p&gt;
+   *  &lt;blockquote&gt;
+   *     Strip a leading prefix consisting of blanks or control characters
+   *     followed by &lt;code&gt;|&lt;/code&gt; from the line.
+   *  &lt;/blockquote&gt;
+   */
+  <span class="keyword">def</span> <a title="=&gt; String" id="18047">stripMargin</a>: <span title="String">String</span> = <a href="#18046" title="(marginChar: Char)String">stripMargin</a>(<span title="Char('|')" class="char">'|'</span>)
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(ch: Char)String" id="18048">escape</a>(<a title="Char" id="227299">ch</a>: <span title="Char">Char</span>): <span title="String">String</span> = <span title="(x$1: Any)java.lang.String" class="string">&quot;\\Q&quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#227299" title="Char">ch</a> + <span title="java.lang.String(&quot;\E&quot;)" class="string">&quot;\\E&quot;</span>
+
+  @throws(classOf[java.util.regex.PatternSyntaxException])
+  <span class="keyword">def</span> <a title="(separator: Char)Array[String]" id="18049">split</a>(<a title="Char" id="180185">separator</a>: <span title="Char">Char</span>): <a href="../Array.scala.html#885" title="Array[String]">Array</a>[String] = <a href="#18944" title="=&gt; String">self</a>.<span title="(x$1: java.lang.String)Array[java.lang.String]">split</span>(<a href="#18048" title="(ch: Char)String">escape</a>(<a href="#180185" title="Char">separator</a>))
+
+  @throws(classOf[java.util.regex.PatternSyntaxException])
+  <span class="keyword">def</span> <a title="(separators: Array[Char])Array[String]" id="18050">split</a>(<a title="Array[Char]" id="180182">separators</a>: <a href="../Array.scala.html#885" title="Array[Char]">Array</a>[Char]): <a href="../Array.scala.html#885" title="Array[String]">Array</a>[String] = {
+    <span class="keyword">val</span> <a title="java.lang.String" id="227311">re</a> = <a href="#180182" title="Array[Char]">separators</a>.<a href="../collection/generic/VectorTemplate.scala.html#17764" title="(z: java.lang.String)(op: (java.lang.String, Char) =&gt; java.lang.String)java.lang.String">foldLeft</a>(<span title="java.lang.String(&quot;[&quot;)" class="string">&quot;[&quot;</span>)<span title="(x$1: Any)java.lang.String">(</span><a href="#227327" title="(x$1: Any)java.lang.String">_</a>+<a href="#18048" title="(ch: Char)String">escape</a>(<a href="#227328" title="Char">_</a>)) + <span title="java.lang.String(&quot;]&quot;)" class="string">&quot;]&quot;</span>
+    <a href="#18944" title="=&gt; String">self</a>.<span title="(x$1: java.lang.String)Array[java.lang.String]">split</span>(<a href="#227311" title="java.lang.String">re</a>)
+  }
+
+  /** You can follow a string with `.r', turning
+   *  it into a Regex. E.g.
+   *
+   *  &quot;&quot;&quot;A\w*&quot;&quot;&quot;.r   is the regular expression for identifiers starting with `A'.
+   */
+  <span class="keyword">def</span> <a title="=&gt; scala.util.matching.Regex" id="18051">r</a>: <a href="../util/matching/Regex.scala.html#12912" title="scala.util.matching.Regex">Regex</a> = <span title="scala.util.matching.Regex" class="keyword">new</span> <a href="../util/matching/Regex.scala.html#12912" title="scala.util.matching.Regex">Regex</a>(<a href="#18944" title="=&gt; String">self</a>)
+  
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="18052">toBoolean</a>: <span title="Boolean">Boolean</span> = <a href="#18059" title="(s: String)Boolean">parseBoolean</a>(<a href="#18944" title="=&gt; String">self</a>)
+  <span class="keyword">def</span> <a title="=&gt; Byte" id="18053">toByte</a>: <a title="Byte" id="2154">Byte</a>       = java.lang.<a title="object java.lang.Byte" id="1580">Byte</a>.<a title="(x$1: java.lang.String)Byte" id="18814">parseByte</a>(<a href="#18944" title="=&gt; String">self</a>)
+  <span class="keyword">def</span> <a title="=&gt; Short" id="18054">toShort</a>: <a title="Short" id="2168">Short</a>     = java.lang.<a title="object java.lang.Short" id="1697">Short</a>.<a title="(x$1: java.lang.String)Short" id="18758">parseShort</a>(<a href="#18944" title="=&gt; String">self</a>)
+  <span class="keyword">def</span> <a title="=&gt; Int" id="18055">toInt</a>: <span title="Int">Int</span>         = java.lang.<a title="object java.lang.Integer" id="1532">Integer</a>.<a title="(x$1: java.lang.String)Int" id="18388">parseInt</a>(<a href="#18944" title="=&gt; String">self</a>)
+  <span class="keyword">def</span> <a title="=&gt; Long" id="18056">toLong</a>: <a title="Long" id="2182">Long</a>       = java.lang.<a title="object java.lang.Long" id="1694">Long</a>.<a title="(x$1: java.lang.String)Long" id="18287">parseLong</a>(<a href="#18944" title="=&gt; String">self</a>)
+  <span class="keyword">def</span> <a title="=&gt; Float" id="18057">toFloat</a>: <a title="Float" id="2189">Float</a>     = java.lang.<a title="object java.lang.Float" id="1868">Float</a>.<a title="(x$1: java.lang.String)Float" id="18212">parseFloat</a>(<a href="#18944" title="=&gt; String">self</a>)
+  <span class="keyword">def</span> <a title="=&gt; Double" id="18058">toDouble</a>: <a title="Double" id="2196">Double</a>   = java.lang.<a title="object java.lang.Double" id="1877">Double</a>.<a title="(x$1: java.lang.String)Double" id="18148">parseDouble</a>(<a href="#18944" title="=&gt; String">self</a>)
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(s: String)Boolean" id="18059">parseBoolean</a>(<a title="String" id="227345">s</a>: <span title="String">String</span>): <span title="Boolean">Boolean</span> =
+    <span title="Boolean" class="keyword">if</span> (<a href="#227345" title="(x$1: AnyRef)Boolean" id="6529">s</a> != <span title="Null(null)" class="keyword">null</span>) <a href="#227345" title="String">s</a>.<a title="()java.lang.String" id="7036">toLowerCase</a> <span title="Boolean" class="keyword">match</span> {
+      <span title="Boolean(true)" class="keyword">case</span> <span title="java.lang.String(&quot;true&quot;)" class="string">&quot;true&quot;</span> =&gt; <span title="Boolean(true)" class="keyword">true</span>
+      <span title="Boolean(false)" class="keyword">case</span> <span title="java.lang.String(&quot;false&quot;)" class="string">&quot;false&quot;</span> =&gt; <span title="Boolean(false)" class="keyword">false</span>
+      <span title="Nothing" class="keyword">case</span> _ =&gt; <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.NumberFormatException" class="keyword">new</span> <a href="../Predef.scala.html#16172" title="java.lang.NumberFormatException">NumberFormatException</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;For input string: \&quot;&quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="#227345" title="String">s</a>+<span title="java.lang.String(&quot;&quot;&quot;)" class="string">&quot;\&quot;&quot;</span>)
+    }
+    <span class="keyword">else</span>
+      <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.NumberFormatException" class="keyword">new</span> <a href="../Predef.scala.html#16172" title="java.lang.NumberFormatException">NumberFormatException</a>(<span title="java.lang.String(&quot;For input string: &quot;null&quot;&quot;)" class="string">&quot;For input string: \&quot;null\&quot;&quot;</span>)
+
+  /* !!! causes crash?
+  def toArray: Array[Char] = {
+    val result = new Array[Char](length)
+    self.getChars(0, length, result, 0)
+    result
+  }
+  */
+
+  /** &lt;p&gt;
+   *  Uses the underlying string as a pattern (in a fashion similar to
+   *  printf in C), and uses the supplied arguments to fill in the
+   *  holes.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The interpretation of the formatting patterns is described in
+   *    &lt;a href=&quot;&quot; target=&quot;contentFrame&quot; class=&quot;java/util/Formatter&quot;&gt;
+   *    &lt;code&gt;java.util.Formatter&lt;/code&gt;&lt;/a&gt;.
+   *  &lt;/p&gt;
+   *
+   *  @param args the arguments used to instantiating the pattern.
+   *  @throws java.lang.IllegalArgumentException
+   */
+  <span class="keyword">def</span> <a title="(args: Any*)String" id="18060">format</a>(<a title="Any*" id="34204">args</a> : <span title="Any*">Any</span>*) : <span title="String">String</span> =
+    java.lang.<span title="object java.lang.String">String</span>.<a title="(x$1: java.lang.String,x$2: java.lang.Object*)java.lang.String" id="7043">format</a>(<a href="#18944" title="=&gt; String">self</a>, <a href="#34204" title="Any*">args</a>.<span title="[T0]T0">asInstanceOf</span><span title="Seq[AnyRef]">[</span><a href="../collection/Sequence.scala.html#4346" title="Seq[AnyRef]">Seq</a>[AnyRef]].<a href="../collection/generic/TraversableTemplate.scala.html#17233" title="(implicit evidence$1: scala.reflect.ClassManifest[AnyRef])Array[AnyRef]">toArray</a>: _*)
+
+  /** &lt;p&gt;
+   *  Like format(args*) but takes an initial Locale parameter
+   *  which influences formatting as in java.lang.String's format.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The interpretation of the formatting patterns is described in
+   *    &lt;a href=&quot;&quot; target=&quot;contentFrame&quot; class=&quot;java/util/Formatter&quot;&gt;
+   *    &lt;code&gt;java.util.Formatter&lt;/code&gt;&lt;/a&gt;.
+   *  &lt;/p&gt;
+   *
+   *  @param locale an instance of java.util.Locale
+   *  @param args the arguments used to instantiating the pattern.
+   *  @throws java.lang.IllegalArgumentException
+   */
+  <span class="keyword">def</span> <a title="(l: java.util.Locale,args: Any*)String" id="18061">format</a>(<a title="java.util.Locale" id="34122">l</a>: java.util.<a title="java.util.Locale" id="6319">Locale</a>, <a title="Any*" id="34123">args</a>: <span title="Any*">Any</span>*): <span title="String">String</span> =
+    java.lang.<span title="object java.lang.String">String</span>.<a title="(x$1: java.util.Locale,x$2: java.lang.String,x$3: java.lang.Object*)java.lang.String" id="7048">format</a>(<a href="#34122" title="java.util.Locale">l</a>, <a href="#18944" title="=&gt; String">self</a>, <a href="#34123" title="Any*">args</a>.<span title="[T0]T0">asInstanceOf</span><span title="Seq[AnyRef]">[</span><a href="../collection/Sequence.scala.html#4346" title="Seq[AnyRef]">Seq</a>[AnyRef]].<a href="../collection/generic/TraversableTemplate.scala.html#17233" title="(implicit evidence$1: scala.reflect.ClassManifest[AnyRef])Array[AnyRef]">toArray</a>: _*)
+}
+
+
+        </pre>
+    </body>
+</html>

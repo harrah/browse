@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Application.scala</title>
+        <script type="text/javascript" src="jquery-all.js"></script>
+        <script type="text/javascript" src="linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: Application.scala 17586 2009-04-27 16:38:44Z dragos $
+
+
+<span class="keyword">package</span> scala
+
+<span class="keyword">import</span> java.lang.System.getProperty
+<span class="keyword">import</span> scala.compat.Platform.currentTime
+
+/** &lt;p&gt;
+ *    The &lt;code&gt;Application&lt;/code&gt; trait can be used to quickly turn objects
+ *    into executable programs, but is &lt;em&gt;not recommended&lt;/em&gt;.
+ *    Here is an example:
+ *  &lt;/p&gt;&lt;pre&gt;
+ *  &lt;b&gt;object&lt;/b&gt; Main &lt;b&gt;extends&lt;/b&gt; Application {
+ *    Console.println(&quot;Hello World!&quot;)
+ *  }
+ *  &lt;/pre&gt;
+ *  &lt;p&gt;
+ *    Here, object &lt;code&gt;Main&lt;/code&gt; inherits the &lt;code&gt;main&lt;/code&gt; method
+ *    of &lt;code&gt;Application&lt;/code&gt;. The body of the &lt;code&gt;Main&lt;/code&gt; object
+ *    defines the main program. This technique does not work if the main
+ *    program depends on command-line arguments (which are not accessible
+ *    with the technique presented here).
+ *  &lt;/p&gt;
+ *  &lt;p&gt;
+ *    It is possible to time the execution of objects that inherit from class
+ *    &lt;code&gt;Application&lt;/code&gt; by setting the global &lt;code&gt;scala.time&lt;/code&gt;
+ *    property. Here is an example for benchmarking object &lt;code&gt;Main&lt;/code&gt;:
+ *  &lt;/p&gt;&lt;pre&gt;
+ *  java -Dscala.time Main
+ *  &lt;/pre&gt;
+ *  &lt;p&gt;
+ *    In practice the &lt;code&gt;Application&lt;/code&gt; trait has a number of serious
+ *    pitfalls:
+ *  &lt;/p&gt;
+ *  &lt;ul&gt;
+ *    &lt;li&gt; Threaded code that references the object will block until static 
+ *    initialization is complete.  However, because the entire execution of an 
+ *    &lt;code&gt;object&lt;/code&gt; extending &lt;code&gt;Application&lt;/code&gt; takes place during
+ *    static initialization, concurrent code will &lt;em&gt;always&lt;/em&gt; deadlock if 
+ *    it must synchronize with the enclosing object.&lt;/li&gt;
+ *    &lt;li&gt;As described above, there is no way to obtain the 
+ *    command-line arguments because all code in body of an &lt;code&gt;object&lt;/code&gt;
+ *    extending &lt;code&gt;Application&lt;/code&gt; is run as part of the static initialization
+ *    which occurs before &lt;code&gt;Application&lt;/code&gt;'s &lt;code&gt;main&lt;/code&gt; method 
+ *    even begins execution.&lt;/li&gt;  
+ *    &lt;li&gt;Static initializers are run only once during program execution, and 
+ *    JVM authors usually assume their execution to be relatively short.  
+ *    Therefore, certain JVM configurations may become confused, or simply fail to
+ *    optimize or JIT the code in the body of an &lt;code&gt;object&lt;/code&gt; extending 
+ *    &lt;code&gt;Application&lt;/code&gt;.  This can lead to a significant 
+ *    performance degradation.&lt;/li&gt;
+ *  &lt;/ul&gt;
+ *
+ *  Instead, it is recommended to define a &lt;code&gt;main&lt;/code&gt; method explicitly:
+ *  &lt;pre&gt;
+ *  &lt;b&gt;object&lt;/b&gt; Main {
+ *    &lt;b&gt;def&lt;/b&gt; main(args: Array[String]) {
+ *      //..
+ *    }
+ *  }
+ *  &lt;/pre&gt;
+ *
+ *  @author  Matthias Zenger
+ *  @version 1.0, 10/09/2003
+ */
+
+<span class="keyword">trait</span> <a title="trait Application extends java.lang.Object with ScalaObject" id="729">Application</a> <a href="ScalaObject.scala.html#957" title="ScalaObject">{</a>
+
+  /** The time when execution of this program started.
+   */
+  <span class="keyword">val</span> <a title="Long" id="58768">executionStart</a>: <a title="Long" id="2182">Long</a> = <a href="compat/Platform.scala.html#17691" title="=&gt; Long">currentTime</a>
+
+  /** The default main method.
+   *
+   *  @param args the arguments passed to the main method
+   */
+  <span class="keyword">def</span> <a title="(args: Array[String])Unit" id="58770">main</a>(<a title="Array[String]" id="58775">args</a>: <a href="Array.scala.html#885" title="Array[String]">Array</a>[String]) {
+    <span title="Unit" class="keyword">if</span> (<a title="(x$1: java.lang.String)java.lang.String" id="1628">getProperty</a><a title="(x$1: AnyRef)Boolean" id="6533">(</a><span title="java.lang.String(&quot;scala.time&quot;)" class="string">&quot;scala.time&quot;</span>) ne <span title="Null(null)" class="keyword">null</span>) {
+      <span class="keyword">val</span> <a title="Long" id="58783">total</a> = <a href="compat/Platform.scala.html#17691" title="(x$1: Long)Long" id="3200">currentTime</a> - <a href="#58768" title="=&gt; Long">executionStart</a>
+      <a href="Console.scala.html#388" title="object Console">Console</a>.<a href="Console.scala.html#58871" title="(x: Any)Unit">println</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;[total &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#58783" title="Long">total</a> + <span title="java.lang.String(&quot;ms]&quot;)" class="string">&quot;ms]&quot;</span>)
+    }
+  }
+}
+
+        </pre>
+    </body>
+</html>

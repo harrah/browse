@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>runtime/ScalaRunTime.scala</title>
+        <script type="text/javascript" src="../jquery-all.js"></script>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: ScalaRunTime.scala 18589 2009-08-27 14:45:35Z odersky $
+
+
+<span class="keyword">package</span> scala.runtime
+
+<span class="keyword">import</span> scala.reflect.ClassManifest
+
+/* The object &lt;code&gt;ScalaRunTime&lt;/code&gt; provides ...
+ */
+<span class="keyword">object</span> <a title="object scala.runtime.ScalaRunTime" id="1987">ScalaRunTime</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+
+  <span class="keyword">def</span> <a title="(x: AnyRef)Boolean" id="20615">isArray</a>(<a title="AnyRef" id="84622">x</a>: <span title="AnyRef">AnyRef</span>): <span title="Boolean">Boolean</span> = <a title="(x$1: Boolean)Boolean" id="2208">(</a><a href="#84622" title="(x$1: AnyRef)Boolean">x</a> <span title="(x$1: Boolean)Boolean">!=</span> <span title="Null(null)" class="keyword">null</span> &amp;&amp; <a href="#84622" title="AnyRef">x</a>.<span title="()java.lang.Class[_]">getClass</span>.<a title="()Boolean" id="4103">isArray</a>) || (<a href="#84622" title="(x$1: AnyRef)Boolean">x</a> <span title="(x$1: Boolean)Boolean">!=</span> <span title="Null(null)" class="keyword">null</span> &amp;&amp; <a href="#84622" title="AnyRef">x</a>.<a title="[T0]Boolean" id="3618">isInstanceOf</a><span title="Boolean">[</span><a href="BoxedArray.scala.html#2034" title="scala.runtime.BoxedArray[_]">BoxedArray</a>[_]])
+  <span class="keyword">def</span> <a title="(clazz: Class[_])Boolean" id="20616">isValueClass</a>(<a title="Class[_]" id="51785">clazz</a>: <span title="Class[_]">Class</span>[_]) = <a href="#51785" title="Class[_]">clazz</a>.<a title="()Boolean" id="4104">isPrimitive</a>()
+
+  // todo: [for Gilles] replace with boxArray
+  <span class="keyword">def</span> <a title="[A](xs: Seq[A])Array[A]" id="20617">forceBoxedArray</a>[<a title="&gt;: Nothing &lt;: Any" id="20619">A</a> &lt;: Any](<a title="Seq[A]" id="163750">xs</a>: <a href="../collection/Sequence.scala.html#4346" title="Seq[A]">Seq</a>[A]): <a href="../Array.scala.html#885" title="Array[A]">Array</a>[A] = {
+    <span class="keyword">val</span> <a title="Array[A]" id="163753">array</a> = <span title="Array[A]" class="keyword">new</span> <a href="../Array.scala.html#885" title="Array[A]">Array</a>[A](<a href="#163750" title="Seq[A]">xs</a>.<a href="../collection/generic/SequenceTemplate.scala.html#17338" title="=&gt; Int">length</a>)
+    <span class="keyword">var</span> <a title="Int" id="163754">i</a> = <span title="Int(0)" class="int">0</span>
+    <span class="keyword">for</span> (<a title="A" id="163763">x</a> &lt;- <a href="#163750" title="Seq[A]">xs</a>.<a href="../collection/Iterator.scala.html#19219" title="(f: (A) =&gt; Unit)Unit">iterator</a>) { <a href="../Array.scala.html#17717" title="(i: Int,x: A)Unit">array</a>(<a href="#163754" title="Int">i</a>) = <a href="#163763" title="A">x</a>; <a href="#163754" title="Int">i</a> += <span title="Int(1)" class="int">1</span> }
+    <a href="#163753" title="Array[A]">array</a>
+  }
+
+  <span class="keyword">def</span> <a title="[T &lt;: AnyRef](x: T)T" id="20620">checkInitialized</a>[<a title="&gt;: Nothing &lt;: AnyRef" id="20622">T</a> &lt;: AnyRef](<a title="T" id="163816">x</a>: <a href="#20622" title="T">T</a>): <a href="#20622" title="T">T</a> = 
+    <span title="T" class="keyword">if</span> (<a href="#163816" title="(x$1: AnyRef)Boolean" id="3624">x</a> == <span title="Null(null)" class="keyword">null</span>) <span title="Nothing" class="keyword">throw</span> <span title="UninitializedError" class="keyword">new</span> <a href="../UninitializedError.scala.html#120" title="UninitializedError">UninitializedError</a> <span class="keyword">else</span> <a href="#163816" title="T">x</a>
+
+  <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class Try[a] extends java.lang.Object with ScalaObject" id="20623">Try</a>[<a title="&gt;: Nothing &lt;: Any" id="20624">a</a>] <a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+    <span class="keyword">def</span> <a title="[b &gt;: a](handler: PartialFunction[Throwable,b])b" id="163828">Catch</a>[<a title="&gt;: a &lt;: Any" id="163830">b</a> &gt;: a](<a title="PartialFunction[Throwable,b]" id="163835">handler</a>: <a href="../PartialFunction.scala.html#1083" title="PartialFunction[Throwable,b]">PartialFunction</a>[Throwable, b]): <a href="#163830" title="b">b</a>
+    <span class="keyword">def</span> <a title="(handler: Unit)a" id="163831">Finally</a>(<a title="Unit" id="163838">handler</a>: <span title="Unit">Unit</span>): <a href="#20624" title="a">a</a>
+  }
+
+  <span class="keyword">def</span> <a title="[a](block: =&gt; a)scala.runtime.ScalaRunTime.Try[a]" id="20625">Try</a>[<a title="&gt;: Nothing &lt;: Any" id="20627">a</a>](<a title="=&gt; a" id="163840">block</a>: =&gt; a): <a href="#20623" title="scala.runtime.ScalaRunTime.Try[a]">Try</a>[a] = <a href="#163843" title="scala.runtime.ScalaRunTime.Try[a] with Runnable{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends scala.runtime.ScalaRunTime.Try[a] with Runnable" id="163843">Try</a>[a] <span class="keyword">with</span> <a title="Runnable" id="1807">Runnable</a> {
+    <span class="keyword">var</span> <a title="a" id="163846">result</a>: <a href="#20627" title="a">a</a> = _
+    <span class="keyword">var</span> <a title="Throwable" id="163849">exception</a>: <a title="Throwable" id="1885">Throwable</a> = <a href="ExceptionHandling.java.html#2074" title="object scala.runtime.ExceptionHandling">ExceptionHandling</a>.<a href="ExceptionHandling.java.html#163863" title="(runnable: java.lang.Runnable)java.lang.Throwable">tryCatch</a>(<a href="#163843" title="scala.runtime.ScalaRunTime.Try[a] with Runnable{ ... }" class="keyword">this</a>)
+
+    <span class="keyword">def</span> <a title="()Unit" id="163851">run</a>(): <span title="Unit">Unit</span> = <a href="#163846" title="(x$1: a)Unit">result</a> = <a href="#163840" title="=&gt; a">block</a>
+
+    <span class="keyword">def</span> <a title="[b &gt;: a](handler: PartialFunction[Throwable,b])b" id="163852">Catch</a>[<a title="&gt;: a &lt;: Any" id="163854">b</a> &gt;: a](<a title="PartialFunction[Throwable,b]" id="163871">handler</a>: <a href="../PartialFunction.scala.html#1083" title="PartialFunction[Throwable,b]">PartialFunction</a>[Throwable, b]): <a href="#163854" title="b">b</a> =
+      <span title="b" class="keyword">if</span> (<a href="#163849" title="(x$1: AnyRef)Boolean">exception</a> eq <span title="Null(null)" class="keyword">null</span>)
+        <a href="#163846" title="=&gt; a">result</a>.<span title="[T0]T0">asInstanceOf</span><span title="b">[</span><a href="#163854" title="b">b</a>]
+      // !!! else if (exception is LocalReturn)
+      // !!!   // ...
+      <span class="keyword">else</span> <span title="b" class="keyword">if</span> (<a href="../PartialFunction.scala.html#17071" title="(x: Throwable)Boolean">handler</a> isDefinedAt <a href="#163849" title="=&gt; Throwable">exception</a>)
+        <a href="../Function1.scala.html#17119" title="(v1: Throwable)b">handler</a>(<a href="#163849" title="=&gt; Throwable">exception</a>)
+      <span class="keyword">else</span>
+        <span title="Nothing" class="keyword">throw</span> <a href="#163849" title="=&gt; Throwable">exception</a>
+
+    <span class="keyword">def</span> <a title="(handler: Unit)a" id="163855">Finally</a>(<a title="Unit" id="163886">handler</a>: <span title="Unit">Unit</span>): <a href="#20627" title="a">a</a> =
+      <span title="a" class="keyword">if</span> (<a href="#163849" title="(x$1: AnyRef)Boolean">exception</a> eq <span title="Null(null)" class="keyword">null</span>)
+        <a href="#163846" title="=&gt; a">result</a>.<span title="[T0]T0">asInstanceOf</span><span title="a">[</span><a href="#20627" title="a">a</a>]
+      <span class="keyword">else</span>
+        <span title="Nothing" class="keyword">throw</span> <a href="#163849" title="=&gt; Throwable">exception</a>
+  }
+
+  <span class="keyword">def</span> <a title="(x: Product)List[Any]" id="20628">caseFields</a>(<a title="Product" id="163892">x</a>: <a href="../Product.scala.html#675" title="Product">Product</a>): <a href="../collection/immutable/List.scala.html#8973" title="List[Any]">List</a>[Any] = {
+    <span class="keyword">val</span> <a title="Int" id="163894">arity</a> = <a href="#163892" title="Product">x</a>.<a href="../Product.scala.html#17967" title="=&gt; Int">productArity</a>
+    <span class="keyword">def</span> <a title="(from: Int)List[Any]" id="163895">fields</a>(<a title="Int" id="163896">from</a>: <span title="Int">Int</span>): <a href="../collection/immutable/List.scala.html#8973" title="List[Any]">List</a>[Any] =
+      <span title="List[Any]" class="keyword">if</span> (<a href="#163896" title="(x$1: Int)Boolean">from</a> == <a href="#163894" title="Int">arity</a>) List<a href="../collection/immutable/List.scala.html#9259" title="object Nil">(</a>)
+      <span class="keyword">else</span> <a href="#163892" title="Product">x</a>.<a href="../Product.scala.html#17966" title="(n: Int)Any">productElement</a>(<a href="#163896" title="Int">from</a>) <a href="#163912" title="Any">::</a> <a href="#163895" title="(from: Int)List[Any]">fields</a><a href="../collection/immutable/List.scala.html#17630" title="(x: Any)List[Any]">(</a><a href="#163896" title="(x$1: Int)Int">from</a> + <span title="Int(1)" class="int">1</span>)
+    <a href="#163895" title="(from: Int)List[Any]">fields</a>(<span title="Int(0)" class="int">0</span>)
+  }
+
+  <span class="keyword">def</span> <a title="(x: Product)String" id="20629">_toString</a>(<a title="Product" id="20647">x</a>: <a href="../Product.scala.html#675" title="Product">Product</a>): <span title="String">String</span> =
+    <a href="#20628" title="(x: Product)List[Any]">caseFields</a>(<a href="#20647" title="Product">x</a>).<a href="../collection/generic/TraversableTemplate.scala.html#17246" title="(start: String,sep: String,end: String)String">mkString</a>(<a href="#20647" title="Product">x</a>.<a href="../Product.scala.html#17970" title="(x$1: Any)java.lang.String" id="6542">productPrefix</a> + <span title="java.lang.String(&quot;(&quot;)" class="string">&quot;(&quot;</span>, <span title="java.lang.String(&quot;,&quot;)" class="string">&quot;,&quot;</span>, <span title="java.lang.String(&quot;)&quot;)" class="string">&quot;)&quot;</span>)
+
+  <span class="keyword">def</span> <a title="(x: Product)Int" id="20630">_hashCode</a>(<a title="Product" id="20642">x</a>: <a href="../Product.scala.html#675" title="Product">Product</a>): <span title="Int">Int</span> = {
+    <span class="keyword">var</span> <a title="Int" id="163960">code</a> = <a href="#20642" title="Product">x</a>.<a href="../Product.scala.html#17970" title="=&gt; java.lang.String">productPrefix</a>.<a title="()Int" id="6966">hashCode</a>()
+    <span class="keyword">val</span> <a title="Int" id="163961">arr</a> =  <a href="#20642" title="Product">x</a>.<a href="../Product.scala.html#17967" title="=&gt; Int">productArity</a>
+    <span class="keyword">var</span> <a title="Int" id="163962">i</a> = <span title="Int(0)" class="int">0</span>
+    <span title="Unit" class="keyword">while</span> (<a href="#163962" title="(x$1: Int)Boolean">i</a> &lt; <a href="#163961" title="Int">arr</a>) <a href="#163963" title="()Unit">{</a>
+      <span class="keyword">val</span> <a title="Any" id="163973">elem</a> = <a href="#20642" title="Product">x</a>.<a href="../Product.scala.html#17966" title="(n: Int)Any">productElement</a>(<a href="#163962" title="Int">i</a>)
+      <a href="#163960" title="Int">code</a> = <a href="#163960" title="(x$1: Int)Int" id="2966">code</a> <span title="(x$1: Int)Int">*</span> <span title="Int(41)" class="int">41</span> + (<span title="Int" class="keyword">if</span> (<a href="#163973" title="(x$1: Any)Boolean">elem</a> == <span title="Null(null)" class="keyword">null</span>) <span title="Int(0)" class="int">0</span> <span class="keyword">else</span> <a href="#163973" title="Any">elem</a>.<a title="()Int" id="3616">hashCode</a>())
+      <a href="#163962" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+    }
+    <a href="#163960" title="Int">code</a>
+  }
+
+  <span class="keyword">def</span> <a title="(x: Product,y: Any)Boolean" id="20631">_equals</a>(<a title="Product" id="164044">x</a>: <a href="../Product.scala.html#675" title="Product">Product</a>, <a title="Any" id="164045">y</a>: <span title="Any">Any</span>): <span title="Boolean">Boolean</span> = <a href="#164045" title="Any">y</a> <span title="Boolean" class="keyword">match</span> {
+    <span title="Boolean" class="keyword">case</span> <a title="Product" id="164047">y1</a>: <a href="../Product.scala.html#675" title="Product">Product</a> <span class="keyword">if</span> <a href="#164044" title="Product">x</a>.<a href="../Product.scala.html#17967" title="(x$1: Int)Boolean">productArity</a> == <a href="#164047" title="Product">y1</a>.<a href="../Product.scala.html#17967" title="=&gt; Int">productArity</a> =&gt;
+      <span class="keyword">val</span> <a title="Int" id="164055">arity</a> = <a href="#164044" title="Product">x</a>.<a href="../Product.scala.html#17967" title="=&gt; Int">productArity</a>
+      <span class="keyword">var</span> <a title="Int" id="164056">i</a> = <span title="Int(0)" class="int">0</span>
+      <span title="Unit" class="keyword">while</span> (<a href="#164056" title="(x$1: Int)Boolean">i</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <a href="#164055" title="Int">arity</a> &amp;&amp; <a href="#164044" title="Product">x</a>.<a href="../Product.scala.html#17966" title="(n: Int)Any">productElement</a><span title="(x$1: Any)Boolean">(</span><a href="#164056" title="Int">i</a>) == <a href="#164047" title="Product">y1</a>.<a href="../Product.scala.html#17966" title="(n: Int)Any">productElement</a>(<a href="#164056" title="Int">i</a>))
+        <a href="#164056" title="Int">i</a> <a href="#164057" title="()Unit">+=</a> <span title="Int(1)" class="int">1</span>
+      <a href="#164056" title="(x$1: Int)Boolean">i</a> == <a href="#164055" title="Int">arity</a>
+    <span title="Boolean(false)" class="keyword">case</span> _ =&gt;
+      <span title="Boolean(false)" class="keyword">false</span>
+  }
+
+  <span class="keyword">def</span> <a title="(x: Product,y: Any)Boolean" id="20632">_equalsWithVarArgs</a>(<a title="Product" id="164115">x</a>: <a href="../Product.scala.html#675" title="Product">Product</a>, <a title="Any" id="164116">y</a>: <span title="Any">Any</span>): <span title="Boolean">Boolean</span> = <a href="#164116" title="Any">y</a> <span title="Boolean" class="keyword">match</span> {
+    <span title="Boolean" class="keyword">case</span> <a title="Product" id="164118">y1</a>: <a href="../Product.scala.html#675" title="Product">Product</a> <span class="keyword">if</span> <a href="#164115" title="Product">x</a>.<a href="../Product.scala.html#17967" title="(x$1: Int)Boolean">productArity</a> == <a href="#164118" title="Product">y1</a>.<a href="../Product.scala.html#17967" title="=&gt; Int">productArity</a> =&gt;
+      <span class="keyword">val</span> <a title="Int" id="164126">arity</a> = <a href="#164115" title="Product">x</a>.<a href="../Product.scala.html#17967" title="=&gt; Int">productArity</a>
+      <span class="keyword">var</span> <a title="Int" id="164127">i</a> = <span title="Int(0)" class="int">0</span>
+      <span title="Unit" class="keyword">while</span> (<a href="#164127" title="(x$1: Int)Boolean">i</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <a href="#164126" title="(x$1: Int)Int">arity</a> - <span title="Int(1)" class="int">1</span> &amp;&amp; <a href="#164115" title="Product">x</a>.<a href="../Product.scala.html#17966" title="(n: Int)Any">productElement</a><span title="(x$1: Any)Boolean">(</span><a href="#164127" title="Int">i</a>) == <a href="#164118" title="Product">y1</a>.<a href="../Product.scala.html#17966" title="(n: Int)Any">productElement</a>(<a href="#164127" title="Int">i</a>))
+        <a href="#164127" title="Int">i</a> <a href="#164128" title="()Unit">+=</a> <span title="Int(1)" class="int">1</span>
+      <a href="#164127" title="(x$1: Int)Boolean">i</a> <span title="(x$1: Boolean)Boolean">==</span> <a href="#164126" title="(x$1: Int)Int">arity</a> - <span title="Int(1)" class="int">1</span> &amp;&amp; {
+        <a href="#164115" title="Product">x</a>.<a href="../Product.scala.html#17966" title="(n: Int)Any">productElement</a>(<a href="#164127" title="Int">i</a>) <span title="Boolean" class="keyword">match</span> {
+          <span title="Boolean" class="keyword">case</span> <a title="Seq[_]" id="164200">xs</a>: <a href="../collection/Sequence.scala.html#4346" title="Seq[_]">Seq</a>[_] =&gt;
+            <a href="#164118" title="Product">y1</a>.<a href="../Product.scala.html#17966" title="(n: Int)Any">productElement</a>(<a href="#164127" title="Int">i</a>) <span title="Boolean" class="keyword">match</span> {
+              <span title="Boolean" class="keyword">case</span> <a title="Seq[_]" id="164204">ys</a>: <a href="../collection/Sequence.scala.html#4346" title="Seq[_]">Seq</a>[_] =&gt; <a href="../collection/generic/IterableTemplate.scala.html#17321" title="(that: Iterable[Any])Boolean">xs</a> sameElements <a href="#164204" title="Seq[_]">ys</a>
+            }
+        }
+      }
+    <span title="Boolean(false)" class="keyword">case</span> _ =&gt;
+      <span title="Boolean(false)" class="keyword">false</span>
+  }
+
+  //def checkDefined[T &gt;: Null](x: T): T = 
+  //  if (x == null) throw new UndefinedException else x
+
+  <span class="keyword">def</span> <a title="[a](xs: a*)Seq[a]" id="20633">Seq</a>[<a title="&gt;: Nothing &lt;: Any" id="20635">a</a>](<a title="a*" id="164222">xs</a>: <a title="a*" id="4176">a</a>*): <a href="../collection/Sequence.scala.html#4346" title="Seq[a]">Seq</a>[a] = <span title="Null(null)" class="keyword">null</span> // interpreted specially by new backend.
+
+  <span class="keyword">def</span> <a title="[A](x: scala.runtime.BoxedArray[A],elemClass: Class[_])AnyRef" id="20636">arrayValue</a>[<a title="&gt;: Nothing &lt;: Any" id="20638">A</a>](<a title="scala.runtime.BoxedArray[A]" id="164225">x</a>: <a href="BoxedArray.scala.html#2034" title="scala.runtime.BoxedArray[A]">BoxedArray</a>[A], <a title="Class[_]" id="164226">elemClass</a>: <span title="Class[_]">Class</span>[_]): <span title="AnyRef">AnyRef</span> =
+    <span title="AnyRef" class="keyword">if</span> (<a href="#164225" title="(x$1: AnyRef)Boolean">x</a> eq <span title="Null(null)" class="keyword">null</span>) <span title="Null(null)" class="keyword">null</span> <span class="keyword">else</span> <a href="#164225" title="scala.runtime.BoxedArray[A]">x</a>.<a href="BoxedArray.scala.html#26151" title="(elemClass: Class[_])AnyRef">unbox</a>(<a href="#164226" title="Class[_]">elemClass</a>)
+
+  <span class="keyword">def</span> <a title="(value: AnyRef)scala.runtime.BoxedArray[_]" id="20639">boxArray</a>(<a title="AnyRef" id="61608">value</a>: <span title="AnyRef">AnyRef</span>): <a href="BoxedArray.scala.html#2034" title="scala.runtime.BoxedArray[_]">BoxedArray</a>[_] = <a href="#61608" title="AnyRef">value</a> <span title="scala.runtime.BoxedArray[_111]" class="keyword">match</span> {
+    <span title="scala.runtime.BoxedObjectArray[Nothing]" class="keyword">case</span> <a title="Array[AnyRef]" id="164240">x</a>: <a href="../Array.scala.html#885" title="Array[AnyRef]">Array</a>[AnyRef] =&gt; <span title="scala.runtime.BoxedObjectArray[Nothing]" class="keyword">new</span> <a href="BoxedObjectArray.scala.html#2100" title="scala.runtime.BoxedObjectArray[Nothing]">BoxedObjectArray</a>(<a href="#164240" title="Array[AnyRef]">x</a>, <a href="../reflect/ClassManifest.scala.html#11504" title="object scala.reflect.ClassManifest">ClassManifest</a>.<a href="../reflect/ClassManifest.scala.html#26236" title="(clazz: Class[_])scala.reflect.ClassManifest[Nothing]">classType</a>(<a href="#164240" title="Array[AnyRef]">x</a>.<span title="()java.lang.Class[_]">getClass</span>.<span title="()java.lang.Class[_]">getComponentType</span>))
+    <span title="scala.runtime.BoxedIntArray" class="keyword">case</span> <a title="Array[Int]" id="164270">x</a>: <a href="../Array.scala.html#885" title="Array[Int]">Array</a>[Int] =&gt; <span title="scala.runtime.BoxedIntArray" class="keyword">new</span> <a href="BoxedIntArray.scala.html#2109" title="scala.runtime.BoxedIntArray">BoxedIntArray</a>(<a href="#164270" title="Array[Int]">x</a>)
+    <span title="scala.runtime.BoxedDoubleArray" class="keyword">case</span> <a title="Array[Double]" id="164273">x</a>: <a href="../Array.scala.html#885" title="Array[Double]">Array</a>[Double] =&gt; <span title="scala.runtime.BoxedDoubleArray" class="keyword">new</span> <a href="BoxedDoubleArray.scala.html#2028" title="scala.runtime.BoxedDoubleArray">BoxedDoubleArray</a>(<a href="#164273" title="Array[Double]">x</a>)
+    <span title="scala.runtime.BoxedLongArray" class="keyword">case</span> <a title="Array[Long]" id="164276">x</a>: <a href="../Array.scala.html#885" title="Array[Long]">Array</a>[Long] =&gt; <span title="scala.runtime.BoxedLongArray" class="keyword">new</span> <a href="BoxedLongArray.scala.html#2025" title="scala.runtime.BoxedLongArray">BoxedLongArray</a>(<a href="#164276" title="Array[Long]">x</a>)
+    <span title="scala.runtime.BoxedFloatArray" class="keyword">case</span> <a title="Array[Float]" id="164279">x</a>: <a href="../Array.scala.html#885" title="Array[Float]">Array</a>[Float] =&gt; <span title="scala.runtime.BoxedFloatArray" class="keyword">new</span> <a href="BoxedFloatArray.scala.html#1992" title="scala.runtime.BoxedFloatArray">BoxedFloatArray</a>(<a href="#164279" title="Array[Float]">x</a>)
+    <span title="scala.runtime.BoxedCharArray" class="keyword">case</span> <a title="Array[Char]" id="164282">x</a>: <a href="../Array.scala.html#885" title="Array[Char]">Array</a>[Char] =&gt; <span title="scala.runtime.BoxedCharArray" class="keyword">new</span> <a href="BoxedCharArray.scala.html#2124" title="scala.runtime.BoxedCharArray">BoxedCharArray</a>(<a href="#164282" title="Array[Char]">x</a>)
+    <span title="scala.runtime.BoxedByteArray" class="keyword">case</span> <a title="Array[Byte]" id="164285">x</a>: <a href="../Array.scala.html#885" title="Array[Byte]">Array</a>[Byte] =&gt; <span title="scala.runtime.BoxedByteArray" class="keyword">new</span> <a href="BoxedByteArray.scala.html#2022" title="scala.runtime.BoxedByteArray">BoxedByteArray</a>(<a href="#164285" title="Array[Byte]">x</a>)
+    <span title="scala.runtime.BoxedShortArray" class="keyword">case</span> <a title="Array[Short]" id="164288">x</a>: <a href="../Array.scala.html#885" title="Array[Short]">Array</a>[Short] =&gt; <span title="scala.runtime.BoxedShortArray" class="keyword">new</span> <a href="BoxedShortArray.scala.html#2085" title="scala.runtime.BoxedShortArray">BoxedShortArray</a>(<a href="#164288" title="Array[Short]">x</a>)
+    <span title="scala.runtime.BoxedBooleanArray" class="keyword">case</span> <a title="Array[Boolean]" id="164291">x</a>: <a href="../Array.scala.html#885" title="Array[Boolean]">Array</a>[Boolean] =&gt; <span title="scala.runtime.BoxedBooleanArray" class="keyword">new</span> <a href="BoxedBooleanArray.scala.html#2031" title="scala.runtime.BoxedBooleanArray">BoxedBooleanArray</a>(<a href="#164291" title="Array[Boolean]">x</a>)
+    <span title="scala.runtime.BoxedArray[_]" class="keyword">case</span> <a title="scala.runtime.BoxedArray[_]" id="164294">x</a>: <a href="BoxedArray.scala.html#2034" title="scala.runtime.BoxedArray[_]">BoxedArray</a>[_] =&gt; <a href="#164294" title="scala.runtime.BoxedArray[_]">x</a>
+    <span title="Null(null)" class="keyword">case</span> <span title="Null(null)" class="keyword">null</span> =&gt; <span title="Null(null)" class="keyword">null</span>
+  }
+
+  <span class="keyword">def</span> <a title="(value: AnyRef)AnyRef" id="20640">box</a>(<a title="AnyRef" id="167189">value</a>: <span title="AnyRef">AnyRef</span>): <span title="AnyRef">AnyRef</span> = <a href="#167189" title="AnyRef">value</a> <span title="AnyRef" class="keyword">match</span> {
+    <span title="scala.runtime.RichString" class="keyword">case</span> <a title="String" id="167191">x</a>: <span title="String">String</span> =&gt; <span title="scala.runtime.RichString" class="keyword">new</span> <a href="RichString.scala.html#2058" title="scala.runtime.RichString">RichString</a>(<a href="#167191" title="String">x</a>)
+    <span title="scala.runtime.BoxedObjectArray[Nothing]" class="keyword">case</span> <a title="Array[AnyRef]" id="167194">x</a>: <a href="../Array.scala.html#885" title="Array[AnyRef]">Array</a>[AnyRef] =&gt; <span title="scala.runtime.BoxedObjectArray[Nothing]" class="keyword">new</span> <a href="BoxedObjectArray.scala.html#2100" title="scala.runtime.BoxedObjectArray[Nothing]">BoxedObjectArray</a>(<a href="#167194" title="Array[AnyRef]">x</a>, <a href="../reflect/ClassManifest.scala.html#11504" title="object scala.reflect.ClassManifest">ClassManifest</a>.<a href="../reflect/ClassManifest.scala.html#26236" title="(clazz: Class[_])scala.reflect.ClassManifest[Nothing]">classType</a>(<a href="#167194" title="Array[AnyRef]">x</a>.<span title="()java.lang.Class[_]">getClass</span>.<span title="()java.lang.Class[_]">getComponentType</span>))
+    <span title="scala.runtime.BoxedIntArray" class="keyword">case</span> <a title="Array[Int]" id="167224">x</a>: <a href="../Array.scala.html#885" title="Array[Int]">Array</a>[Int] =&gt; <span title="scala.runtime.BoxedIntArray" class="keyword">new</span> <a href="BoxedIntArray.scala.html#2109" title="scala.runtime.BoxedIntArray">BoxedIntArray</a>(<a href="#167224" title="Array[Int]">x</a>)
+    <span title="scala.runtime.BoxedDoubleArray" class="keyword">case</span> <a title="Array[Double]" id="167227">x</a>: <a href="../Array.scala.html#885" title="Array[Double]">Array</a>[Double] =&gt; <span title="scala.runtime.BoxedDoubleArray" class="keyword">new</span> <a href="BoxedDoubleArray.scala.html#2028" title="scala.runtime.BoxedDoubleArray">BoxedDoubleArray</a>(<a href="#167227" title="Array[Double]">x</a>)
+    <span title="scala.runtime.BoxedLongArray" class="keyword">case</span> <a title="Array[Long]" id="167230">x</a>: <a href="../Array.scala.html#885" title="Array[Long]">Array</a>[Long] =&gt; <span title="scala.runtime.BoxedLongArray" class="keyword">new</span> <a href="BoxedLongArray.scala.html#2025" title="scala.runtime.BoxedLongArray">BoxedLongArray</a>(<a href="#167230" title="Array[Long]">x</a>)
+    <span title="scala.runtime.BoxedFloatArray" class="keyword">case</span> <a title="Array[Float]" id="167233">x</a>: <a href="../Array.scala.html#885" title="Array[Float]">Array</a>[Float] =&gt; <span title="scala.runtime.BoxedFloatArray" class="keyword">new</span> <a href="BoxedFloatArray.scala.html#1992" title="scala.runtime.BoxedFloatArray">BoxedFloatArray</a>(<a href="#167233" title="Array[Float]">x</a>)
+    <span title="scala.runtime.BoxedCharArray" class="keyword">case</span> <a title="Array[Char]" id="167236">x</a>: <a href="../Array.scala.html#885" title="Array[Char]">Array</a>[Char] =&gt; <span title="scala.runtime.BoxedCharArray" class="keyword">new</span> <a href="BoxedCharArray.scala.html#2124" title="scala.runtime.BoxedCharArray">BoxedCharArray</a>(<a href="#167236" title="Array[Char]">x</a>)
+    <span title="scala.runtime.BoxedByteArray" class="keyword">case</span> <a title="Array[Byte]" id="167239">x</a>: <a href="../Array.scala.html#885" title="Array[Byte]">Array</a>[Byte] =&gt; <span title="scala.runtime.BoxedByteArray" class="keyword">new</span> <a href="BoxedByteArray.scala.html#2022" title="scala.runtime.BoxedByteArray">BoxedByteArray</a>(<a href="#167239" title="Array[Byte]">x</a>)
+    <span title="scala.runtime.BoxedShortArray" class="keyword">case</span> <a title="Array[Short]" id="167242">x</a>: <a href="../Array.scala.html#885" title="Array[Short]">Array</a>[Short] =&gt; <span title="scala.runtime.BoxedShortArray" class="keyword">new</span> <a href="BoxedShortArray.scala.html#2085" title="scala.runtime.BoxedShortArray">BoxedShortArray</a>(<a href="#167242" title="Array[Short]">x</a>)
+    <span title="scala.runtime.BoxedBooleanArray" class="keyword">case</span> <a title="Array[Boolean]" id="167245">x</a>: <a href="../Array.scala.html#885" title="Array[Boolean]">Array</a>[Boolean] =&gt; <span title="scala.runtime.BoxedBooleanArray" class="keyword">new</span> <a href="BoxedBooleanArray.scala.html#2031" title="scala.runtime.BoxedBooleanArray">BoxedBooleanArray</a>(<a href="#167245" title="Array[Boolean]">x</a>)
+    <span title="AnyRef" class="keyword">case</span> <a title="AnyRef" id="167248">x</a> =&gt; <a href="#167248" title="AnyRef">x</a>
+  }
+
+  /** Given any Scala value, convert it to a String.
+   *
+   * The primary motivation for this method is to provide a means for
+   * correctly obtaining a String representation of a value, while
+   * avoiding the pitfalls of naïvely calling toString on said value.
+   * In particular, it addresses the fact that (a) toString cannot be
+   * called on null and (b) depending on the apparent type of an
+   * array, toString may or may not print it in a human-readable form.
+   *
+   * @param arg the value to stringify 
+   * @return a string representation of &lt;code&gt;arg&lt;/code&gt;
+   *
+   */  
+  <span class="keyword">def</span> <a title="(arg: Any)String" id="20641">stringOf</a>(<a title="Any" id="84678">arg</a> : <span title="Any">Any</span>): <span title="String">String</span> = <a href="#84678" title="Any">arg</a> <span title="String" class="keyword">match</span> {
+    <span title="java.lang.String(&quot;null&quot;)" class="keyword">case</span> <span title="Null(null)" class="keyword">null</span> =&gt; <span title="java.lang.String(&quot;null&quot;)" class="string">&quot;null&quot;</span>
+    <span title="String" class="keyword">case</span> (<a title="AnyRef" id="167249">arg</a> : <span title="AnyRef">AnyRef</span>) <span class="keyword">if</span> <a href="#20615" title="(x: AnyRef)Boolean">isArray</a>(<a href="#167249" title="AnyRef">arg</a>) =&gt; <a href="#20639" title="(value: AnyRef)scala.runtime.BoxedArray[_]">boxArray</a>(<a href="#167249" title="AnyRef">arg</a>).<a href="BoxedArray.scala.html#26162" title="()String">deepToString</a>
+    <span title="java.lang.String" class="keyword">case</span> <a title="Any" id="167257">arg</a> =&gt; <a href="#167257" title="Any">arg</a>.<a title="()java.lang.String" id="3617">toString</a>
+  }
+}
+
+        </pre>
+    </body>
+</html>

@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>collection/generic/TraversableViewTemplate.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: TraversableViewTemplate.scala 18387 2009-07-24 15:28:37Z odersky $
+
+
+<span class="keyword">package</span> scala.collection.generic
+<span class="keyword">import</span> scala.collection._
+
+<span class="keyword">import</span> Math.MAX_INT
+<span class="keyword">import</span> TraversableView.NoBuilder
+
+/** &lt;p&gt;
+ *    A base class for views of &lt;a href=&quot;../Traversable.html&quot;
+ *    target=&quot;contentFrame&quot;&gt;&lt;code&gt;Traversable&lt;/code&gt;&lt;/a&gt;.&lt;br/&gt;
+ *    Every subclass has to implement the &lt;code&gt;foreach&lt;/code&gt; method.
+ *  &lt;/p&gt;
+ *  @note Methods such as map/flatMap on this will not invoke the implicitly passed
+ *        Builder factory, but will return a new view directly, to preserve by-name behavior.
+ *        The new view is then cast to the factory's result type.
+ *        This means that every BuilderFactory that takes a
+ *        View as its From type parameter must yield the same view (or a generic superclass of it)
+ *        as its result parameter. If that assumption is broken, cast errors might result.
+ *
+ *  @author Martin Odersky
+ *  @version 2.8
+ */
+<span class="keyword">trait</span> <a title="trait TraversableViewTemplate[+A, +Coll &lt;: Traversable[_], +This &lt;: scala.collection.generic.TraversableView[A,Coll] with scala.collection.generic.TraversableViewTemplate[A,Coll,This]] extends java.lang.Object with Traversable[A] with scala.collection.generic.TraversableTemplate[A,This] with ScalaObject" id="10700">TraversableViewTemplate</a>[+<a title="&gt;: Nothing &lt;: Any" id="14223">A</a>, 
+                              +<a title="&gt;: Nothing &lt;: Traversable[_]" id="14224">Coll</a> &lt;: Traversable[_], 
+                              +<a title="&gt;: Nothing &lt;: scala.collection.generic.TraversableView[A,Coll] with scala.collection.generic.TraversableViewTemplate[A,Coll,This]" id="14225">This</a> &lt;: TraversableView[A, Coll] <span class="keyword">with</span> TraversableViewTemplate[A, Coll, This]]
+  <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="../Traversable.scala.html#4436" title="Traversable[A]">Traversable</a>[A] <span class="keyword">with</span> <a href="TraversableTemplate.scala.html#10391" title="scala.collection.generic.TraversableTemplate[A,This]">TraversableTemplate</a>[A, This] { 
+self =&gt;
+
+  <span class="keyword">override</span> <span class="keyword">protected</span>[<span class="keyword">this</span>] <span class="keyword">def</span> <a title="=&gt; scala.collection.generic.Builder[A,This]" id="25926">newBuilder</a>: <a href="Builder.scala.html#10028" title="scala.collection.generic.Builder[A,This]">Builder</a>[A, This] = 
+    <span title="Nothing" class="keyword">throw</span> <a title="(x$1: java.lang.String)java.lang.UnsupportedOperationException" id="45864" class="keyword">new</a> <a href="../../Predef.scala.html#16169" title="java.lang.UnsupportedOperationException">UnsupportedOperationException</a>(<a href="../../runtime/StringAdd.scala.html#18936" title="(other: String)java.lang.String" class="keyword">this</a>+<span title="java.lang.String(&quot;.newBuilder&quot;)" class="string">&quot;.newBuilder&quot;</span>)
+
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; Coll" id="25927">underlying</a>: <a href="#14224" title="Coll">Coll</a>
+
+  <span class="keyword">def</span> <a title="[B &gt;: A, That](implicit bf: scala.collection.generic.BuilderFactory[B,That,Coll])That" id="25928">force</a>[<a title="&gt;: A &lt;: Any" id="25931">B</a> &gt;: A, <a title="&gt;: Nothing &lt;: Any" id="25932">That</a>](<span class="keyword">implicit</span> <a title="scala.collection.generic.BuilderFactory[B,That,Coll]" id="138409">bf</a>: <a href="BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[B,That,Coll]">BuilderFactory</a>[B, That, Coll]) = {
+    <span class="keyword">val</span> <a title="scala.collection.generic.Builder[B,That]" id="138412">b</a> = <a href="BuilderFactory.scala.html#20484" title="(from: Coll)scala.collection.generic.Builder[B,That]">bf</a>(<a href="#25927" title="=&gt; Coll">underlying</a>)
+    <a href="Growable.scala.html#19586" title="(iter: Traversable[B])b.type">b</a> ++= <a href="#10700" title="scala.collection.generic.TraversableViewTemplate[A,Coll,This]" class="keyword">this</a>
+    <a href="#138412" title="scala.collection.generic.Builder[B,That]">b</a>.<a href="Builder.scala.html#19591" title="()That">result</a>()
+  }
+
+  <span class="keyword">trait</span> <a title="trait Transformed[+B] extends java.lang.Object with scala.collection.generic.TraversableView[B,Coll] with ScalaObject" id="25933">Transformed</a>[+<a title="&gt;: Nothing &lt;: Any" id="25934">B</a>] <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="TraversableView.scala.html#10847" title="scala.collection.generic.TraversableView[B,Coll]">TraversableView</a>[B, Coll] {
+    <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="Coll" id="37896">underlying</a> = <a href="#10700" title="TraversableViewTemplate.this.type">self</a>.<a href="#25927" title="=&gt; Coll">underlying</a>
+  }
+
+  /** pre: from &gt;= 0  
+   */
+  <span class="keyword">trait</span> <a title="trait Sliced extends java.lang.Object with TraversableViewTemplate.this.Transformed[A] with ScalaObject" id="25935">Sliced</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="#25933" title="TraversableViewTemplate.this.Transformed[A]">Transformed</a>[A] {
+    <span class="keyword">protected</span>[<span class="keyword">this</span>] <span class="keyword">val</span> <a title="=&gt; Int" id="37953">from</a>: <span title="Int">Int</span>
+    <span class="keyword">protected</span>[<span class="keyword">this</span>] <span class="keyword">val</span> <a title="=&gt; Int" id="37954">until</a>: <span title="Int">Int</span>
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="[C](f: (A) =&gt; C)Unit" id="37955">foreach</a>[<a title="&gt;: Nothing &lt;: Any" id="37957">C</a>](<a title="(A) =&gt; C" id="138432">f</a>: A =&gt; C) {
+      <span class="keyword">var</span> <a title="Int" id="138441">index</a> = <span title="Int(0)" class="int">0</span>
+      <span class="keyword">for</span> (<a title="A" id="138449">x</a> &lt;- <a href="TraversableClass.scala.html#17261" title="(f: (A) =&gt; Unit)Unit">self</a>) {
+        <span title="Any" class="keyword">if</span> (<a href="#37953" title="(x$1: Int)Boolean">from</a> &lt;= <a href="#138441" title="Int">index</a>) {
+          <span title="Unit" class="keyword">if</span> (<a href="#37954" title="(x$1: Int)Boolean">until</a> &lt;= <a href="#138441" title="Int">index</a>) <span title="Nothing" class="keyword">return</span>
+          <a href="../../Function1.scala.html#17119" title="(v1: A)C">f</a>(<a href="#138449" title="A">x</a>)
+        }
+        <a href="#138441" title="Int" id="2962">index</a> += <span title="Int(1)" class="int">1</span>
+      }
+    }
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="37958">stringPrefix</a> = <a href="#10700" title="TraversableViewTemplate.this.type">self</a>.<a href="TraversableTemplate.scala.html#17253" title="(x$1: Any)java.lang.String">stringPrefix</a>+<span title="java.lang.String(&quot;S&quot;)" class="string">&quot;S&quot;</span>
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="(from1: Int,until1: Int)This" id="37959">slice</a>(<a title="Int" id="138511">from1</a>: <span title="Int">Int</span>, <a title="Int" id="138512">until1</a>: <span title="Int">Int</span>): <a href="#14225" title="This">This</a> =
+      <a href="#25955" title="(_from: Int,_until: Int)Sliced.this.Transformed[A]">newSliced</a>(<a href="../../runtime/RichInt.scala.html#19065" title="(that: Int)Int">from1</a> max <span title="Int(0)" class="int">0</span>, <a href="../../runtime/RichInt.scala.html#19065" title="(that: Int)Int">until1</a> max <span title="Int(0)" class="int">0</span>).<span title="[T0]T0">asInstanceOf</span><span title="This">[</span><a href="#14225" title="This">This</a>]
+  }
+
+  <span class="keyword">trait</span> <a title="trait Mapped[B] extends java.lang.Object with TraversableViewTemplate.this.Transformed[B] with ScalaObject" id="25936">Mapped</a>[<a title="&gt;: Nothing &lt;: Any" id="25937">B</a>] <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="#25933" title="TraversableViewTemplate.this.Transformed[B]">Transformed</a>[B] {
+    <span class="keyword">protected</span>[<span class="keyword">this</span>] <span class="keyword">val</span> <a title="=&gt; (A) =&gt; B" id="38096">mapping</a>: A =&gt; B
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="[C](f: (B) =&gt; C)Unit" id="38097">foreach</a>[<a title="&gt;: Nothing &lt;: Any" id="38099">C</a>](<a title="(B) =&gt; C" id="138545">f</a>: B =&gt; C) {
+      <span class="keyword">for</span> (<a title="A" id="138561">x</a> &lt;- <a href="TraversableClass.scala.html#17261" title="(f: (A) =&gt; C)Unit">self</a>)
+        <a href="../../Function1.scala.html#17119" title="(v1: B)C">f</a>(<a href="../../Function1.scala.html#17119" title="(v1: A)B">mapping</a>(<a href="#138561" title="A">x</a>))
+    }
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="38100">stringPrefix</a> = <a href="#10700" title="TraversableViewTemplate.this.type">self</a>.<a href="TraversableTemplate.scala.html#17253" title="(x$1: Any)java.lang.String">stringPrefix</a>+<span title="java.lang.String(&quot;M&quot;)" class="string">&quot;M&quot;</span>
+  }
+
+  <span class="keyword">trait</span> <a title="trait FlatMapped[B] extends java.lang.Object with TraversableViewTemplate.this.Transformed[B] with ScalaObject" id="25938">FlatMapped</a>[<a title="&gt;: Nothing &lt;: Any" id="25939">B</a>] <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="#25933" title="TraversableViewTemplate.this.Transformed[B]">Transformed</a>[B] {
+    <span class="keyword">protected</span>[<span class="keyword">this</span>] <span class="keyword">val</span> <a title="=&gt; (A) =&gt; Traversable[B]" id="38157">mapping</a>: A =&gt; Traversable[B]
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="[C](f: (B) =&gt; C)Unit" id="38158">foreach</a>[<a title="&gt;: Nothing &lt;: Any" id="38160">C</a>](<a title="(B) =&gt; C" id="138577">f</a>: B =&gt; C) {
+      <span class="keyword">for</span> (<a title="A" id="138593">x</a> &lt;- <a href="TraversableClass.scala.html#17261" title="(f: (A) =&gt; Unit)Unit">self</a>)
+        <span class="keyword">for</span> (<a title="B" id="138605">y</a> &lt;- <a href="../../Function1.scala.html#17119" title="(v1: A)Traversable[B]">mapping</a><a href="TraversableClass.scala.html#17261" title="(f: (B) =&gt; C)Unit">(</a><a href="#138593" title="A">x</a>))
+          <a href="../../Function1.scala.html#17119" title="(v1: B)C">f</a>(<a href="#138605" title="B">y</a>)
+    }
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="38161">stringPrefix</a> = <a href="#10700" title="TraversableViewTemplate.this.type">self</a>.<a href="TraversableTemplate.scala.html#17253" title="(x$1: Any)java.lang.String">stringPrefix</a>+<span title="java.lang.String(&quot;N&quot;)" class="string">&quot;N&quot;</span>
+  }
+
+  <span class="keyword">trait</span> <a title="trait Appended[B &gt;: A] extends java.lang.Object with TraversableViewTemplate.this.Transformed[B] with ScalaObject" id="25940">Appended</a>[<a title="&gt;: A &lt;: Any" id="25941">B</a> &gt;: A] <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="#25933" title="TraversableViewTemplate.this.Transformed[B]">Transformed</a>[B] {
+    <span class="keyword">protected</span>[<span class="keyword">this</span>] <span class="keyword">val</span> <a title="=&gt; Traversable[B]" id="38644">rest</a>: <a href="../Traversable.scala.html#4436" title="Traversable[B]">Traversable</a>[B]
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="[C](f: (B) =&gt; C)Unit" id="38645">foreach</a>[<a title="&gt;: Nothing &lt;: Any" id="38647">C</a>](<a title="(B) =&gt; C" id="138621">f</a>: B =&gt; C) {
+      <span class="keyword">for</span> (<a title="A" id="138637">x</a> &lt;- <a href="TraversableClass.scala.html#17261" title="(f: (A) =&gt; C)Unit">self</a>) <a href="../../Function1.scala.html#17119" title="(v1: B)C">f</a>(<a href="#138637" title="A">x</a>)
+      <span class="keyword">for</span> (<a title="B" id="138651">x</a> &lt;- <a href="TraversableClass.scala.html#17261" title="(f: (B) =&gt; C)Unit">rest</a>) <a href="../../Function1.scala.html#17119" title="(v1: B)C">f</a>(<a href="#138651" title="B">x</a>)
+    }
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="38648">stringPrefix</a> = <a href="#10700" title="TraversableViewTemplate.this.type">self</a>.<a href="TraversableTemplate.scala.html#17253" title="(x$1: Any)java.lang.String">stringPrefix</a>+<span title="java.lang.String(&quot;A&quot;)" class="string">&quot;A&quot;</span>
+  }    
+
+  <span class="keyword">trait</span> <a title="trait Filtered extends java.lang.Object with TraversableViewTemplate.this.Transformed[A] with ScalaObject" id="25942">Filtered</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="#25933" title="TraversableViewTemplate.this.Transformed[A]">Transformed</a>[A] {
+    <span class="keyword">protected</span>[<span class="keyword">this</span>] <span class="keyword">val</span> <a title="=&gt; (A) =&gt; Boolean" id="38756">pred</a>: A =&gt; Boolean 
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="[C](f: (A) =&gt; C)Unit" id="38757">foreach</a>[<a title="&gt;: Nothing &lt;: Any" id="38759">C</a>](<a title="(A) =&gt; C" id="138664">f</a>: A =&gt; C) {
+      <span class="keyword">for</span> (<a title="A" id="138680">x</a> &lt;- <a href="TraversableClass.scala.html#17261" title="(f: (A) =&gt; Any)Unit">self</a>)
+        <span title="Any" class="keyword">if</span> (<a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">pred</a>(<a href="#138680" title="A">x</a>)) <a href="../../Function1.scala.html#17119" title="(v1: A)C">f</a>(<a href="#138680" title="A">x</a>)
+    }
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="38760">stringPrefix</a> = <a href="#10700" title="TraversableViewTemplate.this.type">self</a>.<a href="TraversableTemplate.scala.html#17253" title="(x$1: Any)java.lang.String">stringPrefix</a>+<span title="java.lang.String(&quot;F&quot;)" class="string">&quot;F&quot;</span>
+  }
+
+  <span class="keyword">trait</span> <a title="trait TakenWhile extends java.lang.Object with TraversableViewTemplate.this.Transformed[A] with ScalaObject" id="25943">TakenWhile</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="#25933" title="TraversableViewTemplate.this.Transformed[A]">Transformed</a>[A] {
+    <span class="keyword">protected</span>[<span class="keyword">this</span>] <span class="keyword">val</span> <a title="=&gt; (A) =&gt; Boolean" id="38925">pred</a>: A =&gt; Boolean 
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="[C](f: (A) =&gt; C)Unit" id="38926">foreach</a>[<a title="&gt;: Nothing &lt;: Any" id="38928">C</a>](<a title="(A) =&gt; C" id="138700">f</a>: A =&gt; C) {
+      <span class="keyword">for</span> (<a title="A" id="138716">x</a> &lt;- <a href="TraversableClass.scala.html#17261" title="(f: (A) =&gt; C)Unit">self</a>) {
+        <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">pred</a>(<a href="#138716" title="A">x</a>)) <span title="Nothing" class="keyword">return</span>
+        <a href="../../Function1.scala.html#17119" title="(v1: A)C">f</a>(<a href="#138716" title="A">x</a>)
+      }
+    }
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="38929">stringPrefix</a> = <a href="#10700" title="TraversableViewTemplate.this.type">self</a>.<a href="TraversableTemplate.scala.html#17253" title="(x$1: Any)java.lang.String">stringPrefix</a>+<span title="java.lang.String(&quot;T&quot;)" class="string">&quot;T&quot;</span>
+  }
+
+  <span class="keyword">trait</span> <a title="trait DroppedWhile extends java.lang.Object with TraversableViewTemplate.this.Transformed[A] with ScalaObject" id="25944">DroppedWhile</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="#25933" title="TraversableViewTemplate.this.Transformed[A]">Transformed</a>[A] {
+    <span class="keyword">protected</span>[<span class="keyword">this</span>] <span class="keyword">val</span> <a title="=&gt; (A) =&gt; Boolean" id="38999">pred</a>: A =&gt; Boolean 
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="[C](f: (A) =&gt; C)Unit" id="39000">foreach</a>[<a title="&gt;: Nothing &lt;: Any" id="39002">C</a>](<a title="(A) =&gt; C" id="138732">f</a>: A =&gt; C) {
+      <span class="keyword">var</span> <a title="Boolean" id="138741">go</a> = <span title="Boolean(false)" class="keyword">false</span>
+      <span class="keyword">for</span> (<a title="A" id="138749">x</a> &lt;- <a href="TraversableClass.scala.html#17261" title="(f: (A) =&gt; Any)Unit">self</a>) {
+        <span title="Unit" class="keyword">if</span> (<a title="(x$1: Boolean)Boolean" id="2210">!</a><a href="#138741" title="Boolean">go</a> &amp;&amp; <span title="=&gt; Boolean">!</span><a href="../../Function1.scala.html#17119" title="(v1: A)Boolean">pred</a>(<a href="#138749" title="A">x</a>)) <a href="#138741" title="Boolean">go</a> = <span title="Boolean(true)" class="keyword">true</span>
+        <span title="Any" class="keyword">if</span> (<a href="#138741" title="Boolean">go</a>) <a href="../../Function1.scala.html#17119" title="(v1: A)C">f</a>(<a href="#138749" title="A">x</a>)
+      }
+    }
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="39003">stringPrefix</a> = <a href="#10700" title="TraversableViewTemplate.this.type">self</a>.<a href="TraversableTemplate.scala.html#17253" title="(x$1: Any)java.lang.String">stringPrefix</a>+<span title="java.lang.String(&quot;D&quot;)" class="string">&quot;D&quot;</span>
+  }
+
+  /** Boilerplate method, to override in each subclass
+   *  This method could be eliminated if Scala had virtual classes
+   */
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="[B &gt;: A](that: Traversable[B])TraversableViewTemplate.this.Transformed[B]" id="25945">newAppended</a>[<a title="&gt;: A &lt;: Any" id="25947">B</a> &gt;: A](<a title="Traversable[B]" id="39687">that</a>: <a href="../Traversable.scala.html#4436" title="Traversable[B]">Traversable</a>[B]): <a href="#25933" title="TraversableViewTemplate.this.Transformed[B]">Transformed</a>[B] = <a href="#138770" title="java.lang.Object with TraversableViewTemplate.this.Appended[B]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with TraversableViewTemplate.this.Appended[B]" id="138770">Appended</a>[B] { <span class="keyword">val</span> <a title="Traversable[B]" id="138772">rest</a> = <a href="#39687" title="Traversable[B]">that</a> }
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="[B](f: (A) =&gt; B)TraversableViewTemplate.this.Transformed[B]" id="25948">newMapped</a>[<a title="&gt;: Nothing &lt;: Any" id="25950">B</a>](<a title="(A) =&gt; B" id="39729">f</a>: A =&gt; B): <a href="#25933" title="TraversableViewTemplate.this.Transformed[B]">Transformed</a>[B] = <a href="#138780" title="java.lang.Object with TraversableViewTemplate.this.Mapped[B]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with TraversableViewTemplate.this.Mapped[B]" id="138780">Mapped</a>[B] { <span class="keyword">val</span> <a title="(A) =&gt; B" id="138782">mapping</a> = <a href="#39729" title="(A) =&gt; B">f</a> }
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="[B](f: (A) =&gt; Traversable[B])TraversableViewTemplate.this.Transformed[B]" id="25951">newFlatMapped</a>[<a title="&gt;: Nothing &lt;: Any" id="25953">B</a>](<a title="(A) =&gt; Traversable[B]" id="39767">f</a>: A =&gt; Traversable[B]): <a href="#25933" title="TraversableViewTemplate.this.Transformed[B]">Transformed</a>[B] = <a href="#138790" title="java.lang.Object with TraversableViewTemplate.this.FlatMapped[B]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with TraversableViewTemplate.this.FlatMapped[B]" id="138790">FlatMapped</a>[B] { <span class="keyword">val</span> <a title="(A) =&gt; Traversable[B]" id="138792">mapping</a> = <a href="#39767" title="(A) =&gt; Traversable[B]">f</a> }
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)TraversableViewTemplate.this.Transformed[A]" id="25954">newFiltered</a>(<a title="(A) =&gt; Boolean" id="39805">p</a>: A =&gt; Boolean): <a href="#25933" title="TraversableViewTemplate.this.Transformed[A]">Transformed</a>[A] = <a href="#138800" title="java.lang.Object with TraversableViewTemplate.this.Filtered{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with TraversableViewTemplate.this.Filtered" id="138800">Filtered</a> { <span class="keyword">val</span> <a title="(A) =&gt; Boolean" id="138802">pred</a> = <a href="#39805" title="(A) =&gt; Boolean">p</a> }
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(_from: Int,_until: Int)TraversableViewTemplate.this.Transformed[A]" id="25955">newSliced</a>(<a title="Int" id="39832">_from</a>: <span title="Int">Int</span>, <a title="Int" id="39833">_until</a>: <span title="Int">Int</span>): <a href="#25933" title="TraversableViewTemplate.this.Transformed[A]">Transformed</a>[A] = <a href="#138810" title="java.lang.Object with TraversableViewTemplate.this.Sliced{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with TraversableViewTemplate.this.Sliced" id="138810">Sliced</a> { <span class="keyword">val</span> <a title="Int" id="138812">from</a> = <a href="#39832" title="Int">_from</a>; <span class="keyword">val</span> <a title="Int" id="138814">until</a> = <a href="#39833" title="Int">_until</a> }
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)TraversableViewTemplate.this.Transformed[A]" id="25956">newDroppedWhile</a>(<a title="(A) =&gt; Boolean" id="39856">p</a>: A =&gt; Boolean): <a href="#25933" title="TraversableViewTemplate.this.Transformed[A]">Transformed</a>[A] = <a href="#138822" title="java.lang.Object with TraversableViewTemplate.this.DroppedWhile{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with TraversableViewTemplate.this.DroppedWhile" id="138822">DroppedWhile</a> { <span class="keyword">val</span> <a title="(A) =&gt; Boolean" id="138824">pred</a> = <a href="#39856" title="(A) =&gt; Boolean">p</a> }
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)TraversableViewTemplate.this.Transformed[A]" id="25957">newTakenWhile</a>(<a title="(A) =&gt; Boolean" id="39881">p</a>: A =&gt; Boolean): <a href="#25933" title="TraversableViewTemplate.this.Transformed[A]">Transformed</a>[A] = <a href="#138832" title="java.lang.Object with TraversableViewTemplate.this.TakenWhile{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with TraversableViewTemplate.this.TakenWhile" id="138832">TakenWhile</a> { <span class="keyword">val</span> <a title="(A) =&gt; Boolean" id="138834">pred</a> = <a href="#39881" title="(A) =&gt; Boolean">p</a> }
+  
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[B &gt;: A, That](that: Traversable[B])(implicit bf: scala.collection.generic.BuilderFactory[B,That,This])That" id="25958">++</a>[<a title="&gt;: A &lt;: Any" id="25961">B</a> &gt;: A, <a title="&gt;: Nothing &lt;: Any" id="25962">That</a>](<a title="Traversable[B]" id="138842">that</a>: <a href="../Traversable.scala.html#4436" title="Traversable[B]">Traversable</a>[B])(<span class="keyword">implicit</span> <a title="scala.collection.generic.BuilderFactory[B,That,This]" id="138843">bf</a>: <a href="BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[B,That,This]">BuilderFactory</a>[B, That, This]): <a href="#25962" title="That">That</a> = {
+    <a href="#25945" title="(that: Traversable[B])TraversableViewTemplate.this.Transformed[B]">newAppended</a>(<a href="#138842" title="Traversable[B]">that</a>).<span title="[T0]T0">asInstanceOf</span><span title="That">[</span><a href="#25962" title="That">That</a>]
+// was:    val b = bf(thisCollection)
+//     if (b.isInstanceOf[NoBuilder[_]]) newAppended(that).asInstanceOf[That]
+//    else super.++[B, That](that)(bf) 
+  }
+ 
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[B &gt;: A, That](that: Iterator[B])(implicit bf: scala.collection.generic.BuilderFactory[B,That,This])That" id="25963">++</a>[<a title="&gt;: A &lt;: Any" id="25966">B</a> &gt;: A, <a title="&gt;: Nothing &lt;: Any" id="25967">That</a>](<a title="Iterator[B]" id="138871">that</a>: <a href="../Iterator.scala.html#4274" title="Iterator[B]">Iterator</a>[B])(<span class="keyword">implicit</span> <a title="scala.collection.generic.BuilderFactory[B,That,This]" id="138872">bf</a>: <a href="BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[B,That,This]">BuilderFactory</a>[B, That, This]): <a href="#25967" title="That">That</a> = <a href="#25958" title="[B &gt;: A, That](that: Traversable[B])(implicit bf: scala.collection.generic.BuilderFactory[B,That,This])That">++</a><span title="(that: Traversable[B])(implicit bf: scala.collection.generic.BuilderFactory[B,That,This])That">[</span><a href="#25966" title="B">B</a>, <a href="#25967" title="That">That</a>]<a href="#138872" title="scala.collection.generic.BuilderFactory[B,That,This]">(</a><a href="#138871" title="Iterator[B]">that</a>.<a href="../Iterator.scala.html#19282" title="=&gt; Stream[B]">toStream</a>)
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[B, That](f: (A) =&gt; B)(implicit bf: scala.collection.generic.BuilderFactory[B,That,This])That" id="25968">map</a>[<a title="&gt;: Nothing &lt;: Any" id="25971">B</a>, <a title="&gt;: Nothing &lt;: Any" id="25972">That</a>](<a title="(A) =&gt; B" id="60943">f</a>: A =&gt; B)(<span class="keyword">implicit</span> <a title="scala.collection.generic.BuilderFactory[B,That,This]" id="60944">bf</a>: <a href="BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[B,That,This]">BuilderFactory</a>[B, That, This]): <a href="#25972" title="That">That</a> = {
+    <a href="#25948" title="(f: (A) =&gt; B)TraversableViewTemplate.this.Transformed[B]">newMapped</a>(<a href="#60943" title="(A) =&gt; B">f</a>).<span title="[T0]T0">asInstanceOf</span><span title="That">[</span><a href="#25972" title="That">That</a>]
+// was:        val b = bf(thisCollection)
+//          if (b.isInstanceOf[NoBuilder[_]]) newMapped(f).asInstanceOf[That]
+//    else super.map[B, That](f)(bf) 
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[B, That](f: (A) =&gt; Traversable[B])(implicit bf: scala.collection.generic.BuilderFactory[B,That,This])That" id="25973">flatMap</a>[<a title="&gt;: Nothing &lt;: Any" id="25976">B</a>, <a title="&gt;: Nothing &lt;: Any" id="25977">That</a>](<a title="(A) =&gt; Traversable[B]" id="138936">f</a>: A =&gt; Traversable[B])(<span class="keyword">implicit</span> <a title="scala.collection.generic.BuilderFactory[B,That,This]" id="138937">bf</a>: <a href="BuilderFactory.scala.html#10817" title="scala.collection.generic.BuilderFactory[B,That,This]">BuilderFactory</a>[B, That, This]): <a href="#25977" title="That">That</a> = {
+    <a href="#25951" title="(f: (A) =&gt; Traversable[B])TraversableViewTemplate.this.Transformed[B]">newFlatMapped</a>(<a href="#138936" title="(A) =&gt; Traversable[B]">f</a>).<span title="[T0]T0">asInstanceOf</span><span title="That">[</span><a href="#25977" title="That">That</a>]
+// was:    val b = bf(thisCollection)
+//     if (b.isInstanceOf[NoBuilder[_]]) newFlatMapped(f).asInstanceOf[That]
+//    else super.flatMap[B, That](f)(bf)
+  }
+  
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)This" id="25978">filter</a>(<a title="(A) =&gt; Boolean" id="138952">p</a>: A =&gt; Boolean): <a href="#14225" title="This">This</a> = <a href="#25954" title="(p: (A) =&gt; Boolean)TraversableViewTemplate.this.Transformed[A]">newFiltered</a>(<a href="#138952" title="(A) =&gt; Boolean">p</a>).<span title="[T0]T0">asInstanceOf</span><span title="This">[</span><a href="#14225" title="This">This</a>]
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; This" id="25979">init</a>: <a href="#14225" title="This">This</a> = <a href="#25955" title="(_from: Int,_until: Int)TraversableViewTemplate.this.Transformed[A]">newSliced</a>(<span title="Int(0)" class="int">0</span>, <a href="TraversableTemplate.scala.html#17137" title="(x$1: Int)Int" id="2964">size</a> - <span title="Int(1)" class="int">1</span>).<span title="[T0]T0">asInstanceOf</span><span title="This">[</span><a href="#14225" title="This">This</a>]
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(n: Int)This" id="25980">drop</a>(<a title="Int" id="138979">n</a>: <span title="Int">Int</span>): <a href="#14225" title="This">This</a> = <a href="#25955" title="(_from: Int,_until: Int)TraversableViewTemplate.this.Transformed[A]">newSliced</a>(<a href="../../runtime/RichInt.scala.html#19065" title="(that: Int)Int">n</a> max <span title="Int(0)" class="int">0</span>, <a href="../../Math.scala.html#22672" title="=&gt; Int">MAX_INT</a>).<span title="[T0]T0">asInstanceOf</span><span title="This">[</span><a href="#14225" title="This">This</a>]
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(n: Int)This" id="25981">take</a>(<a title="Int" id="90097">n</a>: <span title="Int">Int</span>): <a href="#14225" title="This">This</a> = <a href="#25955" title="(_from: Int,_until: Int)TraversableViewTemplate.this.Transformed[A]">newSliced</a>(<span title="Int(0)" class="int">0</span>, <a href="#90097" title="Int">n</a>).<span title="[T0]T0">asInstanceOf</span><span title="This">[</span><a href="#14225" title="This">This</a>]
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(from: Int,until: Int)This" id="25982">slice</a>(<a title="Int" id="98855">from</a>: <span title="Int">Int</span>, <a title="Int" id="98856">until</a>: <span title="Int">Int</span>): <a href="#14225" title="This">This</a> = <a href="#25955" title="(_from: Int,_until: Int)TraversableViewTemplate.this.Transformed[A]">newSliced</a>(<a href="../../runtime/RichInt.scala.html#19065" title="(that: Int)Int">from</a> max <span title="Int(0)" class="int">0</span>, <a href="#98856" title="Int">until</a>).<span title="[T0]T0">asInstanceOf</span><span title="This">[</span><a href="#14225" title="This">This</a>]
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)This" id="25983">dropWhile</a>(<a title="(A) =&gt; Boolean" id="139015">p</a>: A =&gt; Boolean): <a href="#14225" title="This">This</a> = <a href="#25956" title="(p: (A) =&gt; Boolean)TraversableViewTemplate.this.Transformed[A]">newDroppedWhile</a>(<a href="#139015" title="(A) =&gt; Boolean">p</a>).<span title="[T0]T0">asInstanceOf</span><span title="This">[</span><a href="#14225" title="This">This</a>]
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)This" id="25984">takeWhile</a>(<a title="(A) =&gt; Boolean" id="139020">p</a>: A =&gt; Boolean): <a href="#14225" title="This">This</a> = <a href="#25957" title="(p: (A) =&gt; Boolean)TraversableViewTemplate.this.Transformed[A]">newTakenWhile</a>(<a href="#139020" title="(A) =&gt; Boolean">p</a>).<span title="[T0]T0">asInstanceOf</span><span title="This">[</span><a href="#14225" title="This">This</a>]
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)(This, This)" id="25985">span</a>(<a title="(A) =&gt; Boolean" id="139025">p</a>: A =&gt; Boolean): <a href="../../Tuple2.scala.html#1152" title="(This, This)">(</a>This, This) = <a href="../../Tuple2.scala.html#20670" title="(_1: This,_2: This)(This, This)">(</a><a href="#25984" title="(p: (A) =&gt; Boolean)This">takeWhile</a>(<a href="#139025" title="(A) =&gt; Boolean">p</a>), <a href="#25983" title="(p: (A) =&gt; Boolean)This">dropWhile</a>(<a href="#139025" title="(A) =&gt; Boolean">p</a>))
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(n: Int)(This, This)" id="25986">splitAt</a>(<a title="Int" id="139042">n</a>: <span title="Int">Int</span>): <a href="../../Tuple2.scala.html#1152" title="(This, This)">(</a>This, This) = <a href="../../Tuple2.scala.html#20670" title="(_1: This,_2: This)(This, This)">(</a><a href="#25981" title="(n: Int)This">take</a>(<a href="#139042" title="Int">n</a>), <a href="#25980" title="(n: Int)This">drop</a>(<a href="#139042" title="Int">n</a>))
+}
+
+
+        </pre>
+    </body>
+</html>

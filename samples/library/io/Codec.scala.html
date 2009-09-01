@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>io/Codec.scala</title>
+        <script type="text/javascript" src="../jquery-all.js"></script>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id$
+
+<span class="keyword">package</span> scala.io
+
+<span class="keyword">import</span> java.nio.charset.{ Charset, CharsetDecoder, CharsetEncoder, CharacterCodingException, CodingErrorAction =&gt; Action }
+
+// Some notes about encodings for use in refining this implementation.
+//
+// Emails: encoding recorded in header, e.g. Content-Type: charset= &quot;iso-8859-1&quot;
+// HTML: optional content-type meta tag.
+//   &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=iso-8859-1&quot;&gt;
+// XML: optional encoding parameter.
+//   &lt;?xml version=&quot;1.0&quot; encoding=&quot;ISO8859-1&quot; ?&gt;
+//
+// MacRoman vs. UTF-8: see http://jira.codehaus.org/browse/JRUBY-3576
+// -Dfile.encoding: see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4375816
+
+/** A class for character encoding/decoding preferences.
+ *
+ */
+<span class="keyword">class</span> <a title="class Codec extends java.lang.Object with ScalaObject" id="9817">Codec</a><a href="../ScalaObject.scala.html#957" title="ScalaObject">(</a><span class="keyword">val</span> <a title="java.nio.charset.Charset" id="127652">charSet</a>: <span title="java.nio.charset.Charset">Charset</span>)
+{
+  <span class="keyword">type</span> <a title="[T]((T) =&gt; T, Boolean)" id="33567">Configure</a>[<a title="&gt;: Nothing &lt;: Any" id="33568">T</a>] = <a href="../Tuple2.scala.html#1152" title="((T) =&gt; T, Boolean)">(</a>T =&gt; T, Boolean)
+  <span class="keyword">type</span> <a title="(java.nio.charset.CharacterCodingException) =&gt; Int" id="33569">Handler</a>      = CharacterCodingException =&gt; Int
+  
+  // these variables allow configuring the Codec object, and then
+  // all decoders and encoders retrieved from it will use these settings.
+  <span class="keyword">private</span>[<span class="keyword">this</span>] <span class="keyword">var</span> <a title="java.nio.charset.CodingErrorAction" id="33570">_onMalformedInput</a>: <span title="java.nio.charset.CodingErrorAction">Action</span>         = <span title="Null(null)" class="keyword">null</span>
+  <span class="keyword">private</span>[<span class="keyword">this</span>] <span class="keyword">var</span> <a title="java.nio.charset.CodingErrorAction" id="33571">_onUnmappableCharacter</a>: <span title="java.nio.charset.CodingErrorAction">Action</span>    = <span title="Null(null)" class="keyword">null</span>
+  <span class="keyword">private</span>[<span class="keyword">this</span>] <span class="keyword">var</span> <a title="Array[Byte]" id="33572">_encodingReplacement</a>: <a href="../Array.scala.html#885" title="Array[Byte]">Array</a>[Byte] = <span title="Null(null)" class="keyword">null</span>
+  <span class="keyword">private</span>[<span class="keyword">this</span>] <span class="keyword">var</span> <a title="String" id="33573">_decodingReplacement</a>: <span title="String">String</span>      = <span title="Null(null)" class="keyword">null</span>
+  <span class="keyword">private</span>[<span class="keyword">this</span>] <span class="keyword">var</span> <a title="(java.nio.charset.CharacterCodingException) =&gt; Int" id="33574">_onCodingException</a>: <a href="../Function1.scala.html#159" title="(java.nio.charset.CharacterCodingException) =&gt; Int">Handler</a>       = <a title="java.nio.charset.CharacterCodingException" id="127662">e</a> =&gt; <span title="Nothing" class="keyword">throw</span> <a href="#127662" title="java.nio.charset.CharacterCodingException">e</a>
+  
+  // these methods can be chained to configure the variables above
+  <span class="keyword">def</span> <a title="(newAction: java.nio.charset.CodingErrorAction)Codec.this.type" id="33575">onMalformedInput</a>(<a title="java.nio.charset.CodingErrorAction" id="127663">newAction</a>: <span title="java.nio.charset.CodingErrorAction">Action</span>): <span class="keyword">this</span>.<span class="keyword">type</span> = { <a href="#33570" title="java.nio.charset.CodingErrorAction">_onMalformedInput</a> = <a href="#127663" title="java.nio.charset.CodingErrorAction">newAction</a> ; <a href="#9817" title="Codec.this.type" class="keyword">this</a> }
+  <span class="keyword">def</span> <a title="(newAction: java.nio.charset.CodingErrorAction)Codec.this.type" id="33576">onUnmappableCharacter</a>(<a title="java.nio.charset.CodingErrorAction" id="127665">newAction</a>: <span title="java.nio.charset.CodingErrorAction">Action</span>): <span class="keyword">this</span>.<span class="keyword">type</span> = { <a href="#33571" title="java.nio.charset.CodingErrorAction">_onUnmappableCharacter</a> = <a href="#127665" title="java.nio.charset.CodingErrorAction">newAction</a> ; <a href="#9817" title="Codec.this.type" class="keyword">this</a> }
+  <span class="keyword">def</span> <a title="(newReplacement: String)Codec.this.type" id="33577">decodingReplaceWith</a>(<a title="String" id="127667">newReplacement</a>: <span title="String">String</span>): <span class="keyword">this</span>.<span class="keyword">type</span> = { <a href="#33573" title="String">_decodingReplacement</a> = <a href="#127667" title="String">newReplacement</a> ; <a href="#9817" title="Codec.this.type" class="keyword">this</a> }
+  <span class="keyword">def</span> <a title="(newReplacement: Array[Byte])Codec.this.type" id="33578">encodingReplaceWith</a>(<a title="Array[Byte]" id="127669">newReplacement</a>: <a href="../Array.scala.html#885" title="Array[Byte]">Array</a>[Byte]): <span class="keyword">this</span>.<span class="keyword">type</span> = { <a href="#33572" title="Array[Byte]">_encodingReplacement</a> = <a href="#127669" title="Array[Byte]">newReplacement</a> ; <a href="#9817" title="Codec.this.type" class="keyword">this</a> }
+  <span class="keyword">def</span> <a title="(handler: (java.nio.charset.CharacterCodingException) =&gt; Int)Codec.this.type" id="33579">onCodingException</a>(<a title="(java.nio.charset.CharacterCodingException) =&gt; Int" id="127671">handler</a>: <a href="../Function1.scala.html#159" title="(java.nio.charset.CharacterCodingException) =&gt; Int">Handler</a>): <span class="keyword">this</span>.<span class="keyword">type</span> = { <a href="#33574" title="(java.nio.charset.CharacterCodingException) =&gt; Int">_onCodingException</a> = <a href="#127671" title="(java.nio.charset.CharacterCodingException) =&gt; Int">handler</a> ; <a href="#9817" title="Codec.this.type" class="keyword">this</a> }
+  
+  <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="33580">name</a> = <a href="#127652" title="=&gt; java.nio.charset.Charset">charSet</a>.<a title="()java.lang.String" id="33112">name</a>
+  <span class="keyword">def</span> <a title="=&gt; java.nio.charset.CharsetEncoder" id="33581">encoder</a> =
+    <a href="#33584" title="[T](x: T,fs: ((T) =&gt; T, Boolean)*)T">applyFunctions</a><span title="(x: java.nio.charset.CharsetEncoder,fs: ((java.nio.charset.CharsetEncoder) =&gt; java.nio.charset.CharsetEncoder, Boolean)*)java.nio.charset.CharsetEncoder">[</span><a title="java.nio.charset.CharsetEncoder" id="6830">CharsetEncoder</a>](<a href="#127652" title="=&gt; java.nio.charset.Charset">charSet</a>.<a title="()java.nio.charset.CharsetEncoder" id="33121">newEncoder</a>(),
+      <a href="../Tuple2.scala.html#20670" title="(_1: (java.nio.charset.CharsetEncoder) =&gt; java.nio.charset.CharsetEncoder,_2: Boolean)((java.nio.charset.CharsetEncoder) =&gt; java.nio.charset.CharsetEncoder, Boolean)">(</a><a href="#127720" title="(x$1: java.nio.charset.CodingErrorAction)java.nio.charset.CharsetEncoder" id="47294">_</a> onMalformedInput <a href="#33570" title="java.nio.charset.CodingErrorAction">_onMalformedInput</a>, <a href="#33570" title="(x$1: AnyRef)Boolean">_onMalformedInput</a> != <span title="Null(null)" class="keyword">null</span>),
+      <a href="../Tuple2.scala.html#20670" title="(_1: (java.nio.charset.CharsetEncoder) =&gt; java.nio.charset.CharsetEncoder,_2: Boolean)((java.nio.charset.CharsetEncoder) =&gt; java.nio.charset.CharsetEncoder, Boolean)">(</a><a href="#127739" title="(x$1: java.nio.charset.CodingErrorAction)java.nio.charset.CharsetEncoder" id="47299">_</a> onUnmappableCharacter <a href="#33571" title="java.nio.charset.CodingErrorAction">_onUnmappableCharacter</a>, <a href="#33571" title="(x$1: AnyRef)Boolean">_onUnmappableCharacter</a> != <span title="Null(null)" class="keyword">null</span>),
+      <a href="../Tuple2.scala.html#20670" title="(_1: (java.nio.charset.CharsetEncoder) =&gt; java.nio.charset.CharsetEncoder,_2: Boolean)((java.nio.charset.CharsetEncoder) =&gt; java.nio.charset.CharsetEncoder, Boolean)">(</a><a href="#127758" title="(x$1: Array[Byte])java.nio.charset.CharsetEncoder" id="47287">_</a> replaceWith <a href="#33572" title="Array[Byte]">_encodingReplacement</a>, <a href="#33572" title="(x$1: AnyRef)Boolean">_encodingReplacement</a> != <span title="Null(null)" class="keyword">null</span>)
+    )
+    
+  <span class="keyword">def</span> <a title="=&gt; java.nio.charset.CharsetDecoder" id="33582">decoder</a> = 
+    <a href="#33584" title="[T](x: T,fs: ((T) =&gt; T, Boolean)*)T">applyFunctions</a><span title="(x: java.nio.charset.CharsetDecoder,fs: ((java.nio.charset.CharsetDecoder) =&gt; java.nio.charset.CharsetDecoder, Boolean)*)java.nio.charset.CharsetDecoder">[</span><span title="java.nio.charset.CharsetDecoder">CharsetDecoder</span>](<a href="#127652" title="=&gt; java.nio.charset.Charset">charSet</a>.<a title="()java.nio.charset.CharsetDecoder" id="33120">newDecoder</a>(),
+      <a href="../Tuple2.scala.html#20670" title="(_1: (java.nio.charset.CharsetDecoder) =&gt; java.nio.charset.CharsetDecoder,_2: Boolean)((java.nio.charset.CharsetDecoder) =&gt; java.nio.charset.CharsetDecoder, Boolean)">(</a><a href="#127786" title="(x$1: java.nio.charset.CodingErrorAction)java.nio.charset.CharsetDecoder" id="33661">_</a> onMalformedInput <a href="#33570" title="java.nio.charset.CodingErrorAction">_onMalformedInput</a>, <a href="#33570" title="(x$1: AnyRef)Boolean">_onMalformedInput</a> != <span title="Null(null)" class="keyword">null</span>),
+      <a href="../Tuple2.scala.html#20670" title="(_1: (java.nio.charset.CharsetDecoder) =&gt; java.nio.charset.CharsetDecoder,_2: Boolean)((java.nio.charset.CharsetDecoder) =&gt; java.nio.charset.CharsetDecoder, Boolean)">(</a><a href="#127805" title="(x$1: java.nio.charset.CodingErrorAction)java.nio.charset.CharsetDecoder" id="33666">_</a> onUnmappableCharacter <a href="#33571" title="java.nio.charset.CodingErrorAction">_onUnmappableCharacter</a>, <a href="#33571" title="(x$1: AnyRef)Boolean">_onUnmappableCharacter</a> != <span title="Null(null)" class="keyword">null</span>),
+      <a href="../Tuple2.scala.html#20670" title="(_1: (java.nio.charset.CharsetDecoder) =&gt; java.nio.charset.CharsetDecoder,_2: Boolean)((java.nio.charset.CharsetDecoder) =&gt; java.nio.charset.CharsetDecoder, Boolean)">(</a><a href="#127824" title="(x$1: java.lang.String)java.nio.charset.CharsetDecoder" id="33656">_</a> replaceWith <a href="#33573" title="String">_decodingReplacement</a>, <a href="#33573" title="(x$1: AnyRef)Boolean">_decodingReplacement</a> != <span title="Null(null)" class="keyword">null</span>)
+    )
+  
+  <span class="keyword">def</span> <a title="(body: =&gt; Int)Int" id="33583">wrap</a>(<a title="=&gt; Int" id="127840">body</a>: =&gt; Int): <a title="Int" id="2175">Int</a> =
+    <span class="keyword">try</span> <a href="#127840" title="=&gt; Int">body</a> <span class="keyword">catch</span> { <span title="Int" class="keyword">case</span> <a title="java.nio.charset.CharacterCodingException" id="127842">e</a>: <a title="java.nio.charset.CharacterCodingException" id="6833">CharacterCodingException</a> =&gt; <a href="../Function1.scala.html#17119" title="(v1: java.nio.charset.CharacterCodingException)Int">_onCodingException</a>(<a href="#127842" title="java.nio.charset.CharacterCodingException">e</a>) }
+
+  // call a series of side effecting methods on an object, finally returning the object
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="[T](x: T,fs: ((T) =&gt; T, Boolean)*)T" id="33584">applyFunctions</a>[<a title="&gt;: Nothing &lt;: Any" id="33586">T</a>](<a title="T" id="127681">x</a>: <a href="#33586" title="T">T</a>, <a title="((T) =&gt; T, Boolean)*" id="127682">fs</a>: <a title="((T) =&gt; T, Boolean)*" id="4176">Configure</a>[T]*) =
+    <a href="#127682" title="((T) =&gt; T, Boolean)*">fs</a>.<a href="../collection/generic/TraversableTemplate.scala.html#17187" title="(z: T)(op: (T, ((T) =&gt; T, Boolean)) =&gt; T)T">foldLeft</a>(<a href="#127681" title="T">x</a>)((<a title="T" id="127696">x</a>, <a title="((T) =&gt; T, Boolean)" id="127697">pair</a>) =&gt; <a href="#127697" title="((T) =&gt; T, Boolean)">pair</a> <span title="T" class="keyword">match</span> {
+      <span title="T" class="keyword">case</span> (<a title="(T) =&gt; T" id="127700">f</a>, <a title="Boolean" id="127701">cond</a>) =&gt; <span title="T" class="keyword">if</span> (<a href="#127701" title="Boolean">cond</a>) <a href="../Function1.scala.html#17119" title="(v1: T)T">f</a>(<a href="#127696" title="T">x</a>) <span class="keyword">else</span> <a href="#127696" title="T">x</a>
+    })
+}
+
+<span class="keyword">object</span> <a title="object scala.io.Codec" id="9818">Codec</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  <span class="keyword">final</span> <span class="keyword">val</span> <a title="java.nio.charset.Charset" id="33629">ISO8859</a> = <span title="(x$1: java.lang.String)java.nio.charset.Charset">Charset</span> forName <span title="java.lang.String(&quot;ISO-8859-1&quot;)" class="string">&quot;ISO-8859-1&quot;</span>
+  <span class="keyword">final</span> <span class="keyword">val</span> <a title="java.nio.charset.Charset" id="33631">UTF8</a>    = <span title="(x$1: java.lang.String)java.nio.charset.Charset">Charset</span> forName <span title="java.lang.String(&quot;UTF-8&quot;)" class="string">&quot;UTF-8&quot;</span>
+  
+  <span class="keyword">def</span> <a title="=&gt; scala.io.Codec" id="33633">default</a>                               = <a href="#33635" title="(charSet: java.nio.charset.Charset)scala.io.Codec">apply</a>(<span title="object java.nio.charset.Charset">Charset</span>.<a title="()java.nio.charset.Charset" id="33108">defaultCharset</a>)
+  <span class="keyword">def</span> <a title="(encoding: String)scala.io.Codec" id="33634">apply</a>(<a title="String" id="33693">encoding</a>: <span title="String">String</span>): <a href="#9817" title="scala.io.Codec">Codec</a>        = <span title="scala.io.Codec" class="keyword">new</span> <a href="#9817" title="scala.io.Codec">Codec</a>(<span title="(x$1: java.lang.String)java.nio.charset.Charset">Charset</span> forName <a href="#33693" title="String">encoding</a>)
+  <span class="keyword">def</span> <a title="(charSet: java.nio.charset.Charset)scala.io.Codec" id="33635">apply</a>(<a title="java.nio.charset.Charset" id="33691">charSet</a>: <span title="java.nio.charset.Charset">Charset</span>): <a href="#9817" title="scala.io.Codec">Codec</a>        = <span title="scala.io.Codec" class="keyword">new</span> <a href="#9817" title="scala.io.Codec">Codec</a>(<a href="#33691" title="java.nio.charset.Charset">charSet</a>)
+  <span class="keyword">def</span> <a title="(decoder: java.nio.charset.CharsetDecoder)scala.io.Codec" id="33636">apply</a>(<a title="java.nio.charset.CharsetDecoder" id="33647">decoder</a>: <span title="java.nio.charset.CharsetDecoder">CharsetDecoder</span>): <a href="#9817" title="scala.io.Codec">Codec</a> = {
+    <span class="keyword">val</span> <a title="java.nio.charset.CharsetDecoder" id="127871">_decoder</a> = <a href="#33647" title="java.nio.charset.CharsetDecoder">decoder</a>
+    <a href="#127872" title="scala.io.Codec{ ... }" class="keyword">new</a> <a href="#9817" title="anonymous class $anon extends scala.io.Codec" id="127872">Codec</a>(<a href="#33647" title="java.nio.charset.CharsetDecoder">decoder</a>.<a title="()java.nio.charset.Charset" id="33654">charset</a>()) { <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; java.nio.charset.CharsetDecoder" id="127874">decoder</a> = <a href="#127871" title="java.nio.charset.CharsetDecoder">_decoder</a> }
+  }
+  
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="implicit scala.io.Codec.string2codec : (s: String)scala.io.Codec" id="33637">string2codec</a>(<a title="String" id="33709">s</a>: <span title="String">String</span>) = <a href="#33634" title="(encoding: String)scala.io.Codec">apply</a>(<a href="#33709" title="String">s</a>)
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="implicit scala.io.Codec.charset2codec : (c: java.nio.charset.Charset)scala.io.Codec" id="33638">charset2codec</a>(<a title="java.nio.charset.Charset" id="33699">c</a>: <span title="java.nio.charset.Charset">Charset</span>) = <a href="#33635" title="(charSet: java.nio.charset.Charset)scala.io.Codec">apply</a>(<a href="#33699" title="java.nio.charset.Charset">c</a>)
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="implicit scala.io.Codec.decoder2codec : (cd: java.nio.charset.CharsetDecoder)scala.io.Codec" id="33639">decoder2codec</a>(<a title="java.nio.charset.CharsetDecoder" id="33641">cd</a>: <span title="java.nio.charset.CharsetDecoder">CharsetDecoder</span>) = <a href="#33636" title="(decoder: java.nio.charset.CharsetDecoder)scala.io.Codec">apply</a>(<a href="#33641" title="java.nio.charset.CharsetDecoder">cd</a>)
+}
+        </pre>
+    </body>
+</html>

@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>xml/parsing/MarkupHandler.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: MarkupHandler.scala 18614 2009-08-31 10:27:23Z extempore $
+
+
+<span class="keyword">package</span> scala.xml
+<span class="keyword">package</span> parsing
+
+<span class="keyword">import</span> scala.collection.mutable.{HashMap, Map}
+<span class="keyword">import</span> scala.io.Source
+<span class="keyword">import</span> scala.util.logging.Logged
+<span class="keyword">import</span> scala.xml.dtd._
+
+/** class that handles markup - provides callback methods to MarkupParser.
+ *  the default is nonvalidating behaviour
+ *
+ *  @author  Burak Emir
+ *  @version 1.0
+ *
+ *  @todo can we ignore more entity declarations (i.e. those with extIDs)?
+ *  @todo expanding entity references
+ */
+<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class MarkupHandler extends java.lang.Object with scala.util.logging.Logged with ScalaObject" id="12125">MarkupHandler</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="../../util/logging/Logged.scala.html#13208" title="scala.util.logging.Logged">Logged</a>
+{
+  /** returns true is this markup handler is validating */
+  <span class="keyword">val</span> <a title="Boolean" id="50182">isValidating</a>: <a title="Boolean" id="1949">Boolean</a> = <span title="Boolean(false)" class="keyword">false</span>
+
+  <span class="keyword">var</span> <a title="List[scala.xml.dtd.Decl]" id="50185">decls</a>: <a href="../../collection/immutable/List.scala.html#8973" title="List[scala.xml.dtd.Decl]">List</a>[Decl] = <a href="../../collection/immutable/List.scala.html#9259" title="object Nil">Nil</a>
+  <span class="keyword">var</span> <a title="scala.collection.mutable.Map[String,scala.xml.dtd.EntityDecl]" id="50188">ent</a>: <a href="../../collection/mutable/Map.scala.html#7590" title="scala.collection.mutable.Map[String,scala.xml.dtd.EntityDecl]">Map</a>[String, EntityDecl] = <span title="scala.collection.mutable.HashMap[String,scala.xml.dtd.EntityDecl]" class="keyword">new</span> <a href="../../collection/mutable/HashMap.scala.html#7755" title="scala.collection.mutable.HashMap[String,scala.xml.dtd.EntityDecl]">HashMap</a>[String, EntityDecl]()
+
+  <span class="keyword">def</span> <a title="(Label: String)scala.xml.dtd.ElemDecl" id="50190">lookupElemDecl</a>(<a title="String" id="246380">Label</a>: <span title="String">String</span>): <a href="../dtd/Decl.scala.html#11173" title="scala.xml.dtd.ElemDecl">ElemDecl</a> = {
+    <span class="keyword">for</span> (<a title="scala.xml.dtd.ElemDecl" id="253351">z</a> @ ElemDecl(<a href="#246380" title="String">Label</a>, _) &lt;- <a href="../../collection/generic/LinearSequenceTemplate.scala.html#19402" title="(f: (scala.xml.dtd.Decl) =&gt; Nothing)Unit">decls</a>)
+      <span title="Nothing" class="keyword">return</span> <a href="#253351" title="scala.xml.dtd.ElemDecl">z</a>
+      
+    <span title="Null(null)" class="keyword">null</span>
+  }
+
+  <span class="keyword">def</span> <a title="(entityName: String)scala.io.Source" id="50191">replacementText</a>(<a title="String" id="147412">entityName</a>: <span title="String">String</span>): <a href="../../io/Source.scala.html#9826" title="scala.io.Source">Source</a> =
+    <a href="../../io/Source.scala.html#83300" title="(s: String)scala.io.Source">Source</a> fromString ((<a href="../../collection/generic/MapTemplate.scala.html#35273" title="(key: String)Option[scala.xml.dtd.EntityDecl]">ent</a> get <a href="#147412" title="String">entityName</a>) <span title="String" class="keyword">match</span> {
+      <span title="String" class="keyword">case</span> Some(ParsedEntityDecl(_, IntDef(<a title="String" id="253363">value</a>)))     =&gt; <a href="#253363" title="String">value</a>
+      <span title="String" class="keyword">case</span> Some(ParameterEntityDecl(_, IntDef(<a title="String" id="253371">value</a>)))  =&gt; <a href="../../runtime/RichString.scala.html#18060" title="(args: Any*)String" class="string">&quot; %s &quot;</a> format <a href="#253371" title="String">value</a>
+      <span title="String" class="keyword">case</span> Some(_)                                      =&gt; <a href="../../runtime/RichString.scala.html#18060" title="(args: Any*)String" class="string">&quot;&lt;!-- %s; --&gt;&quot;</a> format <a href="#147412" title="String">entityName</a>
+      <span title="String" class="keyword">case</span> <a href="../../Option.scala.html#463" title="object None">None</a>                                         =&gt; <a href="../../runtime/RichString.scala.html#18060" title="(args: Any*)String" class="string">&quot;&lt;!-- unknown entity %s; --&gt;&quot;</a> format <a href="#147412" title="String">entityName</a>
+    })
+
+  <span class="keyword">def</span> <a title="(n: String)Unit" id="50192">endDTD</a>(<a title="String" id="146246">n</a>: <span title="String">String</span>): <span title="Unit">Unit</span> = <span title="Unit">(</span>)
+
+  /** callback method invoked by MarkupParser after start-tag of element.
+   *
+   *  @param pos      the position in the sourcefile
+   *  @param pre      the prefix
+   *  @param label    the local name
+   *  @param attrs    the attributes (metadata)
+   */
+  <span class="keyword">def</span> <a title="(pos: Int,pre: String,label: String,attrs: scala.xml.MetaData,scope: scala.xml.NamespaceBinding)Unit" id="50193">elemStart</a>(<a title="Int" id="146387">pos</a>: <span title="Int">Int</span>, <a title="String" id="146388">pre</a>: <span title="String">String</span>, <a title="String" id="146389">label</a>: <span title="String">String</span>, <a title="scala.xml.MetaData" id="146390">attrs</a>: <a href="../MetaData.scala.html#8585" title="scala.xml.MetaData">MetaData</a>, <a title="scala.xml.NamespaceBinding" id="146391">scope</a>: <a href="../NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>): <span title="Unit">Unit</span> = <span title="Unit">(</span>)
+
+  /** callback method invoked by MarkupParser after end-tag of element.
+   *
+   *  @param pos      the position in the source file
+   *  @param pre      the prefix
+   *  @param label    the local name
+   *  @param attrs    the attributes (metadata)
+   */
+  <span class="keyword">def</span> <a title="(pos: Int,pre: String,label: String)Unit" id="50194">elemEnd</a>(<a title="Int" id="146411">pos</a>: <span title="Int">Int</span>, <a title="String" id="146412">pre</a>: <span title="String">String</span>, <a title="String" id="146413">label</a>: <span title="String">String</span>): <span title="Unit">Unit</span> = <span title="Unit">(</span>)
+
+  /** callback method invoked by MarkupParser after parsing an elementm,
+   *  between the elemStart and elemEnd callbacks
+   *
+   *  @param pos      the position in the source file
+   *  @param pre      the prefix
+   *  @param label    the local name
+   *  @param attrs    the attributes (metadata)
+   *  @param args     the children of this element
+   *  @return         ...
+   */
+  <span class="keyword">def</span> <a title="(pos: Int,pre: String,label: String,attrs: scala.xml.MetaData,scope: scala.xml.NamespaceBinding,args: scala.xml.NodeSeq)scala.xml.NodeSeq" id="50195">elem</a>(<a title="Int" id="50226">pos</a>: <span title="Int">Int</span>, <a title="String" id="50227">pre</a>: <span title="String">String</span>, <a title="String" id="50228">label</a>: <span title="String">String</span>, <a title="scala.xml.MetaData" id="50229">attrs</a>: <a href="../MetaData.scala.html#8585" title="scala.xml.MetaData">MetaData</a>, <a title="scala.xml.NamespaceBinding" id="50230">scope</a>: <a href="../NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>, <a title="scala.xml.NodeSeq" id="50231">args</a>: <a href="../NodeSeq.scala.html#8522" title="scala.xml.NodeSeq">NodeSeq</a>): <a href="../NodeSeq.scala.html#8522" title="scala.xml.NodeSeq">NodeSeq</a>
+
+  /** callback method invoked by MarkupParser after parsing PI.
+   */
+  <span class="keyword">def</span> <a title="(pos: Int,target: String,txt: String)scala.xml.NodeSeq" id="50196">procInstr</a>(<a title="Int" id="50281">pos</a>: <span title="Int">Int</span>, <a title="String" id="50282">target</a>: <span title="String">String</span>, <a title="String" id="50283">txt</a>: <span title="String">String</span>): <a href="../NodeSeq.scala.html#8522" title="scala.xml.NodeSeq">NodeSeq</a>
+
+  /** callback method invoked by MarkupParser after parsing comment.
+   */
+  <span class="keyword">def</span> <a title="(pos: Int,comment: String)scala.xml.NodeSeq" id="50197">comment</a>(<a title="Int" id="50326">pos</a>: <span title="Int">Int</span>, <a title="String" id="50327">comment</a>: <span title="String">String</span>): <a href="../NodeSeq.scala.html#8522" title="scala.xml.NodeSeq">NodeSeq</a>
+
+  /** callback method invoked by MarkupParser after parsing entity ref.
+   *  @todo expanding entity references
+   */
+  <span class="keyword">def</span> <a title="(pos: Int,n: String)scala.xml.NodeSeq" id="50198">entityRef</a>(<a title="Int" id="50355">pos</a>: <span title="Int">Int</span>, <a title="String" id="50356">n</a>: <span title="String">String</span>): <a href="../NodeSeq.scala.html#8522" title="scala.xml.NodeSeq">NodeSeq</a>
+
+  /** callback method invoked by MarkupParser after parsing text.
+   */
+  <span class="keyword">def</span> <a title="(pos: Int,txt: String)scala.xml.NodeSeq" id="50199">text</a>(<a title="Int" id="50384">pos</a>: <span title="Int">Int</span>, <a title="String" id="50385">txt</a>: <span title="String">String</span>): <a href="../NodeSeq.scala.html#8522" title="scala.xml.NodeSeq">NodeSeq</a>
+
+  // DTD handler methods
+
+  <span class="keyword">def</span> <a title="(n: String,cmstr: String)Unit" id="50200">elemDecl</a>(<a title="String" id="147275">n</a>: <span title="String">String</span>, <a title="String" id="147276">cmstr</a>: <span title="String">String</span>): <span title="Unit">Unit</span> = <span title="Unit">(</span>)
+
+  <span class="keyword">def</span> <a title="(name: String,attList: List[scala.xml.dtd.AttrDecl])Unit" id="50201">attListDecl</a>(<a title="String" id="147037">name</a>: <span title="String">String</span>, <a title="List[scala.xml.dtd.AttrDecl]" id="147038">attList</a>: <a href="../../collection/immutable/List.scala.html#8973" title="List[scala.xml.dtd.AttrDecl]">List</a>[AttrDecl]): <span title="Unit">Unit</span> = <span title="Unit">(</span>)
+  
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(name: String,edef: scala.xml.dtd.EntityDef,f: (String, scala.xml.dtd.EntityDef) =&gt; scala.xml.dtd.EntityDecl)Unit" id="50202">someEntityDecl</a>(<a title="String" id="253449">name</a>: <span title="String">String</span>, <a title="scala.xml.dtd.EntityDef" id="253450">edef</a>: <a href="../dtd/Decl.scala.html#11035" title="scala.xml.dtd.EntityDef">EntityDef</a>, <a title="(String, scala.xml.dtd.EntityDef) =&gt; scala.xml.dtd.EntityDecl" id="253451">f</a>: (String, EntityDef) =&gt; EntityDecl): <span title="Unit">Unit</span> =
+    <a href="#253450" title="scala.xml.dtd.EntityDef">edef</a> <span title="Unit" class="keyword">match</span> {
+      <span title="Unit" class="keyword">case</span> _: <a href="../dtd/Decl.scala.html#11056" title="scala.xml.dtd.ExtDef">ExtDef</a> <span class="keyword">if</span> <a title="=&gt; Boolean" id="2203">!</a><a href="#50182" title="=&gt; Boolean">isValidating</a> =&gt;  // ignore (cf REC-xml 4.4.1)
+      <span title="Unit" class="keyword">case</span> _  =&gt;
+        <span class="keyword">val</span> <a title="scala.xml.dtd.EntityDecl" id="253453">y</a> = <a href="../../Function2.scala.html#20443" title="(v1: String,v2: scala.xml.dtd.EntityDef)scala.xml.dtd.EntityDecl">f</a>(<a href="#253449" title="String">name</a>, <a href="#253450" title="scala.xml.dtd.EntityDef">edef</a>)
+        <a href="#50185" title="(x$1: List[scala.xml.dtd.Decl])Unit">decls</a> ::= <a href="#253453" title="scala.xml.dtd.EntityDecl">y</a>
+        <a href="#50188" title="=&gt; scala.collection.mutable.Map[String,scala.xml.dtd.EntityDecl]">ent</a>.<a href="../../collection/generic/MutableMapTemplate.scala.html#57774" title="(key: String,value: scala.xml.dtd.EntityDecl)Unit">update</a>(<a href="#253449" title="String">name</a>, <a href="#253453" title="scala.xml.dtd.EntityDecl">y</a>)
+    }
+
+  <span class="keyword">def</span> <a title="(name: String,edef: scala.xml.dtd.EntityDef)Unit" id="50203">parameterEntityDecl</a>(<a title="String" id="146793">name</a>: <span title="String">String</span>, <a title="scala.xml.dtd.EntityDef" id="146794">edef</a>: <a href="../dtd/Decl.scala.html#11035" title="scala.xml.dtd.EntityDef">EntityDef</a>): <span title="Unit">Unit</span> =
+    <a href="#50202" title="(name: String,edef: scala.xml.dtd.EntityDef,f: (String, scala.xml.dtd.EntityDef) =&gt; scala.xml.dtd.EntityDecl)Unit">someEntityDecl</a>(<a href="#146793" title="String">name</a>, <a href="#146794" title="scala.xml.dtd.EntityDef">edef</a>, <a href="../dtd/Decl.scala.html#11129" title="object scala.xml.dtd.ParameterEntityDecl">ParameterEntityDecl</a>.<a href="../dtd/Decl.scala.html#27414" title="(name: String,entdef: scala.xml.dtd.EntityDef)scala.xml.dtd.ParameterEntityDecl">apply</a> _)
+
+  <span class="keyword">def</span> <a title="(name: String,edef: scala.xml.dtd.EntityDef)Unit" id="50204">parsedEntityDecl</a>(<a title="String" id="146848">name</a>: <span title="String">String</span>, <a title="scala.xml.dtd.EntityDef" id="146849">edef</a>: <a href="../dtd/Decl.scala.html#11035" title="scala.xml.dtd.EntityDef">EntityDef</a>): <span title="Unit">Unit</span> = 
+    <a href="#50202" title="(name: String,edef: scala.xml.dtd.EntityDef,f: (String, scala.xml.dtd.EntityDef) =&gt; scala.xml.dtd.EntityDecl)Unit">someEntityDecl</a>(<a href="#146848" title="String">name</a>, <a href="#146849" title="scala.xml.dtd.EntityDef">edef</a>, <a href="../dtd/Decl.scala.html#11216" title="object scala.xml.dtd.ParsedEntityDecl">ParsedEntityDecl</a>.<a href="../dtd/Decl.scala.html#27292" title="(name: String,entdef: scala.xml.dtd.EntityDef)scala.xml.dtd.ParsedEntityDecl">apply</a> _)
+
+  <span class="keyword">def</span> <a title="(name: String)Unit" id="50205">peReference</a>(<a title="String" id="147196">name</a>: <span title="String">String</span>) { <a href="#50185" title="(x$1: List[scala.xml.dtd.Decl])Unit">decls</a> ::= <a href="../dtd/Decl.scala.html#28175" title="(ent: String)scala.xml.dtd.PEReference">PEReference</a>(<a href="#147196" title="String">name</a>) }
+  <span class="keyword">def</span> <a title="(name: String,extID: scala.xml.dtd.ExternalID,notat: String)Unit" id="50206">unparsedEntityDecl</a>(<a title="String" id="146842">name</a>: <span title="String">String</span>, <a title="scala.xml.dtd.ExternalID" id="146843">extID</a>: <a href="../dtd/ExternalID.scala.html#11068" title="scala.xml.dtd.ExternalID">ExternalID</a>, <a title="String" id="146844">notat</a>: <span title="String">String</span>): <span title="Unit">Unit</span> = <span title="Unit">(</span>)
+  <span class="keyword">def</span> <a title="(notat: String,extID: scala.xml.dtd.ExternalID)Unit" id="50207">notationDecl</a>(<a title="String" id="147045">notat</a>: <span title="String">String</span>, <a title="scala.xml.dtd.ExternalID" id="147046">extID</a>: <a href="../dtd/ExternalID.scala.html#11068" title="scala.xml.dtd.ExternalID">ExternalID</a>): <span title="Unit">Unit</span> = <span title="Unit">(</span>)
+  <span class="keyword">def</span> <a title="(pos: Int,str: String)Unit" id="50208">reportSyntaxError</a>(<a title="Int" id="144619">pos</a>: <span title="Int">Int</span>, <a title="String" id="144620">str</a>: <span title="String">String</span>): <span title="Unit">Unit</span>
+}
+        </pre>
+    </body>
+</html>

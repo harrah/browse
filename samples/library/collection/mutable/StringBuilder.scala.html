@@ -1,0 +1,872 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>collection/mutable/StringBuilder.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2006-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: StringBuilder.scala 16884 2009-01-09 16:52:09Z cunei $
+
+
+<span class="keyword">package</span> scala.collection.mutable
+
+<span class="keyword">import</span> collection.generic._
+<span class="keyword">import</span> scala.runtime.RichString
+<span class="keyword">import</span> compat.Platform.arraycopy
+<span class="keyword">import</span> scala.reflect.Manifest
+
+/** &lt;p&gt;
+ *    A mutable sequence of characters.  This class provides an API compatible
+ *    with &lt;a class=&quot;java/lang/StringBuilder&quot; href=&quot;&quot; target=&quot;_top&quot;&gt;
+ *    &lt;code&gt;java.lang.StringBuilder&lt;/code&gt;&lt;/a&gt;.
+ *  &lt;/p&gt;generic/
+ *
+ *  @author Stephane Micheloud
+ *  @author Martin Odersky
+ *  @version 2.8
+ */
+@serializable
+@SerialVersionUID(<span class="int">0</span> - <span class="long">8525408645367278351L</span>)
+<span class="keyword">final</span> <span class="keyword">class</span> <a title="class StringBuilder extends java.lang.Object with scala.collection.generic.Builder[Char,String] with scala.collection.mutable.Vector[Char] with ScalaObject" id="7821">StringBuilder</a><a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="Int" id="23425">initCapacity</a>: <span title="Int">Int</span>, <span class="keyword">private</span> <span class="keyword">val</span> <a title="String" id="23426">initValue</a>: <span title="String">String</span>)
+      <span class="keyword">extends</span> <a href="../generic/Builder.scala.html#10028" title="scala.collection.generic.Builder[Char,String]">Builder</a>[Char, String]
+         <span class="keyword">with</span> <a href="Vector.scala.html#7818" title="scala.collection.mutable.Vector[Char]">Vector</a>[Char] {
+
+  <a href="../../Predef.scala.html#16217" title="(requirement: Boolean)Unit">require</a>(<a href="#23425" title="(x$1: Int)Boolean">initCapacity</a> &gt;= <span title="Int(0)" class="int">0</span>)
+
+  /** The value is used for character storage. */
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Array[Char]" id="23343">array</a> = <span title="Array[Char]" class="keyword">new</span> <a href="../../Array.scala.html#885" title="Array[Char]">Array</a>[Char](<a href="#23425" title="(x$1: Int)Int">initCapacity</a> + <a href="#23426" title="=&gt; String">initValue</a>.<span title="()Int">length</span>)
+
+  /** The count is the number of characters used. */
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Int" id="23346">count</a>: <span title="Int">Int</span> = <span title="Int(0)" class="int">0</span>
+
+  /** Constructs a string builder with no characters in it and an 
+   *  initial capacity of 16 characters.
+   */
+  <span class="keyword">def</span> <a title="()StringBuilder" id="23348" class="keyword">this</a>() = <a href="#7821" title="StringBuilder.this.type" class="keyword">this</a>(<span title="Int(16)" class="int">16</span>, <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+
+  /** Constructs a string builder with no characters in it and an 
+   *  initial capacity specified by the &lt;code&gt;capacity&lt;/code&gt; argument. 
+   *
+   *  @param  capacity  the initial capacity.
+   *  @throws NegativeArraySizeException  if the &lt;code&gt;capacity&lt;/code&gt;
+   *                    argument is less than &lt;code&gt;0&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="(capacity: Int)StringBuilder" id="23349" class="keyword">this</a>(<a title="Int" id="23420">capacity</a>: <span title="Int">Int</span>) = <a href="#7821" title="StringBuilder.this.type" class="keyword">this</a>(<a href="#23420" title="Int">capacity</a>, <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+
+  /** Constructs a string builder with initial characters 
+   *  equal to characters of `str`.
+   */
+  <span class="keyword">def</span> <a title="(str: String)StringBuilder" id="23350" class="keyword">this</a>(<a title="String" id="23413">str</a>: <span title="String">String</span>) = <a href="#7821" title="StringBuilder.this.type" class="keyword">this</a>(<span title="Int(16)" class="int">16</span>, <a href="#23413" title="String">str</a>)
+
+  <a href="#23370" title="(s: String)StringBuilder">append</a>(<a href="#23426" title="=&gt; String">initValue</a>)
+
+  <span class="keyword">def</span> <a title="=&gt; Array[Char]" id="23351">toArray</a>: <a href="../../Array.scala.html#885" title="Array[Char]">Array</a>[Char] = <a href="#23343" title="=&gt; Array[Char]">array</a>
+
+  <span class="keyword">def</span> <a title="=&gt; Int" id="23352">length</a>: <span title="Int">Int</span> = <a href="#23346" title="=&gt; Int">count</a>
+  <span class="keyword">def</span> <a title="(n: Int)Unit" id="23353">length_=</a>(<a title="Int" id="145560">n</a>: <span title="Int">Int</span>) { <a href="#23355" title="(n: Int)Unit">setLength</a>(<a href="#145560" title="Int">n</a>) }
+ 
+  /** Clears the builder contents.
+   */
+  <span class="keyword">def</span> <a title="()Unit" id="23354">clear</a>(): <a title="Unit" id="1948">Unit</a> = <a href="#23355" title="(n: Int)Unit">setLength</a>(<span title="Int(0)" class="int">0</span>)
+
+ /** Sets the length of the character sequence.
+   *
+   *  @param  newLength  the new length
+   *  @throws IndexOutOfBoundsException  if the &lt;code&gt;n&lt;/code&gt; argument is negative.
+   */
+  <span class="keyword">def</span> <a title="(n: Int)Unit" id="23355">setLength</a>(<a title="Int" id="219660">n</a>: <span title="Int">Int</span>) {
+    <a href="../../Predef.scala.html#16218" title="(requirement: Boolean,message: =&gt; Any)Unit">require</a>(<a href="#219660" title="(x$1: Int)Boolean">n</a> &gt;= <span title="Int(0)" class="int">0</span>, <a href="#219660" title="Int">n</a>)
+    <span title="Unit" class="keyword">while</span> (<a href="#23346" title="(x$1: Int)Boolean">count</a> &lt; <a href="#219660" title="Int">n</a>) <a href="#23380" title="(x: Char)StringBuilder">append</a><a href="#219667" title="()Unit">(</a><span title="Char('\00')" class="char">'\0'</span>)
+    <a href="#23346" title="(x$1: Int)Unit">count</a> = <a href="#219660" title="Int">n</a>
+  }
+
+  /** Returns the current capacity. The capacity is the amount of storage 
+   *  available for newly inserted characters, beyond which an allocation 
+   *  will occur.
+   *
+   *  @return  the current capacity
+   */
+  <span class="keyword">def</span> <a title="=&gt; Int" id="23356">capacity</a>: <span title="Int">Int</span> = <a href="#23343" title="=&gt; Array[Char]">array</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>
+
+  /** Same as &lt;code&gt;ensureCapacity&lt;/code&gt;. */
+  @deprecated(<span class="string">&quot;use `ensureCapacity' instead. An assignment is misleading because\n&quot;</span>+
+              <span class="string">&quot;it can never decrease the capacity.&quot;</span>)
+  <span class="keyword">def</span> <a title="(n: Int)Unit" id="23357">capacity_=</a>(<a title="Int" id="219716">n</a>: <span title="Int">Int</span>) { <a href="#23358" title="(n: Int)Unit">ensureCapacity</a>(<a href="#219716" title="Int">n</a>) }
+
+  /** &lt;p&gt;
+   *    Ensures that the capacity is at least equal to the specified minimum.
+   *    If the current capacity is less than the argument, then a new internal
+   *    array is allocated with greater capacity. The new capacity is the larger of: 
+   *  &lt;/p&gt;
+   *  &lt;ul&gt;
+   *    &lt;li&gt;The &lt;code&gt;n&lt;/code&gt; argument. 
+   *    &lt;li&gt;Twice the old capacity, plus &lt;code&gt;2&lt;/code&gt;. 
+   *  &lt;/ul&gt;
+   *  &lt;p&gt;
+   *    If the &lt;code&gt;n&lt;/code&gt; argument is non-positive, this
+   *    method takes no action and simply returns.
+   *  &lt;/p&gt;
+   *
+   *  @param n the minimum desired capacity.
+   */
+  <span class="keyword">def</span> <a title="(n: Int)Unit" id="23358">ensureCapacity</a>(<a title="Int" id="219718">n</a>: <span title="Int">Int</span>) {
+    <span title="Unit" class="keyword">if</span> (<a href="#219718" title="(x$1: Int)Boolean">n</a> &gt; <a href="#23343" title="=&gt; Array[Char]">array</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>) {
+      <span class="keyword">var</span> <a title="Int" id="219729">newsize</a> = <a href="#23343" title="=&gt; Array[Char]">array</a>.<a href="../../Array.scala.html#17715" title="(x$1: Int)Int">length</a> * <span title="Int(2)" class="int">2</span>
+      <span title="Unit" class="keyword">while</span> (<a href="#219718" title="(x$1: Int)Boolean">n</a> &gt; <a href="#219729" title="Int">newsize</a>)
+        <a href="#219729" title="Int">newsize</a> = <a href="#219729" title="(x$1: Int)Int">newsize</a> * <span title="Int(2)" class="int">2</span>
+      <span class="keyword">val</span> <a title="Array[Char]" id="219730">newar</a> = <span title="Array[Char]" class="keyword">new</span> <a href="../../Array.scala.html#885" title="Array[Char]">Array</a>[Char](<a href="#219729" title="Int">newsize</a>)
+      <a href="../../compat/Platform.scala.html#17685" title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">arraycopy</a>(<a href="#23343" title="=&gt; Array[Char]">array</a>, <span title="Int(0)" class="int">0</span>, <a href="#219730" title="Array[Char]">newar</a>, <span title="Int(0)" class="int">0</span>, <a href="#23346" title="=&gt; Int">count</a>)
+      <a href="#23343" title="(x$1: Array[Char])Unit">array</a> = <a href="#219730" title="Array[Char]">newar</a>
+    }
+  }
+      
+  /** &lt;p&gt;
+   *    Returns the &lt;code&gt;Char&lt;/code&gt; value in this sequence at the specified index.
+   *    The first &lt;code&gt;Char&lt;/code&gt; value is at index &lt;code&gt;0&lt;/code&gt;, the next at index
+   *    &lt;code&gt;1&lt;/code&gt;, and so on, as in array indexing.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The index argument must be greater than or equal to
+   *    &lt;code&gt;0&lt;/code&gt;, and less than the length of this sequence.
+   *  &lt;/p&gt;
+   *
+   *  @param  index   the index of the desired &lt;code&gt;Char&lt;/code&gt; value.
+   *  @return         the &lt;code&gt;Char&lt;/code&gt; value at the specified index.
+   *  @throws IndexOutOfBoundsException  if &lt;code&gt;index&lt;/code&gt; is 
+   *                  negative or greater than or equal to &lt;code&gt;length()&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="(index: Int)Char" id="23359">charAt</a>(<a title="Int" id="152282">index</a>: <span title="Int">Int</span>): <span title="Char">Char</span> = {
+    <span title="Unit" class="keyword">if</span> (<a href="#152282" title="(x$1: Int)Boolean">index</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <span title="Int(0)" class="int">0</span> || <a href="#152282" title="(x$1: Int)Boolean">index</a> &gt;= <a href="#23346" title="=&gt; Int">count</a>)
+      <span title="Nothing" class="keyword">throw</span> <span title="(x$1: Int)java.lang.StringIndexOutOfBoundsException" class="keyword">new</span> <a href="../../Predef.scala.html#16168" title="java.lang.StringIndexOutOfBoundsException">StringIndexOutOfBoundsException</a>(<a href="#152282" title="Int">index</a>)
+    <a href="../../Array.scala.html#17716" title="(i: Int)Char">array</a>(<a href="#152282" title="Int">index</a>)
+  }
+
+  /** Same as &lt;code&gt;charAt&lt;/code&gt;. */
+  <span class="keyword">def</span> <a title="(i: Int)Char" id="23360">apply</a>(<a title="Int" id="219820">i</a>: <span title="Int">Int</span>): <span title="Char">Char</span> = <a href="#23359" title="(index: Int)Char">charAt</a>(<a href="#219820" title="Int">i</a>)
+
+  /** &lt;p&gt;
+   *    Removes the &lt;code&gt;Char&lt;/code&gt; at the specified position in this
+   *    sequence. This sequence is shortened by one &lt;code&gt;Char&lt;/code&gt;.
+   *  &lt;/p&gt;
+   *
+   *  @param  index  Index of &lt;code&gt;Char&lt;/code&gt; to remove
+   *  @return        This object.
+   *  @throws StringIndexOutOfBoundsException  if the &lt;code&gt;index&lt;/code&gt;
+   *	             is negative or greater than or equal to &lt;code&gt;length()&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="(index: Int)StringBuilder" id="23361">deleteCharAt</a>(<a title="Int" id="219825">index</a>: <span title="Int">Int</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> = {
+    <span title="Unit" class="keyword">if</span> (<a href="#219825" title="(x$1: Int)Boolean">index</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <span title="Int(0)" class="int">0</span> || <a href="#219825" title="(x$1: Int)Boolean">index</a> &gt;= <a href="#23346" title="=&gt; Int">count</a>)
+      <span title="Nothing" class="keyword">throw</span> <span title="(x$1: Int)java.lang.StringIndexOutOfBoundsException" class="keyword">new</span> <a href="../../Predef.scala.html#16168" title="java.lang.StringIndexOutOfBoundsException">StringIndexOutOfBoundsException</a>(<a href="#219825" title="Int">index</a>)
+    <a href="../../compat/Platform.scala.html#17685" title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">arraycopy</a>(<a href="#23343" title="=&gt; Array[Char]">array</a>, <a href="#219825" title="(x$1: Int)Int">index</a> + <span title="Int(1)" class="int">1</span>, <a href="#23343" title="=&gt; Array[Char]">array</a>, <a href="#219825" title="Int">index</a>, <a href="#23346" title="(x$1: Int)Int">count</a> <span title="(x$1: Int)Int">-</span> <a href="#219825" title="Int">index</a> - <span title="Int(1)" class="int">1</span>)
+    <a href="#23346" title="(x$1: Int)Unit">count</a> -= <span title="Int(1)" class="int">1</span>
+    <a href="#7821" title="StringBuilder" class="keyword">this</a>
+  }
+
+  /** &lt;p&gt;
+   *    The character at the specified index is set to &lt;code&gt;ch&lt;/code&gt;. This 
+   *    sequence is altered to represent a new character sequence that is 
+   *    identical to the old character sequence, except that it contains the 
+   *    character &lt;code&gt;ch&lt;/code&gt; at position &lt;code&gt;index&lt;/code&gt;. 
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The index argument must be greater than or equal to 
+   *    &lt;code&gt;0&lt;/code&gt;, and less than the length of this sequence. 
+   *  &lt;/p&gt;
+   *
+   *  @param  index   the index of the character to modify.
+   *  @param  ch      the new character.
+   *  @throws IndexOutOfBoundsException  if &lt;code&gt;index&lt;/code&gt; is 
+   *                  negative or greater than or equal to &lt;code&gt;length()&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="(index: Int,ch: Char)Unit" id="23362">setCharAt</a>(<a title="Int" id="219967">index</a>: <span title="Int">Int</span>, <a title="Char" id="219968">ch</a>: <span title="Char">Char</span>) {
+    <span title="Unit" class="keyword">if</span> (<a href="#219967" title="(x$1: Int)Boolean">index</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <span title="Int(0)" class="int">0</span> || <a href="#219967" title="(x$1: Int)Boolean">index</a> &gt;= <a href="#23346" title="=&gt; Int">count</a>)
+      <span title="Nothing" class="keyword">throw</span> <span title="(x$1: Int)java.lang.StringIndexOutOfBoundsException" class="keyword">new</span> <a href="../../Predef.scala.html#16168" title="java.lang.StringIndexOutOfBoundsException">StringIndexOutOfBoundsException</a>(<a href="#219967" title="Int">index</a>)
+    <a href="../../Array.scala.html#17717" title="(i: Int,x: Char)Unit">array</a>(<a href="#219967" title="Int">index</a>) = <a href="#219968" title="Char">ch</a>
+  }
+
+  /** Same as &lt;code&gt;setCharAt&lt;/code&gt;. */
+  <span class="keyword">def</span> <a title="(i: Int,c: Char)Unit" id="23363">update</a>(<a title="Int" id="220010">i</a>: <span title="Int">Int</span>, <a title="Char" id="220011">c</a>: <span title="Char">Char</span>) { <a href="#23362" title="(index: Int,ch: Char)Unit">setCharAt</a>(<a href="#220010" title="Int">i</a>, <a href="#220011" title="Char">c</a>) }
+
+  /** Returns a new &lt;code&gt;String&lt;/code&gt; that contains a subsequence of
+   *  characters currently contained in this character sequence. The 
+   *  substring begins at the specified index and extends to the end of
+   *  this sequence.
+   * 
+   *  @param  start  The beginning index, inclusive.
+   *  @return        The new string.
+   *  @throws StringIndexOutOfBoundsException  if &lt;code&gt;start&lt;/code&gt; is
+   *                 less than zero, or greater than the length of this object.
+   */
+  <span class="keyword">def</span> <a title="(start: Int)String" id="23364">substring</a>(<a title="Int" id="220021">start</a>: <span title="Int">Int</span>): <span title="String">String</span> = <a href="#23365" title="(start: Int,end: Int)String">substring</a>(<a href="#220021" title="Int">start</a>, <a href="#23346" title="=&gt; Int">count</a>)
+
+  /** Returns a new &lt;code&gt;String&lt;/code&gt; that contains a subsequence of
+   *  characters currently contained in this sequence. The 
+   *  substring begins at the specified &lt;code&gt;start&lt;/code&gt; and 
+   *  extends to the character at index &lt;code&gt;end - 1&lt;/code&gt;.
+   *
+   *  @param  start  The beginning index, inclusive.
+   *  @param  end    The ending index, exclusive.
+   *  @return The new string.
+   *  @throws StringIndexOutOfBoundsException  if &lt;code&gt;start&lt;/code&gt;
+   *                 or &lt;code&gt;end&lt;/code&gt; are negative or greater than
+   *		     &lt;code&gt;length()&lt;/code&gt;, or &lt;code&gt;start&lt;/code&gt; is
+   *		     greater than &lt;code&gt;end&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="(start: Int,end: Int)String" id="23365">substring</a>(<a title="Int" id="220026">start</a>: <span title="Int">Int</span>, <a title="Int" id="220027">end</a>: <span title="Int">Int</span>): <span title="String">String</span> = {
+    <span title="Unit" class="keyword">if</span> (<a href="#220026" title="(x$1: Int)Boolean">start</a> &lt; <span title="Int(0)" class="int">0</span>)
+      <span title="Nothing" class="keyword">throw</span> <span title="(x$1: Int)java.lang.StringIndexOutOfBoundsException" class="keyword">new</span> <a href="../../Predef.scala.html#16168" title="java.lang.StringIndexOutOfBoundsException">StringIndexOutOfBoundsException</a>(<a href="#220026" title="Int">start</a>)
+    <span title="Unit" class="keyword">if</span> (<a href="#220027" title="(x$1: Int)Boolean">end</a> &gt; <a href="#23346" title="=&gt; Int">count</a>)
+      <span title="Nothing" class="keyword">throw</span> <span title="(x$1: Int)java.lang.StringIndexOutOfBoundsException" class="keyword">new</span> <a href="../../Predef.scala.html#16168" title="java.lang.StringIndexOutOfBoundsException">StringIndexOutOfBoundsException</a>(<a href="#220027" title="Int">end</a>)
+    <span title="Unit" class="keyword">if</span> (<a href="#220026" title="(x$1: Int)Boolean">start</a> &gt; <a href="#220027" title="Int">end</a>)
+      <span title="Nothing" class="keyword">throw</span> <span title="(x$1: Int)java.lang.StringIndexOutOfBoundsException" class="keyword">new</span> <a href="../../Predef.scala.html#16168" title="java.lang.StringIndexOutOfBoundsException">StringIndexOutOfBoundsException</a>(<a href="#220027" title="(x$1: Int)Int">end</a> - <a href="#220026" title="Int">start</a>)
+    <span title="(x$1: Array[Char],x$2: Int,x$3: Int)java.lang.String" class="keyword">new</span> <a href="../../Predef.scala.html#16156" title="java.lang.String">String</a>(<a href="#23343" title="=&gt; Array[Char]">array</a>, <a href="#220026" title="Int">start</a>, <a href="#220027" title="(x$1: Int)Int">end</a> - <a href="#220026" title="Int">start</a>)
+  }
+
+  <span class="keyword">def</span> <a title="(start: Int,end: Int)java.lang.CharSequence" id="23366">subSequence</a>(<a title="Int" id="220121">start</a>: <span title="Int">Int</span>, <a title="Int" id="220122">end</a>: <span title="Int">Int</span>): java.lang.<a title="java.lang.CharSequence" id="1864">CharSequence</a> = <a href="#23365" title="(start: Int,end: Int)String">substring</a>(<a href="#220121" title="Int">start</a>, <a href="#220122" title="Int">end</a>)
+
+  /* Appends the string representation of the &lt;code&gt;Any&lt;/code&gt; argument.
+   */
+  <span class="keyword">def</span> <a title="(x: Char)StringBuilder.this.type" id="23367">+=</a>(<a title="Char" id="220133">x</a>: <span title="Char">Char</span>): <span class="keyword">this</span>.<span class="keyword">type</span> = { <a href="#23380" title="(x: Char)StringBuilder">append</a>(<a href="#220133" title="Char">x</a>); <a href="#7821" title="StringBuilder.this.type" class="keyword">this</a> }
+
+  <span class="keyword">def</span> <a title="(x: Char)StringBuilder.this.type" id="23368">+</a>(<a title="Char" id="220157">x</a>: <span title="Char">Char</span>): <span class="keyword">this</span>.<span class="keyword">type</span> = { <a href="#23367" title="(x: Char)StringBuilder.this.type">+=</a>(<a href="#220157" title="Char">x</a>); <a href="#7821" title="StringBuilder.this.type" class="keyword">this</a> }
+
+
+  /** &lt;p&gt;
+   *    Appends the string representation of the &lt;code&gt;Any&lt;/code&gt; 
+   *    argument.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The argument is converted to a string as if by the method 
+   *    &lt;code&gt;String.valueOf&lt;/code&gt;, and the characters of that 
+   *    string are then appended to this sequence.
+   *  &lt;/p&gt;
+   *
+   *  @param  x   an &lt;code&gt;Any&lt;/code&gt; object.
+   *  @return     a reference to this object.
+   */
+  <span class="keyword">def</span> <a title="(x: Any)StringBuilder" id="23369">append</a>(<a title="Any" id="23479">x</a>: <span title="Any">Any</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> =
+    <a href="#23370" title="(s: String)StringBuilder">append</a>(<span title="object java.lang.String">String</span>.<span title="(x$1: Any)java.lang.String">valueOf</span>(<a href="#23479" title="Any">x</a>))
+
+  /** Appends the specified string to this character sequence.
+   *
+   *  @param  s   a string.
+   *  @return     a reference to this object.
+   */
+  <span class="keyword">def</span> <a title="(s: String)StringBuilder" id="23370">append</a>(<a title="String" id="23477">s</a>: <span title="String">String</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> = {
+    <span class="keyword">val</span> <a title="java.lang.String" id="220192">str</a> = <span title="java.lang.String" class="keyword">if</span> (<a href="#23477" title="(x$1: AnyRef)Boolean">s</a> == <span title="Null(null)" class="keyword">null</span>) <span title="java.lang.String(&quot;null&quot;)" class="string">&quot;null&quot;</span> <span class="keyword">else</span> <a href="#23477" title="String">s</a>
+    <span class="keyword">val</span> <a title="Int" id="220193">len</a> = <a href="#220192" title="java.lang.String">str</a>.<span title="()Int">length</span>
+    <a href="#23358" title="(n: Int)Unit">ensureCapacity</a>(<a href="#23346" title="(x$1: Int)Int">count</a> + <a href="#220193" title="Int">len</a>)
+    <a href="#220192" title="java.lang.String">str</a>.<span title="(x$1: Int,x$2: Int,x$3: Array[Char],x$4: Int)Unit">getChars</span>(<span title="Int(0)" class="int">0</span>, <a href="#220193" title="Int">len</a>, <a href="#23343" title="=&gt; Array[Char]">array</a>, <a href="#23346" title="=&gt; Int">count</a>)
+    <a href="#23346" title="(x$1: Int)Unit">count</a> += <a href="#220193" title="Int">len</a>
+    <a href="#7821" title="StringBuilder" class="keyword">this</a>
+  }
+
+  /** Appends the specified string builder to this sequence.
+   *
+   *  @param sb
+   *  @return 
+   */
+  <span class="keyword">def</span> <a title="(sb: StringBuilder)StringBuilder" id="23371">append</a>(<a title="StringBuilder" id="23465">sb</a>: <a href="#7821" title="StringBuilder">StringBuilder</a>): <a href="#7821" title="StringBuilder">StringBuilder</a> =
+    <span title="StringBuilder" class="keyword">if</span> (<a href="#23465" title="(x$1: AnyRef)Boolean">sb</a> == <span title="Null(null)" class="keyword">null</span>)
+      <a href="#23370" title="(s: String)StringBuilder">append</a>(<span title="java.lang.String(&quot;null&quot;)" class="string">&quot;null&quot;</span>)
+    <span class="keyword">else</span> {
+      <span class="keyword">val</span> <a title="Int" id="220316">len</a> = <a href="#23465" title="StringBuilder">sb</a>.<a href="#23352" title="=&gt; Int">length</a>
+      <a href="#23358" title="(n: Int)Unit">ensureCapacity</a>(<a href="#23346" title="(x$1: Int)Int">count</a> + <a href="#220316" title="Int">len</a>)
+      <a href="../../compat/Platform.scala.html#17685" title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">arraycopy</a>(<a href="#23465" title="StringBuilder">sb</a>.<a href="#23351" title="=&gt; Array[Char]">toArray</a>, <span title="Int(0)" class="int">0</span>, <a href="#23343" title="=&gt; Array[Char]">array</a>, <a href="#23346" title="=&gt; Int">count</a>, <a href="#220316" title="Int">len</a>)
+      <a href="#23346" title="(x$1: Int)Unit">count</a> += <a href="#220316" title="Int">len</a>
+      <a href="#7821" title="StringBuilder" class="keyword">this</a>
+    }
+
+  /** &lt;p&gt;
+   *    Appends the string representation of the &lt;code&gt;Char&lt;/code&gt; sequence 
+   *    argument to this sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The characters of the sequence argument are appended, in order,
+   *    to the contents of this sequence. The length of this sequence
+   *    increases by the length of the argument.
+   *  &lt;/p&gt;
+   *
+   *  @param  x  the characters to be appended.
+   *  @return    a reference to this object.
+   */
+  <span class="keyword">def</span> <a title="(x: Seq[Char])StringBuilder" id="23372">appendAll</a>(<a title="Seq[Char]" id="220423">x</a>: <a href="../Sequence.scala.html#4346" title="Seq[Char]">Seq</a>[Char]): <a href="#7821" title="StringBuilder">StringBuilder</a> =
+    <a href="#23376" title="(x: Array[Char],offset: Int,len: Int)StringBuilder">appendAll</a>(<a href="#220423" title="Seq[Char]">x</a>.<a href="../generic/TraversableTemplate.scala.html#17233" title="(implicit evidence$1: scala.reflect.ClassManifest[Char])Array[Char]">toArray</a>, <span title="Int(0)" class="int">0</span>, <a href="#220423" title="Seq[Char]">x</a>.<a href="../generic/SequenceTemplate.scala.html#17338" title="=&gt; Int">length</a>)
+
+  @deprecated(<span class="string">&quot;use appendAll instead. This method is deprecated because of the\n&quot;</span>+
+              <span class="string">&quot;possible confusion with `append(Any)'.&quot;</span>)
+  <span class="keyword">def</span> <a title="(x: Seq[Char])StringBuilder" id="23373">append</a>(<a title="Seq[Char]" id="23463">x</a>: <a href="../Sequence.scala.html#4346" title="Seq[Char]">Seq</a>[Char]): <a href="#7821" title="StringBuilder">StringBuilder</a> =
+    <a href="#23372" title="(x: Seq[Char])StringBuilder">appendAll</a>(<a href="#23463" title="Seq[Char]">x</a>)
+      
+  /** &lt;p&gt;
+   *    Appends the string representation of the &lt;code&gt;Char&lt;/code&gt; array 
+   *    argument to this sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The characters of the array argument are appended, in order, to 
+   *    the contents of this sequence. The length of this sequence
+   *    increases by the length of the argument.
+   *  &lt;/p&gt;
+   *
+   *  @param  x  the characters to be appended.
+   *  @return    a reference to this object.
+   */
+  <span class="keyword">def</span> <a title="(x: Array[Char])StringBuilder" id="23374">appendAll</a>(<a title="Array[Char]" id="220432">x</a>: <a href="../../Array.scala.html#885" title="Array[Char]">Array</a>[Char]): <a href="#7821" title="StringBuilder">StringBuilder</a> =
+    <a href="#23376" title="(x: Array[Char],offset: Int,len: Int)StringBuilder">appendAll</a>(<a href="#220432" title="Array[Char]">x</a>, <span title="Int(0)" class="int">0</span>, <a href="#220432" title="Array[Char]">x</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>)
+
+  @deprecated(<span class="string">&quot;use appendAll instead. This method is deprecated because\n&quot;</span>+
+              <span class="string">&quot;of the possible confusion with `append(Any)'.&quot;</span>)
+  <span class="keyword">def</span> <a title="(x: Array[Char])StringBuilder" id="23375">append</a>(<a title="Array[Char]" id="23461">x</a>: <a href="../../Array.scala.html#885" title="Array[Char]">Array</a>[Char]): <a href="#7821" title="StringBuilder">StringBuilder</a> =
+    <a href="#23374" title="(x: Array[Char])StringBuilder">appendAll</a>(<a href="#23461" title="Array[Char]">x</a>)
+
+  /** &lt;p&gt;
+   *    Appends the string representation of a subarray of the
+   *    &lt;code&gt;char&lt;/code&gt; array argument to this sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    Characters of the &lt;code&gt;Char&lt;/code&gt; array &lt;code&gt;x&lt;/code&gt;, starting at
+   *    index &lt;code&gt;offset&lt;/code&gt;, are appended, in order, to the contents
+   *    of this sequence. The length of this sequence increases
+   *    by the value of &lt;code&gt;len&lt;/code&gt;.
+   *  &lt;/p&gt;
+   *
+   *  @param  x      the characters to be appended.
+   *  @param  offset the index of the first &lt;code&gt;Char&lt;/code&gt; to append.
+   *  @param  len    the number of &lt;code&gt;Char&lt;/code&gt;s to append.
+   *  @return        a reference to this object.
+   */
+  <span class="keyword">def</span> <a title="(x: Array[Char],offset: Int,len: Int)StringBuilder" id="23376">appendAll</a>(<a title="Array[Char]" id="220428">x</a>: <a href="../../Array.scala.html#885" title="Array[Char]">Array</a>[Char], <a title="Int" id="220429">offset</a>: <span title="Int">Int</span>, <a title="Int" id="220430">len</a>: <span title="Int">Int</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> = {
+    <a href="#23358" title="(n: Int)Unit">ensureCapacity</a>(<a href="#23346" title="(x$1: Int)Int">count</a> + <a href="#220430" title="Int">len</a>)
+    <a href="../../compat/Platform.scala.html#17685" title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">arraycopy</a>(<a href="#220428" title="Array[Char]">x</a>, <a href="#220429" title="Int">offset</a>, <a href="#23343" title="=&gt; Array[Char]">array</a>, <a href="#23346" title="=&gt; Int">count</a>, <a href="#220430" title="Int">len</a>)
+    <a href="#23346" title="(x$1: Int)Unit">count</a> += <a href="#220430" title="Int">len</a>
+    <a href="#7821" title="StringBuilder" class="keyword">this</a>
+  }
+
+  @deprecated(<span class="string">&quot;use appendAll instead. This method is deprecated because\n&quot;</span>+
+              <span class="string">&quot;of the possible confusion with `append(Any, Int, Int)'.&quot;</span>)
+  <span class="keyword">def</span> <a title="(x: Array[Char],offset: Int,len: Int)StringBuilder" id="23377">append</a>(<a title="Array[Char]" id="23457">x</a>: <a href="../../Array.scala.html#885" title="Array[Char]">Array</a>[Char], <a title="Int" id="23458">offset</a>: <span title="Int">Int</span>, <a title="Int" id="23459">len</a>: <span title="Int">Int</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> = 
+    <a href="#23376" title="(x: Array[Char],offset: Int,len: Int)StringBuilder">appendAll</a>(<a href="#23457" title="Array[Char]">x</a>, <a href="#23458" title="Int">offset</a>, <a href="#23459" title="Int">len</a>)
+
+  /** &lt;p&gt;
+   *    Appends the string representation of the &lt;code&gt;Boolean&lt;/code&gt; 
+   *    argument to the sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The argument is converted to a string as if by the method 
+   *    &lt;code&gt;String.valueOf&lt;/code&gt;, and the characters of that 
+   *   string are then appended to this sequence. 
+   *  &lt;/p&gt;
+   *
+   *   @param  x  a &lt;code&gt;Boolean&lt;/code&gt;.
+   *   @return    a reference to this object.
+   */
+  <span class="keyword">def</span> <a title="(x: Boolean)StringBuilder" id="23378">append</a>(<a title="Boolean" id="23455">x</a>: <span title="Boolean">Boolean</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> = <a href="#23370" title="(s: String)StringBuilder">append</a>(<span title="object java.lang.String">String</span>.<span title="(x$1: Boolean)java.lang.String">valueOf</span>(<a href="#23455" title="Boolean">x</a>))
+  <span class="keyword">def</span> <a title="(x: Byte)StringBuilder" id="23379">append</a>(<a title="Byte" id="23453">x</a>: <span title="Byte">Byte</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> = <a href="#23370" title="(s: String)StringBuilder">append</a>(<span title="object java.lang.String">String</span>.<span title="(x$1: Any)java.lang.String">valueOf</span>(<a href="#23453" title="Byte">x</a>))
+
+  <span class="keyword">def</span> <a title="(x: Char)StringBuilder" id="23380">append</a>(<a title="Char" id="23451">x</a>: <span title="Char">Char</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> = {
+    <a href="#23358" title="(n: Int)Unit">ensureCapacity</a>(<a href="#23346" title="(x$1: Int)Int">count</a> + <span title="Int(1)" class="int">1</span>)
+    <a href="../../Array.scala.html#17717" title="(i: Int,x: Char)Unit">array</a>(<a href="#23346" title="=&gt; Int">count</a>) = <a href="#23451" title="Char">x</a>
+    <a href="#23346" title="(x$1: Int)Unit">count</a> += <span title="Int(1)" class="int">1</span>
+    <a href="#7821" title="StringBuilder" class="keyword">this</a>
+  }
+
+  <span class="keyword">def</span> <a title="(x: Short)StringBuilder" id="23381">append</a>(<a title="Short" id="23449">x</a>: <span title="Short">Short</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> =
+    <a href="#23370" title="(s: String)StringBuilder">append</a>(<span title="object java.lang.String">String</span>.<span title="(x$1: Any)java.lang.String">valueOf</span>(<a href="#23449" title="Short">x</a>))
+
+  <span class="keyword">def</span> <a title="(x: Int)StringBuilder" id="23382">append</a>(<a title="Int" id="23447">x</a>: <span title="Int">Int</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> =
+    <a href="#23370" title="(s: String)StringBuilder">append</a>(<span title="object java.lang.String">String</span>.<span title="(x$1: Int)java.lang.String">valueOf</span>(<a href="#23447" title="Int">x</a>))
+
+  <span class="keyword">def</span> <a title="(x: Long)StringBuilder" id="23383">append</a>(<a title="Long" id="23445">x</a>: <span title="Long">Long</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> =
+    <a href="#23370" title="(s: String)StringBuilder">append</a>(<span title="object java.lang.String">String</span>.<span title="(x$1: Long)java.lang.String">valueOf</span>(<a href="#23445" title="Long">x</a>))
+
+  <span class="keyword">def</span> <a title="(x: Float)StringBuilder" id="23384">append</a>(<a title="Float" id="23443">x</a>: <span title="Float">Float</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> =
+    <a href="#23370" title="(s: String)StringBuilder">append</a>(<span title="object java.lang.String">String</span>.<span title="(x$1: Float)java.lang.String">valueOf</span>(<a href="#23443" title="Float">x</a>))
+
+  <span class="keyword">def</span> <a title="(x: Double)StringBuilder" id="23385">append</a>(<a title="Double" id="23441">x</a>: <span title="Double">Double</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> = 
+    <a href="#23370" title="(s: String)StringBuilder">append</a>(<span title="object java.lang.String">String</span>.<span title="(x$1: Double)java.lang.String">valueOf</span>(<a href="#23441" title="Double">x</a>))
+
+  /** Removes the characters in a substring of this sequence.
+   *  The substring begins at the specified &lt;code&gt;start&lt;/code&gt; and extends to
+   *  the character at index &lt;code&gt;end - 1&lt;/code&gt; or to the end of the
+   *  sequence if no such character exists. If
+   *  &lt;code&gt;start&lt;/code&gt; is equal to &lt;code&gt;end&lt;/code&gt;, no changes are made.
+   *
+   *  @param  start  The beginning index, inclusive.
+   *  @param  end    The ending index, exclusive.
+   *  @return        This object.
+   *  @throws StringIndexOutOfBoundsException  if &lt;code&gt;start&lt;/code&gt;
+   *                 is negative, greater than &lt;code&gt;length()&lt;/code&gt;, or
+   *		     greater than &lt;code&gt;end&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="(start: Int,end: Int)StringBuilder" id="23386">delete</a>(<a title="Int" id="220812">start</a>: <span title="Int">Int</span>, <a title="Int" id="220813">end</a>: <span title="Int">Int</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> = {
+    <span title="Unit" class="keyword">if</span> (<a href="#220812" title="(x$1: Int)Boolean">start</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <span title="Int(0)" class="int">0</span> || <a href="#220812" title="(x$1: Int)Boolean">start</a> &gt; <a href="#220813" title="Int">end</a>)
+      <span title="Nothing" class="keyword">throw</span> <span title="(x$1: Int)java.lang.StringIndexOutOfBoundsException" class="keyword">new</span> <a href="../../Predef.scala.html#16168" title="java.lang.StringIndexOutOfBoundsException">StringIndexOutOfBoundsException</a>(<a href="#220812" title="Int">start</a>)
+    <span class="keyword">val</span> <a title="Int" id="220815">end0</a> = <span title="Int" class="keyword">if</span> (<a href="#220813" title="(x$1: Int)Boolean">end</a> &gt; <a href="#23346" title="=&gt; Int">count</a>) <a href="#23346" title="=&gt; Int">count</a> <span class="keyword">else</span> <a href="#220813" title="Int">end</a>
+    <span class="keyword">val</span> <a title="Int" id="220816">len</a> = <a href="#220815" title="(x$1: Int)Int">end0</a> - <a href="#220812" title="Int">start</a>
+    <span title="Unit" class="keyword">if</span> (<a href="#220816" title="(x$1: Int)Boolean">len</a> &gt; <span title="Int(0)" class="int">0</span>) {
+      <a href="../../compat/Platform.scala.html#17685" title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">arraycopy</a>(<a href="#23343" title="=&gt; Array[Char]">array</a>, <a href="#220812" title="(x$1: Int)Int">start</a> + <a href="#220816" title="Int">len</a>, <a href="#23343" title="=&gt; Array[Char]">array</a>, <a href="#220812" title="Int">start</a>, <a href="#23346" title="(x$1: Int)Int">count</a> - <a href="#220815" title="Int">end0</a>)
+      <a href="#23346" title="(x$1: Int)Unit">count</a> -= <a href="#220816" title="Int">len</a>
+    }
+    <a href="#7821" title="StringBuilder" class="keyword">this</a>
+  }
+
+  /** Replaces the characters in a substring of this sequence
+   *  with characters in the specified &lt;code&gt;String&lt;/code&gt;. The substring
+   *  begins at the specified &lt;code&gt;start&lt;/code&gt; and extends to the character
+   *  at index &lt;code&gt;end - 1&lt;/code&gt; or to the end of the sequence if no such
+   *  character exists. First the characters in the substring are removed and
+   *  then the specified &lt;code&gt;String&lt;/code&gt; is inserted at &lt;code&gt;start&lt;/code&gt;.
+   * 
+   *  @param  start  The beginning index, inclusive.
+   *  @param  end    The ending index, exclusive.
+   *  @param  str    String that will replace previous contents.
+   *  @return        This object.
+   *  @throws StringIndexOutOfBoundsException  if &lt;code&gt;start&lt;/code&gt;
+   *                 is negative, greater than &lt;code&gt;length()&lt;/code&gt;, or
+   *		     greater than &lt;code&gt;end&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="(start: Int,end: Int,str: String)Unit" id="23387">replace</a>(<a title="Int" id="220976">start</a>: <span title="Int">Int</span>, <a title="Int" id="220977">end</a>: <span title="Int">Int</span>, <a title="String" id="220978">str</a>: <span title="String">String</span>) {
+    <span title="Unit" class="keyword">if</span> (<a href="#220976" title="(x$1: Int)Boolean">start</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <span title="Int(0)" class="int">0</span> <span title="(x$1: Boolean)Boolean">||</span> <a href="#220976" title="(x$1: Int)Boolean">start</a> &gt; <a href="#23346" title="=&gt; Int">count</a> || <a href="#220976" title="(x$1: Int)Boolean">start</a> &gt; <a href="#220977" title="Int">end</a>)
+      <span title="Nothing" class="keyword">throw</span> <span title="(x$1: Int)java.lang.StringIndexOutOfBoundsException" class="keyword">new</span> <a href="../../Predef.scala.html#16168" title="java.lang.StringIndexOutOfBoundsException">StringIndexOutOfBoundsException</a>(<a href="#220976" title="Int">start</a>)
+
+    <span class="keyword">val</span> <a title="Int" id="220980">end0</a> = <span title="Int" class="keyword">if</span> (<a href="#220977" title="(x$1: Int)Boolean">end</a> &gt; <a href="#23346" title="=&gt; Int">count</a>) <a href="#23346" title="=&gt; Int">count</a> <span class="keyword">else</span> <a href="#220977" title="Int">end</a>
+    <span class="keyword">val</span> <a title="Int" id="220981">len</a> = <a href="#220978" title="String">str</a>.<span title="()Int">length</span>()
+    <span class="keyword">val</span> <a title="Int" id="220982">newCount</a> = <a href="#23346" title="(x$1: Int)Int">count</a> <span title="(x$1: Int)Int">+</span> <a href="#220981" title="Int">len</a> - (<a href="#220980" title="(x$1: Int)Int">end0</a> - <a href="#220976" title="Int">start</a>)
+    <a href="#23358" title="(n: Int)Unit">ensureCapacity</a>(<a href="#220982" title="Int">newCount</a>)
+
+    <a href="../../compat/Platform.scala.html#17685" title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">arraycopy</a>(<a href="#23343" title="=&gt; Array[Char]">array</a>, <a href="#220977" title="Int">end</a>, <a href="#23343" title="=&gt; Array[Char]">array</a>, <a href="#220976" title="(x$1: Int)Int">start</a> + <a href="#220981" title="Int">len</a>, <a href="#23346" title="(x$1: Int)Int">count</a> - <a href="#220977" title="Int">end</a>)
+    <a href="#220978" title="String">str</a>.<span title="(x$1: Int,x$2: Int,x$3: Array[Char],x$4: Int)Unit">getChars</span>(<span title="Int(0)" class="int">0</span>, <a href="#220981" title="Int">len</a>, <a href="#23343" title="=&gt; Array[Char]">array</a>, <a href="#220976" title="Int">start</a>)  
+    <a href="#23346" title="(x$1: Int)Unit">count</a> = <a href="#220982" title="Int">newCount</a>
+    <a href="#7821" title="StringBuilder" class="keyword">this</a>
+  }
+
+  /** Inserts the string representation of a subarray of the &lt;code&gt;str&lt;/code&gt;
+   *  array argument into this sequence. The subarray begins at the specified
+   *  &lt;code&gt;offset&lt;/code&gt; and extends &lt;code&gt;len&lt;/code&gt; &lt;code&gt;char&lt;/code&gt;s.
+   *  The characters of the subarray are inserted into this sequence at
+   *  the position indicated by &lt;code&gt;index&lt;/code&gt;. The length of this
+   *  sequence increases by &lt;code&gt;len&lt;/code&gt; &lt;code&gt;Char&lt;/code&gt;s.
+   *
+   * @param  index   position at which to insert subarray.
+   * @param  str     a &lt;code&gt;Char&lt;/code&gt; array.
+   * @param  offset  the index of the first &lt;code&gt;char&lt;/code&gt; in subarray to
+   *                 be inserted.
+   * @param  len     the number of &lt;code&gt;Char&lt;/code&gt;s in the subarray to
+   *                 be inserted.
+   * @return         This object
+   * @throws StringIndexOutOfBoundsException  if &lt;code&gt;index&lt;/code&gt;
+   *                 is negative or greater than &lt;code&gt;length()&lt;/code&gt;, or
+   *                 &lt;code&gt;offset&lt;/code&gt; or &lt;code&gt;len&lt;/code&gt; are negative, or
+   *                 &lt;code&gt;(offset+len)&lt;/code&gt; is greater than
+   *                 &lt;code&gt;str.length&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="(index: Int,str: Array[Char],offset: Int,len: Int)StringBuilder" id="23388">insertAll</a>(<a title="Int" id="221128">index</a>: <span title="Int">Int</span>, <a title="Array[Char]" id="221129">str</a>: <a href="../../Array.scala.html#885" title="Array[Char]">Array</a>[Char], <a title="Int" id="221130">offset</a>: <span title="Int">Int</span>, <a title="Int" id="221131">len</a>: <span title="Int">Int</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> = {
+    <span title="Unit" class="keyword">if</span> (<a href="#221128" title="(x$1: Int)Boolean">index</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <span title="Int(0)" class="int">0</span> || <a href="#221128" title="(x$1: Int)Boolean">index</a> &gt; <a href="#23346" title="=&gt; Int">count</a>)
+      <span title="Nothing" class="keyword">throw</span> <span title="(x$1: Int)java.lang.StringIndexOutOfBoundsException" class="keyword">new</span> <a href="../../Predef.scala.html#16168" title="java.lang.StringIndexOutOfBoundsException">StringIndexOutOfBoundsException</a>(<a href="#221128" title="Int">index</a>)
+    <span title="Unit" class="keyword">if</span> (<a href="#221130" title="(x$1: Int)Boolean">offset</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <span title="Int(0)" class="int">0</span> <span title="(x$1: Boolean)Boolean">||</span> <a href="#221131" title="(x$1: Int)Boolean">len</a> &lt; <span title="Int(0)" class="int">0</span> || <a href="#221130" title="(x$1: Int)Boolean">offset</a> &gt; <a href="#221129" title="Array[Char]">str</a>.<a href="../../Array.scala.html#17715" title="(x$1: Int)Int">length</a> - <a href="#221131" title="Int">len</a>)
+      <span title="Nothing" class="keyword">throw</span> <a title="(x$1: java.lang.String)java.lang.StringIndexOutOfBoundsException" id="219800" class="keyword">new</a> <a href="../../Predef.scala.html#16168" title="java.lang.StringIndexOutOfBoundsException">StringIndexOutOfBoundsException</a>(
+                <span title="(x$1: Any)java.lang.String" class="string">&quot;offset &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#221130" title="Int">offset</a> <span title="(x$1: Any)java.lang.String">+</span> <span title="java.lang.String(&quot;, len &quot;)" class="string">&quot;, len &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#221131" title="Int">len</a> <span title="(x$1: Any)java.lang.String">+</span>
+                <span title="java.lang.String(&quot;, str.length &quot;)" class="string">&quot;, str.length &quot;</span> + <a href="#221129" title="Array[Char]">str</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>)
+    <a href="#23358" title="(n: Int)Unit">ensureCapacity</a>(<a href="#23346" title="(x$1: Int)Int">count</a> + <a href="#221131" title="Int">len</a>)
+    <a href="../../compat/Platform.scala.html#17685" title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">arraycopy</a>(<a href="#23343" title="=&gt; Array[Char]">array</a>, <a href="#221128" title="Int">index</a>, <a href="#23343" title="=&gt; Array[Char]">array</a>, <a href="#221128" title="(x$1: Int)Int">index</a> + <a href="#221131" title="Int">len</a>, <a href="#23346" title="(x$1: Int)Int">count</a> - <a href="#221128" title="Int">index</a>)
+    <a href="../../compat/Platform.scala.html#17685" title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">arraycopy</a>(<a href="#221129" title="Array[Char]">str</a>, <a href="#221130" title="Int">offset</a>, <a href="#23343" title="=&gt; Array[Char]">array</a>, <a href="#221128" title="Int">index</a>, <a href="#221131" title="Int">len</a>)
+    <a href="#23346" title="(x$1: Int)Unit">count</a> += <a href="#221131" title="Int">len</a>
+    <a href="#7821" title="StringBuilder" class="keyword">this</a>
+  }
+
+  @deprecated(<span class="string">&quot;use insertAll instead. This method is deprecated because of the\n&quot;</span>+
+              <span class="string">&quot;possible confusion with `insert(Int, Any, Int, Int)'.&quot;</span>)
+  <span class="keyword">def</span> <a title="(index: Int,str: Array[Char],offset: Int,len: Int)StringBuilder" id="23389">insert</a>(<a title="Int" id="221348">index</a>: <span title="Int">Int</span>, <a title="Array[Char]" id="221349">str</a>: <a href="../../Array.scala.html#885" title="Array[Char]">Array</a>[Char], <a title="Int" id="221350">offset</a>: <span title="Int">Int</span>, <a title="Int" id="221351">len</a>: <span title="Int">Int</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> = 
+    <a href="#23388" title="(index: Int,str: Array[Char],offset: Int,len: Int)StringBuilder">insertAll</a>(<a href="#221348" title="Int">index</a>, <a href="#221349" title="Array[Char]">str</a>, <a href="#221350" title="Int">offset</a>, <a href="#221351" title="Int">len</a>)
+
+  /** &lt;p&gt;
+   *    Inserts the string representation of the &lt;code&gt;Any&lt;/code&gt; 
+   *    argument into this character sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The second argument is converted to a string as if by the method 
+   *    &lt;code&gt;String.valueOf&lt;/code&gt;, and the characters of that 
+   *    string are then inserted into this sequence at the indicated 
+   *    offset. 
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The offset argument must be greater than or equal to 
+   *    &lt;code&gt;0&lt;/code&gt;, and less than or equal to the length of this 
+   *    sequence.
+   *  &lt;/p&gt;
+   *
+   *  @param  offset  the offset.
+   *  @param  x       an &lt;code&gt;Any&lt;/code&gt; value.
+   *  @return         a reference to this object.
+   *  @throws StringIndexOutOfBoundsException  if the offset is invalid.
+   */
+  <span class="keyword">def</span> <a title="(at: Int,x: Any)StringBuilder" id="23390">insert</a>(<a title="Int" id="221364">at</a>: <span title="Int">Int</span>, <a title="Any" id="221365">x</a>: <span title="Any">Any</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> =
+    <a href="#23391" title="(at: Int,x: String)StringBuilder">insert</a>(<a href="#221364" title="Int">at</a>, <span title="object java.lang.String">String</span>.<span title="(x$1: Any)java.lang.String">valueOf</span>(<a href="#221365" title="Any">x</a>))
+  
+  /** Inserts the string into this character sequence.
+   *
+   *  @param  at  the offset position.
+   *  @param  x   a string.
+   *  @return     a reference to this object.
+   *  @throws StringIndexOutOfBoundsException  if the offset is invalid.
+   */
+  <span class="keyword">def</span> <a title="(at: Int,x: String)StringBuilder" id="23391">insert</a>(<a title="Int" id="221400">at</a>: <span title="Int">Int</span>, <a title="String" id="221401">x</a>: <span title="String">String</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> = {
+    <span title="Unit" class="keyword">if</span> (<a href="#221400" title="(x$1: Int)Boolean">at</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <span title="Int(0)" class="int">0</span> || <a href="#221400" title="(x$1: Int)Boolean">at</a> &gt; <a href="#23346" title="=&gt; Int">count</a>)
+      <span title="Nothing" class="keyword">throw</span> <span title="(x$1: Int)java.lang.StringIndexOutOfBoundsException" class="keyword">new</span> <a href="../../Predef.scala.html#16168" title="java.lang.StringIndexOutOfBoundsException">StringIndexOutOfBoundsException</a>(<a href="#221400" title="Int">at</a>)
+    <span class="keyword">val</span> <a title="java.lang.String" id="221413">str</a> = <span title="java.lang.String" class="keyword">if</span> (<a href="#221401" title="(x$1: AnyRef)Boolean">x</a> == <span title="Null(null)" class="keyword">null</span>) <span title="java.lang.String(&quot;null&quot;)" class="string">&quot;null&quot;</span> <span class="keyword">else</span> <a href="#221401" title="String">x</a>
+    <span class="keyword">val</span> <a title="Int" id="221414">len</a> = <a href="#221413" title="java.lang.String">str</a>.<span title="()Int">length</span>
+    <a href="#23358" title="(n: Int)Unit">ensureCapacity</a>(<a href="#23346" title="(x$1: Int)Int">count</a> + <a href="#221414" title="Int">len</a>)
+    <a href="../../compat/Platform.scala.html#17685" title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">arraycopy</a>(<a href="#23343" title="=&gt; Array[Char]">array</a>, <a href="#221400" title="Int">at</a>, <a href="#23343" title="=&gt; Array[Char]">array</a>, <a href="#221400" title="(x$1: Int)Int">at</a> + <a href="#221414" title="Int">len</a>, <a href="#23346" title="(x$1: Int)Int">count</a> - <a href="#221400" title="Int">at</a>)
+    <a href="#221413" title="java.lang.String">str</a>.<span title="(x$1: Int,x$2: Int,x$3: Array[Char],x$4: Int)Unit">getChars</span>(<span title="Int(0)" class="int">0</span>, <a href="#221414" title="Int">len</a>, <a href="#23343" title="=&gt; Array[Char]">array</a>, <a href="#221400" title="Int">at</a>)
+    <a href="#23346" title="(x$1: Int)Unit">count</a> += <a href="#221414" title="Int">len</a>
+    <a href="#7821" title="StringBuilder" class="keyword">this</a>
+  }
+
+  /** Inserts the string representation of the &lt;code&gt;Char&lt;/code&gt; sequence 
+   *  argument into this sequence.
+   *
+   *  @param  at  the offset position.
+   *  @param  x   a character sequence.
+   *  @return     a reference to this object.
+   *  @throws StringIndexOutOfBoundsException  if the offset is invalid.
+   */
+  <span class="keyword">def</span> <a title="(at: Int,x: Seq[Char])StringBuilder" id="23392">insertAll</a>(<a title="Int" id="221359">at</a>: <span title="Int">Int</span>, <a title="Seq[Char]" id="221360">x</a>: <a href="../Sequence.scala.html#4346" title="Seq[Char]">Seq</a>[Char]): <a href="#7821" title="StringBuilder">StringBuilder</a> =
+    <a href="#23394" title="(at: Int,x: Array[Char])StringBuilder">insertAll</a>(<a href="#221359" title="Int">at</a>, <a href="#221360" title="Seq[Char]">x</a>.<a href="../generic/TraversableTemplate.scala.html#17233" title="(implicit evidence$1: scala.reflect.ClassManifest[Char])Array[Char]">toArray</a>)
+
+  @deprecated(<span class="string">&quot;use insertAll instead. This method is deprecated because of\n&quot;</span>+
+              <span class="string">&quot;the possible confusion with `insert(Int, Any)'.&quot;</span>)
+  <span class="keyword">def</span> <a title="(at: Int,x: Seq[Char])StringBuilder" id="23393">insert</a>(<a title="Int" id="221397">at</a>: <span title="Int">Int</span>, <a title="Seq[Char]" id="221398">x</a>: <a href="../Sequence.scala.html#4346" title="Seq[Char]">Seq</a>[Char]): <a href="#7821" title="StringBuilder">StringBuilder</a> =
+    <a href="#23392" title="(at: Int,x: Seq[Char])StringBuilder">insertAll</a>(<a href="#221397" title="Int">at</a>, <a href="#221398" title="Seq[Char]">x</a>)
+
+  /** Inserts the string representation of the &lt;code&gt;Char&lt;/code&gt; array 
+   *  argument into this sequence.
+   *
+   *  @param  at  the offset position.
+   *  @param  x   a character array.
+   *  @return     a reference to this object.
+   *  @throws StringIndexOutOfBoundsException  if the offset is invalid.
+   */
+  <span class="keyword">def</span> <a title="(at: Int,x: Array[Char])StringBuilder" id="23394">insertAll</a>(<a title="Int" id="221356">at</a>: <span title="Int">Int</span>, <a title="Array[Char]" id="221357">x</a>: <a href="../../Array.scala.html#885" title="Array[Char]">Array</a>[Char]): <a href="#7821" title="StringBuilder">StringBuilder</a> = {
+    <span title="Unit" class="keyword">if</span> (<a href="#221356" title="(x$1: Int)Boolean">at</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <span title="Int(0)" class="int">0</span> || <a href="#221356" title="(x$1: Int)Boolean">at</a> &gt; <a href="#23346" title="=&gt; Int">count</a>)
+      <span title="Nothing" class="keyword">throw</span> <span title="(x$1: Int)java.lang.StringIndexOutOfBoundsException" class="keyword">new</span> <a href="../../Predef.scala.html#16168" title="java.lang.StringIndexOutOfBoundsException">StringIndexOutOfBoundsException</a>(<a href="#221356" title="Int">at</a>)
+    <span class="keyword">val</span> <a title="Int" id="221619">len</a> = <a href="#221357" title="Array[Char]">x</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>
+    <a href="#23358" title="(n: Int)Unit">ensureCapacity</a>(<a href="#23346" title="(x$1: Int)Int">count</a> + <a href="#221619" title="Int">len</a>)
+    <a href="../../compat/Platform.scala.html#17685" title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">arraycopy</a>(<a href="#23343" title="=&gt; Array[Char]">array</a>, <a href="#221356" title="Int">at</a>, <a href="#23343" title="=&gt; Array[Char]">array</a>, <a href="#221356" title="(x$1: Int)Int">at</a> + <a href="#221619" title="Int">len</a>, <a href="#23346" title="(x$1: Int)Int">count</a> - <a href="#221356" title="Int">at</a>)
+    <a href="../../compat/Platform.scala.html#17685" title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">arraycopy</a>(<a href="#221357" title="Array[Char]">x</a>, <span title="Int(0)" class="int">0</span>, <a href="#23343" title="=&gt; Array[Char]">array</a>, <a href="#221356" title="Int">at</a>, <a href="#221619" title="Int">len</a>)
+    <a href="#23346" title="(x$1: Int)Unit">count</a> += <a href="#221619" title="Int">len</a>
+    <a href="#7821" title="StringBuilder" class="keyword">this</a>
+  }
+
+  @deprecated(<span class="string">&quot;use insertAll instead. This method is deprecated because of\n&quot;</span>+
+              <span class="string">&quot;the possible confusion with `insert(Int, Any)'.&quot;</span>)
+  <span class="keyword">def</span> <a title="(at: Int,x: Array[Char])StringBuilder" id="23395">insert</a>(<a title="Int" id="221394">at</a>: <span title="Int">Int</span>, <a title="Array[Char]" id="221395">x</a>: <a href="../../Array.scala.html#885" title="Array[Char]">Array</a>[Char]): <a href="#7821" title="StringBuilder">StringBuilder</a> = 
+    <a href="#23394" title="(at: Int,x: Array[Char])StringBuilder">insertAll</a>(<a href="#221394" title="Int">at</a>, <a href="#221395" title="Array[Char]">x</a>)
+
+  /** &lt;p&gt;
+   *    Inserts the string representation of the &lt;code&gt;Boolean&lt;/code&gt; argument
+   *    into this sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The offset argument must be greater than or equal to 0, and less than
+   *    or equal to the length of this sequence.
+   *  &lt;/p&gt;
+   *
+   *  @param  at  the offset position.
+   *  @param  x   a &lt;code&gt;Boolean&lt;/code&gt; value.
+   *  @return     a reference to this object.
+   */
+  <span class="keyword">def</span> <a title="(at: Int,x: Boolean)StringBuilder" id="23396">insert</a>(<a title="Int" id="221391">at</a>: <span title="Int">Int</span>, <a title="Boolean" id="221392">x</a>: <span title="Boolean">Boolean</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> =
+    <a href="#23391" title="(at: Int,x: String)StringBuilder">insert</a>(<a href="#221391" title="Int">at</a>, <span title="object java.lang.String">String</span>.<span title="(x$1: Boolean)java.lang.String">valueOf</span>(<a href="#221392" title="Boolean">x</a>))
+
+  /** &lt;p&gt;
+   *    Inserts the string representation of the &lt;code&gt;Byte&lt;/code&gt; argument
+   *    into this sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The offset argument must be greater than or equal to 0, and less than
+   *    or equal to the length of this sequence.
+   *  &lt;/p&gt;
+   *
+   *  @param  at  the offset position.
+   *  @param  x   a &lt;code&gt;Byte&lt;/code&gt; value.
+   *  @return     a reference to this object.
+   */
+  <span class="keyword">def</span> <a title="(at: Int,x: Byte)StringBuilder" id="23397">insert</a>(<a title="Int" id="221388">at</a>: <span title="Int">Int</span>, <a title="Byte" id="221389">x</a>: <span title="Byte">Byte</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> =
+    <a href="#23391" title="(at: Int,x: String)StringBuilder">insert</a>(<a href="#221388" title="Int">at</a>, <span title="object java.lang.String">String</span>.<span title="(x$1: Any)java.lang.String">valueOf</span>(<a href="#221389" title="Byte">x</a>))
+
+  /** &lt;p&gt;
+   *    Inserts the string representation of the &lt;code&gt;Char&lt;/code&gt; argument
+   *    into this sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The offset argument must be greater than or equal to 0, and less than
+   *    or equal to the length of this sequence.
+   *  &lt;/p&gt;
+   *
+   *  @param  at  the offset position.
+   *  @param  x   a &lt;code&gt;Char&lt;/code&gt; value.
+   *  @return     a reference to this object.
+   */
+  <span class="keyword">def</span> <a title="(at: Int,x: Char)StringBuilder" id="23398">insert</a>(<a title="Int" id="221385">at</a>: <span title="Int">Int</span>, <a title="Char" id="221386">x</a>: <span title="Char">Char</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> = {
+    <span title="Unit" class="keyword">if</span> (<a href="#221385" title="(x$1: Int)Boolean">at</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <span title="Int(0)" class="int">0</span> || <a href="#221385" title="(x$1: Int)Boolean">at</a> &gt; <a href="#23346" title="=&gt; Int">count</a>)
+      <span title="Nothing" class="keyword">throw</span> <span title="(x$1: Int)java.lang.StringIndexOutOfBoundsException" class="keyword">new</span> <a href="../../Predef.scala.html#16168" title="java.lang.StringIndexOutOfBoundsException">StringIndexOutOfBoundsException</a>(<a href="#221385" title="Int">at</a>)
+    <a href="#23358" title="(n: Int)Unit">ensureCapacity</a>(<a href="#23346" title="(x$1: Int)Int">count</a> + <span title="Int(1)" class="int">1</span>)
+    <a href="../../compat/Platform.scala.html#17685" title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">arraycopy</a>(<a href="#23343" title="=&gt; Array[Char]">array</a>, <a href="#221385" title="Int">at</a>, <a href="#23343" title="=&gt; Array[Char]">array</a>, <a href="#221385" title="(x$1: Int)Int">at</a> + <span title="Int(1)" class="int">1</span>, <a href="#23346" title="(x$1: Int)Int">count</a> - <a href="#221385" title="Int">at</a>)
+    <a href="../../Array.scala.html#17717" title="(i: Int,x: Char)Unit">array</a>(<a href="#221385" title="Int">at</a>) = <a href="#221386" title="Char">x</a>
+    <a href="#23346" title="(x$1: Int)Unit">count</a> += <span title="Int(1)" class="int">1</span>
+    <a href="#7821" title="StringBuilder" class="keyword">this</a>
+  }
+
+  /** &lt;p&gt;
+   *    Inserts the string representation of the &lt;code&gt;Short&lt;/code&gt; argument
+   *    into this sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The offset argument must be greater than or equal to 0, and less than
+   *    or equal to the length of this sequence.
+   *  &lt;/p&gt;
+   *
+   *  @param  at  the offset position.
+   *  @param  x   a &lt;code&gt;Short&lt;/code&gt; value.
+   *  @return     a reference to this object.
+   */
+  <span class="keyword">def</span> <a title="(at: Int,x: Short)StringBuilder" id="23399">insert</a>(<a title="Int" id="221382">at</a>: <span title="Int">Int</span>, <a title="Short" id="221383">x</a>: <span title="Short">Short</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> =
+    <a href="#23391" title="(at: Int,x: String)StringBuilder">insert</a>(<a href="#221382" title="Int">at</a>, <span title="object java.lang.String">String</span>.<span title="(x$1: Any)java.lang.String">valueOf</span>(<a href="#221383" title="Short">x</a>))
+
+  /** &lt;p&gt;
+   *    Inserts the string representation of the &lt;code&gt;Int&lt;/code&gt; argument
+   *    into this sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The offset argument must be greater than or equal to 0, and less than
+   *    or equal to the length of this sequence.
+   *  &lt;/p&gt;
+   *
+   *  @param  at  the offset position.
+   *  @param  x   a &lt;code&gt;Int&lt;/code&gt; value.
+   *  @return     a reference to this object.
+   */
+  <span class="keyword">def</span> <a title="(at: Int,x: Int)StringBuilder" id="23400">insert</a>(<a title="Int" id="221379">at</a>: <span title="Int">Int</span>, <a title="Int" id="221380">x</a>: <span title="Int">Int</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> =
+    <a href="#23391" title="(at: Int,x: String)StringBuilder">insert</a>(<a href="#221379" title="Int">at</a>, <span title="object java.lang.String">String</span>.<span title="(x$1: Int)java.lang.String">valueOf</span>(<a href="#221380" title="Int">x</a>))
+
+  /** &lt;p&gt;
+   *    Inserts the string representation of the &lt;code&gt;Long&lt;/code&gt; argument
+   *    into this sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The offset argument must be greater than or equal to 0, and less than
+   *    or equal to the length of this sequence.
+   *  &lt;/p&gt;
+   *
+   *  @param  at  the offset position.
+   *  @param  x   a &lt;code&gt;Long&lt;/code&gt; value.
+   *  @return     a reference to this object.
+   */
+  <span class="keyword">def</span> <a title="(at: Int,x: Long)StringBuilder" id="23401">insert</a>(<a title="Int" id="221376">at</a>: <span title="Int">Int</span>, <a title="Long" id="221377">x</a>: <span title="Long">Long</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> =
+    <a href="#23391" title="(at: Int,x: String)StringBuilder">insert</a>(<a href="#221376" title="Int">at</a>, <span title="object java.lang.String">String</span>.<span title="(x$1: Long)java.lang.String">valueOf</span>(<a href="#221377" title="Long">x</a>))
+
+  /** &lt;p&gt;
+   *    Inserts the string representation of the &lt;code&gt;Float&lt;/code&gt; argument
+   *    into this sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The offset argument must be greater than or equal to 0, and less than
+   *    or equal to the length of this sequence.
+   *  &lt;/p&gt;
+   *
+   *  @param  at  the offset position.
+   *  @param  x   a &lt;code&gt;Float&lt;/code&gt; value.
+   *  @return     a reference to this object.
+   */
+  <span class="keyword">def</span> <a title="(at: Int,x: Float)StringBuilder" id="23402">insert</a>(<a title="Int" id="221373">at</a>: <span title="Int">Int</span>, <a title="Float" id="221374">x</a>: <span title="Float">Float</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> =
+    <a href="#23391" title="(at: Int,x: String)StringBuilder">insert</a>(<a href="#221373" title="Int">at</a>, <span title="object java.lang.String">String</span>.<span title="(x$1: Float)java.lang.String">valueOf</span>(<a href="#221374" title="Float">x</a>))
+
+  /** &lt;p&gt;
+   *    Inserts the string representation of the &lt;code&gt;Double&lt;/code&gt; argument
+   *    into this sequence.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    The offset argument must be greater than or equal to 0, and less than
+   *    or equal to the length of this sequence.
+   *  &lt;/p&gt;
+   *
+   *  @param  at  the offset position.
+   *  @param  x   a &lt;code&gt;Double&lt;/code&gt; value.
+   *  @return     a reference to this object.
+   */
+  <span class="keyword">def</span> <a title="(at: Int,x: Double)StringBuilder" id="23403">insert</a>(<a title="Int" id="221370">at</a>: <span title="Int">Int</span>, <a title="Double" id="221371">x</a>: <span title="Double">Double</span>): <a href="#7821" title="StringBuilder">StringBuilder</a> =
+    <a href="#23391" title="(at: Int,x: String)StringBuilder">insert</a>(<a href="#221370" title="Int">at</a>, <span title="object java.lang.String">String</span>.<span title="(x$1: Double)java.lang.String">valueOf</span>(<a href="#221371" title="Double">x</a>))
+
+  /** &lt;p&gt;
+   *    Returns the index within this string of the first occurrence of the
+   *    specified substring. The integer returned is the smallest value 
+   *    &lt;i&gt;k&lt;/i&gt; such that:
+   *  &lt;/p&gt;
+   *  &lt;blockquote&gt;&lt;pre&gt;
+   *  this.toString().startsWith(str, &lt;i&gt;k&lt;/i&gt;)&lt;/pre&gt;
+   *  &lt;/blockquote&gt;
+   *  &lt;p&gt;
+   *    is &lt;code&gt;true&lt;/code&gt;.
+   *  &lt;/p&gt;
+   *
+   *  @param  str  any string.
+   *  @return      if the string argument occurs as a substring within this
+   *               object, then the index of the first character of the first
+   *               such substring is returned; if it does not occur as a
+   *               substring, &lt;code&gt;-1&lt;/code&gt; is returned.
+   *  @throws NullPointerException if &lt;code&gt;str&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="(str: String)Int" id="23404">indexOf</a>(<a title="String" id="222071">str</a>: <span title="String">String</span>): <span title="Int">Int</span> = <a href="../generic/SequenceTemplate.scala.html#17374" title="(that: Sequence[Char])Int">indexOfSeq</a>(<a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString">str</a>.<a href="../generic/TraversableTemplate.scala.html#17233" title="(implicit evidence$1: scala.reflect.ClassManifest[Char])Array[Char]">toArray</a>)
+
+  /** &lt;p&gt;
+   *    Returns the index within this string of the first occurrence of the
+   *    specified substring, starting at the specified index. The integer
+   *    returned is the smallest value &lt;code&gt;k&lt;/code&gt; for which:
+   *  &lt;/p&gt;&lt;pre&gt;
+   *    k &gt;= Math.min(fromIndex, str.length()) &amp;&amp;
+   *                   this.toString().startsWith(str, k)&lt;/pre&gt;
+   *  &lt;p&gt;
+   *    If no such value of &lt;code&gt;k&lt;/code&gt; exists, then &lt;code&gt;-1&lt;/code&gt;
+   *    is returned.
+   *  &lt;/p&gt;
+   *
+   *  @param str        the substring for which to search.
+   *  @param fromIndex  the index from which to start the search.
+   *  @return           the index within this string of the first occurrence
+   *                    of the specified substring, starting at the specified index.
+   */
+  <span class="keyword">def</span> <a title="(str: String,fromIndex: Int)Int" id="23405">indexOf</a>(<a title="String" id="222126">str</a>: <span title="String">String</span>, <a title="Int" id="222127">fromIndex</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = <a href="../generic/SequenceTemplate.scala.html#17377" title="(that: Sequence[Char],fromIndex: Int)Int">indexOfSeq</a>(<a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString">str</a>.<a href="../generic/TraversableTemplate.scala.html#17233" title="(implicit evidence$1: scala.reflect.ClassManifest[Char])Array[Char]">toArray</a>, <a href="#222127" title="Int">fromIndex</a>)
+
+  /** &lt;p&gt;
+   *    Returns the index within this string of the rightmost occurrence
+   *    of the specified substring.  The rightmost empty string &quot;&quot; is
+   *    considered to occur at the index value &lt;code&gt;this.length()&lt;/code&gt;. 
+   *    The returned index is the largest value &lt;i&gt;k&lt;/i&gt; such that 
+   *  &lt;/p&gt;
+   *  &lt;blockquote&gt;&lt;pre&gt;
+   *  this.toString().startsWith(str, k)&lt;/pre&gt;
+   *  &lt;/blockquote&gt;
+   *  &lt;p&gt;
+   *    is true.
+   *  &lt;/p&gt;
+   *
+   * @param  str  the substring to search for.
+   * @return      if the string argument occurs one or more times as a substring
+   *              within this object, then the index of the first character of
+   *              the last such substring is returned. If it does not occur as
+   *              a substring, &lt;code&gt;-1&lt;/code&gt; is returned.
+   * @throws NullPointerException  if &lt;code&gt;str&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="(str: String)Int" id="23406">lastIndexOf</a>(<a title="String" id="222203">str</a>: <span title="String">String</span>): <span title="Int">Int</span> = <a href="../generic/SequenceTemplate.scala.html#17383" title="(that: Sequence[Char],fromIndex: Int)Int">lastIndexOfSeq</a>(<a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString">str</a>.<a href="../generic/TraversableTemplate.scala.html#17233" title="(implicit evidence$1: scala.reflect.ClassManifest[Char])Array[Char]">toArray</a>, <a href="#23346" title="=&gt; Int">count</a>)
+
+  /** &lt;p&gt;
+   *    Returns the index within this string of the last occurrence of the
+   *    specified substring. The integer returned is the largest value
+   *    &lt;code&gt;k&lt;/code&gt; such that:
+   *  &lt;/p&gt;&lt;pre&gt;val
+   *    k &lt;= Math.min(fromIndex, str.length()) &amp;&amp;
+   *                   this.toString().startsWith(str, k)&lt;/pre&gt;
+   *  &lt;p&gt;
+   *    If no such value of &lt;code&gt;k&lt;/code&gt; exists, then &lt;code&gt;-1&lt;/code&gt;
+   *    is returned.
+   *  &lt;/p&gt;
+   *
+   *  @param  str        the substring to search for.
+   *  @param  fromIndex  the index to start the search from.
+   *  @return            the index within this sequence of the last occurrence
+   *                     of the specified substring.
+   */
+  <span class="keyword">def</span> <a title="(str: String,fromIndex: Int)Int" id="23407">lastIndexOf</a>(<a title="String" id="222284">str</a>: <span title="String">String</span>, <a title="Int" id="222285">fromIndex</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = <a href="../generic/SequenceTemplate.scala.html#17383" title="(that: Sequence[Char],fromIndex: Int)Int">lastIndexOfSeq</a>(<a href="../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString">str</a>.<a href="../generic/TraversableTemplate.scala.html#17233" title="(implicit evidence$1: scala.reflect.ClassManifest[Char])Array[Char]">toArray</a>, <a href="#222285" title="Int">fromIndex</a>)
+
+  /** &lt;p&gt;
+   *    Causes this character sequence to be replaced by the reverse of the
+   *    sequence. If there are any surrogate pairs included in the sequence,
+   *    these are treated as single characters for the reverse operation.
+   *    Thus, the order of the high-low surrogates is never reversed.
+   *  &lt;/p&gt;
+   *  &lt;p&gt;
+   *    Let &lt;i&gt;n&lt;/i&gt; be the character length of this character sequence
+   *    (not the length in &lt;code&gt;Char&lt;/code&gt; values) just prior to
+   *    execution of the &lt;code&gt;reverse&lt;/code&gt; method. Then the
+   *    character at index &lt;i&gt;k&lt;/i&gt; in the new character sequence is
+   *    equal to the character at index &lt;i&gt;n-k-1&lt;/i&gt; in the old
+   *    character sequence.
+   *  &lt;/p&gt;
+   *
+   *  @return  a reference to this object.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()StringBuilder" id="23408">reverse</a>(): <a href="#7821" title="StringBuilder">StringBuilder</a> = {
+    <span class="keyword">var</span> <a title="Boolean" id="222362">hasSurrogate</a> = <span title="Boolean(false)" class="keyword">false</span>
+    <span class="keyword">val</span> <a title="Int" id="222363">n</a> = <a href="#23346" title="(x$1: Int)Int">count</a> - <span title="Int(1)" class="int">1</span>
+    <span class="keyword">var</span> <a title="Int" id="222364">j</a> = <a title="(x$1: Int)Int" id="2859">(</a><a href="#222363" title="(x$1: Int)Int">n</a>-<span title="Int(1)" class="int">1</span>) &gt;&gt; <span title="Int(1)" class="int">1</span>
+    <span title="Unit" class="keyword">while</span> (<a href="#222364" title="(x$1: Int)Boolean">j</a> &gt;= <span title="Int(0)" class="int">0</span>) <a href="#222365" title="()Unit">{</a>
+      <span class="keyword">val</span> <a title="Char" id="222397">temp</a> = <a href="../../Array.scala.html#17716" title="(i: Int)Char">array</a>(<a href="#222364" title="Int">j</a>)
+      <span class="keyword">val</span> <a title="Char" id="222398">temp2</a> = <a href="../../Array.scala.html#17716" title="(i: Int)Char">array</a>(<a href="#222363" title="(x$1: Int)Int">n</a> - <a href="#222364" title="Int">j</a>)
+      <span title="Unit" class="keyword">if</span> (<a title="=&gt; Boolean" id="2203">!</a><a href="#222362" title="Boolean">hasSurrogate</a>)
+        <a href="#222362" title="Boolean">hasSurrogate</a> =
+          <span title="(x$1: Boolean)Boolean">(</span><a href="#222397" title="(x$1: Char)Boolean">temp</a> <span title="(x$1: Boolean)Boolean">&gt;=</span> Character.<span title="Char('?')">MIN_HIGH_SURROGATE</span> &amp;&amp; <a href="#222397" title="(x$1: Char)Boolean">temp</a> &lt;= Character.<span title="Char('?')">MAX_LOW_SURROGATE</span>) ||
+       	  (<a href="#222398" title="(x$1: Char)Boolean">temp2</a> <span title="(x$1: Boolean)Boolean">&gt;=</span> Character.<span title="Char('?')">MIN_HIGH_SURROGATE</span> &amp;&amp; <a href="#222398" title="(x$1: Char)Boolean">temp2</a> &lt;= Character.<span title="Char('?')">MAX_LOW_SURROGATE</span>)
+      <a href="../../Array.scala.html#17717" title="(i: Int,x: Char)Unit">array</a>(<a href="#222364" title="Int">j</a>) = <a href="#222398" title="Char">temp2</a>
+      <a href="../../Array.scala.html#17717" title="(i: Int,x: Char)Unit">array</a>(<a href="#222363" title="(x$1: Int)Int">n</a> - <a href="#222364" title="Int">j</a>) = <a href="#222397" title="Char">temp</a>
+      <a href="#222364" title="Int">j</a> -= <span title="Int(1)" class="int">1</span>
+    }
+    <span title="Unit" class="keyword">if</span> (<a href="#222362" title="Boolean">hasSurrogate</a>) {
+      // Reverse back all valid surrogate pairs
+      <span class="keyword">var</span> <a title="Int" id="222543">i</a> = <span title="Int(0)" class="int">0</span>
+      <span title="Unit" class="keyword">while</span> (<a href="#222543" title="(x$1: Int)Boolean">i</a> &lt; <a href="#23346" title="(x$1: Int)Int">count</a> - <span title="Int(1)" class="int">1</span>) <a href="#222544" title="()Unit">{</a>
+        <span class="keyword">val</span> <a title="Char" id="222564">c2</a> = <a href="../../Array.scala.html#17716" title="(i: Int)Char">array</a>(<a href="#222543" title="Int">i</a>)
+	<span title="Unit" class="keyword">if</span> (<span title="object java.lang.Character">Character</span>.<a title="(x$1: Char)Boolean" id="18553">isLowSurrogate</a>(<a href="#222564" title="Char">c2</a>)) {
+          <span class="keyword">val</span> <a title="Char" id="222577">c1</a> = <a href="../../Array.scala.html#17716" title="(i: Int)Char">array</a>(<a href="#222543" title="(x$1: Int)Int">i</a> + <span title="Int(1)" class="int">1</span>)
+          <span title="Unit" class="keyword">if</span> (<span title="object java.lang.Character">Character</span>.<a title="(x$1: Char)Boolean" id="18551">isHighSurrogate</a>(<a href="#222577" title="Char">c1</a>)) {
+            <a href="../../Array.scala.html#17717" title="(i: Int,x: Char)Unit">array</a>(<a href="#222543" title="Int">i</a>) = <a href="#222577" title="Char">c1</a>; <a href="#222543" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+            <a href="../../Array.scala.html#17717" title="(i: Int,x: Char)Unit">array</a>(<a href="#222543" title="Int">i</a>) = <a href="#222564" title="Char">c2</a>
+          }
+        }
+        <a href="#222543" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+      }
+    }
+    <a href="#7821" title="StringBuilder" class="keyword">this</a>
+  }
+
+  /** Returns a string representing the data in this sequence.
+   *  A new &lt;code&gt;String&lt;/code&gt; object is allocated and initialized to 
+   *  contain the character sequence currently represented by this 
+   *  object. This &lt;code&gt;String&lt;/code&gt; is then returned. Subsequent 
+   *  changes to this sequence do not affect the contents of the 
+   *  &lt;code&gt;String&lt;/code&gt;.
+   *
+   *  @return  a string representation of this sequence of characters.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="23409">toString</a>: <span title="String">String</span> = <span title="(x$1: Array[Char],x$2: Int,x$3: Int)java.lang.String" class="keyword">new</span> <a href="../../Predef.scala.html#16156" title="java.lang.String">String</a>(<a href="#23343" title="=&gt; Array[Char]">array</a>, <span title="Int(0)" class="int">0</span>, <a href="#23346" title="=&gt; Int">count</a>)
+  
+  <span class="keyword">def</span> <a title="()String" id="23410">result</a>(): <span title="String">String</span> = <a href="#23409" title="()String">toString</a>
+}
+
+
+<span class="keyword">object</span> <a title="object StringBuilder" id="7822">StringBuilder</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+
+  <span class="keyword">type</span> <a title="[T]Array[T]" id="49856">Array</a>[<a title="&gt;: Nothing &lt;: Any" id="49857">T</a><a id="1">]</a> = scala.<a href="../../Array.scala.html#885" title="Array[T]">Array</a>[T] // !!!
+
+  // method &lt;code&gt;java.util.Arrays.copyOf&lt;/code&gt; exists since 1.6
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(src: scala.collection.mutable.StringBuilder.Array[Char],newLength: Int)scala.collection.mutable.StringBuilder.Array[Char]" id="49858">copyOf</a>(<a title="scala.collection.mutable.StringBuilder.Array[Char]" id="222748">src</a>: <a href="../../Array.scala.html#885" title="scala.collection.mutable.StringBuilder.Array[Char]">Array</a>[Char], <a title="Int" id="222749">newLength</a>: <span title="Int">Int</span>): <a href="../../Array.scala.html#885" title="scala.collection.mutable.StringBuilder.Array[Char]">Array</a>[Char] = {
+    <span class="keyword">val</span> <a title="Array[Char]" id="222751">dest</a> = <span title="Array[Char]" class="keyword">new</span> <a href="../../Array.scala.html#885" title="Array[Char]">Array</a>[Char](<a href="#222749" title="Int">newLength</a>)
+    <a href="../../compat/Platform.scala.html#17685" title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">arraycopy</a>(<a href="#222748" title="scala.collection.mutable.StringBuilder.Array[Char]">src</a>, <span title="Int(0)" class="int">0</span>, <a href="#222751" title="Array[Char]">dest</a>, <span title="Int(0)" class="int">0</span>, <a href="../../Math.scala.html#526" title="object Math">Math</a>.<a href="../../Math.scala.html#22734" title="(x: Int,y: Int)Int">min</a>(<a href="#222748" title="scala.collection.mutable.StringBuilder.Array[Char]">src</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>, <a href="#222749" title="Int">newLength</a>))
+    <a href="#222751" title="Array[Char]">dest</a>
+  }
+}
+
+        </pre>
+    </body>
+</html>

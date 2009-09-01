@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>xml/MetaData.scala</title>
+        <script type="text/javascript" src="../jquery-all.js"></script>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: MetaData.scala 17988 2009-06-03 12:31:59Z extempore $
+
+
+<span class="keyword">package</span> scala.xml
+
+<span class="keyword">import</span> Utility.sbToString
+<span class="keyword">import</span> annotation.tailrec
+
+/**
+ * Copyright 2008 Google Inc. All Rights Reserved.
+ * @author Burak Emir &lt;bqe@google.com&gt;
+ */
+<span class="keyword">object</span> <a title="object scala.xml.MetaData" id="8586">MetaData</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+
+  /** 
+   * appends all attributes from new_tail to attribs, without attempting to detect
+   * or remove duplicates. The method guarantees that all attributes from attribs come before
+   * the attributes in new_tail, but does not guarantee to preserve the relative order of attribs.
+   * Duplicates can be removed with normalize.
+   */
+  @tailrec
+  <span class="keyword">def</span> <a title="(attribs: scala.xml.MetaData,new_tail: scala.xml.MetaData)scala.xml.MetaData" id="32038">concatenate</a>(<a title="scala.xml.MetaData" id="137136">attribs</a>: <a href="#8585" title="scala.xml.MetaData">MetaData</a>, <a title="scala.xml.MetaData" id="137137">new_tail</a>: <a href="#8585" title="scala.xml.MetaData">MetaData</a>): <a href="#8585" title="scala.xml.MetaData">MetaData</a> =
+    <span title="scala.xml.MetaData" class="keyword">if</span> (<a href="#137136" title="(x$1: AnyRef)Boolean">attribs</a> eq <a href="Null.scala.html#8526" title="object scala.xml.Null">Null</a>) <a href="#137137" title="scala.xml.MetaData">new_tail</a>
+    <span class="keyword">else</span> <a href="#32038" title="(attribs: scala.xml.MetaData,new_tail: scala.xml.MetaData)scala.xml.MetaData">concatenate</a>(<a href="#137136" title="scala.xml.MetaData">attribs</a>.<a href="#31885" title="=&gt; scala.xml.MetaData">next</a>, <a href="#137136" title="scala.xml.MetaData">attribs</a>.<a href="#31871" title="(next: scala.xml.MetaData)scala.xml.MetaData">copy</a>(<a href="#137137" title="scala.xml.MetaData">new_tail</a>))
+
+  /**
+   * returns normalized MetaData, with all duplicates removed and namespace prefixes resolved to
+   *  namespace URIs via the given scope.
+   */
+  <span class="keyword">def</span> <a title="(attribs: scala.xml.MetaData,scope: scala.xml.NamespaceBinding)scala.xml.MetaData" id="32039">normalize</a>(<a title="scala.xml.MetaData" id="137172">attribs</a>: <a href="#8585" title="scala.xml.MetaData">MetaData</a>, <a title="scala.xml.NamespaceBinding" id="137173">scope</a>: <a href="NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>): <a href="#8585" title="scala.xml.MetaData">MetaData</a> = {
+    <span class="keyword">import</span> collection.mutable.HashSet
+    <span class="keyword">def</span> <a title="(md: scala.xml.MetaData,normalized_attribs: scala.xml.MetaData,map: scala.collection.mutable.HashSet[String])scala.xml.MetaData" id="137176">iterate</a>(<a title="scala.xml.MetaData" id="137177">md</a>: <a href="#8585" title="scala.xml.MetaData">MetaData</a>, <a title="scala.xml.MetaData" id="137178">normalized_attribs</a>: <a href="#8585" title="scala.xml.MetaData">MetaData</a>, <a title="scala.collection.mutable.HashSet[String]" id="137179">map</a>: <a href="../collection/mutable/HashSet.scala.html#7602" title="scala.collection.mutable.HashSet[String]">HashSet</a>[String]): <a href="#8585" title="scala.xml.MetaData">MetaData</a> = {
+      <span title="scala.xml.MetaData" class="keyword">if</span> (<a href="#137177" title="(x$1: AnyRef)Boolean">md</a> eq <a href="Null.scala.html#8526" title="object scala.xml.Null">Null</a>)
+        <a href="#137178" title="scala.xml.MetaData">normalized_attribs</a>
+      <span class="keyword">else</span> {
+        <span class="keyword">val</span> <a title="java.lang.String" id="137182">universal_key</a> = <a href="#32040" title="(attrib: scala.xml.MetaData,scope: scala.xml.NamespaceBinding)java.lang.String">getUniversalKey</a>(<a href="#137177" title="scala.xml.MetaData">md</a>, <a href="#137173" title="scala.xml.NamespaceBinding">scope</a>)
+        <span title="scala.xml.MetaData" class="keyword">if</span> (<a href="#137179" title="scala.collection.mutable.HashSet[String]">map</a>.<a href="../collection/mutable/HashSet.scala.html#37338" title="(elem: String)Boolean">contains</a>(<a href="#137182" title="java.lang.String">universal_key</a>))
+          <a href="#137176" title="(md: scala.xml.MetaData,normalized_attribs: scala.xml.MetaData,map: scala.collection.mutable.HashSet[String])scala.xml.MetaData">iterate</a>(<a href="#137177" title="scala.xml.MetaData">md</a>.<a href="#31885" title="=&gt; scala.xml.MetaData">next</a>, <a href="#137178" title="scala.xml.MetaData">normalized_attribs</a>, <a href="#137179" title="scala.collection.mutable.HashSet[String]">map</a>)
+        <span class="keyword">else</span> {
+          <a href="../collection/mutable/HashSet.scala.html#37339" title="(elem: String)map.type">map</a> += <a href="#137182" title="java.lang.String">universal_key</a>
+          <a href="#137176" title="(md: scala.xml.MetaData,normalized_attribs: scala.xml.MetaData,map: scala.collection.mutable.HashSet[String])scala.xml.MetaData">iterate</a>(<a href="#137177" title="scala.xml.MetaData">md</a>.<a href="#31885" title="=&gt; scala.xml.MetaData">next</a>, <a href="#137177" title="scala.xml.MetaData">md</a>.<a href="#31871" title="(next: scala.xml.MetaData)scala.xml.MetaData">copy</a>(<a href="#137178" title="scala.xml.MetaData">normalized_attribs</a>), <a href="#137179" title="scala.collection.mutable.HashSet[String]">map</a>)
+        } 
+      }
+    }
+    <a href="#137176" title="(md: scala.xml.MetaData,normalized_attribs: scala.xml.MetaData,map: scala.collection.mutable.HashSet[String])scala.xml.MetaData">iterate</a>(<a href="#137172" title="scala.xml.MetaData">attribs</a>, <a href="Null.scala.html#8526" title="object scala.xml.Null">Null</a>, <span title="scala.collection.mutable.HashSet[String]" class="keyword">new</span> <a href="../collection/mutable/HashSet.scala.html#7602" title="scala.collection.mutable.HashSet[String]">HashSet</a>[String])
+  }
+ 
+  /**
+   * returns key if md is unprefixed, pre+key is md is prefixed
+   */
+  <span class="keyword">def</span> <a title="(attrib: scala.xml.MetaData,scope: scala.xml.NamespaceBinding)java.lang.String" id="32040">getUniversalKey</a>(<a title="scala.xml.MetaData" id="137183">attrib</a>: <a href="#8585" title="scala.xml.MetaData">MetaData</a>, <a title="scala.xml.NamespaceBinding" id="137184">scope</a>: <a href="NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>) = <a href="#137183" title="scala.xml.MetaData">attrib</a> <span title="java.lang.String" class="keyword">match</span> {
+    <span title="java.lang.String" class="keyword">case</span> <a title="scala.xml.PrefixedAttribute" id="137187">prefixed</a>: <a href="PrefixedAttribute.scala.html#8705" title="scala.xml.PrefixedAttribute">PrefixedAttribute</a>     =&gt; <a href="#137184" title="scala.xml.NamespaceBinding">scope</a>.<a href="NamespaceBinding.scala.html#32363" title="(_prefix: String)String">getURI</a><a title="(x$1: Any)java.lang.String" id="6542">(</a><a href="#137187" title="scala.xml.PrefixedAttribute">prefixed</a>.<a href="PrefixedAttribute.scala.html#31994" title="=&gt; String">pre</a>) + <a href="#137187" title="scala.xml.PrefixedAttribute">prefixed</a>.<a href="PrefixedAttribute.scala.html#31996" title="=&gt; String">key</a>
+    <span title="String" class="keyword">case</span> <a title="scala.xml.UnprefixedAttribute" id="137192">unprefixed</a>: <a href="UnprefixedAttribute.scala.html#8474" title="scala.xml.UnprefixedAttribute">UnprefixedAttribute</a> =&gt; <a href="#137192" title="scala.xml.UnprefixedAttribute">unprefixed</a>.<a href="UnprefixedAttribute.scala.html#32091" title="=&gt; String">key</a>
+  }
+
+  /**
+   *  returns MetaData with attributes updated from given MetaData
+   */
+  <span class="keyword">def</span> <a title="(attribs: scala.xml.MetaData,scope: scala.xml.NamespaceBinding,updates: scala.xml.MetaData)scala.xml.MetaData" id="32041">update</a>(<a title="scala.xml.MetaData" id="137241">attribs</a>: <a href="#8585" title="scala.xml.MetaData">MetaData</a>, <a title="scala.xml.NamespaceBinding" id="137242">scope</a>: <a href="NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>, <a title="scala.xml.MetaData" id="137243">updates</a>: <a href="#8585" title="scala.xml.MetaData">MetaData</a>): <a href="#8585" title="scala.xml.MetaData">MetaData</a> =
+    <a href="#32039" title="(attribs: scala.xml.MetaData,scope: scala.xml.NamespaceBinding)scala.xml.MetaData">normalize</a>(<a href="#32038" title="(attribs: scala.xml.MetaData,new_tail: scala.xml.MetaData)scala.xml.MetaData">concatenate</a>(<a href="#137243" title="scala.xml.MetaData">updates</a>, <a href="#137241" title="scala.xml.MetaData">attribs</a>), <a href="#137242" title="scala.xml.NamespaceBinding">scope</a>)
+
+}
+
+/** &lt;p&gt;
+ *    This class represents an attribute and at the same time a linked list of attributes.
+ *    Every instance of this class is either an instance of UnprefixedAttribute &lt;code&gt;key,value&lt;/code&gt;
+ *    or an instance of PrefixedAttribute &lt;code&gt;namespace_prefix,key,value&lt;/code&gt; or Null, the empty
+ *    attribute list. Namespace URIs are obtained by using the namespace scope of the element owning
+ *    this attribute (see &lt;code&gt;getNamespace&lt;/code&gt;)
+ * &lt;/p&gt;
+ *
+ * Copyright 2008 Google Inc. All Rights Reserved.
+ * @author Burak Emir &lt;bqe@google.com&gt;
+ */
+@serializable
+<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class MetaData extends java.lang.Object with Iterable[scala.xml.MetaData] with ScalaObject" id="8585">MetaData</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="../collection/Iterable.scala.html#4460" title="Iterable[scala.xml.MetaData]">Iterable</a>[MetaData]
+{
+  /** Updates this MetaData with the MetaData given as argument. All attributes that occur in updates
+   *  are part of the resulting MetaData. If an attribute occurs in both this instance and 
+   *  updates, only the one in updates is part of the result (avoiding duplicates). For prefixed
+   *  attributes, namespaces are resolved using the given scope, which defaults to TopScope.
+   *
+   *  @param updates MetaData with new and updated attributes
+   *  @return a new MetaData instance that contains old, new and updated attributes
+   */
+  <span class="keyword">def</span> <a title="(updates: scala.xml.MetaData,scope: scala.xml.NamespaceBinding)scala.xml.MetaData" id="31866">append</a>(<a title="scala.xml.MetaData" id="137252">updates</a>: <a href="#8585" title="scala.xml.MetaData">MetaData</a>, <a title="scala.xml.NamespaceBinding" id="137255">scope</a>: <a href="NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a> = <a href="TopScope.scala.html#8562" title="object scala.xml.TopScope">TopScope</a>): <a href="#8585" title="scala.xml.MetaData">MetaData</a> =
+    <a href="#8586" title="object scala.xml.MetaData">MetaData</a>.<a href="#32041" title="(attribs: scala.xml.MetaData,scope: scala.xml.NamespaceBinding,updates: scala.xml.MetaData)scala.xml.MetaData">update</a>(<a href="#8585" title="scala.xml.MetaData" class="keyword">this</a>, <a href="#137255" title="scala.xml.NamespaceBinding">scope</a>, <a href="#137252" title="scala.xml.MetaData">updates</a>)
+
+  /**
+   * Gets value of unqualified (unprefixed) attribute with given key, null if not found
+   *
+   * @param  key
+   * @return value as Seq[Node] if key is found, null otherwise
+   */
+  <span class="keyword">def</span> <a title="(key: String)Seq[scala.xml.Node]" id="31867">apply</a>(<a title="String" id="32347">key</a>: <span title="String">String</span>): <a href="../collection/Sequence.scala.html#4346" title="Seq[scala.xml.Node]">Seq</a>[Node]
+
+  /** convenience method, same as &lt;code&gt;apply(namespace, owner.scope, key)&lt;/code&gt;.
+   *
+   *  @param namespace_uri namespace uri of key
+   *  @param owner the element owning this attribute list
+   *  @param key   the attribute key
+   *  @return          ...
+   */
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(namespace_uri: String,owner: scala.xml.Node,key: String)Seq[scala.xml.Node]" id="31868">apply</a>(<a title="String" id="32339">namespace_uri</a>: <span title="String">String</span>, <a title="scala.xml.Node" id="32340">owner</a>: <a href="Node.scala.html#8654" title="scala.xml.Node">Node</a>, <a title="String" id="32341">key</a>: <span title="String">String</span>): <a href="../collection/Sequence.scala.html#4346" title="Seq[scala.xml.Node]">Seq</a>[Node] =
+    <a href="#31869" title="(namespace_uri: String,scp: scala.xml.NamespaceBinding,k: String)Seq[scala.xml.Node]">apply</a>(<a href="#32339" title="String">namespace_uri</a>, <a href="#32340" title="scala.xml.Node">owner</a>.<a href="Node.scala.html#20996" title="=&gt; scala.xml.NamespaceBinding">scope</a>, <a href="#32341" title="String">key</a>)
+
+  /**
+   * Gets value of prefixed attribute with given key and namespace, null if not found
+   *
+   * @param  namespace_uri namespace uri of key
+   * @param  scp a namespace scp (usually of the element owning this attribute list)
+   * @param  key to be looked fore
+   * @return value as Seq[Node] if key is found, null otherwise
+   */
+  <span class="keyword">def</span> <a title="(namespace_uri: String,scp: scala.xml.NamespaceBinding,k: String)Seq[scala.xml.Node]" id="31869">apply</a>(<a title="String" id="32343">namespace_uri</a>:<span title="String">String</span>, <a title="scala.xml.NamespaceBinding" id="32344">scp</a>:<a href="NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>, <a title="String" id="32345">k</a>:<span title="String">String</span>): <a href="../collection/Sequence.scala.html#4346" title="Seq[scala.xml.Node]">Seq</a>[Node]
+
+  /**
+   *  @param m ...
+   *  @return  &lt;code&gt;true&lt;/code&gt; iff ...
+   */
+  <span class="keyword">def</span> <a title="(m: scala.xml.MetaData)Boolean" id="31870">containedIn1</a>(<a title="scala.xml.MetaData" id="137274">m</a>: <a href="#8585" title="scala.xml.MetaData">MetaData</a>): <span title="Boolean">Boolean</span> =
+    <a href="#137274" title="(x$1: AnyRef)Boolean">m</a> <span title="(x$1: Boolean)Boolean">!=</span> <span title="Null(null)" class="keyword">null</span> &amp;&amp; (<a href="#137274" title="scala.xml.MetaData">m</a>.<a href="#31880" title="(that: scala.xml.MetaData)Boolean">equals1</a><a title="(x$1: Boolean)Boolean" id="2208">(</a><a href="#8585" title="scala.xml.MetaData" class="keyword">this</a>) || <a href="#31870" title="(m: scala.xml.MetaData)Boolean">containedIn1</a>(<a href="#137274" title="scala.xml.MetaData">m</a>.<a href="#31885" title="=&gt; scala.xml.MetaData">next</a>))
+
+  /** returns a copy of this MetaData item with next field set to argument.
+   *
+   *  @param next ...
+   *  @return     ...
+   */
+  <span class="keyword">def</span> <a title="(next: scala.xml.MetaData)scala.xml.MetaData" id="31871">copy</a>(<a title="scala.xml.MetaData" id="32370">next</a>: <a href="#8585" title="scala.xml.MetaData">MetaData</a>): <a href="#8585" title="scala.xml.MetaData">MetaData</a>
+
+  /** if owner is the element of this metadata item, returns namespace */
+  <span class="keyword">def</span> <a title="(owner: scala.xml.Node)String" id="31872">getNamespace</a>(<a title="scala.xml.Node" id="32397">owner</a>: <a href="Node.scala.html#8654" title="scala.xml.Node">Node</a>): <span title="String">String</span> 
+
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="31873">hasNext</a> = (<a href="Null.scala.html#8526" title="(x$1: AnyRef)Boolean">Null</a> != <a href="#31885" title="=&gt; scala.xml.MetaData">next</a>)
+
+  <span class="keyword">def</span> <a title="=&gt; Int" id="31874">length</a>: <span title="Int">Int</span> = <a href="#31875" title="(i: Int)Int">length</a>(<span title="Int(0)" class="int">0</span>)
+
+  <span class="keyword">def</span> <a title="(i: Int)Int" id="31875">length</a>(<a title="Int" id="137304">i</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = <a href="#31885" title="=&gt; scala.xml.MetaData">next</a>.<a href="#31875" title="(i: Int)Int">length</a>(<a href="#137304" title="(x$1: Int)Int">i</a> + <span title="Int(1)" class="int">1</span>)
+
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="31876">isPrefixed</a>: <span title="Boolean">Boolean</span>
+
+  /** deep equals method */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(that: Any)Boolean" id="31877">equals</a>(<a title="Any" id="137334">that</a>: <a title="Any" id="47">Any</a>) = <a href="#137334" title="Any">that</a> <span title="Boolean" class="keyword">match</span> {
+    <span title="Boolean" class="keyword">case</span> <a title="scala.xml.MetaData" id="137337">m</a>: <a href="#8585" title="scala.xml.MetaData">MetaData</a>  =&gt;
+      <span title="(x$1: Boolean)Boolean">(</span><a href="#8585" title="MetaData.this.type" class="keyword">this</a>.<a href="#31874" title="(x$1: Int)Boolean">length</a> == <a href="#137337" title="scala.xml.MetaData">m</a>.<a href="#31874" title="=&gt; Int">length</a>) <span title="(x$1: Boolean)Boolean">&amp;&amp;</span>
+      (<a href="#8585" title="MetaData.this.type" class="keyword">this</a>.<span title="(x$1: Int)Boolean">hashCode</span> == <a href="#137337" title="scala.xml.MetaData">m</a>.<span title="()Int">hashCode</span>) &amp;&amp;
+      (<a href="../collection/generic/TraversableTemplate.scala.html#17183" title="(p: (scala.xml.MetaData) =&gt; Boolean)Boolean" class="keyword">this</a> forall (<a href="#31870" title="(m: scala.xml.MetaData)Boolean">_</a> containedIn1 <a href="#137337" title="scala.xml.MetaData">m</a>))
+    <span title="Boolean(false)" class="keyword">case</span> _            =&gt; <span title="Boolean(false)" class="keyword">false</span>
+  }
+
+  /** returns an iterator on attributes */
+  <span class="keyword">def</span> <a title="=&gt; Iterator[scala.xml.MetaData]" id="31878">iterator</a>: <a href="../collection/Iterator.scala.html#4274" title="Iterator[scala.xml.MetaData]">Iterator</a>[MetaData] = <a href="#137371" title="java.lang.Object with Iterator[scala.xml.MetaData]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with Iterator[scala.xml.MetaData]" id="137371">Iterator</a>[MetaData] {
+    <span class="keyword">var</span> <a title="scala.xml.MetaData" id="137374">x</a>: <a href="#8585" title="scala.xml.MetaData">MetaData</a> = <a href="#8585" title="scala.xml.MetaData">MetaData</a>.<span class="keyword">this</span>
+    <span class="keyword">def</span> <a title="=&gt; Boolean" id="137376">hasNext</a> = <a href="Null.scala.html#8526" title="(x$1: AnyRef)Boolean">Null</a> != <a href="#137374" title="=&gt; scala.xml.MetaData">x</a>
+    <span class="keyword">def</span> <a title="()scala.xml.MetaData" id="137377">next</a> = {
+      <span class="keyword">val</span> <a title="scala.xml.MetaData" id="137395">y</a> = <a href="#137374" title="=&gt; scala.xml.MetaData">x</a>
+      <a href="#137374" title="(x$1: scala.xml.MetaData)Unit">x</a> = <a href="#137374" title="=&gt; scala.xml.MetaData">x</a>.<a href="#31885" title="=&gt; scala.xml.MetaData">next</a>
+      <a href="#137395" title="scala.xml.MetaData">y</a>
+    }
+  }
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Int" id="31879">size</a> : <span title="Int">Int</span> = <span title="(x$1: Int)Int" class="int">1</span> + {
+    <span title="Int" class="keyword">if</span> (<a href="Null.scala.html#8526" title="(x$1: AnyRef)Boolean" id="3624">Null</a> == <a href="#31885" title="=&gt; scala.xml.MetaData">next</a>) <span title="Int(0)" class="int">0</span> <span class="keyword">else</span> <a href="#31885" title="=&gt; scala.xml.MetaData">next</a>.<a href="#31879" title="=&gt; Int">size</a>
+  }
+
+  /** shallow equals method */
+  <span class="keyword">def</span> <a title="(that: scala.xml.MetaData)Boolean" id="31880">equals1</a>(<a title="scala.xml.MetaData" id="32403">that</a>: <a href="#8585" title="scala.xml.MetaData">MetaData</a>): <span title="Boolean">Boolean</span>
+
+  /** filters this sequence of meta data */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(f: (scala.xml.MetaData) =&gt; Boolean)scala.xml.MetaData" id="31881">filter</a>(<a title="(scala.xml.MetaData) =&gt; Boolean" id="137431">f</a>: MetaData =&gt; Boolean): <a href="#8585" title="scala.xml.MetaData">MetaData</a> = {
+    <span title="scala.xml.MetaData" class="keyword">if</span> (<a href="../Function1.scala.html#17119" title="(v1: scala.xml.MetaData)Boolean">f</a>(<a href="#8585" title="scala.xml.MetaData" class="keyword">this</a>)) <a href="#31871" title="(next: scala.xml.MetaData)scala.xml.MetaData">copy</a>(<a href="#31881" title="(f: (scala.xml.MetaData) =&gt; Boolean)scala.xml.MetaData">next</a> filter <a href="#137431" title="(scala.xml.MetaData) =&gt; Boolean">f</a>) <span class="keyword">else</span> <a href="#31881" title="(f: (scala.xml.MetaData) =&gt; Boolean)scala.xml.MetaData">next</a> filter <a href="#137431" title="(scala.xml.MetaData) =&gt; Boolean">f</a>
+  }
+
+  /** returns key of this MetaData item */
+  <span class="keyword">def</span> <a title="=&gt; String" id="31882">key</a>: <span title="String">String</span>
+
+  /** returns value of this MetaData item */
+  <span class="keyword">def</span> <a title="=&gt; Seq[scala.xml.Node]" id="31883">value</a>: <a href="../collection/Sequence.scala.html#4346" title="Seq[scala.xml.Node]">Seq</a>[Node]
+
+  /** maps this sequence of meta data */
+  <span class="keyword">def</span> <a title="(f: (scala.xml.MetaData) =&gt; scala.xml.Text)List[scala.xml.Text]" id="31884">map</a>(<a title="(scala.xml.MetaData) =&gt; scala.xml.Text" id="137447">f</a>: MetaData =&gt; Text): <a href="../collection/immutable/List.scala.html#8973" title="List[scala.xml.Text]">List</a>[Text] = <a href="../Function1.scala.html#17119" title="(v1: scala.xml.MetaData)scala.xml.Text">f</a>(<a href="#8585" title="scala.xml.MetaData" class="keyword">this</a>)<a href="#137451" title="scala.xml.Text">::</a><a href="../collection/immutable/List.scala.html#17630" title="(x: scala.xml.Text)List[scala.xml.Text]">(</a><a href="#31884" title="(f: (scala.xml.MetaData) =&gt; scala.xml.Text)List[scala.xml.Text]">next</a> map <a href="#137447" title="(scala.xml.MetaData) =&gt; scala.xml.Text">f</a>)
+
+  /** returns Null or the next MetaData item */
+  <span class="keyword">def</span> <a title="=&gt; scala.xml.MetaData" id="31885">next</a>: <a href="#8585" title="scala.xml.MetaData">MetaData</a>
+
+  /**
+   * Gets value of unqualified (unprefixed) attribute with given key, None if not found
+   *
+   * @param  key
+   * @return value in Some(Seq[Node]) if key is found, None otherwise
+   */
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(key: String)Option[Seq[scala.xml.Node]]" id="31886">get</a>(<a title="String" id="86190">key</a>: <span title="String">String</span>): <a href="../Option.scala.html#777" title="Option[Seq[scala.xml.Node]]">Option</a>[Seq[Node]] = <a href="#31867" title="(key: String)Seq[scala.xml.Node]">apply</a>(<a href="#86190" title="String">key</a>) <span title="Option[Seq[scala.xml.Node]]" class="keyword">match</span> {
+    <span title="None.type" class="keyword">case</span> <span title="Null(null)" class="keyword">null</span> =&gt; <a href="../Option.scala.html#463" title="object None">None</a>
+    <span title="Some[Seq[scala.xml.Node]]" class="keyword">case</span> <a title="Seq[scala.xml.Node]" id="137512">x</a>    =&gt; <a href="../Option.scala.html#19800" title="(x: Seq[scala.xml.Node])Some[Seq[scala.xml.Node]]">Some</a>(<a href="#137512" title="Seq[scala.xml.Node]">x</a>)
+  }
+
+  /** same as get(uri, owner.scope, key) */
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(uri: String,owner: scala.xml.Node,key: String)Option[Seq[scala.xml.Node]]" id="31887">get</a>(<a title="String" id="86186">uri</a>: <span title="String">String</span>, <a title="scala.xml.Node" id="86187">owner</a>: <a href="Node.scala.html#8654" title="scala.xml.Node">Node</a>, <a title="String" id="86188">key</a>: <span title="String">String</span>): <a href="../Option.scala.html#777" title="Option[Seq[scala.xml.Node]]">Option</a>[Seq[Node]] =
+    <a href="#31888" title="(uri: String,scope: scala.xml.NamespaceBinding,key: String)Option[Seq[scala.xml.Node]]">get</a>(<a href="#86186" title="String">uri</a>, <a href="#86187" title="scala.xml.Node">owner</a>.<a href="Node.scala.html#20996" title="=&gt; scala.xml.NamespaceBinding">scope</a>, <a href="#86188" title="String">key</a>)
+
+
+  /** gets value of qualified (prefixed) attribute with given key.
+   *
+   * @param  uri namespace of key
+   * @param  scope a namespace scp (usually of the element owning this attribute list)
+   * @param  key to be looked fore
+   * @return value as Some[Seq[Node]] if key is found, None otherwise
+   */
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(uri: String,scope: scala.xml.NamespaceBinding,key: String)Option[Seq[scala.xml.Node]]" id="31888">get</a>(<a title="String" id="86182">uri</a>: <span title="String">String</span>, <a title="scala.xml.NamespaceBinding" id="86183">scope</a>: <a href="NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>, <a title="String" id="86184">key</a>: <span title="String">String</span>): <a href="../Option.scala.html#777" title="Option[Seq[scala.xml.Node]]">Option</a>[Seq[Node]] =
+    <a href="#31869" title="(namespace_uri: String,scp: scala.xml.NamespaceBinding,k: String)Seq[scala.xml.Node]">apply</a>(<a href="#86182" title="String">uri</a>, <a href="#86183" title="scala.xml.NamespaceBinding">scope</a>, <a href="#86184" title="String">key</a>) <span title="Option[Seq[scala.xml.Node]]" class="keyword">match</span> {
+      <span title="None.type" class="keyword">case</span> <span title="Null(null)" class="keyword">null</span> =&gt; <a href="../Option.scala.html#463" title="object None">None</a>
+      <span title="Some[Seq[scala.xml.Node]]" class="keyword">case</span> <a title="Seq[scala.xml.Node]" id="137540">x</a>    =&gt; <a href="../Option.scala.html#19800" title="(x: Seq[scala.xml.Node])Some[Seq[scala.xml.Node]]">Some</a>(<a href="#137540" title="Seq[scala.xml.Node]">x</a>)
+    }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Int" id="31889">hashCode</a>(): <span title="Int">Int</span>
+
+  <span class="keyword">def</span> <a title="()String" id="31890">toString1</a>(): <span title="String">String</span> = <a href="Utility.scala.html#26573" title="(f: (StringBuilder) =&gt; Unit)String">sbToString</a>(<a href="#31891" title="(sb: StringBuilder)Unit">toString1</a>)
+
+  // appends string representations of single attribute to StringBuilder
+  <span class="keyword">def</span> <a title="(sb: StringBuilder)Unit" id="31891">toString1</a>(<a title="StringBuilder" id="32408">sb</a>: <a href="../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a>): <a title="Unit" id="1948">Unit</a>
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="31892">toString</a>(): <span title="String">String</span> = <a href="Utility.scala.html#26573" title="(f: (StringBuilder) =&gt; Unit)String">sbToString</a>(<a href="#31893" title="(sb: StringBuilder)StringBuilder">buildString</a>)
+
+  <span class="keyword">def</span> <a title="(sb: StringBuilder)StringBuilder" id="31893">buildString</a>(<a title="StringBuilder" id="133940">sb</a>: <a href="../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a>): <a href="../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a> = {
+    <a href="#133940" title="StringBuilder">sb</a>.<a href="../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<span title="Char(' ')" class="char">' '</span>)
+    <a href="#31891" title="(sb: StringBuilder)Unit">toString1</a>(<a href="#133940" title="StringBuilder">sb</a>)
+    <a href="#31885" title="=&gt; scala.xml.MetaData">next</a>.<a href="#31893" title="(sb: StringBuilder)StringBuilder">buildString</a>(<a href="#133940" title="StringBuilder">sb</a>)
+  }
+
+  /**
+   *  @param scope ...
+   *  @return      &lt;code&gt;true&lt;/code&gt; iff ...
+   */
+  <span class="keyword">def</span> <a title="(scope: scala.xml.NamespaceBinding)Boolean" id="31894">wellformed</a>(<a title="scala.xml.NamespaceBinding" id="32400">scope</a>: <a href="NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>): <span title="Boolean">Boolean</span>
+
+  /**
+   *  @param key ...
+   *  @return    ...
+   */
+  <span class="keyword">def</span> <a title="(key: String)scala.xml.MetaData" id="31895">remove</a>(<a title="String" id="32130">key</a>: <span title="String">String</span>): <a href="#8585" title="scala.xml.MetaData">MetaData</a>
+
+  /**
+   *  @param namespace ...
+   *  @param scope     ...
+   *  @param key       ...
+   *  @return          ...
+   */
+  <span class="keyword">def</span> <a title="(namespace: String,scope: scala.xml.NamespaceBinding,key: String)scala.xml.MetaData" id="31896">remove</a>(<a title="String" id="32124">namespace</a>: <span title="String">String</span>, <a title="scala.xml.NamespaceBinding" id="32125">scope</a>: <a href="NamespaceBinding.scala.html#8759" title="scala.xml.NamespaceBinding">NamespaceBinding</a>, <a title="String" id="32126">key</a>: <span title="String">String</span>): <a href="#8585" title="scala.xml.MetaData">MetaData</a>
+
+  /**
+   *  @param namespace ...
+   *  @param owner     ...
+   *  @param key       ...
+   *  @return          ...
+   */
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="(namespace: String,owner: scala.xml.Node,key: String)scala.xml.MetaData" id="31897">remove</a>(<a title="String" id="32114">namespace</a>: <span title="String">String</span>, <a title="scala.xml.Node" id="32115">owner</a>: <a href="Node.scala.html#8654" title="scala.xml.Node">Node</a>, <a title="String" id="32116">key</a>: <span title="String">String</span>): <a href="#8585" title="scala.xml.MetaData">MetaData</a> =
+    <a href="#31896" title="(namespace: String,scope: scala.xml.NamespaceBinding,key: String)scala.xml.MetaData">remove</a>(<a href="#32114" title="String">namespace</a>, <a href="#32115" title="scala.xml.Node">owner</a>.<a href="Node.scala.html#20996" title="=&gt; scala.xml.NamespaceBinding">scope</a>, <a href="#32116" title="String">key</a>)
+
+}
+
+        </pre>
+    </body>
+</html>

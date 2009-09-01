@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>xml/NamespaceBinding.scala</title>
+        <script type="text/javascript" src="../jquery-all.js"></script>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: NamespaceBinding.scala 18241 2009-07-08 17:58:35Z extempore $
+
+
+<span class="keyword">package</span> scala.xml
+
+<span class="keyword">import</span> Predef._
+<span class="keyword">import</span> Utility.sbToString
+
+/** The class &lt;code&gt;NamespaceBinding&lt;/code&gt; represents namespace bindings
+ *  and scopes. The binding for the default namespace is treated as a null
+ *  prefix. the absent namespace is represented with the null uri. Neither
+ *  prefix nor uri may be empty, which is not checked.
+ *
+ *  @author  Burak Emir
+ *  @version 1.0
+ */
+@SerialVersionUID(<span class="int">0</span> - <span class="long">2518644165573446725L</span>)
+case <span class="keyword">class</span> <a title="class NamespaceBinding extends java.lang.Object with ScalaObject with Product" id="55792">NamespaceBinding</a><a href="../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="String" id="55796">prefix</a>: <span title="String">String</span>, <a title="String" id="55797">uri</a>: <span title="String">String</span>, <a title="scala.xml.NamespaceBinding" id="55798">parent</a>: <a href="#55792" title="scala.xml.NamespaceBinding">NamespaceBinding</a>) <span class="keyword">extends</span> <a title="java.lang.Object" id="3623">AnyRef</a>
+{
+  <span title="Unit" class="keyword">if</span> (<a title="(x$1: AnyRef)Boolean" id="6529" class="keyword">null</a> <span title="(x$1: Boolean)Boolean">!=</span> <a href="#55796" title="=&gt; String">prefix</a> &amp;&amp; <a title="(x$1: Int)Boolean" id="2950" class="int">0</a> == <a href="#55796" title="=&gt; String">prefix</a>.<a title="()Int" id="6904">length</a>())
+    <span title="Nothing" class="keyword">throw</span> <a title="(x$1: java.lang.String)java.lang.IllegalArgumentException" id="26503" class="keyword">new</a> <a href="../Predef.scala.html#16170" title="java.lang.IllegalArgumentException">IllegalArgumentException</a>(<span title="java.lang.String(&quot;zero length prefix not allowed&quot;)" class="string">&quot;zero length prefix not allowed&quot;</span>)
+
+  <span class="keyword">def</span> <a title="(_prefix: String)String" id="32363">getURI</a>(<a title="String" id="55753">_prefix</a>: <span title="String">String</span>): <span title="String">String</span> =
+    <span title="String" class="keyword">if</span> (<a href="#55796" title="(x$1: AnyRef)Boolean">prefix</a> == <a href="#55753" title="String">_prefix</a>) <a href="#55797" title="=&gt; String">uri</a>
+    <span class="keyword">else</span> <a href="#32363" title="(_prefix: String)String">parent</a> getURI <a href="#55753" title="String">_prefix</a>
+
+  /** Returns some prefix that is mapped to the prefix.
+   *
+   *  @param _uri
+   *  @return
+   */
+  <span class="keyword">def</span> <a title="(_uri: String)String" id="32364">getPrefix</a>(<a title="String" id="55763">_uri</a>: <span title="String">String</span>): <span title="String">String</span> =
+    <span title="String" class="keyword">if</span> (<a href="#55763" title="(x$1: AnyRef)Boolean">_uri</a> == <a href="#55797" title="=&gt; String">uri</a>) <a href="#55797" title="=&gt; String">uri</a>
+    <span class="keyword">else</span> <a href="#32363" title="(_prefix: String)String">parent</a> getURI <a href="#55763" title="String">_uri</a>
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="32365">toString</a>(): <span title="String">String</span> = <a href="Utility.scala.html#26573" title="(f: (StringBuilder) =&gt; Unit)String">sbToString</a>(<a href="#32367" title="(sb: StringBuilder,stop: scala.xml.NamespaceBinding)Unit">buildString</a>(<a href="#55775" title="StringBuilder">_</a>, <a href="TopScope.scala.html#8562" title="object scala.xml.TopScope">TopScope</a>))
+
+  <span class="keyword">def</span> <a title="(stop: scala.xml.NamespaceBinding)String" id="32366">buildString</a>(<a title="scala.xml.NamespaceBinding" id="55782">stop</a>: <a href="#55792" title="scala.xml.NamespaceBinding">NamespaceBinding</a>): <span title="String">String</span> = <a href="Utility.scala.html#26573" title="(f: (StringBuilder) =&gt; Unit)String">sbToString</a>(<a href="#32367" title="(sb: StringBuilder,stop: scala.xml.NamespaceBinding)Unit">buildString</a>(<a href="#55827" title="StringBuilder">_</a>, <a href="#55782" title="scala.xml.NamespaceBinding">stop</a>))
+  <span class="keyword">def</span> <a title="(sb: StringBuilder,stop: scala.xml.NamespaceBinding)Unit" id="32367">buildString</a>(<a title="StringBuilder" id="55779">sb</a>: <a href="../collection/mutable/StringBuilder.scala.html#7821" title="StringBuilder">StringBuilder</a>, <a title="scala.xml.NamespaceBinding" id="55780">stop</a>: <a href="#55792" title="scala.xml.NamespaceBinding">NamespaceBinding</a>): <a title="Unit" id="1948">Unit</a> = {
+    <span title="Unit" class="keyword">if</span> (<a href="#55792" title="(x$1: AnyRef)Boolean" class="keyword">this</a> ne <a href="#55780" title="scala.xml.NamespaceBinding">stop</a>) { // contains?
+      <a href="#55779" title="StringBuilder">sb</a>.<a href="../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">append</a>(<span title="java.lang.String(&quot; xmlns&quot;)" class="string">&quot; xmlns&quot;</span>)
+      <span title="Any" class="keyword">if</span> (<a href="#55796" title="(x$1: AnyRef)Boolean">prefix</a> ne <span title="Null(null)" class="keyword">null</span>) {
+        <a href="#55779" title="StringBuilder">sb</a>.<a href="../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<span title="Char(':')" class="char">':'</span>).<a href="../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">append</a>(<a href="#55796" title="=&gt; String">prefix</a>)
+      }
+      <a href="#55779" title="StringBuilder">sb</a>.<a href="../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<span title="Char('=')" class="char">'='</span>)
+      .<a href="../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<span title="Char('&quot;')" class="char">'&quot;'</span>)
+      .<a href="../collection/mutable/StringBuilder.scala.html#23370" title="(s: String)StringBuilder">append</a>(<span title="java.lang.String" class="keyword">if</span> (<a href="#55797" title="(x$1: AnyRef)Boolean">uri</a> == <span title="Null(null)" class="keyword">null</span>) <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span> <span class="keyword">else</span> <a href="#55797" title="=&gt; String">uri</a>)
+      .<a href="../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">append</a>(<span title="Char('&quot;')" class="char">'&quot;'</span>);
+      <a href="#55798" title="=&gt; scala.xml.NamespaceBinding">parent</a>.<a href="#32367" title="(sb: StringBuilder,stop: scala.xml.NamespaceBinding)Unit">buildString</a>(<a href="#55779" title="StringBuilder">sb</a>, <a href="#55780" title="scala.xml.NamespaceBinding">stop</a>) // copy(ignore)
+    }
+  }
+
+}
+
+        </pre>
+    </body>
+</html>

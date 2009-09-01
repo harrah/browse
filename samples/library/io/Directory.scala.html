@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>io/Directory.scala</title>
+        <script type="text/javascript" src="../jquery-all.js"></script>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+<span class="keyword">package</span> scala.io
+
+<span class="keyword">import</span> java.io.{ File =&gt; JFile }
+<span class="keyword">import</span> collection.Traversable
+
+<span class="keyword">object</span> <a title="object scala.io.Directory" id="9569">Directory</a>
+<a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>  
+  <span class="keyword">def</span> <a title="(path: scala.io.Path)scala.io.Directory" id="32594">apply</a>(<a title="scala.io.Path" id="32763">path</a>: <a href="Path.scala.html#9562" title="scala.io.Path">Path</a>)       = <a href="#32763" title="scala.io.Path">path</a>.<a href="Path.scala.html#32604" title="=&gt; scala.io.Directory">toDirectory</a>
+  
+  // Like File.makeTemp but creates a directory instead
+  <span class="keyword">def</span> <a title="(prefix: String,suffix: String,dir: java.io.File)scala.io.Directory" id="32595">makeTemp</a>(<a title="String" id="32772">prefix</a>: <span title="String">String</span> = <a href="Path.scala.html#9563" title="object scala.io.Path">Path</a>.<a href="Path.scala.html#32665" title="=&gt; java.lang.String">randomPrefix</a>, <a title="String" id="32773">suffix</a>: <span title="String">String</span> = <span title="Null(null)" class="keyword">null</span>, <a title="java.io.File" id="32774">dir</a>: <span title="java.io.File">JFile</span> = <span title="Null(null)" class="keyword">null</span>): <a href="#9568" title="scala.io.Directory">Directory</a> = {
+    <span class="keyword">val</span> <a title="scala.io.File" id="33516">path</a> = <a href="File.scala.html#9638" title="object scala.io.File">File</a>.<a href="File.scala.html#33519" title="(prefix: String,suffix: String,dir: java.io.File)scala.io.File">makeTemp</a>(<a href="#32772" title="String">prefix</a>, <a href="#32773" title="String">suffix</a>, <a href="#32774" title="java.io.File">dir</a>)
+    <a href="#33516" title="scala.io.File">path</a>.<a href="Path.scala.html#32638" title="()Boolean">delete</a>()
+    <a href="#33516" title="scala.io.File">path</a>.<a href="Path.scala.html#32634" title="(force: Boolean)scala.io.Directory">createDirectory</a>()
+  }
+}
+<span class="keyword">import</span> Path._
+
+/** An abstraction for directories.
+ *
+ *  @author  Paul Phillips
+ *  @since   2.8
+ */
+<span class="keyword">class</span> <a title="class Directory extends scala.io.Path with ScalaObject" id="9568">Directory</a><a href="../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="java.io.File" id="32658">jfile</a>: <span title="java.io.File">JFile</span>) <span class="keyword">extends</span> <a href="Path.scala.html#9562" title="scala.io.Path">Path</a>(<a href="#32658" title="java.io.File">jfile</a>)
+{  
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; scala.io.Directory" id="32646">toDirectory</a>: <a href="#9568" title="scala.io.Directory">Directory</a> = <a href="#9568" title="scala.io.Directory" class="keyword">this</a>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; scala.io.File" id="32647">toFile</a>: <a href="File.scala.html#9637" title="scala.io.File">File</a> = <a href="File.scala.html#33598" title="scala.io.Codec" id="33774" class="keyword">new</a> <a href="File.scala.html#9637" title="scala.io.File">File</a>(<a href="Path.scala.html#32597" title="java.io.File" id="33767">jfile</a>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Boolean" id="32648">create</a>(): <span title="Boolean">Boolean</span> = <a href="Path.scala.html#32597" title="=&gt; java.io.File">jfile</a>.<a title="()Boolean" id="32717">mkdirs</a>()
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Boolean" id="32649">isValid</a> = <a href="Path.scala.html#32597" title="=&gt; java.io.File">jfile</a>.<span title="()Boolean">isDirectory</span><a title="(x$1: Boolean)Boolean" id="2208">(</a>) || <a title="=&gt; Boolean" id="2203">!</a><a href="Path.scala.html#32597" title="=&gt; java.io.File">jfile</a>.<a title="()Boolean" id="32699">exists</a>()
+  
+  /** An iterator over the contents of this directory.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Iterator[scala.io.Path]" id="32650">list</a>: <a href="../collection/Iterator.scala.html#4274" title="Iterator[scala.io.Path]">Iterator</a>[Path] =
+    <a href="Path.scala.html#32597" title="=&gt; java.io.File">jfile</a>.<span title="()Array[java.io.File]">listFiles</span> <span title="Iterator[scala.io.Path]" class="keyword">match</span> {
+      <span title="&lt;refinement&gt; extends java.lang.Object with Iterator[Nothing]" class="keyword">case</span> <span title="Null(null)" class="keyword">null</span>   =&gt; <a href="../package.scala.html#14773" title="=&gt; collection.Iterator.type">Iterator</a>.<a href="../collection/Iterator.scala.html#21409" title="=&gt; &lt;refinement&gt; extends java.lang.Object with Iterator[Nothing]">empty</a>
+      <span title="Iterator[scala.io.Path]" class="keyword">case</span> <a title="Array[java.io.File]" id="33831">xs</a>     =&gt; <a href="#33831" title="Array[java.io.File]">xs</a>.<a href="../collection/Iterator.scala.html#19189" title="(f: (java.io.File) =&gt; scala.io.Path)Iterator[scala.io.Path]">iterator</a> map <a href="Path.scala.html#9563" title="object scala.io.Path">Path</a>.<a href="Path.scala.html#32664" title="(jfile: java.io.File)scala.io.Path">apply</a>
+    }
+  
+  <span class="keyword">def</span> <a title="=&gt; Iterator[scala.io.Directory]" id="32651">dirs</a>: <a href="../collection/Iterator.scala.html#4274" title="Iterator[scala.io.Directory]">Iterator</a>[Directory] = <a href="../collection/Iterator.scala.html#19199" title="(pf: PartialFunction[Any,scala.io.Directory])Iterator[scala.io.Directory]">list</a> filterMap <a href="#33863" title="scala.io.Directory">{</a> <span title="scala.io.Directory" class="keyword">case</span> <a title="scala.io.Directory" id="33864">x</a>: <a href="#9568" title="scala.io.Directory">Directory</a> =&gt; <a href="#33864" title="scala.io.Directory">x</a> }
+  <span class="keyword">def</span> <a title="=&gt; Iterator[scala.io.File]" id="32652">files</a>: <a href="../collection/Iterator.scala.html#4274" title="Iterator[scala.io.File]">Iterator</a>[File] = <a href="../collection/Iterator.scala.html#19199" title="(pf: PartialFunction[Any,scala.io.File])Iterator[scala.io.File]">list</a> filterMap <a href="#33873" title="scala.io.File">{</a> <span title="scala.io.File" class="keyword">case</span> <a title="scala.io.File" id="33874">x</a>: <a href="File.scala.html#9637" title="scala.io.File">File</a> =&gt; <a href="#33874" title="scala.io.File">x</a> }
+  
+  <span class="keyword">def</span> <a title="(depth: Int)Iterator[scala.io.Path]" id="32653">deepList</a>(<a title="Int" id="33880">depth</a>: <span title="Int">Int</span> = <span title="Int(1)" class="int">1</span>): <a href="../collection/Iterator.scala.html#4274" title="Iterator[scala.io.Path]">Iterator</a>[Path] =
+    <span title="Iterator[scala.io.Path]" class="keyword">if</span> (<a href="#33880" title="(x$1: Int)Boolean" id="2950">depth</a> == <span title="Int(0)" class="int">0</span>) <a href="../package.scala.html#14773" title="=&gt; collection.Iterator.type">Iterator</a>.<a href="../collection/Iterator.scala.html#21409" title="=&gt; &lt;refinement&gt; extends java.lang.Object with Iterator[Nothing]">empty</a>
+    <span class="keyword">else</span> <a href="../collection/Iterator.scala.html#19192" title="(that: =&gt; Iterator[scala.io.Path])java.lang.Object with Iterator[scala.io.Path]{def cur: Iterator[scala.io.Path]; def cur_=(x$1: Iterator[scala.io.Path]): Unit}">list</a> ++ (<a href="../collection/Iterator.scala.html#19195" title="(f: (scala.io.Directory) =&gt; Iterator[scala.io.Path])Iterator[scala.io.Path]">dirs</a> flatMap (<a href="#32653" title="(depth: Int)Iterator[scala.io.Path]">_</a> deepList (<a href="#33880" title="(x$1: Int)Int" id="2964">depth</a> - <span title="Int(1)" class="int">1</span>)))
+  
+  /** An iterator over the directories underneath this directory,
+   *  to the (optionally) given depth.
+   */
+  <span class="keyword">def</span> <a title="(depth: Int)Iterator[scala.io.Directory]" id="32654">subdirs</a>(<a title="Int" id="34027">depth</a>: <span title="Int">Int</span> = <span title="Int(1)" class="int">1</span>): <a href="../collection/Iterator.scala.html#4274" title="Iterator[scala.io.Directory]">Iterator</a>[Directory] = 
+    <a href="#32653" title="(depth: Int)Iterator[scala.io.Path]">deepList</a><a href="../collection/Iterator.scala.html#19199" title="(pf: PartialFunction[Any,scala.io.Directory])Iterator[scala.io.Directory]">(</a><a href="#34027" title="Int">depth</a>) filterMap <a href="#34033" title="scala.io.Directory">{</a> <span title="scala.io.Directory" class="keyword">case</span> <a title="scala.io.Directory" id="34034">x</a>: <a href="#9568" title="scala.io.Directory">Directory</a> =&gt; <a href="#34034" title="scala.io.Directory">x</a> }
+    
+  /** Deletes the directory recursively. Returns false on failure.
+   *  Use with caution!
+   */
+  <span class="keyword">def</span> <a title="()Boolean" id="32655">deleteRecursively</a>(): <span title="Boolean">Boolean</span> = <a href="#32656" title="(f: java.io.File)Boolean">deleteRecursively</a>(<a href="Path.scala.html#32597" title="=&gt; java.io.File">jfile</a>)
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(f: java.io.File)Boolean" id="32656">deleteRecursively</a>(<a title="java.io.File" id="34044">f</a>: <span title="java.io.File">JFile</span>): <span title="Boolean">Boolean</span> = {
+    <span title="Unit" class="keyword">if</span> (<a href="#34044" title="java.io.File">f</a>.<span title="()Boolean">isDirectory</span>) <a href="#34044" title="java.io.File">f</a>.<span title="()Array[java.io.File]">listFiles</span> <span title="Unit" class="keyword">match</span> { 
+      <span title="Unit" class="keyword">case</span> <span title="Null(null)" class="keyword">null</span> =&gt;
+      <span title="Unit" class="keyword">case</span> <a title="Array[java.io.File]" id="34054">xs</a>   =&gt; <a href="../collection/generic/VectorTemplate.scala.html#17752" title="(f: (java.io.File) =&gt; Boolean)Unit">xs</a> foreach <a href="#32656" title="(f: java.io.File)Boolean">deleteRecursively</a>
+    }
+    <a href="#34044" title="java.io.File">f</a>.<a title="()Boolean" id="32706">delete</a>()
+  }
+  
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="32657">toString</a>() = <a href="../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;Directory(%s)&quot;</a>.<a href="../runtime/RichString.scala.html#18060" title="(args: Any*)String">format</a>(<a href="Path.scala.html#32612" title="=&gt; String">path</a>)
+}
+
+        </pre>
+    </body>
+</html>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>util/parsing/json/Parser.scala</title>
+        <script type="text/javascript" src="../../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2006-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: Parser.scala 16893 2009-01-13 13:09:22Z cunei $
+
+
+<span class="keyword">package</span> scala.util.parsing.json
+
+<span class="keyword">import</span> scala.util.parsing.combinator._
+<span class="keyword">import</span> scala.util.parsing.combinator.syntactical._
+<span class="keyword">import</span> scala.util.parsing.combinator.lexical._
+
+/**
+ *  @author Derek Chen-Becker &lt;&quot;java&quot;+@+&quot;chen-becker&quot;+&quot;.&quot;+&quot;org&quot;&gt;
+ */
+<span class="keyword">class</span> <a title="class Parser extends java.lang.Object with scala.util.parsing.combinator.syntactical.StdTokenParsers with scala.util.parsing.combinator.ImplicitConversions with ScalaObject" id="13872">Parser</a> <a href="../../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="../combinator/syntactical/StdTokenParsers.scala.html#13229" title="scala.util.parsing.combinator.syntactical.StdTokenParsers">StdTokenParsers</a> <span class="keyword">with</span> <a href="../combinator/ImplicitConversions.scala.html#12499" title="scala.util.parsing.combinator.ImplicitConversions">ImplicitConversions</a> {
+  // Fill in abstract defs
+  <span class="keyword">type</span> <a title="scala.util.parsing.json.Lexer" id="124582">Tokens</a> = <a href="Lexer.scala.html#13665" title="scala.util.parsing.json.Lexer">Lexer</a>
+  <span class="keyword">val</span> <a title="scala.util.parsing.json.Lexer" id="124583">lexical</a> = <span title="scala.util.parsing.json.Lexer" class="keyword">new</span> <a href="#124582" title="scala.util.parsing.json.Lexer">Tokens</a>
+
+  // Configure lexical parsing
+  <a href="#124583" title="=&gt; scala.util.parsing.json.Lexer">lexical</a>.<a href="../../../collection/generic/Growable.scala.html#19586" title="(iter: Traversable[String])Parser.this.lexical.reserved.type">reserved</a> ++= <a href="../../../collection/immutable/List.scala.html#17535" title="(xs: java.lang.String*)List[java.lang.String]">List</a>(<span title="java.lang.String(&quot;true&quot;)" class="string">&quot;true&quot;</span>, <span title="java.lang.String(&quot;false&quot;)" class="string">&quot;false&quot;</span>, <span title="java.lang.String(&quot;null&quot;)" class="string">&quot;null&quot;</span>)
+  <a href="#124583" title="=&gt; scala.util.parsing.json.Lexer">lexical</a>.<a href="../../../collection/generic/Growable.scala.html#19586" title="(iter: Traversable[String])Parser.this.lexical.delimiters.type">delimiters</a> ++= <a href="../../../collection/immutable/List.scala.html#17535" title="(xs: java.lang.String*)List[java.lang.String]">List</a>(<span title="java.lang.String(&quot;{&quot;)" class="string">&quot;{&quot;</span>, <span title="java.lang.String(&quot;}&quot;)" class="string">&quot;}&quot;</span>, <span title="java.lang.String(&quot;[&quot;)" class="string">&quot;[&quot;</span>, <span title="java.lang.String(&quot;]&quot;)" class="string">&quot;]&quot;</span>, <span title="java.lang.String(&quot;:&quot;)" class="string">&quot;:&quot;</span>, <span title="java.lang.String(&quot;,&quot;)" class="string">&quot;,&quot;</span>)
+
+  /** Type signature for functions that can parse numeric literals */
+  <span class="keyword">type</span> <a title="(String) =&gt; Any" id="124585">NumericParser</a> = String =&gt; Any
+  
+  // Global default number parsing function
+  <span class="keyword">protected</span> <span class="keyword">var</span> <a title="(String) =&gt; Any" id="124587">defaultNumberParser</a> : <a href="../../../Function1.scala.html#159" title="(String) =&gt; Any">NumericParser</a> = {<a href="../../../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString">_</a>.<a href="../../../runtime/RichString.scala.html#18058" title="=&gt; Double">toDouble</a>}
+  
+  // Per-thread default number parsing function
+  <span class="keyword">protected</span> <span class="keyword">val</span> <a title="java.lang.ThreadLocal[(String) =&gt; Any]" id="124589">numberParser</a> = <a href="#125769" title="java.lang.ThreadLocal[(String) =&gt; Any]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.ThreadLocal[(String) =&gt; Any]" id="125769">ThreadLocal</a>[NumericParser]() {
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="()(String) =&gt; Any" id="125771">initialValue</a>() = <a href="#124587" title="=&gt; (String) =&gt; Any">defaultNumberParser</a>
+  }
+  
+  // Define the grammar
+  <span class="keyword">def</span> <a title="=&gt; Parser.this.Parser[List[Any]]" id="124591">root</a>       = <a href="../combinator/Parsers.scala.html#57590" title="(q: =&gt; Parser.this.Parser[List[Any]])Parser.this.Parser[List[Any]]">jsonObj</a> | <a href="#124593" title="=&gt; Parser.this.Parser[List[Any]]">jsonArray</a>
+  <span class="keyword">def</span> <a title="=&gt; Parser.this.Parser[List[(String, Any)]]" id="124592">jsonObj</a>    = <a href="../combinator/Parsers.scala.html#57581" title="(p: =&gt; Parser.this.Parser[List[(String, Any)]])Parser.this.Parser[List[(String, Any)]]" class="string">&quot;{&quot;</a> <a href="../combinator/Parsers.scala.html#57584" title="(p: =&gt; Parser.this.Parser[String])Parser.this.Parser[List[(String, Any)]]">~&gt;</a> <a href="../combinator/Parsers.scala.html#57438" title="(p: =&gt; Parser.this.Parser[(String, Any)],q: =&gt; Parser.this.Parser[Any])Parser.this.Parser[List[(String, Any)]]">repsep</a>(<a href="#124594" title="=&gt; Parser.this.Parser[(String, Any)]">objEntry</a>, <a href="../combinator/syntactical/StdTokenParsers.scala.html#84308" title="implicit scala.util.parsing.combinator.syntactical.StdTokenParsers.keyword : (chars: String)Parser.this.Parser[String]" class="string">&quot;,&quot;</a>) &lt;~ <a href="../combinator/syntactical/StdTokenParsers.scala.html#84308" title="implicit scala.util.parsing.combinator.syntactical.StdTokenParsers.keyword : (chars: String)Parser.this.Parser[String]" class="string">&quot;}&quot;</a>
+  <span class="keyword">def</span> <a title="=&gt; Parser.this.Parser[List[Any]]" id="124593">jsonArray</a>  = <a href="../combinator/Parsers.scala.html#57581" title="(p: =&gt; Parser.this.Parser[List[Any]])Parser.this.Parser[List[Any]]" class="string">&quot;[&quot;</a> <a href="../combinator/Parsers.scala.html#57584" title="(p: =&gt; Parser.this.Parser[String])Parser.this.Parser[List[Any]]">~&gt;</a> <a href="../combinator/Parsers.scala.html#57438" title="(p: =&gt; Parser.this.Parser[Any],q: =&gt; Parser.this.Parser[Any])Parser.this.Parser[List[Any]]">repsep</a>(<a href="#124595" title="=&gt; Parser.this.Parser[Any]">value</a>, <a href="../combinator/syntactical/StdTokenParsers.scala.html#84308" title="implicit scala.util.parsing.combinator.syntactical.StdTokenParsers.keyword : (chars: String)Parser.this.Parser[String]" class="string">&quot;,&quot;</a>) &lt;~ <a href="../combinator/syntactical/StdTokenParsers.scala.html#84308" title="implicit scala.util.parsing.combinator.syntactical.StdTokenParsers.keyword : (chars: String)Parser.this.Parser[String]" class="string">&quot;]&quot;</a>
+  <span class="keyword">def</span> <a title="=&gt; Parser.this.Parser[(String, Any)]" id="124594">objEntry</a>   = <a href="../combinator/Parsers.scala.html#57578" title="(p: =&gt; Parser.this.Parser[Any])Parser.this.Parser[Parser.this.~[String,Any]]">stringVal</a> <a href="../combinator/Parsers.scala.html#57596" title="(f: (Parser.this.~[String,Any]) =&gt; (String, Any))Parser.this.Parser[(String, Any)]">~</a> (<a href="../combinator/Parsers.scala.html#57581" title="(p: =&gt; Parser.this.Parser[Any])Parser.this.Parser[Any]" class="string">&quot;:&quot;</a> ~&gt; <a href="#124595" title="=&gt; Parser.this.Parser[Any]">value</a>) ^^ <a href="#125136" title="(String, Any)">{</a> <span title="(String, Any)" class="keyword">case</span> <a title="String" id="125139">x</a> ~ <a title="Any" id="125140">y</a> =&gt; <a href="../../../Tuple2.scala.html#20670" title="(_1: String,_2: Any)(String, Any)">(</a><a href="#125139" title="String">x</a>, <a href="#125140" title="Any">y</a>) }
+  <span class="keyword">def</span> <a title="=&gt; Parser.this.Parser[Any]" id="124595">value</a>: <a href="../combinator/Parsers.scala.html#57399" title="Parser.this.Parser[Any]">Parser</a>[Any] = (<a href="../combinator/Parsers.scala.html#57590" title="(q: =&gt; Parser.this.Parser[List[Any]])Parser.this.Parser[List[Any]]">jsonObj</a> <a href="../combinator/Parsers.scala.html#57590" title="(q: =&gt; Parser.this.Parser[Any])Parser.this.Parser[Any]">|</a> <a href="#124593" title="=&gt; Parser.this.Parser[List[Any]]">jsonArray</a> <a href="../combinator/Parsers.scala.html#57590" title="(q: =&gt; Parser.this.Parser[Any])Parser.this.Parser[Any]">|</a> <a href="#124597" title="=&gt; Parser.this.Parser[Any]">number</a> <a href="../combinator/Parsers.scala.html#57590" title="(q: =&gt; Parser.this.Parser[Any])Parser.this.Parser[Any]">|</a> <a href="../combinator/Parsers.scala.html#57599" title="(r: Boolean)Parser.this.Parser[Boolean]" class="string">&quot;true&quot;</a> ^^^ <span title="Boolean(true)" class="keyword">true</span> <a href="../combinator/Parsers.scala.html#57590" title="(q: =&gt; Parser.this.Parser[Any])Parser.this.Parser[Any]">|</a> <a href="../combinator/Parsers.scala.html#57599" title="(r: Boolean)Parser.this.Parser[Boolean]" class="string">&quot;false&quot;</a> ^^^ <span title="Boolean(false)" class="keyword">false</span> <a href="../combinator/Parsers.scala.html#57590" title="(q: =&gt; Parser.this.Parser[Any])Parser.this.Parser[Any]">|</a> <a href="../combinator/Parsers.scala.html#57599" title="(r: Null)Parser.this.Parser[Null]" class="string">&quot;null&quot;</a> ^^^ <span title="Null(null)" class="keyword">null</span> | <a href="#124596" title="=&gt; Parser.this.Parser[String]">stringVal</a>)
+  <span class="keyword">def</span> <a title="=&gt; Parser.this.Parser[String]" id="124596">stringVal</a>  = <a href="../combinator/Parsers.scala.html#57417" title="(expected: String,f: PartialFunction[Parser.this.Elem,String])Parser.this.Parser[String]">accept</a>(<span title="java.lang.String(&quot;string&quot;)" class="string">&quot;string&quot;</span>, <a href="#125090" title="String">{</a> <span title="String" class="keyword">case</span> lexical.StringLit(<a title="String" id="125091">n</a>) =&gt; <a href="#125091" title="String">n</a>} )
+  <span class="keyword">def</span> <a title="=&gt; Parser.this.Parser[Any]" id="124597">number</a>     = <a href="../combinator/Parsers.scala.html#57417" title="(expected: String,f: PartialFunction[Parser.this.Elem,Any])Parser.this.Parser[Any]">accept</a>(<span title="java.lang.String(&quot;number&quot;)" class="string">&quot;number&quot;</span>, <a href="#190458" title="Any">{</a> <span title="Any" class="keyword">case</span> lexical.NumericLit(<a title="String" id="190459">n</a>) =&gt; <a href="#124589" title="=&gt; java.lang.ThreadLocal[(String) =&gt; Any]">numberParser</a>.<a title="()(String) =&gt; Any" id="36935">get</a>.<a href="../../../Function1.scala.html#17119" title="(v1: String)Any">apply</a>(<a href="#190459" title="String">n</a>)} )
+}
+
+
+        </pre>
+    </body>
+</html>

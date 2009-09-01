@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>collection/mutable/SynchronizedBuffer.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |                                         **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: SynchronizedBuffer.scala 17856 2009-05-27 19:35:02Z dubochet $
+
+
+<span class="keyword">package</span> scala.collection.mutable
+
+
+/** This class should be used as a mixin. It synchronizes the &lt;code&gt;Buffer&lt;/code&gt;
+ *  methods of the class into which it is mixed in.
+ *
+ *  @author  Matthias Zenger
+ *  @version 1.0, 08/07/2003
+ */
+<span class="keyword">trait</span> <a title="trait SynchronizedBuffer[A] extends java.lang.Object with scala.collection.mutable.Buffer[A] with ScalaObject" id="7806">SynchronizedBuffer</a>[<a title="&gt;: Nothing &lt;: Any" id="13176">A</a><a id="1">]</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="Buffer.scala.html#7641" title="scala.collection.mutable.Buffer[A]">Buffer</a>[A] {
+
+  <span class="keyword">import</span> collection.Traversable
+
+  <span class="keyword">abstract</span> <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Int" id="83594">length</a>: <span title="Int">Int</span> = <a href="#7806" title="(x$1: Int)Int">synchronized</a> {
+    <a href="#270568" title="=&gt; Int" class="keyword">super</a>.<a title="=&gt; Int" id="270568">length</a>
+  }
+
+  <span class="keyword">abstract</span> <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Iterator[A]" id="83595">iterator</a>: <a href="../Iterator.scala.html#4274" title="Iterator[A]">Iterator</a>[A] = <a href="#7806" title="(x$1: Iterator[A])Iterator[A]">synchronized</a> {
+    <a href="#270569" title="=&gt; Iterator[A]" class="keyword">super</a>.<a title="=&gt; Iterator[A]" id="270569">iterator</a>
+  }
+
+  <span class="keyword">abstract</span> <span class="keyword">override</span> <span class="keyword">def</span> <a title="(n: Int)A" id="83596">apply</a>(<a title="Int" id="83638">n</a>: <span title="Int">Int</span>): <a href="#13176" title="A">A</a> = <a href="#7806" title="(x$1: A)A">synchronized</a> {
+    <a href="#270571" title="(n: Int)A" class="keyword">super</a>.<a title="(n: Int)A" id="270571">apply</a>(<a href="#83638" title="Int">n</a>)
+  }
+
+  /** Append a single element to this buffer and return
+   *  the identity of the buffer.
+   *
+   *  @param elem  the element to append.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(elem: A)scala.collection.mutable.Buffer[A]" id="83597">+</a>(<a title="A" id="83650">elem</a>: <a href="#13176" title="A">A</a>): <a href="Buffer.scala.html#7641" title="scala.collection.mutable.Buffer[A]">Buffer</a>[A] = <a href="#7806" title="(x$1: scala.collection.mutable.Buffer[A])scala.collection.mutable.Buffer[A]">synchronized</a> {
+    <a href="#270573" title="(elem: A)scala.collection.mutable.Buffer[A]" class="keyword">super</a>.<a title="(elem: A)scala.collection.mutable.Buffer[A]" id="270573">+</a>(<a href="#83650" title="A">elem</a>)
+  }
+
+  /** Append a single element to this buffer.
+   *
+   *  @param elem  the element to append.
+   */
+  <span class="keyword">abstract</span> <span class="keyword">override</span> <span class="keyword">def</span> <a title="(elem: A)SynchronizedBuffer.this.type" id="83598">+=</a>(<a title="A" id="83716">elem</a>: <a href="#13176" title="A">A</a>): <span class="keyword">this</span>.<span class="keyword">type</span> = <a href="#7806" title="[T0](x$1: T0)T0">synchronized</a><span title="(x$1: SynchronizedBuffer.this.type)SynchronizedBuffer.this.type">[</span><span class="keyword">this</span>.<span class="keyword">type</span>] {
+    <a href="#270583" title="(elem: A)SynchronizedBuffer.this.type" class="keyword">super</a>.<a title="(elem: A)SynchronizedBuffer.this.type" id="270583">+=</a>(<a href="#83716" title="A">elem</a>)
+  }
+
+  /** Appends a number of elements provided by an iterable object
+   *  via its &lt;code&gt;iterator&lt;/code&gt; method. The identity of the
+   *  buffer is returned.
+   *
+   *  @param iter  the iterable object.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(iter: Traversable[A])scala.collection.mutable.Buffer[A]" id="83599">++</a>(<a title="Traversable[A]" id="83756">iter</a>: <a href="../Traversable.scala.html#4436" title="Traversable[A]">Traversable</a>[A]): <a href="Buffer.scala.html#7641" title="scala.collection.mutable.Buffer[A]">Buffer</a>[A] = <a href="#7806" title="(x$1: scala.collection.mutable.Buffer[A])scala.collection.mutable.Buffer[A]">synchronized</a> {
+    <a href="#270586" title="(iter: Traversable[A])scala.collection.mutable.Buffer[A]" class="keyword">super</a>.<a title="(iter: Traversable[A])scala.collection.mutable.Buffer[A]" id="270586">++</a>(<a href="#83756" title="Traversable[A]">iter</a>)
+  }
+
+  /** Appends a number of elements provided by an iterable object
+   *  via its &lt;code&gt;iterator&lt;/code&gt; method.
+   *
+   *  @param iter  the iterable object.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(iter: Traversable[A])SynchronizedBuffer.this.type" id="83600">++=</a>(<a title="Traversable[A]" id="83920">iter</a>: <a href="../Traversable.scala.html#4436" title="Traversable[A]">Traversable</a>[A]): <span class="keyword">this</span>.<span class="keyword">type</span> = <a href="#7806" title="[T0](x$1: T0)T0">synchronized</a><span title="(x$1: SynchronizedBuffer.this.type)SynchronizedBuffer.this.type">[</span><span class="keyword">this</span>.<span class="keyword">type</span>] {
+    <a href="#270589" title="(iter: Traversable[A])SynchronizedBuffer.this.type" class="keyword">super</a>.<a title="(iter: Traversable[A])SynchronizedBuffer.this.type" id="270589">++=</a>(<a href="#83920" title="Traversable[A]">iter</a>)
+  }
+
+  /** Appends a sequence of elements to this buffer.
+   *
+   *  @param elems  the elements to append.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(elems: A*)Unit" id="83601">append</a>(<a title="A*" id="83962">elems</a>: <span title="A*">A</span>*): <span title="Unit">Unit</span> = <a href="#7806" title="(x$1: scala.collection.mutable.SynchronizedBuffer[A])scala.collection.mutable.SynchronizedBuffer[A]">synchronized</a> <span title="Unit">{</span>
+    <a href="#270589" title="(iter: Traversable[A])SynchronizedBuffer.this.type" class="keyword">super</a>.++=(<a href="#83962" title="A*">elems</a>)
+  }
+
+  /** Appends a number of elements provided by an iterable object
+   *  via its &lt;code&gt;iterator&lt;/code&gt; method.
+   *
+   *  @param iter  the iterable object.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(iter: Traversable[A])Unit" id="83602">appendAll</a>(<a title="Traversable[A]" id="83993">iter</a>: <a href="../Traversable.scala.html#4436" title="Traversable[A]">Traversable</a>[A]): <span title="Unit">Unit</span> = <a href="#7806" title="(x$1: Unit)Unit">synchronized</a> {
+    <a href="#270592" title="(iter: Traversable[A])Unit" class="keyword">super</a>.<a title="(iter: Traversable[A])Unit" id="270592">appendAll</a>(<a href="#83993" title="Traversable[A]">iter</a>)
+  }
+
+  /** Prepend a single element to this buffer and return
+   *  the identity of the buffer.
+   *
+   *  @param elem  the element to append.
+   */
+  <span class="keyword">abstract</span> <span class="keyword">override</span> <span class="keyword">def</span> <a title="(elem: A)scala.collection.mutable.Buffer[A]" id="83603">+:</a>(<a title="A" id="84005">elem</a>: <a href="#13176" title="A">A</a>): <a href="Buffer.scala.html#7641" title="scala.collection.mutable.Buffer[A]">Buffer</a>[A] = <a href="#7806" title="(x$1: scala.collection.mutable.Buffer[A])scala.collection.mutable.Buffer[A]">synchronized</a> {
+    <a href="#270597" title="(elem: A)scala.collection.mutable.Buffer[A]" class="keyword">super</a>.<a title="(elem: A)scala.collection.mutable.Buffer[A]" id="270597">+:</a>(<a href="#84005" title="A">elem</a>)
+  }
+
+  /** Prepends a number of elements provided by an iterable object
+   *  via its &lt;code&gt;iterator&lt;/code&gt; method. The identity of the
+   *  buffer is returned.
+   *
+   *  @param iter  the iterable object.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(iter: Traversable[A])scala.collection.mutable.Buffer[A]" id="83604">++:</a>(<a title="Traversable[A]" id="84017">iter</a>: <a href="../Traversable.scala.html#4436" title="Traversable[A]">Traversable</a>[A]): <a href="Buffer.scala.html#7641" title="scala.collection.mutable.Buffer[A]">Buffer</a>[A] = <a href="#7806" title="(x$1: scala.collection.mutable.Buffer[A])scala.collection.mutable.Buffer[A]">synchronized</a> {
+    <a href="#270600" title="(iter: Traversable[A])scala.collection.mutable.Buffer[A]" class="keyword">super</a>.<a title="(iter: Traversable[A])scala.collection.mutable.Buffer[A]" id="270600">++:</a>(<a href="#84017" title="Traversable[A]">iter</a>)
+  }
+
+  /** Prepend an element to this list.
+   *
+   *  @param elem  the element to prepend.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(elems: A*)Unit" id="83605">prepend</a>(<a title="A*" id="84039">elems</a>: <span title="A*">A</span>*): <span title="Unit">Unit</span> = <a href="#7806" title="(x$1: Unit)Unit">synchronized</a> {
+    <a href="#270603" title="(iter: Traversable[A])Unit" class="keyword">super</a>.<a title="(iter: Traversable[A])Unit" id="270603">prependAll</a>(<a href="#84039" title="A*">elems</a>)
+  }
+
+  /** Prepends a number of elements provided by an iterable object
+   *  via its &lt;code&gt;iterator&lt;/code&gt; method. The identity of the
+   *  buffer is returned.
+   *
+   *  @param iter  the iterable object.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(elems: Traversable[A])Unit" id="83606">prependAll</a>(<a title="Traversable[A]" id="84059">elems</a>: <a href="../Traversable.scala.html#4436" title="Traversable[A]">Traversable</a>[A]): <span title="Unit">Unit</span> = <a href="#7806" title="(x$1: Unit)Unit">synchronized</a> {
+    <a href="#270603" title="(iter: Traversable[A])Unit" class="keyword">super</a>.prependAll(<a href="#84059" title="Traversable[A]">elems</a>)
+  }
+
+  /** Inserts new elements at the index &lt;code&gt;n&lt;/code&gt;. Opposed to method
+   *  &lt;code&gt;update&lt;/code&gt;, this method will not replace an element with a
+   *  one. Instead, it will insert the new elements at index &lt;code&gt;n&lt;/code&gt;.
+   *
+   *  @param n      the index where a new element will be inserted.
+   *  @param elems  the new elements to insert.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(n: Int,elems: A*)Unit" id="83607">insert</a>(<a title="Int" id="84081">n</a>: <span title="Int">Int</span>, <a title="A*" id="84082">elems</a>: <span title="A*">A</span>*): <span title="Unit">Unit</span> = <a href="#7806" title="(x$1: Unit)Unit">synchronized</a> {
+    <a href="#270610" title="(n: Int,iter: Traversable[A])Unit" class="keyword">super</a>.<a title="(n: Int,iter: Traversable[A])Unit" id="270610">insertAll</a>(<a href="#84081" title="Int">n</a>, <a href="#84082" title="A*">elems</a>)
+  }
+
+  /** Inserts new elements at the index &lt;code&gt;n&lt;/code&gt;. Opposed to method
+   *  &lt;code&gt;update&lt;/code&gt;, this method will not replace an element with a
+   *  one. Instead, it will insert a new element at index &lt;code&gt;n&lt;/code&gt;.
+   *
+   *  @param n     the index where a new element will be inserted.
+   *  @param iter  the iterable object providing all elements to insert.
+   */
+  <span class="keyword">abstract</span> <span class="keyword">override</span> <span class="keyword">def</span> <a title="(n: Int,iter: Traversable[A])Unit" id="83608">insertAll</a>(<a title="Int" id="84096">n</a>: <span title="Int">Int</span>, <a title="Traversable[A]" id="84097">iter</a>: <a href="../Traversable.scala.html#4436" title="Traversable[A]">Traversable</a>[A]): <span title="Unit">Unit</span> = <a href="#7806" title="(x$1: Unit)Unit">synchronized</a> {
+     <a href="#270610" title="(n: Int,iter: Traversable[A])Unit" class="keyword">super</a>.insertAll(<a href="#84096" title="Int">n</a>, <a href="#84097" title="Traversable[A]">iter</a>)
+  }
+
+  /** Replace element at index &lt;code&gt;n&lt;/code&gt; with the new element
+   *  &lt;code&gt;newelem&lt;/code&gt;.
+   *
+   *  @param n       the index of the element to replace.
+   *  @param newelem the new element.
+   */
+  <span class="keyword">abstract</span> <span class="keyword">override</span> <span class="keyword">def</span> <a title="(n: Int,newelem: A)Unit" id="83609">update</a>(<a title="Int" id="84111">n</a>: <span title="Int">Int</span>, <a title="A" id="84112">newelem</a>: <a href="#13176" title="A">A</a>): <span title="Unit">Unit</span> = <a href="#7806" title="(x$1: Unit)Unit">synchronized</a> {
+    <a href="#270625" title="(n: Int,newelem: A)Unit" class="keyword">super</a>.<a title="(n: Int,newelem: A)Unit" id="270625">update</a>(<a href="#84111" title="Int">n</a>, <a href="#84112" title="A">newelem</a>)
+  }
+
+  /** Removes the element on a given index position.
+   *
+   *  @param n  the index which refers to the element to delete.
+   */
+  <span class="keyword">abstract</span> <span class="keyword">override</span> <span class="keyword">def</span> <a title="(n: Int)A" id="83610">remove</a>(<a title="Int" id="84134">n</a>: <span title="Int">Int</span>): <a href="#13176" title="A">A</a> = <a href="#7806" title="(x$1: A)A">synchronized</a> {
+    <a href="#270632" title="(n: Int)A" class="keyword">super</a>.<a title="(n: Int)A" id="270632">remove</a>(<a href="#84134" title="Int">n</a>)
+  }
+
+  /** Clears the buffer contents.
+   */
+  <span class="keyword">abstract</span> <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Unit" id="83611">clear</a>(): <span title="Unit">Unit</span> = <a href="#7806" title="(x$1: Unit)Unit">synchronized</a> {
+    <a href="#270634" title="()Unit" class="keyword">super</a>.<a title="()Unit" id="270634">clear</a>
+  }
+/* TODO: Reintegrate
+  override def &lt;&lt;(cmd: Message[(Location, A)]): Unit = synchronized {
+    super.&lt;&lt;(cmd)
+  }
+*/
+  /** Return a clone of this buffer.
+   *
+   *  @return an &lt;code&gt;ArrayBuffer&lt;/code&gt; with the same elements.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()scala.collection.mutable.Buffer[A]" id="83612">clone</a>(): <a href="Buffer.scala.html#7641" title="scala.collection.mutable.Buffer[A]">Buffer</a>[A] = <a href="#7806" title="(x$1: scala.collection.mutable.Buffer[A])scala.collection.mutable.Buffer[A]">synchronized</a> {
+    <a href="#270635" title="()scala.collection.mutable.Buffer[A]" class="keyword">super</a>.<a title="()scala.collection.mutable.Buffer[A]" id="270635">clone</a>()
+  }
+
+  /** The hashCode method always yields an error, since it is not
+   *  safe to use buffers as keys in hash tables.
+   *
+   *  @return never.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Int" id="83613">hashCode</a>(): <span title="Int">Int</span> = <a href="#7806" title="(x$1: Int)Int">synchronized</a> {
+    <a href="#270636" title="()Int" class="keyword">super</a>.<a title="()Int" id="270636">hashCode</a>()
+  }
+}
+
+        </pre>
+    </body>
+</html>

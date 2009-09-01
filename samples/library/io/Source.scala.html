@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>io/Source.scala</title>
+        <script type="text/javascript" src="../jquery-all.js"></script>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: Source.scala 18500 2009-08-17 21:16:39Z extempore $
+
+
+<span class="keyword">package</span> scala.io
+
+<span class="keyword">import</span> java.io.{ FileInputStream, InputStream, PrintStream, File =&gt; JFile }
+<span class="keyword">import</span> java.net.{ URI, URL }
+
+/** This object provides convenience methods to create an iterable
+ *  representation of a source file.
+ *
+ *  @author  Burak Emir, Paul Phillips
+ *  @version 1.0, 19/08/2004
+ */
+<span class="keyword">object</span> <a title="object scala.io.Source" id="9827">Source</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  <span class="keyword">val</span> <a title="Int" id="83294">DefaultBufSize</a> = <span title="Int(2048)" class="int">2048</span>
+  
+  /** Creates a &lt;code&gt;Source&lt;/code&gt; from System.in.
+   */
+  <span class="keyword">def</span> <a title="=&gt; scala.io.Source" id="83296">stdin</a> = <a href="#256197" title="Int" id="256216">fromInputStream</a><a href="#256200" title="scala.io.Codec" id="256226">(</a><a title="object java.lang.System" id="1628">System</a>.<a title="java.io.InputStream" id="24040">in</a>)
+  
+  /** Creates a &lt;code&gt;Source&lt;/code&gt; from an Iterable.
+   *
+   *  @param    iterable  the Iterable
+   *  @return   the &lt;code&gt;Source&lt;/code&gt; instance.
+   */
+  <span class="keyword">def</span> <a title="(iterable: Iterable[Char])scala.io.Source" id="83297">fromIterable</a>(<a title="Iterable[Char]" id="256229">iterable</a>: <a href="../collection/Iterable.scala.html#4460" title="Iterable[Char]">Iterable</a>[Char]): <a href="#9826" title="scala.io.Source">Source</a> = <a href="#83282" title="(f: () =&gt; scala.io.Source)scala.io.Source{ ... }" class="keyword">new</a> <a href="#9826" title="anonymous class $anon extends scala.io.Source" id="256231">Source</a> {
+    <span class="keyword">val</span> <a title="Iterator[Char]" id="256233">iter</a> = <a href="#256229" title="Iterable[Char]">iterable</a>.<a href="../collection/generic/IterableTemplate.scala.html#17285" title="=&gt; Iterator[Char]">iterator</a>
+  } withReset(() =&gt; <a href="#83297" title="(iterable: Iterable[Char])scala.io.Source">fromIterable</a>(<a href="#256229" title="Iterable[Char]">iterable</a>))
+
+  /** Creates a &lt;code&gt;Source&lt;/code&gt; instance from a single character.
+   *
+   *  @param c ...
+   *  @return  the create &lt;code&gt;Source&lt;/code&gt; instance.
+   */
+  <span class="keyword">def</span> <a title="(c: Char)scala.io.Source" id="83298">fromChar</a>(<a title="Char" id="256249">c</a>: <span title="Char">Char</span>): <a href="#9826" title="scala.io.Source">Source</a> = <a href="#83297" title="(iterable: Iterable[Char])scala.io.Source">fromIterable</a>(<a href="../Array.scala.html#29224" title="(xs: Char*)Array[Char]">Array</a>(<a href="#256249" title="Char">c</a>))
+
+  /** creates Source from array of characters, with empty description.
+   *
+   *  @param chars ...
+   *  @return      ...
+   */
+  <span class="keyword">def</span> <a title="(chars: Array[Char])scala.io.Source" id="83299">fromChars</a>(<a title="Array[Char]" id="256522">chars</a>: <a href="../Array.scala.html#885" title="Array[Char]">Array</a>[Char]): <a href="#9826" title="scala.io.Source">Source</a> = <a href="#83297" title="(iterable: Iterable[Char])scala.io.Source">fromIterable</a>(<a href="#256522" title="Array[Char]">chars</a>)
+
+  /** creates Source from string, with empty description.
+   *
+   *  @param s ...
+   *  @return  ...
+   */
+  <span class="keyword">def</span> <a title="(s: String)scala.io.Source" id="83300">fromString</a>(<a title="String" id="253357">s</a>: <span title="String">String</span>): <a href="#9826" title="scala.io.Source">Source</a> = <a href="#83297" title="(iterable: Iterable[Char])scala.io.Source">fromIterable</a>(<a href="../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString">s</a>)
+
+  /** Create a &lt;code&gt;Source&lt;/code&gt; from array of bytes, decoding
+   *  the bytes according to codec.
+   *
+   *  @param bytes ...
+   *  @param enc   ...
+   *  @return      the created &lt;code&gt;Source&lt;/code&gt; instance.
+   */
+  <span class="keyword">def</span> <a title="(bytes: Array[Byte])(implicit codec: scala.io.Codec)scala.io.Source" id="83301">fromBytes</a>(<a title="Array[Byte]" id="256567">bytes</a>: <a href="../Array.scala.html#885" title="Array[Byte]">Array</a>[Byte])(<span class="keyword">implicit</span> <a title="scala.io.Codec" id="256538">codec</a>: <a href="Codec.scala.html#9817" title="scala.io.Codec">Codec</a> = <a href="Codec.scala.html#9818" title="object scala.io.Codec">Codec</a>.<a href="Codec.scala.html#33633" title="=&gt; scala.io.Codec">default</a>): <a href="#9826" title="scala.io.Source">Source</a> =
+    <a href="#83300" title="(s: String)scala.io.Source">fromString</a>(<span title="(x$1: Array[Byte],x$2: java.lang.String)java.lang.String" class="keyword">new</span> <a href="../Predef.scala.html#16156" title="java.lang.String">String</a>(<a href="#256567" title="Array[Byte]">bytes</a>, <a href="#256538" title="scala.io.Codec">codec</a>.<a href="Codec.scala.html#33580" title="=&gt; java.lang.String">name</a>))
+  
+  /** Create a &lt;code&gt;Source&lt;/code&gt; from array of bytes, assuming
+   *  one byte per character (ISO-8859-1 encoding.)
+   */
+  <span class="keyword">def</span> <a title="(bytes: Array[Byte])scala.io.Source" id="83302">fromRawBytes</a>(<a title="Array[Byte]" id="256569">bytes</a>: <a href="../Array.scala.html#885" title="Array[Byte]">Array</a>[Byte]): <a href="#9826" title="scala.io.Source">Source</a> = <a href="#83300" title="(s: String)scala.io.Source">fromString</a>(<span title="(x$1: Array[Byte],x$2: java.lang.String)java.lang.String" class="keyword">new</span> <a href="../Predef.scala.html#16156" title="java.lang.String">String</a>(<a href="#256569" title="Array[Byte]">bytes</a>, <a href="Codec.scala.html#9818" title="object scala.io.Codec">Codec</a>.<a href="Codec.scala.html#33629" title="=&gt; java.nio.charset.Charset">ISO8859</a>.<a title="()java.lang.String" id="33112">name</a>))
+
+  /** creates Source from file with given name, setting
+   *  its description to filename.
+   */
+  <span class="keyword">def</span> <a title="(name: String)(implicit codec: scala.io.Codec)scala.io.Source" id="83303">fromPath</a>(<a title="String" id="83547">name</a>: <span title="String">String</span>)(<span class="keyword">implicit</span> <a title="scala.io.Codec" id="83539">codec</a>: <a href="Codec.scala.html#9817" title="scala.io.Codec">Codec</a> = <a href="Codec.scala.html#9818" title="object scala.io.Codec">Codec</a>.<a href="Codec.scala.html#33633" title="=&gt; scala.io.Codec">default</a>): <a href="#9826" title="scala.io.Source">Source</a> = <a href="#83306" title="(file: java.io.File,bufferSize: Int)(implicit codec: scala.io.Codec)scala.io.Source">fromFile</a><a href="#83539" title="scala.io.Codec">(</a><span title="java.io.File" class="keyword">new</span> <span title="java.io.File">JFile</span>(<a href="#83547" title="String">name</a>))
+
+  /** creates &lt;code&gt;Source&lt;/code&gt; from file with given file: URI
+   */
+  <span class="keyword">def</span> <a title="(uri: java.net.URI)(implicit codec: scala.io.Codec)scala.io.Source" id="83304">fromURI</a>(<a title="java.net.URI" id="256625">uri</a>: <a title="java.net.URI" id="5101">URI</a>)(<span class="keyword">implicit</span> <a title="scala.io.Codec" id="256614">codec</a>: <a href="Codec.scala.html#9817" title="scala.io.Codec">Codec</a> = <a href="Codec.scala.html#9818" title="object scala.io.Codec">Codec</a>.<a href="Codec.scala.html#33633" title="=&gt; scala.io.Codec">default</a>): <a href="#9826" title="scala.io.Source">Source</a> = <a href="#83306" title="(file: java.io.File,bufferSize: Int)(implicit codec: scala.io.Codec)scala.io.Source">fromFile</a><a href="#256614" title="scala.io.Codec">(</a><a title="(x$1: java.net.URI)java.io.File" id="32684" class="keyword">new</a> <span title="java.io.File">JFile</span>(<a href="#256625" title="java.net.URI">uri</a>))
+  
+  /** same as fromInputStream(url.openStream())(codec)
+   */
+  <span class="keyword">def</span> <a title="(url: java.net.URL)(implicit codec: scala.io.Codec)scala.io.Source" id="83305">fromURL</a>(<a title="java.net.URL" id="83443">url</a>: <a title="java.net.URL" id="4909">URL</a>)(<span class="keyword">implicit</span> <a title="scala.io.Codec" id="83311">codec</a>: <a href="Codec.scala.html#9817" title="scala.io.Codec">Codec</a> = <a href="Codec.scala.html#9818" title="object scala.io.Codec">Codec</a>.<a href="Codec.scala.html#33633" title="=&gt; scala.io.Codec">default</a>): <a href="#9826" title="scala.io.Source">Source</a> =
+    <a href="#83307" title="(inputStream: java.io.InputStream,bufferSize: Int,reset: () =&gt; scala.io.Source,close: () =&gt; Unit)(implicit codec: scala.io.Codec)scala.io.Source">fromInputStream</a>(<a href="#83443" title="java.net.URL">url</a>.<a title="()java.io.InputStream" id="83377">openStream</a>())(<a href="#83311" title="scala.io.Codec">codec</a>)
+
+  /** Creates Source from &lt;code&gt;file&lt;/code&gt;, using given character encoding,
+   *  setting its description to filename. Input is buffered in a buffer of
+   *  size &lt;code&gt;bufferSize&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="(file: java.io.File,bufferSize: Int)(implicit codec: scala.io.Codec)scala.io.Source" id="83306">fromFile</a>(<a title="java.io.File" id="248796">file</a>: <span title="java.io.File">JFile</span>, <a title="Int" id="235668">bufferSize</a>: <span title="Int">Int</span> = <a href="#83294" title="=&gt; Int">DefaultBufSize</a>)(<span class="keyword">implicit</span> <a title="scala.io.Codec" id="235669">codec</a>: <a href="Codec.scala.html#9817" title="scala.io.Codec">Codec</a> = <a href="Codec.scala.html#9818" title="object scala.io.Codec">Codec</a>.<a href="Codec.scala.html#33633" title="=&gt; scala.io.Codec">default</a>): <a href="#9826" title="scala.io.Source">Source</a> = {
+    <span class="keyword">val</span> <a title="java.io.FileInputStream" id="256633">inputStream</a> = <a title="(x$1: java.io.File)java.io.FileInputStream" id="46903" class="keyword">new</a> <a title="java.io.FileInputStream" id="3958">FileInputStream</a>(<a href="#248796" title="java.io.File">file</a>)
+
+    <a href="#83307" title="(inputStream: java.io.InputStream,bufferSize: Int,reset: () =&gt; scala.io.Source,close: () =&gt; Unit)(implicit codec: scala.io.Codec)scala.io.Source">fromInputStream</a><a href="#83284" title="(text: java.lang.String)scala.io.Source">(</a>
+      <a href="#256633" title="java.io.FileInputStream">inputStream</a>,
+      <a href="#235668" title="Int">bufferSize</a>,
+      () =&gt; <a href="#83306" title="(file: java.io.File,bufferSize: Int)(implicit codec: scala.io.Codec)scala.io.Source">fromFile</a>(<a href="#248796" title="java.io.File">file</a>, <a href="#235668" title="Int">bufferSize</a>)(<a href="#235669" title="scala.io.Codec">codec</a>),
+      () =&gt; <a href="#256633" title="java.io.FileInputStream">inputStream</a>.<a title="()Unit" id="46917">close</a>()
+    ) withDescription (<span title="(x$1: Any)java.lang.String" class="string">&quot;file:&quot;</span> + <a href="#248796" title="java.io.File">file</a>.<a title="()java.lang.String" id="32691">getAbsolutePath</a>)
+  }
+
+  /** Reads data from &lt;code&gt;inputStream&lt;/code&gt; with a buffered reader,
+   *  using encoding in implicit parameter &lt;code&gt;codec&lt;/code&gt;.
+   * 
+   *  @param  inputStream  the input stream from which to read
+   *  @param  bufferSize   buffer size (defaults to Source.DefaultBufSize)
+   *  @param  reset        a () =&gt; Source which resets the stream (if unset, reset() will throw an Exception)
+   *  @param  codec        (implicit) a scala.io.Codec specifying behavior (defaults to Codec.default)
+   *  @return              the buffered source
+   */
+  <span class="keyword">def</span> <a title="(inputStream: java.io.InputStream,bufferSize: Int,reset: () =&gt; scala.io.Source,close: () =&gt; Unit)(implicit codec: scala.io.Codec)scala.io.Source" id="83307">fromInputStream</a>(
+    <a title="java.io.InputStream" id="256218">inputStream</a>: <a title="java.io.InputStream" id="3892">InputStream</a>,
+    <a title="Int" id="256197">bufferSize</a>: <span title="Int">Int</span> = <a href="#83294" title="=&gt; Int">DefaultBufSize</a>,
+    <a title="() =&gt; scala.io.Source" id="256198">reset</a>: () =&gt; Source = <span title="Null(null)" class="keyword">null</span>,
+    <a title="() =&gt; Unit" id="256199">close</a>: () =&gt; Unit = <span title="Null(null)" class="keyword">null</span>
+  )(<span class="keyword">implicit</span> <a title="scala.io.Codec" id="256200">codec</a>: <a href="Codec.scala.html#9817" title="scala.io.Codec">Codec</a> = <a href="Codec.scala.html#9818" title="object scala.io.Codec">Codec</a>.<a href="Codec.scala.html#33633" title="=&gt; scala.io.Codec">default</a>): <a href="#9826" title="scala.io.Source">Source</a> =
+  {
+    // workaround for default arguments being unable to refer to other parameters
+    <span class="keyword">val</span> <a title="() =&gt; scala.io.Source" id="256663">resetFn</a> = <span title="() =&gt; scala.io.Source" class="keyword">if</span> (<a href="#256198" title="(x$1: AnyRef)Boolean" id="3624">reset</a> == <span title="Null(null)" class="keyword">null</span>) () =&gt; <a href="#83307" title="(inputStream: java.io.InputStream,bufferSize: Int,reset: () =&gt; scala.io.Source,close: () =&gt; Unit)(implicit codec: scala.io.Codec)scala.io.Source">fromInputStream</a><a href="#256200" title="scala.io.Codec">(</a><a href="#256218" title="java.io.InputStream">inputStream</a>, <a href="#256197" title="Int">bufferSize</a>, <a href="#256198" title="() =&gt; scala.io.Source">reset</a>, <a href="#256199" title="() =&gt; Unit">close</a>) <span class="keyword">else</span> <a href="#256198" title="() =&gt; scala.io.Source">reset</a>
+    <span title="scala.io.BufferedSource" class="keyword">new</span> <a href="BufferedSource.scala.html#9709" title="scala.io.BufferedSource">BufferedSource</a>(<a href="#256218" title="java.io.InputStream">inputStream</a>)(<a href="#256200" title="scala.io.Codec">codec</a>) .
+      <a href="#83282" title="(f: () =&gt; scala.io.Source)scala.io.BufferedSource">withReset</a> (<a href="#256663" title="() =&gt; scala.io.Source">resetFn</a>) .
+      <a href="#83283" title="(f: () =&gt; Unit)scala.io.BufferedSource">withClose</a> (<a href="#256199" title="() =&gt; Unit">close</a>)
+  }
+}
+
+// Coming Soon?
+//
+// abstract class Source2[T] extends Iterable[T] { }
+// 
+// abstract class ByteSource() extends Source2[Byte] { }
+// 
+// abstract class CharSource(implicit codec: Codec = Codec.default) extends Source2[Char] { }
+
+/** The class &lt;code&gt;Source&lt;/code&gt; implements an iterable representation
+ *  of source data.  Calling method &lt;code&gt;reset&lt;/code&gt; returns an identical,
+ *  resetted source, where possible.
+ *
+ *  @author  Burak Emir
+ *  @version 1.0
+ */
+<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class Source extends java.lang.Object with Iterator[Char] with ScalaObject" id="9826">Source</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="../collection/Iterator.scala.html#4274" title="Iterator[Char]">Iterator</a>[Char]
+{
+  /** the actual iterator */
+  <span class="keyword">protected</span> <span class="keyword">val</span> <a title="=&gt; Iterator[Char]" id="83255">iter</a>: <a href="../collection/Iterator.scala.html#4274" title="Iterator[Char]">Iterator</a>[Char]
+
+  // ------ public values
+
+  /** description of this source, default empty */
+  <span class="keyword">var</span> <a title="String" id="83257">descr</a>: <span title="String">String</span> = <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>
+
+  <span class="keyword">var</span> <a title="Int" id="83260">nerrors</a> = <span title="Int(0)" class="int">0</span>
+  <span class="keyword">var</span> <a title="Int" id="83263">nwarnings</a> = <span title="Int(0)" class="int">0</span>
+
+  /** convenience method, returns given line (not including newline)
+   *  from Source.
+   *
+   *  @param line the line index, first line is 1
+   *  @return     the character string of the specified line.
+   *
+   */
+  <span class="keyword">def</span> <a title="(line: Int)String" id="83265">getLine</a>(<a title="Int" id="256708">line</a>: <span title="Int">Int</span>): <span title="String">String</span> = <a href="#83267" title="(separator: String)Iterator[String]">getLines</a><a href="../collection/Iterator.scala.html#19187" title="(n: Int)Iterator[String]">(</a>) drop (<a href="#256708" title="(x$1: Int)Int">line</a> - <span title="Int(1)" class="int">1</span>) <a href="../collection/Iterator.scala.html#19185" title="()String">next</a>
+  
+  <span class="keyword">class</span> <a title="class LineIterator extends java.lang.Object with Iterator[String] with ScalaObject" id="83266">LineIterator</a><a href="../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="String" id="256747">separator</a>: <span title="String">String</span>) <span class="keyword">extends</span> <a href="../collection/Iterator.scala.html#4274" title="Iterator[String]">Iterator</a>[String] {
+    <a href="../Predef.scala.html#16218" title="(requirement: Boolean,message: =&gt; Any)Unit">require</a>(<a href="#256747" title="String">separator</a>.<span title="(x$1: Int)Boolean">length</span> <a title="(x$1: Boolean)Boolean" id="2208">==</a> <span title="Int(1)" class="int">1</span> || <a href="#256747" title="String">separator</a>.<span title="(x$1: Int)Boolean">length</span> == <span title="Int(2)" class="int">2</span>, <span title="java.lang.String(&quot;Line separator may be 1 or 2 characters only.&quot;)" class="string">&quot;Line separator may be 1 or 2 characters only.&quot;</span>)
+    <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="BufferedIterator[Char]" id="256738">iter</a>: <a href="../collection/BufferedIterator.scala.html#4292" title="BufferedIterator[Char]">BufferedIterator</a>[Char] = <a href="#9826" title="Source.this.type">Source</a>.<span class="keyword">this</span>.<a href="#83255" title="=&gt; Iterator[Char]">iter</a>.<a href="../collection/Iterator.scala.html#19254" title="=&gt; &lt;refinement&gt; extends java.lang.Object with scala.collection.BufferedIterator[Char]">buffered</a>
+    // For two character newline sequences like \r\n, we peek at
+    // the iterator head after seeing \r, and drop the \n if present.
+    <span class="keyword">val</span> <a title="(Char) =&gt; Boolean" id="256739">isNewline</a>: Char =&gt; Boolean = {
+      <span class="keyword">val</span> <a title="Char" id="256779">firstCh</a> = <a href="../runtime/RichString.scala.html#18032" title="(n: Int)Char">separator</a>(<span title="Int(0)" class="int">0</span>)
+      <span title="(Char) =&gt; Boolean" class="keyword">if</span> (<a href="#256747" title="String">separator</a>.<span title="(x$1: Int)Boolean">length</span> == <span title="Int(1)" class="int">1</span>) (<a href="#256830" title="(x$1: Char)Boolean">_</a> == <a href="#256779" title="Char">firstCh</a>)
+      <span class="keyword">else</span> (ch: <span title="Char">Char</span>) =&gt; <span title="(x$1: Boolean)Boolean">(</span><a href="#256838" title="(x$1: Char)Boolean">ch</a> == <a href="#256779" title="Char">firstCh</a>) <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <a href="#256737" title="=&gt; BufferedIterator[Char]">iter</a>.<a href="../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a> &amp;&amp; {
+        <span class="keyword">val</span> <a title="Boolean" id="256847">res</a> = <a href="#256737" title="=&gt; BufferedIterator[Char]">iter</a>.<a href="../collection/BufferedIterator.scala.html#53325" title="(x$1: Char)Boolean">head</a> == <a href="../runtime/RichString.scala.html#18032" title="(n: Int)Char">separator</a>(<span title="Int(1)" class="int">1</span>)
+        <span title="AnyVal with NotNull" class="keyword">if</span> (<a href="#256847" title="Boolean">res</a>) { <a href="#256737" title="=&gt; BufferedIterator[Char]">iter</a>.<a href="../collection/Iterator.scala.html#19185" title="()Char">next</a> }  // drop the second character
+        <a href="#256847" title="Boolean">res</a>
+      }
+    }
+    <span class="keyword">private</span>[<span class="keyword">this</span>] <span class="keyword">val</span> <a title="StringBuilder" id="256741">sb</a> = <a href="../collection/mutable/StringBuilder.scala.html#23348" title="()StringBuilder" class="keyword">new</a> <a href="../package.scala.html#14791" title="StringBuilder">StringBuilder</a>
+    
+    <span class="keyword">private</span> <span class="keyword">def</span> <a title="()Boolean" id="256742">getc</a>() =
+      <span title="Boolean" class="keyword">if</span> (<a title="=&gt; Boolean" id="2203">!</a><a href="#256737" title="=&gt; BufferedIterator[Char]">iter</a>.<a href="../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>) <span title="Boolean(false)" class="keyword">false</span>
+      <span class="keyword">else</span> {
+        <span class="keyword">val</span> <a title="Char" id="256919">ch</a> = <a href="#256737" title="=&gt; BufferedIterator[Char]">iter</a>.<a href="../collection/Iterator.scala.html#19185" title="()Char">next</a>
+        <span title="Boolean" class="keyword">if</span> (<a href="../Function1.scala.html#17119" title="(v1: Char)Boolean">isNewline</a>(<a href="#256919" title="Char">ch</a>)) <span title="Boolean(false)" class="keyword">false</span>
+        <span class="keyword">else</span> {
+          <a href="../collection/mutable/StringBuilder.scala.html#23380" title="(x: Char)StringBuilder">sb</a> append <a href="#256919" title="Char">ch</a>
+          <span title="Boolean(true)" class="keyword">true</span>
+        }
+      }
+
+    <span class="keyword">def</span> <a title="=&gt; Boolean" id="256743">hasNext</a> = <a href="#256737" title="=&gt; BufferedIterator[Char]">iter</a>.<a href="../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>
+    <span class="keyword">def</span> <a title="()String" id="256744">next</a> = {
+      <a href="#256741" title="StringBuilder">sb</a>.<a href="../collection/mutable/StringBuilder.scala.html#23354" title="()Unit">clear</a>
+      <span title="Unit" class="keyword">while</span> (<a href="#256742" title="()Boolean">getc</a>()) <a href="#256937" title="Unit">{</a> }
+      <a href="#256741" title="StringBuilder">sb</a>.<a href="../collection/mutable/StringBuilder.scala.html#23409" title="()String">toString</a>
+    }
+  }
+
+  /** returns an iterator who returns lines (NOT including newline character(s)).
+   *  If no separator is given, the platform-specific value &quot;line.separator&quot; is used.
+   *  a line ends in \r, \n, or \r\n.
+   */
+  <span class="keyword">def</span> <a title="(separator: String)Iterator[String]" id="83267">getLines</a>(<a title="String" id="124197">separator</a>: <span title="String">String</span> = compat.<a href="../compat/Platform.scala.html#16638" title="object scala.compat.Platform">Platform</a>.<a href="../compat/Platform.scala.html#17689" title="=&gt; java.lang.String">EOL</a>): <a href="../collection/Iterator.scala.html#4274" title="Iterator[String]">Iterator</a>[String] =
+    <span title="Source.this.LineIterator" class="keyword">new</span> <a href="#83266" title="Source.this.LineIterator">LineIterator</a>(<a href="#124197" title="String">separator</a>)
+
+  /** Returns &lt;code&gt;true&lt;/code&gt; if this source has more characters.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="83268">hasNext</a> = <a href="#83255" title="=&gt; Iterator[Char]">iter</a>.<a href="../collection/Iterator.scala.html#19184" title="=&gt; Boolean">hasNext</a>
+
+  /** Returns next character.
+   */
+  <span class="keyword">def</span> <a title="()Char" id="83269">next</a>: <span title="Char">Char</span> = <a href="#83281" title="Source.this.Positioner">positioner</a>.<a href="#145302" title="=&gt; Char">next</a>
+  
+  <span class="keyword">class</span> <a title="class Positioner extends java.lang.Object with ScalaObject" id="83270">Positioner</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+    /** the last character returned by next. */
+    <span class="keyword">var</span> <a title="Char" id="145288">ch</a>: <span title="Char">Char</span> = _
+
+    /** position of last character returned by next */
+    <span class="keyword">var</span> <a title="Int" id="145291">pos</a> = <span title="Int(0)" class="int">0</span>
+
+    /** current line and column */
+    <span class="keyword">var</span> <a title="Int" id="145294">cline</a> = <span title="Int(1)" class="int">1</span>
+    <span class="keyword">var</span> <a title="Int" id="145297">ccol</a> = <span title="Int(1)" class="int">1</span>
+
+    /** default col increment for tabs '\t', set to 4 initially */
+    <span class="keyword">var</span> <a title="Int" id="145300">tabinc</a> = <span title="Int(4)" class="int">4</span>
+
+    <span class="keyword">def</span> <a title="=&gt; Char" id="145302">next</a>: <span title="Char">Char</span> = {
+      <a href="#145288" title="(x$1: Char)Unit">ch</a> = <a href="#83255" title="=&gt; Iterator[Char]">iter</a>.<a href="../collection/Iterator.scala.html#19185" title="()Char">next</a>
+      <a href="#145291" title="(x$1: Int)Unit">pos</a> = <a href="Position.scala.html#9845" title="object scala.io.Position">Position</a>.<a href="Position.scala.html#159274" title="(line: Int,column: Int)Int">encode</a>(<a href="#145294" title="=&gt; Int">cline</a>, <a href="#145297" title="=&gt; Int">ccol</a>)
+      <a href="#145288" title="=&gt; Char">ch</a> <span title="Unit" class="keyword">match</span> {
+        <span title="Unit" class="keyword">case</span> <span title="Char('\012')" class="char">'\n'</span> =&gt;
+          <a href="#145297" title="(x$1: Int)Unit">ccol</a> = <span title="Int(1)" class="int">1</span>
+          <a href="#145294" title="(x$1: Int)Unit">cline</a> += <span title="Int(1)" class="int">1</span>
+        <span title="Unit" class="keyword">case</span> <span title="Char('\011')" class="char">'\t'</span> =&gt;
+          <a href="#145297" title="(x$1: Int)Unit">ccol</a> += <a href="#145300" title="=&gt; Int">tabinc</a>
+        <span title="Unit" class="keyword">case</span> _ =&gt;
+          <a href="#145297" title="(x$1: Int)Unit">ccol</a> += <span title="Int(1)" class="int">1</span>
+      }
+      <a href="#145288" title="=&gt; Char">ch</a>
+    }
+  }
+  <span class="keyword">object</span> <a title="object Source.this.NoPositioner" id="83271">NoPositioner</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="#83270" title="Source.this.Positioner">Positioner</a> {
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Char" id="257077">next</a>: <span title="Char">Char</span> = <a href="#83255" title="=&gt; Iterator[Char]">iter</a>.<a href="../collection/Iterator.scala.html#19185" title="()Char">next</a>
+  }
+  <span class="keyword">def</span> <a title="=&gt; Char" id="83273">ch</a> = <a href="#83281" title="Source.this.Positioner">positioner</a>.<a href="#145288" title="=&gt; Char">ch</a>
+  <span class="keyword">def</span> <a title="=&gt; Int" id="83274">pos</a> = <a href="#83281" title="Source.this.Positioner">positioner</a>.<a href="#145291" title="=&gt; Int">pos</a>
+
+  /** Reports an error message to the output stream &lt;code&gt;out&lt;/code&gt;.
+   *
+   *  @param pos the source position (line/column)
+   *  @param msg the error message to report
+   *  @param out PrintStream to use (optional: defaults to &lt;code&gt;Console.err&lt;/code&gt;)
+   */
+  <span class="keyword">def</span> <a title="(pos: Int,msg: String,out: java.io.PrintStream)Unit" id="83275">reportError</a>(
+    <a title="Int" id="147140">pos</a>: <span title="Int">Int</span>, 
+    <a title="String" id="147141">msg</a>: <span title="String">String</span>, 
+    <a title="java.io.PrintStream" id="147144">out</a>: <span title="java.io.PrintStream">PrintStream</span> = <a href="../Console.scala.html#388" title="object Console">Console</a>.<a href="../Console.scala.html#58842" title="=&gt; java.io.PrintStream">err</a>)
+  {
+    <a href="#83260" title="(x$1: Int)Unit">nerrors</a> += <span title="Int(1)" class="int">1</span>
+    <a href="#83277" title="(pos: Int,msg: String,out: java.io.PrintStream)Unit">report</a>(<a href="#147140" title="Int">pos</a>, <a href="#147141" title="String">msg</a>, <a href="#147144" title="java.io.PrintStream">out</a>)
+  }
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(n: Int)String" id="83276">spaces</a>(<a title="Int" id="257127">n</a>: <span title="Int">Int</span>) = <a href="../collection/immutable/List.scala.html#8974" title="object List">List</a>.<a href="../collection/generic/TraversableFactory.scala.html#17481" title="(n: Int)(elem: =&gt; Char)List[Char]">fill</a>(<a href="#257127" title="Int">n</a>)(<span title="Char(' ')" class="char">' '</span>).<a href="../collection/generic/TraversableTemplate.scala.html#17248" title="=&gt; String">mkString</a>
+  /**
+   *  @param pos the source position (line/column)
+   *  @param msg the error message to report
+   *  @param out PrintStream to use
+   */
+  <span class="keyword">def</span> <a title="(pos: Int,msg: String,out: java.io.PrintStream)Unit" id="83277">report</a>(<a title="Int" id="257121">pos</a>: <span title="Int">Int</span>, <a title="String" id="257122">msg</a>: <span title="String">String</span>, <a title="java.io.PrintStream" id="257123">out</a>: <span title="java.io.PrintStream">PrintStream</span>) {
+    <span class="keyword">val</span> <a title="Int" id="257156">line</a> = <a href="Position.scala.html#159275" title="(pos: Int)Int">Position</a> line <a href="#257121" title="Int">pos</a>
+    <span class="keyword">val</span> <a title="Int" id="257157">col</a> = <a href="Position.scala.html#159276" title="(pos: Int)Int">Position</a> column <a href="#257121" title="Int">pos</a>
+    
+    <a href="#257123" title="(x$1: java.lang.String)Unit" id="24283">out</a> println <a href="../Predef.scala.html#16366" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;%s:%d:%d: %s%s%s^&quot;</a>.<a href="../runtime/RichString.scala.html#18060" title="(args: Any*)String">format</a>(<a href="#83257" title="=&gt; String">descr</a>, <a href="#257156" title="Int">line</a>, <a href="#257157" title="Int">col</a>, <a href="#257122" title="String">msg</a>, <a href="#83265" title="(line: Int)String">getLine</a>(<a href="#257156" title="Int">line</a>), <a href="#83276" title="(n: Int)String">spaces</a>(<a href="#257157" title="(x$1: Int)Int">col</a> - <span title="Int(1)" class="int">1</span>))
+  }
+
+  /**
+   *  @param pos the source position (line/column)
+   *  @param msg the warning message to report
+   *  @param out PrintStream to use (optional: defaults to &lt;code&gt;Console.out&lt;/code&gt;)
+   */
+  <span class="keyword">def</span> <a title="(pos: Int,msg: String,out: java.io.PrintStream)Unit" id="83278">reportWarning</a>(
+    <a title="Int" id="257211">pos</a>: <span title="Int">Int</span>, 
+    <a title="String" id="257212">msg</a>: <span title="String">String</span>, 
+    <a title="java.io.PrintStream" id="257215">out</a>: <span title="java.io.PrintStream">PrintStream</span> = <a href="../Console.scala.html#388" title="object Console">Console</a>.<a href="../Console.scala.html#58841" title="=&gt; java.io.PrintStream">out</a>)
+  {
+    <a href="#83263" title="(x$1: Int)Unit">nwarnings</a> += <span title="Int(1)" class="int">1</span>
+    <a href="#83277" title="(pos: Int,msg: String,out: java.io.PrintStream)Unit">report</a>(<a href="#257211" title="Int">pos</a>, <span title="(x$1: Any)java.lang.String" class="string">&quot;warning! &quot;</span> + <a href="#257212" title="String">msg</a>, <a href="#257215" title="java.io.PrintStream">out</a>)
+  }
+  
+  <span class="keyword">private</span>[<span class="keyword">this</span>] <span class="keyword">var</span> <a title="() =&gt; scala.io.Source" id="83279">resetFunction</a>: () =&gt; Source = <span title="Null(null)" class="keyword">null</span>
+  <span class="keyword">private</span>[<span class="keyword">this</span>] <span class="keyword">var</span> <a title="() =&gt; Unit" id="83280">closeFunction</a>: () =&gt; Unit = <span title="Null(null)" class="keyword">null</span>
+  <span class="keyword">private</span>[<span class="keyword">this</span>] <span class="keyword">var</span> <a title="Source.this.Positioner" id="83281">positioner</a>: <a href="#83270" title="Source.this.Positioner">Positioner</a> = <span title="Source.this.Positioner" class="keyword">new</span> <a href="#83270" title="Source.this.Positioner">Positioner</a>
+  
+  <span class="keyword">def</span> <a title="(f: () =&gt; scala.io.Source)Source.this.type" id="83282">withReset</a>(<a title="() =&gt; scala.io.Source" id="256240">f</a>: () =&gt; Source): <span class="keyword">this</span>.<span class="keyword">type</span> = {
+    <a href="#83279" title="() =&gt; scala.io.Source">resetFunction</a> = <a href="#256240" title="() =&gt; scala.io.Source">f</a>
+    <a href="#9826" title="Source.this.type" class="keyword">this</a>
+  }
+  <span class="keyword">def</span> <a title="(f: () =&gt; Unit)Source.this.type" id="83283">withClose</a>(<a title="() =&gt; Unit" id="256696">f</a>: () =&gt; Unit): <span class="keyword">this</span>.<span class="keyword">type</span> = {
+    <a href="#83280" title="() =&gt; Unit">closeFunction</a> = <a href="#256696" title="() =&gt; Unit">f</a>
+    <a href="#9826" title="Source.this.type" class="keyword">this</a>
+  }
+  <span class="keyword">def</span> <a title="(text: String)Source.this.type" id="83284">withDescription</a>(<a title="String" id="256652">text</a>: <span title="String">String</span>): <span class="keyword">this</span>.<span class="keyword">type</span> = {
+    <a href="#83257" title="(x$1: String)Unit">descr</a> = <a href="#256652" title="String">text</a>
+    <a href="#9826" title="Source.this.type" class="keyword">this</a>
+  }
+  // we'd like to default to no positioning, but for now we break
+  // less by defaulting to status quo.
+  <span class="keyword">def</span> <a title="(on: Boolean)Source.this.type" id="83285">withPositioning</a>(<a title="Boolean" id="257262">on</a>: <a title="Boolean" id="1949">Boolean</a>): <span class="keyword">this</span>.<span class="keyword">type</span> = {
+    <a href="#83281" title="Source.this.Positioner">positioner</a> = <span title="Source.this.Positioner" class="keyword">if</span> (<a href="#257262" title="Boolean">on</a>) <span title="Source.this.Positioner" class="keyword">new</span> <a href="#83270" title="Source.this.Positioner">Positioner</a> <span class="keyword">else</span> <a href="#83271" title="object Source.this.NoPositioner">NoPositioner</a>
+    <a href="#9826" title="Source.this.type" class="keyword">this</a>
+  }
+
+  /** The close() method closes the underlying resource. */
+  <span class="keyword">def</span> <a title="=&gt; Unit" id="83286">close</a>: <a title="Unit" id="1948">Unit</a>     =
+    <span title="Unit" class="keyword">if</span> (<a href="#83280" title="(x$1: AnyRef)Boolean">closeFunction</a> != <span title="Null(null)" class="keyword">null</span>) <a href="../Function0.scala.html#34096" title="()Unit">closeFunction</a>()
+    
+  /** The reset() method creates a fresh copy of this Source. */
+  <span class="keyword">def</span> <a title="()scala.io.Source" id="83287">reset</a>(): <a href="#9826" title="scala.io.Source">Source</a> = 
+    <span title="scala.io.Source" class="keyword">if</span> (<a href="#83279" title="(x$1: AnyRef)Boolean">resetFunction</a> != <span title="Null(null)" class="keyword">null</span>) <a href="../Function0.scala.html#34096" title="()scala.io.Source">resetFunction</a>()
+    <span class="keyword">else</span> <span title="Nothing" class="keyword">throw</span> <a title="(x$1: java.lang.String)java.lang.UnsupportedOperationException" id="45864" class="keyword">new</a> <a href="../Predef.scala.html#16169" title="java.lang.UnsupportedOperationException">UnsupportedOperationException</a>(<span title="java.lang.String(&quot;Source's reset() method was not set.&quot;)" class="string">&quot;Source's reset() method was not set.&quot;</span>)
+}
+
+        </pre>
+    </body>
+</html>

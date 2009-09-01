@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>concurrent/ops.scala</title>
+        <script type="text/javascript" src="../jquery-all.js"></script>
+        <script type="text/javascript" src="../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: ops.scala 18585 2009-08-27 05:35:33Z extempore $
+
+
+<span class="keyword">package</span> scala.concurrent
+
+<span class="keyword">import</span> java.lang.Thread
+<span class="keyword">import</span> scala.util.control.Exception.allCatch
+
+/** The object &lt;code&gt;ops&lt;/code&gt; ...
+ *
+ *  @author  Martin Odersky, Stepan Koltsov, Philipp Haller
+ */
+<span class="keyword">object</span> <a title="object scala.concurrent.ops" id="8195">ops</a>
+<a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  <span class="keyword">implicit</span> <span class="keyword">val</span> <a title="scala.concurrent.TaskRunner[Unit]" id="52255">defaultRunner</a>: <a href="TaskRunner.scala.html#8209" title="scala.concurrent.TaskRunner[Unit]">TaskRunner</a>[Unit] =
+    <a href="TaskRunners.scala.html#8291" title="object scala.concurrent.TaskRunners">TaskRunners</a>.<a href="TaskRunners.scala.html#71383" title="=&gt; scala.concurrent.TaskRunner[Unit]">threadRunner</a>
+
+  /**
+   *  If expression computed successfully return it in &lt;code&gt;Right&lt;/code&gt;,
+   *  otherwise return exception in &lt;code&gt;Left&lt;/code&gt;.
+   */
+  <span class="keyword">def</span> <a title="[A](body: =&gt; A)Either[Throwable,A]" id="52257">tryCatch</a>[<a title="&gt;: Nothing &lt;: Any" id="52259">A</a>](<a title="=&gt; A" id="71387">body</a>: =&gt; A): <a href="../Either.scala.html#306" title="Either[Throwable,A]">Either</a>[Throwable, A] =
+    <a href="../util/control/Exception.scala.html#31235" title="[T]util.control.Exception.Catch[T]">allCatch</a><a href="../util/control/Exception.scala.html#47485" title="(body: =&gt; A)Either[Throwable,A]">[</a><a href="#52259" title="A">A</a>] either <a href="#71387" title="=&gt; A">body</a>
+  
+  <span class="keyword">def</span> <a title="[A](body: =&gt; A)Either[Exception,A]" id="52260">tryCatchEx</a>[<a title="&gt;: Nothing &lt;: Any" id="52262">A</a>](<a title="=&gt; A" id="71402">body</a>: =&gt; A): <a href="../Either.scala.html#306" title="Either[Exception,A]">Either</a>[Exception, A] =
+    <span class="keyword">try</span> <a href="../Either.scala.html#71406" title="(b: A)Right[Nothing,A]">Right</a>(<a href="#71402" title="=&gt; A">body</a>) <span class="keyword">catch</span> {
+      <span title="Left[Exception,Nothing]" class="keyword">case</span> <a title="Exception" id="71435">ex</a>: <a title="Exception" id="1873">Exception</a>  =&gt; <a href="../Either.scala.html#71437" title="(a: Exception)Left[Exception,Nothing]">Left</a>(<a href="#71435" title="Exception">ex</a>)
+    }
+  
+  <span class="keyword">def</span> <a title="[T &lt;: Throwable, A](x: Either[T,A])A" id="52263">getOrThrow</a>[<a title="&gt;: Nothing &lt;: Throwable" id="52266">T</a> &lt;: Throwable, <a title="&gt;: Nothing &lt;: Any" id="52267">A</a>](<a title="Either[T,A]" id="52278">x</a>: <a href="../Either.scala.html#306" title="Either[T,A]">Either</a>[T, A]): <a href="#52267" title="A">A</a> =
+    <a href="#52278" title="Either[T,A]">x</a>.<a href="../Either.scala.html#52289" title="[X](fa: (T) =&gt; X,fb: (A) =&gt; X)X">fold</a><span title="(fa: (T) =&gt; A,fb: (A) =&gt; A)A">[</span><a href="#52267" title="A">A</a>](<span title="Nothing" class="keyword">throw</span> <a href="#71511" title="T">_</a>, <a href="../Predef.scala.html#16207" title="(x: A)A">identity</a> _)
+
+  /** Evaluates an expression asynchronously.
+   *
+   *  @param  p the expression to evaluate
+   */
+  <span class="keyword">def</span> <a title="(p: =&gt; Unit)(implicit runner: scala.concurrent.TaskRunner[Unit])Unit" id="52268">spawn</a>(<a title="=&gt; Unit" id="71532">p</a>: =&gt; Unit)(<span class="keyword">implicit</span> <a title="scala.concurrent.TaskRunner[Unit]" id="71526">runner</a>: <a href="TaskRunner.scala.html#8209" title="scala.concurrent.TaskRunner[Unit]">TaskRunner</a>[Unit] = <a href="#52255" title="=&gt; scala.concurrent.TaskRunner[Unit]">defaultRunner</a>): <a title="Unit" id="1948">Unit</a> = {
+    <a href="TaskRunner.scala.html#52055" title="(task: () =&gt; Unit)runner.Future[Unit]">runner</a> <span title="Unit">submit</span> (() =&gt; <a href="#71532" title="=&gt; Unit">p</a>)
+  }
+
+  /**
+   *  @param p ...
+   *  @return  ...
+   */
+  <span class="keyword">def</span> <a title="[A](p: =&gt; A)(implicit runner: scala.concurrent.TaskRunner[Unit])() =&gt; A" id="52269">future</a>[<a title="&gt;: Nothing &lt;: Any" id="71539">A</a>](<a title="=&gt; A" id="71565">p</a>: =&gt; A)(<span class="keyword">implicit</span> <a title="scala.concurrent.TaskRunner[Unit]" id="71537">runner</a>: <a href="TaskRunner.scala.html#8209" title="scala.concurrent.TaskRunner[Unit]">TaskRunner</a>[Unit] = <a href="#52255" title="=&gt; scala.concurrent.TaskRunner[Unit]">defaultRunner</a>): () =&gt; A = {
+    <span class="keyword">val</span> <a title="scala.concurrent.SyncVar[Either[Throwable,A]]" id="71541">result</a> = <span title="scala.concurrent.SyncVar[Either[Throwable,A]]" class="keyword">new</span> <a href="SyncVar.scala.html#8398" title="scala.concurrent.SyncVar[Either[Throwable,A]]">SyncVar</a>[Either[Throwable, A]]
+    <a href="#52268" title="(p: =&gt; Unit)(implicit runner: scala.concurrent.TaskRunner[Unit])Unit">spawn</a>({ <a href="SyncVar.scala.html#20785" title="(x: Either[Throwable,A])Unit">result</a> set <a href="#52257" title="(body: =&gt; A)Either[Throwable,A]">tryCatch</a>(<a href="#71565" title="=&gt; A">p</a>) })(<a href="#71537" title="scala.concurrent.TaskRunner[Unit]">runner</a>)
+    () =&gt; <a href="#52263" title="(x: Either[Throwable,A])A">getOrThrow</a>(<a href="#71541" title="scala.concurrent.SyncVar[Either[Throwable,A]]">result</a>.<a href="SyncVar.scala.html#20782" title="=&gt; Either[Throwable,A]">get</a>)
+  }
+
+  /**
+   *  @param xp ...
+   *  @param yp ...
+   *  @return   ...
+   */
+  <span class="keyword">def</span> <a title="[A, B](xp: =&gt; A,yp: =&gt; B)(A, B)" id="52272">par</a>[<a title="&gt;: Nothing &lt;: Any" id="52275">A</a>, <a title="&gt;: Nothing &lt;: Any" id="52276">B</a>](<a title="=&gt; A" id="71568">xp</a>: =&gt; A, <a title="=&gt; B" id="71569">yp</a>: =&gt; B): <a href="../Tuple2.scala.html#1152" title="(A, B)">(</a>A, B) = {
+    <span class="keyword">val</span> <a title="scala.concurrent.SyncVar[Either[Throwable,B]]" id="71573">y</a> = <span title="scala.concurrent.SyncVar[Either[Throwable,B]]" class="keyword">new</span> <a href="SyncVar.scala.html#8398" title="scala.concurrent.SyncVar[Either[Throwable,B]]">SyncVar</a>[Either[Throwable, B]]
+    <a href="#52268" title="(p: =&gt; Unit)(implicit runner: scala.concurrent.TaskRunner[Unit])Unit">spawn</a> <a href="#52255" title="=&gt; scala.concurrent.TaskRunner[Unit]">{</a> <a href="SyncVar.scala.html#20785" title="(x: Either[Throwable,B])Unit">y</a> set <a href="#52257" title="(body: =&gt; B)Either[Throwable,B]">tryCatch</a>(<a href="#71569" title="=&gt; B">yp</a>) }
+    <a href="../Tuple2.scala.html#20670" title="(_1: A,_2: B)(A, B)">(</a><a href="#71568" title="=&gt; A">xp</a>, <a href="#52263" title="(x: Either[Throwable,B])B">getOrThrow</a>(<a href="#71573" title="scala.concurrent.SyncVar[Either[Throwable,B]]">y</a>.<a href="SyncVar.scala.html#20782" title="=&gt; Either[Throwable,B]">get</a>))
+  }
+
+  /**
+   *  @param start ...
+   *  @param end   ...
+   *  @param p     ...
+   */
+  <span class="keyword">def</span> <a title="(start: Int,end: Int)(p: (Int) =&gt; Unit)Unit" id="52277">replicate</a>(<a title="Int" id="71607">start</a>: <span title="Int">Int</span>, <a title="Int" id="71608">end</a>: <span title="Int">Int</span>)(<a title="(Int) =&gt; Unit" id="71609">p</a>: Int =&gt; Unit) {
+    <span title="Unit" class="keyword">if</span> (<a href="#71607" title="(x$1: Int)Boolean">start</a> == <a href="#71608" title="Int">end</a>) 
+      <span title="Unit">(</span>)
+    <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#71607" title="(x$1: Int)Int">start</a> <span title="(x$1: Int)Boolean">+</span> <span title="Int(1)" class="int">1</span> == <a href="#71608" title="Int">end</a>)
+      <a href="../Function1.scala.html#17119" title="(v1: Int)Unit">p</a>(<a href="#71607" title="Int">start</a>)
+    <span class="keyword">else</span> {
+      <span class="keyword">val</span> <a title="Int" id="71633">mid</a> = <a title="(x$1: Int)Int" id="2968">(</a><a href="#71607" title="(x$1: Int)Int">start</a> + <a href="#71608" title="Int">end</a>) / <span title="Int(2)" class="int">2</span>
+      <a href="#52268" title="(p: =&gt; Unit)(implicit runner: scala.concurrent.TaskRunner[Unit])Unit">spawn</a> <a href="#52255" title="=&gt; scala.concurrent.TaskRunner[Unit]">{</a> <a href="#52277" title="(start: Int,end: Int)(p: (Int) =&gt; Unit)Unit">replicate</a>(<a href="#71607" title="Int">start</a>, <a href="#71633" title="Int">mid</a>)(<a href="#71609" title="(Int) =&gt; Unit">p</a>) }
+      <a href="#52277" title="(start: Int,end: Int)(p: (Int) =&gt; Unit)Unit">replicate</a>(<a href="#71633" title="Int">mid</a>, <a href="#71608" title="Int">end</a>)(<a href="#71609" title="(Int) =&gt; Unit">p</a>)
+    }
+  }
+
+/*
+  def parMap[a,b](f: a =&gt; b, xs: Array[a]): Array[b] = {
+    val results = new Array[b](xs.length);
+    replicate(0, xs.length) { i =&gt; results(i) = f(xs(i)) }
+    results
+  }
+*/
+
+}
+
+        </pre>
+    </body>
+</html>

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>PartialFunction.scala</title>
+        <script type="text/javascript" src="jquery-all.js"></script>
+        <script type="text/javascript" src="linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: PartialFunction.scala 18610 2009-08-30 20:42:17Z extempore $
+
+
+<span class="keyword">package</span> scala
+
+<span class="keyword">import</span> annotation.experimental
+
+/** A partial function of type &lt;code&gt;PartialFunction[A, B]&lt;/code&gt; is a
+ *  unary function where the domain does not include all values of type
+ *  &lt;code&gt;A&lt;/code&gt;. The function &lt;code&gt;isDefinedAt&lt;/code&gt; allows to
+ *  test dynamically, if a value is in the domain of the function.
+ *
+ *  @author  Martin Odersky
+ *  @version 1.0, 16/07/2003
+ */
+<span class="keyword">trait</span> <a title="trait PartialFunction[-A, +B] extends java.lang.Object with (A) =&gt; B with ScalaObject" id="1083">PartialFunction</a>[-<a title="&gt;: Nothing &lt;: Any" id="14595">A</a>, +<a title="&gt;: Nothing &lt;: Any" id="14596">B</a>] <a href="ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a title="java.lang.Object" id="3623">AnyRef</a> <span class="keyword">with</span> (A =&gt; B) {
+
+  /** Checks if a value is contained in the functions domain.
+   *
+   *  @param  x   the value to test
+   *  @return true, iff &lt;code&gt;x&lt;/code&gt; is in the domain of this function.
+   */
+  <span class="keyword">def</span> <a title="(x: A)Boolean" id="17071">isDefinedAt</a>(<a title="A" id="22144">x</a>: <a href="#14595" title="A">A</a>): <span title="Boolean">Boolean</span>
+
+  <span class="keyword">def</span> <a title="[A1 &lt;: A, B1 &gt;: B](that: PartialFunction[A1,B1])PartialFunction[A1,B1]" id="17072">orElse</a>[<a title="&gt;: Nothing &lt;: A" id="17075">A1</a> &lt;: A, <a title="&gt;: B &lt;: Any" id="17076">B1</a> &gt;: B](<a title="PartialFunction[A1,B1]" id="120169">that</a>: <a href="#1083" title="PartialFunction[A1,B1]">PartialFunction</a>[A1, B1]) : <a href="#1083" title="PartialFunction[A1,B1]">PartialFunction</a>[A1, B1] = 
+    <a href="#157302" title="java.lang.Object with PartialFunction[A1,B1]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with PartialFunction[A1,B1]" id="157302">PartialFunction</a>[A1, B1] {
+    <span class="keyword">def</span> <a title="(x: A1)Boolean" id="157304">isDefinedAt</a>(<a title="A1" id="157310">x</a>: <a href="#17075" title="A1">A1</a>): <span title="Boolean">Boolean</span> = 
+      <a href="#1083" title="PartialFunction.this.type">PartialFunction</a>.<span class="keyword">this</span>.<a href="#17071" title="(x: A)Boolean">isDefinedAt</a><a title="(x$1: Boolean)Boolean" id="2208">(</a><a href="#157310" title="A1">x</a>) || <a href="#120169" title="PartialFunction[A1,B1]">that</a>.<a href="#17071" title="(x: A1)Boolean">isDefinedAt</a>(<a href="#157310" title="A1">x</a>)
+    <span class="keyword">def</span> <a title="(x: A1)B1" id="157305">apply</a>(<a title="A1" id="157320">x</a>: <a href="#17075" title="A1">A1</a>): <a href="#17076" title="B1">B1</a> = 
+      <span title="B1" class="keyword">if</span> (<a href="#1083" title="PartialFunction.this.type">PartialFunction</a>.<span class="keyword">this</span>.<a href="#17071" title="(x: A)Boolean">isDefinedAt</a>(<a href="#157320" title="A1">x</a>)) <a href="#1083" title="PartialFunction.this.type">PartialFunction</a>.<span class="keyword">this</span>.<a href="Function1.scala.html#17119" title="(v1: A)B">apply</a>(<a href="#157320" title="A1">x</a>) 
+      <span class="keyword">else</span> <a href="#120169" title="PartialFunction[A1,B1]">that</a>.<a href="Function1.scala.html#17119" title="(v1: A1)B1">apply</a>(<a href="#157320" title="A1">x</a>)
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[C](k: (B) =&gt; C)PartialFunction[A,C]" id="17077">andThen</a>[<a title="&gt;: Nothing &lt;: Any" id="17079">C</a>](<a title="(B) =&gt; C" id="98795">k</a>: B =&gt; C) : <a href="#1083" title="PartialFunction[A,C]">PartialFunction</a>[A, C] = <a href="#157333" title="java.lang.Object with PartialFunction[A,C]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with PartialFunction[A,C]" id="157333">PartialFunction</a>[A, C] {
+    <span class="keyword">def</span> <a title="(x: A)Boolean" id="157335">isDefinedAt</a>(<a title="A" id="157341">x</a>: <a href="#14595" title="A">A</a>): <span title="Boolean">Boolean</span> = <a href="#1083" title="PartialFunction.this.type">PartialFunction</a>.<span class="keyword">this</span>.<a href="#17071" title="(x: A)Boolean">isDefinedAt</a>(<a href="#157341" title="A">x</a>)
+    <span class="keyword">def</span> <a title="(x: A)C" id="157336">apply</a>(<a title="A" id="157345">x</a>: <a href="#14595" title="A">A</a>): <a href="#17079" title="C">C</a> = <a href="Function1.scala.html#17119" title="(v1: B)C">k</a>(<a href="#1083" title="PartialFunction.this.type">PartialFunction</a>.<span class="keyword">this</span>.<a href="Function1.scala.html#17119" title="(v1: A)B">apply</a>(<a href="#157345" title="A">x</a>))
+  }
+}
+
+/** A few handy operations which leverage the extra bit of information
+ *  available in partial functions.  Examples:
+ * 
+ * &lt;pre&gt;
+ *  import PartialFunction._
+ *
+ *  def strangeConditional(other: Any): Boolean = cond(other) {
+ *    case x: String if x == &quot;abc&quot; || x == &quot;def&quot;  =&gt; true
+ *    case x: Int =&gt; true
+ *  }
+ *  def onlyInt(v: Any): Option[Int] = condOpt(v) { case x: Int =&gt; x }
+ * &lt;/pre&gt;
+ * 
+ *  @author  Paul Phillips
+ *  @since   2.8
+ */
+@experimental
+<span class="keyword">object</span> <a title="object PartialFunction" id="1084">PartialFunction</a>
+<a href="ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  /** Creates a Boolean test based on a value and a partial function.
+   *  It behaves like a 'match' statement with an implied 'case _ =&gt; false'
+   *  following the supplied cases.
+   *
+   *  @param  x   the value to test
+   *  @param  pf  the partial function
+   *  @return true, iff &lt;code&gt;x&lt;/code&gt; is in the domain of pf &amp;&amp; pf(x) == true
+   */
+  <span class="keyword">def</span> <a title="[T](x: T)(pf: PartialFunction[T,Boolean])Boolean" id="22078">cond</a>[<a title="&gt;: Nothing &lt;: Any" id="22080">T</a>](<a title="T" id="157359">x</a>: <a href="#22080" title="T">T</a>)(<a title="PartialFunction[T,Boolean]" id="157360">pf</a>: <a href="#1083" title="PartialFunction[T,Boolean]">PartialFunction</a>[T, Boolean]): <span title="Boolean">Boolean</span> =
+    <a title="(x$1: Boolean)Boolean" id="2210">(</a><a href="#17071" title="(x: T)Boolean">pf</a> isDefinedAt <a href="#157359" title="T">x</a>) &amp;&amp; <a href="Function1.scala.html#17119" title="(v1: T)Boolean">pf</a>(<a href="#157359" title="T">x</a>)
+  
+  /** Transforms a PartialFunction[T,U] `pf' into Function1[T,Option[U]] `f'
+   *  whose result is Some(x) if the argument is in pf's domain and None otherwise,
+   *  and applies it to the value `x'.  In effect, it is a 'match' statement
+   *  which wraps all case results in Some(_) and adds 'case _ =&gt; None' to the end.
+   *
+   *  @param  x     the value to test
+   *  @param  pf    the PartialFunction[T,U]
+   *  @return Some(pf(x)) iff (pf isDefinedAt x) and None otherwise
+   */
+  <span class="keyword">def</span> <a title="[T, U](x: T)(pf: PartialFunction[T,U])Option[U]" id="22081">condOpt</a>[<a title="&gt;: Nothing &lt;: Any" id="22084">T</a>,<a title="&gt;: Nothing &lt;: Any" id="22085">U</a>](<a title="T" id="157372">x</a>: <a href="#22084" title="T">T</a>)(<a title="PartialFunction[T,U]" id="157373">pf</a>: <a href="#1083" title="PartialFunction[T,U]">PartialFunction</a>[T, U]): <a href="Option.scala.html#777" title="Option[U]">Option</a>[U] =
+    <span title="Option[U]" class="keyword">if</span> (<a href="#17071" title="(x: T)Boolean">pf</a> isDefinedAt <a href="#157372" title="T">x</a>) <a href="Option.scala.html#19800" title="(x: U)Some[U]">Some</a>(<a href="Function1.scala.html#17119" title="(v1: T)U">pf</a>(<a href="#157372" title="T">x</a>)) <span class="keyword">else</span> <a href="Option.scala.html#463" title="object None">None</a>
+
+  // If only getOrElse were a bit less unwieldy...
+  // def opt[T,U](x: T, default: U)(pf: PartialFunction[T, U]): U =
+  //   opt(x)(pf) getOrElse default
+}
+        </pre>
+    </body>
+</html>

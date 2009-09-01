@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>collection/mutable/OpenHashMap.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |                                         **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: OpenHashMap.scala 17925 2009-05-30 18:10:21Z rytz $
+
+
+<span class="keyword">package</span> scala.collection.mutable;
+
+<span class="keyword">object</span> <a title="object scala.collection.mutable.OpenHashMap" id="7699">OpenHashMap</a><a href="../../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  <span class="keyword">def</span> <a title="[K, V](elems: (K, V)*)scala.collection.mutable.OpenHashMap[K,V]" id="150478">apply</a>[<a title="&gt;: Nothing &lt;: Any" id="150481">K</a>, <a title="&gt;: Nothing &lt;: Any" id="150482">V</a>](<a title="(K, V)*" id="150541">elems</a> : <a title="(K, V)*" id="4176">(</a>K, V)*) = {
+    <span class="keyword">val</span> <a title="scala.collection.mutable.OpenHashMap[K,V]" id="150544">dict</a> = <a href="#150496" title="()scala.collection.mutable.OpenHashMap[K,V]" class="keyword">new</a> <a href="#7698" title="scala.collection.mutable.OpenHashMap[K,V]">OpenHashMap</a>[K, V];
+    <a href="#150541" title="(K, V)*">elems</a>.<a href="../generic/IterableTemplate.scala.html#17287" title="(f: ((K, V)) =&gt; Unit)Unit">foreach</a>(<a href="#150566" title="Unit">{</a><span title="Unit" class="keyword">case</span> (<a title="K" id="150569">x</a>, <a title="V" id="150570">y</a>) =&gt; <a href="#150519" title="(key: K,value: V)Unit">dict</a>(<a href="#150569" title="K">x</a>) = <a href="#150570" title="V">y</a>});
+    <a href="#150544" title="scala.collection.mutable.OpenHashMap[K,V]">dict</a>;
+  }
+
+  <span class="keyword">def</span> <a title="[K, V]scala.collection.mutable.OpenHashMap[K,V]" id="150483">empty</a>[<a title="&gt;: Nothing &lt;: Any" id="150486">K</a>, <a title="&gt;: Nothing &lt;: Any" id="150487">V</a>] = <a href="#150496" title="()scala.collection.mutable.OpenHashMap[K,V]" class="keyword">new</a> <a href="#7698" title="scala.collection.mutable.OpenHashMap[K,V]">OpenHashMap</a>[K, V];
+
+  <span class="keyword">private</span>[mutable] <span class="keyword">class</span> <a title="class Entry[Key, Value] extends java.lang.Object with ScalaObject" id="150488">Entry</a>[<a title="&gt;: Nothing &lt;: Any" id="150489">Key</a>, <a title="&gt;: Nothing &lt;: Any" id="150490">Value</a>]<a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><span class="keyword">val</span> <a title="Key" id="150617">key</a> : <a href="#150489" title="Key">Key</a>, 
+                                           <span class="keyword">val</span> <a title="Int" id="150618">hash</a> : <span title="Int">Int</span>,
+                                           <span class="keyword">var</span> <a title="Option[Value]" id="150619">value</a> : <a href="../../Option.scala.html#777" title="Option[Value]">Option</a>[Value])
+
+  <span class="keyword">private</span>[mutable] <span class="keyword">def</span> <a title="(j: Int)Int" id="150491">highestOneBit</a>(<a title="Int" id="150622">j</a> : <span title="Int">Int</span>) = { // This should really go somewhere central as we're now code sharing by cut and paste. :(
+    <span class="keyword">var</span> <a title="Int" id="150625">i</a> = <a href="#150622" title="Int">j</a>;
+    <a href="#150625" title="Int">i</a> |= (<a href="#150625" title="(x$1: Int)Int">i</a> &gt;&gt;  <span title="Int(1)" class="int">1</span>);
+    <a href="#150625" title="Int">i</a> |= (<a href="#150625" title="(x$1: Int)Int">i</a> &gt;&gt;  <span title="Int(2)" class="int">2</span>);
+    <a href="#150625" title="Int">i</a> |= (<a href="#150625" title="(x$1: Int)Int">i</a> &gt;&gt;  <span title="Int(4)" class="int">4</span>);
+    <a href="#150625" title="Int">i</a> |= (<a href="#150625" title="(x$1: Int)Int">i</a> &gt;&gt;  <span title="Int(8)" class="int">8</span>);
+    <a href="#150625" title="Int">i</a> |= (<a href="#150625" title="(x$1: Int)Int">i</a> &gt;&gt; <span title="Int(16)" class="int">16</span>);
+    <a href="#150625" title="(x$1: Int)Int">i</a> - (<a href="#150625" title="(x$1: Int)Int">i</a> &gt;&gt;&gt; <span title="Int(1)" class="int">1</span>);
+  }
+
+  <span class="keyword">private</span>[mutable] <span class="keyword">def</span> <a title="(i: Int)Int" id="150492">nextPowerOfTwo</a>(<a title="Int" id="150778">i</a> : <span title="Int">Int</span>) = <a href="#150491" title="(j: Int)Int">highestOneBit</a><a title="(x$1: Int)Int" id="2851">(</a><a href="#150778" title="Int">i</a>) &lt;&lt; <span title="Int(1)" class="int">1</span>; 
+}
+
+<span class="keyword">import</span> OpenHashMap.Entry;
+
+/**
+ * A mutable hash map based on an open hashing scheme. The precise scheme is undefined,
+ * but it should make a reasonable effort to ensure that an insert with consecutive hash
+ * codes is not unneccessarily penalised. In particular, mappings of consecutive integer
+ * keys should work without significant performance loss.
+ *
+ * @author David MacIver
+ */
+<span class="keyword">class</span> <a title="class OpenHashMap[Key, Value] extends java.lang.Object with scala.collection.mutable.Map[Key,Value] with ScalaObject" id="7698">OpenHashMap</a>[<a title="&gt;: Nothing &lt;: Any" id="14374">Key</a>, <a title="&gt;: Nothing &lt;: Any" id="14375">Value</a>]<a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="Int" id="150537">initialSize</a> : <span title="Int">Int</span>) <span class="keyword">extends</span> scala.collection.mutable.<a href="Map.scala.html#7590" title="scala.collection.mutable.Map[Key,Value]">Map</a>[Key, Value]{
+  <span class="keyword">def</span> <a title="()scala.collection.mutable.OpenHashMap[Key,Value]" id="150496" class="keyword">this</a>() = <a href="#7698" title="OpenHashMap.this.type" class="keyword">this</a>(<span title="Int(8)" class="int">8</span>);
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; scala.collection.mutable.OpenHashMap[Key,Value]" id="150497">empty</a> = <a href="#7699" title="object scala.collection.mutable.OpenHashMap">OpenHashMap</a>.<a href="#150483" title="scala.collection.mutable.OpenHashMap[Key,Value]">empty</a>
+
+  <span class="keyword">private</span>[<span class="keyword">this</span>] <span class="keyword">val</span> <a title="Int" id="150498">actualInitialSize</a> = <a href="#7699" title="object scala.collection.mutable.OpenHashMap">OpenHashMap</a>.<a href="#150492" title="(i: Int)Int">nextPowerOfTwo</a>(<a href="#150537" title="Int">initialSize</a>);
+
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Int" id="150500">mask</a> = <a href="#150498" title="(x$1: Int)Int">actualInitialSize</a> - <span title="Int(1)" class="int">1</span>;;
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Array[scala.collection.mutable.OpenHashMap.Entry[Key,Value]]" id="150503">table</a> : <a href="../../Array.scala.html#885" title="Array[scala.collection.mutable.OpenHashMap.Entry[Key,Value]]">Array</a>[Entry[Key, Value]] = <span title="Array[scala.collection.mutable.OpenHashMap.Entry[Key,Value]]" class="keyword">new</span> <a href="../../Array.scala.html#885" title="Array[scala.collection.mutable.OpenHashMap.Entry[Key,Value]]">Array</a>[Entry[Key, Value]](<a href="#150498" title="Int">actualInitialSize</a>);
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Int" id="150506">_size</a> = <span title="Int(0)" class="int">0</span>;
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Int" id="150509">deleted</a> = <span title="Int(0)" class="int">0</span>; 
+ 
+  // Used for tracking inserts so that iterators can determine in concurrent modification has occurred.
+  <span class="keyword">private</span>[<span class="keyword">this</span>] <span class="keyword">var</span> <a title="Int" id="150511">modCount</a> = <span title="Int(0)" class="int">0</span>;
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Int" id="150512">size</a> = <a href="#150506" title="=&gt; Int">_size</a>;
+  <span class="keyword">private</span>[<span class="keyword">this</span>] <span class="keyword">def</span> <a title="(s: Int)Unit" id="150513">size_=</a>(<a title="Int" id="150826">s</a> : <span title="Int">Int</span>) = <a href="#150506" title="(x$1: Int)Unit">_size</a> = <a href="#150826" title="Int">s</a>;
+
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(key: Key)Int" id="150514">hashOf</a>(<a title="Key" id="150831">key</a> : <a href="#14374" title="Key">Key</a>) = {
+    <span class="keyword">var</span> <a title="Int" id="150834">h</a> = <a href="#150831" title="Key">key</a>.<a title="()Int" id="3616">hashCode</a>;
+    <a href="#150834" title="Int">h</a> ^= (<span title="(x$1: Int)Int">(</span><a href="#150834" title="(x$1: Int)Int">h</a> &gt;&gt;&gt; <span title="Int(20)" class="int">20</span>) ^ (<a href="#150834" title="(x$1: Int)Int">h</a> &gt;&gt;&gt; <span title="Int(12)" class="int">12</span>));
+    <a href="#150834" title="(x$1: Int)Int">h</a> <span title="(x$1: Int)Int">^</span> (<a href="#150834" title="(x$1: Int)Int">h</a> &gt;&gt;&gt; <span title="Int(7)" class="int">7</span>) ^ (<a href="#150834" title="(x$1: Int)Int">h</a> &gt;&gt;&gt; <span title="Int(4)" class="int">4</span>);
+  }
+
+  <span class="keyword">private</span>[<span class="keyword">this</span>] <span class="keyword">def</span> <a title="=&gt; Unit" id="150515">growTable</a> = {
+    <span class="keyword">val</span> <a title="Int" id="150904">oldSize</a> = <a href="#150500" title="(x$1: Int)Int">mask</a> + <span title="Int(1)" class="int">1</span>;
+    <span class="keyword">val</span> <a title="Int" id="150905">newSize</a> = <span title="(x$1: Int)Int" class="int">4</span> * <a href="#150904" title="Int">oldSize</a>;
+    <span class="keyword">val</span> <a title="Array[scala.collection.mutable.OpenHashMap.Entry[Key,Value]]" id="150906">oldTable</a> = <a href="#150503" title="=&gt; Array[scala.collection.mutable.OpenHashMap.Entry[Key,Value]]">table</a>;
+    <a href="#150503" title="(x$1: Array[scala.collection.mutable.OpenHashMap.Entry[Key,Value]])Unit">table</a> = <span title="Array[scala.collection.mutable.OpenHashMap.Entry[Key,Value]]" class="keyword">new</span> <a href="../../Array.scala.html#885" title="Array[scala.collection.mutable.OpenHashMap.Entry[Key,Value]]">Array</a>[Entry[Key, Value]](<a href="#150905" title="Int">newSize</a>);
+    <a href="#150500" title="(x$1: Int)Unit">mask</a> = <a href="#150905" title="(x$1: Int)Int">newSize</a> - <span title="Int(1)" class="int">1</span>;     
+    <a href="#150906" title="Array[scala.collection.mutable.OpenHashMap.Entry[Key,Value]]">oldTable</a>.<a href="../generic/VectorTemplate.scala.html#17752" title="(f: (scala.collection.mutable.OpenHashMap.Entry[Key,Value]) =&gt; Unit)Unit">foreach</a>( <a title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]" id="150961">entry</a> =&gt;
+      <span title="Unit" class="keyword">if</span> (<a href="#150961" title="(x$1: AnyRef)Boolean">entry</a> <span title="(x$1: Boolean)Boolean">!=</span> <span title="Null(null)" class="keyword">null</span> &amp;&amp; <a href="#150961" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">entry</a>.<a href="#150619" title="(x$1: AnyRef)Boolean">value</a> != <a href="../../Option.scala.html#463" title="object None">None</a>) <a href="#150518" title="(entry: scala.collection.mutable.OpenHashMap.Entry[Key,Value])Unit">addEntry</a>(<a href="#150961" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">entry</a>));
+    <a href="#150509" title="(x$1: Int)Unit">deleted</a> = <span title="Int(0)" class="int">0</span>;
+  } 
+
+  <span class="keyword">private</span>[<span class="keyword">this</span>] <span class="keyword">def</span> <a title="(key: Key)Int" id="150516">findIndex</a>(<a title="Key" id="151003">key</a> : <a href="#14374" title="Key">Key</a>) : <span title="Int">Int</span> = <a href="#150517" title="(key: Key,hash: Int)Int">findIndex</a>(<a href="#151003" title="Key">key</a>, <a href="#150514" title="(key: Key)Int">hashOf</a>(<a href="#151003" title="Key">key</a>));
+
+  <span class="keyword">private</span>[<span class="keyword">this</span>] <span class="keyword">def</span> <a title="(key: Key,hash: Int)Int" id="150517">findIndex</a>(<a title="Key" id="151000">key</a> : <a href="#14374" title="Key">Key</a>, <a title="Int" id="151001">hash</a> : <span title="Int">Int</span>) : <span title="Int">Int</span> = {
+    <span class="keyword">var</span> <a title="Int" id="151046">j</a> = <a href="#151001" title="Int">hash</a>;
+
+    <span class="keyword">var</span> <a title="Int" id="151047">index</a> = <a href="#151001" title="(x$1: Int)Int">hash</a> &amp; <a href="#150500" title="=&gt; Int">mask</a>;
+    <span class="keyword">var</span> <a title="Int" id="151048">perturb</a> = <a href="#151047" title="Int">index</a>;
+    <span title="Unit" class="keyword">while</span>(<a href="../../Array.scala.html#17716" title="(i: Int)scala.collection.mutable.OpenHashMap.Entry[Key,Value]">table</a><span title="(x$1: AnyRef)Boolean">(</span><a href="#151047" title="Int">index</a>) <span title="(x$1: Boolean)Boolean">!=</span> <span title="Null(null)" class="keyword">null</span> &amp;&amp; 
+          <span title="=&gt; Boolean">!</span>(<a href="../../Array.scala.html#17716" title="(i: Int)scala.collection.mutable.OpenHashMap.Entry[Key,Value]">table</a>(<a href="#151047" title="Int">index</a>).<a href="#150618" title="(x$1: Int)Boolean">hash</a> <span title="(x$1: Boolean)Boolean">==</span> <a href="#151001" title="Int">hash</a> &amp;&amp;
+            <a href="../../Array.scala.html#17716" title="(i: Int)scala.collection.mutable.OpenHashMap.Entry[Key,Value]">table</a>(<a href="#151047" title="Int">index</a>).<a href="#150617" title="(x$1: Any)Boolean">key</a> == <a href="#151000" title="Key">key</a>))<a href="#151049" title="()Unit">{</a>
+      <a href="#151046" title="Int">j</a> = <span title="(x$1: Int)Int" class="int">5</span> <span title="(x$1: Int)Int">*</span> <a href="#151046" title="Int">j</a> <span title="(x$1: Int)Int">+</span> <span title="Int(1)" class="int">1</span> + <a href="#151048" title="Int">perturb</a>;
+      <a href="#151048" title="Int">perturb</a> &gt;&gt;= <span title="Int(5)" class="int">5</span>;
+      <a href="#151047" title="Int">index</a> = <a href="#151046" title="(x$1: Int)Int">j</a> &amp; <a href="#150500" title="=&gt; Int">mask</a>;
+    }
+    <a href="#151047" title="Int">index</a>;
+  }
+
+  <span class="keyword">private</span>[<span class="keyword">this</span>] <span class="keyword">def</span> <a title="(entry: scala.collection.mutable.OpenHashMap.Entry[Key,Value])Unit" id="150518">addEntry</a>(<a title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]" id="150977">entry</a> : <a href="#150488" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">Entry</a>[Key, Value]) = 
+    <span title="Unit" class="keyword">if</span> (<a href="#150977" title="(x$1: AnyRef)Boolean">entry</a> != <span title="Null(null)" class="keyword">null</span>) <a href="../../Array.scala.html#17717" title="(i: Int,x: scala.collection.mutable.OpenHashMap.Entry[Key,Value])Unit">table</a>(<a href="#150517" title="(key: Key,hash: Int)Int">findIndex</a>(<a href="#150977" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">entry</a>.<a href="#150617" title="=&gt; Key">key</a>, <a href="#150977" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">entry</a>.<a href="#150618" title="=&gt; Int">hash</a>)) = <a href="#150977" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">entry</a>;
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(key: Key,value: Value)Unit" id="150519">update</a>(<a title="Key" id="150573">key</a> : <a href="#14374" title="Key">Key</a>, <a title="Value" id="150574">value</a> : <a href="#14375" title="Value">Value</a>) {
+    <a href="#150523" title="(key: Key,hash: Int,value: Value)Option[Value]">put</a><span title="Unit">(</span><a href="#150573" title="Key">key</a>, <a href="#150514" title="(key: Key)Int">hashOf</a>(<a href="#150573" title="Key">key</a>), <a href="#150574" title="Value">value</a>);
+  }
+
+  <span class="keyword">def</span> <a title="(kv: (Key, Value))OpenHashMap.this.type" id="150520">+=</a> (<a title="(Key, Value)" id="151190">kv</a>: <a href="../../Tuple2.scala.html#1152" title="(Key, Value)">(</a>Key, Value)): <span class="keyword">this</span>.<span class="keyword">type</span> = { <a href="#150522" title="(key: Key,value: Value)Option[Value]">put</a>(<a href="#151190" title="(Key, Value)">kv</a>.<a href="../../Tuple2.scala.html#20472" title="=&gt; Key">_1</a>, <a href="#151190" title="(Key, Value)">kv</a>.<a href="../../Tuple2.scala.html#20474" title="=&gt; Value">_2</a>); <a href="#7698" title="OpenHashMap.this.type" class="keyword">this</a> }
+  <span class="keyword">def</span> <a title="(key: Key)OpenHashMap.this.type" id="150521">-=</a> (<a title="Key" id="151216">key</a>: <a href="#14374" title="Key">Key</a>): <span class="keyword">this</span>.<span class="keyword">type</span> = { <a href="#150524" title="(key: Key)Option[Value]">remove</a>(<a href="#151216" title="Key">key</a>); <a href="#7698" title="OpenHashMap.this.type" class="keyword">this</a> }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(key: Key,value: Value)Option[Value]" id="150522">put</a>(<a title="Key" id="151170">key</a> : <a href="#14374" title="Key">Key</a>, <a title="Value" id="151171">value</a> : <a href="#14375" title="Value">Value</a>): <a href="../../Option.scala.html#777" title="Option[Value]">Option</a>[Value] = 
+    <a href="#150523" title="(key: Key,hash: Int,value: Value)Option[Value]">put</a>(<a href="#151170" title="Key">key</a>, <a href="#150514" title="(key: Key)Int">hashOf</a>(<a href="#151170" title="Key">key</a>), <a href="#151171" title="Value">value</a>)
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(key: Key,hash: Int,value: Value)Option[Value]" id="150523">put</a>(<a title="Key" id="151180">key</a> : <a href="#14374" title="Key">Key</a>, <a title="Int" id="151181">hash</a> : <span title="Int">Int</span>, <a title="Value" id="151182">value</a> : <a href="#14375" title="Value">Value</a>): <a href="../../Option.scala.html#777" title="Option[Value]">Option</a>[Value] = {
+    <span title="Unit" class="keyword">if</span> (<span title="(x$1: Int)Int" class="int">2</span> <a title="(x$1: Int)Boolean" id="2958">*</a> (<a href="#150512" title="(x$1: Int)Int">size</a> + <a href="#150509" title="=&gt; Int">deleted</a>) &gt; <a href="#150500" title="=&gt; Int">mask</a>) <a href="#150515" title="=&gt; Unit">growTable</a>;
+    <span class="keyword">val</span> <a title="Int" id="151260">index</a> = <a href="#150517" title="(key: Key,hash: Int)Int">findIndex</a>(<a href="#151180" title="Key">key</a>, <a href="#151181" title="Int">hash</a>);
+    <span class="keyword">val</span> <a title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]" id="151261">entry</a> = <a href="../../Array.scala.html#17716" title="(i: Int)scala.collection.mutable.OpenHashMap.Entry[Key,Value]">table</a>(<a href="#151260" title="Int">index</a>);
+    <span title="Option[Value]" class="keyword">if</span> (<a href="#151261" title="(x$1: AnyRef)Boolean">entry</a> == <span title="Null(null)" class="keyword">null</span>) {
+      <a href="../../Array.scala.html#17717" title="(i: Int,x: scala.collection.mutable.OpenHashMap.Entry[Key,Value])Unit">table</a>(<a href="#151260" title="Int">index</a>) = <span title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]" class="keyword">new</span> <a href="#150488" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">Entry</a>(<a href="#151180" title="Key">key</a>, <a href="#151181" title="Int">hash</a>, <a href="../../Option.scala.html#19800" title="(x: Value)Some[Value]">Some</a>(<a href="#151182" title="Value">value</a>));
+      <a href="#150511" title="Int">modCount</a> += <span title="Int(1)" class="int">1</span>;
+      <a href="#150513" title="(s: Int)Unit">size</a> += <span title="Int(1)" class="int">1</span>;
+      <a href="../../Option.scala.html#463" title="object None">None</a>
+    } <span class="keyword">else</span> {
+      <span class="keyword">val</span> <a title="Option[Value]" id="151407">res</a> = <a href="#151261" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">entry</a>.<a href="#150619" title="=&gt; Option[Value]">value</a>
+      <span title="Unit" class="keyword">if</span> (<a href="#151261" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">entry</a>.<a href="#150619" title="(x$1: AnyRef)Boolean">value</a> == <a href="../../Option.scala.html#463" title="object None">None</a>) { <a href="#150513" title="(s: Int)Unit">size</a> += <span title="Int(1)" class="int">1</span>; <a href="#150511" title="Int">modCount</a> += <span title="Int(1)" class="int">1</span> }
+      <a href="#151261" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">entry</a>.<a href="#150619" title="(x$1: Option[Value])Unit">value</a> = <a href="../../Option.scala.html#19800" title="(x: Value)Some[Value]">Some</a>(<a href="#151182" title="Value">value</a>);
+      <a href="#151407" title="Option[Value]">res</a>
+    }
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(key: Key)Option[Value]" id="150524">remove</a>(<a title="Key" id="151233">key</a> : <a href="#14374" title="Key">Key</a>): <a href="../../Option.scala.html#777" title="Option[Value]">Option</a>[Value] = {
+    <span class="keyword">val</span> <a title="Int" id="151493">index</a> = <a href="#150516" title="(key: Key)Int">findIndex</a>(<a href="#151233" title="Key">key</a>);
+    <span title="Option[Value]" class="keyword">if</span> (<a href="../../Array.scala.html#17716" title="(i: Int)scala.collection.mutable.OpenHashMap.Entry[Key,Value]">table</a><span title="(x$1: AnyRef)Boolean">(</span><a href="#151493" title="Int">index</a>) <span title="(x$1: Boolean)Boolean">!=</span> <span title="Null(null)" class="keyword">null</span> &amp;&amp; <a href="../../Array.scala.html#17716" title="(i: Int)scala.collection.mutable.OpenHashMap.Entry[Key,Value]">table</a>(<a href="#151493" title="Int">index</a>).<a href="#150619" title="(x$1: AnyRef)Boolean">value</a> != <a href="../../Option.scala.html#463" title="object None">None</a>){      
+      <span class="keyword">val</span> <a title="Option[Value]" id="151535">res</a> = <a href="../../Array.scala.html#17716" title="(i: Int)scala.collection.mutable.OpenHashMap.Entry[Key,Value]">table</a>(<a href="#151493" title="Int">index</a>).<a href="#150619" title="=&gt; Option[Value]">value</a>
+      <a href="../../Array.scala.html#17716" title="(i: Int)scala.collection.mutable.OpenHashMap.Entry[Key,Value]">table</a>(<a href="#151493" title="Int">index</a>).<a href="#150619" title="(x$1: Option[Value])Unit">value</a> = <a href="../../Option.scala.html#463" title="object None">None</a>;
+      <a href="#150513" title="(s: Int)Unit">size</a> -= <span title="Int(1)" class="int">1</span>;
+      <a href="#150509" title="(x$1: Int)Unit">deleted</a> += <span title="Int(1)" class="int">1</span>;
+      <a href="#151535" title="Option[Value]">res</a>
+    } <span class="keyword">else</span> <a href="../../Option.scala.html#463" title="object None">None</a>
+  }
+
+  <span class="keyword">def</span> <a title="(key: Key)Option[Value]" id="150525">get</a>(<a title="Key" id="151627">key</a> : <a href="#14374" title="Key">Key</a>) : <a href="../../Option.scala.html#777" title="Option[Value]">Option</a>[Value] = {
+    <span class="keyword">val</span> <a title="Int" id="151630">hash</a> = <a href="#150514" title="(key: Key)Int">hashOf</a>(<a href="#151627" title="Key">key</a>);
+
+    <span class="keyword">var</span> <a title="Int" id="151631">j</a> = <a href="#151630" title="Int">hash</a>;
+    <span class="keyword">var</span> <a title="Int" id="151632">index</a> = <a href="#151630" title="(x$1: Int)Int">hash</a> &amp; <a href="#150500" title="=&gt; Int">mask</a>;
+    <span class="keyword">var</span> <a title="Int" id="151633">perturb</a> = <a href="#151632" title="Int">index</a>;
+    <span class="keyword">var</span> <a title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]" id="151634">entry</a> = <a href="../../Array.scala.html#17716" title="(i: Int)scala.collection.mutable.OpenHashMap.Entry[Key,Value]">table</a>(<a href="#151632" title="Int">index</a>);
+    <span title="Unit" class="keyword">while</span>(<a href="#151634" title="(x$1: AnyRef)Boolean">entry</a> != <span title="Null(null)" class="keyword">null</span>)<a href="#151635" title="()Unit">{</a>
+      <span title="Unit" class="keyword">if</span> (<a href="#151634" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">entry</a>.<a href="#150618" title="(x$1: Int)Boolean">hash</a> <span title="(x$1: Boolean)Boolean">==</span> <a href="#151630" title="Int">hash</a> &amp;&amp;
+          <a href="#151634" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">entry</a>.<a href="#150617" title="(x$1: Any)Boolean">key</a> == <a href="#151627" title="Key">key</a>){
+        <span title="Nothing" class="keyword">return</span> <a href="#151634" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">entry</a>.<a href="#150619" title="=&gt; Option[Value]">value</a>;
+      }
+      
+      <a href="#151631" title="Int">j</a> = <span title="(x$1: Int)Int" class="int">5</span> <span title="(x$1: Int)Int">*</span> <a href="#151631" title="Int">j</a> <span title="(x$1: Int)Int">+</span> <span title="Int(1)" class="int">1</span> + <a href="#151633" title="Int">perturb</a>;
+      <a href="#151633" title="Int">perturb</a> &gt;&gt;= <span title="Int(5)" class="int">5</span>;
+      <a href="#151632" title="Int">index</a> = <a href="#151631" title="(x$1: Int)Int">j</a> &amp; <a href="#150500" title="=&gt; Int">mask</a>;
+      <a href="#151634" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">entry</a> = <a href="../../Array.scala.html#17716" title="(i: Int)scala.collection.mutable.OpenHashMap.Entry[Key,Value]">table</a>(<a href="#151632" title="Int">index</a>);
+    }
+    <a href="../../Option.scala.html#463" title="object None">None</a>;
+  }
+ 
+  /**
+   * An iterator over the elements of this map. Use of this iterator follows the same
+   * contract for concurrent modification as the foreach method.
+   */ 
+  <span class="keyword">def</span> <a title="=&gt; &lt;refinement&gt; extends java.lang.Object with Iterator[(Key, Value)]" id="150526">iterator</a> = <a href="#151749" title="java.lang.Object with Iterator[(Key, Value)]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with Iterator[(Key, Value)]" id="151749">Iterator</a>[(Key, Value)]{
+    <span class="keyword">var</span> <a title="Int" id="151752">index</a> = <span title="Int(0)" class="int">0</span>;
+    <span class="keyword">val</span> <a title="Int" id="151754">initialModCount</a> = <a href="#150511" title="Int">modCount</a>;
+
+    <span class="keyword">private</span>[<span class="keyword">this</span>] <span class="keyword">def</span> <a title="=&gt; Unit" id="151756">advance</a> {
+      <span title="Unit" class="keyword">if</span> (<a href="#151754" title="(x$1: Int)Boolean">initialModCount</a> != <a href="#150511" title="Int">modCount</a>) <a href="../../Predef.scala.html#16210" title="(message: String)Nothing">error</a>(<span title="java.lang.String(&quot;Concurrent modification&quot;)" class="string">&quot;Concurrent modification&quot;</span>);
+      <span title="Unit" class="keyword">while</span>(<span title="(x$1: Boolean)Boolean">(</span><a href="#151752" title="(x$1: Int)Boolean">index</a> &lt;= <a href="#150500" title="=&gt; Int">mask</a>) &amp;&amp; (<a href="../../Array.scala.html#17716" title="(i: Int)scala.collection.mutable.OpenHashMap.Entry[Key,Value]">table</a><span title="(x$1: AnyRef)Boolean">(</span><a href="#151752" title="=&gt; Int">index</a>) <a title="(x$1: Boolean)Boolean" id="2208">==</a> <span title="Null(null)" class="keyword">null</span> || <a href="../../Array.scala.html#17716" title="(i: Int)scala.collection.mutable.OpenHashMap.Entry[Key,Value]">table</a>(<a href="#151752" title="=&gt; Int">index</a>).<a href="#150619" title="(x$1: AnyRef)Boolean">value</a> == <a href="../../Option.scala.html#463" title="object None">None</a>)) <a href="#151752" title="(x$1: Int)Unit">index</a><a href="#151775" title="()Unit">+=</a><span title="Int(1)" class="int">1</span>;
+    }
+
+    <span class="keyword">def</span> <a title="=&gt; Boolean" id="151757">hasNext</a> = {<a href="#151756" title="=&gt; Unit">advance</a>; <a href="#151752" title="(x$1: Int)Boolean">index</a> &lt;= <a href="#150500" title="=&gt; Int">mask</a>; }
+
+    <span class="keyword">def</span> <a title="()(Key, Value)" id="151758">next</a> = {
+      <a href="#151756" title="=&gt; Unit">advance</a>;
+      <span class="keyword">val</span> <a title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]" id="151870">result</a> = <a href="../../Array.scala.html#17716" title="(i: Int)scala.collection.mutable.OpenHashMap.Entry[Key,Value]">table</a>(<a href="#151752" title="=&gt; Int">index</a>);
+      <a href="#151752" title="(x$1: Int)Unit">index</a> += <span title="Int(1)" class="int">1</span>;
+      <a href="../../Tuple2.scala.html#20670" title="(_1: Key,_2: Value)(Key, Value)">(</a><a href="#151870" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">result</a>.<a href="#150617" title="=&gt; Key">key</a>, <a href="#151870" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">result</a>.<a href="#150619" title="=&gt; Option[Value]">value</a>.<a href="../../Option.scala.html#19759" title="=&gt; Value">get</a>);
+    }
+  }
+
+  @deprecated(<span class="string">&quot;use `iterator' instead&quot;</span>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Iterator[(Key, Value)]" id="150527">elements</a>: <a href="../Iterator.scala.html#4274" title="Iterator[(Key, Value)]">Iterator</a>[(Key, Value)] = <a href="#150526" title="=&gt; &lt;refinement&gt; extends java.lang.Object with Iterator[(Key, Value)]">iterator</a>
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()scala.collection.mutable.OpenHashMap[Key,Value]" id="150528">clone</a> : <a href="#7698" title="scala.collection.mutable.OpenHashMap[Key,Value]">OpenHashMap</a>[Key, Value] = {
+    <span class="keyword">val</span> <a title="scala.collection.mutable.OpenHashMap[Key,Value]" id="151955">it</a> = <a href="#150496" title="()scala.collection.mutable.OpenHashMap[Key,Value]" class="keyword">new</a> <a href="#7698" title="scala.collection.mutable.OpenHashMap[Key,Value]">OpenHashMap</a>[Key, Value]
+    <a href="#150532" title="(f: (scala.collection.mutable.OpenHashMap.Entry[Key,Value]) =&gt; Unit)Unit">foreachUndeletedEntry</a>(<a title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]" id="151967">entry</a> =&gt; <a href="#151955" title="scala.collection.mutable.OpenHashMap[Key,Value]">it</a>.<a href="#150523" title="(key: Key,hash: Int,value: Value)Option[Value]">put</a><span title="Unit">(</span><a href="#151967" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">entry</a>.<a href="#150617" title="=&gt; Key">key</a>, <a href="#151967" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">entry</a>.<a href="#150618" title="=&gt; Int">hash</a>, <a href="#151967" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">entry</a>.<a href="#150619" title="=&gt; Option[Value]">value</a>.<a href="../../Option.scala.html#19759" title="=&gt; Value">get</a>));
+    <a href="#151955" title="scala.collection.mutable.OpenHashMap[Key,Value]">it</a>
+  }
+
+  /**
+   * Loop over the key, value mappings of this map.
+   *
+   * The behaviour of modifying the map during an iteration is as follows: 
+   *
+   * &lt;ul&gt;
+   *  &lt;li&gt;Deleting a mapping is always permitted.&lt;/li&gt;
+   *  &lt;li&gt;Changing the value of mapping which is already present is permitted.&lt;/li&gt;
+   *  &lt;li&gt;Anything else is not permitted. It will usually, but not always, throw an exception.&lt;/li&gt;
+   * &lt;/ul&gt;
+   *
+   * @param  f The function to apply to each key, value mapping.
+   */ 
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[U](f: ((Key, Value)) =&gt; U)Unit" id="150529">foreach</a>[<a title="&gt;: Nothing &lt;: Any" id="150531">U</a>](<a title="((Key, Value)) =&gt; U" id="151980">f</a> : ((Key, Value)) =&gt;  U){
+    <span class="keyword">val</span> <a title="Int" id="151992">startModCount</a> = <a href="#150511" title="Int">modCount</a>;
+    <a href="#150532" title="(f: (scala.collection.mutable.OpenHashMap.Entry[Key,Value]) =&gt; Unit)Unit">foreachUndeletedEntry</a>(<a title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]" id="151994">entry</a> =&gt; {
+      <span title="Unit" class="keyword">if</span> (<a href="#150511" title="(x$1: Int)Boolean">modCount</a> != <a href="#151992" title="Int">startModCount</a>) <a href="../../Predef.scala.html#16210" title="(message: String)Nothing">error</a>(<span title="java.lang.String(&quot;Concurrent Modification&quot;)" class="string">&quot;Concurrent Modification&quot;</span>)
+      <a href="../../Function1.scala.html#17119" title="(v1: (Key, Value))U">f</a><span title="Unit">(</span><a href="../../Tuple2.scala.html#20670" title="(_1: Key,_2: Value)(Key, Value)">(</a><a href="#151994" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">entry</a>.<a href="#150617" title="=&gt; Key">key</a>, <a href="#151994" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">entry</a>.<a href="#150619" title="=&gt; Option[Value]">value</a>.<a href="../../Option.scala.html#19759" title="=&gt; Value">get</a>))}
+    );  
+  }
+
+  <span class="keyword">private</span>[<span class="keyword">this</span>] <span class="keyword">def</span> <a title="(f: (scala.collection.mutable.OpenHashMap.Entry[Key,Value]) =&gt; Unit)Unit" id="150532">foreachUndeletedEntry</a>(<a title="(scala.collection.mutable.OpenHashMap.Entry[Key,Value]) =&gt; Unit" id="151964">f</a> : Entry[Key, Value] =&gt; Unit){
+    <a href="#150503" title="=&gt; Array[scala.collection.mutable.OpenHashMap.Entry[Key,Value]]">table</a>.<a href="../generic/VectorTemplate.scala.html#17752" title="(f: (scala.collection.mutable.OpenHashMap.Entry[Key,Value]) =&gt; Unit)Unit">foreach</a>(<a title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]" id="152039">entry</a> =&gt; <span title="Unit" class="keyword">if</span> (<a href="#152039" title="(x$1: AnyRef)Boolean">entry</a> <span title="(x$1: Boolean)Boolean">!=</span> <span title="Null(null)" class="keyword">null</span> &amp;&amp; <a href="#152039" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">entry</a>.<a href="#150619" title="(x$1: AnyRef)Boolean">value</a> != <a href="../../Option.scala.html#463" title="object None">None</a>) <a href="../../Function1.scala.html#17119" title="(v1: scala.collection.mutable.OpenHashMap.Entry[Key,Value])Unit">f</a>(<a href="#152039" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">entry</a>));
+  }
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(f: (Key, Value) =&gt; Value)OpenHashMap.this.type" id="150533">transform</a>(<a title="(Key, Value) =&gt; Value" id="152061">f</a> : (Key, Value) =&gt; Value) = {
+    <a href="#150532" title="(f: (scala.collection.mutable.OpenHashMap.Entry[Key,Value]) =&gt; Unit)Unit">foreachUndeletedEntry</a>(<a title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]" id="152068">entry</a> =&gt; <a href="#152068" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">entry</a>.<a href="#150619" title="(x$1: Option[Value])Unit">value</a> = <a href="../../Option.scala.html#19800" title="(x: Value)Some[Value]">Some</a>(<a href="../../Function2.scala.html#20443" title="(v1: Key,v2: Value)Value">f</a>(<a href="#152068" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">entry</a>.<a href="#150617" title="=&gt; Key">key</a>, <a href="#152068" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">entry</a>.<a href="#150619" title="=&gt; Option[Value]">value</a>.<a href="../../Option.scala.html#19759" title="=&gt; Value">get</a>)));
+    <a href="#7698" title="OpenHashMap.this.type" class="keyword">this</a>
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(f: (Key, Value) =&gt; Boolean)OpenHashMap.this.type" id="150534">retain</a>(<a title="(Key, Value) =&gt; Boolean" id="152087">f</a> : (Key, Value) =&gt; Boolean) = {
+    <a href="#150532" title="(f: (scala.collection.mutable.OpenHashMap.Entry[Key,Value]) =&gt; Unit)Unit">foreachUndeletedEntry</a>(<a title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]" id="152094">entry</a> =&gt; <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="../../Function2.scala.html#20443" title="(v1: Key,v2: Value)Boolean">f</a>(<a href="#152094" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">entry</a>.<a href="#150617" title="=&gt; Key">key</a>, <a href="#152094" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">entry</a>.<a href="#150619" title="=&gt; Option[Value]">value</a>.<a href="../../Option.scala.html#19759" title="=&gt; Value">get</a>)) {<a href="#152094" title="scala.collection.mutable.OpenHashMap.Entry[Key,Value]">entry</a>.<a href="#150619" title="(x$1: Option[Value])Unit">value</a> = <a href="../../Option.scala.html#463" title="object None">None</a>; <a href="#150513" title="(s: Int)Unit">size</a> -= <span title="Int(1)" class="int">1</span>; <a href="#150509" title="(x$1: Int)Unit">deleted</a> += <span title="Int(1)" class="int">1</span>} );
+    <a href="#7698" title="OpenHashMap.this.type" class="keyword">this</a>
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="150535">stringPrefix</a> = <span title="java.lang.String(&quot;OpenHashMap&quot;)" class="string">&quot;OpenHashMap&quot;</span>
+}
+
+        </pre>
+    </body>
+</html>

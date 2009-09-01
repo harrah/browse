@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Option.scala</title>
+        <script type="text/javascript" src="jquery-all.js"></script>
+        <script type="text/javascript" src="linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2002-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: Option.scala 18610 2009-08-30 20:42:17Z extempore $
+
+
+<span class="keyword">package</span> scala
+
+<span class="keyword">import</span> Predef._
+<span class="keyword">import</span> annotation.experimental
+
+<span class="keyword">object</span> <a title="object Option" id="778">Option</a>
+<a href="ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  /** An implicit conversion that converts an option to an iterable value
+   */
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="[A](xo: Option[A])Iterable[A]" id="58053">option2Iterable</a>[<a title="&gt;: Nothing &lt;: Any" id="58055">A</a>](<a title="Option[A]" id="58070">xo</a>: <a href="#777" title="Option[A]">Option</a>[A]): <a href="collection/Iterable.scala.html#4460" title="Iterable[A]">Iterable</a>[A] = <a href="#58070" title="Option[A]">xo</a>.<a href="#19783" title="=&gt; List[A]">toList</a>
+
+  /** An Option factory which creates Some(value) if the argument is not null,
+   *  and None if it is null.
+   *
+   *  @param  x the value
+   *  @return   Some(value) if value != null, None if value == null
+   */
+  @experimental
+  <span class="keyword">def</span> <a title="[A](x: A)Option[A]" id="58056">apply</a>[<a title="&gt;: Nothing &lt;: Any" id="58058">A</a>](<a title="A" id="91122">x</a>: <a href="#58058" title="A">A</a>): <a href="#777" title="Option[A]">Option</a>[A] = <span title="Option[A]" class="keyword">if</span> (<a href="#91122" title="(x$1: Any)Boolean">x</a> == <span title="Null(null)" class="keyword">null</span>) <a href="#238612" title="object None">None</a> <span class="keyword">else</span> <a href="#19800" title="(x: A)Some[A]">Some</a>(<a href="#91122" title="A">x</a>)
+  
+  // For methods which return -1 on failure
+  // def fromReturnValue(value: Int): Option[Int] = if (value &lt; 0) None else Some(value)
+  
+  <span class="keyword">class</span> <a title="class NullableOption[A &gt;: Null &lt;: AnyRef] extends java.lang.Object with ScalaObject" id="58059">NullableOption</a>[<a title="&gt;: Null &lt;: AnyRef" id="58060">A</a> &gt;: Null &lt;: AnyRef]<a href="ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="Option[A]" id="238371">x</a>: <a href="#777" title="Option[A]">Option</a>[A]) {
+    /** The option's value if it is nonempty, or &lt;code&gt;null&lt;/code&gt; if it is empty.
+     *  The use of null of course is discouraged, but code written to use Options
+     *  often must interface with code which expects and returns nulls.
+     */
+    @experimental 
+    <span class="keyword">def</span> <a title="=&gt; A" id="135226">orNull</a>: <a href="#58060" title="A">A</a> = <span title="A" class="keyword">if</span> (<a href="#238371" title="Option[A]">x</a>.<a href="#19757" title="=&gt; Boolean">isEmpty</a>) <span title="Null(null)" class="keyword">null</span> <span class="keyword">else</span> <a href="#238371" title="Option[A]">x</a>.<a href="#19759" title="=&gt; A">get</a>
+  }
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="[A &gt;: Null &lt;: AnyRef](xo: Option[A])scala.Option.NullableOption[A]" id="58061">option2NullableOption</a>[<a title="&gt;: Null &lt;: AnyRef" id="58063">A</a> &gt;: Null &lt;: AnyRef](<a title="Option[A]" id="58067">xo</a>: <a href="#777" title="Option[A]">Option</a>[A]): <a href="#58059" title="scala.Option.NullableOption[A]">NullableOption</a>[A] = <span title="scala.Option.NullableOption[A]" class="keyword">new</span> <a href="#58059" title="scala.Option.NullableOption[A]">NullableOption</a>(<a href="#58067" title="Option[A]">xo</a>)
+}
+
+/** This class represents optional values. Instances of &lt;code&gt;Option&lt;/code&gt;
+ *  are either instances of case class &lt;code&gt;Some&lt;/code&gt; or it is case
+ *  object &lt;code&gt;None&lt;/code&gt;.
+ *
+ *  @author  Martin Odersky
+ *  @author  Matthias Zenger
+ *  @version 1.1, 16/01/2007
+ */
+<span class="keyword">sealed</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class Option[+A] extends java.lang.Object with Product with ScalaObject" id="777">Option</a>[+<a title="&gt;: Nothing &lt;: Any" id="16481">A</a>] <a href="ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="Product.scala.html#675" title="Product">Product</a> {
+
+  /** True if the option is the &lt;code&gt;None&lt;/code&gt; value, false otherwise.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="19757">isEmpty</a>: <span title="Boolean">Boolean</span>
+
+  /** True if the option is a &lt;code&gt;Some&lt;/code&gt;(...) false otherwise.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="19758">isDefined</a>: <span title="Boolean">Boolean</span> = <span title="=&gt; Boolean">!</span><a href="#19757" title="=&gt; Boolean">isEmpty</a>
+
+  /** get the value of this option.
+   *  @requires that the option is nonEmpty.
+   *  @throws Predef.NoSuchElementException if the option is empty.
+   */
+  <span class="keyword">def</span> <a title="=&gt; A" id="19759">get</a>: <a href="#16481" title="A">A</a>
+
+  @deprecated(<span class="string">&quot;use &lt;code&gt;getOrElse&lt;/code&gt; instead&quot;</span>)
+  <span class="keyword">def</span> <a title="[B &gt;: A](default: B)B" id="19760">get</a>[<a title="&gt;: A &lt;: Any" id="19762">B</a> &gt;: A](<a title="B" id="20197">default</a>: <a href="#19762" title="B">B</a>): <a href="#19762" title="B">B</a> = <a href="#777" title="Option[A]" class="keyword">this</a> <span title="B" class="keyword">match</span> {
+    <span title="B" class="keyword">case</span> <a href="#238612" title="object None">None</a> =&gt; <a href="#20197" title="B">default</a>
+    <span title="A" class="keyword">case</span> Some(<a title="A" id="238389">x</a>) =&gt; <a href="#238389" title="A">x</a>
+  }
+
+  /** If the option is nonempty return its value,
+   *  otherwise return the result of evaluating a default expression.
+   *
+   *  @param default  the default expression.
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A](default: =&gt; B)B" id="19763">getOrElse</a>[<a title="&gt;: A &lt;: Any" id="19765">B</a> &gt;: A](<a title="=&gt; B" id="58749">default</a>: =&gt; B): <a href="#19765" title="B">B</a> = 
+    <span title="B" class="keyword">if</span> (<a href="#19757" title="=&gt; Boolean">isEmpty</a>) <a href="#58749" title="=&gt; B">default</a> <span class="keyword">else</span> <a href="#777" title="Option.this.type" class="keyword">this</a>.<a href="#19759" title="=&gt; A">get</a>
+
+  /** If the option is nonempty, return a function applied to its value,
+   *  wrapped in a Some i.e. &lt;code&gt;Some(f(this.get))&lt;/code&gt;.
+   *  Otherwise return &lt;code&gt;None&lt;/code&gt;.
+   *
+   *  @param  f   the function to apply
+   */
+  <span class="keyword">def</span> <a title="[B](f: (A) =&gt; B)Option[B]" id="19766">map</a>[<a title="&gt;: Nothing &lt;: Any" id="19768">B</a>](<a title="(A) =&gt; B" id="58736">f</a>: A =&gt; B): <a href="#777" title="Option[B]">Option</a>[B] = 
+    <span title="Option[B]" class="keyword">if</span> (<a href="#19757" title="=&gt; Boolean">isEmpty</a>) <a href="#238612" title="object None">None</a> <span class="keyword">else</span> <a href="#19800" title="(x: B)Some[B]">Some</a>(<a href="Function1.scala.html#17119" title="(v1: A)B">f</a>(<a href="#777" title="Option.this.type" class="keyword">this</a>.<a href="#19759" title="=&gt; A">get</a>))
+
+  /** If the option is nonempty, return a function applied to its value.
+   *  Otherwise return None.
+   *  @param  f   the function to apply
+   */
+  <span class="keyword">def</span> <a title="[B](f: (A) =&gt; Option[B])Option[B]" id="19769">flatMap</a>[<a title="&gt;: Nothing &lt;: Any" id="19771">B</a>](<a title="(A) =&gt; Option[B]" id="238404">f</a>: A =&gt; Option[B]): <a href="#777" title="Option[B]">Option</a>[B] = 
+    <span title="Option[B]" class="keyword">if</span> (<a href="#19757" title="=&gt; Boolean">isEmpty</a>) <a href="#238612" title="object None">None</a> <span class="keyword">else</span> <a href="Function1.scala.html#17119" title="(v1: A)Option[B]">f</a>(<a href="#777" title="Option.this.type" class="keyword">this</a>.<a href="#19759" title="=&gt; A">get</a>)
+
+  /** If the option is nonempty and the given predicate &lt;code&gt;p&lt;/code&gt;
+   *  yields &lt;code&gt;false&lt;/code&gt; on its value, return &lt;code&gt;None&lt;/code&gt;.
+   *  Otherwise return the option value itself.
+   *
+   *  @param  p   the predicate used for testing.
+   */
+  <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)Option[A]" id="19772">filter</a>(<a title="(A) =&gt; Boolean" id="238412">p</a>: A =&gt; Boolean): <a href="#777" title="Option[A]">Option</a>[A] = 
+    <span title="Option[A]" class="keyword">if</span> (<a href="#19757" title="(x$1: Boolean)Boolean">isEmpty</a> || <a href="Function1.scala.html#17119" title="(v1: A)Boolean">p</a>(<a href="#777" title="Option.this.type" class="keyword">this</a>.<a href="#19759" title="=&gt; A">get</a>)) <a href="#777" title="Option[A]" class="keyword">this</a> <span class="keyword">else</span> <a href="#238612" title="object None">None</a>
+
+  /** Apply the given procedure &lt;code&gt;f&lt;/code&gt; to the option's value,
+   *  if it is nonempty. Do nothing if it is empty.
+   *
+   *  @param  f   the procedure to apply.
+   */
+  <span class="keyword">def</span> <a title="[U](f: (A) =&gt; U)Unit" id="19773">foreach</a>[<a title="&gt;: Nothing &lt;: Any" id="19775">U</a>](<a title="(A) =&gt; U" id="238421">f</a>: A =&gt; U) {
+    <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#19757" title="=&gt; Boolean">isEmpty</a>) <a href="Function1.scala.html#17119" title="(v1: A)U">f</a><span title="Unit">(</span><a href="#777" title="Option.this.type" class="keyword">this</a>.<a href="#19759" title="=&gt; A">get</a>)
+  }
+  
+  /** If the given partial function &lt;code&gt;pf&lt;/code&gt; is defined for the
+   *  option's value, apply it to the value.  Otherwise, None.
+   *
+   *  @param  pf   the partial function.
+   */
+  @experimental
+  <span class="keyword">def</span> <a title="[B](pf: PartialFunction[Any,B])Option[B]" id="19776">filterMap</a>[<a title="&gt;: Nothing &lt;: Any" id="19778">B</a>](<a title="PartialFunction[Any,B]" id="238429">pf</a>: <a href="PartialFunction.scala.html#1083" title="PartialFunction[Any,B]">PartialFunction</a>[Any, B]): <a href="#777" title="Option[B]">Option</a>[B] =
+    <span title="Option[B]" class="keyword">if</span> (<a title="(x$1: Boolean)Boolean" id="2210">!</a><a href="#19757" title="=&gt; Boolean">isEmpty</a> &amp;&amp; <a href="#238429" title="PartialFunction[Any,B]">pf</a>.<a href="PartialFunction.scala.html#17071" title="(x: Any)Boolean">isDefinedAt</a>(<a href="#777" title="Option.this.type" class="keyword">this</a>.<a href="#19759" title="=&gt; A">get</a>)) <a href="#19800" title="(x: B)Some[B]">Some</a>(<a href="Function1.scala.html#17119" title="(v1: Any)B">pf</a>(<a href="#777" title="Option.this.type" class="keyword">this</a>.<a href="#19759" title="=&gt; A">get</a>)) <span class="keyword">else</span> <a href="#238612" title="object None">None</a>  
+
+  /** If the option is nonempty return it,
+   *  otherwise return the result of evaluating an alternative expression.
+   *  @param alternative  the alternative expression.
+   */
+  <span class="keyword">def</span> <a title="[B &gt;: A](alternative: =&gt; Option[B])Option[B]" id="19779">orElse</a>[<a title="&gt;: A &lt;: Any" id="19781">B</a> &gt;: A](<a title="=&gt; Option[B]" id="41307">alternative</a>: =&gt; Option[B]): <a href="#777" title="Option[B]">Option</a>[B] = 
+    <span title="Option[B]" class="keyword">if</span> (<a href="#19757" title="=&gt; Boolean">isEmpty</a>) <a href="#41307" title="=&gt; Option[B]">alternative</a> <span class="keyword">else</span> <a href="#777" title="Option[A]" class="keyword">this</a>
+
+  /** An singleton iterator returning the option's value if it is nonempty
+   *  or the empty iterator if the option is empty.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Iterator[A]" id="19782">iterator</a>: <a href="collection/Iterator.scala.html#4274" title="Iterator[A]">Iterator</a>[A] = 
+    <span title="Iterator[A]" class="keyword">if</span> (<a href="#19757" title="=&gt; Boolean">isEmpty</a>) <a href="package.scala.html#14773" title="=&gt; collection.Iterator.type">Iterator</a>.<a href="collection/Iterator.scala.html#21409" title="=&gt; &lt;refinement&gt; extends java.lang.Object with Iterator[Nothing]">empty</a> <span class="keyword">else</span> <a href="package.scala.html#14773" title="=&gt; collection.Iterator.type">Iterator</a>.<a href="collection/Iterator.scala.html#21411" title="(elem: A)java.lang.Object with Iterator[A]">single</a>(<a href="#777" title="Option.this.type" class="keyword">this</a>.<a href="#19759" title="=&gt; A">get</a>)
+
+  /** A singleton list containing the option's value if it is nonempty
+   *  or the empty list if the option is empty.
+   */
+  <span class="keyword">def</span> <a title="=&gt; List[A]" id="19783">toList</a>: <a href="collection/immutable/List.scala.html#8973" title="List[A]">List</a>[A] = 
+    <span title="List[A]" class="keyword">if</span> (<a href="#19757" title="=&gt; Boolean">isEmpty</a>) List<a href="collection/immutable/List.scala.html#9259" title="object Nil">(</a>) <span class="keyword">else</span> <a href="collection/immutable/List.scala.html#17535" title="(xs: A*)List[A]">List</a>(<a href="#777" title="Option.this.type" class="keyword">this</a>.<a href="#19759" title="=&gt; A">get</a>)
+
+  /** An &lt;code&gt;Either&lt;/code&gt; that is a &lt;code&gt;Left&lt;/code&gt; with the given argument
+   * &lt;code&gt;left&lt;/code&gt; if this is empty, or a &lt;code&gt;Right&lt;/code&gt; if this is nonempty with the
+   * option's value.
+   */
+  <span class="keyword">def</span> <a title="[X](left: =&gt; X)Either[X,A] with Product" id="19784">toRight</a>[<a title="&gt;: Nothing &lt;: Any" id="19786">X</a>](<a title="=&gt; X" id="238482">left</a>: =&gt; X) =
+    <span title="&lt;refinement&gt; extends Either[X,A] with Product" class="keyword">if</span> (<a href="#19757" title="=&gt; Boolean">isEmpty</a>) <a href="Either.scala.html#71437" title="(a: X)Left[X,Nothing]">Left</a>(<a href="#238482" title="=&gt; X">left</a>) <span class="keyword">else</span> <a href="Either.scala.html#71406" title="(b: A)Right[Nothing,A]">Right</a>(<a href="#777" title="Option.this.type" class="keyword">this</a>.<a href="#19759" title="=&gt; A">get</a>)
+
+  /** An &lt;code&gt;Either&lt;/code&gt; that is a &lt;code&gt;Right&lt;/code&gt; with the given argument
+   * &lt;code&gt;right&lt;/code&gt; if this is empty, or a &lt;code&gt;Left&lt;/code&gt; if this is nonempty with the
+   * option's value.
+   */
+  <span class="keyword">def</span> <a title="[X](right: =&gt; X)Either[A,X] with Product" id="19787">toLeft</a>[<a title="&gt;: Nothing &lt;: Any" id="19789">X</a>](<a title="=&gt; X" id="238513">right</a>: =&gt; X) =
+    <span title="&lt;refinement&gt; extends Either[A,X] with Product" class="keyword">if</span> (<a href="#19757" title="=&gt; Boolean">isEmpty</a>) <a href="Either.scala.html#71406" title="(b: X)Right[Nothing,X]">Right</a>(<a href="#238513" title="=&gt; X">right</a>) <span class="keyword">else</span> <a href="Either.scala.html#71437" title="(a: A)Left[A,Nothing]">Left</a>(<a href="#777" title="Option.this.type" class="keyword">this</a>.<a href="#19759" title="=&gt; A">get</a>)
+}
+
+/** Class &lt;code&gt;Some[A]&lt;/code&gt; represents existing values of type
+ *  &lt;code&gt;A&lt;/code&gt;.
+ *
+ *  @author  Martin Odersky
+ *  @version 1.0, 16/07/2003
+ */
+<span class="keyword">final</span> case <span class="keyword">class</span> <a title="class Some[+A] extends Option[A] with ScalaObject with Product" id="19800">Some</a>[+<a title="&gt;: Nothing &lt;: Any" id="19802">A</a>]<a href="ScalaObject.scala.html#957" title="ScalaObject">(</a><a title="A" id="19815">x</a>: <a href="#19802" title="A">A</a>) <span class="keyword">extends</span> <a href="#777" title="Option[A]">Option</a>[A] {
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="19807">isEmpty</a> = <span title="Boolean(false)" class="keyword">false</span>
+  <span class="keyword">def</span> <a title="=&gt; A" id="19808">get</a> = <a href="#19815" title="=&gt; A">x</a>
+}
+
+
+/** This case object represents non-existent values.
+ *
+ *  @author  Martin Odersky
+ *  @version 1.0, 16/07/2003
+ */
+case <span class="keyword">object</span> <a href="#238601" title="object None" id="238612">None</a> <a href="ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="#777" title="Option[Nothing]">Option</a>[Nothing] {
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="19793">isEmpty</a> = <span title="Boolean(true)" class="keyword">true</span>
+  <span class="keyword">def</span> <a title="=&gt; Nothing" id="19794">get</a> = <span title="Nothing" class="keyword">throw</span> <a title="(x$1: java.lang.String)java.util.NoSuchElementException" id="19666" class="keyword">new</a> <a href="Predef.scala.html#16171" title="java.util.NoSuchElementException">NoSuchElementException</a>(<span title="java.lang.String(&quot;None.get&quot;)" class="string">&quot;None.get&quot;</span>)
+}
+
+        </pre>
+    </body>
+</html>

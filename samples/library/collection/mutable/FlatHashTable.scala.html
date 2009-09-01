@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>collection/mutable/FlatHashTable.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: FlatHashTable.scala 17858 2009-05-27 21:37:33Z dubochet $
+
+<span class="keyword">package</span> scala.collection.mutable
+
+<span class="keyword">import</span> Predef._
+
+<span class="keyword">trait</span> <a title="trait FlatHashTable[A] extends java.lang.Object with ScalaObject" id="7851">FlatHashTable</a>[<a title="&gt;: Nothing &lt;: Any" id="14423">A</a><a id="1">]</a> <a href="../../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+
+  /** The load factor for the hash table; must be &lt; 500 (0.5)
+   */
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; Int" id="34313">loadFactor</a>: <span title="Int">Int</span> = <span title="Int(450)" class="int">450</span>
+  <span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; Int" id="34314">loadFactorDenum</a> = <span title="Int(1000)" class="int">1000</span>
+
+  /** The initial size of the hash table.
+   */
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; Int" id="34315">initialSize</a>: <span title="Int">Int</span> = <span title="Int(16)" class="int">16</span>
+
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">val</span> <a title="Boolean(false)" id="34316">tableDebug</a> = <span title="Boolean(false)" class="keyword">false</span>
+
+  /** The actual hash table.
+   */
+  <span class="keyword">protected</span> <span class="keyword">var</span> <a title="Array[AnyRef]" id="34319">table</a>: <a href="../../Array.scala.html#885" title="Array[AnyRef]">Array</a>[AnyRef] = 
+    <span title="Array[AnyRef]" class="keyword">if</span> (<a href="#34315" title="(x$1: Int)Boolean" id="2950">initialSize</a> == <span title="Int(0)" class="int">0</span>) <span title="Null(null)" class="keyword">null</span> <span class="keyword">else</span> <span title="Array[AnyRef]" class="keyword">new</span> <a href="../../Array.scala.html#885" title="Array[AnyRef]">Array</a>(<a href="#34315" title="=&gt; Int">initialSize</a>)
+
+  /** The number of mappings contained in this hash table.
+   */
+  <span class="keyword">protected</span> <span class="keyword">var</span> <a title="Int" id="34322">tableSize</a> = <span title="Int(0)" class="int">0</span>
+
+  /** The next size value at which to resize (capacity * load factor).
+   */
+  <span class="keyword">protected</span> <span class="keyword">var</span> <a title="Int" id="34325">threshold</a>: <span title="Int">Int</span> = <a href="#34338" title="(size: Int)Int">newThreshold</a>(<a href="#34315" title="=&gt; Int">initialSize</a>)
+
+  /** Returns the number of entires in this hash table.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Int" id="34327">size</a>: <span title="Int">Int</span> = <a href="#34322" title="=&gt; Int">tableSize</a>
+  
+  <span class="keyword">def</span> <a title="(elem: A)Option[A]" id="34328">findEntry</a>(<a title="A" id="154761">elem</a>: <a href="#14423" title="A">A</a>): <a href="../../Option.scala.html#777" title="Option[A]">Option</a>[A] = {
+    <span class="keyword">var</span> <a title="Int" id="154763">h</a> = <a href="#34337" title="(hcode: Int)Int">index</a>(<a href="#34335" title="(elem: A)Int">elemHashCode</a>(<a href="#154761" title="A">elem</a>))
+    <span class="keyword">var</span> <a title="AnyRef" id="154764">entry</a> = <a href="../../Array.scala.html#17716" title="(i: Int)AnyRef">table</a>(<a href="#154763" title="Int">h</a>)
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: AnyRef)Boolean" class="keyword">null</span> <span title="(x$1: Boolean)Boolean">!=</span> <a href="#154764" title="AnyRef">entry</a> &amp;&amp; <a href="#154764" title="(x$1: Any)Boolean">entry</a> != <a href="#154761" title="A">elem</a>) <a href="#154765" title="()Unit">{</a>
+      <a href="#154763" title="Int">h</a> = <span title="(x$1: Int)Int">(</span><a href="#154763" title="(x$1: Int)Int">h</a> + <span title="Int(1)" class="int">1</span>) % <a href="#34319" title="=&gt; Array[AnyRef]">table</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>
+      <a href="#154764" title="AnyRef">entry</a> = <a href="../../Array.scala.html#17716" title="(i: Int)AnyRef">table</a>(<a href="#154763" title="Int">h</a>)
+    }
+    <span title="Option[A]" class="keyword">if</span> (<span title="(x$1: AnyRef)Boolean" class="keyword">null</span> == <a href="#154764" title="AnyRef">entry</a>) <a href="../../Option.scala.html#463" title="object None">None</a> <span class="keyword">else</span> <a href="../../Option.scala.html#19800" title="(x: A)Some[A]">Some</a>(<a href="#154764" title="AnyRef">entry</a>.<span title="[T0]T0">asInstanceOf</span><span title="A">[</span><a href="#14423" title="A">A</a>])
+  }
+
+  <span class="keyword">def</span> <a title="(elem: A)Boolean" id="34329">containsEntry</a>(<a title="A" id="34455">elem</a>: <a href="#14423" title="A">A</a>): <span title="Boolean">Boolean</span> = {
+    <span class="keyword">var</span> <a title="Int" id="154959">h</a> = <a href="#34337" title="(hcode: Int)Int">index</a>(<a href="#34335" title="(elem: A)Int">elemHashCode</a>(<a href="#34455" title="A">elem</a>))
+    <span class="keyword">var</span> <a title="AnyRef" id="154960">entry</a> = <a href="../../Array.scala.html#17716" title="(i: Int)AnyRef">table</a>(<a href="#154959" title="Int">h</a>)
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: AnyRef)Boolean" class="keyword">null</span> <span title="(x$1: Boolean)Boolean">!=</span> <a href="#154960" title="AnyRef">entry</a> &amp;&amp; <a href="#154960" title="(x$1: Any)Boolean">entry</a> != <a href="#34455" title="A">elem</a>) <a href="#154961" title="()Unit">{</a>
+      <a href="#154959" title="Int">h</a> = <span title="(x$1: Int)Int">(</span><a href="#154959" title="(x$1: Int)Int">h</a> + <span title="Int(1)" class="int">1</span>) % <a href="#34319" title="=&gt; Array[AnyRef]">table</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>
+      <a href="#154960" title="AnyRef">entry</a> = <a href="../../Array.scala.html#17716" title="(i: Int)AnyRef">table</a>(<a href="#154959" title="Int">h</a>)
+    }
+    <span title="(x$1: AnyRef)Boolean" class="keyword">null</span> != <a href="#154960" title="AnyRef">entry</a>
+  }
+
+  /** Add entry if not yet in table
+   *  Return whether a new entry was added
+   */
+  <span class="keyword">def</span> <a title="(elem: A)Boolean" id="34330">addEntry</a>(<a title="A" id="34506">elem</a>: <a href="#14423" title="A">A</a>) : <span title="Boolean">Boolean</span> = {
+    <span class="keyword">var</span> <a title="Int" id="155036">h</a> = <a href="#34337" title="(hcode: Int)Int">index</a>(<a href="#34335" title="(elem: A)Int">elemHashCode</a>(<a href="#34506" title="A">elem</a>))
+    <span class="keyword">var</span> <a title="AnyRef" id="155037">entry</a> = <a href="../../Array.scala.html#17716" title="(i: Int)AnyRef">table</a>(<a href="#155036" title="Int">h</a>)
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: AnyRef)Boolean" class="keyword">null</span> != <a href="#155037" title="AnyRef">entry</a>) <a href="#155038" title="()Unit">{</a>
+      <span title="Unit" class="keyword">if</span> (<a href="#155037" title="(x$1: Any)Boolean">entry</a> == <a href="#34506" title="A">elem</a>) <span title="Nothing" class="keyword">return</span> <span title="Boolean(false)" class="keyword">false</span>
+      <a href="#155036" title="Int">h</a> = <span title="(x$1: Int)Int">(</span><a href="#155036" title="(x$1: Int)Int">h</a> + <span title="Int(1)" class="int">1</span>) % <a href="#34319" title="=&gt; Array[AnyRef]">table</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>
+      <a href="#155037" title="AnyRef">entry</a> = <a href="../../Array.scala.html#17716" title="(i: Int)AnyRef">table</a>(<a href="#155036" title="Int">h</a>)
+    }
+    <a href="../../Array.scala.html#17717" title="(i: Int,x: AnyRef)Unit">table</a>(<a href="#155036" title="Int">h</a>) = <a href="#34506" title="A">elem</a>.<span title="[T0]T0">asInstanceOf</span><span title="AnyRef">[</span><a title="AnyRef" id="1756">AnyRef</a>]
+    <a href="#34322" title="(x$1: Int)Unit">tableSize</a> = <a href="#34322" title="(x$1: Int)Int">tableSize</a> + <span title="Int(1)" class="int">1</span>
+    <span title="Unit" class="keyword">if</span> (<a href="#34322" title="(x$1: Int)Boolean">tableSize</a> &gt;= <a href="#34325" title="=&gt; Int">threshold</a>) <a href="#34333" title="()Unit">growTable</a>()
+    <span title="Boolean(true)" class="keyword">true</span>
+  }
+
+  <span class="keyword">def</span> <a title="(elem: A)Option[A]" id="34331">removeEntry</a>(<a title="A" id="34553">elem</a>: <a href="#14423" title="A">A</a>) : <a href="../../Option.scala.html#777" title="Option[A]">Option</a>[A] = {
+    <span title="Unit" class="keyword">if</span> (<span title="Boolean(false)">tableDebug</span>) <a href="#34334" title="()Unit">checkConsistent</a>()
+    <span class="keyword">def</span> <a title="(i: Int,j: Int)Boolean" id="155150">precedes</a>(<a title="Int" id="155157">i</a>: <span title="Int">Int</span>, <a title="Int" id="155158">j</a>: <span title="Int">Int</span>) = {
+      <span class="keyword">val</span> <a title="Int" id="155159">d</a> = <a href="#34319" title="=&gt; Array[AnyRef]">table</a>.<a href="../../Array.scala.html#17715" title="(x$1: Int)Int" id="2859">length</a> &gt;&gt; <span title="Int(1)" class="int">1</span>
+      <span title="Boolean" class="keyword">if</span> (<a href="#155157" title="(x$1: Int)Boolean" id="2956">i</a> &lt;= <a href="#155158" title="Int">j</a>) <a href="#155158" title="(x$1: Int)Int">j</a> <span title="(x$1: Int)Boolean">-</span> <a href="#155157" title="Int">i</a> &lt; <a href="#155159" title="Int">d</a>
+      <span class="keyword">else</span> <a href="#155157" title="(x$1: Int)Int">i</a> <a title="(x$1: Int)Boolean" id="2958">-</a> <a href="#155158" title="Int">j</a> &gt; <a href="#155159" title="Int">d</a>
+    }
+    <span class="keyword">var</span> <a title="Int" id="155151">h</a> = <a href="#34337" title="(hcode: Int)Int">index</a>(<a href="#34335" title="(elem: A)Int">elemHashCode</a>(<a href="#34553" title="A">elem</a>))
+    <span class="keyword">var</span> <a title="AnyRef" id="155152">entry</a> = <a href="../../Array.scala.html#17716" title="(i: Int)AnyRef">table</a>(<a href="#155151" title="Int">h</a>)
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: AnyRef)Boolean" class="keyword">null</span> != <a href="#155152" title="AnyRef">entry</a>) <a href="#155153" title="()Unit">{</a>
+      <span title="Unit" class="keyword">if</span> (<a href="#155152" title="(x$1: Any)Boolean">entry</a> == <a href="#34553" title="A">elem</a>) {
+        <span class="keyword">var</span> <a title="Int" id="155225">h0</a> = <a href="#155151" title="Int">h</a>
+        <span class="keyword">var</span> <a title="Int" id="155226">h1</a> = <span title="(x$1: Int)Int">(</span><a href="#155225" title="(x$1: Int)Int">h0</a> + <span title="Int(1)" class="int">1</span>) % <a href="#34319" title="=&gt; Array[AnyRef]">table</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>
+        <span title="Unit" class="keyword">while</span> (<span title="(x$1: AnyRef)Boolean" class="keyword">null</span> != <a href="../../Array.scala.html#17716" title="(i: Int)AnyRef">table</a>(<a href="#155226" title="Int">h1</a>)) <a href="#155227" title="()Unit">{</a>
+          <span class="keyword">val</span> <a title="Int" id="155258">h2</a> = <a href="#34337" title="(hcode: Int)Int">index</a>(<a href="#34335" title="(elem: A)Int">elemHashCode</a>(<a href="../../Array.scala.html#17716" title="(i: Int)AnyRef">table</a>(<a href="#155226" title="Int">h1</a>).<span title="[T0]T0">asInstanceOf</span><span title="A">[</span><a href="#14423" title="A">A</a>]))
+          //Console.println(&quot;shift at &quot;+h1+&quot;:&quot;+table(h1)+&quot; with h2 = &quot;+h2+&quot;? &quot;+(h2 != h1)+precedes(h2, h0)+table.length)
+          <span title="Unit" class="keyword">if</span> (<a href="#155258" title="(x$1: Int)Boolean" id="2952">h2</a> <span title="(x$1: Boolean)Boolean">!=</span> <a href="#155226" title="Int">h1</a> &amp;&amp; <a href="#155150" title="(i: Int,j: Int)Boolean">precedes</a>(<a href="#155258" title="Int">h2</a>, <a href="#155225" title="Int">h0</a>)) {
+            //Console.println(&quot;shift &quot;+h1+&quot; to &quot;+h0+&quot;!&quot;)
+            <a href="../../Array.scala.html#17717" title="(i: Int,x: AnyRef)Unit">table</a>(<a href="#155225" title="Int">h0</a>) = <a href="../../Array.scala.html#17716" title="(i: Int)AnyRef">table</a>(<a href="#155226" title="Int">h1</a>)
+            <a href="#155225" title="Int">h0</a> = <a href="#155226" title="Int">h1</a>
+          } 
+          <a href="#155226" title="Int">h1</a> = <span title="(x$1: Int)Int">(</span><a href="#155226" title="(x$1: Int)Int">h1</a> + <span title="Int(1)" class="int">1</span>) % <a href="#34319" title="=&gt; Array[AnyRef]">table</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>
+        }
+        <a href="../../Array.scala.html#17717" title="(i: Int,x: AnyRef)Unit">table</a>(<a href="#155225" title="Int">h0</a>) = <span title="Null(null)" class="keyword">null</span>
+        <a href="#34322" title="(x$1: Int)Unit">tableSize</a> -= <span title="Int(1)" class="int">1</span>
+        <span title="Unit" class="keyword">if</span> (<span title="Boolean(false)">tableDebug</span>) <a href="#34334" title="()Unit">checkConsistent</a>()
+        <span title="Nothing" class="keyword">return</span> <a href="../../Option.scala.html#19800" title="(x: A)Some[A]">Some</a>(<a href="#155152" title="AnyRef">entry</a>.<span title="[T0]T0">asInstanceOf</span><span title="A">[</span><a href="#14423" title="A">A</a>])
+      }
+      <a href="#155151" title="Int">h</a> = <span title="(x$1: Int)Int">(</span><a href="#155151" title="(x$1: Int)Int">h</a> + <span title="Int(1)" class="int">1</span>) % <a href="#34319" title="=&gt; Array[AnyRef]">table</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>
+      <a href="#155152" title="AnyRef">entry</a> = <a href="../../Array.scala.html#17716" title="(i: Int)AnyRef">table</a>(<a href="#155151" title="Int">h</a>)
+    }
+    <a href="../../Option.scala.html#463" title="object None">None</a>
+  }
+
+  <span class="keyword">def</span> <a title="=&gt; &lt;refinement&gt; extends java.lang.Object with Iterator[A]" id="34332">iterator</a> = <a href="#34729" title="java.lang.Object with Iterator[A]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with Iterator[A]" id="34729">Iterator</a>[A] {
+    <span class="keyword">private</span> <span class="keyword">var</span> <a title="Int" id="34732">i</a> = <span title="Int(0)" class="int">0</span>
+    <span class="keyword">def</span> <a title="=&gt; Boolean" id="34734">hasNext</a>: <span title="Boolean">Boolean</span> = {
+      <span title="Unit" class="keyword">while</span> (<a href="#34732" title="(x$1: Int)Boolean">i</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <a href="#34319" title="=&gt; Array[AnyRef]">table</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a> &amp;&amp; (<span title="(x$1: AnyRef)Boolean" class="keyword">null</span> == <a href="../../Array.scala.html#17716" title="(i: Int)AnyRef">table</a>(<a href="#34732" title="=&gt; Int">i</a>))) <a href="#34732" title="(x$1: Int)Unit">i</a> <a href="#34743" title="()Unit">+=</a> <span title="Int(1)" class="int">1</span>
+      <a href="#34732" title="(x$1: Int)Boolean">i</a> &lt; <a href="#34319" title="=&gt; Array[AnyRef]">table</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>
+    }
+    <span class="keyword">def</span> <a title="()A" id="34735">next</a>(): <a href="#14423" title="A">A</a> =
+      <span title="A" class="keyword">if</span> (<a href="#34734" title="=&gt; Boolean">hasNext</a>) { <a href="#34732" title="(x$1: Int)Unit">i</a> += <span title="Int(1)" class="int">1</span>; <a href="../../Array.scala.html#17716" title="(i: Int)AnyRef">table</a>(<a href="#34732" title="(x$1: Int)Int">i</a> - <span title="Int(1)" class="int">1</span>).<span title="[T0]T0">asInstanceOf</span><span title="A">[</span><a href="#14423" title="A">A</a>] }
+      <span class="keyword">else</span> <a href="../../package.scala.html#14773" title="=&gt; collection.Iterator.type">Iterator</a>.<a href="../Iterator.scala.html#21409" title="=&gt; &lt;refinement&gt; extends java.lang.Object with Iterator[Nothing]">empty</a>.<a href="../Iterator.scala.html#19185" title="()Nothing">next</a>
+  }
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="()Unit" id="34333">growTable</a>() {
+    <span class="keyword">val</span> <a title="Array[AnyRef]" id="155422">oldtable</a> = <a href="#34319" title="=&gt; Array[AnyRef]">table</a>
+    <a href="#34319" title="(x$1: Array[AnyRef])Unit">table</a> = <span title="Array[AnyRef]" class="keyword">new</span> <a href="../../Array.scala.html#885" title="Array[AnyRef]">Array</a>[AnyRef](<a href="#34319" title="=&gt; Array[AnyRef]">table</a>.<a href="../../Array.scala.html#17715" title="(x$1: Int)Int" id="2966">length</a> * <span title="Int(2)" class="int">2</span>)
+    <a href="#34322" title="(x$1: Int)Unit">tableSize</a> = <span title="Int(0)" class="int">0</span>
+    <a href="#34325" title="(x$1: Int)Unit">threshold</a> = <a href="#34338" title="(size: Int)Int">newThreshold</a>(<a href="#34319" title="=&gt; Array[AnyRef]">table</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>)
+    <span class="keyword">var</span> <a title="Int" id="155423">i</a> = <span title="Int(0)" class="int">0</span>
+    <span title="Unit" class="keyword">while</span> (<a href="#155423" title="(x$1: Int)Boolean">i</a> &lt; <a href="#155422" title="Array[AnyRef]">oldtable</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>) <a href="#155424" title="()Unit">{</a>
+      <span class="keyword">val</span> <a title="AnyRef" id="155463">entry</a> = <a href="../../Array.scala.html#17716" title="(i: Int)AnyRef">oldtable</a>(<a href="#155423" title="Int">i</a>)
+      <span title="AnyVal with NotNull" class="keyword">if</span> (<span title="(x$1: AnyRef)Boolean" class="keyword">null</span> != <a href="#155463" title="AnyRef">entry</a>) <a href="#34330" title="(elem: A)Boolean">addEntry</a>(<a href="#155463" title="AnyRef">entry</a>.<span title="[T0]T0">asInstanceOf</span><span title="A">[</span><a href="#14423" title="A">A</a>])
+      <a href="#155423" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+    }
+    <span title="Unit" class="keyword">if</span> (<span title="Boolean(false)">tableDebug</span>) <a href="#34334" title="()Unit">checkConsistent</a>()
+  }
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="()Unit" id="34334">checkConsistent</a>() {
+    <span class="keyword">for</span> (<a title="Int" id="155561">i</a> &lt;- <a href="../../runtime/RichInt.scala.html#19060" title="(end: Int)Range" class="int">0</a> <a href="../../Range.scala.html#38256" title="(f: (Int) =&gt; Unit)Unit">until</a> <a href="#34319" title="=&gt; Array[AnyRef]">table</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>)
+      <span title="Unit" class="keyword">if</span> (<a href="../../Array.scala.html#17716" title="(i: Int)AnyRef">table</a><span title="(x$1: AnyRef)Boolean">(</span><a href="#155561" title="Int">i</a>) <span title="(x$1: Boolean)Boolean">!=</span> <span title="Null(null)" class="keyword">null</span> &amp;&amp; <a title="=&gt; Boolean" id="2203">!</a><a href="#34329" title="(elem: A)Boolean">containsEntry</a>(<a href="../../Array.scala.html#17716" title="(i: Int)AnyRef">table</a>(<a href="#155561" title="Int">i</a>).<span title="[T0]T0">asInstanceOf</span><span title="A">[</span><a href="#14423" title="A">A</a>]))
+        <a href="../../Predef.scala.html#16214" title="(assertion: Boolean,message: =&gt; Any)Unit">assert</a>(<span title="Boolean(false)" class="keyword">false</span>, <a href="#155561" title="(x$1: java.lang.String)java.lang.String" id="2849">i</a><span title="(x$1: Any)java.lang.String">+</span><span title="java.lang.String(&quot; &quot;)" class="string">&quot; &quot;</span><span title="(x$1: Any)java.lang.String">+</span><a href="../../Array.scala.html#17716" title="(i: Int)AnyRef">table</a>(<a href="#155561" title="Int">i</a>)<span title="(x$1: Any)java.lang.String">+</span><span title="java.lang.String(&quot; &quot;)" class="string">&quot; &quot;</span>+<a href="#34319" title="=&gt; Array[AnyRef]">table</a>.<a href="../generic/SequenceTemplate.scala.html#17430" title="()String">toString</a>)
+  }
+
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(elem: A)Int" id="34335">elemHashCode</a>(<a title="A" id="154872">elem</a>: <a href="#14423" title="A">A</a>) = <a href="#154872" title="A">elem</a>.<a title="()Int" id="3616">hashCode</a>()
+
+  <span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">def</span> <a title="(hcode: Int)Int" id="34336">improve</a>(<a title="Int" id="154769">hcode</a>: <span title="Int">Int</span>) = {
+    <span class="keyword">var</span> <a title="Int" id="154772">h</a>: <span title="Int">Int</span> = <a href="#154769" title="(x$1: Int)Int">hcode</a> + <a title="=&gt; Int" id="2865">~</a>(<a href="#154769" title="(x$1: Int)Int">hcode</a> &lt;&lt; <span title="Int(9)" class="int">9</span>)
+    <a href="#154772" title="Int">h</a> = <a href="#154772" title="(x$1: Int)Int">h</a> ^ (<a href="#154772" title="(x$1: Int)Int">h</a> &gt;&gt;&gt; <span title="Int(14)" class="int">14</span>)
+    <a href="#154772" title="Int">h</a> = <a href="#154772" title="(x$1: Int)Int">h</a> + (<a href="#154772" title="(x$1: Int)Int">h</a> &lt;&lt; <span title="Int(4)" class="int">4</span>)
+    <a href="#154772" title="(x$1: Int)Int">h</a> ^ (<a href="#154772" title="(x$1: Int)Int">h</a> &gt;&gt;&gt; <span title="Int(10)" class="int">10</span>)
+  }
+
+  <span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">def</span> <a title="(hcode: Int)Int" id="34337">index</a>(<a title="Int" id="154766">hcode</a>: <span title="Int">Int</span>) = <a href="#34336" title="(hcode: Int)Int">improve</a><a title="(x$1: Int)Int" id="2974">(</a><a href="#154766" title="Int">hcode</a>) &amp; (<a href="#34319" title="=&gt; Array[AnyRef]">table</a>.<a href="../../Array.scala.html#17715" title="(x$1: Int)Int">length</a> - <span title="Int(1)" class="int">1</span>)
+
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(size: Int)Int" id="34338">newThreshold</a>(<a title="Int" id="154723">size</a>: <span title="Int">Int</span>) = {
+    <span class="keyword">val</span> <a title="Int" id="154726">lf</a> = <a href="#34313" title="=&gt; Int">loadFactor</a>
+    <a href="../../Predef.scala.html#16214" title="(assertion: Boolean,message: =&gt; Any)Unit">assert</a>(<a href="#154726" title="(x$1: Int)Boolean">lf</a> &lt; (<a href="#34314" title="(x$1: Int)Int" id="2968">loadFactorDenum</a> / <span title="Int(2)" class="int">2</span>), <span title="java.lang.String(&quot;loadFactor too large; must be &lt; 0.5&quot;)" class="string">&quot;loadFactor too large; must be &lt; 0.5&quot;</span>)
+    (<a href="#154723" title="Int">size</a>.<a title="(x$1: Int)Long" id="2846">toLong</a> <a title="(x$1: Int)Long" id="3176">*</a> <a href="#154726" title="Int">lf</a> / <a href="#34314" title="=&gt; Int">loadFactorDenum</a> ).<a title="=&gt; Int" id="3053">toInt</a>
+  }
+
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="()Unit" id="34339">clear</a>() {
+    <span class="keyword">var</span> <a title="Int" id="155629">i</a> = <a href="#34319" title="=&gt; Array[AnyRef]">table</a>.<a href="../../Array.scala.html#17715" title="(x$1: Int)Int">length</a> - <span title="Int(1)" class="int">1</span>
+    <span title="Unit" class="keyword">while</span> (<a href="#155629" title="(x$1: Int)Boolean">i</a> &gt;= <span title="Int(0)" class="int">0</span>) <a href="#155630" title="()Unit">{</a> <a href="../../Array.scala.html#17717" title="(i: Int,x: AnyRef)Unit">table</a>(<a href="#155629" title="Int">i</a>) = <span title="Null(null)" class="keyword">null</span>; <a href="#155629" title="Int">i</a> -= <span title="Int(1)" class="int">1</span> }
+    <a href="#34322" title="(x$1: Int)Unit">tableSize</a> = <span title="Int(0)" class="int">0</span>
+  }
+}
+
+        </pre>
+    </body>
+</html>

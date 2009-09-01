@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>collection/generic/SequenceForwarder.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: SequenceForwarder.scala 18387 2009-07-24 15:28:37Z odersky $
+
+
+<span class="keyword">package</span> scala.collection.generic
+<span class="keyword">import</span> scala.collection._
+
+/** This class implements a forwarder for sequences. It forwards
+ *  all calls to a different sequence object except for
+ *
+ *    - toString, hashCode, equals, stringPrefix
+ *    - newBuilder, view, toSequence
+ *    - all calls creating a new sequence of the same kind
+ *
+ *  The above methods are forwarded by subclass SequenceProxy
+ *
+ *  @author  Martin Odersky
+ *  @version 2.8
+ */
+<span class="keyword">trait</span> <a title="trait SequenceForwarder[+A] extends java.lang.Object with Sequence[A] with scala.collection.generic.IterableForwarder[A] with ScalaObject" id="9935">SequenceForwarder</a>[+<a title="&gt;: Nothing &lt;: Any" id="16824">A</a>] <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">extends</a> <a href="../Sequence.scala.html#4346" title="Sequence[A]">Sequence</a>[A] <span class="keyword">with</span> <a href="IterableForwarder.scala.html#10898" title="scala.collection.generic.IterableForwarder[A]">IterableForwarder</a>[A] {
+
+  <span class="keyword">protected</span> <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Sequence[A]" id="46559">underlying</a>: <a href="../Sequence.scala.html#4346" title="Sequence[A]">Sequence</a>[A] 
+  
+  // PartialFunction delegates
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(i: Int)A" id="46560">apply</a>(<a title="Int" id="258944">i</a>: <span title="Int">Int</span>): <a href="#16824" title="A">A</a> = <a href="#46559" title="=&gt; Sequence[A]">underlying</a>.<a href="SequenceTemplate.scala.html#17339" title="(idx: Int)A">apply</a>(<a href="#258944" title="Int">i</a>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(x: Int)Boolean" id="46561">isDefinedAt</a>(<a title="Int" id="258951">x</a>: <span title="Int">Int</span>): <span title="Boolean">Boolean</span> = <a href="#46559" title="=&gt; Sequence[A]">underlying</a>.<a href="SequenceTemplate.scala.html#17342" title="(x: Int)Boolean">isDefinedAt</a>(<a href="#258951" title="Int">x</a>)
+  
+  // Sequence delegates
+  // Sequence methods could be printed by  cat SequenceTemplate.scala | sed -n '/trait Seq/,$ p' | egrep '^  (override )?def'
+  
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Int" id="46562">length</a>: <span title="Int">Int</span> = <a href="#46559" title="=&gt; Sequence[A]">underlying</a>.<a href="SequenceTemplate.scala.html#17338" title="=&gt; Int">length</a>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(l: Int)Int" id="46563">lengthCompare</a>(<a title="Int" id="258958">l</a>: <span title="Int">Int</span>) = <a href="SequenceTemplate.scala.html#17340" title="(len: Int)Int">underlying</a> lengthCompare <a href="#258958" title="Int">l</a>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean,from: Int)Int" id="46564">segmentLength</a>(<a title="(A) =&gt; Boolean" id="258963">p</a>: A =&gt; Boolean, <a title="Int" id="258964">from</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = <a href="#46559" title="=&gt; Sequence[A]">underlying</a>.<a href="SequenceTemplate.scala.html#17343" title="(p: (A) =&gt; Boolean,from: Int)Int">segmentLength</a>(<a href="#258963" title="(A) =&gt; Boolean">p</a>, <a href="#258964" title="Int">from</a>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean)Int" id="46565">prefixLength</a>(<a title="(A) =&gt; Boolean" id="258972">p</a>: A =&gt; Boolean) = <a href="#46559" title="=&gt; Sequence[A]">underlying</a>.<a href="SequenceTemplate.scala.html#17344" title="(p: (A) =&gt; Boolean)Int">prefixLength</a>(<a href="#258972" title="(A) =&gt; Boolean">p</a>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(p: (A) =&gt; Boolean,from: Int)Int" id="46566">indexWhere</a>(<a title="(A) =&gt; Boolean" id="258981">p</a>: A =&gt; Boolean, <a title="Int" id="258982">from</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = <a href="#46559" title="=&gt; Sequence[A]">underlying</a>.<a href="SequenceTemplate.scala.html#17346" title="(p: (A) =&gt; Boolean,from: Int)Int">indexWhere</a>(<a href="#258981" title="(A) =&gt; Boolean">p</a>, <a href="#258982" title="Int">from</a>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[B &gt;: A](elem: B,from: Int)Int" id="46567">indexOf</a>[<a title="&gt;: A &lt;: Any" id="46569">B</a> &gt;: A](<a title="B" id="259010">elem</a>: <a href="#46569" title="B">B</a>, <a title="Int" id="259011">from</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = <a href="#46559" title="=&gt; Sequence[A]">underlying</a>.<a href="SequenceTemplate.scala.html#17351" title="(elem: B,from: Int)Int">indexOf</a>(<a href="#259010" title="B">elem</a>, <a href="#259011" title="Int">from</a>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Iterator[A]" id="46570">reverseIterator</a>: <a href="../Iterator.scala.html#4274" title="Iterator[A]">Iterator</a>[A] = <a href="#46559" title="=&gt; Sequence[A]">underlying</a>.<a href="SequenceTemplate.scala.html#17363" title="=&gt; Iterator[A]">reverseIterator</a>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[B](that: Sequence[B],offset: Int)Boolean" id="46571">startsWith</a>[<a title="&gt;: Nothing &lt;: Any" id="46573">B</a>](<a title="Sequence[B]" id="259058">that</a>: <a href="../Sequence.scala.html#4346" title="Sequence[B]">Sequence</a>[B], <a title="Int" id="259059">offset</a>: <span title="Int">Int</span>): <span title="Boolean">Boolean</span> = <a href="#46559" title="=&gt; Sequence[A]">underlying</a>.<a href="SequenceTemplate.scala.html#17365" title="(that: Sequence[B],offset: Int)Boolean">startsWith</a>(<a href="#259058" title="Sequence[B]">that</a>, <a href="#259059" title="Int">offset</a>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[B](that: Sequence[B])Boolean" id="46574">endsWith</a>[<a title="&gt;: Nothing &lt;: Any" id="46576">B</a>](<a title="Sequence[B]" id="259104">that</a>: <a href="../Sequence.scala.html#4346" title="Sequence[B]">Sequence</a>[B]): <span title="Boolean">Boolean</span> = <a href="#46559" title="=&gt; Sequence[A]">underlying</a>.<a href="SequenceTemplate.scala.html#17371" title="(that: Sequence[B])Boolean">endsWith</a>(<a href="#259104" title="Sequence[B]">that</a>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[B &gt;: A](that: Sequence[B])Int" id="46577">indexOfSeq</a>[<a title="&gt;: A &lt;: Any" id="46579">B</a> &gt;: A](<a title="Sequence[B]" id="259114">that</a>: <a href="../Sequence.scala.html#4346" title="Sequence[B]">Sequence</a>[B]): <span title="Int">Int</span> = <a href="#46559" title="=&gt; Sequence[A]">underlying</a>.<a href="SequenceTemplate.scala.html#17374" title="(that: Sequence[B])Int">indexOfSeq</a>(<a href="#259114" title="Sequence[B]">that</a>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(elem: Any)Boolean" id="46580">contains</a>(<a title="Any" id="259146">elem</a>: <a title="Any" id="47">Any</a>): <span title="Boolean">Boolean</span> = <a href="#46559" title="=&gt; Sequence[A]">underlying</a>.<a href="SequenceTemplate.scala.html#17386" title="(elem: Any)Boolean">contains</a>(<a href="#259146" title="Any">elem</a>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Range" id="46581">indices</a>: <a href="../../Range.scala.html#1281" title="Range">Range</a> = <a href="#46559" title="=&gt; Sequence[A]">underlying</a>.<a href="SequenceTemplate.scala.html#17417" title="=&gt; Range">indices</a>
+}
+
+        </pre>
+    </body>
+</html>

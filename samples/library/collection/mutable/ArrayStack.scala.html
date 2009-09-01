@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>collection/mutable/ArrayStack.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+// $Id: ArrayStack.scala 18565 2009-08-24 16:43:15Z phaller $
+
+// !!! todo: integrate in collections framework
+<span class="keyword">package</span> scala.collection.mutable;
+
+<span class="keyword">private</span> <span class="keyword">object</span> <a title="object scala.collection.mutable.Utils" id="7765">Utils</a><a href="../../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+  <span class="keyword">def</span> <a title="(x: Array[AnyRef])Array[AnyRef]" id="122994">growArray</a>(<a title="Array[AnyRef]" id="122999">x</a> : <a href="../../Array.scala.html#885" title="Array[AnyRef]">Array</a>[AnyRef]) = {
+    <span class="keyword">val</span> <a title="Array[AnyRef]" id="123002">y</a> = <span title="Array[AnyRef]" class="keyword">new</span> <a href="../../Array.scala.html#885" title="Array[AnyRef]">Array</a>[AnyRef](<a href="#122999" title="Array[AnyRef]">x</a>.<a href="../../Array.scala.html#17715" title="(x$1: Int)Int" id="2966">length</a> * <span title="Int(2)" class="int">2</span>);
+    <a href="../../Array.scala.html#886" title="object Array">Array</a>.<a href="../../Array.scala.html#29214" title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">copy</a>(<a href="#122999" title="Array[AnyRef]">x</a>, <span title="Int(0)" class="int">0</span>, <a href="#123002" title="Array[AnyRef]">y</a>, <span title="Int(0)" class="int">0</span>, <a href="#122999" title="Array[AnyRef]">x</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>);
+    <a href="#123002" title="Array[AnyRef]">y</a>; 
+  }
+
+  <span class="keyword">def</span> <a title="(x: Array[AnyRef])Array[AnyRef]" id="122995">clone</a>(<a title="Array[AnyRef]" id="123030">x</a> : <a href="../../Array.scala.html#885" title="Array[AnyRef]">Array</a>[AnyRef]) = {
+    <span class="keyword">val</span> <a title="Array[AnyRef]" id="123033">y</a> = <span title="Array[AnyRef]" class="keyword">new</span> <a href="../../Array.scala.html#885" title="Array[AnyRef]">Array</a>[AnyRef](<a href="#123030" title="Array[AnyRef]">x</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>);
+    <a href="../../Array.scala.html#886" title="object Array">Array</a>.<a href="../../Array.scala.html#29214" title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">copy</a>(<a href="#123030" title="Array[AnyRef]">x</a>, <span title="Int(0)" class="int">0</span>, <a href="#123033" title="Array[AnyRef]">y</a>, <span title="Int(0)" class="int">0</span>, <a href="#123030" title="Array[AnyRef]">x</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>);
+    <a href="#123033" title="Array[AnyRef]">y</a>; 
+  }
+}
+
+/**
+ * Simple stack class backed by an array. Should be significantly faster
+ * than the standard mutable stack. 
+ *
+ * @author David MacIver
+ */
+@cloneable
+<span class="keyword">class</span> <a title="class ArrayStack[T] extends java.lang.Object with scala.collection.mutable.Iterable[T] with ScalaObject" id="7713">ArrayStack</a>[<a title="&gt;: Nothing &lt;: Any" id="13643">T</a>] <a href="../../ScalaObject.scala.html#957" title="ScalaObject" class="keyword">private</a>(<span class="keyword">private</span> <span class="keyword">var</span> <a title="Array[AnyRef]" id="123077">table</a> : <a href="../../Array.scala.html#885" title="Array[AnyRef]">Array</a>[AnyRef],
+                            <span class="keyword">private</span> <span class="keyword">var</span> <a title="Int" id="123078">index</a> : <a title="Int" id="2175">Int</a>) <span class="keyword">extends</span> <a href="Iterable.scala.html#7962" title="scala.collection.mutable.Iterable[T]">Iterable</a>[T]{
+  <span class="keyword">def</span> <a title="()scala.collection.mutable.ArrayStack[T]" id="123049" class="keyword">this</a>() = <a href="#7713" title="ArrayStack.this.type" class="keyword">this</a>(<span title="Array[AnyRef]" class="keyword">new</span> <a href="../../Array.scala.html#885" title="Array[AnyRef]">Array</a>[AnyRef](<span title="Int(1)" class="int">1</span>), <span title="Int(0)" class="int">0</span>);   
+
+  /** 
+   * Push an element onto the stack.
+   *
+   * @param x The element to push
+   */ 
+  <span class="keyword">def</span> <a title="(x: T)Unit" id="123050">push</a>(<a title="T" id="123094">x</a> : <a href="#13643" title="T">T</a>) = {
+    <span title="Unit" class="keyword">if</span> (<a href="#123078" title="(x$1: Int)Boolean">index</a> == <a href="#123077" title="=&gt; Array[AnyRef]">table</a>.<a href="../../Array.scala.html#17715" title="=&gt; Int">length</a>) <a href="#123077" title="(x$1: Array[AnyRef])Unit">table</a> = <a href="#7765" title="object scala.collection.mutable.Utils">Utils</a>.<a href="#122994" title="(x: Array[AnyRef])Array[AnyRef]">growArray</a>(<a href="#123077" title="=&gt; Array[AnyRef]">table</a>);
+    <a href="../../Array.scala.html#17717" title="(i: Int,x: AnyRef)Unit">table</a>(<a href="#123078" title="=&gt; Int">index</a>) = <a href="#123094" title="T">x</a>.<span title="[T0]T0">asInstanceOf</span><span title="AnyRef">[</span><a title="AnyRef" id="1756">AnyRef</a>];
+    <a href="#123078" title="(x$1: Int)Unit" id="2962">index</a> += <span title="Int(1)" class="int">1</span>;
+  }
+
+  /**
+   * Pop the top element off the stack.
+   */
+  <span class="keyword">def</span> <a title="=&gt; T" id="123051">pop</a> = {
+    <span title="Unit" class="keyword">if</span> (<a href="#123078" title="(x$1: Int)Boolean">index</a> == <span title="Int(0)" class="int">0</span>) <a href="../../Predef.scala.html#16210" title="(message: String)Nothing">error</a>(<span title="java.lang.String(&quot;Stack empty&quot;)" class="string">&quot;Stack empty&quot;</span>);
+    <a href="#123078" title="(x$1: Int)Unit">index</a> -= <span title="Int(1)" class="int">1</span>;
+    <span class="keyword">val</span> <a title="T" id="123161">x</a> = <a href="../../Array.scala.html#17716" title="(i: Int)AnyRef">table</a>(<a href="#123078" title="=&gt; Int">index</a>).<span title="[T0]T0">asInstanceOf</span><span title="T">[</span><a href="#13643" title="T">T</a>];
+    <a href="../../Array.scala.html#17717" title="(i: Int,x: AnyRef)Unit">table</a>(<a href="#123078" title="=&gt; Int">index</a>) = <span title="Null(null)" class="keyword">null</span>;
+    <a href="#123161" title="T">x</a>;
+  } 
+
+  /** View the top element of the stack. */
+  @deprecated(<span class="string">&quot;use top instead&quot;</span>)
+  <span class="keyword">def</span> <a title="=&gt; T" id="123052">peek</a> = <a href="#123053" title="=&gt; T">top</a>
+
+  /**
+   * View the top element of the stack.
+   */
+  <span class="keyword">def</span> <a title="=&gt; T" id="123053">top</a> = <a href="../../Array.scala.html#17716" title="(i: Int)AnyRef">table</a>(<a href="#123078" title="(x$1: Int)Int">index</a> - <span title="Int(1)" class="int">1</span>).<span title="[T0]T0">asInstanceOf</span><span title="T">[</span><a href="#13643" title="T">T</a>]
+
+  /**
+   * Duplicate the top element of the stack.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Unit" id="123054">dup</a> = <a href="#123050" title="(x: T)Unit">push</a>(<a href="#123053" title="=&gt; T">top</a>);
+
+  /**
+   * Empties the stack.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Unit" id="123055">clear</a> = {
+    <a href="#123078" title="(x$1: Int)Unit">index</a> = <span title="Int(0)" class="int">0</span>;
+    <a href="#123077" title="(x$1: Array[AnyRef])Unit">table</a> = <span title="Array[AnyRef]" class="keyword">new</span> <a href="../../Array.scala.html#885" title="Array[AnyRef]">Array</a>(<span title="Int(1)" class="int">1</span>);
+  }
+
+  /**
+   * Empties the stack, passing all elements on it in FIFO order to the 
+   * provided function.
+   *
+   * @param f The function to drain to.
+   */
+  <span class="keyword">def</span> <a title="(f: (T) =&gt; Unit)Unit" id="123056">drain</a>(<a title="(T) =&gt; Unit" id="123280">f</a> : T =&gt; Unit) = <span title="Unit" class="keyword">while</span>(<a title="=&gt; Boolean" id="2203">!</a><a href="#123066" title="=&gt; Boolean">isEmpty</a>) <a href="../../Function1.scala.html#17119" title="(v1: T)Unit">f</a><a href="#123283" title="()Unit">(</a><a href="#123051" title="=&gt; T">pop</a>);
+
+  /**
+   * Pushes all the provided elements onto the stack.
+   *
+   * @param x The source of elements to push
+   */
+  <span class="keyword">def</span> <a title="(x: Iterable[T])ArrayStack.this.type" id="123057">++=</a>(<a title="Iterable[T]" id="123299">x</a> : collection.<a href="../Iterable.scala.html#4460" title="Iterable[T]">Iterable</a>[T]): <span class="keyword">this</span>.<span class="keyword">type</span> = { <a href="#123299" title="Iterable[T]">x</a>.<a href="../generic/IterableTemplate.scala.html#17287" title="(f: (T) =&gt; scala.collection.mutable.ArrayStack[T])Unit">foreach</a>(<a href="#123059" title="(x: T)ArrayStack.this.type" class="keyword">this</a> +=(<a href="#123311" title="T">_</a>)); <a href="#7713" title="ArrayStack.this.type" class="keyword">this</a> }
+
+
+  /**
+   * Pushes all the provided elements onto the stack.
+   *
+   * @param x The source of elements to push
+   */
+  <span class="keyword">def</span> <a title="(x: Iterator[T])ArrayStack.this.type" id="123058">++=</a>(<a title="Iterator[T]" id="123319">x</a> : <a href="../Iterator.scala.html#4274" title="Iterator[T]">Iterator</a>[T]): <span class="keyword">this</span>.<span class="keyword">type</span> = { <a href="#123319" title="Iterator[T]">x</a>.<a href="../Iterator.scala.html#19219" title="(f: (T) =&gt; scala.collection.mutable.ArrayStack[T])Unit">foreach</a>(<a href="#123059" title="(x: T)ArrayStack.this.type" class="keyword">this</a> +=(<a href="#123325" title="T">_</a>)); <a href="#7713" title="ArrayStack.this.type" class="keyword">this</a> }
+
+  /**
+   *  Alias for push.
+   * 
+   *  @param x The element to push
+   */
+  <span class="keyword">def</span> <a title="(x: T)ArrayStack.this.type" id="123059">+=</a>(<a title="T" id="123312">x</a> : <a href="#13643" title="T">T</a>): <span class="keyword">this</span>.<span class="keyword">type</span> = { <a href="#123050" title="(x: T)Unit">push</a>(<a href="#123312" title="T">x</a>); <a href="#7713" title="ArrayStack.this.type" class="keyword">this</a> }
+ 
+
+
+  /**
+   * Pop the top two elements off the stack, apply f to them and push the result
+   * back on to the stack.
+   * 
+   * @param f The combining function
+   */
+  <span class="keyword">def</span> <a title="(f: (T, T) =&gt; T)Unit" id="123060">combine</a>(<a title="(T, T) =&gt; T" id="123333">f</a> : (T, T) =&gt; T) = <a href="#123050" title="(x: T)Unit">push</a>(<a href="../../Function2.scala.html#20443" title="(v1: T,v2: T)T">f</a>(<a href="#123051" title="=&gt; T">pop</a>, <a href="#123051" title="=&gt; T">pop</a>));
+  
+  /**
+   * Repeatedly combine the top elements of the stack until the stack contains only
+   * one element.
+   */
+  <span class="keyword">def</span> <a title="(f: (T, T) =&gt; T)Unit" id="123061">reduceWith</a>(<a title="(T, T) =&gt; T" id="123342">f</a> : (T, T) =&gt; T) = <span title="Unit" class="keyword">while</span>(<a href="#123062" title="(x$1: Int)Boolean">size</a> &gt; <span title="Int(1)" class="int">1</span>) <a href="#123060" title="(f: (T, T) =&gt; T)Unit">combine</a><a href="#123345" title="()Unit">(</a><a href="#123342" title="(T, T) =&gt; T">f</a>)     
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Int" id="123062">size</a> = <a href="#123078" title="=&gt; Int">index</a>;
+
+  /**
+   * Evaluates the expression, preserving the contents of the stack so that 
+   * any changes the evaluation makes to the stack contents will be undone after
+   * it completes.
+   *
+   * @param action The action to run.
+   */
+  <span class="keyword">def</span> <a title="[T](action: =&gt; T)T" id="123063">preserving</a>[<a title="&gt;: Nothing &lt;: Any" id="123065">T</a>](<a title="=&gt; T" id="123359">action</a> : =&gt; T) = {
+    <span class="keyword">val</span> <a title="Int" id="123362">oldIndex</a> = <a href="#123078" title="=&gt; Int">index</a>;
+    <span class="keyword">val</span> <a title="Array[AnyRef]" id="123363">oldTable</a> = <a href="#7765" title="object scala.collection.mutable.Utils">Utils</a>.<a href="#122995" title="(x: Array[AnyRef])Array[AnyRef]">clone</a>(<a href="#123077" title="=&gt; Array[AnyRef]">table</a>);
+
+    <span class="keyword">try</span>{
+      <a href="#123359" title="=&gt; T">action</a>;
+    } <span class="keyword">finally</span> {
+      <a href="#123078" title="(x$1: Int)Unit">index</a> = <a href="#123362" title="Int">oldIndex</a>;
+      <a href="#123077" title="(x$1: Array[AnyRef])Unit">table</a> = <a href="#123363" title="Array[AnyRef]">oldTable</a>;
+    }
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Boolean" id="123066">isEmpty</a> = <a href="#123078" title="(x$1: Int)Boolean">index</a> == <span title="Int(0)" class="int">0</span>;
+
+  /**
+   * Iterates over the stack in LIFO order.
+   */
+  <span class="keyword">def</span> <a title="=&gt; Iterator[T]" id="123067">iterator</a>: <a href="../Iterator.scala.html#4274" title="Iterator[T]">Iterator</a>[T] = <a href="#123374" title="java.lang.Object with Iterator[T]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with Iterator[T]" id="123374">Iterator</a>[T]{
+    <span class="keyword">var</span> <a title="Int" id="123377">currentIndex</a> = <a href="#123078" title="=&gt; Int">index</a>;
+    <span class="keyword">def</span> <a title="=&gt; Boolean" id="123379">hasNext</a> = <a href="#123377" title="(x$1: Int)Boolean">currentIndex</a> &gt; <span title="Int(0)" class="int">0</span>;
+    <span class="keyword">def</span> <a title="()T" id="123380">next</a> = {
+      <a href="#123377" title="(x$1: Int)Unit">currentIndex</a> -= <span title="Int(1)" class="int">1</span>;
+      <a href="../../Array.scala.html#17716" title="(i: Int)AnyRef">table</a>(<a href="#123377" title="=&gt; Int">currentIndex</a>).<span title="[T0]T0">asInstanceOf</span><span title="T">[</span><a href="#13643" title="T">T</a>];
+    }
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="[U](f: (T) =&gt; U)Unit" id="123068">foreach</a>[<a title="&gt;: Nothing &lt;: Any" id="123070">U</a>](<a title="(T) =&gt; U" id="123445">f</a> : T =&gt;  U){
+    <span class="keyword">var</span> <a title="Int" id="123457">currentIndex</a> = <a href="#123078" title="=&gt; Int">index</a>;
+    <span title="Unit" class="keyword">while</span>(<a href="#123457" title="(x$1: Int)Boolean">currentIndex</a> &gt; <span title="Int(0)" class="int">0</span>)<a href="#123458" title="()Unit">{</a>
+      <a href="#123457" title="Int">currentIndex</a> -= <span title="Int(1)" class="int">1</span>;
+      <a href="../../Function1.scala.html#17119" title="(v1: T)U">f</a>(<a href="../../Array.scala.html#17716" title="(i: Int)AnyRef">table</a>(<a href="#123457" title="Int">currentIndex</a>).<span title="[T0]T0">asInstanceOf</span><span title="T">[</span><a href="#13643" title="T">T</a>]);
+    }
+  }
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()scala.collection.mutable.ArrayStack[T]" id="123071">clone</a> = <span title="scala.collection.mutable.ArrayStack[T]" class="keyword">new</span> <a href="#7713" title="scala.collection.mutable.ArrayStack[T]">ArrayStack</a>[T](<a href="#7765" title="object scala.collection.mutable.Utils">Utils</a>.<a href="#122995" title="(x: Array[AnyRef])Array[AnyRef]">clone</a>(<a href="#123077" title="=&gt; Array[AnyRef]">table</a>), <a href="#123078" title="=&gt; Int">index</a>);
+}
+
+        </pre>
+    </body>
+</html>
