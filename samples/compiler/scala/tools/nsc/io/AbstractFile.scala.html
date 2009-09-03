@@ -13,15 +13,16 @@
  * Copyright 2005-2009 LAMP/EPFL
  * @author  Martin Odersky
  */
-// $Id: AbstractFile.scala 18617 2009-08-31 15:46:46Z extempore $
+// $Id: AbstractFile.scala 18633 2009-09-01 21:26:05Z extempore $
 
 
 <span class="keyword">package</span> scala.tools.nsc
 <span class="keyword">package</span> io
 
-<span class="keyword">import</span> java.io.{File, FileOutputStream, IOException, InputStream, OutputStream}
+<span class="keyword">import</span> java.io.{ File =&gt; JFile, FileOutputStream, IOException, InputStream, OutputStream }
 <span class="keyword">import</span> java.net.URL
-<span class="keyword">import</span> scala.io.{ File =&gt; SFile }
+<span class="keyword">import</span> scala.io.{ Path, Directory, File }
+<span class="keyword">import</span> PartialFunction._
 
 <span class="keyword">import</span> scala.collection.mutable.ArrayBuffer
 
@@ -29,21 +30,23 @@
  * @author Philippe Altherr
  * @version 1.0, 23/03/2004
  */
-<span class="keyword">object</span> <a title="object scala.tools.nsc.io.AbstractFile" id="20549">AbstractFile</a>
+<span class="keyword">object</span> <a title="object scala.tools.nsc.io.AbstractFile" id="20690">AbstractFile</a>
 <span title="ScalaObject">{</span>
+  <span class="keyword">def</span> <a title="(f: scala.io.Path)Boolean" id="121544">isJarOrZip</a>(<a title="scala.io.Path" id="659546">f</a>: <span title="scala.io.Path">Path</span>) = <a title="(x: Option[String])(pf: PartialFunction[Option[String],Boolean])Boolean" id="1107">cond</a>(<a href="#659546" title="scala.io.Path">f</a>.<a title="=&gt; Option[String]" id="112301">extension</a>) <a href="#659559" title="Boolean">{</a> <span title="Boolean(true)" class="keyword">case</span> <a id="1">Some</a>(<span title="java.lang.String(&quot;zip&quot;)" class="string">&quot;zip&quot;</span> | <span title="java.lang.String(&quot;jar&quot;)" class="string">&quot;jar&quot;</span>) =&gt; <span title="Boolean(true)" class="keyword">true</span> }
+  
   /** Returns &quot;getFile(new File(path))&quot;. */
-  <span class="keyword">def</span> <a title="(path: String)scala.tools.nsc.io.AbstractFile" id="121036">getFile</a>(<a title="String" id="578600">path</a>: <span title="String">String</span>): <a href="#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = <a href="#121037" title="(file: java.io.File)scala.tools.nsc.io.AbstractFile">getFile</a>(<span title="java.io.File" class="keyword">new</span> <span title="java.io.File">File</span>(<a href="#578600" title="String">path</a>))
+  <span class="keyword">def</span> <a title="(path: String)scala.tools.nsc.io.AbstractFile" id="121545">getFile</a>(<a title="String" id="580147">path</a>: <span title="String">String</span>): <a href="#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = <a href="#121546" title="(path: scala.io.Path)scala.tools.nsc.io.AbstractFile">getFile</a>(<a title="(path: String)scala.io.Path" id="112341">Path</a>(<a href="#580147" title="String">path</a>))
+  <span class="keyword">def</span> <a title="(path: scala.io.Path)scala.tools.nsc.io.AbstractFile" id="121546">getFile</a>(<a title="scala.io.Path" id="580145">path</a>: <span title="scala.io.Path">Path</span>): <a href="#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = <a href="#121547" title="(file: scala.io.File)scala.tools.nsc.io.AbstractFile">getFile</a>(<a href="#580145" title="scala.io.Path">path</a>.<span title="=&gt; scala.io.File">toFile</span>)
 
   /**
    * If the specified File exists and is a regular file, returns an
    * abstract regular file backed by it. Otherwise, returns &lt;code&gt;null&lt;/code&gt;.
    */
-  <span class="keyword">def</span> <a title="(file: java.io.File)scala.tools.nsc.io.AbstractFile" id="121037">getFile</a>(<a title="java.io.File" id="578598">file</a>: <span title="java.io.File">File</span>): <a href="#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> =
-    <span title="scala.tools.nsc.io.AbstractFile" class="keyword">if</span> (<a href="#578598" title="java.io.File">file</a>.<span title="()Boolean">isFile</span><span title="(x$1: Boolean)Boolean">(</span>) &amp;&amp; <a href="#578598" title="java.io.File">file</a>.<span title="()Boolean">exists</span>()) <span title="scala.tools.nsc.io.PlainFile" class="keyword">new</span> <a href="PlainFile.scala.html#20566" title="scala.tools.nsc.io.PlainFile">PlainFile</a>(<a href="#578598" title="implicit scala.io.Path.jfile2path : (jfile: java.io.File)scala.io.Path">file</a>) <span class="keyword">else</span> <span title="Null(null)" class="keyword">null</span>
-
+  <span class="keyword">def</span> <a title="(file: scala.io.File)scala.tools.nsc.io.AbstractFile" id="121547">getFile</a>(<a title="scala.io.File" id="580143">file</a>: <span title="scala.io.File">File</span>): <a href="#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> =
+    <span title="scala.tools.nsc.io.AbstractFile" class="keyword">if</span> (<a href="#580143" title="scala.io.File">file</a>.<span title="=&gt; Boolean">isFile</span>) <span title="scala.tools.nsc.io.PlainFile" class="keyword">new</span> <a href="PlainFile.scala.html#20707" title="scala.tools.nsc.io.PlainFile">PlainFile</a>(<a href="#580143" title="scala.io.File">file</a>) <span class="keyword">else</span> <span title="Null(null)" class="keyword">null</span>
 
   /** Returns &quot;getDirectory(new File(path))&quot;. */
-  <span class="keyword">def</span> <a title="(path: String)scala.tools.nsc.io.AbstractFile" id="121038">getDirectory</a>(<a title="String" id="168656">path</a>: <span title="String">String</span>): <a href="#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = <a href="#121039" title="(file: java.io.File)scala.tools.nsc.io.AbstractFile">getDirectory</a>(<span title="java.io.File" class="keyword">new</span> <span title="java.io.File">File</span>(<a href="#168656" title="String">path</a>))
+  <span class="keyword">def</span> <a title="(path: scala.io.Path)scala.tools.nsc.io.AbstractFile" id="121548">getDirectory</a>(<a title="scala.io.Path" id="169294">path</a>: <span title="scala.io.Path">Path</span>): <a href="#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = <a href="#121549" title="(file: scala.io.File)scala.tools.nsc.io.AbstractFile">getDirectory</a>(<a href="#169294" title="scala.io.Path">path</a>.<span title="=&gt; scala.io.File">toFile</span>)
 
   /**
    * If the specified File exists and is either a directory or a
@@ -53,15 +56,10 @@
    * @param file ...
    * @return     ...
    */
-  <span class="keyword">def</span> <a title="(file: java.io.File)scala.tools.nsc.io.AbstractFile" id="121039">getDirectory</a>(<a title="java.io.File" id="168654">file</a>: <span title="java.io.File">File</span>): <a href="#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = {
-    <span title="Unit" class="keyword">if</span> (<a href="#168654" title="java.io.File">file</a>.<a title="()Boolean" id="35193">isDirectory</a><span title="(x$1: Boolean)Boolean">(</span>) &amp;&amp; <a href="#168654" title="java.io.File">file</a>.<span title="()Boolean">exists</span>()) <span title="Nothing" class="keyword">return</span> <span title="scala.tools.nsc.io.PlainFile" class="keyword">new</span> <a href="PlainFile.scala.html#20566" title="scala.tools.nsc.io.PlainFile">PlainFile</a>(<a href="#168654" title="implicit scala.io.Path.jfile2path : (jfile: java.io.File)scala.io.Path">file</a>)
-    <span title="Unit" class="keyword">if</span> (<a href="#168654" title="java.io.File">file</a>.<span title="()Boolean">isFile</span><span title="(x$1: Boolean)Boolean">(</span>) &amp;&amp; <a href="#168654" title="java.io.File">file</a>.<span title="()Boolean">exists</span>()) {
-      <span class="keyword">val</span> <a title="java.lang.String" id="658066">path</a> = <a href="#168654" title="java.io.File">file</a>.<a title="()java.lang.String" id="35182">getPath</a>()
-      <span title="Unit" class="keyword">if</span> (<a href="#658066" title="java.lang.String">path</a>.<span title="(x$1: java.lang.String)Boolean">endsWith</span><span title="(x$1: Boolean)Boolean">(</span><span title="java.lang.String(&quot;.jar&quot;)" class="string">&quot;.jar&quot;</span>) || <a href="#658066" title="java.lang.String">path</a>.<span title="(x$1: java.lang.String)Boolean">endsWith</span>(<span title="java.lang.String(&quot;.zip&quot;)" class="string">&quot;.zip&quot;</span>))
-        <span title="Nothing" class="keyword">return</span> <a href="ZipArchive.scala.html#636812" title="(file: scala.io.File)scala.tools.nsc.io.AbstractFile">ZipArchive</a> fromFile <a title="object scala.io.File" id="130700">SFile</a><a title="scala.io.Codec" id="130758">(</a><a href="#168654" title="scala.io.Path" id="658082">file</a>)
-    }
-    <span title="Null(null)" class="keyword">null</span>
-  }
+  <span class="keyword">def</span> <a title="(file: scala.io.File)scala.tools.nsc.io.AbstractFile" id="121549">getDirectory</a>(<a title="scala.io.File" id="169292">file</a>: <span title="scala.io.File">File</span>): <a href="#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> =
+    <span title="scala.tools.nsc.io.AbstractFile" class="keyword">if</span> (<a href="#169292" title="scala.io.File">file</a>.<a title="=&gt; Boolean" id="112307">isDirectory</a>) <span title="scala.tools.nsc.io.PlainFile" class="keyword">new</span> <a href="PlainFile.scala.html#20707" title="scala.tools.nsc.io.PlainFile">PlainFile</a>(<a href="#169292" title="scala.io.File">file</a>)
+    <span class="keyword">else</span> <span title="scala.tools.nsc.io.AbstractFile" class="keyword">if</span> (<a href="#169292" title="scala.io.File">file</a>.<span title="(x$1: Boolean)Boolean">isFile</span> &amp;&amp; <a href="#121544" title="(f: scala.io.Path)Boolean">isJarOrZip</a>(<a href="#169292" title="scala.io.File">file</a>)) <a href="ZipArchive.scala.html#638417" title="(file: scala.io.File)scala.tools.nsc.io.ZipArchive">ZipArchive</a> fromFile <a href="#169292" title="scala.io.File">file</a>
+    <span class="keyword">else</span> <span title="Null(null)" class="keyword">null</span>
 
   /**
    * If the specified URL exists and is a readable zip or jar archive,
@@ -71,16 +69,8 @@
    * @param file ...
    * @return     ...
    */
-  <span class="keyword">def</span> <a title="(url: java.net.URL)scala.tools.nsc.io.AbstractFile" id="121040">getURL</a>(<a title="java.net.URL" id="169179">url</a>: <a title="java.net.URL" id="4920">URL</a>): <a href="#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> =
-    <span title="scala.tools.nsc.io.AbstractFile" class="keyword">if</span> (<a href="#169179" title="(x$1: AnyRef)Boolean">url</a> ne <span title="Null(null)" class="keyword">null</span>) {
-      <span class="keyword">val</span> <a title="java.lang.String" id="658094">path</a> = <a href="#169179" title="java.net.URL">url</a>.<a title="()java.lang.String" id="117388">getPath</a>()
-      <span title="scala.tools.nsc.io.AbstractFile" class="keyword">if</span> (<a href="#658094" title="java.lang.String">path</a>.<span title="(x$1: java.lang.String)Boolean">endsWith</span><span title="(x$1: Boolean)Boolean">(</span><span title="java.lang.String(&quot;.jar&quot;)" class="string">&quot;.jar&quot;</span>) || <a href="#658094" title="java.lang.String">path</a>.<span title="(x$1: java.lang.String)Boolean">endsWith</span>(<span title="java.lang.String(&quot;.zip&quot;)" class="string">&quot;.zip&quot;</span>))
-        <a href="ZipArchive.scala.html#20516" title="object scala.tools.nsc.io.ZipArchive">ZipArchive</a>.<a href="ZipArchive.scala.html#636814" title="(url: java.net.URL)scala.tools.nsc.io.AbstractFile">fromURL</a>(<a href="#169179" title="java.net.URL">url</a>)
-      <span class="keyword">else</span>
-        <span title="Null(null)" class="keyword">null</span>
-    }
-    <span class="keyword">else</span>
-      <span title="Null(null)" class="keyword">null</span>
+  <span class="keyword">def</span> <a title="(url: java.net.URL)scala.tools.nsc.io.AbstractFile" id="121550">getURL</a>(<a title="java.net.URL" id="169927">url</a>: <span title="java.net.URL">URL</span>): <a href="#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> =
+    <span title="(x: java.net.URL)Option[java.net.URL]">Option</span><a title="(pf: PartialFunction[Any,scala.tools.nsc.io.AbstractFile])Option[scala.tools.nsc.io.AbstractFile]" id="35250">(</a><a href="#169927" title="java.net.URL">url</a>) <a title="(xo: Option[scala.tools.nsc.io.AbstractFile])Option#NullableOption[scala.tools.nsc.io.AbstractFile]" id="35273">filterMap</a> <a href="#659614" title="scala.tools.nsc.io.AbstractFile">{</a> <span title="scala.tools.nsc.io.AbstractFile" class="keyword">case</span> <a title="java.net.URL" id="659615">url</a>: <span title="java.net.URL">URL</span> <span class="keyword">if</span> <a href="#121544" title="(f: scala.io.Path)Boolean">isJarOrZip</a>(<a href="#659615" title="java.net.URL">url</a>.<a title="implicit scala.io.Path.string2path : (s: String)scala.io.Path" id="117875">getPath</a>) =&gt; <a href="ZipArchive.scala.html#638419" title="(url: java.net.URL)scala.tools.nsc.io.AbstractFile">ZipArchive</a> fromURL <a href="#659615" title="java.net.URL">url</a> } <a title="=&gt; scala.tools.nsc.io.AbstractFile" id="35272">orNull</a>
 }
 
 /**
@@ -107,48 +97,49 @@
  *   &lt;code&gt;global.settings.encoding.value&lt;/code&gt;.
  * &lt;/p&gt;
  */
-<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class AbstractFile extends java.lang.Object with Iterable[scala.tools.nsc.io.AbstractFile] with ScalaObject" id="20548">AbstractFile</a> <span title="ScalaObject" class="keyword">extends</span> <a title="java.lang.Object" id="3625">AnyRef</a> <span class="keyword">with</span> <a title="Iterable[scala.tools.nsc.io.AbstractFile]" id="4471">Iterable</a>[AbstractFile] {
+<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class AbstractFile extends java.lang.Object with Iterable[scala.tools.nsc.io.AbstractFile] with ScalaObject" id="20689">AbstractFile</a> <span title="ScalaObject" class="keyword">extends</span> <a title="java.lang.Object" id="3646">AnyRef</a> <span class="keyword">with</span> <a title="Iterable[scala.tools.nsc.io.AbstractFile]" id="4537">Iterable</a>[AbstractFile] {
 
   /** Returns the name of this abstract file. */
-  <span class="keyword">def</span> <a title="=&gt; String" id="51383">name</a>: <span title="String">String</span>
+  <span class="keyword">def</span> <a title="=&gt; String" id="51636">name</a>: <span title="String">String</span>
 
   /** Returns the path of this abstract file. */
-  <span class="keyword">def</span> <a title="=&gt; String" id="51384">path</a>: <span title="String">String</span>
+  <span class="keyword">def</span> <a title="=&gt; String" id="51637">path</a>: <span title="String">String</span>
 
   /** The absolute file, if this is a relative file. */
-  <span class="keyword">def</span> <a title="=&gt; scala.tools.nsc.io.AbstractFile" id="51385">absolute</a>: <a href="#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a>
+  <span class="keyword">def</span> <a title="=&gt; scala.tools.nsc.io.AbstractFile" id="51638">absolute</a>: <a href="#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a>
 
   /** Returns the containing directory of this abstract file */
-  <span class="keyword">def</span> <a title="=&gt; scala.tools.nsc.io.AbstractFile" id="51386">container</a> : <a href="#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a>
+  <span class="keyword">def</span> <a title="=&gt; scala.tools.nsc.io.AbstractFile" id="51639">container</a> : <a href="#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a>
   
   /** Returns the underlying File if any and null otherwise. */
-  <span class="keyword">def</span> <a title="=&gt; java.io.File" id="51387">file</a>: <span title="java.io.File">File</span>
+  <span class="keyword">def</span> <a title="=&gt; java.io.File" id="51640">file</a>: <a title="java.io.File" id="3828">JFile</a>
+  <span class="keyword">def</span> <a title="=&gt; scala.io.File" id="51641">sfile</a> = <a title="object scala.io.File" id="131247">File</a><a title="scala.io.Codec" id="131290">(</a><a href="#51640" title="scala.io.Path" id="112338">file</a>) // XXX
 
   /** Does this abstract file denote an existing file? */
-  <span class="keyword">def</span> <a title="=&gt; Boolean" id="51388">exists</a>: <span title="Boolean">Boolean</span> =
-    <span title="Boolean" class="keyword">if</span> (<a href="#51387" title="(x$1: AnyRef)Boolean">file</a> ne <span title="Null(null)" class="keyword">null</span>) <a href="#51387" title="=&gt; java.io.File">file</a>.<span title="()Boolean">exists</span>()
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="51642">exists</a>: <span title="Boolean">Boolean</span> =
+    <span title="Boolean" class="keyword">if</span> (<a href="#51640" title="(x$1: AnyRef)Boolean" id="6613">file</a> ne <span title="Null(null)" class="keyword">null</span>) <a href="#51640" title="=&gt; java.io.File">file</a>.<a title="()Boolean" id="35381">exists</a>
     <span class="keyword">else</span> <span title="Boolean(true)" class="keyword">true</span>
 
   /** Create a file on disk, if one does not exist already. */
-  <span class="keyword">def</span> <a title="=&gt; Unit" id="51389">create</a>: <span title="Unit">Unit</span>
+  <span class="keyword">def</span> <a title="=&gt; Unit" id="51643">create</a>: <span title="Unit">Unit</span>
 
   /** Delete the underlying file or directory (recursively). */
-  <span class="keyword">def</span> <a title="=&gt; Unit" id="51390">delete</a>: <span title="Unit">Unit</span>
+  <span class="keyword">def</span> <a title="=&gt; Unit" id="51644">delete</a>: <span title="Unit">Unit</span>
 
   /** Is this abstract file a directory? */
-  <span class="keyword">def</span> <a title="=&gt; Boolean" id="51391">isDirectory</a>: <span title="Boolean">Boolean</span>
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="51645">isDirectory</a>: <span title="Boolean">Boolean</span>
 
   /** Returns the time that this abstract file was last modified. */
-  <span class="keyword">def</span> <a title="=&gt; Long" id="51392">lastModified</a>: <a title="Long" id="2184">Long</a>
+  <span class="keyword">def</span> <a title="=&gt; Long" id="51646">lastModified</a>: <a title="Long" id="2205">Long</a>
 
   /** returns an input stream so the file can be read */
-  <span class="keyword">def</span> <a title="=&gt; java.io.InputStream" id="51393">input</a>: <a title="java.io.InputStream" id="3894">InputStream</a>
+  <span class="keyword">def</span> <a title="=&gt; java.io.InputStream" id="51647">input</a>: <a title="java.io.InputStream" id="3915">InputStream</a>
   
   /** Returns an output stream for writing the file */
-  <span class="keyword">def</span> <a title="=&gt; java.io.OutputStream" id="51394">output</a>: <a title="java.io.OutputStream" id="3951">OutputStream</a>
+  <span class="keyword">def</span> <a title="=&gt; java.io.OutputStream" id="51648">output</a>: <a title="java.io.OutputStream" id="3972">OutputStream</a>
 
   /** size of this file if it is a concrete file. */
-  <span class="keyword">def</span> <a title="=&gt; Option[Int]" id="51395">sizeOption</a>: <a title="Option[Int]" id="782">Option</a>[Int] = <a title="object None" id="465">None</a>
+  <span class="keyword">def</span> <a title="=&gt; Option[Int]" id="51649">sizeOption</a>: <a title="Option[Int]" id="794">Option</a>[Int] = <a title="object None" id="477">None</a>
 
   /** returns contents of file (if applicable) in a byte array.
    *  warning: use &lt;code&gt;Global.getSourceFile()&lt;/code&gt; to use the proper
@@ -156,29 +147,29 @@
    *
    *  @throws java.io.IOException
    */
-  <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; Array[Char]" id="51396">toCharArray</a> = <a title="(x$1: Array[Byte])java.lang.String" id="6905" class="keyword">new</a> <a title="java.lang.String" id="7817">String</a>(<a href="#51397" title="=&gt; Array[Byte]">toByteArray</a>).<a title="()Array[Char]" id="7053">toCharArray</a>
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; Array[Char]" id="51650">toCharArray</a> = <a title="(x$1: Array[Byte])java.lang.String" id="6974" class="keyword">new</a> <a title="java.lang.String" id="7886">String</a>(<a href="#51651" title="=&gt; Array[Byte]">toByteArray</a>).<a title="()Array[Char]" id="7122">toCharArray</a>
 
   /** returns contents of file (if applicable) in a byte array.
    *
    *  @throws java.io.IOException
    */
   @throws(classOf[IOException])
-  <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; Array[Byte]" id="51397">toByteArray</a>: <span title="Array[Byte]">Array</span>[Byte] = {
-    <span class="keyword">val</span> <a title="java.io.InputStream" id="658112">in</a> = <a href="#51393" title="=&gt; java.io.InputStream">input</a>
-    <span class="keyword">var</span> <a title="Int" id="658113">rest</a> = <a href="#51395" title="=&gt; Option[Int]">sizeOption</a>.<a title="=&gt; Int" id="35043">get</a>
-    <span class="keyword">val</span> <a title="Array[Byte]" id="658114">arr</a> = <span title="Array[Byte]" class="keyword">new</span> <span title="Array[Byte]">Array</span>[Byte](<a href="#658113" title="Int">rest</a>)
-    <span title="Unit" class="keyword">while</span> (<a href="#658113" title="(x$1: Int)Boolean" id="2960">rest</a> &gt; <span title="Int(0)" class="int">0</span>) <a href="#658115" title="()Unit">{</a>
-      <span class="keyword">val</span> <a title="Int" id="658134">res</a> = <a href="#658112" title="java.io.InputStream">in</a>.<a title="(x$1: Array[Byte],x$2: Int,x$3: Int)Int" id="83984">read</a>(<a href="#658114" title="Array[Byte]">arr</a>, <a href="#658114" title="Array[Byte]">arr</a>.<a title="(x$1: Int)Int" id="24569">length</a> - <a href="#658113" title="Int">rest</a>, <a href="#658113" title="Int">rest</a>)
-      <span title="Unit" class="keyword">if</span> (<a href="#658134" title="(x$1: Int)Boolean" id="2952">res</a> == <span title="Int(-1)">-</span><span class="int">1</span>)
-        <span title="Nothing" class="keyword">throw</span> <a title="(x$1: java.lang.String)java.io.IOException" id="102350" class="keyword">new</a> <a title="java.io.IOException" id="3636">IOException</a>(<span title="java.lang.String(&quot;read error&quot;)" class="string">&quot;read error&quot;</span>)
-      <a href="#658113" title="Int">rest</a> -= <a href="#658134" title="Int">res</a>
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; Array[Byte]" id="51651">toByteArray</a>: <span title="Array[Byte]">Array</span>[Byte] = {
+    <span class="keyword">val</span> <a title="java.io.InputStream" id="659683">in</a> = <a href="#51647" title="=&gt; java.io.InputStream">input</a>
+    <span class="keyword">var</span> <a title="Int" id="659684">rest</a> = <a href="#51649" title="=&gt; Option[Int]">sizeOption</a>.<a title="=&gt; Int" id="35232">get</a>
+    <span class="keyword">val</span> <a title="Array[Byte]" id="659685">arr</a> = <span title="Array[Byte]" class="keyword">new</span> <span title="Array[Byte]">Array</span>[Byte](<a href="#659684" title="Int">rest</a>)
+    <span title="Unit" class="keyword">while</span> (<a href="#659684" title="(x$1: Int)Boolean">rest</a> &gt; <span title="Int(0)" class="int">0</span>) <a href="#659686" title="()Unit">{</a>
+      <span class="keyword">val</span> <a title="Int" id="659705">res</a> = <a href="#659683" title="java.io.InputStream">in</a>.<a title="(x$1: Array[Byte],x$2: Int,x$3: Int)Int" id="84345">read</a>(<a href="#659685" title="Array[Byte]">arr</a>, <a href="#659685" title="Array[Byte]">arr</a>.<a title="(x$1: Int)Int" id="24728">length</a> - <a href="#659684" title="Int">rest</a>, <a href="#659684" title="Int">rest</a>)
+      <span title="Unit" class="keyword">if</span> (<a href="#659705" title="(x$1: Int)Boolean" id="2973">res</a> == <span title="Int(-1)">-</span><span class="int">1</span>)
+        <span title="Nothing" class="keyword">throw</span> <a title="(x$1: java.lang.String)java.io.IOException" id="102743" class="keyword">new</a> <a title="java.io.IOException" id="3657">IOException</a>(<span title="java.lang.String(&quot;read error&quot;)" class="string">&quot;read error&quot;</span>)
+      <a href="#659684" title="Int">rest</a> -= <a href="#659705" title="Int">res</a>
     }
-    <a href="#658112" title="java.io.InputStream">in</a>.<a title="()Unit" id="83991">close</a>()
-    <a href="#658114" title="Array[Byte]">arr</a>
+    <a href="#659683" title="java.io.InputStream">in</a>.<a title="()Unit" id="84352">close</a>()
+    <a href="#659685" title="Array[Byte]">arr</a>
   }
 
   /** Returns all abstract subfiles of this abstract directory. */
-  <span class="keyword">def</span> <a title="=&gt; Iterator[scala.tools.nsc.io.AbstractFile]" id="51398">iterator</a>: <a title="Iterator[scala.tools.nsc.io.AbstractFile]" id="4276">Iterator</a>[AbstractFile]
+  <span class="keyword">def</span> <a title="=&gt; Iterator[scala.tools.nsc.io.AbstractFile]" id="51652">iterator</a>: <a title="Iterator[scala.tools.nsc.io.AbstractFile]" id="4309">Iterator</a>[AbstractFile]
 
   /** Returns the abstract file in this abstract directory with the specified
    *  name. If there is no such file, returns &lt;code&gt;null&lt;/code&gt;. The argument
@@ -189,12 +180,12 @@
    *  @param directory ...
    *  @return          ...
    */
-  <span class="keyword">def</span> <a title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile" id="51399">lookupName</a>(<a title="String" id="110944">name</a>: <span title="String">String</span>, <a title="Boolean" id="110945">directory</a>: <span title="Boolean">Boolean</span>): <a href="#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a>
+  <span class="keyword">def</span> <a title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile" id="51653">lookupName</a>(<a title="String" id="111390">name</a>: <span title="String">String</span>, <a title="Boolean" id="111391">directory</a>: <span title="Boolean">Boolean</span>): <a href="#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a>
 
   /** Returns an abstract file with the given name. It does not
    *  check that it exists.
    */
-  <span class="keyword">def</span> <a title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile" id="51400">lookupNameUnchecked</a>(<a title="String" id="110962">name</a>: <span title="String">String</span>, <a title="Boolean" id="110963">directory</a>: <span title="Boolean">Boolean</span>): <a href="#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a>
+  <span class="keyword">def</span> <a title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile" id="51654">lookupNameUnchecked</a>(<a title="String" id="111408">name</a>: <span title="String">String</span>, <a title="Boolean" id="111409">directory</a>: <span title="Boolean">Boolean</span>): <a href="#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a>
 
   /** Returns the abstract file in this abstract directory with the specified
    *  path relative to it, If there is no such file, returns null. The argument
@@ -205,72 +196,58 @@
    *  @param directory ...
    *  @return          ...
    */
-  <span class="keyword">def</span> <a title="(path: String,directory: Boolean)scala.tools.nsc.io.AbstractFile" id="51401">lookupPath</a>(<a title="String" id="108275">path</a>: <span title="String">String</span>, <a title="Boolean" id="108276">directory</a>: <span title="Boolean">Boolean</span>): <a href="#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = {
-    <a href="#51403" title="(getFile: (scala.tools.nsc.io.AbstractFile, String, Boolean) =&gt; scala.tools.nsc.io.AbstractFile,path0: String,directory: Boolean)scala.tools.nsc.io.AbstractFile">lookup</a>((<a title="scala.tools.nsc.io.AbstractFile" id="658212">f</a>, <a title="String" id="658213">p</a>, <a title="Boolean" id="658214">dir</a>) =&gt; <a href="#658212" title="scala.tools.nsc.io.AbstractFile">f</a>.<a href="#51399" title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile">lookupName</a>(<a href="#658213" title="String">p</a>, <a href="#658214" title="Boolean">dir</a>), <a href="#108275" title="String">path</a>, <a href="#108276" title="Boolean">directory</a>)
+  <span class="keyword">def</span> <a title="(path: String,directory: Boolean)scala.tools.nsc.io.AbstractFile" id="51655">lookupPath</a>(<a title="String" id="108673">path</a>: <span title="String">String</span>, <a title="Boolean" id="108674">directory</a>: <span title="Boolean">Boolean</span>): <a href="#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = {
+    <a href="#51657" title="(getFile: (scala.tools.nsc.io.AbstractFile, String, Boolean) =&gt; scala.tools.nsc.io.AbstractFile,path0: String,directory: Boolean)scala.tools.nsc.io.AbstractFile">lookup</a>((<a title="scala.tools.nsc.io.AbstractFile" id="659783">f</a>, <a title="String" id="659784">p</a>, <a title="Boolean" id="659785">dir</a>) =&gt; <a href="#659783" title="scala.tools.nsc.io.AbstractFile">f</a>.<a href="#51653" title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile">lookupName</a>(<a href="#659784" title="String">p</a>, <a href="#659785" title="Boolean">dir</a>), <a href="#108673" title="String">path</a>, <a href="#108674" title="Boolean">directory</a>)
   }
 
   /** Return an abstract file that does not check that `path' denotes
    *  an existing file.
    */
-  <span class="keyword">def</span> <a title="(path: String,directory: Boolean)scala.tools.nsc.io.AbstractFile" id="51402">lookupPathUnchecked</a>(<a title="String" id="326859">path</a>: <span title="String">String</span>, <a title="Boolean" id="326860">directory</a>: <span title="Boolean">Boolean</span>): <a href="#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = {
-    <a href="#51403" title="(getFile: (scala.tools.nsc.io.AbstractFile, String, Boolean) =&gt; scala.tools.nsc.io.AbstractFile,path0: String,directory: Boolean)scala.tools.nsc.io.AbstractFile">lookup</a>((<a title="scala.tools.nsc.io.AbstractFile" id="658220">f</a>, <a title="String" id="658221">p</a>, <a title="Boolean" id="658222">dir</a>) =&gt; <a href="#658220" title="scala.tools.nsc.io.AbstractFile">f</a>.<a href="#51400" title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile">lookupNameUnchecked</a>(<a href="#658221" title="String">p</a>, <a href="#658222" title="Boolean">dir</a>), <a href="#326859" title="String">path</a>, <a href="#326860" title="Boolean">directory</a>)
+  <span class="keyword">def</span> <a title="(path: String,directory: Boolean)scala.tools.nsc.io.AbstractFile" id="51656">lookupPathUnchecked</a>(<a title="String" id="327819">path</a>: <span title="String">String</span>, <a title="Boolean" id="327820">directory</a>: <span title="Boolean">Boolean</span>): <a href="#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = {
+    <a href="#51657" title="(getFile: (scala.tools.nsc.io.AbstractFile, String, Boolean) =&gt; scala.tools.nsc.io.AbstractFile,path0: String,directory: Boolean)scala.tools.nsc.io.AbstractFile">lookup</a>((<a title="scala.tools.nsc.io.AbstractFile" id="659791">f</a>, <a title="String" id="659792">p</a>, <a title="Boolean" id="659793">dir</a>) =&gt; <a href="#659791" title="scala.tools.nsc.io.AbstractFile">f</a>.<a href="#51654" title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile">lookupNameUnchecked</a>(<a href="#659792" title="String">p</a>, <a href="#659793" title="Boolean">dir</a>), <a href="#327819" title="String">path</a>, <a href="#327820" title="Boolean">directory</a>)
   }
 
-  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(getFile: (scala.tools.nsc.io.AbstractFile, String, Boolean) =&gt; scala.tools.nsc.io.AbstractFile,path0: String,directory: Boolean)scala.tools.nsc.io.AbstractFile" id="51403">lookup</a>(<a title="(scala.tools.nsc.io.AbstractFile, String, Boolean) =&gt; scala.tools.nsc.io.AbstractFile" id="658207">getFile</a>: (AbstractFile, String, Boolean) =&gt; AbstractFile,
-                     <a title="String" id="658208">path0</a>: <span title="String">String</span>,
-                     <a title="Boolean" id="658209">directory</a>: <span title="Boolean">Boolean</span>): <a href="#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = {    
-    <span class="keyword">val</span> <a title="Char" id="658227">separator</a> = <a title="object java.io.File" id="3808">File</a>.<a title="Char" id="35163">separatorChar</a>
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(getFile: (scala.tools.nsc.io.AbstractFile, String, Boolean) =&gt; scala.tools.nsc.io.AbstractFile,path0: String,directory: Boolean)scala.tools.nsc.io.AbstractFile" id="51657">lookup</a>(<a title="(scala.tools.nsc.io.AbstractFile, String, Boolean) =&gt; scala.tools.nsc.io.AbstractFile" id="659778">getFile</a>: (AbstractFile, String, Boolean) =&gt; AbstractFile,
+                     <a title="String" id="659779">path0</a>: <span title="String">String</span>,
+                     <a title="Boolean" id="659780">directory</a>: <span title="Boolean">Boolean</span>): <a href="#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = {    
+    <span class="keyword">val</span> <a title="Char" id="659798">separator</a> = <a title="object java.io.File" id="3829">JFile</a>.<a title="Char" id="35352">separatorChar</a>
     // trim trailing '/'s
-    <span class="keyword">val</span> <a title="java.lang.String" id="658228">path</a> = <span title="java.lang.String" class="keyword">if</span> (<a href="#658208" title="String">path0</a>.<a title="(x$1: Int)Char" id="6917">charAt</a><a title="(x$1: Char)Boolean" id="2716">(</a><a href="#658208" title="String">path0</a>.<span title="(x$1: Int)Int">length</span> - <span title="Int(1)" class="int">1</span>) == <a href="#658227" title="Char">separator</a>) <a href="#658208" title="String">path0</a>.<span title="(x$1: Int,x$2: Int)java.lang.String">substring</span>(<span title="Int(0)" class="int">0</span>, <a href="#658208" title="String">path0</a>.<span title="(x$1: Int)Int">length</span> - <span title="Int(1)" class="int">1</span>) <span class="keyword">else</span> <a href="#658208" title="String">path0</a>
-    <span class="keyword">val</span> <a title="Int" id="658229">length</a> = <a href="#658228" title="java.lang.String">path</a>.<span title="()Int">length</span>()
-    <a title="(assertion: Boolean,message: =&gt; Any)Unit" id="7876">assert</a>(<span title="(x$1: Int)Boolean" class="int">0</span> <span title="(x$1: Boolean)Boolean">&lt;</span> <a href="#658229" title="Int">length</a> &amp;&amp; <a href="#658228" title="java.lang.String">path</a>.<a title="(x$1: Int)Int" id="6983">lastIndexOf</a><span title="(x$1: Int)Boolean">(</span><a href="#658227" title="implicit scala.Predef.char2int : (x: Char)Int">separator</a>) &lt; <a href="#658229" title="(x$1: Int)Int">length</a> - <span title="Int(1)" class="int">1</span>, <a href="#658228" title="java.lang.String">path</a>)
-    <span class="keyword">var</span> <a title="scala.tools.nsc.io.AbstractFile" id="658230">file</a> = <a href="#20548" title="scala.tools.nsc.io.AbstractFile" class="keyword">this</a>
-    <span class="keyword">var</span> <a title="Int" id="658231">start</a> = <span title="Int(0)" class="int">0</span>
-    <span title="Unit" class="keyword">while</span> (<span title="Boolean(true)" class="keyword">true</span>) <a href="#658232" title="()Unit">{</a>
-      <span class="keyword">val</span> <a title="Int" id="658340">index</a> = <a href="#658228" title="java.lang.String">path</a>.<a title="(x$1: Int,x$2: Int)Int" id="6980">indexOf</a>(<a href="#658227" title="implicit scala.Predef.char2int : (x: Char)Int">separator</a>, <a href="#658231" title="Int">start</a>)
-      <span title="(assertion: Boolean)Unit">assert</span>(<a href="#658340" title="(x$1: Int)Boolean">index</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <span title="Int(0)" class="int">0</span> || <a href="#658231" title="(x$1: Int)Boolean">start</a> &lt; <a href="#658340" title="Int">index</a>)
-      <span class="keyword">val</span> <a title="java.lang.String" id="658341">name</a> = <a href="#658228" title="java.lang.String">path</a>.<span title="(x$1: Int,x$2: Int)java.lang.String">substring</span>(<a href="#658231" title="Int">start</a>, <span title="Int" class="keyword">if</span> (<a href="#658340" title="(x$1: Int)Boolean">index</a> &lt; <span title="Int(0)" class="int">0</span>) <a href="#658229" title="Int">length</a> <span class="keyword">else</span> <a href="#658340" title="Int">index</a>)
-      <a href="#658230" title="scala.tools.nsc.io.AbstractFile">file</a> = <a href="#658207" title="(v1: scala.tools.nsc.io.AbstractFile,v2: String,v3: Boolean)scala.tools.nsc.io.AbstractFile" id="37621">getFile</a>(<a href="#658230" title="scala.tools.nsc.io.AbstractFile">file</a>, <a href="#658341" title="java.lang.String">name</a>, <span title="Boolean" class="keyword">if</span> (<a href="#658340" title="(x$1: Int)Boolean">index</a> &lt; <span title="Int(0)" class="int">0</span>) <a href="#658209" title="Boolean">directory</a> <span class="keyword">else</span> <span title="Boolean(true)" class="keyword">true</span>)
-      <span title="Unit" class="keyword">if</span> (<span title="(x$1: Boolean)Boolean">(</span><a href="#658230" title="(x$1: AnyRef)Boolean" id="6542">file</a> eq <span title="Null(null)" class="keyword">null</span>) || <a href="#658340" title="(x$1: Int)Boolean">index</a> &lt; <span title="Int(0)" class="int">0</span>) <span title="Nothing" class="keyword">return</span> <a href="#658230" title="scala.tools.nsc.io.AbstractFile">file</a>
-      <a href="#658231" title="Int">start</a> = <a href="#658340" title="(x$1: Int)Int" id="2964">index</a> + <span title="Int(1)" class="int">1</span>
+    <span class="keyword">val</span> <a title="String" id="659799">path</a>: <span title="String">String</span> = <span title="String" class="keyword">if</span> (<a href="#659779" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString">path0</a>.<span title="(x$1: Char)Boolean">last</span> == <a href="#659798" title="Char">separator</a>) <a href="#659779" title="(n: Int)scala.runtime.RichString" id="25949">path0</a> <a title="implicit scala.Predef.richString2String : (x: scala.runtime.RichString)String" id="8234">dropRight</a> <span title="Int(1)" class="int">1</span> <span class="keyword">else</span> <a href="#659779" title="String">path0</a>
+    <span class="keyword">val</span> <a title="Int" id="659800">length</a> = <a href="#659799" title="String">path</a>.<a title="()Int" id="6984">length</a>()
+    <a title="(assertion: Boolean,message: =&gt; Any)Unit" id="7945">assert</a>(<a href="#659800" title="(x$1: Int)Boolean">length</a> <span title="(x$1: Boolean)Boolean">&gt;</span> <span title="Int(0)" class="int">0</span> &amp;&amp; <a title="=&gt; Boolean" id="2226">!</a>(<a href="#659799" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString">path</a>.<span title="(x$1: Char)Boolean">last</span> == <a href="#659798" title="Char">separator</a>), <a href="#659799" title="String">path</a>)
+    <span class="keyword">var</span> <a title="scala.tools.nsc.io.AbstractFile" id="659801">file</a> = <a href="#20689" title="scala.tools.nsc.io.AbstractFile" class="keyword">this</a>
+    <span class="keyword">var</span> <a title="Int" id="659802">start</a> = <span title="Int(0)" class="int">0</span>
+    <span title="Unit" class="keyword">while</span> (<span title="Boolean(true)" class="keyword">true</span>) <a href="#659803" title="()Unit">{</a>
+      <span class="keyword">val</span> <a title="Int" id="659892">index</a> = <a href="#659799" title="String">path</a>.<a title="(x$1: Int,x$2: Int)Int" id="7049">indexOf</a>(<a href="#659798" title="implicit scala.Predef.char2int : (x: Char)Int" id="8198">separator</a>, <a href="#659802" title="Int">start</a>)
+      <span title="(assertion: Boolean)Unit">assert</span>(<a href="#659892" title="(x$1: Int)Boolean">index</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <span title="Int(0)" class="int">0</span> || <a href="#659802" title="(x$1: Int)Boolean">start</a> &lt; <a href="#659892" title="Int">index</a>)
+      <span class="keyword">val</span> <a title="java.lang.String" id="659893">name</a> = <a href="#659799" title="String">path</a>.<a title="(x$1: Int,x$2: Int)java.lang.String" id="7085">substring</a>(<a href="#659802" title="Int">start</a>, <span title="Int" class="keyword">if</span> (<a href="#659892" title="(x$1: Int)Boolean">index</a> &lt; <span title="Int(0)" class="int">0</span>) <a href="#659800" title="Int">length</a> <span class="keyword">else</span> <a href="#659892" title="Int">index</a>)
+      <a href="#659801" title="scala.tools.nsc.io.AbstractFile">file</a> = <a href="#659778" title="(v1: scala.tools.nsc.io.AbstractFile,v2: String,v3: Boolean)scala.tools.nsc.io.AbstractFile" id="37850">getFile</a>(<a href="#659801" title="scala.tools.nsc.io.AbstractFile">file</a>, <a href="#659893" title="java.lang.String">name</a>, <span title="Boolean" class="keyword">if</span> (<a href="#659892" title="(x$1: Int)Boolean">index</a> &lt; <span title="Int(0)" class="int">0</span>) <a href="#659780" title="Boolean">directory</a> <span class="keyword">else</span> <span title="Boolean(true)" class="keyword">true</span>)
+      <span title="Unit" class="keyword">if</span> (<span title="(x$1: Boolean)Boolean">(</span><a href="#659801" title="(x$1: AnyRef)Boolean" id="6611">file</a> eq <span title="Null(null)" class="keyword">null</span>) || <a href="#659892" title="(x$1: Int)Boolean">index</a> &lt; <span title="Int(0)" class="int">0</span>) <span title="Nothing" class="keyword">return</span> <a href="#659801" title="scala.tools.nsc.io.AbstractFile">file</a>
+      <a href="#659802" title="Int">start</a> = <a href="#659892" title="(x$1: Int)Int" id="2985">index</a> + <span title="Int(1)" class="int">1</span>
     }
-    <a href="#658230" title="scala.tools.nsc.io.AbstractFile">file</a>
+    <a href="#659801" title="scala.tools.nsc.io.AbstractFile">file</a>
   }
   
   /**
    * Get the file in this directory with the given name,
    * creating an empty file if it does not already existing.
    */
-  <span class="keyword">def</span> <a title="(name: String)scala.tools.nsc.io.AbstractFile" id="51404">fileNamed</a>(<a title="String" id="95288">name</a>: <span title="String">String</span>): <a href="#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = {
-    <span title="(assertion: Boolean)Unit">assert</span>(<a href="#51391" title="=&gt; Boolean">isDirectory</a>)
-    <span class="keyword">val</span> <a title="scala.tools.nsc.io.AbstractFile" id="658447">existing</a> = <a href="#51399" title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile">lookupName</a>(<a href="#95288" title="String">name</a>, <span title="Boolean(false)" class="keyword">false</span>)
-    <span title="scala.tools.nsc.io.AbstractFile" class="keyword">if</span> (<a href="#658447" title="(x$1: AnyRef)Boolean">existing</a> == <span title="Null(null)" class="keyword">null</span>) {
-      <span class="keyword">val</span> <a title="java.io.File" id="658460">newFile</a> = <span title="(x$1: java.io.File,x$2: java.lang.String)java.io.File" class="keyword">new</span> <span title="java.io.File">File</span>(<a href="#51387" title="=&gt; java.io.File">file</a>, <a href="#95288" title="String">name</a>)
-      <a href="#658460" title="java.io.File">newFile</a>.<a title="()Boolean" id="35198">createNewFile</a>()
-      <span title="scala.tools.nsc.io.PlainFile" class="keyword">new</span> <a href="PlainFile.scala.html#20566" title="scala.tools.nsc.io.PlainFile">PlainFile</a>(<a href="#658460" title="implicit scala.io.Path.jfile2path : (jfile: java.io.File)scala.io.Path">newFile</a>)
-    } <span class="keyword">else</span> {
-      <a href="#658447" title="scala.tools.nsc.io.AbstractFile">existing</a>
-    }
+  <span class="keyword">def</span> <a title="(name: String)scala.tools.nsc.io.AbstractFile" id="51658">fileNamed</a>(<a title="String" id="95663">name</a>: <span title="String">String</span>): <a href="#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = {
+    <span title="(assertion: Boolean)Unit">assert</span>(<a href="#51645" title="=&gt; Boolean">isDirectory</a>)
+    <span title="(x: scala.tools.nsc.io.AbstractFile)Option[scala.tools.nsc.io.AbstractFile]">Option</span><span title="(default: =&gt; scala.tools.nsc.io.AbstractFile)scala.tools.nsc.io.AbstractFile">(</span><a href="#51653" title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile">lookupName</a>(<a href="#95663" title="String">name</a>, <span title="Boolean(false)" class="keyword">false</span>)) getOrElse <span title="scala.tools.nsc.io.PlainFile" class="keyword">new</span> <a href="PlainFile.scala.html#20707" title="scala.tools.nsc.io.PlainFile">PlainFile</a>((<a href="#51641" title="(child: scala.io.Path)scala.io.Path">sfile</a> <a title="scala.io.Path" id="660034">/</a> <a href="#95663" title="implicit scala.io.Path.string2path : (s: String)scala.io.Path">name</a>).<a href="#660034" title="Boolean" id="112328">createFile</a>())
   }
   
   /**
    * Get the subdirectory with a given name, creating it if it
    * does not already exist.
    */
-  <span class="keyword">def</span> <a title="(name: String)scala.tools.nsc.io.AbstractFile" id="51405">subdirectoryNamed</a>(<a title="String" id="95281">name</a>: <span title="String">String</span>): <a href="#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = {
-    <span title="(assertion: Boolean)Unit">assert</span> (<a href="#51391" title="=&gt; Boolean">isDirectory</a>)
-    <span class="keyword">val</span> <a title="scala.tools.nsc.io.AbstractFile" id="658483">existing</a> = <a href="#51399" title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile">lookupName</a>(<a href="#95281" title="String">name</a>, <span title="Boolean(true)" class="keyword">true</span>)
-    <span title="scala.tools.nsc.io.AbstractFile" class="keyword">if</span> (<a href="#658483" title="(x$1: AnyRef)Boolean">existing</a> == <span title="Null(null)" class="keyword">null</span>) {
-      <span class="keyword">val</span> <a title="java.io.File" id="658496">dir</a> = <span title="(x$1: java.io.File,x$2: java.lang.String)java.io.File" class="keyword">new</span> <span title="java.io.File">File</span>(<a href="#51387" title="=&gt; java.io.File">file</a>, <a href="#95281" title="String">name</a>)
-      <a href="#658496" title="java.io.File">dir</a>.<a title="()Boolean" id="35209">mkdir</a>()
-      <span title="scala.tools.nsc.io.PlainFile" class="keyword">new</span> <a href="PlainFile.scala.html#20566" title="scala.tools.nsc.io.PlainFile">PlainFile</a>(<a href="#658496" title="implicit scala.io.Path.jfile2path : (jfile: java.io.File)scala.io.Path">dir</a>)
-    } <span class="keyword">else</span> {
-      <a href="#658483" title="scala.tools.nsc.io.AbstractFile">existing</a>
-    }
+  <span class="keyword">def</span> <a title="(name: String)scala.tools.nsc.io.AbstractFile" id="51659">subdirectoryNamed</a>(<a title="String" id="95656">name</a>: <span title="String">String</span>): <a href="#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = {
+    <span title="(assertion: Boolean)Unit">assert</span> (<a href="#51645" title="=&gt; Boolean">isDirectory</a>)
+    <span title="(x: scala.tools.nsc.io.AbstractFile)Option[scala.tools.nsc.io.AbstractFile]">Option</span><span title="(default: =&gt; scala.tools.nsc.io.AbstractFile)scala.tools.nsc.io.AbstractFile">(</span><a href="#51653" title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile">lookupName</a>(<a href="#95656" title="String">name</a>, <span title="Boolean(true)" class="keyword">true</span>)) getOrElse <span title="scala.tools.nsc.io.PlainFile" class="keyword">new</span> <a href="PlainFile.scala.html#20707" title="scala.tools.nsc.io.PlainFile">PlainFile</a>((<a href="#51641" title="(child: scala.io.Path)scala.io.Path">sfile</a> <a title="scala.io.Path" id="660079">/</a> <a href="#95656" title="implicit scala.io.Path.string2path : (s: String)scala.io.Path">name</a>).<a href="#660079" title="Boolean" id="112323">createDirectory</a>())
   }
   
   /** Returns the path of this abstract file. */
-  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="51406">toString</a>() = <a href="#51384" title="=&gt; String">path</a>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="51660">toString</a>() = <a href="#51637" title="=&gt; String">path</a>
 
 }
 

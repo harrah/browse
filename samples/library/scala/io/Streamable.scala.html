@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>scala/io/Streamable.scala</title>
+        <script type="text/javascript" src="../../jquery-all.js"></script>
+        <script type="text/javascript" src="../../linked.js"></script>
+        <link rel="stylesheet" type="text/css" href="../../style.css" title="Style">
+    </head>
+    <body>
+        <pre>
+/*                     __                                               *\
+**     ________ ___   / /  ___     Scala API                            **
+**    / __/ __// _ | / /  / _ |    (c) 2003-2009, LAMP/EPFL             **
+**  __\ \/ /__/ __ |/ /__/ __ |    http://scala-lang.org/               **
+** /____/\___/_/ |_/____/_/ | |                                         **
+**                          |/                                          **
+\*                                                                      */
+
+<span class="keyword">package</span> scala.io
+
+<span class="keyword">import</span> java.io.{ BufferedInputStream, InputStream, PrintStream, File =&gt; JFile }
+<span class="keyword">import</span> java.io.{ BufferedReader, InputStreamReader }
+<span class="keyword">import</span> java.net.{ URI, URL }
+
+<span class="keyword">import</span> collection.mutable.ArrayBuffer
+<span class="keyword">import</span> Path.fail
+
+/** Traits for objects which can be represented as Streams.
+ *
+ *  @author Paul Phillips
+ *  @since  2.8
+ */
+
+<span class="keyword">object</span> <a title="object scala.io.Streamable" id="13230">Streamable</a>
+<a href="../ScalaObject.scala.html#969" title="ScalaObject">{</a>
+  /** Traits which can be viewed as a sequence of bytes.  Source types
+   *  which know their length should override def length: Long for more
+   *  efficient method implementations.
+   */
+  <span class="keyword">trait</span> <a title="trait Bytes extends java.lang.Object with ScalaObject" id="33672">Bytes</a> <a href="../ScalaObject.scala.html#969" title="ScalaObject">{</a>
+    <span class="keyword">def</span> <a title="()java.io.InputStream" id="33694">inputStream</a>(): <a title="java.io.InputStream" id="3907">InputStream</a>
+    <span class="keyword">def</span> <a title="=&gt; Long" id="33695">length</a>: <a title="Long" id="2197">Long</a> = <span title="Long(-1L)">-</span><span class="int">1</span>
+    
+    <span class="keyword">def</span> <a title="()java.io.BufferedInputStream" id="33696">bufferedInput</a>() = <span title="java.io.BufferedInputStream" class="keyword">new</span> <a title="java.io.BufferedInputStream" id="3892">BufferedInputStream</a>(<a href="#33694" title="()java.io.InputStream">inputStream</a>())
+    <span class="keyword">def</span> <a title="()Iterator[Byte]" id="33697">bytes</a>(): <a href="../collection/Iterator.scala.html#4301" title="Iterator[Byte]">Iterator</a>[Byte] = <a href="#33698" title="()Iterator[Int]">bytesAsInts</a><a href="../collection/Iterator.scala.html#19296" title="(f: (Int) =&gt; Byte)Iterator[Byte]">(</a>) map (<a href="#72788" title="Int">_</a>.<a title="=&gt; Byte" id="2857">toByte</a>)
+    <span class="keyword">def</span> <a title="()Iterator[Int]" id="33698">bytesAsInts</a>(): <a href="../collection/Iterator.scala.html#4301" title="Iterator[Int]">Iterator</a>[Int] = {
+      <span class="keyword">val</span> <a title="java.io.BufferedInputStream" id="72792">in</a> = <a href="#33696" title="()java.io.BufferedInputStream">bufferedInput</a>()
+      <a href="../collection/Iterator.scala.html#21540" title="(elem: =&gt; Int)Iterator[Int]">Iterator</a> <a href="../collection/Iterator.scala.html#19309" title="(p: (Int) =&gt; Boolean)Iterator[Int]">continually</a> <a href="#72792" title="java.io.BufferedInputStream">in</a>.<a title="()Int" id="72742">read</a>() takeWhile (<a href="#72837" title="(x$1: Int)Boolean" id="2967">_</a> != <span title="Int(-1)">-</span><span class="int">1</span>)
+    }
+
+    /** This method aspires to be the fastest way to read
+     *  a stream of known length into memory.
+     */
+    <span class="keyword">def</span> <a title="()Array[Byte]" id="33699">toByteArray</a>(): <a href="../Array.scala.html#897" title="Array[Byte]">Array</a>[Byte] = {
+      // if we don't know the length, fall back on relative inefficiency
+      <span title="Unit" class="keyword">if</span> (<a href="#33695" title="(x$1: Long)Boolean" id="3201">length</a> == <span title="Long(-1L)">-</span><span class="long">1L</span>)
+        <span title="Nothing" class="keyword">return</span> (<a href="../collection/generic/BufferTemplate.scala.html#20063" title="(iter: Iterator[Byte])scala.collection.mutable.ArrayBuffer[Byte]" class="keyword">new</a> <a href="../collection/mutable/ArrayBuffer.scala.html#7860" title="scala.collection.mutable.ArrayBuffer[Byte]">ArrayBuffer</a>[Byte]() ++ <a href="#33697" title="()Iterator[Byte]">bytes</a>()).<a href="../collection/generic/TraversableTemplate.scala.html#17340" title="(implicit evidence$1: scala.reflect.ClassManifest[Byte])Array[Byte]">toArray</a>
+      
+      <span class="keyword">val</span> <a title="Array[Byte]" id="72847">arr</a> = <span title="Array[Byte]" class="keyword">new</span> <a href="../Array.scala.html#897" title="Array[Byte]">Array</a>[Byte](<a href="#33695" title="=&gt; Long">length</a>.<a title="=&gt; Int" id="3068">toInt</a>)
+      <span class="keyword">val</span> <a title="Int" id="72848">len</a> = <a href="#72847" title="Array[Byte]">arr</a>.<a href="../Array.scala.html#17822" title="=&gt; Int">length</a>
+      <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="java.io.BufferedInputStream" id="72850">in</a> = <a href="#33696" title="()java.io.BufferedInputStream">bufferedInput</a>()
+      <span class="keyword">var</span> <a title="Int" id="72851">offset</a> = <span title="Int(0)" class="int">0</span>
+    
+      <span class="keyword">def</span> <a title="()Unit" id="72852">loop</a>() {
+        <span title="Unit" class="keyword">if</span> (<a href="#72851" title="(x$1: Int)Boolean" id="2969">offset</a> &lt; <a href="#72848" title="Int">len</a>) {
+          <span class="keyword">val</span> <a title="Int" id="73010">read</a> = <a href="#72849" title="=&gt; java.io.BufferedInputStream">in</a>.<a title="(x$1: Array[Byte],x$2: Int,x$3: Int)Int" id="72743">read</a>(<a href="#72847" title="Array[Byte]">arr</a>, <a href="#72851" title="Int">offset</a>, <a href="#72848" title="(x$1: Int)Int" id="2979">len</a> - <a href="#72851" title="Int">offset</a>)
+          <span title="Unit" class="keyword">if</span> (<a href="#73010" title="(x$1: Int)Boolean" id="2975">read</a> &gt;= <span title="Int(0)" class="int">0</span>) {
+            <a href="#72851" title="Int" id="2977">offset</a> += <a href="#73010" title="Int">read</a>
+            <a href="#72852" title="()Unit">loop</a>()
+          }
+        }
+      }
+      <span class="keyword">try</span> <a href="#72852" title="()Unit">loop</a>()
+      <span class="keyword">finally</span> <a href="#72849" title="=&gt; java.io.BufferedInputStream">in</a>.<a title="()Unit" id="72754">close</a>()
+    
+      <span title="Array[Byte]" class="keyword">if</span> (<a href="#72851" title="(x$1: Int)Boolean" id="2965">offset</a> == <a href="#72847" title="Array[Byte]">arr</a>.<a href="../Array.scala.html#17822" title="=&gt; Int">length</a>) <a href="#72847" title="Array[Byte]">arr</a>
+      <span class="keyword">else</span> <a href="Path.scala.html#32771" title="(msg: String)Nothing">fail</a>(<a href="../Predef.scala.html#16471" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;Could not read entire source (%d of %d bytes)&quot;</a>.<a href="../runtime/RichString.scala.html#18167" title="(args: Any*)String">format</a>(<a href="#72851" title="Int">offset</a>, <a href="#72848" title="Int">len</a>))
+    }
+  }
+
+  /** For objects which can be viewed as Chars.  The abstract creationCodec
+   *  can safely be defined as null and will subsequently be ignored.
+   */
+  <span class="keyword">trait</span> <a title="trait Chars extends java.lang.Object with scala.io.Streamable.Bytes with ScalaObject" id="33673">Chars</a> <a href="../ScalaObject.scala.html#969" title="ScalaObject" class="keyword">extends</a> <a href="#33672" title="scala.io.Streamable.Bytes">Bytes</a> {
+    <span class="keyword">def</span> <a title="=&gt; scala.io.Codec" id="33701">creationCodec</a>: <a href="Codec.scala.html#9894" title="scala.io.Codec">Codec</a>
+    <span class="keyword">private</span> <span class="keyword">def</span> <a title="()Nothing" id="33702">failNoCodec</a>() = <a href="Path.scala.html#32771" title="(msg: String)Nothing">fail</a>(<span title="java.lang.String(&quot;This method requires a Codec to be chosen explicitly.&quot;)" class="string">&quot;This method requires a Codec to be chosen explicitly.&quot;</span>)
+
+    /** The general algorithm for any call to a method involving byte&lt;-&gt;char
+     *  transformations is: if a codec is supplied (explicitly or implicitly),
+     *  use that; otherwise if a codec was defined when the object was created,
+     *  use that; otherwise, use Codec.default.
+     * 
+     *  Note that getCodec takes a codec argument rather than having methods
+     *  always default to getCodec() and use the argument otherwise, so that
+     *  method implementations can, where desired, identify the case where no
+     *  codec was ever explicitly supplied.  If allowDefault = false, an
+     *  exception will be thrown rather than falling back on Codec.default.
+     */
+    <span class="keyword">def</span> <a title="(givenCodec: scala.io.Codec,allowDefault: Boolean)scala.io.Codec" id="33703">getCodec</a>(<a title="scala.io.Codec" id="73134">givenCodec</a>: <a href="Codec.scala.html#9894" title="scala.io.Codec">Codec</a> = <span title="Null(null)" class="keyword">null</span>, <a title="Boolean" id="73135">allowDefault</a>: <a title="Boolean" id="1964">Boolean</a> = <span title="Boolean(true)" class="keyword">true</span>) =
+      <span title="scala.io.Codec" class="keyword">if</span> (<a href="#73134" title="(x$1: AnyRef)Boolean">givenCodec</a> != <span title="Null(null)" class="keyword">null</span>) <a href="#73134" title="scala.io.Codec">givenCodec</a>
+      <span class="keyword">else</span> <span title="scala.io.Codec" class="keyword">if</span> (<a href="#33701" title="(x$1: AnyRef)Boolean">creationCodec</a> != <span title="Null(null)" class="keyword">null</span>) <a href="#33701" title="=&gt; scala.io.Codec">creationCodec</a>
+      <span class="keyword">else</span> <span title="scala.io.Codec" class="keyword">if</span> (<a href="#73135" title="Boolean">allowDefault</a>) <a href="Codec.scala.html#9895" title="object scala.io.Codec">Codec</a>.<a href="Codec.scala.html#33746" title="=&gt; scala.io.Codec">default</a>
+      <span class="keyword">else</span> <a href="#33702" title="()Nothing">failNoCodec</a>()
+  
+    <span class="keyword">def</span> <a title="(codec: scala.io.Codec)scala.io.Source" id="33704">chars</a>(<a title="scala.io.Codec" id="73167">codec</a>: <a href="Codec.scala.html#9894" title="scala.io.Codec">Codec</a> = <a href="#33703" title="(givenCodec: scala.io.Codec,allowDefault: Boolean)scala.io.Codec">getCodec</a>()): <a href="Source.scala.html#9903" title="scala.io.Source">Source</a> = (<a href="Source.scala.html#73220" title="(inputStream: java.io.InputStream,bufferSize: Int,reset: () =&gt; scala.io.Source,close: () =&gt; Unit)(implicit codec: scala.io.Codec)scala.io.Source">Source</a> fromInputStream <a href="#33694" title="()java.io.InputStream">inputStream</a>())(<a href="#73167" title="scala.io.Codec">codec</a>)
+    <span class="keyword">def</span> <a title="(codec: scala.io.Codec)Iterator[String]" id="33705">lines</a>(<a title="scala.io.Codec" id="73247">codec</a>: <a href="Codec.scala.html#9894" title="scala.io.Codec">Codec</a> = <a href="#33703" title="(givenCodec: scala.io.Codec,allowDefault: Boolean)scala.io.Codec">getCodec</a>()): <a href="../collection/Iterator.scala.html#4301" title="Iterator[String]">Iterator</a>[String] = <a href="#33704" title="(codec: scala.io.Codec)scala.io.Source">chars</a><a title="scala.io.Source" id="73255">(</a><a href="#73247" title="scala.io.Codec">codec</a>).<a href="Source.scala.html#73254" title="String" id="73259">getLines</a>()
+  
+    /** Obtains an InputStreamReader wrapped around a FileInputStream.
+     */
+    <span class="keyword">def</span> <a title="(codec: scala.io.Codec)java.io.InputStreamReader" id="33706">reader</a>(<a title="scala.io.Codec" id="73267">codec</a>: <a href="Codec.scala.html#9894" title="scala.io.Codec">Codec</a> = <a href="#33703" title="(givenCodec: scala.io.Codec,allowDefault: Boolean)scala.io.Codec">getCodec</a>()) = <a title="(x$1: java.io.InputStream,x$2: java.nio.charset.Charset)java.io.InputStreamReader" id="73273" class="keyword">new</a> <a title="java.io.InputStreamReader" id="3901">InputStreamReader</a>(<a href="#33694" title="()java.io.InputStream">inputStream</a>, <a href="#73267" title="scala.io.Codec">codec</a>.<a href="Codec.scala.html#33642" title="=&gt; java.nio.charset.Charset">charSet</a>)
+  
+    /** Wraps a BufferedReader around the result of reader().
+     */
+    <span class="keyword">def</span> <a title="(codec: scala.io.Codec)java.io.BufferedReader" id="33707">bufferedReader</a>(<a title="scala.io.Codec" id="73313">codec</a>: <a href="Codec.scala.html#9894" title="scala.io.Codec">Codec</a> = <a href="#33703" title="(givenCodec: scala.io.Codec,allowDefault: Boolean)scala.io.Codec">getCodec</a>()) = <a title="(x$1: java.io.Reader)java.io.BufferedReader" id="73317" class="keyword">new</a> <a title="java.io.BufferedReader" id="3682">BufferedReader</a>(<a href="#33706" title="(codec: scala.io.Codec)java.io.InputStreamReader">reader</a>(<a href="#73313" title="scala.io.Codec">codec</a>))
+  
+    /** Convenience function to import entire file into a String.
+     */
+    <span class="keyword">def</span> <a title="(codec: scala.io.Codec)String" id="33708">slurp</a>(<a title="scala.io.Codec" id="73349">codec</a>: <a href="Codec.scala.html#9894" title="scala.io.Codec">Codec</a> = <a href="#33703" title="(givenCodec: scala.io.Codec,allowDefault: Boolean)scala.io.Codec">getCodec</a>()) = <a href="#33704" title="(codec: scala.io.Codec)scala.io.Source">chars</a>(<a href="#73349" title="scala.io.Codec">codec</a>).<a href="../collection/Iterator.scala.html#19393" title="=&gt; String">mkString</a>
+  }
+}
+        </pre>
+    </body>
+</html>

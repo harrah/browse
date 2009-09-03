@@ -23,12 +23,12 @@
 <span class="keyword">import</span> scala.tools.nsc.ast._;
 <span class="keyword">import</span> scala.collection.mutable.{Stack, HashSet, BitSet};
 
-<span class="keyword">trait</span> <a title="trait Linearizers extends java.lang.Object with ScalaObject" id="15054">Linearizers</a> <span title="ScalaObject">{</span> self: ICodes =&gt;
+<span class="keyword">trait</span> <a title="trait Linearizers extends java.lang.Object with ScalaObject" id="15129">Linearizers</a> <span title="ScalaObject">{</span> self: ICodes =&gt;
   <span class="keyword">import</span> opcodes._;
 
-  <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class Linearizer extends java.lang.Object with ScalaObject" id="46325">Linearizer</a> <span title="ScalaObject">{</span>
-    <span class="keyword">def</span> <a title="(c: Linearizers.this.IMethod)List[Linearizers.this.BasicBlock]" id="62209">linearize</a>(<a title="Linearizers.this.IMethod" id="62211">c</a>: <a href="Members.scala.html#46173" title="Linearizers.this.IMethod">IMethod</a>): <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock];
-    <span class="keyword">def</span> <a title="(c: Linearizers.this.IMethod,start: Linearizers.this.BasicBlock)List[Linearizers.this.BasicBlock]" id="62210">linearizeAt</a>(<a title="Linearizers.this.IMethod" id="688411">c</a>: <a href="Members.scala.html#46173" title="Linearizers.this.IMethod">IMethod</a>, <a title="Linearizers.this.BasicBlock" id="688412">start</a>: <a href="BasicBlocks.scala.html#46178" title="Linearizers.this.BasicBlock">BasicBlock</a>): <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock]
+  <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class Linearizer extends java.lang.Object with ScalaObject" id="46557">Linearizer</a> <span title="ScalaObject">{</span>
+    <span class="keyword">def</span> <a title="(c: Linearizers.this.IMethod)List[Linearizers.this.BasicBlock]" id="62481">linearize</a>(<a title="Linearizers.this.IMethod" id="62483">c</a>: <a href="Members.scala.html#46405" title="Linearizers.this.IMethod">IMethod</a>): <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock];
+    <span class="keyword">def</span> <a title="(c: Linearizers.this.IMethod,start: Linearizers.this.BasicBlock)List[Linearizers.this.BasicBlock]" id="62482">linearizeAt</a>(<a title="Linearizers.this.IMethod" id="690124">c</a>: <a href="Members.scala.html#46405" title="Linearizers.this.IMethod">IMethod</a>, <a title="Linearizers.this.BasicBlock" id="690125">start</a>: <a href="BasicBlocks.scala.html#46410" title="Linearizers.this.BasicBlock">BasicBlock</a>): <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock]
   }
 
   /** 
@@ -38,110 +38,110 @@
    * how 'while' statements are translated (if the test is 
    * 'true', the loop continues).
    */
-  <span class="keyword">class</span> <a title="class NormalLinearizer extends Linearizers.this.Linearizer with scala.tools.nsc.backend.WorklistAlgorithm with ScalaObject" id="46326">NormalLinearizer</a> <span title="ScalaObject" class="keyword">extends</span> <a href="#46325" title="Linearizers.this.Linearizer">Linearizer</a> <span class="keyword">with</span> <a href="../WorklistAlgorithm.scala.html#14749" title="scala.tools.nsc.backend.WorklistAlgorithm">WorklistAlgorithm</a> {
-    <span class="keyword">type</span> <a title="Linearizers.this.BasicBlock" id="692805">Elem</a> = <a href="BasicBlocks.scala.html#46178" title="Linearizers.this.BasicBlock">BasicBlock</a>;
+  <span class="keyword">class</span> <a title="class NormalLinearizer extends Linearizers.this.Linearizer with scala.tools.nsc.backend.WorklistAlgorithm with ScalaObject" id="46558">NormalLinearizer</a> <span title="ScalaObject" class="keyword">extends</span> <a href="#46557" title="Linearizers.this.Linearizer">Linearizer</a> <span class="keyword">with</span> <a href="../WorklistAlgorithm.scala.html#14824" title="scala.tools.nsc.backend.WorklistAlgorithm">WorklistAlgorithm</a> {
+    <span class="keyword">type</span> <a title="Linearizers.this.BasicBlock" id="694521">Elem</a> = <a href="BasicBlocks.scala.html#46410" title="Linearizers.this.BasicBlock">BasicBlock</a>;
 
-    <span class="keyword">val</span> <a title="NormalLinearizer.this.WList" id="692806">worklist</a>: <span title="NormalLinearizer.this.WList">WList</span> = <a title="()scala.collection.mutable.Stack[NormalLinearizer.this.Elem]" id="79084" class="keyword">new</a> <span title="scala.collection.mutable.Stack[NormalLinearizer.this.Elem]">Stack</span>();
+    <span class="keyword">val</span> <a title="NormalLinearizer.this.WList" id="694522">worklist</a>: <span title="NormalLinearizer.this.WList">WList</span> = <a title="()scala.collection.mutable.Stack[NormalLinearizer.this.Elem]" id="79374" class="keyword">new</a> <span title="scala.collection.mutable.Stack[NormalLinearizer.this.Elem]">Stack</span>();
 
-    <span class="keyword">var</span> <a title="List[Linearizers.this.BasicBlock]" id="692809">blocks</a>: <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock] = <span title="object Nil">Nil</span>;
+    <span class="keyword">var</span> <a title="List[Linearizers.this.BasicBlock]" id="694525">blocks</a>: <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock] = <span title="object Nil">Nil</span>;
     
-    <span class="keyword">def</span> <a title="(m: Linearizers.this.IMethod)List[Linearizers.this.BasicBlock]" id="692811">linearize</a>(<a title="Linearizers.this.IMethod" id="700734">m</a>: <a href="Members.scala.html#46173" title="Linearizers.this.IMethod">IMethod</a>): <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock] = {
-      <span class="keyword">val</span> <a title="Linearizers.this.BasicBlock" id="700736">b</a> = <a href="#700734" title="Linearizers.this.IMethod">m</a>.<a href="Members.scala.html#61228" title="=&gt; Linearizers.this.Code">code</a>.<a href="Members.scala.html#61392" title="=&gt; Linearizers.this.BasicBlock">startBlock</a>;
-      <a href="#692809" title="(x$1: List[Linearizers.this.BasicBlock])Unit">blocks</a> = <span title="object Nil">Nil</span>;
+    <span class="keyword">def</span> <a title="(m: Linearizers.this.IMethod)List[Linearizers.this.BasicBlock]" id="694527">linearize</a>(<a title="Linearizers.this.IMethod" id="702492">m</a>: <a href="Members.scala.html#46405" title="Linearizers.this.IMethod">IMethod</a>): <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock] = {
+      <span class="keyword">val</span> <a title="Linearizers.this.BasicBlock" id="702494">b</a> = <a href="#702492" title="Linearizers.this.IMethod">m</a>.<a href="Members.scala.html#61497" title="=&gt; Linearizers.this.Code">code</a>.<a href="Members.scala.html#61661" title="=&gt; Linearizers.this.BasicBlock">startBlock</a>;
+      <a href="#694525" title="(x$1: List[Linearizers.this.BasicBlock])Unit">blocks</a> = <span title="object Nil">Nil</span>;
 
-      <a href="../WorklistAlgorithm.scala.html#79073" title="(initWorklist: =&gt; Unit)Unit">run</a> {
-        <a href="#692806" title="(elems: Traversable[NormalLinearizer.this.Elem])NormalLinearizer.this.worklist.type" id="79097">worklist</a> pushAll (<a href="#700734" title="Linearizers.this.IMethod">m</a>.<a href="Members.scala.html#61234" title="(f: (Linearizers.this.ExceptionHandler) =&gt; Linearizers.this.BasicBlock)(implicit bf: scala.collection.generic.BuilderFactory[Linearizers.this.BasicBlock,List[Linearizers.this.BasicBlock],List[Linearizers.this.ExceptionHandler]])List[Linearizers.this.BasicBlock]" id="25243">exh</a> <a title="scala.collection.generic.BuilderFactory[Linearizers.this.BasicBlock,List[Linearizers.this.BasicBlock],List#Coll]" id="7346">map</a> (<a href="#700753" title="Linearizers.this.ExceptionHandler">_</a>.<a href="ExceptionHandlers.scala.html#61445" title="=&gt; Linearizers.this.BasicBlock">startBlock</a>));
-        <a href="#692806" title="=&gt; NormalLinearizer.this.WList">worklist</a>.<span title="(elem: NormalLinearizer.this.Elem)NormalLinearizer.this.worklist.type">push</span><span title="Unit">(</span><a href="#700736" title="Linearizers.this.BasicBlock">b</a>); 
+      <a href="../WorklistAlgorithm.scala.html#79363" title="(initWorklist: =&gt; Unit)Unit">run</a> {
+        <a href="#694522" title="(elems: Traversable[NormalLinearizer.this.Elem])NormalLinearizer.this.worklist.type" id="79387">worklist</a> pushAll (<a href="#702492" title="Linearizers.this.IMethod">m</a>.<a href="Members.scala.html#61503" title="(f: (Linearizers.this.ExceptionHandler) =&gt; Linearizers.this.BasicBlock)(implicit bf: scala.collection.generic.BuilderFactory[Linearizers.this.BasicBlock,List[Linearizers.this.BasicBlock],List[Linearizers.this.ExceptionHandler]])List[Linearizers.this.BasicBlock]" id="25402">exh</a> <a title="scala.collection.generic.BuilderFactory[Linearizers.this.BasicBlock,List[Linearizers.this.BasicBlock],List#Coll]" id="7415">map</a> (<a href="#702511" title="Linearizers.this.ExceptionHandler">_</a>.<a href="ExceptionHandlers.scala.html#61714" title="=&gt; Linearizers.this.BasicBlock">startBlock</a>));
+        <a href="#694522" title="=&gt; NormalLinearizer.this.WList">worklist</a>.<span title="(elem: NormalLinearizer.this.Elem)NormalLinearizer.this.worklist.type">push</span><span title="Unit">(</span><a href="#702494" title="Linearizers.this.BasicBlock">b</a>); 
       }
 
-      <a href="#692809" title="=&gt; List[Linearizers.this.BasicBlock]">blocks</a>.<span title="=&gt; List[Linearizers.this.BasicBlock]">reverse</span>;
+      <a href="#694525" title="=&gt; List[Linearizers.this.BasicBlock]">blocks</a>.<span title="=&gt; List[Linearizers.this.BasicBlock]">reverse</span>;
     }
     
-    <span class="keyword">def</span> <a title="(m: Linearizers.this.IMethod,start: Linearizers.this.BasicBlock)List[Linearizers.this.BasicBlock]" id="692812">linearizeAt</a>(<a title="Linearizers.this.IMethod" id="700851">m</a>: <a href="Members.scala.html#46173" title="Linearizers.this.IMethod">IMethod</a>, <a title="Linearizers.this.BasicBlock" id="700852">start</a>: <a href="BasicBlocks.scala.html#46178" title="Linearizers.this.BasicBlock">BasicBlock</a>): <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock] = {
-      <a href="#692809" title="(x$1: List[Linearizers.this.BasicBlock])Unit">blocks</a> = <span title="object Nil">Nil</span>
-      <a href="#692806" title="=&gt; NormalLinearizer.this.WList">worklist</a>.<a title="()Unit" id="79105">clear</a>()
-      <a href="#692813" title="(startBlock: Linearizers.this.BasicBlock)List[Linearizers.this.BasicBlock]">linearize</a>(<a href="#700852" title="Linearizers.this.BasicBlock">start</a>)
+    <span class="keyword">def</span> <a title="(m: Linearizers.this.IMethod,start: Linearizers.this.BasicBlock)List[Linearizers.this.BasicBlock]" id="694528">linearizeAt</a>(<a title="Linearizers.this.IMethod" id="702612">m</a>: <a href="Members.scala.html#46405" title="Linearizers.this.IMethod">IMethod</a>, <a title="Linearizers.this.BasicBlock" id="702613">start</a>: <a href="BasicBlocks.scala.html#46410" title="Linearizers.this.BasicBlock">BasicBlock</a>): <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock] = {
+      <a href="#694525" title="(x$1: List[Linearizers.this.BasicBlock])Unit">blocks</a> = <span title="object Nil">Nil</span>
+      <a href="#694522" title="=&gt; NormalLinearizer.this.WList">worklist</a>.<a title="()Unit" id="79395">clear</a>()
+      <a href="#694529" title="(startBlock: Linearizers.this.BasicBlock)List[Linearizers.this.BasicBlock]">linearize</a>(<a href="#702613" title="Linearizers.this.BasicBlock">start</a>)
     }
 
     /** Linearize another subtree and append it to the existing blocks. */
-    <span class="keyword">def</span> <a title="(startBlock: Linearizers.this.BasicBlock)List[Linearizers.this.BasicBlock]" id="692813">linearize</a>(<a title="Linearizers.this.BasicBlock" id="700861">startBlock</a>: <a href="BasicBlocks.scala.html#46178" title="Linearizers.this.BasicBlock">BasicBlock</a>): <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock] = {
+    <span class="keyword">def</span> <a title="(startBlock: Linearizers.this.BasicBlock)List[Linearizers.this.BasicBlock]" id="694529">linearize</a>(<a title="Linearizers.this.BasicBlock" id="702622">startBlock</a>: <a href="BasicBlocks.scala.html#46410" title="Linearizers.this.BasicBlock">BasicBlock</a>): <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock] = {
       //blocks = startBlock :: Nil;
-      <a href="../WorklistAlgorithm.scala.html#79073" title="(initWorklist: =&gt; Unit)Unit">run</a>( { <a href="#692806" title="=&gt; NormalLinearizer.this.WList">worklist</a>.<span title="(elem: NormalLinearizer.this.Elem)NormalLinearizer.this.worklist.type">push</span><span title="Unit">(</span><a href="#700861" title="Linearizers.this.BasicBlock">startBlock</a>); } );
-      <a href="#692809" title="=&gt; List[Linearizers.this.BasicBlock]">blocks</a>.<span title="=&gt; List[Linearizers.this.BasicBlock]">reverse</span>;
+      <a href="../WorklistAlgorithm.scala.html#79363" title="(initWorklist: =&gt; Unit)Unit">run</a>( { <a href="#694522" title="=&gt; NormalLinearizer.this.WList">worklist</a>.<span title="(elem: NormalLinearizer.this.Elem)NormalLinearizer.this.worklist.type">push</span><span title="Unit">(</span><a href="#702622" title="Linearizers.this.BasicBlock">startBlock</a>); } );
+      <a href="#694525" title="=&gt; List[Linearizers.this.BasicBlock]">blocks</a>.<span title="=&gt; List[Linearizers.this.BasicBlock]">reverse</span>;
     }
 
-    <span class="keyword">def</span> <a title="(b: Linearizers.this.BasicBlock)Unit" id="692814">processElement</a>(<a title="Linearizers.this.BasicBlock" id="700879">b</a>: <a href="BasicBlocks.scala.html#46178" title="Linearizers.this.BasicBlock">BasicBlock</a>) = 
-      <span title="Unit" class="keyword">if</span> (<a href="#700879" title="Linearizers.this.BasicBlock">b</a>.<span title="(x$1: Int)Boolean">size</span> &gt; <span title="Int(0)" class="int">0</span>) {
-        <a href="#692816" title="(b: Linearizers.this.BasicBlock)Unit">add</a>(<a href="#700879" title="Linearizers.this.BasicBlock">b</a>);
-        <a href="#700879" title="Linearizers.this.BasicBlock">b</a>.<a href="BasicBlocks.scala.html#61341" title="=&gt; Linearizers.this.Instruction">lastInstruction</a> <span title="Unit" class="keyword">match</span> {
-          <span title="Unit" class="keyword">case</span> JUMP(<a title="Linearizers.this.BasicBlock" id="700903">whereto</a>) =&gt; 
-            <a href="#692816" title="(b: Linearizers.this.BasicBlock)Unit">add</a>(<a href="#700903" title="Linearizers.this.BasicBlock">whereto</a>);
-          <span title="Unit" class="keyword">case</span> CJUMP(<a title="Linearizers.this.BasicBlock" id="700917">success</a>, <a title="Linearizers.this.BasicBlock" id="700918">failure</a>, _, _) =&gt;
-            <a href="#692816" title="(b: Linearizers.this.BasicBlock)Unit">add</a>(<a href="#700917" title="Linearizers.this.BasicBlock">success</a>);
-            <a href="#692816" title="(b: Linearizers.this.BasicBlock)Unit">add</a>(<a href="#700918" title="Linearizers.this.BasicBlock">failure</a>);
-          <span title="Unit" class="keyword">case</span> CZJUMP(<a title="Linearizers.this.BasicBlock" id="700939">success</a>, <a title="Linearizers.this.BasicBlock" id="700940">failure</a>, _, _) =&gt;
-            <a href="#692816" title="(b: Linearizers.this.BasicBlock)Unit">add</a>(<a href="#700939" title="Linearizers.this.BasicBlock">success</a>);
-            <a href="#692816" title="(b: Linearizers.this.BasicBlock)Unit">add</a>(<a href="#700940" title="Linearizers.this.BasicBlock">failure</a>);
-          <span title="Unit" class="keyword">case</span> SWITCH(_, <a title="List[Linearizers.this.BasicBlock]" id="700959">labels</a>) =&gt;
-            <a href="#692817" title="(bs: List[Linearizers.this.BasicBlock])Unit">add</a>(<a href="#700959" title="List[Linearizers.this.BasicBlock]">labels</a>);
+    <span class="keyword">def</span> <a title="(b: Linearizers.this.BasicBlock)Unit" id="694530">processElement</a>(<a title="Linearizers.this.BasicBlock" id="702640">b</a>: <a href="BasicBlocks.scala.html#46410" title="Linearizers.this.BasicBlock">BasicBlock</a>) = 
+      <span title="Unit" class="keyword">if</span> (<a href="#702640" title="Linearizers.this.BasicBlock">b</a>.<span title="(x$1: Int)Boolean">size</span> &gt; <span title="Int(0)" class="int">0</span>) {
+        <a href="#694532" title="(b: Linearizers.this.BasicBlock)Unit">add</a>(<a href="#702640" title="Linearizers.this.BasicBlock">b</a>);
+        <a href="#702640" title="Linearizers.this.BasicBlock">b</a>.<a href="BasicBlocks.scala.html#61610" title="=&gt; Linearizers.this.Instruction">lastInstruction</a> <span title="Unit" class="keyword">match</span> {
+          <span title="Unit" class="keyword">case</span> JUMP(<a title="Linearizers.this.BasicBlock" id="702664">whereto</a>) =&gt; 
+            <a href="#694532" title="(b: Linearizers.this.BasicBlock)Unit">add</a>(<a href="#702664" title="Linearizers.this.BasicBlock">whereto</a>);
+          <span title="Unit" class="keyword">case</span> CJUMP(<a title="Linearizers.this.BasicBlock" id="702678">success</a>, <a title="Linearizers.this.BasicBlock" id="702679">failure</a>, _, _) =&gt;
+            <a href="#694532" title="(b: Linearizers.this.BasicBlock)Unit">add</a>(<a href="#702678" title="Linearizers.this.BasicBlock">success</a>);
+            <a href="#694532" title="(b: Linearizers.this.BasicBlock)Unit">add</a>(<a href="#702679" title="Linearizers.this.BasicBlock">failure</a>);
+          <span title="Unit" class="keyword">case</span> CZJUMP(<a title="Linearizers.this.BasicBlock" id="702700">success</a>, <a title="Linearizers.this.BasicBlock" id="702701">failure</a>, _, _) =&gt;
+            <a href="#694532" title="(b: Linearizers.this.BasicBlock)Unit">add</a>(<a href="#702700" title="Linearizers.this.BasicBlock">success</a>);
+            <a href="#694532" title="(b: Linearizers.this.BasicBlock)Unit">add</a>(<a href="#702701" title="Linearizers.this.BasicBlock">failure</a>);
+          <span title="Unit" class="keyword">case</span> SWITCH(_, <a title="List[Linearizers.this.BasicBlock]" id="702720">labels</a>) =&gt;
+            <a href="#694533" title="(bs: List[Linearizers.this.BasicBlock])Unit">add</a>(<a href="#702720" title="List[Linearizers.this.BasicBlock]">labels</a>);
           <span title="Unit" class="keyword">case</span> RETURN(_) =&gt; <span title="Unit">(</span>);
           <span title="Unit" class="keyword">case</span> THROW() =&gt;   <span title="Unit">(</span>);
         }
       }
 
-    <span class="keyword">def</span> <a title="=&gt; NormalLinearizer.this.Elem" id="692815">dequeue</a>: <a href="BasicBlocks.scala.html#46178" title="NormalLinearizer.this.Elem">Elem</a> = <a href="#692806" title="=&gt; NormalLinearizer.this.WList">worklist</a>.<a title="()NormalLinearizer.this.Elem" id="79104">pop</a>;
+    <span class="keyword">def</span> <a title="=&gt; NormalLinearizer.this.Elem" id="694531">dequeue</a>: <a href="BasicBlocks.scala.html#46410" title="NormalLinearizer.this.Elem">Elem</a> = <a href="#694522" title="=&gt; NormalLinearizer.this.WList">worklist</a>.<a title="()NormalLinearizer.this.Elem" id="79394">pop</a>;
 
     /** 
      * Prepend b to the list, if not already scheduled. 
      * TODO: use better test than linear search
      */
-    <span class="keyword">def</span> <a title="(b: Linearizers.this.BasicBlock)Unit" id="692816">add</a>(<a title="Linearizers.this.BasicBlock" id="700896">b</a>: <a href="BasicBlocks.scala.html#46178" title="Linearizers.this.BasicBlock">BasicBlock</a>) {
-      <span title="Unit" class="keyword">if</span> (<a href="#692809" title="=&gt; List[Linearizers.this.BasicBlock]">blocks</a>.<span title="(elem: Any)Boolean">contains</span>(<a href="#700896" title="Linearizers.this.BasicBlock">b</a>))
+    <span class="keyword">def</span> <a title="(b: Linearizers.this.BasicBlock)Unit" id="694532">add</a>(<a title="Linearizers.this.BasicBlock" id="702657">b</a>: <a href="BasicBlocks.scala.html#46410" title="Linearizers.this.BasicBlock">BasicBlock</a>) {
+      <span title="Unit" class="keyword">if</span> (<a href="#694525" title="=&gt; List[Linearizers.this.BasicBlock]">blocks</a>.<span title="(elem: Any)Boolean">contains</span>(<a href="#702657" title="Linearizers.this.BasicBlock">b</a>))
         <span title="Unit">(</span>)
       <span class="keyword">else</span> {
-        <a href="#692809" title="(x$1: List[Linearizers.this.BasicBlock])Unit">blocks</a> = <a href="#700896" title="Linearizers.this.BasicBlock">b</a> <a href="#700980" title="Linearizers.this.BasicBlock">::</a> <a href="#692809" title="(x: Linearizers.this.BasicBlock)List[Linearizers.this.BasicBlock]">blocks</a>;
-        <a href="#692806" title="(elem: NormalLinearizer.this.Elem)NormalLinearizer.this.worklist.type">worklist</a> <span title="Unit">push</span> <a href="#700896" title="Linearizers.this.BasicBlock">b</a>;
+        <a href="#694525" title="(x$1: List[Linearizers.this.BasicBlock])Unit">blocks</a> = <a href="#702657" title="Linearizers.this.BasicBlock">b</a> <a href="#702741" title="Linearizers.this.BasicBlock">::</a> <a href="#694525" title="(x: Linearizers.this.BasicBlock)List[Linearizers.this.BasicBlock]">blocks</a>;
+        <a href="#694522" title="(elem: NormalLinearizer.this.Elem)NormalLinearizer.this.worklist.type">worklist</a> <span title="Unit">push</span> <a href="#702657" title="Linearizers.this.BasicBlock">b</a>;
       }
     }
 
-    <span class="keyword">def</span> <a title="(bs: List[Linearizers.this.BasicBlock])Unit" id="692817">add</a>(<a title="List[Linearizers.this.BasicBlock]" id="700894">bs</a>: <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock]): <span title="Unit">Unit</span> = <a href="#700894" title="(f: (Linearizers.this.BasicBlock) =&gt; Unit)Unit">bs</a> foreach <a href="#692816" title="(b: Linearizers.this.BasicBlock)Unit">add</a>;
+    <span class="keyword">def</span> <a title="(bs: List[Linearizers.this.BasicBlock])Unit" id="694533">add</a>(<a title="List[Linearizers.this.BasicBlock]" id="702655">bs</a>: <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock]): <span title="Unit">Unit</span> = <a href="#702655" title="(f: (Linearizers.this.BasicBlock) =&gt; Unit)Unit">bs</a> foreach <a href="#694532" title="(b: Linearizers.this.BasicBlock)Unit">add</a>;
   }
 
   /**
    * Linearize code using a depth first traversal.
    */
-  <span class="keyword">class</span> <a title="class DepthFirstLinerizer extends Linearizers.this.Linearizer with ScalaObject" id="46327">DepthFirstLinerizer</a> <span title="ScalaObject" class="keyword">extends</span> <a href="#46325" title="Linearizers.this.Linearizer">Linearizer</a> {
-    <span class="keyword">var</span> <a title="List[Linearizers.this.BasicBlock]" id="692787">blocks</a>: <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock] = <span title="object Nil">Nil</span>;
+  <span class="keyword">class</span> <a title="class DepthFirstLinerizer extends Linearizers.this.Linearizer with ScalaObject" id="46559">DepthFirstLinerizer</a> <span title="ScalaObject" class="keyword">extends</span> <a href="#46557" title="Linearizers.this.Linearizer">Linearizer</a> {
+    <span class="keyword">var</span> <a title="List[Linearizers.this.BasicBlock]" id="694503">blocks</a>: <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock] = <span title="object Nil">Nil</span>;
     
-    <span class="keyword">def</span> <a title="(m: Linearizers.this.IMethod)List[Linearizers.this.BasicBlock]" id="692789">linearize</a>(<a title="Linearizers.this.IMethod" id="701032">m</a>: <a href="Members.scala.html#46173" title="Linearizers.this.IMethod">IMethod</a>): <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock] = {
-      <a href="#692787" title="(x$1: List[Linearizers.this.BasicBlock])Unit">blocks</a> = <span title="object Nil">Nil</span>;
+    <span class="keyword">def</span> <a title="(m: Linearizers.this.IMethod)List[Linearizers.this.BasicBlock]" id="694505">linearize</a>(<a title="Linearizers.this.IMethod" id="702793">m</a>: <a href="Members.scala.html#46405" title="Linearizers.this.IMethod">IMethod</a>): <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock] = {
+      <a href="#694503" title="(x$1: List[Linearizers.this.BasicBlock])Unit">blocks</a> = <span title="object Nil">Nil</span>;
 
-      <a href="#692791" title="(b: Linearizers.this.BasicBlock)Unit">dfs</a>(<a href="#701032" title="Linearizers.this.IMethod">m</a>.<a href="Members.scala.html#61228" title="=&gt; Linearizers.this.Code">code</a>.<a href="Members.scala.html#61392" title="=&gt; Linearizers.this.BasicBlock">startBlock</a>);
-      <a href="#701032" title="Linearizers.this.IMethod">m</a>.<a href="Members.scala.html#61234" title="(f: (Linearizers.this.ExceptionHandler) =&gt; Unit)Unit">exh</a> foreach (<a title="Linearizers.this.ExceptionHandler" id="701057">b</a> =&gt; <a href="#692791" title="(b: Linearizers.this.BasicBlock)Unit">dfs</a>(<a href="#701057" title="Linearizers.this.ExceptionHandler">b</a>.<a href="ExceptionHandlers.scala.html#61445" title="=&gt; Linearizers.this.BasicBlock">startBlock</a>));
+      <a href="#694507" title="(b: Linearizers.this.BasicBlock)Unit">dfs</a>(<a href="#702793" title="Linearizers.this.IMethod">m</a>.<a href="Members.scala.html#61497" title="=&gt; Linearizers.this.Code">code</a>.<a href="Members.scala.html#61661" title="=&gt; Linearizers.this.BasicBlock">startBlock</a>);
+      <a href="#702793" title="Linearizers.this.IMethod">m</a>.<a href="Members.scala.html#61503" title="(f: (Linearizers.this.ExceptionHandler) =&gt; Unit)Unit">exh</a> foreach (<a title="Linearizers.this.ExceptionHandler" id="702818">b</a> =&gt; <a href="#694507" title="(b: Linearizers.this.BasicBlock)Unit">dfs</a>(<a href="#702818" title="Linearizers.this.ExceptionHandler">b</a>.<a href="ExceptionHandlers.scala.html#61714" title="=&gt; Linearizers.this.BasicBlock">startBlock</a>));
 
-      <a href="#692787" title="=&gt; List[Linearizers.this.BasicBlock]">blocks</a>.<span title="=&gt; List[Linearizers.this.BasicBlock]">reverse</span>
+      <a href="#694503" title="=&gt; List[Linearizers.this.BasicBlock]">blocks</a>.<span title="=&gt; List[Linearizers.this.BasicBlock]">reverse</span>
     }
     
-    <span class="keyword">def</span> <a title="(m: Linearizers.this.IMethod,start: Linearizers.this.BasicBlock)List[Linearizers.this.BasicBlock]" id="692790">linearizeAt</a>(<a title="Linearizers.this.IMethod" id="701064">m</a>: <a href="Members.scala.html#46173" title="Linearizers.this.IMethod">IMethod</a>, <a title="Linearizers.this.BasicBlock" id="701065">start</a>: <a href="BasicBlocks.scala.html#46178" title="Linearizers.this.BasicBlock">BasicBlock</a>): <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock] = {
-      <a href="#692787" title="(x$1: List[Linearizers.this.BasicBlock])Unit">blocks</a> = <span title="object Nil">Nil</span>
-      <a href="#692791" title="(b: Linearizers.this.BasicBlock)Unit">dfs</a>(<a href="#701065" title="Linearizers.this.BasicBlock">start</a>)
-      <a href="#692787" title="=&gt; List[Linearizers.this.BasicBlock]">blocks</a>.<span title="=&gt; List[Linearizers.this.BasicBlock]">reverse</span>
+    <span class="keyword">def</span> <a title="(m: Linearizers.this.IMethod,start: Linearizers.this.BasicBlock)List[Linearizers.this.BasicBlock]" id="694506">linearizeAt</a>(<a title="Linearizers.this.IMethod" id="702825">m</a>: <a href="Members.scala.html#46405" title="Linearizers.this.IMethod">IMethod</a>, <a title="Linearizers.this.BasicBlock" id="702826">start</a>: <a href="BasicBlocks.scala.html#46410" title="Linearizers.this.BasicBlock">BasicBlock</a>): <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock] = {
+      <a href="#694503" title="(x$1: List[Linearizers.this.BasicBlock])Unit">blocks</a> = <span title="object Nil">Nil</span>
+      <a href="#694507" title="(b: Linearizers.this.BasicBlock)Unit">dfs</a>(<a href="#702826" title="Linearizers.this.BasicBlock">start</a>)
+      <a href="#694503" title="=&gt; List[Linearizers.this.BasicBlock]">blocks</a>.<span title="=&gt; List[Linearizers.this.BasicBlock]">reverse</span>
     }
 
-    <span class="keyword">def</span> <a title="(b: Linearizers.this.BasicBlock)Unit" id="692791">dfs</a>(<a title="Linearizers.this.BasicBlock" id="701036">b</a>: <a href="BasicBlocks.scala.html#46178" title="Linearizers.this.BasicBlock">BasicBlock</a>): <span title="Unit">Unit</span> = 
-      <span title="Unit" class="keyword">if</span> (<a href="#701036" title="Linearizers.this.BasicBlock">b</a>.<span title="(x$1: Int)Boolean">size</span> <span title="(x$1: Boolean)Boolean">&gt;</span> <span title="Int(0)" class="int">0</span> &amp;&amp; <a href="#692792" title="(b: Linearizers.this.BasicBlock)Boolean">add</a>(<a href="#701036" title="Linearizers.this.BasicBlock">b</a>))
-        <a href="#701036" title="Linearizers.this.BasicBlock">b</a>.<a href="BasicBlocks.scala.html#61344" title="(f: (Linearizers.this.BasicBlock) =&gt; Unit)Unit">successors</a> foreach <a href="#692791" title="(b: Linearizers.this.BasicBlock)Unit">dfs</a>;
+    <span class="keyword">def</span> <a title="(b: Linearizers.this.BasicBlock)Unit" id="694507">dfs</a>(<a title="Linearizers.this.BasicBlock" id="702797">b</a>: <a href="BasicBlocks.scala.html#46410" title="Linearizers.this.BasicBlock">BasicBlock</a>): <span title="Unit">Unit</span> = 
+      <span title="Unit" class="keyword">if</span> (<a href="#702797" title="Linearizers.this.BasicBlock">b</a>.<span title="(x$1: Int)Boolean">size</span> <span title="(x$1: Boolean)Boolean">&gt;</span> <span title="Int(0)" class="int">0</span> &amp;&amp; <a href="#694508" title="(b: Linearizers.this.BasicBlock)Boolean">add</a>(<a href="#702797" title="Linearizers.this.BasicBlock">b</a>))
+        <a href="#702797" title="Linearizers.this.BasicBlock">b</a>.<a href="BasicBlocks.scala.html#61613" title="(f: (Linearizers.this.BasicBlock) =&gt; Unit)Unit">successors</a> foreach <a href="#694507" title="(b: Linearizers.this.BasicBlock)Unit">dfs</a>;
 
     /** 
      * Prepend b to the list, if not already scheduled. 
      * TODO: use better test than linear search
      * @return Returns true if the block was added.
      */
-    <span class="keyword">def</span> <a title="(b: Linearizers.this.BasicBlock)Boolean" id="692792">add</a>(<a title="Linearizers.this.BasicBlock" id="701078">b</a>: <a href="BasicBlocks.scala.html#46178" title="Linearizers.this.BasicBlock">BasicBlock</a>): <a title="Boolean" id="1951">Boolean</a> = 
-      <span title="Boolean" class="keyword">if</span> (<a href="#692787" title="=&gt; List[Linearizers.this.BasicBlock]">blocks</a>.<span title="(elem: Any)Boolean">contains</span>(<a href="#701078" title="Linearizers.this.BasicBlock">b</a>))
+    <span class="keyword">def</span> <a title="(b: Linearizers.this.BasicBlock)Boolean" id="694508">add</a>(<a title="Linearizers.this.BasicBlock" id="702839">b</a>: <a href="BasicBlocks.scala.html#46410" title="Linearizers.this.BasicBlock">BasicBlock</a>): <a title="Boolean" id="1972">Boolean</a> = 
+      <span title="Boolean" class="keyword">if</span> (<a href="#694503" title="=&gt; List[Linearizers.this.BasicBlock]">blocks</a>.<span title="(elem: Any)Boolean">contains</span>(<a href="#702839" title="Linearizers.this.BasicBlock">b</a>))
         <span title="Boolean(false)" class="keyword">false</span>
       <span class="keyword">else</span> {
-        <a href="#692787" title="(x$1: List[Linearizers.this.BasicBlock])Unit">blocks</a> = <a href="#701078" title="Linearizers.this.BasicBlock">b</a> <a href="#701109" title="Linearizers.this.BasicBlock">::</a> <a href="#692787" title="(x: Linearizers.this.BasicBlock)List[Linearizers.this.BasicBlock]">blocks</a>;
+        <a href="#694503" title="(x$1: List[Linearizers.this.BasicBlock])Unit">blocks</a> = <a href="#702839" title="Linearizers.this.BasicBlock">b</a> <a href="#702870" title="Linearizers.this.BasicBlock">::</a> <a href="#694503" title="(x: Linearizers.this.BasicBlock)List[Linearizers.this.BasicBlock]">blocks</a>;
         <span title="Boolean(true)" class="keyword">true</span>
       }
   }
@@ -151,51 +151,51 @@
    * a post order traversal, prepending visited nodes to the list.
    * This way, it is constructed already in reverse post order.
    */
-  <span class="keyword">class</span> <a title="class ReversePostOrderLinearizer extends Linearizers.this.Linearizer with ScalaObject" id="46328">ReversePostOrderLinearizer</a> <span title="ScalaObject" class="keyword">extends</span> <a href="#46325" title="Linearizers.this.Linearizer">Linearizer</a> {
-    <span class="keyword">var</span> <a title="List[Linearizers.this.BasicBlock]" id="692763">blocks</a>: <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock] = <span title="object Nil">Nil</span>;
-    <span class="keyword">var</span> <a title="scala.collection.mutable.HashSet[Linearizers.this.BasicBlock]" id="692766">visited</a>: <span title="scala.collection.mutable.HashSet[Linearizers.this.BasicBlock]">HashSet</span>[BasicBlock] = <span title="scala.collection.mutable.HashSet[Linearizers.this.BasicBlock]" class="keyword">new</span> <span title="scala.collection.mutable.HashSet[Linearizers.this.BasicBlock]">HashSet</span>;
-    <span class="keyword">val</span> <a title="scala.collection.mutable.BitSet" id="692768">added</a>: <span title="scala.collection.mutable.BitSet">BitSet</span> = <a title="()scala.collection.mutable.BitSet" id="536305" class="keyword">new</a> <span title="scala.collection.mutable.BitSet">BitSet</span>
+  <span class="keyword">class</span> <a title="class ReversePostOrderLinearizer extends Linearizers.this.Linearizer with ScalaObject" id="46560">ReversePostOrderLinearizer</a> <span title="ScalaObject" class="keyword">extends</span> <a href="#46557" title="Linearizers.this.Linearizer">Linearizer</a> {
+    <span class="keyword">var</span> <a title="List[Linearizers.this.BasicBlock]" id="694479">blocks</a>: <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock] = <span title="object Nil">Nil</span>;
+    <span class="keyword">var</span> <a title="scala.collection.mutable.HashSet[Linearizers.this.BasicBlock]" id="694482">visited</a>: <span title="scala.collection.mutable.HashSet[Linearizers.this.BasicBlock]">HashSet</span>[BasicBlock] = <span title="scala.collection.mutable.HashSet[Linearizers.this.BasicBlock]" class="keyword">new</span> <span title="scala.collection.mutable.HashSet[Linearizers.this.BasicBlock]">HashSet</span>;
+    <span class="keyword">val</span> <a title="scala.collection.mutable.BitSet" id="694484">added</a>: <span title="scala.collection.mutable.BitSet">BitSet</span> = <a title="()scala.collection.mutable.BitSet" id="537499" class="keyword">new</a> <span title="scala.collection.mutable.BitSet">BitSet</span>
     
-    <span class="keyword">def</span> <a title="(m: Linearizers.this.IMethod)List[Linearizers.this.BasicBlock]" id="692770">linearize</a>(<a title="Linearizers.this.IMethod" id="701163">m</a>: <a href="Members.scala.html#46173" title="Linearizers.this.IMethod">IMethod</a>): <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock] = {
-      <a href="#692763" title="(x$1: List[Linearizers.this.BasicBlock])Unit">blocks</a> = <span title="object Nil">Nil</span>;
-      <a href="#692766" title="=&gt; scala.collection.mutable.HashSet[Linearizers.this.BasicBlock]">visited</a>.<span title="()Unit">clear</span>;
-      <a href="#692768" title="=&gt; scala.collection.mutable.BitSet">added</a>.<span title="()Unit">clear</span>;
+    <span class="keyword">def</span> <a title="(m: Linearizers.this.IMethod)List[Linearizers.this.BasicBlock]" id="694486">linearize</a>(<a title="Linearizers.this.IMethod" id="702924">m</a>: <a href="Members.scala.html#46405" title="Linearizers.this.IMethod">IMethod</a>): <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock] = {
+      <a href="#694479" title="(x$1: List[Linearizers.this.BasicBlock])Unit">blocks</a> = <span title="object Nil">Nil</span>;
+      <a href="#694482" title="=&gt; scala.collection.mutable.HashSet[Linearizers.this.BasicBlock]">visited</a>.<span title="()Unit">clear</span>;
+      <a href="#694484" title="=&gt; scala.collection.mutable.BitSet">added</a>.<span title="()Unit">clear</span>;
 
-      <a href="#701163" title="Linearizers.this.IMethod">m</a>.<a href="Members.scala.html#61234" title="(f: (Linearizers.this.ExceptionHandler) =&gt; Unit)Unit">exh</a> foreach (<a title="Linearizers.this.ExceptionHandler" id="701189">b</a> =&gt; <a href="#692772" title="(b: Linearizers.this.BasicBlock)Unit">rpo</a>(<a href="#701189" title="Linearizers.this.ExceptionHandler">b</a>.<a href="ExceptionHandlers.scala.html#61445" title="=&gt; Linearizers.this.BasicBlock">startBlock</a>));
-      <a href="#692772" title="(b: Linearizers.this.BasicBlock)Unit">rpo</a>(<a href="#701163" title="Linearizers.this.IMethod">m</a>.<a href="Members.scala.html#61228" title="=&gt; Linearizers.this.Code">code</a>.<a href="Members.scala.html#61392" title="=&gt; Linearizers.this.BasicBlock">startBlock</a>);
+      <a href="#702924" title="Linearizers.this.IMethod">m</a>.<a href="Members.scala.html#61503" title="(f: (Linearizers.this.ExceptionHandler) =&gt; Unit)Unit">exh</a> foreach (<a title="Linearizers.this.ExceptionHandler" id="702950">b</a> =&gt; <a href="#694488" title="(b: Linearizers.this.BasicBlock)Unit">rpo</a>(<a href="#702950" title="Linearizers.this.ExceptionHandler">b</a>.<a href="ExceptionHandlers.scala.html#61714" title="=&gt; Linearizers.this.BasicBlock">startBlock</a>));
+      <a href="#694488" title="(b: Linearizers.this.BasicBlock)Unit">rpo</a>(<a href="#702924" title="Linearizers.this.IMethod">m</a>.<a href="Members.scala.html#61497" title="=&gt; Linearizers.this.Code">code</a>.<a href="Members.scala.html#61661" title="=&gt; Linearizers.this.BasicBlock">startBlock</a>);
       
       // if the start block has predecessors, it won't be the first one 
       // in the linearization, so we need to enforce it here
-      <span title="List[Linearizers.this.BasicBlock]" class="keyword">if</span> (<a href="#701163" title="Linearizers.this.IMethod">m</a>.<a href="Members.scala.html#61228" title="=&gt; Linearizers.this.Code">code</a>.<a href="Members.scala.html#61392" title="=&gt; Linearizers.this.BasicBlock">startBlock</a>.<a href="BasicBlocks.scala.html#61346" title="(x$1: AnyRef)Boolean" id="6542">predecessors</a> eq <span title="object Nil">Nil</span>)
-        <a href="#692763" title="=&gt; List[Linearizers.this.BasicBlock]">blocks</a>
+      <span title="List[Linearizers.this.BasicBlock]" class="keyword">if</span> (<a href="#702924" title="Linearizers.this.IMethod">m</a>.<a href="Members.scala.html#61497" title="=&gt; Linearizers.this.Code">code</a>.<a href="Members.scala.html#61661" title="=&gt; Linearizers.this.BasicBlock">startBlock</a>.<a href="BasicBlocks.scala.html#61615" title="(x$1: AnyRef)Boolean" id="6611">predecessors</a> eq <span title="object Nil">Nil</span>)
+        <a href="#694479" title="=&gt; List[Linearizers.this.BasicBlock]">blocks</a>
       <span class="keyword">else</span>
-        <a href="#701163" title="Linearizers.this.IMethod">m</a>.<a href="Members.scala.html#61228" title="=&gt; Linearizers.this.Code">code</a>.<a href="Members.scala.html#61392" title="=&gt; Linearizers.this.BasicBlock">startBlock</a> <a href="#701202" title="Linearizers.this.BasicBlock">::</a> <span title="(x: Linearizers.this.BasicBlock)List[Linearizers.this.BasicBlock]">(</span><a href="#692763" title="=&gt; List[Linearizers.this.BasicBlock]">blocks</a>.<a title="(p: (Linearizers.this.BasicBlock) =&gt; Boolean)List[Linearizers.this.BasicBlock]" id="25271">filterNot</a>(<a href="#701205" title="(x$1: AnyRef)Boolean" id="3626">_</a> == <a href="#701163" title="Linearizers.this.IMethod">m</a>.<a href="Members.scala.html#61228" title="=&gt; Linearizers.this.Code">code</a>.<a href="Members.scala.html#61392" title="=&gt; Linearizers.this.BasicBlock">startBlock</a>))
+        <a href="#702924" title="Linearizers.this.IMethod">m</a>.<a href="Members.scala.html#61497" title="=&gt; Linearizers.this.Code">code</a>.<a href="Members.scala.html#61661" title="=&gt; Linearizers.this.BasicBlock">startBlock</a> <a href="#702963" title="Linearizers.this.BasicBlock">::</a> <span title="(x: Linearizers.this.BasicBlock)List[Linearizers.this.BasicBlock]">(</span><a href="#694479" title="=&gt; List[Linearizers.this.BasicBlock]">blocks</a>.<a title="(p: (Linearizers.this.BasicBlock) =&gt; Boolean)List[Linearizers.this.BasicBlock]" id="25430">filterNot</a>(<a href="#702966" title="(x$1: AnyRef)Boolean" id="3647">_</a> == <a href="#702924" title="Linearizers.this.IMethod">m</a>.<a href="Members.scala.html#61497" title="=&gt; Linearizers.this.Code">code</a>.<a href="Members.scala.html#61661" title="=&gt; Linearizers.this.BasicBlock">startBlock</a>))
     }
 
-    <span class="keyword">def</span> <a title="(m: Linearizers.this.IMethod,start: Linearizers.this.BasicBlock)List[Linearizers.this.BasicBlock]" id="692771">linearizeAt</a>(<a title="Linearizers.this.IMethod" id="701221">m</a>: <a href="Members.scala.html#46173" title="Linearizers.this.IMethod">IMethod</a>, <a title="Linearizers.this.BasicBlock" id="701222">start</a>: <a href="BasicBlocks.scala.html#46178" title="Linearizers.this.BasicBlock">BasicBlock</a>): <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock] = {
-      <a href="#692763" title="(x$1: List[Linearizers.this.BasicBlock])Unit">blocks</a> = <span title="object Nil">Nil</span>
-      <a href="#692766" title="=&gt; scala.collection.mutable.HashSet[Linearizers.this.BasicBlock]">visited</a>.<span title="()Unit">clear</span>
-      <a href="#692768" title="=&gt; scala.collection.mutable.BitSet">added</a>.<span title="()Unit">clear</span>
+    <span class="keyword">def</span> <a title="(m: Linearizers.this.IMethod,start: Linearizers.this.BasicBlock)List[Linearizers.this.BasicBlock]" id="694487">linearizeAt</a>(<a title="Linearizers.this.IMethod" id="702982">m</a>: <a href="Members.scala.html#46405" title="Linearizers.this.IMethod">IMethod</a>, <a title="Linearizers.this.BasicBlock" id="702983">start</a>: <a href="BasicBlocks.scala.html#46410" title="Linearizers.this.BasicBlock">BasicBlock</a>): <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock] = {
+      <a href="#694479" title="(x$1: List[Linearizers.this.BasicBlock])Unit">blocks</a> = <span title="object Nil">Nil</span>
+      <a href="#694482" title="=&gt; scala.collection.mutable.HashSet[Linearizers.this.BasicBlock]">visited</a>.<span title="()Unit">clear</span>
+      <a href="#694484" title="=&gt; scala.collection.mutable.BitSet">added</a>.<span title="()Unit">clear</span>
       
-      <a href="#692772" title="(b: Linearizers.this.BasicBlock)Unit">rpo</a>(<a href="#701222" title="Linearizers.this.BasicBlock">start</a>)
-      <a href="#692763" title="=&gt; List[Linearizers.this.BasicBlock]">blocks</a>
+      <a href="#694488" title="(b: Linearizers.this.BasicBlock)Unit">rpo</a>(<a href="#702983" title="Linearizers.this.BasicBlock">start</a>)
+      <a href="#694479" title="=&gt; List[Linearizers.this.BasicBlock]">blocks</a>
     }
     
-    <span class="keyword">def</span> <a title="(b: Linearizers.this.BasicBlock)Unit" id="692772">rpo</a>(<a title="Linearizers.this.BasicBlock" id="701190">b</a>: <a href="BasicBlocks.scala.html#46178" title="Linearizers.this.BasicBlock">BasicBlock</a>): <span title="Unit">Unit</span> = 
-      <span title="Unit" class="keyword">if</span> (<a href="#701190" title="Linearizers.this.BasicBlock">b</a>.<span title="(x$1: Int)Boolean">size</span> <span title="(x$1: Boolean)Boolean">&gt;</span> <span title="Int(0)" class="int">0</span> &amp;&amp; <span title="=&gt; Boolean">!</span>(<a href="#692766" title="(elem: Linearizers.this.BasicBlock)Boolean" id="39286">visited</a> contains <a href="#701190" title="Linearizers.this.BasicBlock">b</a>)) {
-        <a href="#692766" title="(elem: Linearizers.this.BasicBlock)scala.collection.mutable.HashSet[Linearizers.this.BasicBlock]" id="39288">visited</a> += <a href="#701190" title="Linearizers.this.BasicBlock">b</a>;
-        <a href="#701190" title="Linearizers.this.BasicBlock">b</a>.<a href="BasicBlocks.scala.html#61344" title="(f: (Linearizers.this.BasicBlock) =&gt; Unit)Unit">successors</a> foreach <a href="#692772" title="(b: Linearizers.this.BasicBlock)Unit">rpo</a>;
-        <a href="#692773" title="(b: Linearizers.this.BasicBlock)Unit">add</a>(<a href="#701190" title="Linearizers.this.BasicBlock">b</a>);
+    <span class="keyword">def</span> <a title="(b: Linearizers.this.BasicBlock)Unit" id="694488">rpo</a>(<a title="Linearizers.this.BasicBlock" id="702951">b</a>: <a href="BasicBlocks.scala.html#46410" title="Linearizers.this.BasicBlock">BasicBlock</a>): <span title="Unit">Unit</span> = 
+      <span title="Unit" class="keyword">if</span> (<a href="#702951" title="Linearizers.this.BasicBlock">b</a>.<span title="(x$1: Int)Boolean">size</span> <span title="(x$1: Boolean)Boolean">&gt;</span> <span title="Int(0)" class="int">0</span> &amp;&amp; <span title="=&gt; Boolean">!</span>(<a href="#694482" title="(elem: Linearizers.this.BasicBlock)Boolean" id="39518">visited</a> contains <a href="#702951" title="Linearizers.this.BasicBlock">b</a>)) {
+        <a href="#694482" title="(elem: Linearizers.this.BasicBlock)scala.collection.mutable.HashSet[Linearizers.this.BasicBlock]" id="39520">visited</a> += <a href="#702951" title="Linearizers.this.BasicBlock">b</a>;
+        <a href="#702951" title="Linearizers.this.BasicBlock">b</a>.<a href="BasicBlocks.scala.html#61613" title="(f: (Linearizers.this.BasicBlock) =&gt; Unit)Unit">successors</a> foreach <a href="#694488" title="(b: Linearizers.this.BasicBlock)Unit">rpo</a>;
+        <a href="#694489" title="(b: Linearizers.this.BasicBlock)Unit">add</a>(<a href="#702951" title="Linearizers.this.BasicBlock">b</a>);
       }
 
     /** 
      * Prepend b to the list, if not already scheduled. 
      * @return Returns true if the block was added.
      */
-    <span class="keyword">def</span> <a title="(b: Linearizers.this.BasicBlock)Unit" id="692773">add</a>(<a title="Linearizers.this.BasicBlock" id="701308">b</a>: <a href="BasicBlocks.scala.html#46178" title="Linearizers.this.BasicBlock">BasicBlock</a>) = 
-      <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#692768" title="(elem: Int)Boolean" id="39339">added</a>(<a href="#701308" title="Linearizers.this.BasicBlock">b</a>.<a href="BasicBlocks.scala.html#61275" title="=&gt; Int">label</a>)) {
-        <a href="#692768" title="(elem: Int)ReversePostOrderLinearizer.this.added.type" id="536318">added</a> += <a href="#701308" title="Linearizers.this.BasicBlock">b</a>.<a href="BasicBlocks.scala.html#61275" title="=&gt; Int">label</a>
-        <a href="#692763" title="(x$1: List[Linearizers.this.BasicBlock])Unit">blocks</a> = <a href="#701308" title="Linearizers.this.BasicBlock">b</a> <a href="#701349" title="Linearizers.this.BasicBlock">::</a> <a href="#692763" title="(x: Linearizers.this.BasicBlock)List[Linearizers.this.BasicBlock]">blocks</a>;
+    <span class="keyword">def</span> <a title="(b: Linearizers.this.BasicBlock)Unit" id="694489">add</a>(<a title="Linearizers.this.BasicBlock" id="703069">b</a>: <a href="BasicBlocks.scala.html#46410" title="Linearizers.this.BasicBlock">BasicBlock</a>) = 
+      <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#694484" title="(elem: Int)Boolean" id="39571">added</a>(<a href="#703069" title="Linearizers.this.BasicBlock">b</a>.<a href="BasicBlocks.scala.html#61544" title="=&gt; Int">label</a>)) {
+        <a href="#694484" title="(elem: Int)ReversePostOrderLinearizer.this.added.type" id="537512">added</a> += <a href="#703069" title="Linearizers.this.BasicBlock">b</a>.<a href="BasicBlocks.scala.html#61544" title="=&gt; Int">label</a>
+        <a href="#694479" title="(x$1: List[Linearizers.this.BasicBlock])Unit">blocks</a> = <a href="#703069" title="Linearizers.this.BasicBlock">b</a> <a href="#703110" title="Linearizers.this.BasicBlock">::</a> <a href="#694479" title="(x: Linearizers.this.BasicBlock)List[Linearizers.this.BasicBlock]">blocks</a>;
       }
   }
 
@@ -203,12 +203,12 @@
    *  require any well-formedness of the basic blocks (like
    *  the last instruction being a jump).
    */
-  <span class="keyword">class</span> <a title="class DumpLinearizer extends Linearizers.this.Linearizer with ScalaObject" id="46329">DumpLinearizer</a> <span title="ScalaObject" class="keyword">extends</span> <a href="#46325" title="Linearizers.this.Linearizer">Linearizer</a> {
-    <span class="keyword">def</span> <a title="(m: Linearizers.this.IMethod)List[Linearizers.this.BasicBlock]" id="692830">linearize</a>(<a title="Linearizers.this.IMethod" id="701364">m</a>: <a href="Members.scala.html#46173" title="Linearizers.this.IMethod">IMethod</a>): <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock] =
-      <a href="#701364" title="Linearizers.this.IMethod">m</a>.<a href="Members.scala.html#61228" title="=&gt; Linearizers.this.Code">code</a>.<a href="Members.scala.html#61390" title="=&gt; scala.collection.mutable.ListBuffer[Linearizers.this.BasicBlock]">blocks</a>.<a title="=&gt; List[Linearizers.this.BasicBlock]" id="61592">toList</a>;
+  <span class="keyword">class</span> <a title="class DumpLinearizer extends Linearizers.this.Linearizer with ScalaObject" id="46561">DumpLinearizer</a> <span title="ScalaObject" class="keyword">extends</span> <a href="#46557" title="Linearizers.this.Linearizer">Linearizer</a> {
+    <span class="keyword">def</span> <a title="(m: Linearizers.this.IMethod)List[Linearizers.this.BasicBlock]" id="694546">linearize</a>(<a title="Linearizers.this.IMethod" id="703125">m</a>: <a href="Members.scala.html#46405" title="Linearizers.this.IMethod">IMethod</a>): <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock] =
+      <a href="#703125" title="Linearizers.this.IMethod">m</a>.<a href="Members.scala.html#61497" title="=&gt; Linearizers.this.Code">code</a>.<a href="Members.scala.html#61659" title="=&gt; scala.collection.mutable.ListBuffer[Linearizers.this.BasicBlock]">blocks</a>.<a title="=&gt; List[Linearizers.this.BasicBlock]" id="61864">toList</a>;
     
-    <span class="keyword">def</span> <a title="(m: Linearizers.this.IMethod,start: Linearizers.this.BasicBlock)List[Linearizers.this.BasicBlock]" id="692831">linearizeAt</a>(<a title="Linearizers.this.IMethod" id="701373">m</a>: <a href="Members.scala.html#46173" title="Linearizers.this.IMethod">IMethod</a>, <a title="Linearizers.this.BasicBlock" id="701374">start</a>: <a href="BasicBlocks.scala.html#46178" title="Linearizers.this.BasicBlock">BasicBlock</a>): <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock] = {
-      <a title="(message: String)Nothing" id="693">error</a>(<span title="java.lang.String(&quot;not implemented&quot;)" class="string">&quot;not implemented&quot;</span>)
+    <span class="keyword">def</span> <a title="(m: Linearizers.this.IMethod,start: Linearizers.this.BasicBlock)List[Linearizers.this.BasicBlock]" id="694547">linearizeAt</a>(<a title="Linearizers.this.IMethod" id="703134">m</a>: <a href="Members.scala.html#46405" title="Linearizers.this.IMethod">IMethod</a>, <a title="Linearizers.this.BasicBlock" id="703135">start</a>: <a href="BasicBlocks.scala.html#46410" title="Linearizers.this.BasicBlock">BasicBlock</a>): <span title="List[Linearizers.this.BasicBlock]">List</span>[BasicBlock] = {
+      <a title="(message: String)Nothing" id="708">error</a>(<span title="java.lang.String(&quot;not implemented&quot;)" class="string">&quot;not implemented&quot;</span>)
     }
   }
   

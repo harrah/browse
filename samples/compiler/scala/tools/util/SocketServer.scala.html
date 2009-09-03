@@ -24,17 +24,17 @@
 <span class="keyword">import</span> java.io.{ PrintWriter, BufferedOutputStream, BufferedReader, InputStreamReader, IOException }
 <span class="keyword">import</span> java.net.{ Socket, ServerSocket, SocketException, SocketTimeoutException }
 
-<span class="keyword">object</span> <a title="object scala.tools.util.SocketServer" id="21371">SocketServer</a>
+<span class="keyword">object</span> <a title="object scala.tools.util.SocketServer" id="21513">SocketServer</a>
 <span title="ScalaObject">{</span>
   // After 30 idle minutes, politely exit.
   // Should the port file disappear, and the clients
   // therefore unable to contact this server instance,
   // the process will just eventually terminate by itself.
-  <span class="keyword">val</span> <a title="Int" id="286588">IdleTimeout</a> = <span title="Int(1800000)" class="int">1800000</span>
-  <span class="keyword">val</span> <a title="Int" id="286590">BufferSize</a>  = <span title="Int(10240)" class="int">10240</span>
+  <span class="keyword">val</span> <a title="Int" id="287468">IdleTimeout</a> = <span title="Int(1800000)" class="int">1800000</span>
+  <span class="keyword">val</span> <a title="Int" id="287470">BufferSize</a>  = <span title="Int(10240)" class="int">10240</span>
   
-  <span class="keyword">def</span> <a title="(s: java.net.Socket)java.io.BufferedReader" id="286592">bufferedReader</a>(<a title="java.net.Socket" id="286615">s</a>: <span title="java.net.Socket">Socket</span>) = <a title="(x$1: java.io.Reader)java.io.BufferedReader" id="38840" class="keyword">new</a> <span title="java.io.BufferedReader">BufferedReader</span>(<span title="java.io.InputStreamReader" class="keyword">new</span> <a title="java.io.InputStreamReader" id="3888">InputStreamReader</a>(<a href="#286615" title="java.net.Socket">s</a>.<a title="()java.io.InputStream" id="131982">getInputStream</a>()))
-  <span class="keyword">def</span> <a title="(s: java.net.Socket)java.io.BufferedOutputStream" id="286593">bufferedOutput</a>(<a title="java.net.Socket" id="286628">s</a>: <span title="java.net.Socket">Socket</span>) = <a title="(x$1: java.io.OutputStream,x$2: Int)java.io.BufferedOutputStream" id="286635" class="keyword">new</a> <a title="java.io.BufferedOutputStream" id="3873">BufferedOutputStream</a>(<a href="#286628" title="java.net.Socket">s</a>.<span title="()java.io.OutputStream">getOutputStream</span>, <a href="#286590" title="=&gt; Int">BufferSize</a>)
+  <span class="keyword">def</span> <a title="(s: java.net.Socket)java.io.BufferedReader" id="287472">bufferedReader</a>(<a title="java.net.Socket" id="287495">s</a>: <span title="java.net.Socket">Socket</span>) = <a title="(x$1: java.io.Reader)java.io.BufferedReader" id="39072" class="keyword">new</a> <span title="java.io.BufferedReader">BufferedReader</span>(<span title="java.io.InputStreamReader" class="keyword">new</span> <a title="java.io.InputStreamReader" id="3909">InputStreamReader</a>(<a href="#287495" title="java.net.Socket">s</a>.<a title="()java.io.InputStream" id="132557">getInputStream</a>()))
+  <span class="keyword">def</span> <a title="(s: java.net.Socket)java.io.BufferedOutputStream" id="287473">bufferedOutput</a>(<a title="java.net.Socket" id="287508">s</a>: <span title="java.net.Socket">Socket</span>) = <a title="(x$1: java.io.OutputStream,x$2: Int)java.io.BufferedOutputStream" id="287515" class="keyword">new</a> <a title="java.io.BufferedOutputStream" id="3894">BufferedOutputStream</a>(<a href="#287508" title="java.net.Socket">s</a>.<span title="()java.io.OutputStream">getOutputStream</span>, <a href="#287470" title="=&gt; Int">BufferSize</a>)
 }
 <span class="keyword">import</span> SocketServer._
 
@@ -44,69 +44,69 @@
  *  @author  Martin Odersky
  *  @version 1.0
  */
-<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class SocketServer extends java.lang.Object with ScalaObject" id="21370">SocketServer</a>
+<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class SocketServer extends java.lang.Object with ScalaObject" id="21512">SocketServer</a>
 <span title="ScalaObject">{</span>
-  <span class="keyword">def</span> <a title="=&gt; Boolean" id="286595">shutDown</a>: <a title="Boolean" id="1951">Boolean</a>
-  <span class="keyword">def</span> <a title="()Unit" id="286596">session</a>()
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="287475">shutDown</a>: <a title="Boolean" id="1972">Boolean</a>
+  <span class="keyword">def</span> <a title="()Unit" id="287476">session</a>()
 
-  <span class="keyword">var</span> <a title="java.io.PrintWriter" id="286598">out</a>: <span title="java.io.PrintWriter">PrintWriter</span> = _
-  <span class="keyword">var</span> <a title="java.io.BufferedReader" id="286601">in</a>: <span title="java.io.BufferedReader">BufferedReader</span> = _
+  <span class="keyword">var</span> <a title="java.io.PrintWriter" id="287478">out</a>: <span title="java.io.PrintWriter">PrintWriter</span> = _
+  <span class="keyword">var</span> <a title="java.io.BufferedReader" id="287481">in</a>: <span title="java.io.BufferedReader">BufferedReader</span> = _
 
-  <span class="keyword">def</span> <a title="(msg: String)Nothing" id="286603">fatal</a>(<a title="String" id="286882">msg</a>: <span title="String">String</span>): <a title="Nothing" id="3622">Nothing</a> = {
-    <span title="object java.lang.System">System</span>.<span title="java.io.PrintStream">err</span>.<span title="(x$1: java.lang.String)Unit">println</span>(<a href="#286882" title="String">msg</a>)
-    <a title="(status: Int)Nothing" id="7872">exit</a>(<span title="Int(1)" class="int">1</span>)
+  <span class="keyword">def</span> <a title="(msg: String)Nothing" id="287483">fatal</a>(<a title="String" id="287762">msg</a>: <span title="String">String</span>): <a title="Nothing" id="3643">Nothing</a> = {
+    <span title="object java.lang.System">System</span>.<span title="java.io.PrintStream">err</span>.<span title="(x$1: java.lang.String)Unit">println</span>(<a href="#287762" title="String">msg</a>)
+    <a title="(status: Int)Nothing" id="7941">exit</a>(<span title="Int(1)" class="int">1</span>)
   }
 
-  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(msg: String)Unit" id="286604">warn</a>(<a title="String" id="286901">msg</a>: <span title="String">String</span>) {
-    <span title="object java.lang.System">System</span>.<span title="java.io.PrintStream">err</span>.<span title="(x$1: java.lang.String)Unit">println</span>(<a href="#286901" title="String">msg</a>)
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(msg: String)Unit" id="287484">warn</a>(<a title="String" id="287781">msg</a>: <span title="String">String</span>) {
+    <span title="object java.lang.System">System</span>.<span title="java.io.PrintStream">err</span>.<span title="(x$1: java.lang.String)Unit">println</span>(<a href="#287781" title="String">msg</a>)
   }
 
   // called after a timeout is detected,
   // for SocketServer subclasses to perform
   // some cleanup, if any
-  <span class="keyword">def</span> <a title="()Unit" id="286605">timeout</a>() <span title="Unit">{</span>}
+  <span class="keyword">def</span> <a title="()Unit" id="287485">timeout</a>() <span title="Unit">{</span>}
   
-  <span class="keyword">val</span> <a title="java.net.ServerSocket" id="286606">serverSocket</a> =
-    <span class="keyword">try</span> <a title="(x$1: Int)java.net.ServerSocket" id="286662" class="keyword">new</a> <a title="java.net.ServerSocket" id="5085">ServerSocket</a>(<span title="Int(0)" class="int">0</span>)
-    <span class="keyword">catch</span> { <span title="Nothing" class="keyword">case</span> <a title="java.io.IOException" id="286881">e</a>: <span title="java.io.IOException">IOException</span> =&gt; <a href="#286603" title="(msg: String)Nothing">fatal</a>(<span title="java.lang.String(&quot;Could not listen on any port; exiting.&quot;)" class="string">&quot;Could not listen on any port; exiting.&quot;</span>) }
+  <span class="keyword">val</span> <a title="java.net.ServerSocket" id="287486">serverSocket</a> =
+    <span class="keyword">try</span> <a title="(x$1: Int)java.net.ServerSocket" id="287542" class="keyword">new</a> <a title="java.net.ServerSocket" id="5154">ServerSocket</a>(<span title="Int(0)" class="int">0</span>)
+    <span class="keyword">catch</span> { <span title="Nothing" class="keyword">case</span> <a title="java.io.IOException" id="287761">e</a>: <span title="java.io.IOException">IOException</span> =&gt; <a href="#287483" title="(msg: String)Nothing">fatal</a>(<span title="java.lang.String(&quot;Could not listen on any port; exiting.&quot;)" class="string">&quot;Could not listen on any port; exiting.&quot;</span>) }
     
-  <span class="keyword">val</span> <a title="Int" id="286608">port</a>: <a title="Int" id="2177">Int</a> = <a href="#286606" title="=&gt; java.net.ServerSocket">serverSocket</a>.<a title="()Int" id="286679">getLocalPort</a>()
+  <span class="keyword">val</span> <a title="Int" id="287488">port</a>: <a title="Int" id="2198">Int</a> = <a href="#287486" title="=&gt; java.net.ServerSocket">serverSocket</a>.<a title="()Int" id="287559">getLocalPort</a>()
   
   // @todo: this is going to be a prime candidate for ARM
-  <span class="keyword">def</span> <a title="(clientSocket: java.net.Socket)Unit" id="286610">doSession</a>(<a title="java.net.Socket" id="286912">clientSocket</a>: <span title="java.net.Socket">Socket</span>) = {
-    <a href="#286598" title="(x$1: java.io.PrintWriter)Unit">out</a> = <a title="(x$1: java.io.OutputStream,x$2: Boolean)java.io.PrintWriter" id="38867" class="keyword">new</a> <span title="java.io.PrintWriter">PrintWriter</span>(<a href="#286912" title="java.net.Socket">clientSocket</a>.<span title="()java.io.OutputStream">getOutputStream</span>(), <span title="Boolean(true)" class="keyword">true</span>)
-    <a href="#286601" title="(x$1: java.io.BufferedReader)Unit">in</a> = <a href="#286592" title="(s: java.net.Socket)java.io.BufferedReader">bufferedReader</a>(<a href="#286912" title="java.net.Socket">clientSocket</a>)
-    <span class="keyword">val</span> <a title="java.io.BufferedOutputStream" id="286915">bufout</a> = <a href="#286593" title="(s: java.net.Socket)java.io.BufferedOutputStream">bufferedOutput</a>(<a href="#286912" title="java.net.Socket">clientSocket</a>)
+  <span class="keyword">def</span> <a title="(clientSocket: java.net.Socket)Unit" id="287490">doSession</a>(<a title="java.net.Socket" id="287792">clientSocket</a>: <span title="java.net.Socket">Socket</span>) = {
+    <a href="#287478" title="(x$1: java.io.PrintWriter)Unit">out</a> = <a title="(x$1: java.io.OutputStream,x$2: Boolean)java.io.PrintWriter" id="39099" class="keyword">new</a> <span title="java.io.PrintWriter">PrintWriter</span>(<a href="#287792" title="java.net.Socket">clientSocket</a>.<span title="()java.io.OutputStream">getOutputStream</span>(), <span title="Boolean(true)" class="keyword">true</span>)
+    <a href="#287481" title="(x$1: java.io.BufferedReader)Unit">in</a> = <a href="#287472" title="(s: java.net.Socket)java.io.BufferedReader">bufferedReader</a>(<a href="#287792" title="java.net.Socket">clientSocket</a>)
+    <span class="keyword">val</span> <a title="java.io.BufferedOutputStream" id="287795">bufout</a> = <a href="#287473" title="(s: java.net.Socket)java.io.BufferedOutputStream">bufferedOutput</a>(<a href="#287792" title="java.net.Socket">clientSocket</a>)
     
-    scala.<a title="object Console" id="390">Console</a>.<a title="(out: java.io.OutputStream)(thunk: =&gt; Unit)Unit" id="51291">withOut</a>(<a href="#286915" title="java.io.BufferedOutputStream">bufout</a>) { <a href="#286596" title="()Unit">session</a>() }
+    scala.<a title="object Console" id="402">Console</a>.<a title="(out: java.io.OutputStream)(thunk: =&gt; Unit)Unit" id="51544">withOut</a>(<a href="#287795" title="java.io.BufferedOutputStream">bufout</a>) { <a href="#287476" title="()Unit">session</a>() }
     
-    <a href="#286915" title="java.io.BufferedOutputStream">bufout</a>.<a title="()Unit" id="41307">close</a>()
-    <a href="#286598" title="=&gt; java.io.PrintWriter">out</a>.<a title="()Unit" id="38881">close</a>()
-    <a href="#286601" title="=&gt; java.io.BufferedReader">in</a>.<a title="()Unit" id="38857">close</a>()
+    <a href="#287795" title="java.io.BufferedOutputStream">bufout</a>.<a title="()Unit" id="41539">close</a>()
+    <a href="#287478" title="=&gt; java.io.PrintWriter">out</a>.<a title="()Unit" id="39113">close</a>()
+    <a href="#287481" title="=&gt; java.io.BufferedReader">in</a>.<a title="()Unit" id="39089">close</a>()
   }
 
-  <span class="keyword">def</span> <a title="()Unit" id="286611">run</a>() {
-    <span class="keyword">def</span> <a title="(s: String)Nothing" id="286988">fail</a>(<a title="String" id="286989">s</a>: <span title="String">String</span>) = <a href="#286603" title="(msg: String)Nothing">fatal</a>(<a href="#286989" title="(args: Any*)String">s</a> format <a href="#286608" title="=&gt; Int">port</a>)
+  <span class="keyword">def</span> <a title="()Unit" id="287491">run</a>() {
+    <span class="keyword">def</span> <a title="(s: String)Nothing" id="287868">fail</a>(<a title="String" id="287869">s</a>: <span title="String">String</span>) = <a href="#287483" title="(msg: String)Nothing">fatal</a>(<a href="#287869" title="(args: Any*)String">s</a> format <a href="#287488" title="=&gt; Int">port</a>)
     
-    <span class="keyword">try</span> <a href="#286606" title="(x$1: Int)Unit" id="286688">serverSocket</a> setSoTimeout <a href="#286588" title="=&gt; Int">IdleTimeout</a> <span class="keyword">catch</span> {
-      <span title="Nothing" class="keyword">case</span> <a title="java.net.SocketException" id="287018">e</a>: <a title="java.net.SocketException" id="4890">SocketException</a> =&gt; <a href="#286988" title="(s: String)Nothing">fail</a>(<span title="java.lang.String(&quot;Could not set timeout on port: %d; exiting.&quot;)" class="string">&quot;Could not set timeout on port: %d; exiting.&quot;</span>)
+    <span class="keyword">try</span> <a href="#287486" title="(x$1: Int)Unit" id="287568">serverSocket</a> setSoTimeout <a href="#287468" title="=&gt; Int">IdleTimeout</a> <span class="keyword">catch</span> {
+      <span title="Nothing" class="keyword">case</span> <a title="java.net.SocketException" id="287898">e</a>: <a title="java.net.SocketException" id="4959">SocketException</a> =&gt; <a href="#287868" title="(s: String)Nothing">fail</a>(<span title="java.lang.String(&quot;Could not set timeout on port: %d; exiting.&quot;)" class="string">&quot;Could not set timeout on port: %d; exiting.&quot;</span>)
     }
     
     <span class="keyword">try</span> {
-      <span title="Unit" class="keyword">while</span> (<a title="=&gt; Boolean" id="2205">!</a><a href="#286595" title="=&gt; Boolean">shutDown</a>) <a href="#287024" title="()Unit">{</a>
-        <span class="keyword">val</span> <a title="java.net.Socket" id="287025">clientSocket</a> = <span class="keyword">try</span> <a href="#286606" title="=&gt; java.net.ServerSocket">serverSocket</a>.<a title="()java.net.Socket" id="286681">accept</a>() <span class="keyword">catch</span> {
-          <span title="Nothing" class="keyword">case</span> <a title="java.io.IOException" id="287028">e</a>: <span title="java.io.IOException">IOException</span> =&gt; <a href="#286988" title="(s: String)Nothing">fail</a>(<span title="java.lang.String(&quot;Accept on port %d failed; exiting.&quot;)" class="string">&quot;Accept on port %d failed; exiting.&quot;</span>)
+      <span title="Unit" class="keyword">while</span> (<a title="=&gt; Boolean" id="2226">!</a><a href="#287475" title="=&gt; Boolean">shutDown</a>) <a href="#287904" title="()Unit">{</a>
+        <span class="keyword">val</span> <a title="java.net.Socket" id="287905">clientSocket</a> = <span class="keyword">try</span> <a href="#287486" title="=&gt; java.net.ServerSocket">serverSocket</a>.<a title="()java.net.Socket" id="287561">accept</a>() <span class="keyword">catch</span> {
+          <span title="Nothing" class="keyword">case</span> <a title="java.io.IOException" id="287908">e</a>: <span title="java.io.IOException">IOException</span> =&gt; <a href="#287868" title="(s: String)Nothing">fail</a>(<span title="java.lang.String(&quot;Accept on port %d failed; exiting.&quot;)" class="string">&quot;Accept on port %d failed; exiting.&quot;</span>)
         }        
-        <a href="#286610" title="(clientSocket: java.net.Socket)Unit">doSession</a>(<a href="#287025" title="java.net.Socket">clientSocket</a>)
-        <a href="#287025" title="java.net.Socket">clientSocket</a>.<a title="()Unit" id="132014">close</a>()
+        <a href="#287490" title="(clientSocket: java.net.Socket)Unit">doSession</a>(<a href="#287905" title="java.net.Socket">clientSocket</a>)
+        <a href="#287905" title="java.net.Socket">clientSocket</a>.<a title="()Unit" id="132589">close</a>()
       }
     }
     <span class="keyword">catch</span> {
-      <span title="Unit" class="keyword">case</span> <a title="java.net.SocketTimeoutException" id="287037">e</a>: <a title="java.net.SocketTimeoutException" id="5136">SocketTimeoutException</a> =&gt;
-        <a href="#286604" title="(msg: String)Unit">warn</a>(<span title="(args: Any*)String" class="string">&quot;Timeout elapsed with no requests from clients on port %d; exiting&quot;</span> format <a href="#286608" title="=&gt; Int">port</a>)
-        <a href="#286605" title="()Unit">timeout</a>()
+      <span title="Unit" class="keyword">case</span> <a title="java.net.SocketTimeoutException" id="287917">e</a>: <a title="java.net.SocketTimeoutException" id="5205">SocketTimeoutException</a> =&gt;
+        <a href="#287484" title="(msg: String)Unit">warn</a>(<span title="(args: Any*)String" class="string">&quot;Timeout elapsed with no requests from clients on port %d; exiting&quot;</span> format <a href="#287488" title="=&gt; Int">port</a>)
+        <a href="#287485" title="()Unit">timeout</a>()
     }
-    <a href="#286606" title="=&gt; java.net.ServerSocket">serverSocket</a>.<a title="()Unit" id="286684">close</a>()
+    <a href="#287486" title="=&gt; java.net.ServerSocket">serverSocket</a>.<a title="()Unit" id="287564">close</a>()
   }
 }
 

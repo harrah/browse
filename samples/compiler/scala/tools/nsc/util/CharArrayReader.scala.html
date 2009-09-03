@@ -20,101 +20,101 @@
 
 <span class="keyword">import</span> scala.tools.nsc.util.SourceFile.{LF, FF, CR, SU}
 
-<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class CharArrayReader extends java.lang.Object with ScalaObject" id="14599">CharArrayReader</a> <a title="ScalaObject" id="959">{</a> self =&gt;
+<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class CharArrayReader extends java.lang.Object with ScalaObject" id="14674">CharArrayReader</a> <a title="ScalaObject" id="977">{</a> self =&gt;
 
-  <span class="keyword">val</span> <a title="=&gt; Array[Char]" id="121674">buf</a>: <a title="Array[Char]" id="887">Array</a>[Char]
+  <span class="keyword">val</span> <a title="=&gt; Array[Char]" id="122184">buf</a>: <a title="Array[Char]" id="905">Array</a>[Char]
 
-  <span class="keyword">def</span> <a title="=&gt; Boolean" id="121675">decodeUni</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(true)" class="keyword">true</span>
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="122185">decodeUni</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(true)" class="keyword">true</span>
 
   /** An error routine to call on bad unicode escapes \\uxxxx. */
-  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(offset: Int,msg: String)Unit" id="121676">error</a>(<a title="Int" id="523502">offset</a>: <span title="Int">Int</span>, <a title="String" id="523503">msg</a>: <span title="String">String</span>)
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(offset: Int,msg: String)Unit" id="122186">error</a>(<a title="Int" id="524690">offset</a>: <span title="Int">Int</span>, <a title="String" id="524691">msg</a>: <span title="String">String</span>)
 
   /** the last read character */
-  <span class="keyword">var</span> <a title="Char" id="121678">ch</a>: <span title="Char">Char</span> = _
+  <span class="keyword">var</span> <a title="Char" id="122188">ch</a>: <span title="Char">Char</span> = _
 
   /** The offset one past the last read character */
-  <span class="keyword">var</span> <a title="Int" id="121681">charOffset</a>: <span title="Int">Int</span> = <span title="Int(0)" class="int">0</span>
+  <span class="keyword">var</span> <a title="Int" id="122191">charOffset</a>: <span title="Int">Int</span> = <span title="Int(0)" class="int">0</span>
 
   /** The start offset of the current line */
-  <span class="keyword">var</span> <a title="Int" id="121684">lineStartOffset</a>: <span title="Int">Int</span> = <span title="Int(0)" class="int">0</span>
+  <span class="keyword">var</span> <a title="Int" id="122194">lineStartOffset</a>: <span title="Int">Int</span> = <span title="Int(0)" class="int">0</span>
 
   /** The start offset of the line before the current one */
-  <span class="keyword">var</span> <a title="Int" id="121687">lastLineStartOffset</a>: <span title="Int">Int</span> = <span title="Int(0)" class="int">0</span>
+  <span class="keyword">var</span> <a title="Int" id="122197">lastLineStartOffset</a>: <span title="Int">Int</span> = <span title="Int(0)" class="int">0</span>
 
-  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Int" id="121690">lastUnicodeOffset</a> = <span title="Int(-1)">-</span><span class="int">1</span>
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Int" id="122200">lastUnicodeOffset</a> = <span title="Int(-1)">-</span><span class="int">1</span>
 
   /** Is last character a unicode escape \\uxxxx? */
-  <span class="keyword">def</span> <a title="=&gt; Boolean" id="121692">isUnicodeEscape</a> = <a href="#121681" title="(x$1: Int)Boolean">charOffset</a> == <a href="#121690" title="=&gt; Int">lastUnicodeOffset</a>
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="122202">isUnicodeEscape</a> = <a href="#122191" title="(x$1: Int)Boolean">charOffset</a> == <a href="#122200" title="=&gt; Int">lastUnicodeOffset</a>
   
   /** Advance one character */
-  <span class="keyword">final</span> <span class="keyword">def</span> <a title="()Unit" id="121693">nextChar</a>() {
-    <span title="Unit" class="keyword">if</span> (<a href="#121681" title="(x$1: Int)Boolean">charOffset</a> &gt;= <a href="#121674" title="=&gt; Array[Char]">buf</a>.<span title="=&gt; Int">length</span>) {
-      <a href="#121678" title="(x$1: Char)Unit">ch</a> = <span title="Char('\032')">SU</span>
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="()Unit" id="122203">nextChar</a>() {
+    <span title="Unit" class="keyword">if</span> (<a href="#122191" title="(x$1: Int)Boolean">charOffset</a> &gt;= <a href="#122184" title="=&gt; Array[Char]">buf</a>.<span title="=&gt; Int">length</span>) {
+      <a href="#122188" title="(x$1: Char)Unit">ch</a> = <span title="Char('\032')">SU</span>
     } <span class="keyword">else</span> {
-      <span class="keyword">val</span> <a title="Char" id="760765">c</a> = <a href="#121674" title="(i: Int)Char">buf</a>(<a href="#121681" title="=&gt; Int">charOffset</a>)
-      <a href="#121678" title="(x$1: Char)Unit">ch</a> = <a href="#760765" title="Char">c</a>
-      <a href="#121681" title="(x$1: Int)Unit">charOffset</a> += <span title="Int(1)" class="int">1</span>
-      <span title="Unit" class="keyword">if</span> (<a href="#760765" title="(x$1: Char)Boolean">c</a> == <span title="Char('\')" class="char">'\\'</span>) <a href="#121694" title="()Unit">potentialUnicode</a>()
-      <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#760765" title="(x$1: Char)Boolean" id="2720">c</a> &lt; <span title="Char(' ')" class="char">' '</span>) <a href="#121695" title="()Unit">potentialLineEnd</a>()
+      <span class="keyword">val</span> <a title="Char" id="762623">c</a> = <a href="#122184" title="(i: Int)Char">buf</a>(<a href="#122191" title="=&gt; Int">charOffset</a>)
+      <a href="#122188" title="(x$1: Char)Unit">ch</a> = <a href="#762623" title="Char">c</a>
+      <a href="#122191" title="(x$1: Int)Unit">charOffset</a> += <span title="Int(1)" class="int">1</span>
+      <span title="Unit" class="keyword">if</span> (<a href="#762623" title="(x$1: Char)Boolean">c</a> == <span title="Char('\')" class="char">'\\'</span>) <a href="#122204" title="()Unit">potentialUnicode</a>()
+      <span class="keyword">else</span> <span title="Unit" class="keyword">if</span> (<a href="#762623" title="(x$1: Char)Boolean" id="2741">c</a> &lt; <span title="Char(' ')" class="char">' '</span>) <a href="#122205" title="()Unit">potentialLineEnd</a>()
 //      print(&quot;`&quot;+ch+&quot;'&quot;)
     }
   }
 
   /** Interpret \\uxxxx escapes */
-  <span class="keyword">private</span> <span class="keyword">def</span> <a title="()Unit" id="121694">potentialUnicode</a>() {
-    <span class="keyword">def</span> <a title="=&gt; Boolean" id="760834">evenSlashPrefix</a>: <span title="Boolean">Boolean</span> = {
-      <span class="keyword">var</span> <a title="Int" id="760836">p</a> = <a href="#121681" title="(x$1: Int)Int">charOffset</a> - <span title="Int(2)" class="int">2</span>
-      <span title="Unit" class="keyword">while</span> (<a href="#760836" title="(x$1: Int)Boolean">p</a> <span title="(x$1: Boolean)Boolean">&gt;=</span> <span title="Int(0)" class="int">0</span> &amp;&amp; <a href="#121674" title="(i: Int)Char">buf</a><span title="(x$1: Char)Boolean">(</span><a href="#760836" title="Int">p</a>) == <span title="Char('\')" class="char">'\\'</span>) <a href="#760836" title="Int">p</a> <a href="#760837" title="()Unit">-=</a> <span title="Int(1)" class="int">1</span>
-      <a title="(x$1: Int)Int" id="2972">(</a><a href="#121681" title="(x$1: Int)Int">charOffset</a> - <a href="#760836" title="Int">p</a>) <span title="(x$1: Int)Boolean">%</span> <span title="Int(2)" class="int">2</span> == <span title="Int(0)" class="int">0</span>
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="()Unit" id="122204">potentialUnicode</a>() {
+    <span class="keyword">def</span> <a title="=&gt; Boolean" id="762692">evenSlashPrefix</a>: <span title="Boolean">Boolean</span> = {
+      <span class="keyword">var</span> <a title="Int" id="762694">p</a> = <a href="#122191" title="(x$1: Int)Int">charOffset</a> - <span title="Int(2)" class="int">2</span>
+      <span title="Unit" class="keyword">while</span> (<a href="#762694" title="(x$1: Int)Boolean">p</a> <span title="(x$1: Boolean)Boolean">&gt;=</span> <span title="Int(0)" class="int">0</span> &amp;&amp; <a href="#122184" title="(i: Int)Char">buf</a><span title="(x$1: Char)Boolean">(</span><a href="#762694" title="Int">p</a>) == <span title="Char('\')" class="char">'\\'</span>) <a href="#762694" title="Int">p</a> <a href="#762695" title="()Unit">-=</a> <span title="Int(1)" class="int">1</span>
+      <a title="(x$1: Int)Int" id="2993">(</a><a href="#122191" title="(x$1: Int)Int">charOffset</a> - <a href="#762694" title="Int">p</a>) <span title="(x$1: Int)Boolean">%</span> <span title="Int(2)" class="int">2</span> == <span title="Int(0)" class="int">0</span>
     }
-    <span class="keyword">def</span> <a title="=&gt; Int" id="760835">udigit</a>: <span title="Int">Int</span> = {
-      <span class="keyword">val</span> <a title="Int" id="760919">d</a> = <a href="#121696" title="(ch: Char,base: Int)Int">digit2int</a>(<a href="#121674" title="(i: Int)Char">buf</a>(<a href="#121681" title="=&gt; Int">charOffset</a>), <span title="Int(16)" class="int">16</span>)
-      <span title="Unit" class="keyword">if</span> (<a href="#760919" title="(x$1: Int)Boolean">d</a> &gt;= <span title="Int(0)" class="int">0</span>) <a href="#121681" title="(x$1: Int)Unit">charOffset</a> += <span title="Int(1)" class="int">1</span>
-      <span class="keyword">else</span> <a href="#121676" title="(offset: Int,msg: String)Unit">error</a>(<a href="#121681" title="=&gt; Int">charOffset</a>, <span title="java.lang.String(&quot;error in unicode escape&quot;)" class="string">&quot;error in unicode escape&quot;</span>)
-      <a href="#760919" title="Int">d</a>
+    <span class="keyword">def</span> <a title="=&gt; Int" id="762693">udigit</a>: <span title="Int">Int</span> = {
+      <span class="keyword">val</span> <a title="Int" id="762777">d</a> = <a href="#122206" title="(ch: Char,base: Int)Int">digit2int</a>(<a href="#122184" title="(i: Int)Char">buf</a>(<a href="#122191" title="=&gt; Int">charOffset</a>), <span title="Int(16)" class="int">16</span>)
+      <span title="Unit" class="keyword">if</span> (<a href="#762777" title="(x$1: Int)Boolean">d</a> &gt;= <span title="Int(0)" class="int">0</span>) <a href="#122191" title="(x$1: Int)Unit">charOffset</a> += <span title="Int(1)" class="int">1</span>
+      <span class="keyword">else</span> <a href="#122186" title="(offset: Int,msg: String)Unit">error</a>(<a href="#122191" title="=&gt; Int">charOffset</a>, <span title="java.lang.String(&quot;error in unicode escape&quot;)" class="string">&quot;error in unicode escape&quot;</span>)
+      <a href="#762777" title="Int">d</a>
     }
-    <span title="Unit" class="keyword">if</span> (<a href="#121681" title="(x$1: Int)Boolean">charOffset</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <a href="#121674" title="=&gt; Array[Char]">buf</a>.<span title="=&gt; Int">length</span> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <a href="#121674" title="(i: Int)Char">buf</a><span title="(x$1: Char)Boolean">(</span><a href="#121681" title="=&gt; Int">charOffset</a>) == <span title="Char('u')" class="char">'u'</span> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <a href="#121675" title="=&gt; Boolean">decodeUni</a> &amp;&amp; <a href="#760834" title="=&gt; Boolean">evenSlashPrefix</a>) {
-      <a href="#761004" title="Unit" class="keyword">do</a> <a href="#121681" title="(x$1: Int)Unit">charOffset</a> += <span title="Int(1)" class="int">1</span>
-      <span class="keyword">while</span> (<a href="#121681" title="(x$1: Int)Boolean">charOffset</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <a href="#121674" title="=&gt; Array[Char]">buf</a>.<span title="=&gt; Int">length</span> &amp;&amp; <a href="#121674" title="(i: Int)Char">buf</a><span title="(x$1: Char)Boolean">(</span><a href="#121681" title="=&gt; Int">charOffset</a>) == <span title="Char('u')" class="char">'u'</span>)
-      <span class="keyword">val</span> <a title="Int" id="761003">code</a> = <a href="#760835" title="(x$1: Int)Int">udigit</a> <span title="(x$1: Int)Int">&lt;&lt;</span> <span title="Int(12)" class="int">12</span> <span title="(x$1: Int)Int">|</span> <a href="#760835" title="(x$1: Int)Int">udigit</a> &lt;&lt; <span title="Int(8)" class="int">8</span> <span title="(x$1: Int)Int">|</span> <a href="#760835" title="(x$1: Int)Int">udigit</a> &lt;&lt; <span title="Int(4)" class="int">4</span> | <a href="#760835" title="=&gt; Int">udigit</a>
-      <a href="#121690" title="(x$1: Int)Unit">lastUnicodeOffset</a> = <a href="#121681" title="=&gt; Int">charOffset</a>
-      <a href="#121678" title="(x$1: Char)Unit">ch</a> = <a href="#761003" title="Int">code</a>.<a title="=&gt; Char" id="2846">toChar</a>
+    <span title="Unit" class="keyword">if</span> (<a href="#122191" title="(x$1: Int)Boolean">charOffset</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <a href="#122184" title="=&gt; Array[Char]">buf</a>.<span title="=&gt; Int">length</span> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <a href="#122184" title="(i: Int)Char">buf</a><span title="(x$1: Char)Boolean">(</span><a href="#122191" title="=&gt; Int">charOffset</a>) == <span title="Char('u')" class="char">'u'</span> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <a href="#122185" title="=&gt; Boolean">decodeUni</a> &amp;&amp; <a href="#762692" title="=&gt; Boolean">evenSlashPrefix</a>) {
+      <a href="#762862" title="Unit" class="keyword">do</a> <a href="#122191" title="(x$1: Int)Unit">charOffset</a> += <span title="Int(1)" class="int">1</span>
+      <span class="keyword">while</span> (<a href="#122191" title="(x$1: Int)Boolean">charOffset</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <a href="#122184" title="=&gt; Array[Char]">buf</a>.<span title="=&gt; Int">length</span> &amp;&amp; <a href="#122184" title="(i: Int)Char">buf</a><span title="(x$1: Char)Boolean">(</span><a href="#122191" title="=&gt; Int">charOffset</a>) == <span title="Char('u')" class="char">'u'</span>)
+      <span class="keyword">val</span> <a title="Int" id="762861">code</a> = <a href="#762693" title="(x$1: Int)Int">udigit</a> <span title="(x$1: Int)Int">&lt;&lt;</span> <span title="Int(12)" class="int">12</span> <span title="(x$1: Int)Int">|</span> <a href="#762693" title="(x$1: Int)Int">udigit</a> &lt;&lt; <span title="Int(8)" class="int">8</span> <span title="(x$1: Int)Int">|</span> <a href="#762693" title="(x$1: Int)Int">udigit</a> &lt;&lt; <span title="Int(4)" class="int">4</span> | <a href="#762693" title="=&gt; Int">udigit</a>
+      <a href="#122200" title="(x$1: Int)Unit">lastUnicodeOffset</a> = <a href="#122191" title="=&gt; Int">charOffset</a>
+      <a href="#122188" title="(x$1: Char)Unit">ch</a> = <a href="#762861" title="Int">code</a>.<a title="=&gt; Char" id="2867">toChar</a>
     }
   }
 
   /** Handle line ends, replace CR+LF by LF */
-  <span class="keyword">private</span> <span class="keyword">def</span> <a title="()Unit" id="121695">potentialLineEnd</a>() {
-    <span title="Unit" class="keyword">if</span> (<a href="#121678" title="(x$1: Char)Boolean">ch</a> == <span title="Char('\015')">CR</span>)
-      <span title="Unit" class="keyword">if</span> (<a href="#121681" title="(x$1: Int)Boolean">charOffset</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <a href="#121674" title="=&gt; Array[Char]">buf</a>.<span title="=&gt; Int">length</span> &amp;&amp; <a href="#121674" title="(i: Int)Char">buf</a><span title="(x$1: Char)Boolean">(</span><a href="#121681" title="=&gt; Int">charOffset</a>) == <span title="Char('\012')">LF</span>) {
-        <a href="#121681" title="(x$1: Int)Unit">charOffset</a> += <span title="Int(1)" class="int">1</span>
-        <a href="#121678" title="(x$1: Char)Unit">ch</a> = <span title="Char('\012')">LF</span>
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="()Unit" id="122205">potentialLineEnd</a>() {
+    <span title="Unit" class="keyword">if</span> (<a href="#122188" title="(x$1: Char)Boolean">ch</a> == <span title="Char('\015')">CR</span>)
+      <span title="Unit" class="keyword">if</span> (<a href="#122191" title="(x$1: Int)Boolean">charOffset</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <a href="#122184" title="=&gt; Array[Char]">buf</a>.<span title="=&gt; Int">length</span> &amp;&amp; <a href="#122184" title="(i: Int)Char">buf</a><span title="(x$1: Char)Boolean">(</span><a href="#122191" title="=&gt; Int">charOffset</a>) == <span title="Char('\012')">LF</span>) {
+        <a href="#122191" title="(x$1: Int)Unit">charOffset</a> += <span title="Int(1)" class="int">1</span>
+        <a href="#122188" title="(x$1: Char)Unit">ch</a> = <span title="Char('\012')">LF</span>
       }
-    <span title="Unit" class="keyword">if</span> (<a href="#121678" title="(x$1: Char)Boolean">ch</a> <a title="(x$1: Boolean)Boolean" id="2210">==</a> <span title="Char('\012')">LF</span> || <a href="#121678" title="(x$1: Char)Boolean">ch</a> == <span title="Char('\014')">FF</span>) {
-      <a href="#121687" title="(x$1: Int)Unit">lastLineStartOffset</a> = <a href="#121684" title="=&gt; Int">lineStartOffset</a>
-      <a href="#121684" title="(x$1: Int)Unit">lineStartOffset</a> = <a href="#121681" title="=&gt; Int">charOffset</a>
+    <span title="Unit" class="keyword">if</span> (<a href="#122188" title="(x$1: Char)Boolean">ch</a> <a title="(x$1: Boolean)Boolean" id="2231">==</a> <span title="Char('\012')">LF</span> || <a href="#122188" title="(x$1: Char)Boolean">ch</a> == <span title="Char('\014')">FF</span>) {
+      <a href="#122197" title="(x$1: Int)Unit">lastLineStartOffset</a> = <a href="#122194" title="=&gt; Int">lineStartOffset</a>
+      <a href="#122194" title="(x$1: Int)Unit">lineStartOffset</a> = <a href="#122191" title="=&gt; Int">charOffset</a>
     }
   }
 
   /** Convert a character digit to an Int according to given base,
    *  -1 if no success */
-  <span class="keyword">def</span> <a title="(ch: Char,base: Int)Int" id="121696">digit2int</a>(<a title="Char" id="524337">ch</a>: <span title="Char">Char</span>, <a title="Int" id="524338">base</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = {
-    <span title="Int" class="keyword">if</span> (<span title="(x$1: Char)Boolean" class="char">'0'</span> <span title="(x$1: Boolean)Boolean">&lt;=</span> <a href="#524337" title="Char">ch</a> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <a href="#524337" title="(x$1: Char)Boolean">ch</a> &lt;= <span title="Char('9')" class="char">'9'</span> &amp;&amp; <a href="#524337" title="(x$1: Int)Boolean">ch</a> &lt; <span title="(x$1: Int)Int" class="char">'0'</span> + <a href="#524338" title="Int">base</a>)
-      <a href="#524337" title="(x$1: Char)Int">ch</a> - <span title="Char('0')" class="char">'0'</span>
-    <span class="keyword">else</span> <span title="Int" class="keyword">if</span> (<span title="(x$1: Char)Boolean" class="char">'A'</span> <span title="(x$1: Boolean)Boolean">&lt;=</span> <a href="#524337" title="Char">ch</a> &amp;&amp; <a href="#524337" title="(x$1: Int)Boolean">ch</a> &lt; <span title="(x$1: Int)Int" class="char">'A'</span> <span title="(x$1: Int)Int">+</span> <a href="#524338" title="Int">base</a> - <span title="Int(10)" class="int">10</span>)
-      <a href="#524337" title="(x$1: Char)Int">ch</a> <span title="(x$1: Int)Int">-</span> <span title="Char('A')" class="char">'A'</span> + <span title="Int(10)" class="int">10</span>
-    <span class="keyword">else</span> <span title="Int" class="keyword">if</span> (<span title="(x$1: Char)Boolean" class="char">'a'</span> <span title="(x$1: Boolean)Boolean">&lt;=</span> <a href="#524337" title="Char">ch</a> &amp;&amp; <a href="#524337" title="(x$1: Int)Boolean">ch</a> &lt; <span title="(x$1: Int)Int" class="char">'a'</span> <span title="(x$1: Int)Int">+</span> <a href="#524338" title="Int">base</a> - <span title="Int(10)" class="int">10</span>)
-      <a href="#524337" title="(x$1: Char)Int">ch</a> <span title="(x$1: Int)Int">-</span> <span title="Char('a')" class="char">'a'</span> + <span title="Int(10)" class="int">10</span>
+  <span class="keyword">def</span> <a title="(ch: Char,base: Int)Int" id="122206">digit2int</a>(<a title="Char" id="525525">ch</a>: <span title="Char">Char</span>, <a title="Int" id="525526">base</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = {
+    <span title="Int" class="keyword">if</span> (<span title="(x$1: Char)Boolean" class="char">'0'</span> <span title="(x$1: Boolean)Boolean">&lt;=</span> <a href="#525525" title="Char">ch</a> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <a href="#525525" title="(x$1: Char)Boolean">ch</a> &lt;= <span title="Char('9')" class="char">'9'</span> &amp;&amp; <a href="#525525" title="(x$1: Int)Boolean">ch</a> &lt; <span title="(x$1: Int)Int" class="char">'0'</span> + <a href="#525526" title="Int">base</a>)
+      <a href="#525525" title="(x$1: Char)Int">ch</a> - <span title="Char('0')" class="char">'0'</span>
+    <span class="keyword">else</span> <span title="Int" class="keyword">if</span> (<span title="(x$1: Char)Boolean" class="char">'A'</span> <span title="(x$1: Boolean)Boolean">&lt;=</span> <a href="#525525" title="Char">ch</a> &amp;&amp; <a href="#525525" title="(x$1: Int)Boolean">ch</a> &lt; <span title="(x$1: Int)Int" class="char">'A'</span> <span title="(x$1: Int)Int">+</span> <a href="#525526" title="Int">base</a> - <span title="Int(10)" class="int">10</span>)
+      <a href="#525525" title="(x$1: Char)Int">ch</a> <span title="(x$1: Int)Int">-</span> <span title="Char('A')" class="char">'A'</span> + <span title="Int(10)" class="int">10</span>
+    <span class="keyword">else</span> <span title="Int" class="keyword">if</span> (<span title="(x$1: Char)Boolean" class="char">'a'</span> <span title="(x$1: Boolean)Boolean">&lt;=</span> <a href="#525525" title="Char">ch</a> &amp;&amp; <a href="#525525" title="(x$1: Int)Boolean">ch</a> &lt; <span title="(x$1: Int)Int" class="char">'a'</span> <span title="(x$1: Int)Int">+</span> <a href="#525526" title="Int">base</a> - <span title="Int(10)" class="int">10</span>)
+      <a href="#525525" title="(x$1: Char)Int">ch</a> <span title="(x$1: Int)Int">-</span> <span title="Char('a')" class="char">'a'</span> + <span title="Int(10)" class="int">10</span>
     <span class="keyword">else</span>
       <span title="Int(-1)">-</span><span class="int">1</span>
   }
 
   /** A new reader that takes off at the current character position */
-  <span class="keyword">def</span> <a title="=&gt; scala.tools.nsc.util.CharArrayReader" id="121697">lookaheadReader</a> = <a href="#525116" title="scala.tools.nsc.util.CharArrayReader{ ... }" class="keyword">new</a> <a href="#14599" title="anonymous class $anon extends scala.tools.nsc.util.CharArrayReader" id="525116">CharArrayReader</a> {
-    <span class="keyword">val</span> <a title="Array[Char]" id="525118">buf</a> = <a href="#14599" title="CharArrayReader.this.type">self</a>.<a href="#121674" title="=&gt; Array[Char]">buf</a>
-    <a href="#121681" title="(x$1: Int)Unit">charOffset</a> = <a href="#14599" title="CharArrayReader.this.type">self</a>.<a href="#121681" title="=&gt; Int">charOffset</a>
-    <a href="#121678" title="(x$1: Char)Unit">ch</a> = <a href="#14599" title="CharArrayReader.this.type">self</a>.<a href="#121678" title="=&gt; Char">ch</a>
-    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Boolean" id="525120">decodeUni</a> = <a href="#14599" title="CharArrayReader.this.type">self</a>.<a href="#121675" title="=&gt; Boolean">decodeUni</a>
-    <span class="keyword">def</span> <a title="(offset: Int,msg: String)Unit" id="525121">error</a>(<a title="Int" id="525132">offset</a>: <span title="Int">Int</span>, <a title="String" id="525133">msg</a>: <span title="String">String</span>) = <a href="#14599" title="CharArrayReader.this.type">self</a>.<a href="#121676" title="(offset: Int,msg: String)Unit">error</a>(<a href="#525132" title="Int">offset</a>, <a href="#525133" title="String">msg</a>)
+  <span class="keyword">def</span> <a title="=&gt; scala.tools.nsc.util.CharArrayReader" id="122207">lookaheadReader</a> = <a href="#526304" title="scala.tools.nsc.util.CharArrayReader{ ... }" class="keyword">new</a> <a href="#14674" title="anonymous class $anon extends scala.tools.nsc.util.CharArrayReader" id="526304">CharArrayReader</a> {
+    <span class="keyword">val</span> <a title="Array[Char]" id="526306">buf</a> = <a href="#14674" title="CharArrayReader.this.type">self</a>.<a href="#122184" title="=&gt; Array[Char]">buf</a>
+    <a href="#122191" title="(x$1: Int)Unit">charOffset</a> = <a href="#14674" title="CharArrayReader.this.type">self</a>.<a href="#122191" title="=&gt; Int">charOffset</a>
+    <a href="#122188" title="(x$1: Char)Unit">ch</a> = <a href="#14674" title="CharArrayReader.this.type">self</a>.<a href="#122188" title="=&gt; Char">ch</a>
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Boolean" id="526308">decodeUni</a> = <a href="#14674" title="CharArrayReader.this.type">self</a>.<a href="#122185" title="=&gt; Boolean">decodeUni</a>
+    <span class="keyword">def</span> <a title="(offset: Int,msg: String)Unit" id="526309">error</a>(<a title="Int" id="526320">offset</a>: <span title="Int">Int</span>, <a title="String" id="526321">msg</a>: <span title="String">String</span>) = <a href="#14674" title="CharArrayReader.this.type">self</a>.<a href="#122186" title="(offset: Int,msg: String)Unit">error</a>(<a href="#526320" title="Int">offset</a>, <a href="#526321" title="String">msg</a>)
   } 
 }
 

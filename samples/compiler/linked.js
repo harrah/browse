@@ -37,15 +37,20 @@ $(function() {
 		function() { return scrollTo($(this).definition()); }
 	);
 	
-	$('[title]').qtip({
-		style: {
-			name: 'dark', 
-			tip: true, 
-			border: { width: 7, radius: 5 }, 
-			width: { max: 500 }
-		},
-		show: { delay: { length: 0 } },
-		position: { corner:	{ tooltip: "bottomLeft", target: "topMiddle" } }
+	$('[title]').live("mouseover", function() {
+		if ($(this).data('qtip') !== 'object') {
+			$(this).qtip({
+				style: {
+					name: 'dark', 
+					tip: true, 
+					border: { width: 7, radius: 5 }, 
+					width: { max: 500 }
+				},
+				content: { prerender: true },
+				show: { delay: { length: 0 } },
+				position: { corner:	{ tooltip: "bottomLeft", target: "topMiddle" } }
+			}).qtip("show");
+		}
 	});
 });
 

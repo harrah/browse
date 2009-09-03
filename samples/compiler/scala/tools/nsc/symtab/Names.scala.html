@@ -27,40 +27,40 @@
  *  @author  Martin Odersky
  *  @version 1.0, 05/02/2005
  */
-<span class="keyword">class</span> <a title="class Names extends java.lang.Object with ScalaObject" id="10913">Names</a> <span title="ScalaObject">{</span>
+<span class="keyword">class</span> <a title="class Names extends java.lang.Object with ScalaObject" id="10982">Names</a> <span title="ScalaObject">{</span>
 
 // Operations -------------------------------------------------------------
 
-  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">val</span> <a title="Int(32768)" id="26018">HASH_SIZE</a>  = <span title="Int(32768)" class="int">0x8000</span>
-  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">val</span> <a title="Int(32767)" id="26020">HASH_MASK</a>  = <span title="Int(32767)" class="int">0x7FFF</span>
-  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">val</span> <a title="Int(131072)" id="26022">NAME_SIZE</a>  = <span title="Int(131072)" class="int">0x20000</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">val</span> <a title="Int(32768)" id="26177">HASH_SIZE</a>  = <span title="Int(32768)" class="int">0x8000</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">val</span> <a title="Int(32767)" id="26179">HASH_MASK</a>  = <span title="Int(32767)" class="int">0x7FFF</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">val</span> <a title="Int(131072)" id="26181">NAME_SIZE</a>  = <span title="Int(131072)" class="int">0x20000</span>
 
-  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">val</span> <a title="Int(255)" id="26024">MaxFileNameLength</a> = <span title="Int(255)" class="int">255</span>
-  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">val</span> <a title="Int(249)" id="26026">MaxClassNameLength</a> = MaxFileNameLength <span title="Int(249)">-</span> <span class="int">6</span> // leave space for &quot;.class&quot;
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">val</span> <a title="Int(255)" id="26183">MaxFileNameLength</a> = <span title="Int(255)" class="int">255</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">val</span> <a title="Int(249)" id="26185">MaxClassNameLength</a> = MaxFileNameLength <span title="Int(249)">-</span> <span class="int">6</span> // leave space for &quot;.class&quot;
 
-  <span class="keyword">final</span> <span class="keyword">val</span> <a title="Boolean(false)" id="26028">nameDebug</a> = <span title="Boolean(false)" class="keyword">false</span>
+  <span class="keyword">final</span> <span class="keyword">val</span> <a title="Boolean(false)" id="26187">nameDebug</a> = <span title="Boolean(false)" class="keyword">false</span>
 
   /** memory to store all names sequentially
    */
-  <span class="keyword">var</span> <a title="Array[Char]" id="26031">chrs</a>: <span title="Array[Char]">Array</span>[Char] = <span title="Array[Char]" class="keyword">new</span> <span title="Array[Char]">Array</span>[Char](<span title="Int(131072)">NAME_SIZE</span>)
-  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Int" id="26034">nc</a> = <span title="Int(0)" class="int">0</span>
+  <span class="keyword">var</span> <a title="Array[Char]" id="26190">chrs</a>: <span title="Array[Char]">Array</span>[Char] = <span title="Array[Char]" class="keyword">new</span> <span title="Array[Char]">Array</span>[Char](<span title="Int(131072)">NAME_SIZE</span>)
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Int" id="26193">nc</a> = <span title="Int(0)" class="int">0</span>
 
   /** hashtable for finding term names quickly
    */
-  <span class="keyword">private</span> <span class="keyword">val</span> <a title="Array[Names.this.Name]" id="26036">termHashtable</a> = <span title="Array[Names.this.Name]" class="keyword">new</span> <span title="Array[Names.this.Name]">Array</span>[Name](<span title="Int(32768)">HASH_SIZE</span>)
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="Array[Names.this.Name]" id="26195">termHashtable</a> = <span title="Array[Names.this.Name]" class="keyword">new</span> <span title="Array[Names.this.Name]">Array</span>[Name](<span title="Int(32768)">HASH_SIZE</span>)
 
   /** hashtable for finding type names quickly
    */
-  <span class="keyword">private</span> <span class="keyword">val</span> <a title="Array[Names.this.Name]" id="26038">typeHashtable</a> = <span title="Array[Names.this.Name]" class="keyword">new</span> <span title="Array[Names.this.Name]">Array</span>[Name](<span title="Int(32768)">HASH_SIZE</span>)
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="Array[Names.this.Name]" id="26197">typeHashtable</a> = <span title="Array[Names.this.Name]" class="keyword">new</span> <span title="Array[Names.this.Name]">Array</span>[Name](<span title="Int(32768)">HASH_SIZE</span>)
 
   /** the hashcode of a name
    */
-  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(cs: Array[Char],offset: Int,len: Int)Int" id="26040">hashValue</a>(<a title="Array[Char]" id="529371">cs</a>: <span title="Array[Char]">Array</span>[Char], <a title="Int" id="529372">offset</a>: <span title="Int">Int</span>, <a title="Int" id="529373">len</a>: <span title="Int">Int</span>): <span title="Int">Int</span> =
-    <span title="Int" class="keyword">if</span> (<a href="#529373" title="(x$1: Int)Boolean">len</a> &gt; <span title="Int(0)" class="int">0</span>)
-      (<a href="#529373" title="(x$1: Int)Int">len</a> <span title="(x$1: Int)Int">*</span> (<span class="int">41</span> * <span class="int">41</span> <span title="Int(68921)">*</span> <span class="int">41</span>) <span title="(x$1: Int)Int">+</span>
-       <a href="#529371" title="(i: Int)Char">cs</a><span title="(x$1: Int)Int">(</span><a href="#529372" title="Int">offset</a>) * (<span class="int">41</span> <span title="Int(1681)">*</span> <span class="int">41</span>) <a title="(x$1: Char)Int" id="2936">+</a>      
-       <a href="#529371" title="(i: Int)Char">cs</a><span title="(x$1: Int)Int">(</span><a href="#529372" title="(x$1: Int)Int">offset</a> <span title="(x$1: Int)Int">+</span> <a href="#529373" title="Int">len</a> - <span title="Int(1)" class="int">1</span>) * <span title="Int(41)" class="int">41</span> +
-       <a href="#529371" title="(i: Int)Char">cs</a>(<a href="#529372" title="(x$1: Int)Int">offset</a> + (<a href="#529373" title="(x$1: Int)Int" id="2861">len</a> &gt;&gt; <span title="Int(1)" class="int">1</span>)))
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(cs: Array[Char],offset: Int,len: Int)Int" id="26199">hashValue</a>(<a title="Array[Char]" id="530562">cs</a>: <span title="Array[Char]">Array</span>[Char], <a title="Int" id="530563">offset</a>: <span title="Int">Int</span>, <a title="Int" id="530564">len</a>: <span title="Int">Int</span>): <span title="Int">Int</span> =
+    <span title="Int" class="keyword">if</span> (<a href="#530564" title="(x$1: Int)Boolean">len</a> &gt; <span title="Int(0)" class="int">0</span>)
+      (<a href="#530564" title="(x$1: Int)Int">len</a> <span title="(x$1: Int)Int">*</span> (<span class="int">41</span> * <span class="int">41</span> <span title="Int(68921)">*</span> <span class="int">41</span>) <span title="(x$1: Int)Int">+</span>
+       <a href="#530562" title="(i: Int)Char">cs</a><span title="(x$1: Int)Int">(</span><a href="#530563" title="Int">offset</a>) * (<span class="int">41</span> <span title="Int(1681)">*</span> <span class="int">41</span>) <a title="(x$1: Char)Int" id="2957">+</a>      
+       <a href="#530562" title="(i: Int)Char">cs</a><span title="(x$1: Int)Int">(</span><a href="#530563" title="(x$1: Int)Int">offset</a> <span title="(x$1: Int)Int">+</span> <a href="#530564" title="Int">len</a> - <span title="Int(1)" class="int">1</span>) * <span title="Int(41)" class="int">41</span> +
+       <a href="#530562" title="(i: Int)Char">cs</a>(<a href="#530563" title="(x$1: Int)Int">offset</a> + (<a href="#530564" title="(x$1: Int)Int" id="2882">len</a> &gt;&gt; <span title="Int(1)" class="int">1</span>)))
     <span class="keyword">else</span> <span title="Int(0)" class="int">0</span>;
 
   /** Is (the ASCII representation of) name at given index equal to
@@ -72,55 +72,55 @@
    *  @param len    ...
    *  @return       ...
    */
-  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(index: Int,cs: Array[Char],offset: Int,len: Int)Boolean" id="26041">equals</a>(<a title="Int" id="529533">index</a>: <span title="Int">Int</span>, <a title="Array[Char]" id="529534">cs</a>: <span title="Array[Char]">Array</span>[Char], <a title="Int" id="529535">offset</a>: <span title="Int">Int</span>, <a title="Int" id="529536">len</a>: <span title="Int">Int</span>): <span title="Boolean">Boolean</span> = {
-    <span class="keyword">var</span> <a title="Int" id="529538">i</a> = <span title="Int(0)" class="int">0</span>
-    <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">(</span><a href="#529538" title="(x$1: Int)Boolean">i</a> &lt; <a href="#529536" title="Int">len</a>) &amp;&amp; (<a href="#26031" title="(i: Int)Char">chrs</a><span title="(x$1: Char)Boolean">(</span><a href="#529533" title="(x$1: Int)Int">index</a> + <a href="#529538" title="Int">i</a>) == <a href="#529534" title="(i: Int)Char">cs</a>(<a href="#529535" title="(x$1: Int)Int">offset</a> + <a href="#529538" title="Int">i</a>)))
-      <a href="#529538" title="Int">i</a> <a href="#529539" title="()Unit">+=</a> <span title="Int(1)" class="int">1</span>;
-    <a href="#529538" title="(x$1: Int)Boolean">i</a> == <a href="#529536" title="Int">len</a>
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(index: Int,cs: Array[Char],offset: Int,len: Int)Boolean" id="26200">equals</a>(<a title="Int" id="530724">index</a>: <span title="Int">Int</span>, <a title="Array[Char]" id="530725">cs</a>: <span title="Array[Char]">Array</span>[Char], <a title="Int" id="530726">offset</a>: <span title="Int">Int</span>, <a title="Int" id="530727">len</a>: <span title="Int">Int</span>): <span title="Boolean">Boolean</span> = {
+    <span class="keyword">var</span> <a title="Int" id="530729">i</a> = <span title="Int(0)" class="int">0</span>
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">(</span><a href="#530729" title="(x$1: Int)Boolean">i</a> &lt; <a href="#530727" title="Int">len</a>) &amp;&amp; (<a href="#26190" title="(i: Int)Char">chrs</a><span title="(x$1: Char)Boolean">(</span><a href="#530724" title="(x$1: Int)Int">index</a> + <a href="#530729" title="Int">i</a>) == <a href="#530725" title="(i: Int)Char">cs</a>(<a href="#530726" title="(x$1: Int)Int">offset</a> + <a href="#530729" title="Int">i</a>)))
+      <a href="#530729" title="Int">i</a> <a href="#530730" title="()Unit">+=</a> <span title="Int(1)" class="int">1</span>;
+    <a href="#530729" title="(x$1: Int)Boolean">i</a> == <a href="#530727" title="Int">len</a>
   }
 
   /** enter characters into chrs array
    */
-  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(cs: Array[Char],offset: Int,len: Int)Unit" id="26042">enterChars</a>(<a title="Array[Char]" id="529661">cs</a>: <span title="Array[Char]">Array</span>[Char], <a title="Int" id="529662">offset</a>: <span title="Int">Int</span>, <a title="Int" id="529663">len</a>: <span title="Int">Int</span>) {
-    <span class="keyword">var</span> <a title="Int" id="529665">i</a> = <span title="Int(0)" class="int">0</span>
-    <span title="Unit" class="keyword">while</span> (<a href="#529665" title="(x$1: Int)Boolean">i</a> &lt; <a href="#529663" title="Int">len</a>) <a href="#529666" title="()Unit">{</a>
-      <span title="Unit" class="keyword">if</span> (<a href="#26034" title="(x$1: Int)Int">nc</a> <span title="(x$1: Int)Boolean">+</span> <a href="#529665" title="Int">i</a> == <a href="#26031" title="=&gt; Array[Char]">chrs</a>.<span title="=&gt; Int">length</span>) {
-        <span class="keyword">val</span> <a title="Array[Char]" id="529687">newchrs</a> = <span title="Array[Char]" class="keyword">new</span> <span title="Array[Char]">Array</span>[Char](<a href="#26031" title="=&gt; Array[Char]">chrs</a>.<span title="(x$1: Int)Int">length</span> * <span title="Int(2)" class="int">2</span>)
-        compat.<span title="object scala.compat.Platform">Platform</span>.<span title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">arraycopy</span>(<a href="#26031" title="=&gt; Array[Char]">chrs</a>, <span title="Int(0)" class="int">0</span>, <a href="#529687" title="Array[Char]">newchrs</a>, <span title="Int(0)" class="int">0</span>, <a href="#26031" title="=&gt; Array[Char]">chrs</a>.<span title="=&gt; Int">length</span>)
-        <a href="#26031" title="(x$1: Array[Char])Unit">chrs</a> = <a href="#529687" title="Array[Char]">newchrs</a>
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(cs: Array[Char],offset: Int,len: Int)Unit" id="26201">enterChars</a>(<a title="Array[Char]" id="530852">cs</a>: <span title="Array[Char]">Array</span>[Char], <a title="Int" id="530853">offset</a>: <span title="Int">Int</span>, <a title="Int" id="530854">len</a>: <span title="Int">Int</span>) {
+    <span class="keyword">var</span> <a title="Int" id="530856">i</a> = <span title="Int(0)" class="int">0</span>
+    <span title="Unit" class="keyword">while</span> (<a href="#530856" title="(x$1: Int)Boolean">i</a> &lt; <a href="#530854" title="Int">len</a>) <a href="#530857" title="()Unit">{</a>
+      <span title="Unit" class="keyword">if</span> (<a href="#26193" title="(x$1: Int)Int">nc</a> <span title="(x$1: Int)Boolean">+</span> <a href="#530856" title="Int">i</a> == <a href="#26190" title="=&gt; Array[Char]">chrs</a>.<span title="=&gt; Int">length</span>) {
+        <span class="keyword">val</span> <a title="Array[Char]" id="530878">newchrs</a> = <span title="Array[Char]" class="keyword">new</span> <span title="Array[Char]">Array</span>[Char](<a href="#26190" title="=&gt; Array[Char]">chrs</a>.<span title="(x$1: Int)Int">length</span> * <span title="Int(2)" class="int">2</span>)
+        compat.<span title="object scala.compat.Platform">Platform</span>.<span title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">arraycopy</span>(<a href="#26190" title="=&gt; Array[Char]">chrs</a>, <span title="Int(0)" class="int">0</span>, <a href="#530878" title="Array[Char]">newchrs</a>, <span title="Int(0)" class="int">0</span>, <a href="#26190" title="=&gt; Array[Char]">chrs</a>.<span title="=&gt; Int">length</span>)
+        <a href="#26190" title="(x$1: Array[Char])Unit">chrs</a> = <a href="#530878" title="Array[Char]">newchrs</a>
       }
-      <a href="#26031" title="(i: Int,x: Char)Unit">chrs</a>(<a href="#26034" title="(x$1: Int)Int">nc</a> + <a href="#529665" title="Int">i</a>) = <a href="#529661" title="(i: Int)Char">cs</a>(<a href="#529662" title="(x$1: Int)Int">offset</a> + <a href="#529665" title="Int">i</a>)
-      <a href="#529665" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+      <a href="#26190" title="(i: Int,x: Char)Unit">chrs</a>(<a href="#26193" title="(x$1: Int)Int">nc</a> + <a href="#530856" title="Int">i</a>) = <a href="#530852" title="(i: Int)Char">cs</a>(<a href="#530853" title="(x$1: Int)Int">offset</a> + <a href="#530856" title="Int">i</a>)
+      <a href="#530856" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
     }
-    <span title="Unit" class="keyword">if</span> (<a href="#529663" title="(x$1: Int)Boolean">len</a> == <span title="Int(0)" class="int">0</span>) <a href="#26034" title="(x$1: Int)Unit">nc</a> += <span title="Int(1)" class="int">1</span>
-    <span class="keyword">else</span> <a href="#26034" title="(x$1: Int)Unit">nc</a> = <a href="#26034" title="(x$1: Int)Int">nc</a> + <a href="#529663" title="Int">len</a>
+    <span title="Unit" class="keyword">if</span> (<a href="#530854" title="(x$1: Int)Boolean">len</a> == <span title="Int(0)" class="int">0</span>) <a href="#26193" title="(x$1: Int)Unit">nc</a> += <span title="Int(1)" class="int">1</span>
+    <span class="keyword">else</span> <a href="#26193" title="(x$1: Int)Unit">nc</a> = <a href="#26193" title="(x$1: Int)Int">nc</a> + <a href="#530854" title="Int">len</a>
   }
 
-  <span class="keyword">private</span> <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="java.security.MessageDigest" id="26044">md5</a> = <a title="object java.security.MessageDigest" id="5265">MessageDigest</a>.<a title="(x$1: java.lang.String)java.security.MessageDigest" id="529250">getInstance</a>(<span title="java.lang.String(&quot;MD5&quot;)" class="string">&quot;MD5&quot;</span>)
+  <span class="keyword">private</span> <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="java.security.MessageDigest" id="26203">md5</a> = <a title="object java.security.MessageDigest" id="5334">MessageDigest</a>.<a title="(x$1: java.lang.String)java.security.MessageDigest" id="530441">getInstance</a>(<span title="java.lang.String(&quot;MD5&quot;)" class="string">&quot;MD5&quot;</span>)
 
-  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(s: String,prefixSuffixLen: Int)String" id="26045">toMD5</a>(<a title="String" id="529884">s</a>: <span title="String">String</span>, <a title="Int" id="529885">prefixSuffixLen</a>: <span title="Int">Int</span>) = {
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(s: String,prefixSuffixLen: Int)String" id="26204">toMD5</a>(<a title="String" id="531075">s</a>: <span title="String">String</span>, <a title="Int" id="531076">prefixSuffixLen</a>: <span title="Int">Int</span>) = {
 //  println(&quot;COMPACTIFY &quot;+s)
-    <span class="keyword">val</span> <a title="Array[Char]" id="529888">cs</a>: <span title="Array[Char]">Array</span>[Char] = <a href="#529884" title="String">s</a>.<span title="()Array[Char]">toCharArray</span>
-    <span class="keyword">val</span> <a title="Array[Byte]" id="529889">bytes</a> = <span title="Array[Byte]" class="keyword">new</span> <span title="Array[Byte]">Array</span>[Byte](<a href="#529888" title="Array[Char]">cs</a>.<span title="(x$1: Int)Int">length</span> * <span title="Int(4)" class="int">4</span>)
-    <span class="keyword">val</span> <a title="Int" id="529890">len</a> = <span title="object scala.io.UTF8Codec">UTF8Codec</span>.<span title="(src: Array[Char],from: Int,dst: Array[Byte],to: Int,len: Int)Int">encode</span>(<a href="#529888" title="Array[Char]">cs</a>, <span title="Int(0)" class="int">0</span>, <a href="#529889" title="Array[Byte]">bytes</a>, <span title="Int(0)" class="int">0</span>, <a href="#529888" title="Array[Char]">cs</a>.<span title="=&gt; Int">length</span>)
-    <a href="#26043" title="=&gt; java.security.MessageDigest">md5</a>.<a title="(x$1: Array[Byte],x$2: Int,x$3: Int)Unit" id="529261">update</a>(<a href="#529889" title="Array[Byte]">bytes</a>, <span title="Int(0)" class="int">0</span>, <a href="#529890" title="Int">len</a>)
-    <span class="keyword">val</span> <a title="Array[Byte]" id="529891">hash</a> = <a href="#26043" title="=&gt; java.security.MessageDigest">md5</a>.<a title="()Array[Byte]" id="529269">digest</a>()
-    <span class="keyword">val</span> <a title="StringBuilder" id="529892">sb</a> = <a title="()StringBuilder" id="57398" class="keyword">new</a> <a title="StringBuilder" id="366">StringBuilder</a>
-    <a href="#529892" title="StringBuilder">sb</a>.<span title="(x: Array[Char],offset: Int,len: Int)StringBuilder">appendAll</span>(<a href="#529888" title="Array[Char]">cs</a>, <span title="Int(0)" class="int">0</span>, <a href="#529885" title="Int">prefixSuffixLen</a>)
-    <a href="#529892" title="StringBuilder">sb</a>.<span title="(s: String)StringBuilder">append</span>(<span title="java.lang.String(&quot;$$$$&quot;)" class="string">&quot;$$$$&quot;</span>)
-    <span class="keyword">for</span> (<a title="Int" id="530098">i</a> &lt;- <a title="(end: Int)Range" id="31701" class="int">0</a> <a title="(f: (Int) =&gt; StringBuilder)Unit" id="56267">until</a> <a href="#529891" title="Array[Byte]">hash</a>.<span title="=&gt; Int">length</span>) {
-      <span class="keyword">val</span> <a title="Byte" id="530099">b</a> = <a href="#529891" title="(i: Int)Byte">hash</a>(<a href="#530098" title="Int">i</a>)
-      <a href="#529892" title="StringBuilder">sb</a>.<span title="(s: String)StringBuilder">append</span>((<span title="(x$1: Int)Int">(</span><a href="#530099" title="(x$1: Int)Int" id="2237">b</a> &gt;&gt; <span title="Int(4)" class="int">4</span>) <span title="implicit scala.Predef.intWrapper : (x: Int)scala.runtime.RichInt">&amp;</span> <span title="Int(15)" class="int">0xF</span>).<span title="=&gt; String">toHexString</span>)
-      <a href="#529892" title="StringBuilder">sb</a>.<span title="(s: String)StringBuilder">append</span>((<a href="#530099" title="(x$1: Int)Int" id="2352">b</a> <span title="implicit scala.Predef.intWrapper : (x: Int)scala.runtime.RichInt">&amp;</span> <span title="Int(15)" class="int">0xF</span>).<span title="=&gt; String">toHexString</span>)
+    <span class="keyword">val</span> <a title="Array[Char]" id="531079">cs</a>: <span title="Array[Char]">Array</span>[Char] = <a href="#531075" title="String">s</a>.<span title="()Array[Char]">toCharArray</span>
+    <span class="keyword">val</span> <a title="Array[Byte]" id="531080">bytes</a> = <span title="Array[Byte]" class="keyword">new</span> <span title="Array[Byte]">Array</span>[Byte](<a href="#531079" title="Array[Char]">cs</a>.<span title="(x$1: Int)Int">length</span> * <span title="Int(4)" class="int">4</span>)
+    <span class="keyword">val</span> <a title="Int" id="531081">len</a> = <span title="object scala.io.UTF8Codec">UTF8Codec</span>.<span title="(src: Array[Char],from: Int,dst: Array[Byte],to: Int,len: Int)Int">encode</span>(<a href="#531079" title="Array[Char]">cs</a>, <span title="Int(0)" class="int">0</span>, <a href="#531080" title="Array[Byte]">bytes</a>, <span title="Int(0)" class="int">0</span>, <a href="#531079" title="Array[Char]">cs</a>.<span title="=&gt; Int">length</span>)
+    <a href="#26202" title="=&gt; java.security.MessageDigest">md5</a>.<a title="(x$1: Array[Byte],x$2: Int,x$3: Int)Unit" id="530452">update</a>(<a href="#531080" title="Array[Byte]">bytes</a>, <span title="Int(0)" class="int">0</span>, <a href="#531081" title="Int">len</a>)
+    <span class="keyword">val</span> <a title="Array[Byte]" id="531082">hash</a> = <a href="#26202" title="=&gt; java.security.MessageDigest">md5</a>.<a title="()Array[Byte]" id="530460">digest</a>()
+    <span class="keyword">val</span> <a title="StringBuilder" id="531083">sb</a> = <a title="()StringBuilder" id="57658" class="keyword">new</a> <a title="StringBuilder" id="375">StringBuilder</a>
+    <a href="#531083" title="StringBuilder">sb</a>.<span title="(x: Array[Char],offset: Int,len: Int)StringBuilder">appendAll</span>(<a href="#531079" title="Array[Char]">cs</a>, <span title="Int(0)" class="int">0</span>, <a href="#531076" title="Int">prefixSuffixLen</a>)
+    <a href="#531083" title="StringBuilder">sb</a>.<span title="(s: String)StringBuilder">append</span>(<span title="java.lang.String(&quot;$$$$&quot;)" class="string">&quot;$$$$&quot;</span>)
+    <span class="keyword">for</span> (<a title="Int" id="531289">i</a> &lt;- <a title="(end: Int)Range" id="31887" class="int">0</a> <a title="(f: (Int) =&gt; StringBuilder)Unit" id="56527">until</a> <a href="#531082" title="Array[Byte]">hash</a>.<span title="=&gt; Int">length</span>) {
+      <span class="keyword">val</span> <a title="Byte" id="531290">b</a> = <a href="#531082" title="(i: Int)Byte">hash</a>(<a href="#531289" title="Int">i</a>)
+      <a href="#531083" title="StringBuilder">sb</a>.<span title="(s: String)StringBuilder">append</span>((<span title="(x$1: Int)Int">(</span><a href="#531290" title="(x$1: Int)Int" id="2258">b</a> &gt;&gt; <span title="Int(4)" class="int">4</span>) <span title="implicit scala.Predef.intWrapper : (x: Int)scala.runtime.RichInt">&amp;</span> <span title="Int(15)" class="int">0xF</span>).<span title="=&gt; String">toHexString</span>)
+      <a href="#531083" title="StringBuilder">sb</a>.<span title="(s: String)StringBuilder">append</span>((<a href="#531290" title="(x$1: Int)Int" id="2373">b</a> <span title="implicit scala.Predef.intWrapper : (x: Int)scala.runtime.RichInt">&amp;</span> <span title="Int(15)" class="int">0xF</span>).<span title="=&gt; String">toHexString</span>)
     }
-    <a href="#529892" title="StringBuilder">sb</a>.<span title="(s: String)StringBuilder">append</span>(<span title="java.lang.String(&quot;$$$$&quot;)" class="string">&quot;$$$$&quot;</span>)
-    <a href="#529892" title="StringBuilder">sb</a>.<span title="(x: Array[Char],offset: Int,len: Int)StringBuilder">appendAll</span>(<a href="#529888" title="Array[Char]">cs</a>, <a href="#529890" title="(x$1: Int)Int">len</a> - <a href="#529885" title="Int">prefixSuffixLen</a>, <a href="#529885" title="Int">prefixSuffixLen</a>)
-    <a href="#529892" title="StringBuilder">sb</a>.<a title="()String" id="57547">toString</a>
+    <a href="#531083" title="StringBuilder">sb</a>.<span title="(s: String)StringBuilder">append</span>(<span title="java.lang.String(&quot;$$$$&quot;)" class="string">&quot;$$$$&quot;</span>)
+    <a href="#531083" title="StringBuilder">sb</a>.<span title="(x: Array[Char],offset: Int,len: Int)StringBuilder">appendAll</span>(<a href="#531079" title="Array[Char]">cs</a>, <a href="#531081" title="(x$1: Int)Int">len</a> - <a href="#531076" title="Int">prefixSuffixLen</a>, <a href="#531076" title="Int">prefixSuffixLen</a>)
+    <a href="#531083" title="StringBuilder">sb</a>.<a title="()String" id="57807">toString</a>
   }
 
-  <span class="keyword">def</span> <a title="(s: String)String" id="26046">compactify</a>(<a title="String" id="530204">s</a>: <span title="String">String</span>): <span title="String">String</span> =
-    <span title="String" class="keyword">if</span> (<a href="#530204" title="String">s</a>.<span title="(x$1: Int)Boolean">length</span> &lt;= <span title="Int(249)">MaxClassNameLength</span>) <a href="#530204" title="String">s</a> 
-    <span class="keyword">else</span> <a href="#26045" title="(s: String,prefixSuffixLen: Int)String">toMD5</a>(<a href="#530204" title="String">s</a>, MaxClassNameLength <span title="Int(62)">/</span> <span class="int">4</span>)
+  <span class="keyword">def</span> <a title="(s: String)String" id="26205">compactify</a>(<a title="String" id="531395">s</a>: <span title="String">String</span>): <span title="String">String</span> =
+    <span title="String" class="keyword">if</span> (<a href="#531395" title="String">s</a>.<span title="(x$1: Int)Boolean">length</span> &lt;= <span title="Int(249)">MaxClassNameLength</span>) <a href="#531395" title="String">s</a> 
+    <span class="keyword">else</span> <a href="#26204" title="(s: String,prefixSuffixLen: Int)String">toMD5</a>(<a href="#531395" title="String">s</a>, MaxClassNameLength <span title="Int(62)">/</span> <span class="int">4</span>)
 
   /** Create a term name from the characters in &lt;code&gt;cs[offset..offset+len-1]&lt;/code&gt;.
    *
@@ -129,22 +129,22 @@
    *  @param len    ...
    *  @return       the created term name
    */
-  <span class="keyword">def</span> <a title="(cs: Array[Char],offset: Int,len: Int)Names.this.Name" id="26047">newTermName</a>(<a title="Array[Char]" id="30153">cs</a>: <span title="Array[Char]">Array</span>[Char], <a title="Int" id="30154">offset</a>: <span title="Int">Int</span>, <a title="Int" id="30155">len</a>: <span title="Int">Int</span>): <a href="#26055" title="Names.this.Name">Name</a> = {
-    <span class="keyword">val</span> <a title="Int" id="530234">h</a> = <a href="#26040" title="(cs: Array[Char],offset: Int,len: Int)Int">hashValue</a><span title="(x$1: Int)Int">(</span><a href="#30153" title="Array[Char]">cs</a>, <a href="#30154" title="Int">offset</a>, <a href="#30155" title="Int">len</a>) &amp; <span title="Int(32767)">HASH_MASK</span>
-    <span class="keyword">var</span> <a title="Names.this.Name" id="530235">n</a> = <a href="#26036" title="(i: Int)Names.this.Name">termHashtable</a>(<a href="#530234" title="Int">h</a>)
-    <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">(</span><a href="#530235" title="(x$1: AnyRef)Boolean">n</a> ne <span title="Null(null)" class="keyword">null</span>) &amp;&amp; (<a href="#530235" title="Names.this.Name">n</a>.<a href="#28197" title="(x$1: Int)Boolean">length</a> <a title="(x$1: Boolean)Boolean" id="2210">!=</a> <a href="#30155" title="Int">len</a> || <span title="=&gt; Boolean">!</span><a href="#26041" title="(index: Int,cs: Array[Char],offset: Int,len: Int)Boolean">equals</a>(<a href="#530235" title="Names.this.Name">n</a>.<a href="#28193" title="=&gt; Int">start</a>, <a href="#30153" title="Array[Char]">cs</a>, <a href="#30154" title="Int">offset</a>, <a href="#30155" title="Int">len</a>)))
-    <a href="#530235" title="Names.this.Name">n</a> = <a href="#530235" title="Names.this.Name">n</a>.<a href="#28195" title="=&gt; Names.this.Name">next</a>;
-    <span title="Unit" class="keyword">if</span> (<a href="#530235" title="(x$1: AnyRef)Boolean">n</a> eq <span title="Null(null)" class="keyword">null</span>) {
-      <a href="#530235" title="Names.this.Name">n</a> = <span title="Names.this.TermName" class="keyword">new</span> <a href="#26056" title="Names.this.TermName">TermName</a>(<a href="#26034" title="=&gt; Int">nc</a>, <a href="#30155" title="Int">len</a>, <a href="#530234" title="Int">h</a>)
-      <a href="#26042" title="(cs: Array[Char],offset: Int,len: Int)Unit">enterChars</a>(<a href="#30153" title="Array[Char]">cs</a>, <a href="#30154" title="Int">offset</a>, <a href="#30155" title="Int">len</a>)
+  <span class="keyword">def</span> <a title="(cs: Array[Char],offset: Int,len: Int)Names.this.Name" id="26206">newTermName</a>(<a title="Array[Char]" id="30339">cs</a>: <span title="Array[Char]">Array</span>[Char], <a title="Int" id="30340">offset</a>: <span title="Int">Int</span>, <a title="Int" id="30341">len</a>: <span title="Int">Int</span>): <a href="#26214" title="Names.this.Name">Name</a> = {
+    <span class="keyword">val</span> <a title="Int" id="531425">h</a> = <a href="#26199" title="(cs: Array[Char],offset: Int,len: Int)Int">hashValue</a><span title="(x$1: Int)Int">(</span><a href="#30339" title="Array[Char]">cs</a>, <a href="#30340" title="Int">offset</a>, <a href="#30341" title="Int">len</a>) &amp; <span title="Int(32767)">HASH_MASK</span>
+    <span class="keyword">var</span> <a title="Names.this.Name" id="531426">n</a> = <a href="#26195" title="(i: Int)Names.this.Name">termHashtable</a>(<a href="#531425" title="Int">h</a>)
+    <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">(</span><a href="#531426" title="(x$1: AnyRef)Boolean">n</a> ne <span title="Null(null)" class="keyword">null</span>) &amp;&amp; (<a href="#531426" title="Names.this.Name">n</a>.<a href="#28383" title="(x$1: Int)Boolean">length</a> <a title="(x$1: Boolean)Boolean" id="2231">!=</a> <a href="#30341" title="Int">len</a> || <span title="=&gt; Boolean">!</span><a href="#26200" title="(index: Int,cs: Array[Char],offset: Int,len: Int)Boolean">equals</a>(<a href="#531426" title="Names.this.Name">n</a>.<a href="#28379" title="=&gt; Int">start</a>, <a href="#30339" title="Array[Char]">cs</a>, <a href="#30340" title="Int">offset</a>, <a href="#30341" title="Int">len</a>)))
+    <a href="#531426" title="Names.this.Name">n</a> = <a href="#531426" title="Names.this.Name">n</a>.<a href="#28381" title="=&gt; Names.this.Name">next</a>;
+    <span title="Unit" class="keyword">if</span> (<a href="#531426" title="(x$1: AnyRef)Boolean">n</a> eq <span title="Null(null)" class="keyword">null</span>) {
+      <a href="#531426" title="Names.this.Name">n</a> = <span title="Names.this.TermName" class="keyword">new</span> <a href="#26215" title="Names.this.TermName">TermName</a>(<a href="#26193" title="=&gt; Int">nc</a>, <a href="#30341" title="Int">len</a>, <a href="#531425" title="Int">h</a>)
+      <a href="#26201" title="(cs: Array[Char],offset: Int,len: Int)Unit">enterChars</a>(<a href="#30339" title="Array[Char]">cs</a>, <a href="#30340" title="Int">offset</a>, <a href="#30341" title="Int">len</a>)
     }
-    <a href="#530235" title="Names.this.Name">n</a>
+    <a href="#531426" title="Names.this.Name">n</a>
   }
   
   /** create a term name from string
    */
-  <span class="keyword">def</span> <a title="(s: String)Names.this.Name" id="26048">newTermName</a>(<a title="String" id="30151">s</a>: <span title="String">String</span>): <a href="#26055" title="Names.this.Name">Name</a> =
-    <a href="#26047" title="(cs: Array[Char],offset: Int,len: Int)Names.this.Name">newTermName</a>(<a href="#30151" title="String">s</a>.<span title="()Array[Char]">toCharArray</span>(), <span title="Int(0)" class="int">0</span>, <a href="#30151" title="String">s</a>.<span title="()Int">length</span>())
+  <span class="keyword">def</span> <a title="(s: String)Names.this.Name" id="26207">newTermName</a>(<a title="String" id="30337">s</a>: <span title="String">String</span>): <a href="#26214" title="Names.this.Name">Name</a> =
+    <a href="#26206" title="(cs: Array[Char],offset: Int,len: Int)Names.this.Name">newTermName</a>(<a href="#30337" title="String">s</a>.<span title="()Array[Char]">toCharArray</span>(), <span title="Int(0)" class="int">0</span>, <a href="#30337" title="String">s</a>.<span title="()Int">length</span>())
 
   /** Create a term name from the UTF8 encoded bytes in &lt;code&gt;bs[offset..offset+len-1]&lt;/code&gt;.
    *
@@ -153,10 +153,10 @@
    *  @param len    ...
    *  @return       the created term name
    */
-  <span class="keyword">def</span> <a title="(bs: Array[Byte],offset: Int,len: Int)Names.this.Name" id="26049">newTermName</a>(<a title="Array[Byte]" id="30104">bs</a>: <span title="Array[Byte]">Array</span>[Byte], <a title="Int" id="30105">offset</a>: <span title="Int">Int</span>, <a title="Int" id="30106">len</a>: <span title="Int">Int</span>): <a href="#26055" title="Names.this.Name">Name</a> = {
-    <span class="keyword">val</span> <a title="Array[Char]" id="530311">cs</a> = <span title="Array[Char]" class="keyword">new</span> <span title="Array[Char]">Array</span>[Char](<a href="#30104" title="Array[Byte]">bs</a>.<span title="=&gt; Int">length</span>)
-    <span class="keyword">val</span> <a title="Int" id="530312">nchrs</a> = <span title="object scala.io.UTF8Codec">UTF8Codec</span>.<a title="(src: Array[Byte],from: Int,dst: Array[Char],to: Int,len: Int)Int" id="529937">decode</a>(<a href="#30104" title="Array[Byte]">bs</a>, <a href="#30105" title="Int">offset</a>, <a href="#530311" title="Array[Char]">cs</a>, <span title="Int(0)" class="int">0</span>, <a href="#30106" title="Int">len</a>)
-    <a href="#26047" title="(cs: Array[Char],offset: Int,len: Int)Names.this.Name">newTermName</a>(<a href="#530311" title="Array[Char]">cs</a>, <span title="Int(0)" class="int">0</span>, <a href="#530312" title="Int">nchrs</a>)
+  <span class="keyword">def</span> <a title="(bs: Array[Byte],offset: Int,len: Int)Names.this.Name" id="26208">newTermName</a>(<a title="Array[Byte]" id="30290">bs</a>: <span title="Array[Byte]">Array</span>[Byte], <a title="Int" id="30291">offset</a>: <span title="Int">Int</span>, <a title="Int" id="30292">len</a>: <span title="Int">Int</span>): <a href="#26214" title="Names.this.Name">Name</a> = {
+    <span class="keyword">val</span> <a title="Array[Char]" id="531502">cs</a> = <span title="Array[Char]" class="keyword">new</span> <span title="Array[Char]">Array</span>[Char](<a href="#30290" title="Array[Byte]">bs</a>.<span title="=&gt; Int">length</span>)
+    <span class="keyword">val</span> <a title="Int" id="531503">nchrs</a> = <span title="object scala.io.UTF8Codec">UTF8Codec</span>.<a title="(src: Array[Byte],from: Int,dst: Array[Char],to: Int,len: Int)Int" id="531128">decode</a>(<a href="#30290" title="Array[Byte]">bs</a>, <a href="#30291" title="Int">offset</a>, <a href="#531502" title="Array[Char]">cs</a>, <span title="Int(0)" class="int">0</span>, <a href="#30292" title="Int">len</a>)
+    <a href="#26206" title="(cs: Array[Char],offset: Int,len: Int)Names.this.Name">newTermName</a>(<a href="#531502" title="Array[Char]">cs</a>, <span title="Int(0)" class="int">0</span>, <a href="#531503" title="Int">nchrs</a>)
   }
 
   /** Create a type name from the characters in &lt;code&gt;cs[offset..offset+len-1]&lt;/code&gt;.
@@ -166,13 +166,13 @@
    *  @param len    ...
    *  @return       the created type name
    */
-  <span class="keyword">def</span> <a title="(cs: Array[Char],offset: Int,len: Int)Names.this.Name" id="26050">newTypeName</a>(<a title="Array[Char]" id="71344">cs</a>: <span title="Array[Char]">Array</span>[Char], <a title="Int" id="71345">offset</a>: <span title="Int">Int</span>, <a title="Int" id="71346">len</a>: <span title="Int">Int</span>): <a href="#26055" title="Names.this.Name">Name</a> =
-    <a href="#26047" title="(cs: Array[Char],offset: Int,len: Int)Names.this.Name">newTermName</a>(<a href="#71344" title="Array[Char]">cs</a>, <a href="#71345" title="Int">offset</a>, <a href="#71346" title="Int">len</a>).<a href="#28202" title="=&gt; Names.this.Name">toTypeName</a>
+  <span class="keyword">def</span> <a title="(cs: Array[Char],offset: Int,len: Int)Names.this.Name" id="26209">newTypeName</a>(<a title="Array[Char]" id="71628">cs</a>: <span title="Array[Char]">Array</span>[Char], <a title="Int" id="71629">offset</a>: <span title="Int">Int</span>, <a title="Int" id="71630">len</a>: <span title="Int">Int</span>): <a href="#26214" title="Names.this.Name">Name</a> =
+    <a href="#26206" title="(cs: Array[Char],offset: Int,len: Int)Names.this.Name">newTermName</a>(<a href="#71628" title="Array[Char]">cs</a>, <a href="#71629" title="Int">offset</a>, <a href="#71630" title="Int">len</a>).<a href="#28388" title="=&gt; Names.this.Name">toTypeName</a>
 
   /** create a type name from string
    */
-  <span class="keyword">def</span> <a title="(s: String)Names.this.Name" id="26051">newTypeName</a>(<a title="String" id="71342">s</a>: <span title="String">String</span>): <a href="#26055" title="Names.this.Name">Name</a> =
-    <a href="#26048" title="(s: String)Names.this.Name">newTermName</a>(<a href="#71342" title="String">s</a>).<a href="#28202" title="=&gt; Names.this.Name">toTypeName</a>
+  <span class="keyword">def</span> <a title="(s: String)Names.this.Name" id="26210">newTypeName</a>(<a title="String" id="71626">s</a>: <span title="String">String</span>): <a href="#26214" title="Names.this.Name">Name</a> =
+    <a href="#26207" title="(s: String)Names.this.Name">newTermName</a>(<a href="#71626" title="String">s</a>).<a href="#28388" title="=&gt; Names.this.Name">toTypeName</a>
 
   /** Create a type name from the UTF8 encoded bytes in &lt;code&gt;bs[offset..offset+len-1]&lt;/code&gt;.
    *
@@ -181,36 +181,36 @@
    *  @param len    ...
    *  @return       the create type name
    */
-  <span class="keyword">def</span> <a title="(bs: Array[Byte],offset: Int,len: Int)Names.this.Name" id="26052">newTypeName</a>(<a title="Array[Byte]" id="71338">bs</a>: <span title="Array[Byte]">Array</span>[Byte], <a title="Int" id="71339">offset</a>: <span title="Int">Int</span>, <a title="Int" id="71340">len</a>: <span title="Int">Int</span>): <a href="#26055" title="Names.this.Name">Name</a> =
-    <a href="#26049" title="(bs: Array[Byte],offset: Int,len: Int)Names.this.Name">newTermName</a>(<a href="#71338" title="Array[Byte]">bs</a>, <a href="#71339" title="Int">offset</a>, <a href="#71340" title="Int">len</a>).<a href="#28202" title="=&gt; Names.this.Name">toTypeName</a>
+  <span class="keyword">def</span> <a title="(bs: Array[Byte],offset: Int,len: Int)Names.this.Name" id="26211">newTypeName</a>(<a title="Array[Byte]" id="71622">bs</a>: <span title="Array[Byte]">Array</span>[Byte], <a title="Int" id="71623">offset</a>: <span title="Int">Int</span>, <a title="Int" id="71624">len</a>: <span title="Int">Int</span>): <a href="#26214" title="Names.this.Name">Name</a> =
+    <a href="#26208" title="(bs: Array[Byte],offset: Int,len: Int)Names.this.Name">newTermName</a>(<a href="#71622" title="Array[Byte]">bs</a>, <a href="#71623" title="Int">offset</a>, <a href="#71624" title="Int">len</a>).<a href="#28388" title="=&gt; Names.this.Name">toTypeName</a>
 
 
-  <span class="keyword">def</span> <a title="=&gt; Array[Char]" id="26053">nameChars</a>: <span title="Array[Char]">Array</span>[Char] = <a href="#26031" title="=&gt; Array[Char]">chrs</a>
+  <span class="keyword">def</span> <a title="=&gt; Array[Char]" id="26212">nameChars</a>: <span title="Array[Char]">Array</span>[Char] = <a href="#26190" title="=&gt; Array[Char]">chrs</a>
 
-  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="implicit scala.tools.nsc.symtab.Names.view : (s: String)Names.this.Name" id="26054">view</a>(<a title="String" id="30437">s</a>: <span title="String">String</span>): <a href="#26055" title="Names.this.Name">Name</a> = <a href="#26048" title="(s: String)Names.this.Name">newTermName</a>(<a href="#30437" title="String">s</a>)
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="implicit scala.tools.nsc.symtab.Names.view : (s: String)Names.this.Name" id="26213">view</a>(<a title="String" id="30623">s</a>: <span title="String">String</span>): <a href="#26214" title="Names.this.Name">Name</a> = <a href="#26207" title="(s: String)Names.this.Name">newTermName</a>(<a href="#30623" title="String">s</a>)
 
 // Classes ----------------------------------------------------------------------
 
   /** The name class. */
-  <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class Name extends java.lang.Object with (Int) =&gt; Char with ScalaObject" id="26055">Name</a><span title="ScalaObject">(</span><a title="Int" id="530370">index</a>: <span title="Int">Int</span>, <a title="Int" id="530371">len</a>: <span title="Int">Int</span>) <span class="keyword">extends</span> <a title="(Int) =&gt; Char" id="161">Function1</a>[Int, Char] {
+  <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class Name extends java.lang.Object with (Int) =&gt; Char with ScalaObject" id="26214">Name</a><span title="ScalaObject">(</span><a title="Int" id="531561">index</a>: <span title="Int">Int</span>, <a title="Int" id="531562">len</a>: <span title="Int">Int</span>) <span class="keyword">extends</span> <a title="(Int) =&gt; Char" id="170">Function1</a>[Int, Char] {
 
     /** Index into name table */
-    <span class="keyword">def</span> <a title="=&gt; Int" id="28193">start</a>: <span title="Int">Int</span> = <a href="#530370" title="Int">index</a>
+    <span class="keyword">def</span> <a title="=&gt; Int" id="28379">start</a>: <span title="Int">Int</span> = <a href="#531561" title="Int">index</a>
 
     /** next name in the same hash bucket
      */
-    <span class="keyword">var</span> <a title="Names.this.Name" id="28195">next</a>: <a href="#26055" title="Names.this.Name">Name</a> = <span title="Null(null)" class="keyword">null</span>
+    <span class="keyword">var</span> <a title="Names.this.Name" id="28381">next</a>: <a href="#26214" title="Names.this.Name">Name</a> = <span title="Null(null)" class="keyword">null</span>
 
     /** return the length of this name
      */
-    <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; Int" id="28197">length</a>: <span title="Int">Int</span> = <a href="#530371" title="Int">len</a>
+    <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; Int" id="28383">length</a>: <span title="Int">Int</span> = <a href="#531562" title="Int">len</a>
 
-    <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; Boolean" id="28198">isEmpty</a> = <a href="#28197" title="(x$1: Int)Boolean">length</a> == <span title="Int(0)" class="int">0</span>
+    <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; Boolean" id="28384">isEmpty</a> = <a href="#28383" title="(x$1: Int)Boolean">length</a> == <span title="Int(0)" class="int">0</span>
 
-    <span class="keyword">def</span> <a title="=&gt; Boolean" id="28199">isTermName</a>: <span title="Boolean">Boolean</span>
-    <span class="keyword">def</span> <a title="=&gt; Boolean" id="28200">isTypeName</a>: <span title="Boolean">Boolean</span>
-    <span class="keyword">def</span> <a title="=&gt; Names.this.Name" id="28201">toTermName</a>: <a href="#26055" title="Names.this.Name">Name</a>
-    <span class="keyword">def</span> <a title="=&gt; Names.this.Name" id="28202">toTypeName</a>: <a href="#26055" title="Names.this.Name">Name</a>
+    <span class="keyword">def</span> <a title="=&gt; Boolean" id="28385">isTermName</a>: <span title="Boolean">Boolean</span>
+    <span class="keyword">def</span> <a title="=&gt; Boolean" id="28386">isTypeName</a>: <span title="Boolean">Boolean</span>
+    <span class="keyword">def</span> <a title="=&gt; Names.this.Name" id="28387">toTermName</a>: <a href="#26214" title="Names.this.Name">Name</a>
+    <span class="keyword">def</span> <a title="=&gt; Names.this.Name" id="28388">toTypeName</a>: <a href="#26214" title="Names.this.Name">Name</a>
 
 
     /** Copy bytes of this name to buffer &lt;code&gt;cs&lt;/code&gt;, starting at position
@@ -219,42 +219,42 @@
      *  @param cs     ...
      *  @param offset ...
      */
-    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(cs: Array[Char],offset: Int)Unit" id="28203">copyChars</a>(<a title="Array[Char]" id="530374">cs</a>: <span title="Array[Char]">Array</span>[Char], <a title="Int" id="530375">offset</a>: <span title="Int">Int</span>) =
-      compat.<span title="object scala.compat.Platform">Platform</span>.<span title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">arraycopy</span>(<a href="#26031" title="=&gt; Array[Char]">chrs</a>, <a href="#530370" title="Int">index</a>, <a href="#530374" title="Array[Char]">cs</a>, <a href="#530375" title="Int">offset</a>, <a href="#530371" title="Int">len</a>)
+    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(cs: Array[Char],offset: Int)Unit" id="28389">copyChars</a>(<a title="Array[Char]" id="531565">cs</a>: <span title="Array[Char]">Array</span>[Char], <a title="Int" id="531566">offset</a>: <span title="Int">Int</span>) =
+      compat.<span title="object scala.compat.Platform">Platform</span>.<span title="(src: AnyRef,srcPos: Int,dest: AnyRef,destPos: Int,length: Int)Unit">arraycopy</span>(<a href="#26190" title="=&gt; Array[Char]">chrs</a>, <a href="#531561" title="Int">index</a>, <a href="#531565" title="Array[Char]">cs</a>, <a href="#531566" title="Int">offset</a>, <a href="#531562" title="Int">len</a>)
 
     /** return the ascii representation of this name
      */
-    <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; Array[Char]" id="28204">toChars</a>: <span title="Array[Char]">Array</span>[Char] = {
-      <span class="keyword">val</span> <a title="Array[Char]" id="530382">cs</a> = <span title="Array[Char]" class="keyword">new</span> <span title="Array[Char]">Array</span>[Char](<a href="#530371" title="Int">len</a>)
-      <a href="#28203" title="(cs: Array[Char],offset: Int)Unit">copyChars</a>(<a href="#530382" title="Array[Char]">cs</a>, <span title="Int(0)" class="int">0</span>)
-      <a href="#530382" title="Array[Char]">cs</a>
+    <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; Array[Char]" id="28390">toChars</a>: <span title="Array[Char]">Array</span>[Char] = {
+      <span class="keyword">val</span> <a title="Array[Char]" id="531573">cs</a> = <span title="Array[Char]" class="keyword">new</span> <span title="Array[Char]">Array</span>[Char](<a href="#531562" title="Int">len</a>)
+      <a href="#28389" title="(cs: Array[Char],offset: Int)Unit">copyChars</a>(<a href="#531573" title="Array[Char]">cs</a>, <span title="Int(0)" class="int">0</span>)
+      <a href="#531573" title="Array[Char]">cs</a>
     }
 
     /** return the string representation of this name
      */
-    <span class="keyword">final</span> <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="28205">toString</a>(): <span title="String">String</span> = <a title="(x$1: Array[Char],x$2: Int,x$3: Int)java.lang.String" id="6563" class="keyword">new</a> <a title="java.lang.String" id="7817">String</a>(<a href="#26031" title="=&gt; Array[Char]">chrs</a>, <a href="#530370" title="Int">index</a>, <a href="#530371" title="Int">len</a>)
+    <span class="keyword">final</span> <span class="keyword">override</span> <span class="keyword">def</span> <a title="()String" id="28391">toString</a>(): <span title="String">String</span> = <a title="(x$1: Array[Char],x$2: Int,x$3: Int)java.lang.String" id="6632" class="keyword">new</a> <a title="java.lang.String" id="7886">String</a>(<a href="#26190" title="=&gt; Array[Char]">chrs</a>, <a href="#531561" title="Int">index</a>, <a href="#531562" title="Int">len</a>)
 
     /** Write to UTF8 representation of this name to given character array.
      *  Start copying to index `to'. Return index of next free byte in array.
      *  Array must have enough remaining space for all bytes 
      *  (i.e. maximally 3*length bytes).
      */
-    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(bs: Array[Byte],offset: Int)Int" id="28206">copyUTF8</a>(<a title="Array[Byte]" id="150110">bs</a>: <span title="Array[Byte]">Array</span>[Byte], <a title="Int" id="150111">offset</a>: <span title="Int">Int</span>): <span title="Int">Int</span> =
-      <span title="object scala.io.UTF8Codec">UTF8Codec</span>.<span title="(src: Array[Char],from: Int,dst: Array[Byte],to: Int,len: Int)Int">encode</span>(<a href="#26031" title="=&gt; Array[Char]">chrs</a>, <a href="#530370" title="Int">index</a>, <a href="#150110" title="Array[Byte]">bs</a>, <a href="#150111" title="Int">offset</a>, <a href="#530371" title="Int">len</a>)
+    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(bs: Array[Byte],offset: Int)Int" id="28392">copyUTF8</a>(<a title="Array[Byte]" id="150717">bs</a>: <span title="Array[Byte]">Array</span>[Byte], <a title="Int" id="150718">offset</a>: <span title="Int">Int</span>): <span title="Int">Int</span> =
+      <span title="object scala.io.UTF8Codec">UTF8Codec</span>.<span title="(src: Array[Char],from: Int,dst: Array[Byte],to: Int,len: Int)Int">encode</span>(<a href="#26190" title="=&gt; Array[Char]">chrs</a>, <a href="#531561" title="Int">index</a>, <a href="#150717" title="Array[Byte]">bs</a>, <a href="#150718" title="Int">offset</a>, <a href="#531562" title="Int">len</a>)
 
     /** return the hash value of this name
      */
-    <span class="keyword">final</span> <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Int" id="28207">hashCode</a>(): <span title="Int">Int</span> = <a href="#530370" title="Int">index</a>
+    <span class="keyword">final</span> <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Int" id="28393">hashCode</a>(): <span title="Int">Int</span> = <a href="#531561" title="Int">index</a>
 
     /** return the i'th Char of this name
      */
-    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(i: Int)Char" id="28208">apply</a>(<a title="Int" id="103937">i</a>: <span title="Int">Int</span>): <span title="Char">Char</span> = <a href="#26031" title="(i: Int)Char">chrs</a>(<a href="#530370" title="(x$1: Int)Int">index</a> + <a href="#103937" title="Int">i</a>)
+    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(i: Int)Char" id="28394">apply</a>(<a title="Int" id="104330">i</a>: <span title="Int">Int</span>): <span title="Char">Char</span> = <a href="#26190" title="(i: Int)Char">chrs</a>(<a href="#531561" title="(x$1: Int)Int">index</a> + <a href="#104330" title="Int">i</a>)
 
     /** return the index of first occurrence of char c in this name, length if not found */
-    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(c: Char)Int" id="28209">pos</a>(<a title="Char" id="104806">c</a>: <span title="Char">Char</span>): <span title="Int">Int</span> = <a href="#28211" title="(c: Char,start: Int)Int">pos</a>(<a href="#104806" title="Char">c</a>, <span title="Int(0)" class="int">0</span>)
+    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(c: Char)Int" id="28395">pos</a>(<a title="Char" id="105201">c</a>: <span title="Char">Char</span>): <span title="Int">Int</span> = <a href="#28397" title="(c: Char,start: Int)Int">pos</a>(<a href="#105201" title="Char">c</a>, <span title="Int(0)" class="int">0</span>)
 
     /** return the index of first occurrence of char c in this name, length if not found */
-    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String)Int" id="28210">pos</a>(<a title="String" id="104804">s</a>: <span title="String">String</span>): <span title="Int">Int</span> = <a href="#28212" title="(s: String,start: Int)Int">pos</a>(<a href="#104804" title="String">s</a>, <span title="Int(0)" class="int">0</span>)
+    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String)Int" id="28396">pos</a>(<a title="String" id="105199">s</a>: <span title="String">String</span>): <span title="Int">Int</span> = <a href="#28398" title="(s: String,start: Int)Int">pos</a>(<a href="#105199" title="String">s</a>, <span title="Int(0)" class="int">0</span>)
 
     /** return the index of the first occurrence of character &lt;code&gt;c&lt;/code&gt; in
      *  this name from &lt;code&gt;start&lt;/code&gt;, length if not found.
@@ -263,10 +263,10 @@
      *  @param start ...
      *  @return      the index of the first occurrence of &lt;code&gt;c&lt;/code&gt;
      */
-    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(c: Char,start: Int)Int" id="28211">pos</a>(<a title="Char" id="104801">c</a>: <span title="Char">Char</span>, <a title="Int" id="104802">start</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = {
-      <span class="keyword">var</span> <a title="Int" id="530496">i</a> = <a href="#104802" title="Int">start</a>
-      <span title="Unit" class="keyword">while</span> (<a href="#530496" title="(x$1: Int)Boolean">i</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <a href="#530371" title="Int">len</a> &amp;&amp; <a href="#26031" title="(i: Int)Char">chrs</a><span title="(x$1: Char)Boolean">(</span><a href="#530370" title="(x$1: Int)Int">index</a> + <a href="#530496" title="Int">i</a>) != <a href="#104801" title="Char">c</a>) <a href="#530496" title="Int">i</a> <a href="#530497" title="()Unit">+=</a> <span title="Int(1)" class="int">1</span>
-      <a href="#530496" title="Int">i</a>
+    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(c: Char,start: Int)Int" id="28397">pos</a>(<a title="Char" id="105196">c</a>: <span title="Char">Char</span>, <a title="Int" id="105197">start</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = {
+      <span class="keyword">var</span> <a title="Int" id="531687">i</a> = <a href="#105197" title="Int">start</a>
+      <span title="Unit" class="keyword">while</span> (<a href="#531687" title="(x$1: Int)Boolean">i</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <a href="#531562" title="Int">len</a> &amp;&amp; <a href="#26190" title="(i: Int)Char">chrs</a><span title="(x$1: Char)Boolean">(</span><a href="#531561" title="(x$1: Int)Int">index</a> + <a href="#531687" title="Int">i</a>) != <a href="#105196" title="Char">c</a>) <a href="#531687" title="Int">i</a> <a href="#531688" title="()Unit">+=</a> <span title="Int(1)" class="int">1</span>
+      <a href="#531687" title="Int">i</a>
     }
 
     /** return the index of the first occurrence of nonempty string &lt;code&gt;s&lt;/code&gt;
@@ -276,17 +276,17 @@
      *  @param start ...
      *  @return      the index of the first occurrence of &lt;code&gt;s&lt;/code&gt;
      */
-    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String,start: Int)Int" id="28212">pos</a>(<a title="String" id="104798">s</a>: <span title="String">String</span>, <a title="Int" id="104799">start</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = {
-      <span class="keyword">var</span> <a title="Int" id="530581">i</a> = <a href="#28211" title="(c: Char,start: Int)Int">pos</a>(<a href="#104798" title="String">s</a>.<span title="(x$1: Int)Char">charAt</span>(<span title="Int(0)" class="int">0</span>), <a href="#104799" title="Int">start</a>)
-      <span title="Unit" class="keyword">while</span> (<a href="#530581" title="(x$1: Int)Int">i</a> <span title="(x$1: Int)Boolean">+</span> <a href="#104798" title="String">s</a>.<span title="()Int">length</span>() &lt;= <a href="#530371" title="Int">len</a>) <a href="#530582" title="()Unit">{</a>
-        <span class="keyword">var</span> <a title="Int" id="530614">j</a> = <span title="Int(1)" class="int">1</span>
-        <span title="Unit" class="keyword">while</span> (<a href="#104798" title="String">s</a>.<span title="(x$1: Int)Char">charAt</span><span title="(x$1: Char)Boolean">(</span><a href="#530614" title="Int">j</a>) == <a href="#26031" title="(i: Int)Char">chrs</a>(<a href="#530370" title="(x$1: Int)Int">index</a> <span title="(x$1: Int)Int">+</span> <a href="#530581" title="Int">i</a> + <a href="#530614" title="Int">j</a>)) <a href="#530615" title="()Unit">{</a>
-          <a href="#530614" title="Int">j</a> += <span title="Int(1)" class="int">1</span>
-          <span title="Unit" class="keyword">if</span> (<a href="#530614" title="(x$1: Int)Boolean">j</a> == <a href="#104798" title="String">s</a>.<span title="()Int">length</span>()) <span title="Nothing" class="keyword">return</span> <a href="#530581" title="Int">i</a>
+    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String,start: Int)Int" id="28398">pos</a>(<a title="String" id="105193">s</a>: <span title="String">String</span>, <a title="Int" id="105194">start</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = {
+      <span class="keyword">var</span> <a title="Int" id="531772">i</a> = <a href="#28397" title="(c: Char,start: Int)Int">pos</a>(<a href="#105193" title="String">s</a>.<span title="(x$1: Int)Char">charAt</span>(<span title="Int(0)" class="int">0</span>), <a href="#105194" title="Int">start</a>)
+      <span title="Unit" class="keyword">while</span> (<a href="#531772" title="(x$1: Int)Int">i</a> <span title="(x$1: Int)Boolean">+</span> <a href="#105193" title="String">s</a>.<span title="()Int">length</span>() &lt;= <a href="#531562" title="Int">len</a>) <a href="#531773" title="()Unit">{</a>
+        <span class="keyword">var</span> <a title="Int" id="531805">j</a> = <span title="Int(1)" class="int">1</span>
+        <span title="Unit" class="keyword">while</span> (<a href="#105193" title="String">s</a>.<span title="(x$1: Int)Char">charAt</span><span title="(x$1: Char)Boolean">(</span><a href="#531805" title="Int">j</a>) == <a href="#26190" title="(i: Int)Char">chrs</a>(<a href="#531561" title="(x$1: Int)Int">index</a> <span title="(x$1: Int)Int">+</span> <a href="#531772" title="Int">i</a> + <a href="#531805" title="Int">j</a>)) <a href="#531806" title="()Unit">{</a>
+          <a href="#531805" title="Int">j</a> += <span title="Int(1)" class="int">1</span>
+          <span title="Unit" class="keyword">if</span> (<a href="#531805" title="(x$1: Int)Boolean">j</a> == <a href="#105193" title="String">s</a>.<span title="()Int">length</span>()) <span title="Nothing" class="keyword">return</span> <a href="#531772" title="Int">i</a>
         }
-        <a href="#530581" title="Int">i</a> = <a href="#28211" title="(c: Char,start: Int)Int">pos</a>(<a href="#104798" title="String">s</a>.<span title="(x$1: Int)Char">charAt</span>(<span title="Int(0)" class="int">0</span>), <a href="#530581" title="(x$1: Int)Int">i</a> + <span title="Int(1)" class="int">1</span>)
+        <a href="#531772" title="Int">i</a> = <a href="#28397" title="(c: Char,start: Int)Int">pos</a>(<a href="#105193" title="String">s</a>.<span title="(x$1: Int)Char">charAt</span>(<span title="Int(0)" class="int">0</span>), <a href="#531772" title="(x$1: Int)Int">i</a> + <span title="Int(1)" class="int">1</span>)
       }
-      <a href="#530371" title="Int">len</a>
+      <a href="#531562" title="Int">len</a>
     }
 
     /** return the index of last occurrence of char &lt;code&gt;c&lt;/code&gt; in this
@@ -295,9 +295,9 @@
      *  @param c the character
      *  @return  the index of the last occurrence of &lt;code&gt;c&lt;/code&gt;
      */
-    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(c: Char)Int" id="28213">lastPos</a>(<a title="Char" id="109111">c</a>: <span title="Char">Char</span>): <span title="Int">Int</span> = <a href="#28215" title="(c: Char,start: Int)Int">lastPos</a>(<a href="#109111" title="Char">c</a>, <a href="#530371" title="(x$1: Int)Int">len</a> - <span title="Int(1)" class="int">1</span>)
+    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(c: Char)Int" id="28399">lastPos</a>(<a title="Char" id="109509">c</a>: <span title="Char">Char</span>): <span title="Int">Int</span> = <a href="#28401" title="(c: Char,start: Int)Int">lastPos</a>(<a href="#109509" title="Char">c</a>, <a href="#531562" title="(x$1: Int)Int">len</a> - <span title="Int(1)" class="int">1</span>)
 
-    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String)Int" id="28214">lastPos</a>(<a title="String" id="109109">s</a>: <span title="String">String</span>): <span title="Int">Int</span> = <a href="#28216" title="(s: String,start: Int)Int">lastPos</a>(<a href="#109109" title="String">s</a>, <a href="#530371" title="(x$1: Int)Int">len</a> - <a href="#109109" title="String">s</a>.<span title="()Int">length</span>())
+    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String)Int" id="28400">lastPos</a>(<a title="String" id="109507">s</a>: <span title="String">String</span>): <span title="Int">Int</span> = <a href="#28402" title="(s: String,start: Int)Int">lastPos</a>(<a href="#109507" title="String">s</a>, <a href="#531562" title="(x$1: Int)Int">len</a> - <a href="#109507" title="String">s</a>.<span title="()Int">length</span>())
 
     /** return the index of the last occurrence of char &lt;code&gt;c&lt;/code&gt; in this
      *  name from &lt;code&gt;start&lt;/code&gt;, &lt;code&gt;-1&lt;/code&gt; if not found.
@@ -306,10 +306,10 @@
      *  @param start ...
      *  @return      the index of the last occurrence of &lt;code&gt;c&lt;/code&gt;
      */
-    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(c: Char,start: Int)Int" id="28215">lastPos</a>(<a title="Char" id="109106">c</a>: <span title="Char">Char</span>, <a title="Int" id="109107">start</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = {
-      <span class="keyword">var</span> <a title="Int" id="530777">i</a> = <a href="#109107" title="Int">start</a>
-      <span title="Unit" class="keyword">while</span> (<a href="#530777" title="(x$1: Int)Boolean">i</a> <span title="(x$1: Boolean)Boolean">&gt;=</span> <span title="Int(0)" class="int">0</span> &amp;&amp; <a href="#26031" title="(i: Int)Char">chrs</a><span title="(x$1: Char)Boolean">(</span><a href="#530370" title="(x$1: Int)Int">index</a> + <a href="#530777" title="Int">i</a>) != <a href="#109106" title="Char">c</a>) <a href="#530777" title="Int">i</a> <a href="#530778" title="()Unit">-=</a> <span title="Int(1)" class="int">1</span>
-      <a href="#530777" title="Int">i</a>
+    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(c: Char,start: Int)Int" id="28401">lastPos</a>(<a title="Char" id="109504">c</a>: <span title="Char">Char</span>, <a title="Int" id="109505">start</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = {
+      <span class="keyword">var</span> <a title="Int" id="531968">i</a> = <a href="#109505" title="Int">start</a>
+      <span title="Unit" class="keyword">while</span> (<a href="#531968" title="(x$1: Int)Boolean">i</a> <span title="(x$1: Boolean)Boolean">&gt;=</span> <span title="Int(0)" class="int">0</span> &amp;&amp; <a href="#26190" title="(i: Int)Char">chrs</a><span title="(x$1: Char)Boolean">(</span><a href="#531561" title="(x$1: Int)Int">index</a> + <a href="#531968" title="Int">i</a>) != <a href="#109504" title="Char">c</a>) <a href="#531968" title="Int">i</a> <a href="#531969" title="()Unit">-=</a> <span title="Int(1)" class="int">1</span>
+      <a href="#531968" title="Int">i</a>
     }
 
     /** return the index of the last occurrence of string &lt;code&gt;s&lt;/code&gt; in this
@@ -319,52 +319,52 @@
      *  @param start ...
      *  @return      the index of the last occurrence of &lt;code&gt;s&lt;/code&gt;
      */
-    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String,start: Int)Int" id="28216">lastPos</a>(<a title="String" id="109103">s</a>: <span title="String">String</span>, <a title="Int" id="109104">start</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = {
-      <span class="keyword">var</span> <a title="Int" id="530858">i</a> = <a href="#28215" title="(c: Char,start: Int)Int">lastPos</a>(<a href="#109103" title="String">s</a>.<span title="(x$1: Int)Char">charAt</span>(<span title="Int(0)" class="int">0</span>), <a href="#109104" title="Int">start</a>)
-      <span title="Unit" class="keyword">while</span> (<a href="#530858" title="(x$1: Int)Boolean">i</a> &gt;= <span title="Int(0)" class="int">0</span>) <a href="#530859" title="()Unit">{</a>
-        <span class="keyword">var</span> <a title="Int" id="530883">j</a> = <span title="Int(1)" class="int">1</span>; 
-        <span title="Unit" class="keyword">while</span> (<a href="#109103" title="String">s</a>.<span title="(x$1: Int)Char">charAt</span><span title="(x$1: Char)Boolean">(</span><a href="#530883" title="Int">j</a>) == <a href="#26031" title="(i: Int)Char">chrs</a>(<a href="#530370" title="(x$1: Int)Int">index</a> <span title="(x$1: Int)Int">+</span> <a href="#530858" title="Int">i</a> + <a href="#530883" title="Int">j</a>)) <a href="#530884" title="()Unit">{</a>
-          <a href="#530883" title="Int">j</a> += <span title="Int(1)" class="int">1</span>
-          <span title="Unit" class="keyword">if</span> (<a href="#530883" title="(x$1: Int)Boolean">j</a> == <a href="#109103" title="String">s</a>.<span title="()Int">length</span>()) <span title="Nothing" class="keyword">return</span> <a href="#530858" title="Int">i</a>;
+    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(s: String,start: Int)Int" id="28402">lastPos</a>(<a title="String" id="109501">s</a>: <span title="String">String</span>, <a title="Int" id="109502">start</a>: <span title="Int">Int</span>): <span title="Int">Int</span> = {
+      <span class="keyword">var</span> <a title="Int" id="532049">i</a> = <a href="#28401" title="(c: Char,start: Int)Int">lastPos</a>(<a href="#109501" title="String">s</a>.<span title="(x$1: Int)Char">charAt</span>(<span title="Int(0)" class="int">0</span>), <a href="#109502" title="Int">start</a>)
+      <span title="Unit" class="keyword">while</span> (<a href="#532049" title="(x$1: Int)Boolean">i</a> &gt;= <span title="Int(0)" class="int">0</span>) <a href="#532050" title="()Unit">{</a>
+        <span class="keyword">var</span> <a title="Int" id="532074">j</a> = <span title="Int(1)" class="int">1</span>; 
+        <span title="Unit" class="keyword">while</span> (<a href="#109501" title="String">s</a>.<span title="(x$1: Int)Char">charAt</span><span title="(x$1: Char)Boolean">(</span><a href="#532074" title="Int">j</a>) == <a href="#26190" title="(i: Int)Char">chrs</a>(<a href="#531561" title="(x$1: Int)Int">index</a> <span title="(x$1: Int)Int">+</span> <a href="#532049" title="Int">i</a> + <a href="#532074" title="Int">j</a>)) <a href="#532075" title="()Unit">{</a>
+          <a href="#532074" title="Int">j</a> += <span title="Int(1)" class="int">1</span>
+          <span title="Unit" class="keyword">if</span> (<a href="#532074" title="(x$1: Int)Boolean">j</a> == <a href="#109501" title="String">s</a>.<span title="()Int">length</span>()) <span title="Nothing" class="keyword">return</span> <a href="#532049" title="Int">i</a>;
         }
-        <a href="#530858" title="Int">i</a> = <a href="#28215" title="(c: Char,start: Int)Int">lastPos</a>(<a href="#109103" title="String">s</a>.<span title="(x$1: Int)Char">charAt</span>(<span title="Int(0)" class="int">0</span>), <a href="#530858" title="(x$1: Int)Int">i</a> - <span title="Int(1)" class="int">1</span>)
+        <a href="#532049" title="Int">i</a> = <a href="#28401" title="(c: Char,start: Int)Int">lastPos</a>(<a href="#109501" title="String">s</a>.<span title="(x$1: Int)Char">charAt</span>(<span title="Int(0)" class="int">0</span>), <a href="#532049" title="(x$1: Int)Int">i</a> - <span title="Int(1)" class="int">1</span>)
       }
-      <a title="=&gt; Int" id="2866">-</a><a href="#109103" title="String">s</a>.<span title="()Int">length</span>()
+      <a title="=&gt; Int" id="2887">-</a><a href="#109501" title="String">s</a>.<span title="()Int">length</span>()
     }
 
     /** does this name start with prefix?
      */
-    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(prefix: Names.this.Name)Boolean" id="28217">startsWith</a>(<a title="Names.this.Name" id="84515">prefix</a>: <a href="#26055" title="Names.this.Name">Name</a>): <span title="Boolean">Boolean</span> = <a href="#28218" title="(prefix: Names.this.Name,start: Int)Boolean">startsWith</a>(<a href="#84515" title="Names.this.Name">prefix</a>, <span title="Int(0)" class="int">0</span>)
+    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(prefix: Names.this.Name)Boolean" id="28403">startsWith</a>(<a title="Names.this.Name" id="84879">prefix</a>: <a href="#26214" title="Names.this.Name">Name</a>): <span title="Boolean">Boolean</span> = <a href="#28404" title="(prefix: Names.this.Name,start: Int)Boolean">startsWith</a>(<a href="#84879" title="Names.this.Name">prefix</a>, <span title="Int(0)" class="int">0</span>)
 
     /** does this name start with prefix at given start index?
      */
-    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(prefix: Names.this.Name,start: Int)Boolean" id="28218">startsWith</a>(<a title="Names.this.Name" id="84510">prefix</a>: <a href="#26055" title="Names.this.Name">Name</a>, <a title="Int" id="84511">start</a>: <span title="Int">Int</span>): <span title="Boolean">Boolean</span> = {
-      <span class="keyword">var</span> <a title="Int" id="531021">i</a> = <span title="Int(0)" class="int">0</span>
-      <span title="Unit" class="keyword">while</span> (<a href="#531021" title="(x$1: Int)Boolean">i</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <a href="#84510" title="Names.this.Name">prefix</a>.<a href="#28197" title="=&gt; Int">length</a> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <a href="#84511" title="(x$1: Int)Int">start</a> <span title="(x$1: Int)Boolean">+</span> <a href="#531021" title="Int">i</a> &lt; <a href="#530371" title="Int">len</a> &amp;&amp;
-             <a href="#26031" title="(i: Int)Char">chrs</a><span title="(x$1: Char)Boolean">(</span><a href="#530370" title="(x$1: Int)Int">index</a> <span title="(x$1: Int)Int">+</span> <a href="#84511" title="Int">start</a> + <a href="#531021" title="Int">i</a>) == <a href="#26031" title="(i: Int)Char">chrs</a>(<a href="#84510" title="Names.this.Name">prefix</a>.<a href="#28193" title="(x$1: Int)Int">start</a> + <a href="#531021" title="Int">i</a>))
-        <a href="#531021" title="Int">i</a> <a href="#531022" title="()Unit">+=</a> <span title="Int(1)" class="int">1</span>;
-      <a href="#531021" title="(x$1: Int)Boolean">i</a> == <a href="#84510" title="Names.this.Name">prefix</a>.<a href="#28197" title="=&gt; Int">length</a>
+    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(prefix: Names.this.Name,start: Int)Boolean" id="28404">startsWith</a>(<a title="Names.this.Name" id="84874">prefix</a>: <a href="#26214" title="Names.this.Name">Name</a>, <a title="Int" id="84875">start</a>: <span title="Int">Int</span>): <span title="Boolean">Boolean</span> = {
+      <span class="keyword">var</span> <a title="Int" id="532212">i</a> = <span title="Int(0)" class="int">0</span>
+      <span title="Unit" class="keyword">while</span> (<a href="#532212" title="(x$1: Int)Boolean">i</a> <span title="(x$1: Boolean)Boolean">&lt;</span> <a href="#84874" title="Names.this.Name">prefix</a>.<a href="#28383" title="=&gt; Int">length</a> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <a href="#84875" title="(x$1: Int)Int">start</a> <span title="(x$1: Int)Boolean">+</span> <a href="#532212" title="Int">i</a> &lt; <a href="#531562" title="Int">len</a> &amp;&amp;
+             <a href="#26190" title="(i: Int)Char">chrs</a><span title="(x$1: Char)Boolean">(</span><a href="#531561" title="(x$1: Int)Int">index</a> <span title="(x$1: Int)Int">+</span> <a href="#84875" title="Int">start</a> + <a href="#532212" title="Int">i</a>) == <a href="#26190" title="(i: Int)Char">chrs</a>(<a href="#84874" title="Names.this.Name">prefix</a>.<a href="#28379" title="(x$1: Int)Int">start</a> + <a href="#532212" title="Int">i</a>))
+        <a href="#532212" title="Int">i</a> <a href="#532213" title="()Unit">+=</a> <span title="Int(1)" class="int">1</span>;
+      <a href="#532212" title="(x$1: Int)Boolean">i</a> == <a href="#84874" title="Names.this.Name">prefix</a>.<a href="#28383" title="=&gt; Int">length</a>
     }
 
     /** does this name end with suffix?
      */
-    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(suffix: Names.this.Name)Boolean" id="28219">endsWith</a>(<a title="Names.this.Name" id="84356">suffix</a>: <a href="#26055" title="Names.this.Name">Name</a>): <span title="Boolean">Boolean</span> = <a href="#28220" title="(suffix: Names.this.Name,end: Int)Boolean">endsWith</a>(<a href="#84356" title="Names.this.Name">suffix</a>, <a href="#530371" title="Int">len</a>)
+    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(suffix: Names.this.Name)Boolean" id="28405">endsWith</a>(<a title="Names.this.Name" id="84717">suffix</a>: <a href="#26214" title="Names.this.Name">Name</a>): <span title="Boolean">Boolean</span> = <a href="#28406" title="(suffix: Names.this.Name,end: Int)Boolean">endsWith</a>(<a href="#84717" title="Names.this.Name">suffix</a>, <a href="#531562" title="Int">len</a>)
 
     /** does this name end with suffix just before given end index?
      */
-    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(suffix: Names.this.Name,end: Int)Boolean" id="28220">endsWith</a>(<a title="Names.this.Name" id="84351">suffix</a>: <a href="#26055" title="Names.this.Name">Name</a>, <a title="Int" id="84352">end</a>: <span title="Int">Int</span>): <span title="Boolean">Boolean</span> = {
-      <span class="keyword">var</span> <a title="Int" id="531174">i</a> = <span title="Int(1)" class="int">1</span>
-      <span title="Unit" class="keyword">while</span> (<a href="#531174" title="(x$1: Int)Boolean">i</a> <span title="(x$1: Boolean)Boolean">&lt;=</span> <a href="#84351" title="Names.this.Name">suffix</a>.<a href="#28197" title="=&gt; Int">length</a> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <a href="#531174" title="(x$1: Int)Boolean">i</a> &lt;= <a href="#84352" title="Int">end</a> &amp;&amp; 
-             <a href="#26031" title="(i: Int)Char">chrs</a><span title="(x$1: Char)Boolean">(</span><a href="#530370" title="(x$1: Int)Int">index</a> <span title="(x$1: Int)Int">+</span> <a href="#84352" title="Int">end</a> - <a href="#531174" title="Int">i</a>) == <a href="#26031" title="(i: Int)Char">chrs</a>(<a href="#84351" title="Names.this.Name">suffix</a>.<a href="#28193" title="(x$1: Int)Int">start</a> <span title="(x$1: Int)Int">+</span> <a href="#84351" title="Names.this.Name">suffix</a>.<a href="#28197" title="=&gt; Int">length</a> - <a href="#531174" title="Int">i</a>))
-        <a href="#531174" title="Int">i</a> <a href="#531175" title="()Unit">+=</a> <span title="Int(1)" class="int">1</span>;
-      <a href="#531174" title="(x$1: Int)Boolean">i</a> &gt; <a href="#84351" title="Names.this.Name">suffix</a>.<a href="#28197" title="=&gt; Int">length</a>
+    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(suffix: Names.this.Name,end: Int)Boolean" id="28406">endsWith</a>(<a title="Names.this.Name" id="84712">suffix</a>: <a href="#26214" title="Names.this.Name">Name</a>, <a title="Int" id="84713">end</a>: <span title="Int">Int</span>): <span title="Boolean">Boolean</span> = {
+      <span class="keyword">var</span> <a title="Int" id="532365">i</a> = <span title="Int(1)" class="int">1</span>
+      <span title="Unit" class="keyword">while</span> (<a href="#532365" title="(x$1: Int)Boolean">i</a> <span title="(x$1: Boolean)Boolean">&lt;=</span> <a href="#84712" title="Names.this.Name">suffix</a>.<a href="#28383" title="=&gt; Int">length</a> <span title="(x$1: Boolean)Boolean">&amp;&amp;</span> <a href="#532365" title="(x$1: Int)Boolean">i</a> &lt;= <a href="#84713" title="Int">end</a> &amp;&amp; 
+             <a href="#26190" title="(i: Int)Char">chrs</a><span title="(x$1: Char)Boolean">(</span><a href="#531561" title="(x$1: Int)Int">index</a> <span title="(x$1: Int)Int">+</span> <a href="#84713" title="Int">end</a> - <a href="#532365" title="Int">i</a>) == <a href="#26190" title="(i: Int)Char">chrs</a>(<a href="#84712" title="Names.this.Name">suffix</a>.<a href="#28379" title="(x$1: Int)Int">start</a> <span title="(x$1: Int)Int">+</span> <a href="#84712" title="Names.this.Name">suffix</a>.<a href="#28383" title="=&gt; Int">length</a> - <a href="#532365" title="Int">i</a>))
+        <a href="#532365" title="Int">i</a> <a href="#532366" title="()Unit">+=</a> <span title="Int(1)" class="int">1</span>;
+      <a href="#532365" title="(x$1: Int)Boolean">i</a> &gt; <a href="#84712" title="Names.this.Name">suffix</a>.<a href="#28383" title="=&gt; Int">length</a>
     }
 
-    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(subname: Names.this.Name)Boolean" id="28221">containsName</a>(<a title="Names.this.Name" id="274097">subname</a>: <a href="#26055" title="Names.this.Name">Name</a>): <span title="Boolean">Boolean</span> = {
-      <span class="keyword">var</span> <a title="Int" id="531309">start</a> = <span title="Int(0)" class="int">0</span>
-      <span class="keyword">val</span> <a title="Int" id="531310">last</a> = <a href="#530371" title="(x$1: Int)Int">len</a> - <a href="#274097" title="Names.this.Name">subname</a>.<a href="#28197" title="=&gt; Int">length</a>
-      <span title="Unit" class="keyword">while</span> (<a href="#531309" title="(x$1: Int)Boolean">start</a> <span title="(x$1: Boolean)Boolean">&lt;=</span> <a href="#531310" title="Int">last</a> &amp;&amp; <span title="=&gt; Boolean">!</span><a href="#28218" title="(prefix: Names.this.Name,start: Int)Boolean">startsWith</a>(<a href="#274097" title="Names.this.Name">subname</a>, <a href="#531309" title="Int">start</a>)) <a href="#531309" title="Int">start</a> <a href="#531311" title="()Unit">+=</a> <span title="Int(1)" class="int">1</span>
-      <a href="#531309" title="(x$1: Int)Boolean">start</a> &lt;= <a href="#531310" title="Int">last</a>
+    <span class="keyword">final</span> <span class="keyword">def</span> <a title="(subname: Names.this.Name)Boolean" id="28407">containsName</a>(<a title="Names.this.Name" id="274947">subname</a>: <a href="#26214" title="Names.this.Name">Name</a>): <span title="Boolean">Boolean</span> = {
+      <span class="keyword">var</span> <a title="Int" id="532500">start</a> = <span title="Int(0)" class="int">0</span>
+      <span class="keyword">val</span> <a title="Int" id="532501">last</a> = <a href="#531562" title="(x$1: Int)Int">len</a> - <a href="#274947" title="Names.this.Name">subname</a>.<a href="#28383" title="=&gt; Int">length</a>
+      <span title="Unit" class="keyword">while</span> (<a href="#532500" title="(x$1: Int)Boolean">start</a> <span title="(x$1: Boolean)Boolean">&lt;=</span> <a href="#532501" title="Int">last</a> &amp;&amp; <span title="=&gt; Boolean">!</span><a href="#28404" title="(prefix: Names.this.Name,start: Int)Boolean">startsWith</a>(<a href="#274947" title="Names.this.Name">subname</a>, <a href="#532500" title="Int">start</a>)) <a href="#532500" title="Int">start</a> <a href="#532502" title="()Unit">+=</a> <span title="Int(1)" class="int">1</span>
+      <a href="#532500" title="(x$1: Int)Boolean">start</a> &lt;= <a href="#532501" title="Int">last</a>
     }
 
     /** Return the subname with characters from start to end-1.
@@ -373,7 +373,7 @@
      *  @param to   ...
      *  @return     ...
      */
-    <span class="keyword">def</span> <a title="(from: Int,to: Int)Names.this.Name" id="28222">subName</a>(<a title="Int" id="103075">from</a>: <span title="Int">Int</span>, <a title="Int" id="103076">to</a>: <span title="Int">Int</span>): <a href="#26055" title="Names.this.Name">Name</a>
+    <span class="keyword">def</span> <a title="(from: Int,to: Int)Names.this.Name" id="28408">subName</a>(<a title="Int" id="103468">from</a>: <span title="Int">Int</span>, <a title="Int" id="103469">to</a>: <span title="Int">Int</span>): <a href="#26214" title="Names.this.Name">Name</a>
 
     /** Replace all occurrences of &lt;code&gt;from&lt;/code&gt; by &lt;/code&gt;to&lt;/code&gt; in
      *  name; result is always a term name.
@@ -382,70 +382,70 @@
      *  @param to   ...
      *  @return     ...
      */
-    <span class="keyword">def</span> <a title="(from: Char,to: Char)Names.this.Name" id="28223">replace</a>(<a title="Char" id="102952">from</a>: <span title="Char">Char</span>, <a title="Char" id="102953">to</a>: <span title="Char">Char</span>): <a href="#26055" title="Names.this.Name">Name</a> = {
-      <span class="keyword">val</span> <a title="Array[Char]" id="531377">cs</a> = <span title="Array[Char]" class="keyword">new</span> <span title="Array[Char]">Array</span>[Char](<a href="#530371" title="Int">len</a>)
-      <span class="keyword">var</span> <a title="Int" id="531378">i</a> = <span title="Int(0)" class="int">0</span>
-      <span title="Unit" class="keyword">while</span> (<a href="#531378" title="(x$1: Int)Boolean">i</a> &lt; <a href="#530371" title="Int">len</a>) <a href="#531379" title="()Unit">{</a>
-        <span class="keyword">val</span> <a title="Char" id="531390">ch</a> = <a href="#28208" title="(i: Int)Char" class="keyword">this</a>(<a href="#531378" title="Int">i</a>)
-        <a href="#531377" title="(i: Int,x: Char)Unit">cs</a>(<a href="#531378" title="Int">i</a>) = <span title="Char" class="keyword">if</span> (<a href="#531390" title="(x$1: Char)Boolean">ch</a> == <a href="#102952" title="Char">from</a>) <a href="#102953" title="Char">to</a> <span class="keyword">else</span> <a href="#531390" title="Char">ch</a>
-        <a href="#531378" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
+    <span class="keyword">def</span> <a title="(from: Char,to: Char)Names.this.Name" id="28409">replace</a>(<a title="Char" id="103345">from</a>: <span title="Char">Char</span>, <a title="Char" id="103346">to</a>: <span title="Char">Char</span>): <a href="#26214" title="Names.this.Name">Name</a> = {
+      <span class="keyword">val</span> <a title="Array[Char]" id="532568">cs</a> = <span title="Array[Char]" class="keyword">new</span> <span title="Array[Char]">Array</span>[Char](<a href="#531562" title="Int">len</a>)
+      <span class="keyword">var</span> <a title="Int" id="532569">i</a> = <span title="Int(0)" class="int">0</span>
+      <span title="Unit" class="keyword">while</span> (<a href="#532569" title="(x$1: Int)Boolean">i</a> &lt; <a href="#531562" title="Int">len</a>) <a href="#532570" title="()Unit">{</a>
+        <span class="keyword">val</span> <a title="Char" id="532581">ch</a> = <a href="#28394" title="(i: Int)Char" class="keyword">this</a>(<a href="#532569" title="Int">i</a>)
+        <a href="#532568" title="(i: Int,x: Char)Unit">cs</a>(<a href="#532569" title="Int">i</a>) = <span title="Char" class="keyword">if</span> (<a href="#532581" title="(x$1: Char)Boolean">ch</a> == <a href="#103345" title="Char">from</a>) <a href="#103346" title="Char">to</a> <span class="keyword">else</span> <a href="#532581" title="Char">ch</a>
+        <a href="#532569" title="Int">i</a> += <span title="Int(1)" class="int">1</span>
       }
-      <a href="#26047" title="(cs: Array[Char],offset: Int,len: Int)Names.this.Name">newTermName</a>(<a href="#531377" title="Array[Char]">cs</a>, <span title="Int(0)" class="int">0</span>, <a href="#530371" title="Int">len</a>)
+      <a href="#26206" title="(cs: Array[Char],offset: Int,len: Int)Names.this.Name">newTermName</a>(<a href="#532568" title="Array[Char]">cs</a>, <span title="Int(0)" class="int">0</span>, <a href="#531562" title="Int">len</a>)
     }
 
     /** Replace operator symbols by corresponding &lt;code&gt;$op_name&lt;/code&gt;.
      */
-    <span class="keyword">def</span> <a title="=&gt; Names.this.Name" id="28224">encode</a>: <a href="#26055" title="Names.this.Name">Name</a> = {
-      <span class="keyword">val</span> <a title="String" id="531466">str</a> = <a href="#28205" title="()String">toString</a>()
-      <span class="keyword">val</span> <a title="String" id="531467">res</a> = <span title="object scala.util.NameTransformer">NameTransformer</span>.<a title="(name: String)String" id="79155">encode</a>(<a href="#531466" title="String">str</a>)
-      <span title="Names.this.Name" class="keyword">if</span> (<a href="#531467" title="(x$1: AnyRef)Boolean" id="3626">res</a> == <a href="#531466" title="String">str</a>) <a href="#26055" title="Names.this.Name" class="keyword">this</a>
-      <span class="keyword">else</span> <span title="Names.this.Name" class="keyword">if</span> (<a href="#28200" title="=&gt; Boolean">isTypeName</a>) <a href="#26051" title="(s: String)Names.this.Name">newTypeName</a>(<a href="#531467" title="String">res</a>)
-      <span class="keyword">else</span> <a href="#26048" title="(s: String)Names.this.Name">newTermName</a>(<a href="#531467" title="String">res</a>)
+    <span class="keyword">def</span> <a title="=&gt; Names.this.Name" id="28410">encode</a>: <a href="#26214" title="Names.this.Name">Name</a> = {
+      <span class="keyword">val</span> <a title="String" id="532657">str</a> = <a href="#28391" title="()String">toString</a>()
+      <span class="keyword">val</span> <a title="String" id="532658">res</a> = <span title="object scala.util.NameTransformer">NameTransformer</span>.<a title="(name: String)String" id="79445">encode</a>(<a href="#532657" title="String">str</a>)
+      <span title="Names.this.Name" class="keyword">if</span> (<a href="#532658" title="(x$1: AnyRef)Boolean" id="3647">res</a> == <a href="#532657" title="String">str</a>) <a href="#26214" title="Names.this.Name" class="keyword">this</a>
+      <span class="keyword">else</span> <span title="Names.this.Name" class="keyword">if</span> (<a href="#28386" title="=&gt; Boolean">isTypeName</a>) <a href="#26210" title="(s: String)Names.this.Name">newTypeName</a>(<a href="#532658" title="String">res</a>)
+      <span class="keyword">else</span> <a href="#26207" title="(s: String)Names.this.Name">newTermName</a>(<a href="#532658" title="String">res</a>)
     }
 
     /** Replace &lt;code&gt;$op_name&lt;/code&gt; by corresponding operator symbol.
      */
-    <span class="keyword">def</span> <a title="=&gt; String" id="28225">decode</a>: <span title="String">String</span> = (
-      <span title="object scala.util.NameTransformer">NameTransformer</span>.<a title="(name0: String)String" id="79157">decode</a><a title="(x$1: Any)java.lang.String" id="6553">(</a><a href="#28205" title="()String">toString</a>()) +
-      (<span title="Any" class="keyword">if</span> (<span title="(x$1: Boolean)Boolean">nameDebug</span> &amp;&amp; <a href="#28200" title="=&gt; Boolean">isTypeName</a>) <span title="java.lang.String(&quot;!&quot;)" class="string">&quot;!&quot;</span> <span class="keyword">else</span> <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>))//debug
+    <span class="keyword">def</span> <a title="=&gt; String" id="28411">decode</a>: <span title="String">String</span> = (
+      <span title="object scala.util.NameTransformer">NameTransformer</span>.<a title="(name0: String)String" id="79447">decode</a><a title="(x$1: Any)java.lang.String" id="6622">(</a><a href="#28391" title="()String">toString</a>()) +
+      (<span title="Any" class="keyword">if</span> (<span title="(x$1: Boolean)Boolean">nameDebug</span> &amp;&amp; <a href="#28386" title="=&gt; Boolean">isTypeName</a>) <span title="java.lang.String(&quot;!&quot;)" class="string">&quot;!&quot;</span> <span class="keyword">else</span> <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>))//debug
   }
 
-  <span class="keyword">private</span> <span class="keyword">class</span> <a title="class TermName extends Names.this.Name with ScalaObject" id="26056">TermName</a><span title="ScalaObject">(</span><a title="Int" id="530289">index</a>: <span title="Int">Int</span>, <a title="Int" id="530290">len</a>: <span title="Int">Int</span>, <a title="Int" id="530291">hash</a>: <span title="Int">Int</span>) <span class="keyword">extends</span> <a href="#26055" title="Names.this.Name">Name</a>(<a href="#530289" title="Int">index</a>, <a href="#530290" title="Int">len</a>) {
-    <a href="#28195" title="(x$1: Names.this.Name)Unit">next</a> = <a href="#26036" title="(i: Int)Names.this.Name">termHashtable</a>(<a href="#530291" title="Int">hash</a>)
-    <a href="#26036" title="(i: Int,x: Names.this.Name)Unit">termHashtable</a>(<a href="#530291" title="Int">hash</a>) = <a href="#26056" title="Names.this.TermName" class="keyword">this</a>
-    <span class="keyword">def</span> <a title="=&gt; Boolean" id="530284">isTermName</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(true)" class="keyword">true</span>
-    <span class="keyword">def</span> <a title="=&gt; Boolean" id="530285">isTypeName</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>
-    <span class="keyword">def</span> <a title="=&gt; Names.this.Name" id="530286">toTermName</a>: <a href="#26055" title="Names.this.Name">Name</a> = <a href="#26056" title="Names.this.TermName" class="keyword">this</a>
-    <span class="keyword">def</span> <a title="=&gt; Names.this.Name" id="530287">toTypeName</a> = {
-      <span class="keyword">val</span> <a title="Int" id="531534">h</a> = <a href="#26040" title="(cs: Array[Char],offset: Int,len: Int)Int">hashValue</a><span title="(x$1: Int)Int">(</span><a href="#26031" title="=&gt; Array[Char]">chrs</a>, <a href="#530289" title="Int">index</a>, <a href="#530290" title="Int">len</a>) &amp; <span title="Int(32767)">HASH_MASK</span>
-      <span class="keyword">var</span> <a title="Names.this.Name" id="531535">n</a> = <a href="#26038" title="(i: Int)Names.this.Name">typeHashtable</a>(<a href="#531534" title="Int">h</a>)
-      <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">(</span><a href="#531535" title="(x$1: AnyRef)Boolean">n</a> ne <span title="Null(null)" class="keyword">null</span>) &amp;&amp; <a href="#531535" title="Names.this.Name">n</a>.<a href="#28193" title="(x$1: Int)Boolean">start</a> != <a href="#530289" title="Int">index</a>)
-        <a href="#531535" title="Names.this.Name">n</a> = <a href="#531535" title="Names.this.Name">n</a>.<a href="#28195" title="=&gt; Names.this.Name">next</a>;
-      <span title="Unit" class="keyword">if</span> (<a href="#531535" title="(x$1: AnyRef)Boolean">n</a> eq <span title="Null(null)" class="keyword">null</span>)
-        <a href="#531535" title="Names.this.Name">n</a> = <span title="Names.this.TypeName" class="keyword">new</span> <a href="#26057" title="Names.this.TypeName">TypeName</a>(<a href="#530289" title="Int">index</a>, <a href="#530290" title="Int">len</a>, <a href="#531534" title="Int">h</a>);
-      <a href="#531535" title="Names.this.Name">n</a>
+  <span class="keyword">private</span> <span class="keyword">class</span> <a title="class TermName extends Names.this.Name with ScalaObject" id="26215">TermName</a><span title="ScalaObject">(</span><a title="Int" id="531480">index</a>: <span title="Int">Int</span>, <a title="Int" id="531481">len</a>: <span title="Int">Int</span>, <a title="Int" id="531482">hash</a>: <span title="Int">Int</span>) <span class="keyword">extends</span> <a href="#26214" title="Names.this.Name">Name</a>(<a href="#531480" title="Int">index</a>, <a href="#531481" title="Int">len</a>) {
+    <a href="#28381" title="(x$1: Names.this.Name)Unit">next</a> = <a href="#26195" title="(i: Int)Names.this.Name">termHashtable</a>(<a href="#531482" title="Int">hash</a>)
+    <a href="#26195" title="(i: Int,x: Names.this.Name)Unit">termHashtable</a>(<a href="#531482" title="Int">hash</a>) = <a href="#26215" title="Names.this.TermName" class="keyword">this</a>
+    <span class="keyword">def</span> <a title="=&gt; Boolean" id="531475">isTermName</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(true)" class="keyword">true</span>
+    <span class="keyword">def</span> <a title="=&gt; Boolean" id="531476">isTypeName</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>
+    <span class="keyword">def</span> <a title="=&gt; Names.this.Name" id="531477">toTermName</a>: <a href="#26214" title="Names.this.Name">Name</a> = <a href="#26215" title="Names.this.TermName" class="keyword">this</a>
+    <span class="keyword">def</span> <a title="=&gt; Names.this.Name" id="531478">toTypeName</a> = {
+      <span class="keyword">val</span> <a title="Int" id="532725">h</a> = <a href="#26199" title="(cs: Array[Char],offset: Int,len: Int)Int">hashValue</a><span title="(x$1: Int)Int">(</span><a href="#26190" title="=&gt; Array[Char]">chrs</a>, <a href="#531480" title="Int">index</a>, <a href="#531481" title="Int">len</a>) &amp; <span title="Int(32767)">HASH_MASK</span>
+      <span class="keyword">var</span> <a title="Names.this.Name" id="532726">n</a> = <a href="#26197" title="(i: Int)Names.this.Name">typeHashtable</a>(<a href="#532725" title="Int">h</a>)
+      <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">(</span><a href="#532726" title="(x$1: AnyRef)Boolean">n</a> ne <span title="Null(null)" class="keyword">null</span>) &amp;&amp; <a href="#532726" title="Names.this.Name">n</a>.<a href="#28379" title="(x$1: Int)Boolean">start</a> != <a href="#531480" title="Int">index</a>)
+        <a href="#532726" title="Names.this.Name">n</a> = <a href="#532726" title="Names.this.Name">n</a>.<a href="#28381" title="=&gt; Names.this.Name">next</a>;
+      <span title="Unit" class="keyword">if</span> (<a href="#532726" title="(x$1: AnyRef)Boolean">n</a> eq <span title="Null(null)" class="keyword">null</span>)
+        <a href="#532726" title="Names.this.Name">n</a> = <span title="Names.this.TypeName" class="keyword">new</span> <a href="#26216" title="Names.this.TypeName">TypeName</a>(<a href="#531480" title="Int">index</a>, <a href="#531481" title="Int">len</a>, <a href="#532725" title="Int">h</a>);
+      <a href="#532726" title="Names.this.Name">n</a>
     }
-    <span class="keyword">def</span> <a title="(from: Int,to: Int)Names.this.Name" id="530288">subName</a>(<a title="Int" id="531586">from</a>: <span title="Int">Int</span>, <a title="Int" id="531587">to</a>: <span title="Int">Int</span>): <a href="#26055" title="Names.this.Name">Name</a> =
-      <a href="#26047" title="(cs: Array[Char],offset: Int,len: Int)Names.this.Name">newTermName</a>(<a href="#26031" title="=&gt; Array[Char]">chrs</a>, <a href="#28193" title="(x$1: Int)Int">start</a> + <a href="#531586" title="Int">from</a>, <a href="#531587" title="(x$1: Int)Int">to</a> - <a href="#531586" title="Int">from</a>)
+    <span class="keyword">def</span> <a title="(from: Int,to: Int)Names.this.Name" id="531479">subName</a>(<a title="Int" id="532777">from</a>: <span title="Int">Int</span>, <a title="Int" id="532778">to</a>: <span title="Int">Int</span>): <a href="#26214" title="Names.this.Name">Name</a> =
+      <a href="#26206" title="(cs: Array[Char],offset: Int,len: Int)Names.this.Name">newTermName</a>(<a href="#26190" title="=&gt; Array[Char]">chrs</a>, <a href="#28379" title="(x$1: Int)Int">start</a> + <a href="#532777" title="Int">from</a>, <a href="#532778" title="(x$1: Int)Int">to</a> - <a href="#532777" title="Int">from</a>)
   }
 
-  <span class="keyword">private</span> <span class="keyword">class</span> <a title="class TypeName extends Names.this.Name with ScalaObject" id="26057">TypeName</a><span title="ScalaObject">(</span><a title="Int" id="531581">index</a>: <span title="Int">Int</span>, <a title="Int" id="531582">len</a>: <span title="Int">Int</span>, <a title="Int" id="531583">hash</a>: <span title="Int">Int</span>) <span class="keyword">extends</span> <a href="#26055" title="Names.this.Name">Name</a>(<a href="#531581" title="Int">index</a>, <a href="#531582" title="Int">len</a>) {
-    <a href="#28195" title="(x$1: Names.this.Name)Unit">next</a> = <a href="#26038" title="(i: Int)Names.this.Name">typeHashtable</a>(<a href="#531583" title="Int">hash</a>)
-    <a href="#26038" title="(i: Int,x: Names.this.Name)Unit">typeHashtable</a>(<a href="#531583" title="Int">hash</a>) = <a href="#26057" title="Names.this.TypeName" class="keyword">this</a>
-    <span class="keyword">def</span> <a title="=&gt; Boolean" id="531576">isTermName</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>
-    <span class="keyword">def</span> <a title="=&gt; Boolean" id="531577">isTypeName</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(true)" class="keyword">true</span>
-    <span class="keyword">def</span> <a title="=&gt; Names.this.Name" id="531578">toTermName</a>: <a href="#26055" title="Names.this.Name">Name</a> = {
-      <span class="keyword">val</span> <a title="Int" id="531647">h</a> = <a href="#26040" title="(cs: Array[Char],offset: Int,len: Int)Int">hashValue</a><span title="(x$1: Int)Int">(</span><a href="#26031" title="=&gt; Array[Char]">chrs</a>, <a href="#531581" title="Int">index</a>, <a href="#531582" title="Int">len</a>) &amp; <span title="Int(32767)">HASH_MASK</span>
-      <span class="keyword">var</span> <a title="Names.this.Name" id="531648">n</a> = <a href="#26036" title="(i: Int)Names.this.Name">termHashtable</a>(<a href="#531647" title="Int">h</a>)
-      <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">(</span><a href="#531648" title="(x$1: AnyRef)Boolean">n</a> ne <span title="Null(null)" class="keyword">null</span>) &amp;&amp; <a href="#531648" title="Names.this.Name">n</a>.<a href="#28193" title="(x$1: Int)Boolean">start</a> != <a href="#531581" title="Int">index</a>)
-        <a href="#531648" title="Names.this.Name">n</a> = <a href="#531648" title="Names.this.Name">n</a>.<a href="#28195" title="=&gt; Names.this.Name">next</a>;
-      <span title="Unit" class="keyword">if</span> (<a href="#531648" title="(x$1: AnyRef)Boolean">n</a> eq <span title="Null(null)" class="keyword">null</span>)
-        <a href="#531648" title="Names.this.Name">n</a> = <span title="Names.this.TermName" class="keyword">new</span> <a href="#26056" title="Names.this.TermName">TermName</a>(<a href="#531581" title="Int">index</a>, <a href="#531582" title="Int">len</a>, <a href="#531647" title="Int">h</a>);
-      <a href="#531648" title="Names.this.Name">n</a>
+  <span class="keyword">private</span> <span class="keyword">class</span> <a title="class TypeName extends Names.this.Name with ScalaObject" id="26216">TypeName</a><span title="ScalaObject">(</span><a title="Int" id="532772">index</a>: <span title="Int">Int</span>, <a title="Int" id="532773">len</a>: <span title="Int">Int</span>, <a title="Int" id="532774">hash</a>: <span title="Int">Int</span>) <span class="keyword">extends</span> <a href="#26214" title="Names.this.Name">Name</a>(<a href="#532772" title="Int">index</a>, <a href="#532773" title="Int">len</a>) {
+    <a href="#28381" title="(x$1: Names.this.Name)Unit">next</a> = <a href="#26197" title="(i: Int)Names.this.Name">typeHashtable</a>(<a href="#532774" title="Int">hash</a>)
+    <a href="#26197" title="(i: Int,x: Names.this.Name)Unit">typeHashtable</a>(<a href="#532774" title="Int">hash</a>) = <a href="#26216" title="Names.this.TypeName" class="keyword">this</a>
+    <span class="keyword">def</span> <a title="=&gt; Boolean" id="532767">isTermName</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>
+    <span class="keyword">def</span> <a title="=&gt; Boolean" id="532768">isTypeName</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(true)" class="keyword">true</span>
+    <span class="keyword">def</span> <a title="=&gt; Names.this.Name" id="532769">toTermName</a>: <a href="#26214" title="Names.this.Name">Name</a> = {
+      <span class="keyword">val</span> <a title="Int" id="532838">h</a> = <a href="#26199" title="(cs: Array[Char],offset: Int,len: Int)Int">hashValue</a><span title="(x$1: Int)Int">(</span><a href="#26190" title="=&gt; Array[Char]">chrs</a>, <a href="#532772" title="Int">index</a>, <a href="#532773" title="Int">len</a>) &amp; <span title="Int(32767)">HASH_MASK</span>
+      <span class="keyword">var</span> <a title="Names.this.Name" id="532839">n</a> = <a href="#26195" title="(i: Int)Names.this.Name">termHashtable</a>(<a href="#532838" title="Int">h</a>)
+      <span title="Unit" class="keyword">while</span> (<span title="(x$1: Boolean)Boolean">(</span><a href="#532839" title="(x$1: AnyRef)Boolean">n</a> ne <span title="Null(null)" class="keyword">null</span>) &amp;&amp; <a href="#532839" title="Names.this.Name">n</a>.<a href="#28379" title="(x$1: Int)Boolean">start</a> != <a href="#532772" title="Int">index</a>)
+        <a href="#532839" title="Names.this.Name">n</a> = <a href="#532839" title="Names.this.Name">n</a>.<a href="#28381" title="=&gt; Names.this.Name">next</a>;
+      <span title="Unit" class="keyword">if</span> (<a href="#532839" title="(x$1: AnyRef)Boolean">n</a> eq <span title="Null(null)" class="keyword">null</span>)
+        <a href="#532839" title="Names.this.Name">n</a> = <span title="Names.this.TermName" class="keyword">new</span> <a href="#26215" title="Names.this.TermName">TermName</a>(<a href="#532772" title="Int">index</a>, <a href="#532773" title="Int">len</a>, <a href="#532838" title="Int">h</a>);
+      <a href="#532839" title="Names.this.Name">n</a>
     }
-    <span class="keyword">def</span> <a title="=&gt; Names.this.Name" id="531579">toTypeName</a>: <a href="#26055" title="Names.this.Name">Name</a> = <a href="#26057" title="Names.this.TypeName" class="keyword">this</a>
-    <span class="keyword">def</span> <a title="(from: Int,to: Int)Names.this.Name" id="531580">subName</a>(<a title="Int" id="531686">from</a>: <span title="Int">Int</span>, <a title="Int" id="531687">to</a>: <span title="Int">Int</span>): <a href="#26055" title="Names.this.Name">Name</a> =
-      <a href="#26050" title="(cs: Array[Char],offset: Int,len: Int)Names.this.Name">newTypeName</a>(<a href="#26031" title="=&gt; Array[Char]">chrs</a>, <a href="#28193" title="(x$1: Int)Int">start</a> + <a href="#531686" title="Int">from</a>, <a href="#531687" title="(x$1: Int)Int">to</a> - <a href="#531686" title="Int">from</a>)
+    <span class="keyword">def</span> <a title="=&gt; Names.this.Name" id="532770">toTypeName</a>: <a href="#26214" title="Names.this.Name">Name</a> = <a href="#26216" title="Names.this.TypeName" class="keyword">this</a>
+    <span class="keyword">def</span> <a title="(from: Int,to: Int)Names.this.Name" id="532771">subName</a>(<a title="Int" id="532877">from</a>: <span title="Int">Int</span>, <a title="Int" id="532878">to</a>: <span title="Int">Int</span>): <a href="#26214" title="Names.this.Name">Name</a> =
+      <a href="#26209" title="(cs: Array[Char],offset: Int,len: Int)Names.this.Name">newTypeName</a>(<a href="#26190" title="=&gt; Array[Char]">chrs</a>, <a href="#28379" title="(x$1: Int)Int">start</a> + <a href="#532877" title="Int">from</a>, <a href="#532878" title="(x$1: Int)Int">to</a> - <a href="#532877" title="Int">from</a>)
   }
 }
 

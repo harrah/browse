@@ -17,35 +17,35 @@
  *  
  *  @author Philipp Haller
  */
-<span class="keyword">object</span> <a title="object scala.concurrent.JavaConversions" id="8303">JavaConversions</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
+<span class="keyword">object</span> <a title="object scala.concurrent.JavaConversions" id="8369">JavaConversions</a> <a href="../ScalaObject.scala.html#969" title="ScalaObject">{</a>
 
-  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="implicit scala.concurrent.JavaConversions.asTaskRunner : (exec: java.util.concurrent.ExecutorService)scala.concurrent.TaskRunner[Unit]" id="52045">asTaskRunner</a>(<a title="java.util.concurrent.ExecutorService" id="52050">exec</a>: <a title="java.util.concurrent.ExecutorService" id="44691">ExecutorService</a>): <a href="TaskRunner.scala.html#8209" title="scala.concurrent.TaskRunner[Unit]">TaskRunner</a>[Unit] =
-    <a href="#52165" title="java.lang.Object with scala.concurrent.ThreadPoolRunner[Unit]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with scala.concurrent.ThreadPoolRunner[Unit]" id="52165">ThreadPoolRunner</a>[Unit] {
-      <span class="keyword">override</span> <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; java.util.concurrent.ExecutorService" id="52179">executor</a> =
-        <a href="#52050" title="java.util.concurrent.ExecutorService">exec</a>
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="implicit scala.concurrent.JavaConversions.asTaskRunner : (exec: java.util.concurrent.ExecutorService)scala.concurrent.TaskRunner[Unit]" id="52158">asTaskRunner</a>(<a title="java.util.concurrent.ExecutorService" id="52163">exec</a>: <a title="java.util.concurrent.ExecutorService" id="44804">ExecutorService</a>): <a href="TaskRunner.scala.html#8272" title="scala.concurrent.TaskRunner[Unit]">TaskRunner</a>[Unit] =
+    <a href="#52278" title="java.lang.Object with scala.concurrent.ThreadPoolRunner[Unit]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with scala.concurrent.ThreadPoolRunner[Unit]" id="52278">ThreadPoolRunner</a>[Unit] {
+      <span class="keyword">override</span> <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; java.util.concurrent.ExecutorService" id="52292">executor</a> =
+        <a href="#52163" title="java.util.concurrent.ExecutorService">exec</a>
 
-      <span class="keyword">def</span> <a title="()Unit" id="52180">shutdown</a>() =
-        <a href="#52050" title="java.util.concurrent.ExecutorService">exec</a>.<a title="()Unit" id="52062">shutdown</a>()
+      <span class="keyword">def</span> <a title="()Unit" id="52293">shutdown</a>() =
+        <a href="#52163" title="java.util.concurrent.ExecutorService">exec</a>.<a title="()Unit" id="52175">shutdown</a>()
     }
 
-  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="implicit scala.concurrent.JavaConversions.asTaskRunner : (exec: java.util.concurrent.Executor)scala.concurrent.TaskRunner[Unit]" id="52046">asTaskRunner</a>(<a title="java.util.concurrent.Executor" id="52199">exec</a>: <a title="java.util.concurrent.Executor" id="44580">Executor</a>): <a href="TaskRunner.scala.html#8209" title="scala.concurrent.TaskRunner[Unit]">TaskRunner</a>[Unit] =
-    <a href="#52201" title="java.lang.Object with scala.concurrent.TaskRunner[Unit]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with scala.concurrent.TaskRunner[Unit]" id="52201">TaskRunner</a>[Unit] {
-      <span class="keyword">type</span> <a title="[+R]() =&gt; R" id="52203">Future</a>[+<a title="&gt;: Nothing &lt;: Any" id="52204">R</a><a id="1">]</a> = () =&gt; R
+  <span class="keyword">implicit</span> <span class="keyword">def</span> <a title="implicit scala.concurrent.JavaConversions.asTaskRunner : (exec: java.util.concurrent.Executor)scala.concurrent.TaskRunner[Unit]" id="52159">asTaskRunner</a>(<a title="java.util.concurrent.Executor" id="52312">exec</a>: <a title="java.util.concurrent.Executor" id="44693">Executor</a>): <a href="TaskRunner.scala.html#8272" title="scala.concurrent.TaskRunner[Unit]">TaskRunner</a>[Unit] =
+    <a href="#52314" title="java.lang.Object with scala.concurrent.TaskRunner[Unit]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with scala.concurrent.TaskRunner[Unit]" id="52314">TaskRunner</a>[Unit] {
+      <span class="keyword">type</span> <a title="[+R]() =&gt; R" id="52316">Future</a>[+<a title="&gt;: Nothing &lt;: Any" id="52317">R</a><a id="1">]</a> = () =&gt; R
 
-      <span class="keyword">def</span> <a title="(task: () =&gt; Unit)() =&gt; Unit" id="52205">submit</a>(<a title="() =&gt; Unit" id="52212">task</a>: () =&gt; Unit): <span class="keyword">this</span>.<a href="../Function0.scala.html#369" title="() =&gt; Unit">Future</a>[Unit] = {
-        <span class="keyword">val</span> <a title="scala.concurrent.SyncVar[Either[Throwable,Unit]]" id="52217">result</a> = <span title="scala.concurrent.SyncVar[Either[Throwable,Unit]]" class="keyword">new</span> <a href="SyncVar.scala.html#8398" title="scala.concurrent.SyncVar[Either[Throwable,Unit]]">SyncVar</a>[Either[Throwable, Unit]]
-        <span class="keyword">val</span> <a title="&lt;refinement&gt; extends java.lang.Object with java.lang.Runnable" id="52218">runnable</a> = <a href="#52221" title="java.lang.Object with java.lang.Runnable{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with java.lang.Runnable" id="52221">Runnable</a> {
-          <span class="keyword">def</span> <a title="()Unit" id="52223">run</a>() { <a href="SyncVar.scala.html#20785" title="(x: Either[Throwable,Unit])Unit">result</a> set <a href="TaskRunner.scala.html#52059" title="(body: =&gt; Unit)Either[Exception,Unit]">tryCatch</a>(<a href="../Function0.scala.html#34096" title="()Unit">task</a>()) }
+      <span class="keyword">def</span> <a title="(task: () =&gt; Unit)() =&gt; Unit" id="52318">submit</a>(<a title="() =&gt; Unit" id="52325">task</a>: () =&gt; Unit): <span class="keyword">this</span>.<a href="../Function0.scala.html#375" title="() =&gt; Unit">Future</a>[Unit] = {
+        <span class="keyword">val</span> <a title="scala.concurrent.SyncVar[Either[Throwable,Unit]]" id="52330">result</a> = <span title="scala.concurrent.SyncVar[Either[Throwable,Unit]]" class="keyword">new</span> <a href="SyncVar.scala.html#8467" title="scala.concurrent.SyncVar[Either[Throwable,Unit]]">SyncVar</a>[Either[Throwable, Unit]]
+        <span class="keyword">val</span> <a title="&lt;refinement&gt; extends java.lang.Object with java.lang.Runnable" id="52331">runnable</a> = <a href="#52334" title="java.lang.Object with java.lang.Runnable{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with java.lang.Runnable" id="52334">Runnable</a> {
+          <span class="keyword">def</span> <a title="()Unit" id="52336">run</a>() { <a href="SyncVar.scala.html#20892" title="(x: Either[Throwable,Unit])Unit">result</a> set <a href="TaskRunner.scala.html#52172" title="(body: =&gt; Unit)Either[Exception,Unit]">tryCatch</a>(<a href="../Function0.scala.html#34209" title="()Unit">task</a>()) }
         }
-        <a href="#52199" title="java.util.concurrent.Executor">exec</a>.<a title="(x$1: java.lang.Runnable)Unit" id="52193">execute</a>(<a href="#52218" title="&lt;refinement&gt; extends java.lang.Object with java.lang.Runnable">runnable</a>)
-        () =&gt; <a href="ops.scala.html#52263" title="(x: Either[Throwable,Unit])Unit">ops</a> getOrThrow <a href="#52217" title="scala.concurrent.SyncVar[Either[Throwable,Unit]]">result</a>.<a href="SyncVar.scala.html#20782" title="=&gt; Either[Throwable,Unit]">get</a>
+        <a href="#52312" title="java.util.concurrent.Executor">exec</a>.<a title="(x$1: java.lang.Runnable)Unit" id="52306">execute</a>(<a href="#52331" title="&lt;refinement&gt; extends java.lang.Object with java.lang.Runnable">runnable</a>)
+        () =&gt; <a href="ops.scala.html#52376" title="(x: Either[Throwable,Unit])Unit">ops</a> getOrThrow <a href="#52330" title="scala.concurrent.SyncVar[Either[Throwable,Unit]]">result</a>.<a href="SyncVar.scala.html#20889" title="=&gt; Either[Throwable,Unit]">get</a>
       }
 
-      <span class="keyword">def</span> <a title="(blocker: scala.concurrent.ManagedBlocker)Unit" id="52206">managedBlock</a>(<a title="scala.concurrent.ManagedBlocker" id="52298">blocker</a>: <a href="ManagedBlocker.scala.html#8326" title="scala.concurrent.ManagedBlocker">ManagedBlocker</a>) {
-        <a href="#52298" title="scala.concurrent.ManagedBlocker">blocker</a>.<a href="ManagedBlocker.scala.html#52302" title="()Boolean">block</a><span title="Unit">(</span>)
+      <span class="keyword">def</span> <a title="(blocker: scala.concurrent.ManagedBlocker)Unit" id="52319">managedBlock</a>(<a title="scala.concurrent.ManagedBlocker" id="52411">blocker</a>: <a href="ManagedBlocker.scala.html#8395" title="scala.concurrent.ManagedBlocker">ManagedBlocker</a>) {
+        <a href="#52411" title="scala.concurrent.ManagedBlocker">blocker</a>.<a href="ManagedBlocker.scala.html#52415" title="()Boolean">block</a><span title="Unit">(</span>)
       }
 
-      <span class="keyword">def</span> <a title="()Unit" id="52207">shutdown</a>() <span title="Unit">{</span>
+      <span class="keyword">def</span> <a title="()Unit" id="52320">shutdown</a>() <span title="Unit">{</span>
         // do nothing
       }
     }

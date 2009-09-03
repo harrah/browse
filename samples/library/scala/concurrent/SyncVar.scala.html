@@ -28,75 +28,75 @@
  *  @author  Martin Odersky, Stepan Koltsov
  *  @version 1.0, 10/03/2003
  */
-<span class="keyword">class</span> <a title="class SyncVar[A] extends java.lang.Object with ScalaObject" id="8398">SyncVar</a>[<a title="&gt;: Nothing &lt;: Any" id="8401">A</a><a id="1">]</a> <a href="../ScalaObject.scala.html#957" title="ScalaObject">{</a>
-  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Boolean" id="20774">isDefined</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>
-  <span class="keyword">private</span> <span class="keyword">var</span> <a title="A" id="20777">value</a>: <a href="#8401" title="A">A</a> = _
-  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Option[Throwable]" id="20780">exception</a>: <a href="../Option.scala.html#777" title="Option[Throwable]">Option</a>[Throwable] = <a href="../Option.scala.html#463" title="object None">None</a>
+<span class="keyword">class</span> <a title="class SyncVar[A] extends java.lang.Object with ScalaObject" id="8467">SyncVar</a>[<a title="&gt;: Nothing &lt;: Any" id="8470">A</a><a id="1">]</a> <a href="../ScalaObject.scala.html#969" title="ScalaObject">{</a>
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Boolean" id="20881">isDefined</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="A" id="20884">value</a>: <a href="#8470" title="A">A</a> = _
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Option[Throwable]" id="20887">exception</a>: <a href="../Option.scala.html#789" title="Option[Throwable]">Option</a>[Throwable] = <a href="../Option.scala.html#472" title="object None">None</a>
 
-  <span class="keyword">def</span> <a title="=&gt; A" id="20782">get</a> = <a href="#8398" title="(x$1: A)A">synchronized</a> {
-    <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span><a href="#20774" title="=&gt; Boolean">isDefined</a>) <a href="#8398" title="()Unit">wait</a><a href="#20802" title="()Unit">(</a>)
-    <span title="A" class="keyword">if</span> (<a href="#20780" title="=&gt; Option[Throwable]">exception</a>.<a href="../Option.scala.html#19757" title="=&gt; Boolean">isEmpty</a>) <a href="#20777" title="=&gt; A">value</a>
-    <span class="keyword">else</span> <span title="Nothing" class="keyword">throw</span> <a href="#20780" title="=&gt; Option[Throwable]">exception</a>.<a href="../Option.scala.html#19759" title="=&gt; Throwable">get</a>
+  <span class="keyword">def</span> <a title="=&gt; A" id="20889">get</a> = <a href="#8467" title="(x$1: A)A">synchronized</a> {
+    <span title="Unit" class="keyword">while</span> (<span title="=&gt; Boolean">!</span><a href="#20881" title="=&gt; Boolean">isDefined</a>) <a href="#8467" title="()Unit">wait</a><a href="#20909" title="()Unit">(</a>)
+    <span title="A" class="keyword">if</span> (<a href="#20887" title="=&gt; Option[Throwable]">exception</a>.<a href="../Option.scala.html#19864" title="=&gt; Boolean">isEmpty</a>) <a href="#20884" title="=&gt; A">value</a>
+    <span class="keyword">else</span> <span title="Nothing" class="keyword">throw</span> <a href="#20887" title="=&gt; Option[Throwable]">exception</a>.<a href="../Option.scala.html#19866" title="=&gt; Throwable">get</a>
   }
 
-  <span class="keyword">def</span> <a title="(timeout: Long)Option[A]" id="20783">get</a>(<a title="Long" id="20826">timeout</a>: <a title="Long" id="2182">Long</a>): <a href="../Option.scala.html#777" title="Option[A]">Option</a>[A] = <a href="#8398" title="(x$1: Option[A])Option[A]">synchronized</a> {
-    <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#20774" title="=&gt; Boolean">isDefined</a>) {
+  <span class="keyword">def</span> <a title="(timeout: Long)Option[A]" id="20890">get</a>(<a title="Long" id="20933">timeout</a>: <a title="Long" id="2197">Long</a>): <a href="../Option.scala.html#789" title="Option[A]">Option</a>[A] = <a href="#8467" title="(x$1: Option[A])Option[A]">synchronized</a> {
+    <span title="Unit" class="keyword">if</span> (<span title="=&gt; Boolean">!</span><a href="#20881" title="=&gt; Boolean">isDefined</a>) {
       <span class="keyword">try</span> {
-        <a href="#8398" title="(x$1: Long)Unit" id="6520">wait</a>(<a href="#20826" title="Long">timeout</a>)
+        <a href="#8467" title="(x$1: Long)Unit" id="6583">wait</a>(<a href="#20933" title="Long">timeout</a>)
       } <span class="keyword">catch</span> {
-        <span title="Unit" class="keyword">case</span> _: <a title="java.lang.InterruptedException" id="1507">InterruptedException</a> =&gt;
+        <span title="Unit" class="keyword">case</span> _: <a title="java.lang.InterruptedException" id="1522">InterruptedException</a> =&gt;
       }
     }
-    <span title="Option[A]" class="keyword">if</span> (<a href="#20780" title="=&gt; Option[Throwable]">exception</a>.<a href="../Option.scala.html#19757" title="=&gt; Boolean">isEmpty</a>) {
-      <span title="Option[A]" class="keyword">if</span> (<a href="#20774" title="=&gt; Boolean">isDefined</a>) <a href="../Option.scala.html#19800" title="(x: A)Some[A]">Some</a>(<a href="#20777" title="=&gt; A">value</a>) <span class="keyword">else</span> <a href="../Option.scala.html#463" title="object None">None</a>
+    <span title="Option[A]" class="keyword">if</span> (<a href="#20887" title="=&gt; Option[Throwable]">exception</a>.<a href="../Option.scala.html#19864" title="=&gt; Boolean">isEmpty</a>) {
+      <span title="Option[A]" class="keyword">if</span> (<a href="#20881" title="=&gt; Boolean">isDefined</a>) <a href="../Option.scala.html#19907" title="(x: A)Some[A]">Some</a>(<a href="#20884" title="=&gt; A">value</a>) <span class="keyword">else</span> <a href="../Option.scala.html#472" title="object None">None</a>
     } <span class="keyword">else</span>
-      <span title="Nothing" class="keyword">throw</span> <a href="#20780" title="=&gt; Option[Throwable]">exception</a>.<a href="../Option.scala.html#19759" title="=&gt; Throwable">get</a>
+      <span title="Nothing" class="keyword">throw</span> <a href="#20887" title="=&gt; Option[Throwable]">exception</a>.<a href="../Option.scala.html#19866" title="=&gt; Throwable">get</a>
   }
 
-  <span class="keyword">def</span> <a title="()A" id="20784">take</a>() = <a href="#8398" title="(x$1: A)A">synchronized</a> {
+  <span class="keyword">def</span> <a title="()A" id="20891">take</a>() = <a href="#8467" title="(x$1: A)A">synchronized</a> {
     <span class="keyword">try</span> {
-      <a href="#20782" title="=&gt; A">get</a>
+      <a href="#20889" title="=&gt; A">get</a>
     } <span class="keyword">finally</span> {
-      <a href="#20790" title="()Unit">unset</a>()
+      <a href="#20897" title="()Unit">unset</a>()
     }
   }
 
-  <span class="keyword">def</span> <a title="(x: A)Unit" id="20785">set</a>(<a title="A" id="20863">x</a>: <a href="#8401" title="A">A</a>) = <a href="#8398" title="(x$1: Unit)Unit">synchronized</a> {
-    <a href="#20777" title="(x$1: A)Unit">value</a> = <a href="#20863" title="A">x</a>
-    <a href="#20774" title="(x$1: Boolean)Unit">isDefined</a> = <span title="Boolean(true)" class="keyword">true</span>
-    <a href="#20780" title="(x$1: Option[Throwable])Unit">exception</a> = <a href="../Option.scala.html#463" title="object None">None</a>
-    <a href="#8398" title="()Unit">notifyAll</a>()
+  <span class="keyword">def</span> <a title="(x: A)Unit" id="20892">set</a>(<a title="A" id="20970">x</a>: <a href="#8470" title="A">A</a>) = <a href="#8467" title="(x$1: Unit)Unit">synchronized</a> {
+    <a href="#20884" title="(x$1: A)Unit">value</a> = <a href="#20970" title="A">x</a>
+    <a href="#20881" title="(x$1: Boolean)Unit">isDefined</a> = <span title="Boolean(true)" class="keyword">true</span>
+    <a href="#20887" title="(x$1: Option[Throwable])Unit">exception</a> = <a href="../Option.scala.html#472" title="object None">None</a>
+    <a href="#8467" title="()Unit">notifyAll</a>()
   }
 
-  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(e: Throwable)Unit" id="20786">setException</a>(<a title="Throwable" id="20879">e</a>: <a title="Throwable" id="1885">Throwable</a>) = <a href="#8398" title="(x$1: Unit)Unit">synchronized</a> {
-    <a href="#20780" title="(x$1: Option[Throwable])Unit">exception</a> = <a href="../Option.scala.html#19800" title="(x: Throwable)Some[Throwable]">Some</a>(<a href="#20879" title="Throwable">e</a>)
-    <a href="#20774" title="(x$1: Boolean)Unit">isDefined</a> = <span title="Boolean(true)" class="keyword">true</span>
-    <a href="#8398" title="()Unit">notifyAll</a>()
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(e: Throwable)Unit" id="20893">setException</a>(<a title="Throwable" id="20986">e</a>: <a title="Throwable" id="1900">Throwable</a>) = <a href="#8467" title="(x$1: Unit)Unit">synchronized</a> {
+    <a href="#20887" title="(x$1: Option[Throwable])Unit">exception</a> = <a href="../Option.scala.html#19907" title="(x: Throwable)Some[Throwable]">Some</a>(<a href="#20986" title="Throwable">e</a>)
+    <a href="#20881" title="(x$1: Boolean)Unit">isDefined</a> = <span title="Boolean(true)" class="keyword">true</span>
+    <a href="#8467" title="()Unit">notifyAll</a>()
   }
   
   @deprecated(<span class="string">&quot;Will be removed in 2.8. SyncVar should not allow exception by design.&quot;</span>)
-  <span class="keyword">def</span> <a title="(x: =&gt; A)Unit" id="20787">setWithCatch</a>(<a title="=&gt; A" id="20898">x</a>: =&gt; A) = <a href="#8398" title="(x$1: Unit)Unit">synchronized</a> {
+  <span class="keyword">def</span> <a title="(x: =&gt; A)Unit" id="20894">setWithCatch</a>(<a title="=&gt; A" id="21005">x</a>: =&gt; A) = <a href="#8467" title="(x$1: Unit)Unit">synchronized</a> {
     <span class="keyword">try</span> {
-      <a href="#20785" title="(x: A)Unit" class="keyword">this</a> set <a href="#20898" title="=&gt; A">x</a>
+      <a href="#20892" title="(x: A)Unit" class="keyword">this</a> set <a href="#21005" title="=&gt; A">x</a>
     } <span class="keyword">catch</span> {
-      <span title="Nothing" class="keyword">case</span> <a title="java.lang.Throwable" id="20905">e</a> =&gt;
-        <a href="#20786" title="(e: Throwable)Unit" class="keyword">this</a> setException <a href="#20905" title="java.lang.Throwable">e</a>
-        <span title="Nothing" class="keyword">throw</span> <a href="#20905" title="java.lang.Throwable">e</a>
+      <span title="Nothing" class="keyword">case</span> <a title="java.lang.Throwable" id="21012">e</a> =&gt;
+        <a href="#20893" title="(e: Throwable)Unit" class="keyword">this</a> setException <a href="#21012" title="java.lang.Throwable">e</a>
+        <span title="Nothing" class="keyword">throw</span> <a href="#21012" title="java.lang.Throwable">e</a>
     }
   }
   
-  <span class="keyword">def</span> <a title="(x: A)Unit" id="20788">put</a>(<a title="A" id="20911">x</a>: <a href="#8401" title="A">A</a>) = <a href="#8398" title="(x$1: Unit)Unit">synchronized</a> {
-    <span title="Unit" class="keyword">while</span> (<a href="#20774" title="=&gt; Boolean">isDefined</a>) <a href="#8398" title="()Unit">wait</a><a href="#20916" title="()Unit">(</a>)
-    <a href="#20785" title="(x: A)Unit">set</a>(<a href="#20911" title="A">x</a>)
+  <span class="keyword">def</span> <a title="(x: A)Unit" id="20895">put</a>(<a title="A" id="21018">x</a>: <a href="#8470" title="A">A</a>) = <a href="#8467" title="(x$1: Unit)Unit">synchronized</a> {
+    <span title="Unit" class="keyword">while</span> (<a href="#20881" title="=&gt; Boolean">isDefined</a>) <a href="#8467" title="()Unit">wait</a><a href="#21023" title="()Unit">(</a>)
+    <a href="#20892" title="(x: A)Unit">set</a>(<a href="#21018" title="A">x</a>)
   }
   
-  <span class="keyword">def</span> <a title="=&gt; Boolean" id="20789">isSet</a>: <span title="Boolean">Boolean</span> = <a href="#8398" title="(x$1: Boolean)Boolean">synchronized</a> {
-    <a href="#20774" title="=&gt; Boolean">isDefined</a>
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="20896">isSet</a>: <span title="Boolean">Boolean</span> = <a href="#8467" title="(x$1: Boolean)Boolean">synchronized</a> {
+    <a href="#20881" title="=&gt; Boolean">isDefined</a>
   }
 
-  <span class="keyword">def</span> <a title="()Unit" id="20790">unset</a>(): <a title="Unit" id="1948">Unit</a> = <a href="#8398" title="(x$1: Unit)Unit">synchronized</a> {
-    <a href="#20774" title="(x$1: Boolean)Unit">isDefined</a> = <span title="Boolean(false)" class="keyword">false</span>
-    <a href="#8398" title="()Unit">notifyAll</a>()
+  <span class="keyword">def</span> <a title="()Unit" id="20897">unset</a>(): <a title="Unit" id="1963">Unit</a> = <a href="#8467" title="(x$1: Unit)Unit">synchronized</a> {
+    <a href="#20881" title="(x$1: Boolean)Unit">isDefined</a> = <span title="Boolean(false)" class="keyword">false</span>
+    <a href="#8467" title="()Unit">notifyAll</a>()
   }
 
 }

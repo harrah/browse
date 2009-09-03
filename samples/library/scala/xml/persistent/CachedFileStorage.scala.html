@@ -17,7 +17,7 @@
 **                          |/                                          **
 \*                                                                      */
 
-// $Id: CachedFileStorage.scala 18620 2009-08-31 20:19:46Z extempore $
+// $Id: CachedFileStorage.scala 18626 2009-09-01 16:05:38Z extempore $
 
 <span class="keyword">package</span> scala.xml
 <span class="keyword">package</span> persistent
@@ -37,94 +37,94 @@
  *
  *  @author Burak Emir
  */
-<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class CachedFileStorage extends java.lang.Thread with scala.util.logging.Logged with ScalaObject" id="11281">CachedFileStorage</a><a href="../../ScalaObject.scala.html#957" title="ScalaObject">(</a><span class="keyword">private</span> <span class="keyword">val</span> <a title="scala.io.File" id="37350">file1</a>: <a href="../../io/File.scala.html#9637" title="scala.io.File">File</a>)
-<span class="keyword">extends</span> java.lang.<a title="java.lang.Thread" id="1825">Thread</a> <span class="keyword">with</span> scala.util.logging.<a href="../../util/logging/Logged.scala.html#13208" title="scala.util.logging.Logged">Logged</a>
+<span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class CachedFileStorage extends java.lang.Thread with scala.util.logging.Logged with ScalaObject" id="11373">CachedFileStorage</a><a href="../../ScalaObject.scala.html#969" title="ScalaObject">(</a><span class="keyword">private</span> <span class="keyword">val</span> <a title="scala.io.File" id="37463">file1</a>: <a href="../../io/File.scala.html#9714" title="scala.io.File">File</a>)
+<span class="keyword">extends</span> java.lang.<a title="java.lang.Thread" id="1840">Thread</a> <span class="keyword">with</span> scala.util.logging.<a href="../../util/logging/Logged.scala.html#13313" title="scala.util.logging.Logged">Logged</a>
 {
-  <span class="keyword">private</span> <span class="keyword">val</span> <a title="scala.io.File" id="37299">file2</a> = (<a href="#37350" title="=&gt; scala.io.File">file1</a>.<a href="../../io/Path.scala.html#32616" title="=&gt; Option[scala.io.Path]">parent</a>.<a href="../../io/Path.scala.html#32608" title="(child: scala.io.Path)scala.io.Path">get</a> / (<a href="#37350" title="=&gt; scala.io.File">file1</a>.<a href="../../io/Path.scala.html#32611" title="(x$1: Any)java.lang.String">name</a> <a href="../../io/Path.scala.html#32660" title="implicit scala.io.Path.string2path : (s: String)scala.io.Path">+</a> <span title="java.lang.String(&quot;$&quot;)" class="string">&quot;$&quot;</span>)).<a href="../../io/Path.scala.html#32603" title="=&gt; scala.io.File">toFile</a>
+  <span class="keyword">private</span> <span class="keyword">val</span> <a title="scala.io.File" id="37412">file2</a> = (<a href="#37463" title="=&gt; scala.io.File">file1</a>.<a href="../../io/Path.scala.html#32723" title="=&gt; Option[scala.io.Path]">parent</a>.<a href="../../io/Path.scala.html#32715" title="(child: scala.io.Path)scala.io.Path">get</a> / (<a href="#37463" title="=&gt; scala.io.File">file1</a>.<a href="../../io/Path.scala.html#32718" title="(x$1: Any)java.lang.String">name</a> <a href="../../io/Path.scala.html#32765" title="implicit scala.io.Path.string2path : (s: String)scala.io.Path">+</a> <span title="java.lang.String(&quot;$&quot;)" class="string">&quot;$&quot;</span>)).<a href="../../io/Path.scala.html#32710" title="=&gt; scala.io.File">toFile</a>
     
   /**  either equals file1 or file2, references the next file in which updates will be stored
    */
-  <span class="keyword">private</span> <span class="keyword">var</span> <a title="scala.io.File" id="37302">theFile</a>: <a href="../../io/File.scala.html#9637" title="scala.io.File">File</a> = <span title="Null(null)" class="keyword">null</span>
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="scala.io.File" id="37415">theFile</a>: <a href="../../io/File.scala.html#9714" title="scala.io.File">File</a> = <span title="Null(null)" class="keyword">null</span>
 
-  <span class="keyword">private</span> <span class="keyword">def</span> <a title="=&gt; Unit" id="37304">switch</a> = { <a href="#37302" title="(x$1: scala.io.File)Unit">theFile</a> = <span title="scala.io.File" class="keyword">if</span> (<a href="#37302" title="(x$1: AnyRef)Boolean" id="3624">theFile</a> == <a href="#37350" title="=&gt; scala.io.File">file1</a>) <a href="#37299" title="=&gt; scala.io.File">file2</a> <span class="keyword">else</span> <a href="#37350" title="=&gt; scala.io.File">file1</a>; }
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="=&gt; Unit" id="37417">switch</a> = { <a href="#37415" title="(x$1: scala.io.File)Unit">theFile</a> = <span title="scala.io.File" class="keyword">if</span> (<a href="#37415" title="(x$1: AnyRef)Boolean" id="3639">theFile</a> == <a href="#37463" title="=&gt; scala.io.File">file1</a>) <a href="#37412" title="=&gt; scala.io.File">file2</a> <span class="keyword">else</span> <a href="#37463" title="=&gt; scala.io.File">file1</a>; }
 
   /** this storage modified since last modification check */
-  <span class="keyword">protected</span> <span class="keyword">var</span> <a title="Boolean" id="37306">dirty</a> = <span title="Boolean(false)" class="keyword">false</span>
+  <span class="keyword">protected</span> <span class="keyword">var</span> <a title="Boolean" id="37419">dirty</a> = <span title="Boolean(false)" class="keyword">false</span>
 
   /** period between modification checks, in milliseconds */
-  <span class="keyword">protected</span> <span class="keyword">val</span> <a title="Int" id="37308">interval</a> = <span title="Int(1000)" class="int">1000</span>
+  <span class="keyword">protected</span> <span class="keyword">val</span> <a title="Int" id="37421">interval</a> = <span title="Int(1000)" class="int">1000</span>
 
   /** finds and loads the storage file. subclasses should call this method 
    *  prior to any other, but only once, to obtain the initial sequence of nodes.
    */
-  <span class="keyword">protected</span> <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="Iterator[scala.xml.Node]" id="37311">initialNodes</a>: <a href="../../collection/Iterator.scala.html#4274" title="Iterator[scala.xml.Node]">Iterator</a>[Node] = {
-    <span class="keyword">val</span> <a href="../../Tuple2.scala.html#20670" title="(Boolean, Boolean)">(</a><a href="../../Tuple2.scala.html#20472" title="Boolean" id="249544">e1</a>, <a href="../../Tuple2.scala.html#20474" title="Boolean" id="249545">e2</a>) = <a href="../../Tuple2.scala.html#20670" title="(_1: Boolean,_2: Boolean)(Boolean, Boolean)">(</a><a href="#37350" title="=&gt; scala.io.File">file1</a>.<a href="../../io/Path.scala.html#32621" title="=&gt; Boolean">exists</a>, <a href="#37299" title="=&gt; scala.io.File">file2</a>.<a href="../../io/Path.scala.html#32621" title="=&gt; Boolean">exists</a>)
+  <span class="keyword">protected</span> <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="Iterator[scala.xml.Node]" id="37424">initialNodes</a>: <a href="../../collection/Iterator.scala.html#4301" title="Iterator[scala.xml.Node]">Iterator</a>[Node] = {
+    <span class="keyword">val</span> <a href="../../Tuple2.scala.html#20777" title="(Boolean, Boolean)">(</a><a href="../../Tuple2.scala.html#20579" title="Boolean" id="250462">e1</a>, <a href="../../Tuple2.scala.html#20581" title="Boolean" id="250463">e2</a>) = <a href="../../Tuple2.scala.html#20777" title="(_1: Boolean,_2: Boolean)(Boolean, Boolean)">(</a><a href="#37463" title="=&gt; scala.io.File">file1</a>.<a href="../../io/Path.scala.html#32728" title="=&gt; Boolean">exists</a>, <a href="#37412" title="=&gt; scala.io.File">file2</a>.<a href="../../io/Path.scala.html#32728" title="=&gt; Boolean">exists</a>)
     
-    <a href="#37302" title="(x$1: scala.io.File)Unit">theFile</a> = <span title="scala.io.File" class="keyword">if</span> (<a href="#249545" title="(x$1: Boolean)Boolean">e2</a> &amp;&amp; (<a href="../../io/Path.scala.html#32632" title="(other: scala.io.Path)Boolean">file2</a> isFresher <a href="#37350" title="=&gt; scala.io.File">file1</a>)) <a href="#37299" title="=&gt; scala.io.File">file2</a> <span class="keyword">else</span> <a href="#37350" title="=&gt; scala.io.File">file1</a>
-    <span title="Iterator[scala.xml.Node]" class="keyword">if</span> (<span title="(x$1: Boolean)Boolean">!</span><a href="#249544" title="Boolean">e1</a> &amp;&amp; <span title="=&gt; Boolean">!</span><a href="#249545" title="Boolean">e2</a>) <a href="../../package.scala.html#14773" title="=&gt; collection.Iterator.type">Iterator</a>.<a href="../../collection/Iterator.scala.html#21409" title="=&gt; &lt;refinement&gt; extends java.lang.Object with Iterator[Nothing]">empty</a> <span class="keyword">else</span> <a href="#37315" title="=&gt; Iterator[scala.xml.Node]">load</a>
+    <a href="#37415" title="(x$1: scala.io.File)Unit">theFile</a> = <span title="scala.io.File" class="keyword">if</span> (<a href="#250463" title="(x$1: Boolean)Boolean">e2</a> &amp;&amp; (<a href="../../io/Path.scala.html#32741" title="(other: scala.io.Path)Boolean">file2</a> isFresher <a href="#37463" title="=&gt; scala.io.File">file1</a>)) <a href="#37412" title="=&gt; scala.io.File">file2</a> <span class="keyword">else</span> <a href="#37463" title="=&gt; scala.io.File">file1</a>
+    <span title="Iterator[scala.xml.Node]" class="keyword">if</span> (<span title="(x$1: Boolean)Boolean">!</span><a href="#250462" title="Boolean">e1</a> &amp;&amp; <span title="=&gt; Boolean">!</span><a href="#250463" title="Boolean">e2</a>) <a href="../../package.scala.html#14878" title="=&gt; collection.Iterator.type">Iterator</a>.<a href="../../collection/Iterator.scala.html#21516" title="=&gt; &lt;refinement&gt; extends java.lang.Object with Iterator[Nothing]">empty</a> <span class="keyword">else</span> <a href="#37428" title="=&gt; Iterator[scala.xml.Node]">load</a>
   }
 
   /** returns an iterator over the nodes in this storage */
-  <span class="keyword">def</span> <a title="=&gt; Iterator[scala.xml.Node]" id="37312">nodes</a>: <a href="../../collection/Iterator.scala.html#4274" title="Iterator[scala.xml.Node]">Iterator</a>[Node]  
+  <span class="keyword">def</span> <a title="=&gt; Iterator[scala.xml.Node]" id="37425">nodes</a>: <a href="../../collection/Iterator.scala.html#4301" title="Iterator[scala.xml.Node]">Iterator</a>[Node]  
 
   /** adds a node, setting this.dirty to true as a side effect */
-  <span class="keyword">def</span> <a title="(e: scala.xml.Node)Unit" id="37313">+=</a> (<a title="scala.xml.Node" id="37594">e</a>: <a href="../Node.scala.html#8654" title="scala.xml.Node">Node</a>): <span title="Unit">Unit</span> 
+  <span class="keyword">def</span> <a title="(e: scala.xml.Node)Unit" id="37426">+=</a> (<a title="scala.xml.Node" id="37707">e</a>: <a href="../Node.scala.html#8723" title="scala.xml.Node">Node</a>): <span title="Unit">Unit</span> 
 
   /** removes a tree, setting this.dirty to true as a side effect */
-  <span class="keyword">def</span> <a title="(e: scala.xml.Node)Unit" id="37314">-=</a> (<a title="scala.xml.Node" id="37687">e</a>: <a href="../Node.scala.html#8654" title="scala.xml.Node">Node</a>): <span title="Unit">Unit</span> 
+  <span class="keyword">def</span> <a title="(e: scala.xml.Node)Unit" id="37427">-=</a> (<a title="scala.xml.Node" id="37800">e</a>: <a href="../Node.scala.html#8723" title="scala.xml.Node">Node</a>): <span title="Unit">Unit</span> 
 
   /* loads and parses XML from file */
-  <span class="keyword">private</span> <span class="keyword">def</span> <a title="=&gt; Iterator[scala.xml.Node]" id="37315">load</a>: <a href="../../collection/Iterator.scala.html#4274" title="Iterator[scala.xml.Node]">Iterator</a>[Node] = {
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="=&gt; Iterator[scala.xml.Node]" id="37428">load</a>: <a href="../../collection/Iterator.scala.html#4301" title="Iterator[scala.xml.Node]">Iterator</a>[Node] = {
     <span class="keyword">import</span> scala.io.Source
     <span class="keyword">import</span> scala.xml.parsing.ConstructingParser
     
-    <a href="../../util/logging/Logged.scala.html#37332" title="(msg: String)Unit">log</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;[load]\nloading &quot;</span>+<a href="#37302" title="=&gt; scala.io.File">theFile</a>)
-    <span class="keyword">val</span> <a title="scala.io.Source" id="249582">src</a> = <a href="#37302" title="scala.io.File" id="249588">theFile</a>.<a href="../../io/File.scala.html#235635" title="scala.io.Codec" id="249590">chars</a>()
-    <a href="../../util/logging/Logged.scala.html#37332" title="(msg: String)Unit">log</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;parsing &quot;</span>+<a href="#37302" title="=&gt; scala.io.File">theFile</a>)
-    <span class="keyword">val</span> <a title="scala.xml.Node" id="249583">res</a> = <a href="../parsing/ConstructingParser.scala.html#12093" title="object scala.xml.parsing.ConstructingParser">ConstructingParser</a>.<a href="../parsing/ConstructingParser.scala.html#248741" title="(inp: scala.io.Source,preserveWS: Boolean)scala.xml.parsing.ConstructingParser">fromSource</a>(<a href="#249582" title="scala.io.Source">src</a>,<span title="Boolean(false)" class="keyword">false</span>).<a href="../parsing/MarkupParser.scala.html#83203" title="()scala.xml.Document">document</a>.<a href="../NodeSeq.scala.html#20983" title="(i: Int)scala.xml.Node">docElem</a>(<span title="Int(0)" class="int">0</span>)
-    <a href="#37304" title="=&gt; Unit">switch</a>
-    <a href="../../util/logging/Logged.scala.html#37332" title="(msg: String)Unit">log</a>(<span title="java.lang.String(&quot;[load done]&quot;)" class="string">&quot;[load done]&quot;</span>)
-    <a href="#249583" title="scala.xml.Node">res</a>.<a href="../Node.scala.html#21002" title="=&gt; Seq[scala.xml.Node]">child</a>.<a href="../../collection/generic/IterableTemplate.scala.html#17285" title="=&gt; Iterator[scala.xml.Node]">iterator</a>
+    <a href="../../util/logging/Logged.scala.html#37445" title="(msg: String)Unit">log</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;[load]\nloading &quot;</span>+<a href="#37415" title="=&gt; scala.io.File">theFile</a>)
+    <span class="keyword">val</span> <a title="scala.io.Source" id="250500">src</a> = <a href="#37415" title="scala.io.File" id="250506">theFile</a>.<a href="../../io/Streamable.scala.html#73167" title="scala.io.Codec" id="250508">chars</a>()
+    <a href="../../util/logging/Logged.scala.html#37445" title="(msg: String)Unit">log</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;parsing &quot;</span>+<a href="#37415" title="=&gt; scala.io.File">theFile</a>)
+    <span class="keyword">val</span> <a title="scala.xml.Node" id="250501">res</a> = <a href="../parsing/ConstructingParser.scala.html#12188" title="object scala.xml.parsing.ConstructingParser">ConstructingParser</a>.<a href="../parsing/ConstructingParser.scala.html#249651" title="(inp: scala.io.Source,preserveWS: Boolean)scala.xml.parsing.ConstructingParser">fromSource</a>(<a href="#250500" title="scala.io.Source">src</a>,<span title="Boolean(false)" class="keyword">false</span>).<a href="../parsing/MarkupParser.scala.html#83916" title="()scala.xml.Document">document</a>.<a href="../NodeSeq.scala.html#21090" title="(i: Int)scala.xml.Node">docElem</a>(<span title="Int(0)" class="int">0</span>)
+    <a href="#37417" title="=&gt; Unit">switch</a>
+    <a href="../../util/logging/Logged.scala.html#37445" title="(msg: String)Unit">log</a>(<span title="java.lang.String(&quot;[load done]&quot;)" class="string">&quot;[load done]&quot;</span>)
+    <a href="#250501" title="scala.xml.Node">res</a>.<a href="../Node.scala.html#21109" title="=&gt; Seq[scala.xml.Node]">child</a>.<a href="../../collection/generic/IterableTemplate.scala.html#17392" title="=&gt; Iterator[scala.xml.Node]">iterator</a>
   }
   
   /** saves the XML to file */
-  <span class="keyword">private</span> <span class="keyword">def</span> <a title="=&gt; Unit" id="37316">save</a> = <span title="Unit" class="keyword">if</span> (<a href="#11281" title="CachedFileStorage.this.type" class="keyword">this</a>.<a href="#37306" title="=&gt; Boolean">dirty</a>) {
-    <a href="../../util/logging/Logged.scala.html#37332" title="(msg: String)Unit">log</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;[save]\ndeleting &quot;</span>+<a href="#37302" title="=&gt; scala.io.File">theFile</a>);
-    <a href="#37302" title="=&gt; scala.io.File">theFile</a>.<a href="../../io/Path.scala.html#32638" title="()Boolean">delete</a>();
-    <a href="../../util/logging/Logged.scala.html#37332" title="(msg: String)Unit">log</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;creating new &quot;</span>+<a href="#37302" title="=&gt; scala.io.File">theFile</a>);
-    <a href="#37302" title="=&gt; scala.io.File">theFile</a>.<a href="../../io/Path.scala.html#32637" title="()scala.io.File">ensureFile</a>();
-    <span class="keyword">val</span> <a title="java.io.FileOutputStream" id="249628">fos</a> = <a href="#37302" title="scala.io.File" id="249644">theFile</a>.<a href="../../io/File.scala.html#235681" title="Boolean" id="249646">outputStream</a>()
-    <span class="keyword">val</span> <a title="java.nio.channels.FileChannel" id="249629">c</a>   = <a href="#249628" title="java.io.FileOutputStream">fos</a>.<a title="()java.nio.channels.FileChannel" id="47231">getChannel</a>()
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="=&gt; Unit" id="37429">save</a> = <span title="Unit" class="keyword">if</span> (<a href="#11373" title="CachedFileStorage.this.type" class="keyword">this</a>.<a href="#37419" title="=&gt; Boolean">dirty</a>) {
+    <a href="../../util/logging/Logged.scala.html#37445" title="(msg: String)Unit">log</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;[save]\ndeleting &quot;</span>+<a href="#37415" title="=&gt; scala.io.File">theFile</a>);
+    <a href="#37415" title="=&gt; scala.io.File">theFile</a>.<a href="../../io/Path.scala.html#32744" title="()Boolean">delete</a>();
+    <a href="../../util/logging/Logged.scala.html#37445" title="(msg: String)Unit">log</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;creating new &quot;</span>+<a href="#37415" title="=&gt; scala.io.File">theFile</a>);
+    <a href="#37415" title="scala.io.File" id="250560">theFile</a>.<a href="../../io/Path.scala.html#181116" title="Boolean" id="250562">createFile</a>();
+    <span class="keyword">val</span> <a title="java.io.FileOutputStream" id="250546">fos</a> = <a href="#37415" title="scala.io.File" id="250565">theFile</a>.<a href="../../io/File.scala.html#236395" title="Boolean" id="250567">outputStream</a>()
+    <span class="keyword">val</span> <a title="java.nio.channels.FileChannel" id="250547">c</a>   = <a href="#250546" title="java.io.FileOutputStream">fos</a>.<a title="()java.nio.channels.FileChannel" id="47344">getChannel</a>()
     
     // @todo: optimize
-    <span class="keyword">val</span> <a title="scala.xml.Elem" id="249630">storageNode</a> = &lt;<a href="../Elem.scala.html#8564" title="scala.xml.Elem" id="249651">nodes</a>&gt;{ <a href="#37312" title="=&gt; Iterator[scala.xml.Node]">nodes</a>.<a href="../../collection/Iterator.scala.html#19281" title="=&gt; List[scala.xml.Node]">toList</a> }&lt;/nodes&gt;
-    <span class="keyword">val</span> <a title="java.io.Writer" id="249631">w</a> = <a title="object java.nio.channels.Channels" id="24070">Channels</a>.<a title="(x$1: java.nio.channels.WritableByteChannel,x$2: java.lang.String)java.io.Writer" id="47265">newWriter</a>(<a href="#249629" title="java.nio.channels.FileChannel">c</a>, <span title="java.lang.String(&quot;UTF-8&quot;)" class="string">&quot;UTF-8&quot;</span>)
-    <a href="../XML.scala.html#8757" title="object scala.xml.XML">XML</a>.<a href="../XML.scala.html#47048" title="(w: java.io.Writer,node: scala.xml.Node,enc: String,xmlDecl: Boolean,doctype: scala.xml.dtd.DocType)Unit">write</a>(<a href="#249631" title="java.io.Writer">w</a>, <a href="#249630" title="scala.xml.Elem">storageNode</a>, <span title="java.lang.String(&quot;UTF-8&quot;)" class="string">&quot;UTF-8&quot;</span>, <span title="Boolean(true)" class="keyword">true</span>, <span title="Null(null)" class="keyword">null</span>)
+    <span class="keyword">val</span> <a title="scala.xml.Elem" id="250548">storageNode</a> = &lt;<a href="../Elem.scala.html#8633" title="scala.xml.Elem" id="250572">nodes</a>&gt;{ <a href="#37425" title="=&gt; Iterator[scala.xml.Node]">nodes</a>.<a href="../../collection/Iterator.scala.html#19388" title="=&gt; List[scala.xml.Node]">toList</a> }&lt;/nodes&gt;
+    <span class="keyword">val</span> <a title="java.io.Writer" id="250549">w</a> = <a title="object java.nio.channels.Channels" id="24177">Channels</a>.<a title="(x$1: java.nio.channels.WritableByteChannel,x$2: java.lang.String)java.io.Writer" id="47378">newWriter</a>(<a href="#250547" title="java.nio.channels.FileChannel">c</a>, <span title="java.lang.String(&quot;UTF-8&quot;)" class="string">&quot;UTF-8&quot;</span>)
+    <a href="../XML.scala.html#8826" title="object scala.xml.XML">XML</a>.<a href="../XML.scala.html#47161" title="(w: java.io.Writer,node: scala.xml.Node,enc: String,xmlDecl: Boolean,doctype: scala.xml.dtd.DocType)Unit">write</a>(<a href="#250549" title="java.io.Writer">w</a>, <a href="#250548" title="scala.xml.Elem">storageNode</a>, <span title="java.lang.String(&quot;UTF-8&quot;)" class="string">&quot;UTF-8&quot;</span>, <span title="Boolean(true)" class="keyword">true</span>, <span title="Null(null)" class="keyword">null</span>)
     
-    <a href="../../util/logging/Logged.scala.html#37332" title="(msg: String)Unit">log</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;writing to &quot;</span>+<a href="#37302" title="=&gt; scala.io.File">theFile</a>)
+    <a href="../../util/logging/Logged.scala.html#37445" title="(msg: String)Unit">log</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;writing to &quot;</span>+<a href="#37415" title="=&gt; scala.io.File">theFile</a>)
     
-    <a href="#249631" title="java.io.Writer">w</a>.<a title="()Unit" id="25689">close</a>
-    <a href="#249629" title="java.nio.channels.FileChannel">c</a>.<a title="()Unit" id="47410">close</a>
-    <a href="#249628" title="java.io.FileOutputStream">fos</a>.<a title="()Unit" id="47229">close</a>
-    <a href="#37306" title="(x$1: Boolean)Unit">dirty</a> = <span title="Boolean(false)" class="keyword">false</span>
-    <a href="#37304" title="=&gt; Unit">switch</a>
-    <a href="../../util/logging/Logged.scala.html#37332" title="(msg: String)Unit">log</a>(<span title="java.lang.String(&quot;[save done]&quot;)" class="string">&quot;[save done]&quot;</span>)
+    <a href="#250549" title="java.io.Writer">w</a>.<a title="()Unit" id="25796">close</a>
+    <a href="#250547" title="java.nio.channels.FileChannel">c</a>.<a title="()Unit" id="47523">close</a>
+    <a href="#250546" title="java.io.FileOutputStream">fos</a>.<a title="()Unit" id="47342">close</a>
+    <a href="#37419" title="(x$1: Boolean)Unit">dirty</a> = <span title="Boolean(false)" class="keyword">false</span>
+    <a href="#37417" title="=&gt; Unit">switch</a>
+    <a href="../../util/logging/Logged.scala.html#37445" title="(msg: String)Unit">log</a>(<span title="java.lang.String(&quot;[save done]&quot;)" class="string">&quot;[save done]&quot;</span>)
   }
   
   /** run method of the thread. remember to use start() to start a thread, not run. */
-  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Unit" id="37317">run</a> = {
-    <a href="../../util/logging/Logged.scala.html#37332" title="(msg: String)Unit">log</a>(<a href="../../runtime/RichString.scala.html#18060" title="(args: Any*)String" class="string">&quot;[run]\nstarting storage thread, checking every %d ms&quot;</a> format <a href="#37308" title="=&gt; Int">interval</a>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Unit" id="37430">run</a> = {
+    <a href="../../util/logging/Logged.scala.html#37445" title="(msg: String)Unit">log</a>(<a href="../../runtime/RichString.scala.html#18167" title="(args: Any*)String" class="string">&quot;[run]\nstarting storage thread, checking every %d ms&quot;</a> format <a href="#37421" title="=&gt; Int">interval</a>)
     
-    <span title="Unit" class="keyword">while</span> (<span title="Boolean(true)" class="keyword">true</span>) <a href="#249704" title="()Unit">{</a> 
-      <a title="(x$1: Long)Unit" id="1826">Thread</a> sleep <a href="../../Predef.scala.html#16385" title="implicit scala.Predef.int2long : (x: Int)Long">interval</a>
-      <a href="#37316" title="=&gt; Unit">save</a>
+    <span title="Unit" class="keyword">while</span> (<span title="Boolean(true)" class="keyword">true</span>) <a href="#250625" title="()Unit">{</a> 
+      <a title="(x$1: Long)Unit" id="1841">Thread</a> sleep <a href="../../Predef.scala.html#16490" title="implicit scala.Predef.int2long : (x: Int)Long">interval</a>
+      <a href="#37429" title="=&gt; Unit">save</a>
     }
   }
   
   /** forces writing of contents to the file, even if there has not been any update. */
-  <span class="keyword">def</span> <a title="=&gt; Unit" id="37318">flush</a> = { 
-    <a href="#11281" title="CachedFileStorage.this.type" class="keyword">this</a>.<a href="#37306" title="(x$1: Boolean)Unit">dirty</a> = <span title="Boolean(true)" class="keyword">true</span>
-    <a href="#37316" title="=&gt; Unit">save</a>
+  <span class="keyword">def</span> <a title="=&gt; Unit" id="37431">flush</a> = { 
+    <a href="#11373" title="CachedFileStorage.this.type" class="keyword">this</a>.<a href="#37419" title="(x$1: Boolean)Unit">dirty</a> = <span title="Boolean(true)" class="keyword">true</span>
+    <a href="#37429" title="=&gt; Unit">save</a>
   }
 }
 

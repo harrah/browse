@@ -17,7 +17,7 @@
 **                          |/                                          **
 \*                                                                      */
 
-// $Id: ScalaTool.scala 17856 2009-05-27 19:35:02Z dubochet $
+// $Id: ScalaTool.scala 18623 2009-09-01 12:38:38Z rytz $
 
 <span class="keyword">package</span> scala.tools.ant
 
@@ -43,111 +43,124 @@
  * @author  Gilles Dubochet
  * @version 1.1
  */
-<span class="keyword">class</span> <a title="class ScalaTool extends org.apache.tools.ant.taskdefs.MatchingTask with ScalaObject" id="11139">ScalaTool</a> <span title="ScalaObject" class="keyword">extends</span> <a title="org.apache.tools.ant.taskdefs.MatchingTask" id="33246">MatchingTask</a> {
+<span class="keyword">class</span> <a title="class ScalaTool extends org.apache.tools.ant.taskdefs.MatchingTask with ScalaObject" id="11208">ScalaTool</a> <span title="ScalaObject" class="keyword">extends</span> <a title="org.apache.tools.ant.taskdefs.MatchingTask" id="33435">MatchingTask</a> {
   
-  <span class="keyword">private</span> <span class="keyword">def</span> <a title="=&gt; org.apache.tools.ant.types.Path" id="521823">emptyPath</a> = <a title="(x$1: org.apache.tools.ant.Project)org.apache.tools.ant.types.Path" id="35097" class="keyword">new</a> <span title="org.apache.tools.ant.types.Path">Path</span>(<a href="#11139" title="()org.apache.tools.ant.Project" id="34483">getProject</a>)
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="=&gt; org.apache.tools.ant.types.Path" id="522862">emptyPath</a> = <a title="(x$1: org.apache.tools.ant.Project)org.apache.tools.ant.types.Path" id="35286" class="keyword">new</a> <a title="org.apache.tools.ant.types.Path" id="34156">Path</a>(<a href="#11208" title="()org.apache.tools.ant.Project" id="34672">getProject</a>)
 
 /*============================================================================*\
 **                             Ant user-properties                            **
 \*============================================================================*/
 
-  <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class PermissibleValue extends java.lang.Object with ScalaObject" id="521824">PermissibleValue</a> <span title="ScalaObject">{</span>
-    <span class="keyword">val</span> <a title="=&gt; List[String]" id="521885">values</a>: <span title="List[String]">List</span>[String]
-    <span class="keyword">def</span> <a title="(value: String)Boolean" id="521886">isPermissible</a>(<a title="String" id="521890">value</a>: <span title="String">String</span>): <a title="Boolean" id="1951">Boolean</a> =
-      <a title="(x$1: Boolean)Boolean" id="2210">(</a><a href="#521890" title="(x$1: AnyRef)Boolean">value</a> == <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>) || <a href="#521885" title="=&gt; List[String]">values</a>.<a title="(p: (String) =&gt; Boolean)Boolean" id="28937">exists</a>(<a href="#521902" title="String">_</a>.<a title="(x$1: java.lang.String)Boolean" id="6973">startsWith</a>(<a href="#521890" title="String">value</a>))
+  <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class PermissibleValue extends java.lang.Object with ScalaObject" id="522863">PermissibleValue</a> <span title="ScalaObject">{</span>
+    <span class="keyword">val</span> <a title="=&gt; List[String]" id="522924">values</a>: <span title="List[String]">List</span>[String]
+    <span class="keyword">def</span> <a title="(value: String)Boolean" id="522925">isPermissible</a>(<a title="String" id="522929">value</a>: <span title="String">String</span>): <a title="Boolean" id="1972">Boolean</a> =
+      <a title="(x$1: Boolean)Boolean" id="2231">(</a><a href="#522929" title="(x$1: AnyRef)Boolean">value</a> == <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>) || <a href="#522924" title="=&gt; List[String]">values</a>.<a title="(p: (String) =&gt; Boolean)Boolean" id="29123">exists</a>(<a href="#522941" title="String">_</a>.<a title="(x$1: java.lang.String)Boolean" id="7042">startsWith</a>(<a href="#522929" title="String">value</a>))
   }
 
   /** Defines valid values for the platforms property. */
-  <span class="keyword">object</span> <a title="object ScalaTool.this.Platforms" id="521825">Platforms</a> <span title="ScalaObject" class="keyword">extends</span> <a href="#521824" title="ScalaTool.this.PermissibleValue">PermissibleValue</a> {
-    <span class="keyword">val</span> <a title="List[java.lang.String]" id="521912">values</a> = <span title="(xs: java.lang.String*)List[java.lang.String]">List</span>(<span title="java.lang.String(&quot;unix&quot;)" class="string">&quot;unix&quot;</span>, <span title="java.lang.String(&quot;windows&quot;)" class="string">&quot;windows&quot;</span>)
+  <span class="keyword">object</span> <a title="object ScalaTool.this.Platforms" id="522864">Platforms</a> <span title="ScalaObject" class="keyword">extends</span> <a href="#522863" title="ScalaTool.this.PermissibleValue">PermissibleValue</a> {
+    <span class="keyword">val</span> <a title="List[java.lang.String]" id="522951">values</a> = <span title="(xs: java.lang.String*)List[java.lang.String]">List</span>(<span title="java.lang.String(&quot;unix&quot;)" class="string">&quot;unix&quot;</span>, <span title="java.lang.String(&quot;windows&quot;)" class="string">&quot;windows&quot;</span>)
   }
 
   /** The path to the exec script file. &quot;.bat&quot; will be appended for the
     * Windows BAT file, if generated. */
-  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Option[java.io.File]" id="521828">file</a>: <span title="Option[java.io.File]">Option</span>[File] = <span title="object None">None</span>
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Option[java.io.File]" id="522867">file</a>: <span title="Option[java.io.File]">Option</span>[File] = <span title="object None">None</span>
 
   /** The main class to run. */
-  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Option[String]" id="521831">mainClass</a>: <span title="Option[String]">Option</span>[String] = <span title="object None">None</span>
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Option[String]" id="522870">mainClass</a>: <span title="Option[String]">Option</span>[String] = <span title="object None">None</span>
 
   /** Supported platforms for the script. Either &quot;unix&quot; or &quot;windows&quot;.
     * Defaults to both. */
-  <span class="keyword">private</span> <span class="keyword">var</span> <a title="List[String]" id="521834">platforms</a>: <span title="List[String]">List</span>[String] = <span title="(xs: java.lang.String*)List[java.lang.String]">List</span>(<span title="java.lang.String(&quot;unix&quot;)" class="string">&quot;unix&quot;</span>, <span title="java.lang.String(&quot;windows&quot;)" class="string">&quot;windows&quot;</span>)
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="List[String]" id="522873">platforms</a>: <span title="List[String]">List</span>[String] = <span title="(xs: java.lang.String*)List[java.lang.String]">List</span>(<span title="java.lang.String(&quot;unix&quot;)" class="string">&quot;unix&quot;</span>, <span title="java.lang.String(&quot;windows&quot;)" class="string">&quot;windows&quot;</span>)
 
   /** An (optional) path to all JARs that this script depend on. Paths must be
     * relative to the scala home directory. If not set, all JAR archives and
     * folders in &quot;lib/&quot; are automatically added. */
-  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Option[org.apache.tools.ant.types.Path]" id="521837">classpath</a>: <span title="Option[org.apache.tools.ant.types.Path]">Option</span>[Path] = <span title="object None">None</span>
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="List[String]" id="522876">classpath</a>: <span title="List[String]">List</span>[String] = <span title="object Nil">Nil</span>
 
   /** Comma-separated Java system properties to pass to the JRE. Properties
     * are formated as name=value. Properties scala.home, scala.tool.name and
     * scala.tool.version are always set. */
-  <span class="keyword">private</span> <span class="keyword">var</span> <a title="List[(String, String)]" id="521840">properties</a>: <span title="List[(String, String)]">List</span>[(String, String)] = <span title="object Nil">Nil</span>
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="List[(String, String)]" id="522879">properties</a>: <span title="List[(String, String)]">List</span>[(String, String)] = <span title="object Nil">Nil</span>
 
   /** Additional flags passed to the JRE (&quot;java [javaFlags] class&quot;). */
-  <span class="keyword">private</span> <span class="keyword">var</span> <a title="String" id="521843">javaFlags</a>: <span title="String">String</span> = <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="String" id="522882">javaFlags</a>: <span title="String">String</span> = <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>
 
   /** Additional flags passed to the tool (&quot;java class [toolFlags]&quot;). Can only
     * be set when a main class is defined. */
-  <span class="keyword">private</span> <span class="keyword">var</span> <a title="String" id="521846">toolFlags</a>: <span title="String">String</span> = <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="String" id="522885">toolFlags</a>: <span title="String">String</span> = <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>
 
 /*============================================================================*\
 **                             Properties setters                             **
 \*============================================================================*/
 
   /** Sets the file attribute. */
-  <span class="keyword">def</span> <a title="(input: java.io.File)Unit" id="521848">setFile</a>(<a title="java.io.File" id="521935">input</a>: <span title="java.io.File">File</span>) =
-    <a href="#521828" title="(x$1: Option[java.io.File])Unit">file</a> = <span title="(x: java.io.File)Some[java.io.File]">Some</span>(<a href="#521935" title="java.io.File">input</a>)
+  <span class="keyword">def</span> <a title="(input: java.io.File)Unit" id="522887">setFile</a>(<a title="java.io.File" id="522974">input</a>: <span title="java.io.File">File</span>) =
+    <a href="#522867" title="(x$1: Option[java.io.File])Unit">file</a> = <span title="(x: java.io.File)Some[java.io.File]">Some</span>(<a href="#522974" title="java.io.File">input</a>)
 
   /** Sets the main class attribute. */
-  <span class="keyword">def</span> <a title="(input: String)Unit" id="521849">setClass</a>(<a title="String" id="521945">input</a>: <span title="String">String</span>) =
-    <a href="#521831" title="(x$1: Option[String])Unit">mainClass</a> = <span title="(x: String)Some[String]">Some</span>(<a href="#521945" title="String">input</a>)
+  <span class="keyword">def</span> <a title="(input: String)Unit" id="522888">setClass</a>(<a title="String" id="522984">input</a>: <span title="String">String</span>) =
+    <a href="#522870" title="(x$1: Option[String])Unit">mainClass</a> = <span title="(x: String)Some[String]">Some</span>(<a href="#522984" title="String">input</a>)
 
   /** Sets the platforms attribute. */
-  <span class="keyword">def</span> <a title="(input: String)Unit" id="521850">setPlatforms</a>(<a title="String" id="521955">input</a>: <span title="String">String</span>) = {
-    <a href="#521834" title="(x$1: List[String])Unit">platforms</a> = <a href="#521955" title="String">input</a>.<span title="(x$1: java.lang.String)Array[java.lang.String]">split</span>(<span title="java.lang.String(&quot;,&quot;)" class="string">&quot;,&quot;</span>).<span title="=&gt; List[java.lang.String]">toList</span>.<span title="(f: (java.lang.String) =&gt; Traversable[java.lang.String])(implicit bf: scala.collection.generic.BuilderFactory[java.lang.String,List[String],List[java.lang.String]])List[String]">flatMap</span> <span title="scala.collection.generic.BuilderFactory[java.lang.String,List[java.lang.String],List#Coll]">{</span> s: <span title="String">String</span> =&gt;
-      <span class="keyword">val</span> <a title="java.lang.String" id="521971">st</a> = <a href="#521970" title="String">s</a>.<span title="()java.lang.String">trim</span>
-      <span title="List[java.lang.String]" class="keyword">if</span> (<a href="#521825" title="object ScalaTool.this.Platforms">Platforms</a>.<a href="#521886" title="(value: String)Boolean">isPermissible</a>(<a href="#521971" title="java.lang.String">st</a>))
-        (<span title="List[java.lang.String]" class="keyword">if</span> (<a href="#521955" title="(x$1: AnyRef)Boolean">input</a> != <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>) <span title="(xs: java.lang.String*)List[java.lang.String]">List</span>(<a href="#521971" title="java.lang.String">st</a>) <span class="keyword">else</span> <span title="object Nil">Nil</span>)
+  <span class="keyword">def</span> <a title="(input: String)Unit" id="522889">setPlatforms</a>(<a title="String" id="522994">input</a>: <span title="String">String</span>) = {
+    <a href="#522873" title="(x$1: List[String])Unit">platforms</a> = <a href="#522994" title="String">input</a>.<span title="(x$1: java.lang.String)Array[java.lang.String]">split</span>(<span title="java.lang.String(&quot;,&quot;)" class="string">&quot;,&quot;</span>).<span title="=&gt; List[java.lang.String]">toList</span>.<span title="(f: (java.lang.String) =&gt; Traversable[java.lang.String])(implicit bf: scala.collection.generic.BuilderFactory[java.lang.String,List[String],List[java.lang.String]])List[String]">flatMap</span> <span title="scala.collection.generic.BuilderFactory[java.lang.String,List[java.lang.String],List#Coll]">{</span> s: <span title="String">String</span> =&gt;
+      <span class="keyword">val</span> <a title="java.lang.String" id="523010">st</a> = <a href="#523009" title="String">s</a>.<span title="()java.lang.String">trim</span>
+      <span title="List[java.lang.String]" class="keyword">if</span> (<a href="#522864" title="object ScalaTool.this.Platforms">Platforms</a>.<a href="#522925" title="(value: String)Boolean">isPermissible</a>(<a href="#523010" title="java.lang.String">st</a>))
+        (<span title="List[java.lang.String]" class="keyword">if</span> (<a href="#522994" title="(x$1: AnyRef)Boolean">input</a> != <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>) <span title="(xs: java.lang.String*)List[java.lang.String]">List</span>(<a href="#523010" title="java.lang.String">st</a>) <span class="keyword">else</span> <span title="object Nil">Nil</span>)
       <span class="keyword">else</span> {
-        <a href="#521860" title="(message: String)Nothing">error</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;Platform &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#521971" title="java.lang.String">st</a> + <span title="java.lang.String(&quot; does not exist.&quot;)" class="string">&quot; does not exist.&quot;</span>)
+        <a href="#522898" title="(message: String)Nothing">error</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;Platform &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#523010" title="java.lang.String">st</a> + <span title="java.lang.String(&quot; does not exist.&quot;)" class="string">&quot; does not exist.&quot;</span>)
         <span title="object Nil">Nil</span>
       }
     }
   }
 
-  /** Sets the classpath with which to run the tool. */
-  <span class="keyword">def</span> <a title="(input: org.apache.tools.ant.types.Path)Unit" id="521851">setClassPath</a>(<a title="org.apache.tools.ant.types.Path" id="522014">input</a>: <span title="org.apache.tools.ant.types.Path">Path</span>): <span title="Unit">Unit</span> =
-    <span title="Unit" class="keyword">if</span> (<a href="#521837" title="=&gt; Option[org.apache.tools.ant.types.Path]">classpath</a>.<span title="=&gt; Boolean">isEmpty</span>)
-      <a href="#521837" title="(x$1: Option[org.apache.tools.ant.types.Path])Unit">classpath</a> = <span title="(x: org.apache.tools.ant.types.Path)Some[org.apache.tools.ant.types.Path]">Some</span>(<a href="#522014" title="org.apache.tools.ant.types.Path">input</a>)
-    <span class="keyword">else</span>
-      <a href="#521837" title="=&gt; Option[org.apache.tools.ant.types.Path]">classpath</a>.<span title="=&gt; org.apache.tools.ant.types.Path">get</span>.<a title="(x$1: org.apache.tools.ant.types.Path)Unit" id="35120">append</a>(<a href="#522014" title="org.apache.tools.ant.types.Path">input</a>)
-  <span class="keyword">def</span> <a title="=&gt; org.apache.tools.ant.types.Path" id="521852">createClassPath</a>: <span title="org.apache.tools.ant.types.Path">Path</span> = {
-    <span title="Unit" class="keyword">if</span> (<a href="#521837" title="=&gt; Option[org.apache.tools.ant.types.Path]">classpath</a>.<span title="=&gt; Boolean">isEmpty</span>) <a href="#521837" title="(x$1: Option[org.apache.tools.ant.types.Path])Unit">classpath</a> = <span title="(x: org.apache.tools.ant.types.Path)Some[org.apache.tools.ant.types.Path]">Some</span>(<a href="#521823" title="=&gt; org.apache.tools.ant.types.Path">emptyPath</a>)
-    <a href="#521837" title="=&gt; Option[org.apache.tools.ant.types.Path]">classpath</a>.<span title="=&gt; org.apache.tools.ant.types.Path">get</span>.<a title="()org.apache.tools.ant.types.Path" id="35119">createPath</a>()
+  /** 
+   * Sets the classpath with which to run the tool. 
+   * Note that this mechanism of setting the classpath is generally preferred
+   * for general purpose scripts, as this does not assume all elements are
+   * relative to the ant basedir.  Additionally, the platform specific demarcation
+   * of any script variables (e.g. ${SCALA_HOME} or %SCALA_HOME%) can be specified
+   * in a platform independant way (e.g. @SCALA_HOME@) and automatically translated
+   * for you.
+   */
+  <span class="keyword">def</span> <a title="(input: String)Unit" id="522890">setClassPath</a>(<a title="String" id="523053">input</a>: <span title="String">String</span>): <span title="Unit">Unit</span> = {
+    <a href="#522876" title="(x$1: List[String])Unit">classpath</a> = <a href="#522876" title="=&gt; List[String]">classpath</a> <a href="#523055" title="List[String]">:::</a> <a href="#523053" title="String">input</a>.<span title="(x$1: java.lang.String)Array[java.lang.String]">split</span>(<span title="java.lang.String(&quot;,&quot;)" class="string">&quot;,&quot;</span>).<span title="(prefix: List[java.lang.String])List[java.lang.String]">toList</span>
   }
-  <span class="keyword">def</span> <a title="(input: org.apache.tools.ant.types.Reference)Unit" id="521853">setClassPathRef</a>(<a title="org.apache.tools.ant.types.Reference" id="522052">input</a>: <a title="org.apache.tools.ant.types.Reference" id="34033">Reference</a>): <span title="Unit">Unit</span> =
-    <a href="#521852" title="=&gt; org.apache.tools.ant.types.Path">createClassPath</a>.<a title="(x$1: org.apache.tools.ant.types.Reference)Unit" id="35103">setRefid</a>(<a href="#522052" title="org.apache.tools.ant.types.Reference">input</a>)
+  
+  /** 
+   * Adds an Ant Path reference to the tool's classpath.  
+   * Note that all entries in the path must exist either relative to the project
+   * basedir or with an absolute path to a file in the filesystem.  As a result,
+   * this is not a mechanism for setting the classpath for more general use scripts,
+   * such as those distributed within sbaz distribution packages.
+   */
+  <span class="keyword">def</span> <a title="(input: org.apache.tools.ant.types.Reference)Unit" id="522891">setClassPathRef</a>(<a title="org.apache.tools.ant.types.Reference" id="523069">input</a>: <a title="org.apache.tools.ant.types.Reference" id="34222">Reference</a>): <span title="Unit">Unit</span> = {
+    <span class="keyword">val</span> <a title="org.apache.tools.ant.types.Path" id="523071">tmpPath</a> = <a href="#522862" title="=&gt; org.apache.tools.ant.types.Path">emptyPath</a>
+    <a href="#523071" title="org.apache.tools.ant.types.Path">tmpPath</a>.<a title="(x$1: org.apache.tools.ant.types.Reference)Unit" id="35292">setRefid</a>(<a href="#523069" title="org.apache.tools.ant.types.Reference">input</a>)
+    <a href="#522876" title="(x$1: List[String])Unit">classpath</a> = <a href="#522876" title="=&gt; List[String]">classpath</a> <a href="#523074" title="List[String]">:::</a> <a href="#523071" title="org.apache.tools.ant.types.Path">tmpPath</a>.<a title="()Array[java.lang.String]" id="35316">list</a>.<span title="(prefix: List[java.lang.String])List[java.lang.String]">toList</span>
+  }
 
   /** Sets JVM properties that will be set whilst running the tool. */
-  <span class="keyword">def</span> <a title="(input: String)Unit" id="521854">setProperties</a>(<a title="String" id="522057">input</a>: <span title="String">String</span>) = {
-    <a href="#521840" title="(x$1: List[(String, String)])Unit">properties</a> = <a href="#522057" title="String">input</a>.<span title="(x$1: java.lang.String)Array[java.lang.String]">split</span>(<span title="java.lang.String(&quot;,&quot;)" class="string">&quot;,&quot;</span>).<span title="=&gt; List[java.lang.String]">toList</span>.<span title="(f: (java.lang.String) =&gt; Traversable[(java.lang.String, java.lang.String)])(implicit bf: scala.collection.generic.BuilderFactory[(java.lang.String, java.lang.String),List[(String, String)],List[java.lang.String]])List[(String, String)]">flatMap</span> <span title="scala.collection.generic.BuilderFactory[(java.lang.String, java.lang.String),List[(java.lang.String, java.lang.String)],List#Coll]">{</span> s: <span title="String">String</span> =&gt;
-      <span class="keyword">val</span> <a title="java.lang.String" id="522073">st</a> = <a href="#522072" title="String">s</a>.<span title="()java.lang.String">trim</span>
-      <span class="keyword">val</span> <a title="Array[java.lang.String]" id="522074">stArray</a> = <a href="#522073" title="java.lang.String">st</a>.<a title="(x$1: java.lang.String,x$2: Int)Array[java.lang.String]" id="7040">split</a>(<span title="java.lang.String(&quot;=&quot;)" class="string">&quot;=&quot;</span>, <span title="Int(2)" class="int">2</span>)
-      <span title="List[(java.lang.String, java.lang.String)]" class="keyword">if</span> (<a href="#522074" title="Array[java.lang.String]">stArray</a>.<a title="(x$1: Int)Boolean" id="24569">length</a> == <span title="Int(2)" class="int">2</span>) {
-        <span title="List[(java.lang.String, java.lang.String)]" class="keyword">if</span> (<a href="#522057" title="(x$1: AnyRef)Boolean">input</a> != <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>) <span title="(xs: (java.lang.String, java.lang.String)*)List[(java.lang.String, java.lang.String)]">List</span>(<a title="(x: java.lang.String,y: java.lang.String)(java.lang.String, java.lang.String)" id="7895">Pair</a>(<a href="#522074" title="(i: Int)java.lang.String">stArray</a>(<span title="Int(0)" class="int">0</span>), <a href="#522074" title="(i: Int)java.lang.String">stArray</a>(<span title="Int(1)" class="int">1</span>))) <span class="keyword">else</span> <span title="object Nil">Nil</span>
+  <span class="keyword">def</span> <a title="(input: String)Unit" id="522892">setProperties</a>(<a title="String" id="523086">input</a>: <span title="String">String</span>) = {
+    <a href="#522879" title="(x$1: List[(String, String)])Unit">properties</a> = <a href="#523086" title="String">input</a>.<span title="(x$1: java.lang.String)Array[java.lang.String]">split</span>(<span title="java.lang.String(&quot;,&quot;)" class="string">&quot;,&quot;</span>).<span title="=&gt; List[java.lang.String]">toList</span>.<span title="(f: (java.lang.String) =&gt; Traversable[(java.lang.String, java.lang.String)])(implicit bf: scala.collection.generic.BuilderFactory[(java.lang.String, java.lang.String),List[(String, String)],List[java.lang.String]])List[(String, String)]">flatMap</span> <span title="scala.collection.generic.BuilderFactory[(java.lang.String, java.lang.String),List[(java.lang.String, java.lang.String)],List#Coll]">{</span> s: <span title="String">String</span> =&gt;
+      <span class="keyword">val</span> <a title="java.lang.String" id="523102">st</a> = <a href="#523101" title="String">s</a>.<span title="()java.lang.String">trim</span>
+      <span class="keyword">val</span> <a title="Array[java.lang.String]" id="523103">stArray</a> = <a href="#523102" title="java.lang.String">st</a>.<a title="(x$1: java.lang.String,x$2: Int)Array[java.lang.String]" id="7109">split</a>(<span title="java.lang.String(&quot;=&quot;)" class="string">&quot;=&quot;</span>, <span title="Int(2)" class="int">2</span>)
+      <span title="List[(java.lang.String, java.lang.String)]" class="keyword">if</span> (<a href="#523103" title="Array[java.lang.String]">stArray</a>.<a title="(x$1: Int)Boolean" id="24728">length</a> == <span title="Int(2)" class="int">2</span>) {
+        <span title="List[(java.lang.String, java.lang.String)]" class="keyword">if</span> (<a href="#523086" title="(x$1: AnyRef)Boolean">input</a> != <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>) <span title="(xs: (java.lang.String, java.lang.String)*)List[(java.lang.String, java.lang.String)]">List</span>(<a title="(x: java.lang.String,y: java.lang.String)(java.lang.String, java.lang.String)" id="7964">Pair</a>(<a href="#523103" title="(i: Int)java.lang.String">stArray</a>(<span title="Int(0)" class="int">0</span>), <a href="#523103" title="(i: Int)java.lang.String">stArray</a>(<span title="Int(1)" class="int">1</span>))) <span class="keyword">else</span> <span title="object Nil">Nil</span>
       }
       <span class="keyword">else</span>
-        <a href="#521860" title="(message: String)Nothing">error</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;Property &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#522073" title="java.lang.String">st</a> + <span title="java.lang.String(&quot; is not formatted properly.&quot;)" class="string">&quot; is not formatted properly.&quot;</span>)
+        <a href="#522898" title="(message: String)Nothing">error</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;Property &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#523102" title="java.lang.String">st</a> + <span title="java.lang.String(&quot; is not formatted properly.&quot;)" class="string">&quot; is not formatted properly.&quot;</span>)
     }
   }
 
   /** Sets flags to be passed to the Java interpreter. */
-  <span class="keyword">def</span> <a title="(input: String)Unit" id="521855">setJavaflags</a>(<a title="String" id="522168">input</a>: <span title="String">String</span>) =
-    <a href="#521843" title="(x$1: String)Unit">javaFlags</a> = <a href="#522168" title="String">input</a>.<span title="()java.lang.String">trim</span>
+  <span class="keyword">def</span> <a title="(input: String)Unit" id="522893">setJavaflags</a>(<a title="String" id="523197">input</a>: <span title="String">String</span>) =
+    <a href="#522882" title="(x$1: String)Unit">javaFlags</a> = <a href="#523197" title="String">input</a>.<span title="()java.lang.String">trim</span>
 
   /** Sets flags to be passed to the tool. */
-  <span class="keyword">def</span> <a title="(input: String)Unit" id="521856">setToolflags</a>(<a title="String" id="522175">input</a>: <span title="String">String</span>) =
-    <a href="#521846" title="(x$1: String)Unit">toolFlags</a> = <a href="#522175" title="String">input</a>.<span title="()java.lang.String">trim</span>
+  <span class="keyword">def</span> <a title="(input: String)Unit" id="522894">setToolflags</a>(<a title="String" id="523204">input</a>: <span title="String">String</span>) =
+    <a href="#522885" title="(x$1: String)Unit">toolFlags</a> = <a href="#523204" title="String">input</a>.<span title="()java.lang.String">trim</span>
 
 /*============================================================================*\
 **                             Properties getters                             **
@@ -155,18 +168,17 @@
 
     /** Gets the value of the classpath attribute in a Scala-friendly form.
       * @returns The class path as a list of files. */
-    <span class="keyword">private</span> <span class="keyword">def</span> <a title="=&gt; String" id="521857">getUnixclasspath</a>: <span title="String">String</span> =
-      <a href="#521837" title="=&gt; Option[org.apache.tools.ant.types.Path]">classpath</a>.<span title="(default: =&gt; org.apache.tools.ant.types.Path)org.apache.tools.ant.types.Path">getOrElse</span>(<a href="#521823" title="=&gt; org.apache.tools.ant.types.Path">emptyPath</a>).<span title="()Array[java.lang.String]">list</span>.<span title="(start: String,sep: String,end: String)String">mkString</span>(<span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>, <span title="java.lang.String(&quot;:&quot;)" class="string">&quot;:&quot;</span>, <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+    <span class="keyword">private</span> <span class="keyword">def</span> <a title="=&gt; String" id="522895">getUnixclasspath</a>: <span title="String">String</span> =
+      <a href="#522900" title="(text: String,pre: String,post: String)String">transposeVariableMarkup</a>(<a href="#522876" title="=&gt; List[String]">classpath</a>.<span title="(start: String,sep: String,end: String)String">mkString</span>(<span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>, <span title="java.lang.String(&quot;:&quot;)" class="string">&quot;:&quot;</span>, <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>).<span title="(x$1: Char,x$2: Char)java.lang.String">replace</span>(<span title="Char('\')" class="char">'\\'</span>, <span title="Char('/')" class="char">'/'</span>), <span title="java.lang.String(&quot;${&quot;)" class="string">&quot;${&quot;</span>, <span title="java.lang.String(&quot;}&quot;)" class="string">&quot;}&quot;</span>)
 
     /** Gets the value of the classpath attribute in a Scala-friendly form.
       * @returns The class path as a list of files. */
-    <span class="keyword">private</span> <span class="keyword">def</span> <a title="=&gt; String" id="521858">getWinclasspath</a>: <span title="String">String</span> =
-      <a href="#521837" title="=&gt; Option[org.apache.tools.ant.types.Path]">classpath</a>.<span title="(default: =&gt; org.apache.tools.ant.types.Path)org.apache.tools.ant.types.Path">getOrElse</span>(<a href="#521823" title="=&gt; org.apache.tools.ant.types.Path">emptyPath</a>).<span title="()Array[java.lang.String]">list</span>.<span title="(f: (java.lang.String) =&gt; java.lang.String)(implicit bf: scala.collection.generic.BuilderFactory[java.lang.String,Array[java.lang.String],Array[java.lang.String]])Array[java.lang.String]">map</span><a title="scala.collection.generic.BuilderFactory[java.lang.String,Array[java.lang.String],Array[_]]" id="888">(</a><a href="#522223" title="java.lang.String">_</a>.<a title="(x$1: Char,x$2: Char)java.lang.String" id="7024">replace</a>(<span title="Char('/')" class="char">'/'</span>, <span title="Char('\')" class="char">'\\'</span>)).
-                <span title="(start: String,sep: String,end: String)String">mkString</span>(<span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>, <span title="java.lang.String(&quot;;&quot;)" class="string">&quot;;&quot;</span>, <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+    <span class="keyword">private</span> <span class="keyword">def</span> <a title="=&gt; String" id="522896">getWinclasspath</a>: <span title="String">String</span> =
+      <a href="#522900" title="(text: String,pre: String,post: String)String">transposeVariableMarkup</a>(<a href="#522876" title="=&gt; List[String]">classpath</a>.<span title="(start: String,sep: String,end: String)String">mkString</span>(<span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>, <span title="java.lang.String(&quot;;&quot;)" class="string">&quot;;&quot;</span>, <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>).<span title="(x$1: Char,x$2: Char)java.lang.String">replace</span>(<span title="Char('/')" class="char">'/'</span>, <span title="Char('\')" class="char">'\\'</span>), <span title="java.lang.String(&quot;%&quot;)" class="string">&quot;%&quot;</span>, <span title="java.lang.String(&quot;%&quot;)" class="string">&quot;%&quot;</span>)
 
-    <span class="keyword">private</span> <span class="keyword">def</span> <a title="=&gt; String" id="521859">getProperties</a>: <span title="String">String</span> =
-      <a href="#521840" title="=&gt; List[(String, String)]">properties</a>.<span title="(f: ((String, String)) =&gt; java.lang.String)(implicit bf: scala.collection.generic.BuilderFactory[java.lang.String,List[java.lang.String],List[(String, String)]])List[java.lang.String]">map</span><span title="scala.collection.generic.BuilderFactory[java.lang.String,List[java.lang.String],List#Coll]">(</span><a href="#522325" title="java.lang.String">{</a>
-        <span title="java.lang.String" class="keyword">case</span> <a href="#522326" title="(x: (String, String))Option[(String, String)]" id="7900">Pair</a>(<a title="String" id="522336">name</a>,<a title="String" id="522337">value</a>) =&gt; <span title="(x$1: Any)java.lang.String" class="string">&quot;-D&quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#522336" title="String">name</a> <span title="(x$1: Any)java.lang.String">+</span> <span title="java.lang.String(&quot;=&quot;&quot;)" class="string">&quot;=\&quot;&quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#522337" title="String">value</a> + <span title="java.lang.String(&quot;&quot;&quot;)" class="string">&quot;\&quot;&quot;</span>
+    <span class="keyword">private</span> <span class="keyword">def</span> <a title="=&gt; String" id="522897">getProperties</a>: <span title="String">String</span> =
+      <a href="#522879" title="=&gt; List[(String, String)]">properties</a>.<a title="(f: ((String, String)) =&gt; java.lang.String)(implicit bf: scala.collection.generic.BuilderFactory[java.lang.String,List[java.lang.String],List[(String, String)]])List[java.lang.String]" id="25402">map</a><span title="scala.collection.generic.BuilderFactory[java.lang.String,List[java.lang.String],List#Coll]">(</span><a href="#523264" title="java.lang.String">{</a>
+        <span title="java.lang.String" class="keyword">case</span> <a href="#523265" title="(x: (String, String))Option[(String, String)]" id="7969">Pair</a>(<a title="String" id="523275">name</a>,<a title="String" id="523276">value</a>) =&gt; <span title="(x$1: Any)java.lang.String" class="string">&quot;-D&quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#523275" title="String">name</a> <span title="(x$1: Any)java.lang.String">+</span> <span title="java.lang.String(&quot;=&quot;&quot;)" class="string">&quot;=\&quot;&quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#523276" title="String">value</a> + <span title="java.lang.String(&quot;&quot;&quot;)" class="string">&quot;\&quot;&quot;</span>
       }).<span title="(start: String,sep: String,end: String)String">mkString</span>(<span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>, <span title="java.lang.String(&quot; &quot;)" class="string">&quot; &quot;</span>, <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
 
 /*============================================================================*\
@@ -177,47 +189,70 @@
       * ant file.
       * @param message A message describing the error.
       * @throws BuildException A build error exception thrown in every case. */
-    <span class="keyword">private</span> <span class="keyword">def</span> <a title="(message: String)Nothing" id="521860">error</a>(<a title="String" id="521991">message</a>: <span title="String">String</span>): <a title="Nothing" id="3622">Nothing</a> =
-      <span title="Nothing" class="keyword">throw</span> <a title="(x$1: java.lang.String,x$2: org.apache.tools.ant.Location)org.apache.tools.ant.BuildException" id="36622" class="keyword">new</a> <a title="org.apache.tools.ant.BuildException" id="32935">BuildException</a>(<a href="#521991" title="String">message</a>, <a href="#11139" title="()org.apache.tools.ant.Location" id="34484">getLocation</a>())
+    <span class="keyword">private</span> <span class="keyword">def</span> <a title="(message: String)Nothing" id="522898">error</a>(<a title="String" id="523030">message</a>: <span title="String">String</span>): <a title="Nothing" id="3643">Nothing</a> =
+      <span title="Nothing" class="keyword">throw</span> <a title="(x$1: java.lang.String,x$2: org.apache.tools.ant.Location)org.apache.tools.ant.BuildException" id="36814" class="keyword">new</a> <a title="org.apache.tools.ant.BuildException" id="33124">BuildException</a>(<a href="#523030" title="String">message</a>, <a href="#11208" title="()org.apache.tools.ant.Location" id="34673">getLocation</a>())
   
     // XXX encoding and generalize
-    <span class="keyword">private</span> <span class="keyword">def</span> <a title="(clazz: Class[_],resource: String)Stream[Char]" id="521861">getResourceAsCharStream</a>(<a title="Class[_]" id="522451">clazz</a>: <a title="Class[_]" id="1416">Class</a>[_], <a title="String" id="522452">resource</a>: <span title="String">String</span>): <a title="Stream[Char]" id="7528">Stream</a>[Char] = {
-      <span class="keyword">val</span> <a title="java.io.InputStream" id="522457">stream</a> = <a href="#522451" title="Class[_]">clazz</a>.<a title="()java.lang.ClassLoader" id="4110">getClassLoader</a><a title="(x$1: java.lang.String)java.io.InputStream" id="118662">(</a>) getResourceAsStream <a href="#522452" title="String">resource</a>
-      <span title="Stream[Char]" class="keyword">if</span> (<a href="#522457" title="(x$1: AnyRef)Boolean">stream</a> == <span title="Null(null)" class="keyword">null</span>) <span title="=&gt; collection.immutable.Stream.type">Stream</span>.<a title="scala.collection.immutable.Stream[Nothing]" id="184113">empty</a>
-      <span class="keyword">else</span> <a title="(elem: =&gt; Int)scala.collection.immutable.Stream[Int]" id="184174">Stream</a> <a title="(p: (Int) =&gt; Boolean)scala.collection.immutable.Stream[Int]" id="184078">continually</a> <a href="#522457" title="java.io.InputStream">stream</a>.<a title="()Int" id="83981">read</a>() <a title="(f: (Int) =&gt; Char)(implicit bf: scala.collection.generic.BuilderFactory[Char,Stream[Char],scala.collection.immutable.Stream[Int]])Stream[Char]" id="184026">takeWhile</a> (<a href="#522541" title="(x$1: Int)Boolean" id="2954">_</a> != <span title="Int(-1)">-</span><span class="int">1</span>) <a title="scala.collection.generic.BuilderFactory[Char,scala.collection.immutable.Stream[Char],scala.collection.immutable.Stream#Coll]" id="7529">map</a> (<a href="#522565" title="Int">_</a>.<a title="[T0]T0" id="3623">asInstanceOf</a><span title="Char">[</span><a title="Char" id="2163">Char</a>])
+    <span class="keyword">private</span> <span class="keyword">def</span> <a title="(clazz: Class[_],resource: String)Stream[Char]" id="522899">getResourceAsCharStream</a>(<a title="Class[_]" id="523393">clazz</a>: <a title="Class[_]" id="1437">Class</a>[_], <a title="String" id="523394">resource</a>: <span title="String">String</span>): <a title="Stream[Char]" id="7597">Stream</a>[Char] = {
+      <span class="keyword">val</span> <a title="java.io.InputStream" id="523399">stream</a> = <a href="#523393" title="Class[_]">clazz</a>.<a title="()java.lang.ClassLoader" id="4131">getClassLoader</a><a title="(x$1: java.lang.String)java.io.InputStream" id="119155">(</a>) getResourceAsStream <a href="#523394" title="String">resource</a>
+      <span title="Stream[Char]" class="keyword">if</span> (<a href="#523399" title="(x$1: AnyRef)Boolean">stream</a> == <span title="Null(null)" class="keyword">null</span>) <span title="=&gt; collection.immutable.Stream.type">Stream</span>.<a title="scala.collection.immutable.Stream[Nothing]" id="184896">empty</a>
+      <span class="keyword">else</span> <a title="(elem: =&gt; Int)scala.collection.immutable.Stream[Int]" id="184957">Stream</a> <a title="(p: (Int) =&gt; Boolean)scala.collection.immutable.Stream[Int]" id="184861">continually</a> <a href="#523399" title="java.io.InputStream">stream</a>.<a title="()Int" id="84342">read</a>() <a title="(f: (Int) =&gt; Char)(implicit bf: scala.collection.generic.BuilderFactory[Char,Stream[Char],scala.collection.immutable.Stream[Int]])Stream[Char]" id="184809">takeWhile</a> (<a href="#523483" title="(x$1: Int)Boolean" id="2975">_</a> != <span title="Int(-1)">-</span><span class="int">1</span>) <a title="scala.collection.generic.BuilderFactory[Char,scala.collection.immutable.Stream[Char],scala.collection.immutable.Stream#Coll]" id="7598">map</a> (<a href="#523507" title="Int">_</a>.<a title="[T0]T0" id="3644">asInstanceOf</a><span title="Char">[</span><a title="Char" id="2184">Char</a>])
     }
 
-    <span class="keyword">private</span> <span class="keyword">def</span> <a title="(resource: String,tokens: Map[String,String])String" id="521862">readAndPatchResource</a>(<a title="String" id="522627">resource</a>: <span title="String">String</span>, <a title="Map[String,String]" id="522628">tokens</a>: <a title="Map[String,String]" id="7246">Map</a>[String, String]): <span title="String">String</span> = {
-      <span class="keyword">val</span> <a title="Iterator[Char]" id="522630">chars</a> = <a href="#521861" title="(clazz: Class[_],resource: String)Stream[Char]">getResourceAsCharStream</a>(<a href="#11139" title="ScalaTool.this.type" class="keyword">this</a>.<a title="()java.lang.Class[_]" id="3628">getClass</a>, <a href="#522627" title="String">resource</a>).<a title="=&gt; Iterator[Char]" id="28931">iterator</a>
-      <span class="keyword">val</span> <a title="StringBuilder" id="522631">builder</a> = <span title="()StringBuilder" class="keyword">new</span> <span title="StringBuilder">StringBuilder</span>()
+    // Converts a variable like @SCALA_HOME@ to ${SCALA_HOME} when pre = &quot;${&quot; and post = &quot;}&quot;
+    <span class="keyword">private</span> <span class="keyword">def</span> <a title="(text: String,pre: String,post: String)String" id="522900">transposeVariableMarkup</a>(<a title="String" id="523213">text</a>: <span title="String">String</span>, <a title="String" id="523214">pre</a>: <span title="String">String</span>, <a title="String" id="523215">post</a>: <span title="String">String</span>) : <span title="String">String</span> = {
+      <span class="keyword">val</span> <a title="scala.io.Source" id="523569">chars</a> = scala.io.<a title="object scala.io.Source" id="28351">Source</a>.<a title="(s: String)scala.io.Source" id="523673">fromString</a>(<a href="#523213" title="String">text</a>)
+      <span class="keyword">val</span> <a title="StringBuilder" id="523570">builder</a> = <span title="()StringBuilder" class="keyword">new</span> <span title="StringBuilder">StringBuilder</span>()
       
-      <span title="Unit" class="keyword">while</span> (<a href="#522630" title="Iterator[Char]">chars</a>.<span title="=&gt; Boolean">hasNext</span>) <a href="#522632" title="()Unit">{</a>
-        <span class="keyword">val</span> <a title="Char" id="522651">char</a> = <a href="#522630" title="Iterator[Char]">chars</a>.<span title="()Char">next</span>
-        <span title="StringBuilder" class="keyword">if</span> (<a href="#522651" title="(x$1: Char)Boolean" id="2716">char</a> == <span title="Char('@')" class="char">'@'</span>) {
-          <span class="keyword">var</span> <a title="Char" id="522660">char</a> = <a href="#522630" title="Iterator[Char]">chars</a>.<span title="()Char">next</span>
-          <span class="keyword">val</span> <a title="StringBuilder" id="522661">token</a> = <span title="()StringBuilder" class="keyword">new</span> <span title="StringBuilder">StringBuilder</span>()
-          <span title="Unit" class="keyword">while</span> (<a href="#522630" title="Iterator[Char]">chars</a>.<span title="(x$1: Boolean)Boolean">hasNext</span> &amp;&amp; <a href="#522660" title="(x$1: Char)Boolean" id="2718">char</a> != <span title="Char('@')" class="char">'@'</span>) <a href="#522662" title="()Unit">{</a>
-            <a href="#522661" title="StringBuilder">token</a>.<span title="(x: Char)StringBuilder">append</span>(<a href="#522660" title="Char">char</a>)
-            <a href="#522660" title="Char">char</a> = <a href="#522630" title="Iterator[Char]">chars</a>.<span title="()Char">next</span>
+      <span title="Unit" class="keyword">while</span> (<a href="#523569" title="scala.io.Source">chars</a>.<span title="=&gt; Boolean">hasNext</span>) <a href="#523571" title="()Unit">{</a>
+        <span class="keyword">val</span> <a title="Char" id="523733">char</a> = <a href="#523569" title="scala.io.Source">chars</a>.<span title="()Char">next</span>
+        <span title="StringBuilder" class="keyword">if</span> (<a href="#523733" title="(x$1: Char)Boolean">char</a> == <span title="Char('@')" class="char">'@'</span>) {
+          <span class="keyword">var</span> <a title="Char" id="523742">char</a> = <a href="#523569" title="scala.io.Source">chars</a>.<span title="()Char">next</span>
+          <span class="keyword">val</span> <a title="StringBuilder" id="523743">token</a> = <span title="()StringBuilder" class="keyword">new</span> <span title="StringBuilder">StringBuilder</span>()
+          <span title="Unit" class="keyword">while</span> (<a href="#523569" title="scala.io.Source">chars</a>.<span title="(x$1: Boolean)Boolean">hasNext</span> &amp;&amp; <a href="#523742" title="(x$1: Char)Boolean">char</a> != <span title="Char('@')" class="char">'@'</span>) <a href="#523744" title="()Unit">{</a>
+            <a href="#523743" title="StringBuilder">token</a>.<span title="(x: Char)StringBuilder">append</span>(<a href="#523742" title="Char">char</a>)
+            <a href="#523742" title="Char">char</a> = <a href="#523569" title="scala.io.Source">chars</a>.<span title="()Char">next</span>
           }
-          <span title="StringBuilder" class="keyword">if</span> (<a href="#522628" title="Map[String,String]">tokens</a>.<a title="(key: String)Boolean" id="44446">contains</a>(<a href="#522661" title="StringBuilder">token</a>.<span title="()String">toString</span>))
-            <a href="#522631" title="StringBuilder">builder</a>.<span title="(s: String)StringBuilder">append</span>(<a href="#522628" title="(key: String)String" id="44444">tokens</a>(<a href="#522661" title="StringBuilder">token</a>.<span title="()String">toString</span>))
-          <span class="keyword">else</span> <span title="StringBuilder" class="keyword">if</span> (<a href="#522661" title="StringBuilder">token</a>.<span title="(x$1: AnyRef)Boolean">toString</span> == <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
-            <a href="#522631" title="StringBuilder">builder</a>.<span title="(x: Char)StringBuilder">append</span>(<span title="Char('@')" class="char">'@'</span>)
+          <span title="StringBuilder" class="keyword">if</span> (<a href="#523743" title="StringBuilder">token</a>.<span title="(x$1: AnyRef)Boolean">toString</span> == <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+            <a href="#523570" title="StringBuilder">builder</a>.<span title="(x: Char)StringBuilder">append</span>(<span title="Char('@')" class="char">'@'</span>)
           <span class="keyword">else</span>
-            <a href="#522631" title="StringBuilder">builder</a>.<span title="(s: String)StringBuilder">append</span>(<span title="(x$1: Any)java.lang.String" class="string">&quot;@&quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#522661" title="StringBuilder">token</a>.<span title="()String">toString</span> + <span title="java.lang.String(&quot;@&quot;)" class="string">&quot;@&quot;</span>)
-        } <span class="keyword">else</span> <a href="#522631" title="StringBuilder">builder</a>.<span title="(x: Char)StringBuilder">append</span>(<a href="#522651" title="Char">char</a>)
+            <a href="#523570" title="StringBuilder">builder</a>.<span title="(s: String)StringBuilder">append</span>(<a href="#523214" title="(x$1: Any)java.lang.String">pre</a> <span title="(x$1: Any)java.lang.String">+</span> <a href="#523743" title="StringBuilder">token</a>.<span title="()String">toString</span> + <a href="#523215" title="String">post</a>)
+        } <span class="keyword">else</span> <a href="#523570" title="StringBuilder">builder</a>.<span title="(x: Char)StringBuilder">append</span>(<a href="#523733" title="Char">char</a>)          
       }
-      <a href="#522631" title="StringBuilder">builder</a>.<span title="()String">toString</span>
+      <a href="#523570" title="StringBuilder">builder</a>.<span title="()String">toString</span>
+    }
+    
+    <span class="keyword">private</span> <span class="keyword">def</span> <a title="(resource: String,tokens: Map[String,String])String" id="522901">readAndPatchResource</a>(<a title="String" id="523815">resource</a>: <span title="String">String</span>, <a title="Map[String,String]" id="523816">tokens</a>: <a title="Map[String,String]" id="7315">Map</a>[String, String]): <span title="String">String</span> = {
+      <span class="keyword">val</span> <a title="Iterator[Char]" id="523818">chars</a> = <a href="#522899" title="(clazz: Class[_],resource: String)Stream[Char]">getResourceAsCharStream</a>(<a href="#11208" title="ScalaTool.this.type" class="keyword">this</a>.<a title="()java.lang.Class[_]" id="3649">getClass</a>, <a href="#523815" title="String">resource</a>).<a title="=&gt; Iterator[Char]" id="29117">iterator</a>
+      <span class="keyword">val</span> <a title="StringBuilder" id="523819">builder</a> = <span title="()StringBuilder" class="keyword">new</span> <span title="StringBuilder">StringBuilder</span>()
+      
+      <span title="Unit" class="keyword">while</span> (<a href="#523818" title="Iterator[Char]">chars</a>.<span title="=&gt; Boolean">hasNext</span>) <a href="#523820" title="()Unit">{</a>
+        <span class="keyword">val</span> <a title="Char" id="523839">char</a> = <a href="#523818" title="Iterator[Char]">chars</a>.<span title="()Char">next</span>
+        <span title="StringBuilder" class="keyword">if</span> (<a href="#523839" title="(x$1: Char)Boolean">char</a> == <span title="Char('@')" class="char">'@'</span>) {
+          <span class="keyword">var</span> <a title="Char" id="523848">char</a> = <a href="#523818" title="Iterator[Char]">chars</a>.<span title="()Char">next</span>
+          <span class="keyword">val</span> <a title="StringBuilder" id="523849">token</a> = <span title="()StringBuilder" class="keyword">new</span> <span title="StringBuilder">StringBuilder</span>()
+          <span title="Unit" class="keyword">while</span> (<a href="#523818" title="Iterator[Char]">chars</a>.<span title="(x$1: Boolean)Boolean">hasNext</span> &amp;&amp; <a href="#523848" title="(x$1: Char)Boolean">char</a> != <span title="Char('@')" class="char">'@'</span>) <a href="#523850" title="()Unit">{</a>
+            <a href="#523849" title="StringBuilder">token</a>.<span title="(x: Char)StringBuilder">append</span>(<a href="#523848" title="Char">char</a>)
+            <a href="#523848" title="Char">char</a> = <a href="#523818" title="Iterator[Char]">chars</a>.<span title="()Char">next</span>
+          }
+          <span title="StringBuilder" class="keyword">if</span> (<a href="#523816" title="Map[String,String]">tokens</a>.<a title="(key: String)Boolean" id="44678">contains</a>(<a href="#523849" title="StringBuilder">token</a>.<span title="()String">toString</span>))
+            <a href="#523819" title="StringBuilder">builder</a>.<span title="(s: String)StringBuilder">append</span>(<a href="#523816" title="(key: String)String" id="44676">tokens</a>(<a href="#523849" title="StringBuilder">token</a>.<span title="()String">toString</span>))
+          <span class="keyword">else</span> <span title="StringBuilder" class="keyword">if</span> (<a href="#523849" title="StringBuilder">token</a>.<span title="(x$1: AnyRef)Boolean">toString</span> == <span title="java.lang.String(&quot;&quot;)" class="string">&quot;&quot;</span>)
+            <a href="#523819" title="StringBuilder">builder</a>.<span title="(x: Char)StringBuilder">append</span>(<span title="Char('@')" class="char">'@'</span>)
+          <span class="keyword">else</span>
+            <a href="#523819" title="StringBuilder">builder</a>.<span title="(s: String)StringBuilder">append</span>(<span title="(x$1: Any)java.lang.String" class="string">&quot;@&quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#523849" title="StringBuilder">token</a>.<span title="()String">toString</span> + <span title="java.lang.String(&quot;@&quot;)" class="string">&quot;@&quot;</span>)
+        } <span class="keyword">else</span> <a href="#523819" title="StringBuilder">builder</a>.<span title="(x: Char)StringBuilder">append</span>(<a href="#523839" title="Char">char</a>)
+      }
+      <a href="#523819" title="StringBuilder">builder</a>.<span title="()String">toString</span>
     }
 
-    <span class="keyword">private</span> <span class="keyword">def</span> <a title="(file: java.io.File,content: String)Unit" id="521863">writeFile</a>(<a title="java.io.File" id="522760">file</a>: <span title="java.io.File">File</span>, <a title="String" id="522761">content</a>: <span title="String">String</span>) =
-      <span title="Unit" class="keyword">if</span> (<a href="#522760" title="java.io.File">file</a>.<a title="()Boolean" id="35192">exists</a><span title="(x$1: Boolean)Boolean">(</span>) &amp;&amp; <a title="=&gt; Boolean" id="2205">!</a><a href="#522760" title="java.io.File">file</a>.<a title="()Boolean" id="35191">canWrite</a>())
-        <a href="#521860" title="(message: String)Nothing">error</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;File &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#522760" title="java.io.File">file</a> + <span title="java.lang.String(&quot; is not writable&quot;)" class="string">&quot; is not writable&quot;</span>)
+    <span class="keyword">private</span> <span class="keyword">def</span> <a title="(file: java.io.File,content: String)Unit" id="522902">writeFile</a>(<a title="java.io.File" id="523948">file</a>: <span title="java.io.File">File</span>, <a title="String" id="523949">content</a>: <span title="String">String</span>) =
+      <span title="Unit" class="keyword">if</span> (<a href="#523948" title="java.io.File">file</a>.<a title="()Boolean" id="35381">exists</a><span title="(x$1: Boolean)Boolean">(</span>) &amp;&amp; <a title="=&gt; Boolean" id="2226">!</a><a href="#523948" title="java.io.File">file</a>.<a title="()Boolean" id="35380">canWrite</a>())
+        <a href="#522898" title="(message: String)Nothing">error</a>(<span title="(x$1: Any)java.lang.String" class="string">&quot;File &quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#523948" title="java.io.File">file</a> + <span title="java.lang.String(&quot; is not writable&quot;)" class="string">&quot; is not writable&quot;</span>)
       <span class="keyword">else</span> {
-        <span class="keyword">val</span> <a title="java.io.FileWriter" id="522776">writer</a> = <a title="(x$1: java.io.File,x$2: Boolean)java.io.FileWriter" id="133426" class="keyword">new</a> <a title="java.io.FileWriter" id="3753">FileWriter</a>(<a href="#522760" title="java.io.File">file</a>, <span title="Boolean(false)" class="keyword">false</span>)
-        <a href="#522776" title="java.io.FileWriter">writer</a>.<a title="(x$1: java.lang.String)Unit" id="41257">write</a>(<a href="#522761" title="String">content</a>)
-        <a href="#522776" title="java.io.FileWriter">writer</a>.<a title="()Unit" id="133455">close</a>()
+        <span class="keyword">val</span> <a title="java.io.FileWriter" id="523964">writer</a> = <a title="(x$1: java.io.File,x$2: Boolean)java.io.FileWriter" id="134004" class="keyword">new</a> <a title="java.io.FileWriter" id="3774">FileWriter</a>(<a href="#523948" title="java.io.File">file</a>, <span title="Boolean(false)" class="keyword">false</span>)
+        <a href="#523964" title="java.io.FileWriter">writer</a>.<a title="(x$1: java.lang.String)Unit" id="41489">write</a>(<a href="#523949" title="String">content</a>)
+        <a href="#523964" title="java.io.FileWriter">writer</a>.<a title="()Unit" id="134033">close</a>()
       }
 
 /*============================================================================*\
@@ -225,28 +260,28 @@
 \*============================================================================*/
 
   /** Performs the tool creation. */
-  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Unit" id="521864">execute</a>() = {
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Unit" id="522903">execute</a>() = {
     // Tests if all mandatory attributes are set and valid.
-    <span title="Unit" class="keyword">if</span> (<a href="#521828" title="=&gt; Option[java.io.File]">file</a>.<span title="=&gt; Boolean">isEmpty</span>) <a href="#521860" title="(message: String)Nothing">error</a>(<span title="java.lang.String(&quot;Attribute 'file' is not set.&quot;)" class="string">&quot;Attribute 'file' is not set.&quot;</span>)
-    <span title="Unit" class="keyword">if</span> (<a href="#521831" title="=&gt; Option[String]">mainClass</a>.<span title="=&gt; Boolean">isEmpty</span>) <a href="#521860" title="(message: String)Nothing">error</a>(<span title="java.lang.String(&quot;Main class must be set.&quot;)" class="string">&quot;Main class must be set.&quot;</span>)
-    <span class="keyword">val</span> <a title="java.lang.String" id="522805">resourceRoot</a> = <span title="java.lang.String(&quot;scala/tools/ant/templates/&quot;)" class="string">&quot;scala/tools/ant/templates/&quot;</span>
-    <span class="keyword">val</span> <a title="scala.collection.immutable.Map[java.lang.String,String]" id="522806">patches</a> = <a title="(elems: (java.lang.String, String)*)scala.collection.immutable.Map[java.lang.String,String]" id="7849">Map</a> (
-      <span title="(_1: java.lang.String,_2: String)(java.lang.String, String)">(</span><span title="java.lang.String(&quot;class&quot;)" class="string">&quot;class&quot;</span>, <a href="#521831" title="=&gt; Option[String]">mainClass</a>.<span title="=&gt; String">get</span>),
-      <span title="(_1: java.lang.String,_2: String)(java.lang.String, String)">(</span><span title="java.lang.String(&quot;properties&quot;)" class="string">&quot;properties&quot;</span>, <a href="#521859" title="=&gt; String">getProperties</a>),
-      <span title="(_1: java.lang.String,_2: String)(java.lang.String, String)">(</span><span title="java.lang.String(&quot;javaflags&quot;)" class="string">&quot;javaflags&quot;</span>, <a href="#521843" title="=&gt; String">javaFlags</a>),
-      <span title="(_1: java.lang.String,_2: String)(java.lang.String, String)">(</span><span title="java.lang.String(&quot;toolflags&quot;)" class="string">&quot;toolflags&quot;</span>, <a href="#521846" title="=&gt; String">toolFlags</a>)
+    <span title="Unit" class="keyword">if</span> (<a href="#522867" title="=&gt; Option[java.io.File]">file</a>.<span title="=&gt; Boolean">isEmpty</span>) <a href="#522898" title="(message: String)Nothing">error</a>(<span title="java.lang.String(&quot;Attribute 'file' is not set.&quot;)" class="string">&quot;Attribute 'file' is not set.&quot;</span>)
+    <span title="Unit" class="keyword">if</span> (<a href="#522870" title="=&gt; Option[String]">mainClass</a>.<span title="=&gt; Boolean">isEmpty</span>) <a href="#522898" title="(message: String)Nothing">error</a>(<span title="java.lang.String(&quot;Main class must be set.&quot;)" class="string">&quot;Main class must be set.&quot;</span>)
+    <span class="keyword">val</span> <a title="java.lang.String" id="523993">resourceRoot</a> = <span title="java.lang.String(&quot;scala/tools/ant/templates/&quot;)" class="string">&quot;scala/tools/ant/templates/&quot;</span>
+    <span class="keyword">val</span> <a title="scala.collection.immutable.Map[java.lang.String,String]" id="523994">patches</a> = <a title="(elems: (java.lang.String, String)*)scala.collection.immutable.Map[java.lang.String,String]" id="7918">Map</a> (
+      <span title="(_1: java.lang.String,_2: String)(java.lang.String, String)">(</span><span title="java.lang.String(&quot;class&quot;)" class="string">&quot;class&quot;</span>, <a href="#522870" title="=&gt; Option[String]">mainClass</a>.<span title="=&gt; String">get</span>),
+      <span title="(_1: java.lang.String,_2: String)(java.lang.String, String)">(</span><span title="java.lang.String(&quot;properties&quot;)" class="string">&quot;properties&quot;</span>, <a href="#522897" title="=&gt; String">getProperties</a>),
+      <span title="(_1: java.lang.String,_2: String)(java.lang.String, String)">(</span><span title="java.lang.String(&quot;javaflags&quot;)" class="string">&quot;javaflags&quot;</span>, <a href="#522882" title="=&gt; String">javaFlags</a>),
+      <span title="(_1: java.lang.String,_2: String)(java.lang.String, String)">(</span><span title="java.lang.String(&quot;toolflags&quot;)" class="string">&quot;toolflags&quot;</span>, <a href="#522885" title="=&gt; String">toolFlags</a>)
     )
-    <span title="Unit" class="keyword">if</span> (<a href="#521834" title="=&gt; List[String]">platforms</a>.<span title="(elem: Any)Boolean">contains</span>(<span title="java.lang.String(&quot;unix&quot;)" class="string">&quot;unix&quot;</span>)) {
-      <span class="keyword">val</span> <a title="scala.collection.immutable.Map[java.lang.String,String]" id="522859">unixPatches</a> = <a href="#522806" title="(kv: (java.lang.String, String))scala.collection.immutable.Map[java.lang.String,String]">patches</a> + (<span title="(_1: java.lang.String,_2: String)(java.lang.String, String)">(</span><span title="java.lang.String(&quot;classpath&quot;)" class="string">&quot;classpath&quot;</span>, <a href="#521857" title="=&gt; String">getUnixclasspath</a>))
-      <span class="keyword">val</span> <a title="java.lang.String" id="522860">unixTemplateResource</a> = <a href="#522805" title="(x$1: Any)java.lang.String">resourceRoot</a> + <span title="java.lang.String(&quot;tool-unix.tmpl&quot;)" class="string">&quot;tool-unix.tmpl&quot;</span>
-      <span class="keyword">val</span> <a title="String" id="522861">unixTemplate</a> = <a href="#521862" title="(resource: String,tokens: Map[String,String])String">readAndPatchResource</a>(<a href="#522860" title="java.lang.String">unixTemplateResource</a>, <a href="#522859" title="scala.collection.immutable.Map[java.lang.String,String]">unixPatches</a>)
-      <a href="#521863" title="(file: java.io.File,content: String)Unit">writeFile</a>(<a href="#521828" title="=&gt; Option[java.io.File]">file</a>.<span title="=&gt; java.io.File">get</span>, <a href="#522861" title="String">unixTemplate</a>)
+    <span title="Unit" class="keyword">if</span> (<a href="#522873" title="=&gt; List[String]">platforms</a>.<span title="(elem: Any)Boolean">contains</span>(<span title="java.lang.String(&quot;unix&quot;)" class="string">&quot;unix&quot;</span>)) {
+      <span class="keyword">val</span> <a title="scala.collection.immutable.Map[java.lang.String,String]" id="524047">unixPatches</a> = <a href="#523994" title="(kv: (java.lang.String, String))scala.collection.immutable.Map[java.lang.String,String]">patches</a> + (<span title="(_1: java.lang.String,_2: String)(java.lang.String, String)">(</span><span title="java.lang.String(&quot;classpath&quot;)" class="string">&quot;classpath&quot;</span>, <a href="#522895" title="=&gt; String">getUnixclasspath</a>))
+      <span class="keyword">val</span> <a title="java.lang.String" id="524048">unixTemplateResource</a> = <a href="#523993" title="(x$1: Any)java.lang.String">resourceRoot</a> + <span title="java.lang.String(&quot;tool-unix.tmpl&quot;)" class="string">&quot;tool-unix.tmpl&quot;</span>
+      <span class="keyword">val</span> <a title="String" id="524049">unixTemplate</a> = <a href="#522901" title="(resource: String,tokens: Map[String,String])String">readAndPatchResource</a>(<a href="#524048" title="java.lang.String">unixTemplateResource</a>, <a href="#524047" title="scala.collection.immutable.Map[java.lang.String,String]">unixPatches</a>)
+      <a href="#522902" title="(file: java.io.File,content: String)Unit">writeFile</a>(<a href="#522867" title="=&gt; Option[java.io.File]">file</a>.<span title="=&gt; java.io.File">get</span>, <a href="#524049" title="String">unixTemplate</a>)
     }
-    <span title="Unit" class="keyword">if</span> (<a href="#521834" title="=&gt; List[String]">platforms</a>.<span title="(elem: Any)Boolean">contains</span>(<span title="java.lang.String(&quot;windows&quot;)" class="string">&quot;windows&quot;</span>)) {
-      <span class="keyword">val</span> <a title="scala.collection.immutable.Map[java.lang.String,String]" id="522993">winPatches</a> = <a href="#522806" title="(kv: (java.lang.String, String))scala.collection.immutable.Map[java.lang.String,String]">patches</a> + (<span title="(_1: java.lang.String,_2: String)(java.lang.String, String)">(</span><span title="java.lang.String(&quot;classpath&quot;)" class="string">&quot;classpath&quot;</span>, <a href="#521858" title="=&gt; String">getWinclasspath</a>))
-      <span class="keyword">val</span> <a title="java.lang.String" id="522994">winTemplateResource</a> = <a href="#522805" title="(x$1: Any)java.lang.String">resourceRoot</a> + <span title="java.lang.String(&quot;tool-windows.tmpl&quot;)" class="string">&quot;tool-windows.tmpl&quot;</span>
-      <span class="keyword">val</span> <a title="String" id="522995">winTemplate</a> = <a href="#521862" title="(resource: String,tokens: Map[String,String])String">readAndPatchResource</a>(<a href="#522994" title="java.lang.String">winTemplateResource</a>, <a href="#522993" title="scala.collection.immutable.Map[java.lang.String,String]">winPatches</a>)
-      <a href="#521863" title="(file: java.io.File,content: String)Unit">writeFile</a>(<span title="java.io.File" class="keyword">new</span> <span title="java.io.File">File</span>(<a href="#521828" title="=&gt; Option[java.io.File]">file</a>.<span title="=&gt; java.io.File">get</span>.<a title="()java.lang.String" id="35184">getAbsolutePath</a><span title="(x$1: Any)java.lang.String">(</span>) + <span title="java.lang.String(&quot;.bat&quot;)" class="string">&quot;.bat&quot;</span>), <a href="#522995" title="String">winTemplate</a>)
+    <span title="Unit" class="keyword">if</span> (<a href="#522873" title="=&gt; List[String]">platforms</a>.<span title="(elem: Any)Boolean">contains</span>(<span title="java.lang.String(&quot;windows&quot;)" class="string">&quot;windows&quot;</span>)) {
+      <span class="keyword">val</span> <a title="scala.collection.immutable.Map[java.lang.String,String]" id="524181">winPatches</a> = <a href="#523994" title="(kv: (java.lang.String, String))scala.collection.immutable.Map[java.lang.String,String]">patches</a> + (<span title="(_1: java.lang.String,_2: String)(java.lang.String, String)">(</span><span title="java.lang.String(&quot;classpath&quot;)" class="string">&quot;classpath&quot;</span>, <a href="#522896" title="=&gt; String">getWinclasspath</a>))
+      <span class="keyword">val</span> <a title="java.lang.String" id="524182">winTemplateResource</a> = <a href="#523993" title="(x$1: Any)java.lang.String">resourceRoot</a> + <span title="java.lang.String(&quot;tool-windows.tmpl&quot;)" class="string">&quot;tool-windows.tmpl&quot;</span>
+      <span class="keyword">val</span> <a title="String" id="524183">winTemplate</a> = <a href="#522901" title="(resource: String,tokens: Map[String,String])String">readAndPatchResource</a>(<a href="#524182" title="java.lang.String">winTemplateResource</a>, <a href="#524181" title="scala.collection.immutable.Map[java.lang.String,String]">winPatches</a>)
+      <a href="#522902" title="(file: java.io.File,content: String)Unit">writeFile</a>(<span title="java.io.File" class="keyword">new</span> <span title="java.io.File">File</span>(<a href="#522867" title="=&gt; Option[java.io.File]">file</a>.<span title="=&gt; java.io.File">get</span>.<a title="()java.lang.String" id="35373">getAbsolutePath</a><span title="(x$1: Any)java.lang.String">(</span>) + <span title="java.lang.String(&quot;.bat&quot;)" class="string">&quot;.bat&quot;</span>), <a href="#524183" title="String">winTemplate</a>)
     }
   }
 

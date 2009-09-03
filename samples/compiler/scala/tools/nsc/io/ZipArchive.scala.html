@@ -13,19 +13,20 @@
  * Copyright 2005-2009 LAMP/EPFL
  * @author  Martin Odersky
  */
-// $Id: ZipArchive.scala 18617 2009-08-31 15:46:46Z extempore $
+// $Id: ZipArchive.scala 18621 2009-09-01 03:27:19Z extempore $
 
 
 <span class="keyword">package</span> scala.tools.nsc
 <span class="keyword">package</span> io
 
-<span class="keyword">import</span> scala.io.File
+<span class="keyword">import</span> scala.io.{ File, Path }
 <span class="keyword">import</span> java.net.URL
 <span class="keyword">import</span> java.util.Enumeration
-<span class="keyword">import</span> java.io.{ File =&gt; JFile, IOException, InputStream, BufferedInputStream }
+<span class="keyword">import</span> java.io.{ File =&gt; JFile, IOException, InputStream, BufferedInputStream, ByteArrayInputStream }
 <span class="keyword">import</span> java.util.zip.{ ZipEntry, ZipFile, ZipInputStream }
 <span class="keyword">import</span> PartialFunction._
 
+<span class="keyword">import</span> scala.collection.Traversable
 <span class="keyword">import</span> scala.collection.mutable.{ Map, HashMap }
 <span class="keyword">import</span> scala.collection.immutable.{ StringVector =&gt; SV }
 <span class="keyword">import</span> scala.collection.JavaConversions.asIterator
@@ -34,17 +35,9 @@
  * @author  Philippe Altherr
  * @version 1.0, 23/03/2004
  */
-<span class="keyword">object</span> <a title="object scala.tools.nsc.io.ZipArchive" id="20516">ZipArchive</a> <span title="ScalaObject">{</span>
-
-  //########################################################################
-
-  /**
-   * ...
-   *
-   * @param path ...
-   *  @return     ...
-   */
-  <span class="keyword">def</span> <a title="(path: String)scala.tools.nsc.io.AbstractFile" id="636811">fromPath</a>(<a title="String" id="636820">path</a>: <span title="String">String</span>): <a href="AbstractFile.scala.html#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = <a href="#636812" title="(file: scala.io.File)scala.tools.nsc.io.AbstractFile">fromFile</a>(<span title="object scala.io.File">File</span><a title="scala.io.Codec" id="636840">(</a><a href="#636820" title="scala.io.Path" id="636835">path</a>))
+<span class="keyword">object</span> <a title="object scala.tools.nsc.io.ZipArchive" id="20657">ZipArchive</a>
+<span title="ScalaObject">{</span>
+  <span class="keyword">def</span> <a title="(path: scala.io.Path)scala.tools.nsc.io.ZipArchive" id="638416">fromPath</a>(<a title="scala.io.Path" id="638426">path</a>: <a title="scala.io.Path" id="28032">Path</a>): <a href="#20656" title="scala.tools.nsc.io.ZipArchive">ZipArchive</a> = <a href="#638417" title="(file: scala.io.File)scala.tools.nsc.io.ZipArchive">fromFile</a>(<a href="#638426" title="scala.io.Path">path</a>.<a title="=&gt; scala.io.File" id="112283">toFile</a>)
 
   /**
    * If the specified file &lt;code&gt;file&lt;/code&gt; exists and is a readable
@@ -54,49 +47,150 @@
    * @param file ...
    * @return     ...
    */
-  <span class="keyword">def</span> <a title="(file: scala.io.File)scala.tools.nsc.io.AbstractFile" id="636812">fromFile</a>(<a title="scala.io.File" id="636822">file</a>: <span title="scala.io.File">File</span>): <a href="AbstractFile.scala.html#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> =
-    <span class="keyword">try</span> { <span title="scala.tools.nsc.io.ZipArchive" class="keyword">new</span> <a href="#20515" title="scala.tools.nsc.io.ZipArchive">ZipArchive</a>(<a href="#636822" title="scala.io.File">file</a>, <a title="(x$1: java.io.File)java.util.zip.ZipFile" id="112508" class="keyword">new</a> <span title="java.util.zip.ZipFile">ZipFile</span>(<a href="#636822" title="scala.io.File">file</a>.<a title="=&gt; java.io.File" id="111830">jfile</a>)) }
+  <span class="keyword">def</span> <a title="(file: scala.io.File)scala.tools.nsc.io.ZipArchive" id="638417">fromFile</a>(<a title="scala.io.File" id="638428">file</a>: <span title="scala.io.File">File</span>): <a href="#20656" title="scala.tools.nsc.io.ZipArchive">ZipArchive</a> =
+    <span class="keyword">try</span> <span title="scala.tools.nsc.io.ZipArchive" class="keyword">new</span> <a href="#20656" title="scala.tools.nsc.io.ZipArchive">ZipArchive</a>(<a href="#638428" title="scala.io.File">file</a>, <a title="(x$1: java.io.File)java.util.zip.ZipFile" id="112978" class="keyword">new</a> <span title="java.util.zip.ZipFile">ZipFile</span>(<a href="#638428" title="scala.io.File">file</a>.<a title="=&gt; java.io.File" id="112276">jfile</a>))
     <span class="keyword">catch</span> { <span title="Null(null)" class="keyword">case</span> _: <span title="java.io.IOException">IOException</span> =&gt; <span title="Null(null)" class="keyword">null</span> }
 
   /**
    * Returns an abstract directory backed by the specified archive.
-   *
-   * @param archive ...
-   * @return        ...
    */
-  <span class="keyword">def</span> <a title="(archive: java.util.zip.ZipFile)scala.tools.nsc.io.AbstractFile" id="636813">fromArchive</a>(<a title="java.util.zip.ZipFile" id="636853">archive</a>: <span title="java.util.zip.ZipFile">ZipFile</span>): <a href="AbstractFile.scala.html#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> =
-    <span title="scala.tools.nsc.io.ZipArchive" class="keyword">new</span> <a href="#20515" title="scala.tools.nsc.io.ZipArchive">ZipArchive</a>(<span title="object scala.io.File">File</span><a title="scala.io.Codec" id="636869">(</a><a href="#636853" title="java.util.zip.ZipFile">archive</a>.<a title="()java.lang.String" id="112514">getName</a><a title="scala.io.Path" id="636864">(</a>)), <a href="#636853" title="java.util.zip.ZipFile">archive</a>)
+  <span class="keyword">def</span> <a title="(archive: java.util.zip.ZipFile)scala.tools.nsc.io.ZipArchive" id="638418">fromArchive</a>(<a title="java.util.zip.ZipFile" id="638440">archive</a>: <span title="java.util.zip.ZipFile">ZipFile</span>): <a href="#20656" title="scala.tools.nsc.io.ZipArchive">ZipArchive</a> =
+    <span title="scala.tools.nsc.io.ZipArchive" class="keyword">new</span> <a href="#20656" title="scala.tools.nsc.io.ZipArchive">ZipArchive</a>(<a title="object scala.io.File" id="131247">File</a><a title="scala.io.Codec" id="131290">(</a><a href="#638440" title="java.util.zip.ZipFile">archive</a>.<a title="()java.lang.String" id="112984">getName</a><a title="scala.io.Path" id="28033">(</a>)), <a href="#638440" title="java.util.zip.ZipFile">archive</a>)
 
   /**
    * Returns an abstract directory backed by the specified archive.
-   *
-   * @param url ...
-   * @return    ...
    */
-  <span class="keyword">def</span> <a title="(url: java.net.URL)scala.tools.nsc.io.AbstractFile" id="636814">fromURL</a>(<a title="java.net.URL" id="636874">url</a>: <span title="java.net.URL">URL</span>): <a href="AbstractFile.scala.html#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> =
-    <span title="scala.tools.nsc.io.URLZipArchive" class="keyword">new</span> <a href="#20572" title="scala.tools.nsc.io.URLZipArchive">URLZipArchive</a>(<a href="#636874" title="java.net.URL">url</a>)
-}
-
-<span class="keyword">private</span>[io] <span class="keyword">trait</span> <a title="trait ZipFileCommon extends java.lang.Object with ScalaObject" id="22440">ZipFileCommon</a>
-<span title="ScalaObject">{</span>
-  <span class="keyword">import</span> SV.{ splitAt }
+  <span class="keyword">def</span> <a title="(url: java.net.URL)scala.tools.nsc.io.AbstractFile" id="638419">fromURL</a>(<a title="java.net.URL" id="638465">url</a>: <span title="java.net.URL">URL</span>): <a href="AbstractFile.scala.html#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = <span title="scala.tools.nsc.io.URLZipArchive" class="keyword">new</span> <a href="#20713" title="scala.tools.nsc.io.URLZipArchive">URLZipArchive</a>(<a href="#638465" title="java.net.URL">url</a>)
   
-  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(path: String)(String, String)" id="111921">splitPath</a>(<a title="String" id="636991">path</a>: <span title="String">String</span>): <span title="(String, String)">(</span>String, String) = {
-    (<a href="#636991" title="(x$1: Int)Int">path</a> lastIndexOf <span title="Int(47)" class="char">'/'</span>) <span title="(String, String)" class="keyword">match</span> {
-      <span title="(java.lang.String, String)" class="keyword">case</span> <span title="Int(-1)">-</span><span class="int">1</span>   =&gt; <span title="(_1: java.lang.String,_2: String)(java.lang.String, String)">(</span><span title="java.lang.String(&quot;/&quot;)" class="string">&quot;/&quot;</span>, <a href="#636991" title="String">path</a>)
-      <span title="(String, String)" class="keyword">case</span> <a title="Int" id="637015">idx</a>  =&gt; <a title="(s: String,index: Int)(String, String)" id="636932">splitAt</a>(<a href="#636991" title="String">path</a>, <a href="#637015" title="(x$1: Int)Int">idx</a> + <span title="Int(1)" class="int">1</span>)
+  <span class="keyword">private</span>[io] <span class="keyword">class</span> <a title="class ZipEntryTraversableClass extends java.lang.Object with Traversable[java.util.zip.ZipEntry] with ScalaObject" id="638420">ZipEntryTraversableClass</a><span title="ScalaObject">(</span><a title="java.io.InputStream" id="638549">in</a>: <span title="java.io.InputStream">InputStream</span>) <span class="keyword">extends</span> <a title="Traversable[java.util.zip.ZipEntry]" id="4504">Traversable</a>[ZipEntry] {
+    <span class="keyword">val</span> <a title="java.util.zip.ZipInputStream" id="638499">zis</a> = <span title="java.util.zip.ZipInputStream" class="keyword">new</span> <span title="java.util.zip.ZipInputStream">ZipInputStream</span>(<a href="#638549" title="java.io.InputStream">in</a>)
+
+    <span class="keyword">def</span> <a title="[U](f: (java.util.zip.ZipEntry) =&gt; U)Unit" id="638501">foreach</a>[<a title="&gt;: Nothing &lt;: Any" id="638503">U</a>](<a title="(java.util.zip.ZipEntry) =&gt; U" id="638552">f</a>: ZipEntry =&gt; U) = {
+      <span class="keyword">def</span> <a title="(x: java.util.zip.ZipEntry)Unit" id="638569">loop</a>(<a title="java.util.zip.ZipEntry" id="638570">x</a>: <span title="java.util.zip.ZipEntry">ZipEntry</span>): <span title="Unit">Unit</span> = <span title="Unit" class="keyword">if</span> (<a href="#638570" title="(x$1: AnyRef)Boolean" id="6609">x</a> != <span title="Null(null)" class="keyword">null</span>) {
+        <a href="#638552" title="(v1: java.util.zip.ZipEntry)U">f</a>(<a href="#638570" title="java.util.zip.ZipEntry">x</a>)
+        <a href="#638499" title="=&gt; java.util.zip.ZipInputStream">zis</a>.<a title="()Unit" id="638509">closeEntry</a>()
+        <a href="#638569" title="(x: java.util.zip.ZipEntry)Unit">loop</a>(<a href="#638499" title="=&gt; java.util.zip.ZipInputStream">zis</a>.<span title="()java.util.zip.ZipEntry">getNextEntry</span>())
+      }
+      <a href="#638569" title="(x: java.util.zip.ZipEntry)Unit">loop</a>(<a href="#638499" title="=&gt; java.util.zip.ZipInputStream">zis</a>.<span title="()java.util.zip.ZipEntry">getNextEntry</span>())
     }
   }
+}
+
+/** This abstraction aims to factor out the common code between
+ *  ZipArchive (backed by a zip file) and URLZipArchive (backed
+ *  by an InputStream.)
+ */
+<span class="keyword">private</span>[io] <span class="keyword">trait</span> <a title="trait ZipContainer extends scala.tools.nsc.io.AbstractFile with ScalaObject" id="22583">ZipContainer</a> <span title="ScalaObject" class="keyword">extends</span> <a href="AbstractFile.scala.html#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a>
+{
+  /** Abstract types */
+  <span class="keyword">type</span> <a title="&gt;: Nothing &lt;: Any" id="112372">SourceType</a>             // InputStream or AbstractFile
+  <span class="keyword">type</span> <a title="&gt;: Nothing &lt;: Any" id="112373">CreationType</a>           // InputStream or ZipFile
+  <span class="keyword">type</span> <a title="&lt;refinement&gt; extends Traversable[java.util.zip.ZipEntry]" id="112374">ZipTrav</a> = <a href="#638593" title="&lt;refinement&gt; extends Traversable[java.util.zip.ZipEntry]">Traversable</a>[ZipEntry] { <span class="keyword">def</span> zis: ZipInputStream }
+  
+  /** Abstract values */
+  <span class="keyword">protected</span> <span class="keyword">val</span> <a title="=&gt; ZipContainer.this.CreationType" id="112375">creationSource</a>: <a href="#112373" title="ZipContainer.this.CreationType">CreationType</a>
+  <span class="keyword">protected</span> <span class="keyword">val</span> <a title="=&gt; ZipContainer.this.DirEntryInterface" id="112376">root</a>: <a href="#112381" title="ZipContainer.this.DirEntryInterface">DirEntryInterface</a>
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; (scala.tools.nsc.io.AbstractFile, String, String) =&gt; ZipContainer.this.DirEntryInterface" id="112377">DirEntryConstructor</a>: (AbstractFile, String, String) =&gt; DirEntryInterface
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; (ZipContainer.this.SourceType, String, String, java.util.zip.ZipEntry) =&gt; ZipContainer.this.FileEntryInterface" id="112378">FileEntryConstructor</a>: (SourceType, String, String, ZipEntry) =&gt; FileEntryInterface
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; (ZipContainer.this.CreationType) =&gt; ZipContainer.this.ZipTrav" id="112379">ZipTravConstructor</a>: CreationType =&gt; ZipTrav
+  
+  <span class="keyword">protected</span>[io] <span class="keyword">trait</span> <a title="trait EntryInterface extends scala.tools.nsc.io.VirtualFile" id="112380">EntryInterface</a> <span class="keyword">extends</span> <a href="VirtualFile.scala.html#20728" title="scala.tools.nsc.io.VirtualFile">VirtualFile</a> {
+    <span class="keyword">def</span> <a title="=&gt; String" id="112417">name</a>: <span title="String">String</span>
+    <span class="keyword">def</span> <a title="=&gt; String" id="112418">path</a>: <span title="String">String</span>
+  }
+  
+  <span class="keyword">protected</span>[io] <span class="keyword">trait</span> <a title="trait DirEntryInterface extends scala.tools.nsc.io.VirtualFile with ZipContainer.this.EntryInterface with ScalaObject" id="112381">DirEntryInterface</a> <span title="ScalaObject" class="keyword">extends</span> <a href="#112380" title="ZipContainer.this.EntryInterface">EntryInterface</a> {
+    <span class="keyword">def</span> <a title="=&gt; ZipContainer.this.SourceType" id="638596">source</a>: <a href="#112372" title="ZipContainer.this.SourceType">SourceType</a>
+    <span class="keyword">val</span> <a title="scala.collection.mutable.Map[String,ZipContainer.this.EntryInterface]" id="638597">entries</a>: <span title="scala.collection.mutable.Map[String,ZipContainer.this.EntryInterface]">Map</span>[String, EntryInterface] = <span title="scala.collection.mutable.HashMap[String,ZipContainer.this.EntryInterface]" class="keyword">new</span> <a title="scala.collection.mutable.HashMap[String,ZipContainer.this.EntryInterface]" id="25113">HashMap</a>()
+    <span class="keyword">var</span> <a title="java.util.zip.ZipEntry" id="638600">entry</a>: <span title="java.util.zip.ZipEntry">ZipEntry</span> = _
+
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Nothing" id="638602">input</a> = <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.Error" class="keyword">new</span> <span title="java.lang.Error">Error</span>(<span title="java.lang.String(&quot;cannot read directories&quot;)" class="string">&quot;cannot read directories&quot;</span>)
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Long" id="638603">lastModified</a>: <span title="Long">Long</span> =
+      <span title="Long" class="keyword">if</span> (<a href="#638600" title="(x$1: AnyRef)Boolean" id="6613">entry</a> ne <span title="Null(null)" class="keyword">null</span>) <a href="#638600" title="=&gt; java.util.zip.ZipEntry">entry</a>.<span title="()Long">getTime</span>() <span class="keyword">else</span> <a href="#786466" title="=&gt; Long" class="keyword">super</a>.<a title="=&gt; Long" id="786466">lastModified</a>
     
-  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(in: java.io.InputStream)java.io.InputStream" id="111922">byteInputStream</a>(<a title="java.io.InputStream" id="637040">in</a>: <span title="java.io.InputStream">InputStream</span>): <span title="java.io.InputStream">InputStream</span> = {
-    <span class="keyword">val</span> <a title="java.io.BufferedInputStream" id="637042">buf</a> = <span title="java.io.BufferedInputStream" class="keyword">new</span> <a title="java.io.BufferedInputStream" id="3879">BufferedInputStream</a>(<a href="#637040" title="java.io.InputStream">in</a>)
-    <span class="keyword">val</span> <a title="Iterator[Byte]" id="637043">bytes</a> = <span title="(elem: =&gt; Byte)Iterator[Byte]">Iterator</span> <span title="(p: (Byte) =&gt; Boolean)Iterator[Byte]">continually</span> <a href="#637040" title="java.io.InputStream">in</a>.<a title="()Int" id="83981">read</a>().<a title="=&gt; Byte" id="2844">toByte</a> takeWhile (<a href="#637087" title="(x$1: Int)Boolean" id="2330">_</a> != <span title="Int(-1)">-</span><span class="int">1</span>)
-    <span title="java.io.ByteArrayInputStream" class="keyword">new</span> java.io.<a title="java.io.ByteArrayInputStream" id="3681">ByteArrayInputStream</a>(<a href="#637043" title="Iterator[Byte]">bytes</a>.<a title="=&gt; Sequence[Byte]" id="32278">toSequence</a>.<a title="(implicit evidence$1: scala.reflect.ClassManifest[Byte])Array[Byte]" id="27603">toArray</a>)
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Boolean" id="638604">isDirectory</a> = <span title="Boolean(true)" class="keyword">true</span>
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Iterator[scala.tools.nsc.io.AbstractFile]" id="638605">iterator</a>: <span title="Iterator[scala.tools.nsc.io.AbstractFile]">Iterator</span>[AbstractFile] = <a href="#638597" title="=&gt; scala.collection.mutable.Map[String,ZipContainer.this.EntryInterface]">entries</a>.<a title="=&gt; Iterator[ZipContainer.this.EntryInterface]" id="44706">valuesIterator</a>
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile" id="638606">lookupName</a>(<a title="String" id="638648">name</a>: <span title="String">String</span>, <a title="Boolean" id="638649">directory</a>: <span title="Boolean">Boolean</span>): <a href="AbstractFile.scala.html#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = {
+      <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="638651">slashName</a> = <span title="java.lang.String" class="keyword">if</span> (<a href="#638649" title="Boolean">directory</a>) <a href="#638648" title="(x$1: Any)java.lang.String">name</a> + <span title="java.lang.String(&quot;/&quot;)" class="string">&quot;/&quot;</span> <span class="keyword">else</span> <a href="#638648" title="String">name</a>
+      <a href="#638597" title="=&gt; scala.collection.mutable.Map[String,ZipContainer.this.EntryInterface]">entries</a>.<a title="(key: String,default: =&gt; ZipContainer.this.EntryInterface)ZipContainer.this.EntryInterface" id="44672">getOrElse</a>(<a href="#638651" title="=&gt; java.lang.String">slashName</a>, <span title="Null(null)" class="keyword">null</span>)
+    }    
+  }
+  
+  <span class="keyword">protected</span>[io] <span class="keyword">trait</span> <a title="trait FileEntryInterface extends scala.tools.nsc.io.VirtualFile with ZipContainer.this.EntryInterface with ScalaObject" id="112382">FileEntryInterface</a> <span title="ScalaObject" class="keyword">extends</span> <a href="#112380" title="ZipContainer.this.EntryInterface">EntryInterface</a> {
+    <span class="keyword">def</span> <a title="=&gt; java.util.zip.ZipEntry" id="112420">entry</a>: <span title="java.util.zip.ZipEntry">ZipEntry</span>
+
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Long" id="112421">lastModified</a>: <span title="Long">Long</span> = <a href="#112420" title="=&gt; java.util.zip.ZipEntry">entry</a>.<span title="()Long">getTime</span>()
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Some[Int]" id="112422">sizeOption</a> = <a title="(x: Int)Some[Int]" id="267">Some</a>(<a href="#112420" title="=&gt; java.util.zip.ZipEntry">entry</a>.<a title="()Long" id="113095">getSize</a>().<a title="=&gt; Int" id="3076">toInt</a>)
+  }
+  
+  <span class="keyword">class</span> <a title="class ZipRootCreator extends java.lang.Object with ScalaObject" id="112383">ZipRootCreator</a><span title="ScalaObject">(</span><a title="(ZipContainer.this.ZipRootCreator) =&gt; ZipContainer.this.SourceType" id="638734">f</a>: ZipRootCreator =&gt; SourceType) {
+    <span class="keyword">val</span> <a title="ZipContainer.this.DirEntryInterface" id="638685">root</a> = <a href="#112377" title="(v1: scala.tools.nsc.io.AbstractFile,v2: String,v3: String)ZipContainer.this.DirEntryInterface">DirEntryConstructor</a>(<a href="#22583" title="scala.tools.nsc.io.ZipContainer">ZipContainer</a>.<span class="keyword">this</span>, <span title="java.lang.String(&quot;&lt;root&gt;&quot;)" class="string">&quot;&lt;root&gt;&quot;</span>, <span title="java.lang.String(&quot;/&quot;)" class="string">&quot;/&quot;</span>)
+
+    // Map from paths to DirEntries
+    <span class="keyword">val</span> <a title="scala.collection.mutable.HashMap[String,ZipContainer.this.DirEntryInterface]" id="638687">dirs</a> = <a title="[A, B](elems: (A, B)*)scala.collection.mutable.HashMap[A,B]" id="25114">HashMap</a><span title="(elems: (String, ZipContainer.this.DirEntryInterface)*)scala.collection.mutable.HashMap[String,ZipContainer.this.DirEntryInterface]">[</span><span title="String">String</span>, <a href="#112381" title="ZipContainer.this.DirEntryInterface">DirEntryInterface</a>](<a title="(y: ZipContainer.this.DirEntryInterface)(java.lang.String, ZipContainer.this.DirEntryInterface)" id="8021" class="string">&quot;/&quot;</a> -&gt; <a href="#638685" title="=&gt; ZipContainer.this.DirEntryInterface">root</a>)
+    <span class="keyword">val</span> <a title="ZipContainer.this.ZipTrav" id="638689">traverser</a> = <a href="#112379" title="(v1: ZipContainer.this.CreationType)ZipContainer.this.ZipTrav">ZipTravConstructor</a>(<a href="#112375" title="=&gt; ZipContainer.this.CreationType">creationSource</a>)
+    <span class="keyword">private</span>[<span class="keyword">this</span>] <span class="keyword">var</span> <a title="ZipContainer.this.DirEntryInterface" id="638691">_parent</a>: <a href="#112381" title="ZipContainer.this.DirEntryInterface">DirEntryInterface</a> = _
+    <span class="keyword">def</span> <a title="=&gt; ZipContainer.this.DirEntryInterface" id="638692">parent</a> = <a href="#638691" title="ZipContainer.this.DirEntryInterface">_parent</a>
+
+    <span class="keyword">def</span> <a title="(entry: java.util.zip.ZipEntry)Unit" id="638693">addEntry</a>(<a title="java.util.zip.ZipEntry" id="638740">entry</a>: <span title="java.util.zip.ZipEntry">ZipEntry</span>) {
+      <span class="keyword">val</span> <a title="java.lang.String" id="638742">path</a> = <a href="#638740" title="java.util.zip.ZipEntry">entry</a>.<a title="()java.lang.String" id="113089">getName</a>
+      <span title="Unit" class="keyword">if</span> (<a href="#638740" title="java.util.zip.ZipEntry">entry</a>.<a title="()Boolean" id="113111">isDirectory</a>) {
+        <span class="keyword">val</span> <a title="ZipContainer.this.DirEntryInterface" id="638747">dir</a>: <a href="#112381" title="ZipContainer.this.DirEntryInterface">DirEntryInterface</a> = <a href="#112388" title="(dirs: scala.collection.mutable.Map[String,ZipContainer.this.DirEntryInterface],path: String)ZipContainer.this.DirEntryInterface">getDir</a>(<a href="#638687" title="=&gt; scala.collection.mutable.HashMap[String,ZipContainer.this.DirEntryInterface]">dirs</a>, <a href="#638742" title="java.lang.String">path</a>)
+        <span title="Unit" class="keyword">if</span> (<a href="#638747" title="ZipContainer.this.DirEntryInterface">dir</a>.<a href="#638600" title="(x$1: AnyRef)Boolean">entry</a> == <span title="Null(null)" class="keyword">null</span>) <a href="#638747" title="ZipContainer.this.DirEntryInterface">dir</a>.<a href="#638600" title="(x$1: java.util.zip.ZipEntry)Unit">entry</a> = <a href="#638740" title="java.util.zip.ZipEntry">entry</a>
+      }
+      <span class="keyword">else</span> {
+        <span class="keyword">val</span> <a href="#638763" title="(String, String)">(</a><a href="#638762" title="String" id="638763">home</a>, <a href="#638762" title="String" id="638764">name</a>) = <a href="#112384" title="(path: String)(String, String)">splitPath</a><span title="(String, String) @unchecked">(</span><a href="#638742" title="java.lang.String">path</a>)
+        <a href="#638691" title="ZipContainer.this.DirEntryInterface">_parent</a> = <a href="#112388" title="(dirs: scala.collection.mutable.Map[String,ZipContainer.this.DirEntryInterface],path: String)ZipContainer.this.DirEntryInterface">getDir</a>(<a href="#638687" title="=&gt; scala.collection.mutable.HashMap[String,ZipContainer.this.DirEntryInterface]">dirs</a>, <a href="#638763" title="String">home</a>)
+        <a href="#638691" title="ZipContainer.this.DirEntryInterface">_parent</a>.<a href="#638597" title="(key: String,value: ZipContainer.this.EntryInterface)Unit">entries</a>(<a href="#638764" title="String">name</a>) = <a href="#112378" title="(v1: ZipContainer.this.SourceType,v2: String,v3: String,v4: java.util.zip.ZipEntry)ZipContainer.this.FileEntryInterface" id="37831">FileEntryConstructor</a>(<a href="#638734" title="(v1: ZipContainer.this.ZipRootCreator)ZipContainer.this.SourceType">f</a>(<a href="#112383" title="ZipContainer.this.ZipRootCreator" class="keyword">this</a>), <a href="#638764" title="String">name</a>, <a href="#638742" title="java.lang.String">path</a>, <a href="#638740" title="java.util.zip.ZipEntry">entry</a>)
+      }
+    }
+
+    <span class="keyword">def</span> <a title="()ZipContainer.this.DirEntryInterface" id="638694">apply</a>() = {
+      <a href="#638689" title="(f: (java.util.zip.ZipEntry) =&gt; Unit)Unit" id="25543">traverser</a> foreach <a href="#638693" title="(entry: java.util.zip.ZipEntry)Unit">addEntry</a>
+      <a href="#638685" title="=&gt; ZipContainer.this.DirEntryInterface">root</a>
+    }
   }
 
-  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(zis: java.util.zip.ZipInputStream)Iterator[java.util.zip.ZipEntry]" id="111923">zipEntryIterator</a>(<a title="java.util.zip.ZipInputStream" id="637110">zis</a>: <span title="java.util.zip.ZipInputStream">ZipInputStream</span>): <span title="Iterator[java.util.zip.ZipEntry]">Iterator</span>[ZipEntry] = {
-    <span title="(elem: =&gt; java.util.zip.ZipEntry)Iterator[java.util.zip.ZipEntry]">Iterator</span> <span title="(p: (java.util.zip.ZipEntry) =&gt; Boolean)Iterator[java.util.zip.ZipEntry]">continually</span> <a href="#637110" title="java.util.zip.ZipInputStream">zis</a>.<a title="()java.util.zip.ZipEntry" id="637114">getNextEntry</a>() takeWhile (<a href="#637162" title="(x$1: AnyRef)Boolean" id="6540">_</a> != <span title="Null(null)" class="keyword">null</span>)
-  }  
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(path: String)(String, String)" id="112384">splitPath</a>(<a title="String" id="638765">path</a>: <span title="String">String</span>): <span title="(String, String)">(</span>String, String) = {
+    (<a href="#638765" title="(x$1: Int)Int" id="7052">path</a> lastIndexOf <span title="Int(47)" class="char">'/'</span>) <span title="(String, String)" class="keyword">match</span> {
+      <span title="(java.lang.String, String)" class="keyword">case</span> <span title="Int(-1)">-</span><span class="int">1</span>   =&gt; <span title="(_1: java.lang.String,_2: String)(java.lang.String, String)">(</span><span title="java.lang.String(&quot;/&quot;)" class="string">&quot;/&quot;</span>, <a href="#638765" title="String">path</a>)
+      <span title="(String, String)" class="keyword">case</span> <a title="Int" id="638837">idx</a>  =&gt; <span title="object scala.collection.immutable.StringVector">SV</span>.<a title="(s: String,index: Int)(String, String)" id="638866">splitAt</a>(<a href="#638765" title="String">path</a>, <a href="#638837" title="(x$1: Int)Int">idx</a> + <span title="Int(1)" class="int">1</span>)
+    }
+  }
+
+  /**
+   * Returns the abstract file in this abstract directory with the
+   * specified name. If there is no such file, returns null. The
+   * argument &quot;directory&quot; tells whether to look for a directory or
+   * or a regular file.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile" id="112385">lookupName</a>(<a title="String" id="638949">name</a>: <span title="String">String</span>, <a title="Boolean" id="638950">directory</a>: <span title="Boolean">Boolean</span>): <a href="AbstractFile.scala.html#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> =
+    <a href="#112376" title="=&gt; ZipContainer.this.DirEntryInterface">root</a>.<a href="#638606" title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile">lookupName</a>(<a href="#638949" title="String">name</a>, <a href="#638950" title="Boolean">directory</a>)
+      
+  /** Returns an abstract file with the given name. It does not
+   *  check that it exists.
+   */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile" id="112386">lookupNameUnchecked</a>(<a title="String" id="638954">name</a>: <span title="String">String</span>, <a title="Boolean" id="638955">directory</a>: <span title="Boolean">Boolean</span>): <a href="AbstractFile.scala.html#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> =
+    <span title="Nothing" class="keyword">throw</span> <span title="java.lang.UnsupportedOperationException" class="keyword">new</span> <span title="java.lang.UnsupportedOperationException">UnsupportedOperationException</span>()
+
+  /** Returns all abstract subfiles of this abstract directory. */
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Iterator[scala.tools.nsc.io.AbstractFile]" id="112387">iterator</a>: <span title="Iterator[scala.tools.nsc.io.AbstractFile]">Iterator</span>[AbstractFile] = <a href="#112376" title="=&gt; ZipContainer.this.DirEntryInterface">root</a>.<a href="#638605" title="=&gt; Iterator[scala.tools.nsc.io.AbstractFile]">iterator</a>
+
+  /**
+   * Looks up the path in the given map and returns if found.
+   * If not present, creates a new DirEntry, adds to both given
+   * map and parent.entries, and returns it.
+   */
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="(dirs: scala.collection.mutable.Map[String,ZipContainer.this.DirEntryInterface],path: String)ZipContainer.this.DirEntryInterface" id="112388">getDir</a>(<a title="scala.collection.mutable.Map[String,ZipContainer.this.DirEntryInterface]" id="638748">dirs</a>: <span title="scala.collection.mutable.Map[String,ZipContainer.this.DirEntryInterface]">Map</span>[String, DirEntryInterface], <a title="String" id="638749">path</a>: <span title="String">String</span>): <a href="#112381" title="ZipContainer.this.DirEntryInterface">DirEntryInterface</a> =
+    <a href="#638748" title="scala.collection.mutable.Map[String,ZipContainer.this.DirEntryInterface]">dirs</a>.<a title="(key: String,default: =&gt; ZipContainer.this.DirEntryInterface)ZipContainer.this.DirEntryInterface" id="44783">getOrElseUpdate</a>(<a href="#638749" title="String">path</a>, {
+      <span class="keyword">val</span> <a href="#638974" title="(String, String)">(</a><a href="#638973" title="String" id="638974">home</a>, <a href="#638973" title="String" id="638975">name</a>) = <a href="#112384" title="(path: String)(String, String)">splitPath</a><span title="(String, String) @unchecked">(</span><a title="(s: String)String" id="638875">SV</a> init <a href="#638749" title="String">path</a>)
+      <span class="keyword">val</span> <a title="ZipContainer.this.DirEntryInterface" id="638976">parent</a> = <a href="#112388" title="(dirs: scala.collection.mutable.Map[String,ZipContainer.this.DirEntryInterface],path: String)ZipContainer.this.DirEntryInterface">getDir</a>(<a href="#638748" title="scala.collection.mutable.Map[String,ZipContainer.this.DirEntryInterface]">dirs</a>, <a href="#638974" title="String">home</a>)
+      <span class="keyword">val</span> <a title="ZipContainer.this.DirEntryInterface" id="638977">dir</a> = <a href="#112377" title="(v1: scala.tools.nsc.io.AbstractFile,v2: String,v3: String)ZipContainer.this.DirEntryInterface">DirEntryConstructor</a>(<a href="#638976" title="ZipContainer.this.DirEntryInterface">parent</a>, <a href="#638975" title="String">name</a>, <a href="#638749" title="String">path</a>)
+      <a href="#638976" title="ZipContainer.this.DirEntryInterface">parent</a>.<a href="#638597" title="(key: String,value: ZipContainer.this.EntryInterface)Unit">entries</a>(<a href="#638975" title="(x$1: Any)java.lang.String">name</a> + <a href="#638749" title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString">path</a>.<a title="=&gt; Char" id="25941">last</a>) = <a href="#638977" title="ZipContainer.this.DirEntryInterface">dir</a>
+      <a href="#638977" title="ZipContainer.this.DirEntryInterface">dir</a>
+    })
+
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Boolean" id="112389">isDirectory</a> = <span title="Boolean(true)" class="keyword">true</span>
 }
 
 /**
@@ -107,133 +201,62 @@
  * @author  Philippe Altherr
  * @version 1.0, 23/03/2004
  */
-<span class="keyword">final</span> <span class="keyword">class</span> <a title="class ZipArchive extends scala.tools.nsc.io.PlainFile with scala.tools.nsc.io.ZipFileCommon with ScalaObject" id="20515">ZipArchive</a><span title="ScalaObject">(</span><a title="scala.io.File" id="636815">file</a>: <span title="scala.io.File">File</span>, <span class="keyword">val</span> <a title="java.util.zip.ZipFile" id="636816">archive</a>: <span title="java.util.zip.ZipFile">ZipFile</span>) <span class="keyword">extends</span> <a href="PlainFile.scala.html#20566" title="scala.tools.nsc.io.PlainFile">PlainFile</a>(<a href="#636815" title="scala.io.File">file</a>) <span class="keyword">with</span> <a href="#22440" title="scala.tools.nsc.io.ZipFileCommon">ZipFileCommon</a>
+<span class="keyword">final</span> <span class="keyword">class</span> <a title="class ZipArchive extends scala.tools.nsc.io.PlainFile with scala.tools.nsc.io.ZipContainer with ScalaObject" id="20656">ZipArchive</a><span title="ScalaObject">(</span><a title="scala.io.File" id="638421">file</a>: <span title="scala.io.File">File</span>, <span class="keyword">val</span> <a title="java.util.zip.ZipFile" id="638422">archive</a>: <span title="java.util.zip.ZipFile">ZipFile</span>) <span class="keyword">extends</span> <a href="PlainFile.scala.html#20707" title="scala.tools.nsc.io.PlainFile">PlainFile</a>(<a href="#638421" title="scala.io.File">file</a>) <span class="keyword">with</span> <a href="#22583" title="scala.tools.nsc.io.ZipContainer">ZipContainer</a>
 {
-  <span title="(assertion: Boolean)Unit">assert</span>(<a href="#636816" title="(x$1: AnyRef)Boolean">archive</a> ne <span title="Null(null)" class="keyword">null</span>)
-
-  /** The root directory  */
-  <span class="keyword">private</span> <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="ZipArchive.this.DirEntry" id="111910">root</a> = {
-    <span class="keyword">val</span> <a title="ZipArchive.this.DirEntry" id="637174">root</a> = <span title="ZipArchive.this.DirEntry" class="keyword">new</span> <a href="#111917" title="ZipArchive.this.DirEntry">DirEntry</a>(<a href="#20515" title="scala.tools.nsc.io.ZipArchive" class="keyword">this</a>, <span title="java.lang.String(&quot;&lt;root&gt;&quot;)" class="string">&quot;&lt;root&gt;&quot;</span>, <span title="java.lang.String(&quot;/&quot;)" class="string">&quot;/&quot;</span>)
-
-    // A path to DirEntry map
-    <span class="keyword">val</span> <a title="scala.collection.mutable.Map[String,ZipArchive.this.DirEntry]" id="637175">dirs</a>: <span title="scala.collection.mutable.Map[String,ZipArchive.this.DirEntry]">Map</span>[String, DirEntry] = <span title="scala.collection.mutable.HashMap[String,ZipArchive.this.DirEntry]" class="keyword">new</span> <span title="scala.collection.mutable.HashMap[String,ZipArchive.this.DirEntry]">HashMap</span>()
-    <a href="#637175" title="(key: String,value: ZipArchive.this.DirEntry)Unit">dirs</a>(<span title="java.lang.String(&quot;/&quot;)" class="string">&quot;/&quot;</span>) = <a href="#637174" title="ZipArchive.this.DirEntry">root</a>
-    <span class="keyword">val</span> <a title="Iterator[java.util.zip.ZipEntry]" id="637176">entries</a> = <a title="(i: java.util.Enumeration[?0])Iterator[?0]" id="4415">asIterator</a>(<a href="#636816" title="=&gt; java.util.zip.ZipFile">archive</a>.<a title="()java.util.Enumeration[_ &lt;: java.util.zip.ZipEntry]" id="112515">entries</a>())
-    
-    <a href="#637176" title="(f: (java.util.zip.ZipEntry) =&gt; Unit)Unit">entries</a> foreach <a href="#637240" title="Unit">{</a> <span title="Unit" class="keyword">case</span> <a title="java.util.zip.ZipEntry" id="637241">entry</a>: <span title="java.util.zip.ZipEntry">ZipEntry</span> =&gt;
-      <span class="keyword">val</span> <a title="java.lang.String" id="637242">path</a> = <a href="#637241" title="java.util.zip.ZipEntry">entry</a>.<span title="()java.lang.String">getName</span>
-      <span title="Unit" class="keyword">if</span> (<a href="#637241" title="java.util.zip.ZipEntry">entry</a>.<span title="()Boolean">isDirectory</span>) {
-        <span class="keyword">val</span> <a title="ZipArchive.this.DirEntry" id="637247">dir</a>: <a href="#111917" title="ZipArchive.this.DirEntry">DirEntry</a> = <a href="#111915" title="(dirs: scala.collection.mutable.Map[String,ZipArchive.this.DirEntry],path: String)ZipArchive.this.DirEntry">getDir</a>(<a href="#637175" title="scala.collection.mutable.Map[String,ZipArchive.this.DirEntry]">dirs</a>, <a href="#637242" title="java.lang.String">path</a>)
-        <span title="Unit" class="keyword">if</span> (<a href="#637247" title="ZipArchive.this.DirEntry">dir</a>.<a href="#637187" title="(x$1: AnyRef)Boolean">entry</a> == <span title="Null(null)" class="keyword">null</span>) <a href="#637247" title="ZipArchive.this.DirEntry">dir</a>.<a href="#637187" title="(x$1: java.util.zip.ZipEntry)Unit">entry</a> = <a href="#637241" title="java.util.zip.ZipEntry">entry</a>
-      }
-      <span class="keyword">else</span> {
-        <span class="keyword">val</span> <a href="#637264" title="(String, String)">(</a><a href="#637263" title="String" id="637264">home</a>, <a href="#637263" title="String" id="637265">name</a>) = <a href="#111921" title="(path: String)(String, String)">splitPath</a><span title="(String, String) @unchecked">(</span><a href="#637242" title="java.lang.String">path</a>)
-        <span class="keyword">val</span> <a title="ZipArchive.this.DirEntry" id="637266">parent</a>: <a href="#111917" title="ZipArchive.this.DirEntry">DirEntry</a> = <a href="#111915" title="(dirs: scala.collection.mutable.Map[String,ZipArchive.this.DirEntry],path: String)ZipArchive.this.DirEntry">getDir</a>(<a href="#637175" title="scala.collection.mutable.Map[String,ZipArchive.this.DirEntry]">dirs</a>, <a href="#637264" title="String">home</a>)
-        <a href="#637266" title="ZipArchive.this.DirEntry">parent</a>.<a href="#637184" title="=&gt; scala.collection.mutable.Map[String,ZipArchive.this.Entry]">entries</a>.<span title="(key: String,value: ZipArchive.this.Entry)Unit">update</span>(<a href="#637265" title="String">name</a>, <span title="ZipArchive.this.FileEntry" class="keyword">new</span> <a href="#111918" title="ZipArchive.this.FileEntry">FileEntry</a>(<a href="#637266" title="ZipArchive.this.DirEntry">parent</a>, <a href="#637265" title="String">name</a>, <a href="#637242" title="java.lang.String">path</a>, <a href="#637241" title="java.util.zip.ZipEntry">entry</a>))
-      }
-    }
-    
-    <a href="#637174" title="ZipArchive.this.DirEntry">root</a>
-  }
-
-  /** Returns true. */
-  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Boolean" id="111911">isDirectory</a> = <span title="Boolean(true)" class="keyword">true</span>
-
-  /** Returns all abstract subfiles of this abstract directory. */
-  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Iterator[scala.tools.nsc.io.AbstractFile]" id="111912">iterator</a>: <span title="Iterator[scala.tools.nsc.io.AbstractFile]">Iterator</span>[AbstractFile] = <a href="#111909" title="=&gt; ZipArchive.this.DirEntry">root</a>.<a href="#637192" title="=&gt; Iterator[scala.tools.nsc.io.AbstractFile]">iterator</a>
-
-  /**
-   * Returns the abstract file in this abstract directory with the
-   * specified name. If there is no such file, returns null. The
-   * argument &quot;directory&quot; tells whether to look for a directory or
-   * or a regular file.
-   */
-  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile" id="111913">lookupName</a>(<a title="String" id="637315">name</a>: <span title="String">String</span>, <a title="Boolean" id="637316">directory</a>: <span title="Boolean">Boolean</span>): <a href="AbstractFile.scala.html#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> =
-    <a href="#111909" title="=&gt; ZipArchive.this.DirEntry">root</a>.<a href="#637193" title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile">lookupName</a>(<a href="#637315" title="String">name</a>, <a href="#637316" title="Boolean">directory</a>)
-
-  /** Returns an abstract file with the given name. It does not
-   *  check that it exists.
-   */
-  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile" id="111914">lookupNameUnchecked</a>(<a title="String" id="637323">name</a>: <span title="String">String</span>, <a title="Boolean" id="637324">directory</a>: <span title="Boolean">Boolean</span>): <a href="AbstractFile.scala.html#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> =
-    <span title="Nothing" class="keyword">throw</span> <span title="java.lang.UnsupportedOperationException" class="keyword">new</span> <span title="java.lang.UnsupportedOperationException">UnsupportedOperationException</span>()
-
-  /**
-   * Lookups the specified table for a DirEntry with the specified
-   * path. If successful, returns the found DirEntry. Otherwise
-   * creates a new DirEntry, enters it into the table and in the
-   * table of its parent ZipDir and returns it.
-   */
-  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(dirs: scala.collection.mutable.Map[String,ZipArchive.this.DirEntry],path: String)ZipArchive.this.DirEntry" id="111915">getDir</a>(<a title="scala.collection.mutable.Map[String,ZipArchive.this.DirEntry]" id="637248">dirs</a>: <span title="scala.collection.mutable.Map[String,ZipArchive.this.DirEntry]">Map</span>[String, DirEntry], <a title="String" id="637249">path</a>: <span title="String">String</span>): <a href="#111917" title="ZipArchive.this.DirEntry">DirEntry</a> =
-    <a title="(default: =&gt; ZipArchive.this.DirEntry)ZipArchive.this.DirEntry" id="35047">(</a><a href="#637248" title="(key: String)Option[ZipArchive.this.DirEntry]">dirs</a> get <a href="#637249" title="String">path</a>) getOrElse {
-      <span class="keyword">val</span> <a href="#637346" title="(String, String)">(</a><a href="#637345" title="String" id="637346">home</a>, <a href="#637345" title="String" id="637347">name</a>) = <a href="#111921" title="(path: String)(String, String)">splitPath</a><span title="(String, String) @unchecked">(</span><span title="object scala.collection.immutable.StringVector">SV</span>.<a title="(s: String,len: Int)String" id="636929">dropRight</a>(<a href="#637249" title="String">path</a>, <span title="Int(1)" class="int">1</span>))
-      <span class="keyword">val</span> <a title="ZipArchive.this.DirEntry" id="637348">parent</a>: <a href="#111917" title="ZipArchive.this.DirEntry">DirEntry</a> = <a href="#111915" title="(dirs: scala.collection.mutable.Map[String,ZipArchive.this.DirEntry],path: String)ZipArchive.this.DirEntry">getDir</a>(<a href="#637248" title="scala.collection.mutable.Map[String,ZipArchive.this.DirEntry]">dirs</a>, <a href="#637346" title="String">home</a>)
-      <span class="keyword">val</span> <a title="ZipArchive.this.DirEntry" id="637349">dir</a> = <span title="ZipArchive.this.DirEntry" class="keyword">new</span> <a href="#111917" title="ZipArchive.this.DirEntry">DirEntry</a>(<a href="#637348" title="ZipArchive.this.DirEntry">parent</a>, <a href="#637347" title="String">name</a>, <a href="#637249" title="String">path</a>)
-      <a href="#637348" title="ZipArchive.this.DirEntry">parent</a>.<a href="#637184" title="=&gt; scala.collection.mutable.Map[String,ZipArchive.this.Entry]">entries</a>.<span title="(key: String,value: ZipArchive.this.Entry)Unit">update</span>(<a href="#637347" title="(x$1: Any)java.lang.String">name</a> + <span title="object scala.collection.immutable.StringVector">SV</span>.<a title="(s: String)Char" id="636939">last</a>(<a href="#637249" title="String">path</a>), <a href="#637349" title="ZipArchive.this.DirEntry">dir</a>)
-      <a href="#637248" title="scala.collection.mutable.Map[String,ZipArchive.this.DirEntry]">dirs</a>.<span title="(key: String,value: ZipArchive.this.DirEntry)Unit">update</span>(<a href="#637249" title="String">path</a>, <a href="#637349" title="ZipArchive.this.DirEntry">dir</a>)
-      <a href="#637349" title="ZipArchive.this.DirEntry">dir</a>      
-    }
+  self =&gt;
   
-  //########################################################################
-  // Private Class - Entry
+  <span class="keyword">type</span> <a title="scala.tools.nsc.io.AbstractFile" id="112358">SourceType</a> = <a href="AbstractFile.scala.html#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a>
+  <span class="keyword">type</span> <a title="java.util.zip.ZipFile" id="112359">CreationType</a> = <span title="java.util.zip.ZipFile">ZipFile</span>
+  
+  <span class="keyword">protected</span> <span class="keyword">val</span> <a title="java.util.zip.ZipFile" id="112360">creationSource</a>        = <a href="#638422" title="=&gt; java.util.zip.ZipFile">archive</a>
+  <span class="keyword">protected</span> <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="ZipArchive.this.DirEntryInterface" id="112363">root</a>             = <a href="#638694" title="()ZipArchive.this.DirEntryInterface" class="keyword">new</a> <a href="#112383" title="ZipArchive.this.ZipRootCreator">ZipRootCreator</a>(<a href="#639037" title="ZipArchive.this.ZipRootCreator">_</a>.<a href="#638692" title="=&gt; ZipArchive.this.DirEntryInterface">parent</a>)()
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; (scala.tools.nsc.io.AbstractFile, String, String) =&gt; ZipArchive.this.DirEntry" id="112364">DirEntryConstructor</a>   = <span title="ZipArchive.this.DirEntry" class="keyword">new</span> <a href="#112368" title="ZipArchive.this.DirEntry">DirEntry</a>(<a href="#639048" title="scala.tools.nsc.io.AbstractFile">_</a>, <a href="#639049" title="String">_</a>, <a href="#639050" title="String">_</a>)
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; (ZipArchive.this.SourceType, String, String, java.util.zip.ZipEntry) =&gt; ZipArchive.this.FileEntry" id="112365">FileEntryConstructor</a>  = <span title="ZipArchive.this.FileEntry" class="keyword">new</span> <a href="#112369" title="ZipArchive.this.FileEntry">FileEntry</a>(<a href="#639068" title="ZipArchive.this.SourceType">_</a>, <a href="#639069" title="String">_</a>, <a href="#639070" title="String">_</a>, <a href="#639071" title="java.util.zip.ZipEntry">_</a>)
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; (java.util.zip.ZipFile) =&gt; ZipArchive.this.ZipTrav" id="112366">ZipTravConstructor</a>    = <a href="#112370" title="(z: java.util.zip.ZipFile)ZipArchive.this.ZipTrav">zipTraversableFromZipFile</a> _
 
-  /** Superclass of archive entries */
-  <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class Entry extends scala.tools.nsc.io.VirtualFile with ScalaObject" id="111916">Entry</a><span title="ScalaObject">(</span>
-    <span class="keyword">override</span> <span class="keyword">val</span> <a title="scala.tools.nsc.io.AbstractFile" id="637393">container</a>: <a href="AbstractFile.scala.html#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a>,
-    <a title="String" id="637394">name</a>: <span title="String">String</span>,
-    <a title="String" id="637395">path</a>: <span title="String">String</span>
-  ) <span class="keyword">extends</span> <a href="VirtualFile.scala.html#20587" title="scala.tools.nsc.io.VirtualFile">VirtualFile</a>(<a href="#637394" title="String">name</a>, <a href="#637395" title="String">path</a>)
+  <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class Entry extends scala.tools.nsc.io.VirtualFile with ScalaObject" id="112367">Entry</a><span title="ScalaObject">(</span>
+    <span class="keyword">override</span> <span class="keyword">val</span> <a title="scala.tools.nsc.io.AbstractFile" id="639091">container</a>: <a href="AbstractFile.scala.html#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a>,
+    <a title="String" id="639092">name</a>: <span title="String">String</span>,
+    <a title="String" id="639093">path</a>: <span title="String">String</span>
+  ) <span class="keyword">extends</span> <a href="VirtualFile.scala.html#20728" title="scala.tools.nsc.io.VirtualFile">VirtualFile</a>(<a href="#639092" title="String">name</a>, <a href="#639093" title="String">path</a>)
   {
-    <span class="keyword">final</span> <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; String" id="111934">path</a> = <span title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;%s(%s)&quot;</span>.<span title="(args: Any*)String">format</span>(<a href="#20515" title="scala.tools.nsc.io.ZipArchive">ZipArchive</a>.<span class="keyword">this</span>, <a href="#111936" title="=&gt; String">pathInArchive</a>)    
-    <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; java.util.zip.ZipFile" id="111935">getArchive</a> = <a href="#20515" title="ZipArchive.this.type">ZipArchive</a>.<span class="keyword">this</span>.<a href="#636816" title="=&gt; java.util.zip.ZipFile">archive</a>
-    <span class="keyword">def</span> <a title="=&gt; String" id="111936">pathInArchive</a> = <span class="keyword">super</span>.<a href="VirtualFile.scala.html#110697" title="=&gt; String">path</a>
+    <span class="keyword">final</span> <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; String" id="112400">path</a> = <span title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;%s(%s)&quot;</span>.<span title="(args: Any*)String">format</span>(<a href="#20656" title="scala.tools.nsc.io.ZipArchive">self</a>, <a href="#112402" title="=&gt; String">pathInArchive</a>)    
+    <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; java.util.zip.ZipFile" id="112401">getArchive</a> = <a href="#20656" title="ZipArchive.this.type">self</a>.<a href="#638422" title="=&gt; java.util.zip.ZipFile">archive</a>
+    <span class="keyword">def</span> <a title="=&gt; String" id="112402">pathInArchive</a> = <span class="keyword">super</span>.<a href="VirtualFile.scala.html#111130" title="=&gt; String">path</a>
     
-    <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Int" id="111937">hashCode</a> = <span class="keyword">super</span>.<a href="VirtualFile.scala.html#110692" title="(x$1: Int)Int">hashCode</a> + <a href="#637393" title="=&gt; scala.tools.nsc.io.AbstractFile">container</a>.<a title="()Int" id="6524">hashCode</a>
-    <span class="keyword">override</span> <span class="keyword">def</span> <a title="(that: Any)Boolean" id="111938">equals</a>(<a title="Any" id="637467">that</a> : <a title="Any" id="49">Any</a>) =
-      <span class="keyword">super</span>.<a href="VirtualFile.scala.html#110693" title="(that: Any)Boolean">equals</a><a title="(x$1: Boolean)Boolean" id="2212">(</a><a href="#637467" title="Any">that</a>) &amp;&amp; (<a title="(x: Any)(pf: PartialFunction[Any,Boolean])Boolean" id="1086">cond</a>(<a href="#637467" title="Any">that</a>) <a href="#637483" title="Boolean">{</a>
-        <span title="Boolean" class="keyword">case</span> <a title="ZipArchive.this.Entry" id="637484">e</a>: <a href="#111916" title="ZipArchive.this.Entry">Entry</a> =&gt; <a href="#637393" title="(x$1: AnyRef)Boolean">container</a> == <a href="#637484" title="ZipArchive.this.Entry">e</a>.<a href="#637393" title="=&gt; scala.tools.nsc.io.AbstractFile">container</a>
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Int" id="112403">hashCode</a> = <span class="keyword">super</span>.<a href="VirtualFile.scala.html#111125" title="(x$1: Int)Int">hashCode</a> + <a href="#639091" title="=&gt; scala.tools.nsc.io.AbstractFile">container</a>.<a title="()Int" id="6593">hashCode</a>
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="(that: Any)Boolean" id="112404">equals</a>(<a title="Any" id="639161">that</a> : <a title="Any" id="49">Any</a>) =
+      <span class="keyword">super</span>.<a href="VirtualFile.scala.html#111126" title="(that: Any)Boolean">equals</a><a title="(x$1: Boolean)Boolean" id="2233">(</a><a href="#639161" title="Any">that</a>) &amp;&amp; (<a title="(x: Any)(pf: PartialFunction[Any,Boolean])Boolean" id="1107">cond</a>(<a href="#639161" title="Any">that</a>) <a href="#639177" title="Boolean">{</a>
+        <span title="Boolean" class="keyword">case</span> <a title="ZipArchive.this.Entry" id="639178">e</a>: <a href="#112367" title="ZipArchive.this.Entry">Entry</a> =&gt; <a href="#639091" title="(x$1: AnyRef)Boolean">container</a> == <a href="#639178" title="ZipArchive.this.Entry">e</a>.<a href="#639091" title="=&gt; scala.tools.nsc.io.AbstractFile">container</a>
       })
   }
 
-  //########################################################################
-  // Private Class - DirEntry
-
-  /** A directory archive entry */
-  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">class</span> <a title="class DirEntry extends ZipArchive.this.Entry with ScalaObject" id="111917">DirEntry</a><span title="ScalaObject">(</span>
-    <a title="scala.tools.nsc.io.AbstractFile" id="637194">container</a>: <a href="AbstractFile.scala.html#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a>,
-    <a title="String" id="637195">name</a>: <span title="String">String</span>,
-    <a title="String" id="637196">path</a>: <span title="String">String</span>
-  ) <span class="keyword">extends</span> <a href="#111916" title="ZipArchive.this.Entry">Entry</a>(<a href="#637194" title="scala.tools.nsc.io.AbstractFile">container</a>, <a href="#637195" title="String">name</a>, <a href="#637196" title="String">path</a>)
+  <span class="keyword">final</span> <span class="keyword">class</span> <a title="class DirEntry extends ZipArchive.this.Entry with ZipArchive.this.DirEntryInterface with ScalaObject" id="112368">DirEntry</a><span title="ScalaObject">(</span>
+    <a title="scala.tools.nsc.io.AbstractFile" id="639059">container</a>: <a href="AbstractFile.scala.html#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a>,
+    <a title="String" id="639060">name</a>: <span title="String">String</span>,
+    <a title="String" id="639061">path</a>: <span title="String">String</span>
+  ) <span class="keyword">extends</span> <a href="#112367" title="ZipArchive.this.Entry">Entry</a>(<a href="#639059" title="scala.tools.nsc.io.AbstractFile">container</a>, <a href="#639060" title="String">name</a>, <a href="#639061" title="String">path</a>) <span class="keyword">with</span> <a href="#112381" title="ZipArchive.this.DirEntryInterface">DirEntryInterface</a>
   {
-    <span class="keyword">val</span> <a title="scala.collection.mutable.Map[String,ZipArchive.this.Entry]" id="637184">entries</a>: <span title="scala.collection.mutable.Map[String,ZipArchive.this.Entry]">Map</span>[String, Entry] = <span title="scala.collection.mutable.HashMap[String,ZipArchive.this.Entry]" class="keyword">new</span> <span title="scala.collection.mutable.HashMap[String,ZipArchive.this.Entry]">HashMap</span>()
-    <span class="keyword">var</span> <a title="java.util.zip.ZipEntry" id="637187">entry</a>: <span title="java.util.zip.ZipEntry">ZipEntry</span> = _
+    <span class="keyword">def</span> <a title="=&gt; scala.tools.nsc.io.AbstractFile" id="639058">source</a> = <a href="#639091" title="=&gt; scala.tools.nsc.io.AbstractFile">container</a>
+  }
 
-    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Boolean" id="637189">isDirectory</a> = <span title="Boolean(true)" class="keyword">true</span>
-    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Nothing" id="637190">input</a> = <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.Error" class="keyword">new</span> <span title="java.lang.Error">Error</span>(<span title="java.lang.String(&quot;cannot read directories&quot;)" class="string">&quot;cannot read directories&quot;</span>)
-
-    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Long" id="637191">lastModified</a>: <span title="Long">Long</span> =
-      <span title="Long" class="keyword">if</span> (<a href="#637187" title="(x$1: AnyRef)Boolean">entry</a> ne <span title="Null(null)" class="keyword">null</span>) <a href="#637187" title="=&gt; java.util.zip.ZipEntry">entry</a>.<span title="()Long">getTime</span>() <span class="keyword">else</span> <span class="keyword">super</span>.<a href="VirtualFile.scala.html#110705" title="=&gt; Long">lastModified</a>
-
-    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Iterator[scala.tools.nsc.io.AbstractFile]" id="637192">iterator</a>: <span title="Iterator[scala.tools.nsc.io.AbstractFile]">Iterator</span>[AbstractFile] = <a href="#637184" title="=&gt; scala.collection.mutable.Map[String,ZipArchive.this.Entry]">entries</a>.<span title="=&gt; Iterator[ZipArchive.this.Entry]">valuesIterator</span>
-
-    <span class="keyword">override</span> <span class="keyword">def</span> <a title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile" id="637193">lookupName</a>(<a title="String" id="637318">name</a>: <span title="String">String</span>, <a title="Boolean" id="637319">directory</a>: <span title="Boolean">Boolean</span>): <a href="AbstractFile.scala.html#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = {
-      <span class="keyword">def</span> <a title="=&gt; java.lang.String" id="637525">slashName</a> = <span title="java.lang.String" class="keyword">if</span> (<a href="#637319" title="Boolean">directory</a>) <a href="#637318" title="(x$1: Any)java.lang.String">name</a> + <span title="java.lang.String(&quot;/&quot;)" class="string">&quot;/&quot;</span> <span class="keyword">else</span> <a href="#637318" title="String">name</a>
-      <a href="#637184" title="=&gt; scala.collection.mutable.Map[String,ZipArchive.this.Entry]">entries</a>.<a title="(key: String,default: =&gt; ZipArchive.this.Entry)ZipArchive.this.Entry" id="44440">getOrElse</a>(<a href="#637525" title="=&gt; java.lang.String">slashName</a>, <span title="Null(null)" class="keyword">null</span>)
+  <span class="keyword">final</span> <span class="keyword">class</span> <a title="class FileEntry extends ZipArchive.this.Entry with ZipArchive.this.FileEntryInterface with ScalaObject" id="112369">FileEntry</a><span title="ScalaObject">(</span>
+    <a title="scala.tools.nsc.io.AbstractFile" id="639072">container</a>: <a href="AbstractFile.scala.html#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a>,
+    <a title="String" id="639073">name</a>: <span title="String">String</span>,
+    <a title="String" id="639074">path</a>: <span title="String">String</span>,
+    <span class="keyword">val</span> <a title="java.util.zip.ZipEntry" id="639075">entry</a>: <span title="java.util.zip.ZipEntry">ZipEntry</span>
+  ) <span class="keyword">extends</span> <a href="#112367" title="ZipArchive.this.Entry">Entry</a>(<a href="#639072" title="scala.tools.nsc.io.AbstractFile">container</a>, <a href="#639073" title="String">name</a>, <a href="#639074" title="String">path</a>) <span class="keyword">with</span> <a href="#112382" title="ZipArchive.this.FileEntryInterface">FileEntryInterface</a>
+  {
+    <span class="keyword">def</span> <a title="=&gt; java.util.zip.ZipFile" id="112415">archive</a> = <a href="#20656" title="ZipArchive.this.type">self</a>.<a href="#638422" title="=&gt; java.util.zip.ZipFile">archive</a>
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; java.io.InputStream" id="112416">input</a> = <a href="#112415" title="(x$1: java.util.zip.ZipEntry)java.io.InputStream" id="112982">archive</a> getInputStream <a href="#639075" title="=&gt; java.util.zip.ZipEntry">entry</a>
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(z: java.util.zip.ZipFile)ZipArchive.this.ZipTrav" id="112370">zipTraversableFromZipFile</a>(<a title="java.util.zip.ZipFile" id="639081">z</a>: <span title="java.util.zip.ZipFile">ZipFile</span>): <a href="#638593" title="ZipArchive.this.ZipTrav">ZipTrav</a> =
+    <a href="#639215" title="java.lang.Object with Traversable[java.util.zip.ZipEntry]{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.lang.Object with Traversable[java.util.zip.ZipEntry]" id="639215">Traversable</a>[ZipEntry] {
+      <span class="keyword">def</span> <a title="=&gt; java.util.zip.ZipInputStream" id="639217">zis</a>: <span title="java.util.zip.ZipInputStream">ZipInputStream</span> = <span title="Null(null)" class="keyword">null</span>  // not valid for this type
+      <span class="keyword">val</span> <a title="scala.collection.immutable.Stream[java.util.zip.ZipEntry]" id="639218">itStream</a> = <a title="(i: java.util.Enumeration[?0])Iterator[?0]" id="4460">asIterator</a>(<a href="#639081" title="java.util.zip.ZipFile">z</a>.<a title="()java.util.Enumeration[_ &lt;: java.util.zip.ZipEntry]" id="112985">entries</a>()).<a title="=&gt; Stream[?0]" id="32463">toStream</a>
+      <span class="keyword">def</span> <a title="[U](f: (java.util.zip.ZipEntry) =&gt; U)Unit" id="639220">foreach</a>[<a title="&gt;: Nothing &lt;: Any" id="639222">U</a>](<a title="(java.util.zip.ZipEntry) =&gt; U" id="639258">f</a>: ZipEntry =&gt; U) = <a href="#639218" title="(f: (java.util.zip.ZipEntry) =&gt; U)Unit" id="184821">itStream</a> foreach <a href="#639258" title="(java.util.zip.ZipEntry) =&gt; U">f</a>
     }
-  }
-
-  /** A regular file archive entry */
-  <span class="keyword">final</span> <span class="keyword">class</span> <a title="class FileEntry extends ZipArchive.this.Entry with ScalaObject" id="111918">FileEntry</a><span title="ScalaObject">(</span>
-    <a title="scala.tools.nsc.io.AbstractFile" id="637289">container</a>: <a href="AbstractFile.scala.html#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a>,
-    <a title="String" id="637290">name</a>: <span title="String">String</span>,
-    <a title="String" id="637291">path</a>: <span title="String">String</span>,
-    <span class="keyword">val</span> <a title="java.util.zip.ZipEntry" id="637292">entry</a>: <span title="java.util.zip.ZipEntry">ZipEntry</span>
-  ) <span class="keyword">extends</span> <a href="#111916" title="ZipArchive.this.Entry">Entry</a>(<a href="#637289" title="scala.tools.nsc.io.AbstractFile">container</a>, <a href="#637290" title="String">name</a>, <a href="#637291" title="String">path</a>)
-  {
-    <span class="keyword">def</span> <a title="=&gt; java.util.zip.ZipFile" id="111949">archive</a> = <a href="#20515" title="ZipArchive.this.type">ZipArchive</a>.<span class="keyword">this</span>.<a href="#636816" title="=&gt; java.util.zip.ZipFile">archive</a>
-    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Long" id="111950">lastModified</a>: <span title="Long">Long</span> = <a href="#637292" title="=&gt; java.util.zip.ZipEntry">entry</a>.<span title="()Long">getTime</span>()
-    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; java.io.InputStream" id="111951">input</a> = <a href="#111949" title="=&gt; java.util.zip.ZipFile">archive</a>.<a title="(x$1: java.util.zip.ZipEntry)java.io.InputStream" id="112512">getInputStream</a>(<a href="#637292" title="=&gt; java.util.zip.ZipEntry">entry</a>)
-    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Some[Int]" id="111952">sizeOption</a> = <span title="(x: Int)Some[Int]">Some</span>(<a href="#637292" title="=&gt; java.util.zip.ZipEntry">entry</a>.<span title="()Long">getSize</span>().<span title="=&gt; Int">toInt</span>)
-  }
 }
 
 /**
@@ -243,113 +266,54 @@
  * @author  Stephane Micheloud
  * @version 1.0, 29/05/2007
  */
-<span class="keyword">final</span> <span class="keyword">class</span> <a title="class URLZipArchive extends scala.tools.nsc.io.AbstractFile with scala.tools.nsc.io.ZipFileCommon with ScalaObject" id="20572">URLZipArchive</a><span title="ScalaObject">(</span><a title="java.net.URL" id="636899">url</a>: <span title="java.net.URL">URL</span>) <span class="keyword">extends</span> <a href="AbstractFile.scala.html#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> <span class="keyword">with</span> <a href="#22440" title="scala.tools.nsc.io.ZipFileCommon">ZipFileCommon</a> {
-  <span title="(assertion: Boolean)Unit">assert</span>(<a href="#636899" title="(x$1: AnyRef)Boolean">url</a> ne <span title="Null(null)" class="keyword">null</span>)
+<span class="keyword">final</span> <span class="keyword">class</span> <a title="class URLZipArchive extends scala.tools.nsc.io.AbstractFile with scala.tools.nsc.io.ZipContainer with ScalaObject" id="20713">URLZipArchive</a><span title="ScalaObject">(</span><a title="java.net.URL" id="638493">url</a>: <span title="java.net.URL">URL</span>) <span class="keyword">extends</span> <a href="AbstractFile.scala.html#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> <span class="keyword">with</span> <a href="#22583" title="scala.tools.nsc.io.ZipContainer">ZipContainer</a>
+{
+  <span class="keyword">type</span> <a title="java.io.InputStream" id="638470">SourceType</a>   = <span title="java.io.InputStream">InputStream</span>
+  <span class="keyword">type</span> <a title="java.io.InputStream" id="638471">CreationType</a> = <span title="java.io.InputStream">InputStream</span>
+  
+  <span class="keyword">protected</span> <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="java.io.InputStream" id="638473">creationSource</a> = <a href="#638481" title="=&gt; java.io.InputStream">input</a>
+  <span class="keyword">protected</span> <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="URLZipArchive.this.DirEntryInterface" id="638475">root</a> = <a href="#638694" title="()URLZipArchive.this.DirEntryInterface" class="keyword">new</a> <a href="#112383" title="URLZipArchive.this.ZipRootCreator">ZipRootCreator</a>(<a title="URLZipArchive.this.ZipRootCreator" id="639310">x</a> =&gt; <a href="#638492" title="(in: java.io.InputStream)java.io.InputStream">byteInputStream</a>(<a href="#639310" title="URLZipArchive.this.ZipRootCreator">x</a>.<a href="#638689" title="=&gt; URLZipArchive.this.ZipTrav">traverser</a>.<a href="#638594" title="=&gt; java.util.zip.ZipInputStream">zis</a>))()
+  
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; (scala.tools.nsc.io.AbstractFile, String, String) =&gt; URLZipArchive.this.DirEntry" id="638476">DirEntryConstructor</a>   = (<a title="scala.tools.nsc.io.AbstractFile" id="639325">_</a>, <a title="String" id="639326">name</a>, <a title="String" id="639327">path</a>) =&gt; <span title="URLZipArchive.this.DirEntry" class="keyword">new</span> <a href="#638490" title="URLZipArchive.this.DirEntry">DirEntry</a>(<a href="#639326" title="String">name</a>, <a href="#639327" title="String">path</a>)
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; (URLZipArchive.this.SourceType, String, String, java.util.zip.ZipEntry) =&gt; URLZipArchive.this.FileEntry" id="638477">FileEntryConstructor</a>  = <span title="URLZipArchive.this.FileEntry" class="keyword">new</span> <a href="#638491" title="URLZipArchive.this.FileEntry">FileEntry</a>(<a href="#639348" title="URLZipArchive.this.SourceType">_</a>, <a href="#639349" title="String">_</a>, <a href="#639350" title="String">_</a>, <a href="#639351" title="java.util.zip.ZipEntry">_</a>)
+  <span class="keyword">protected</span> <span class="keyword">def</span> <a title="=&gt; (URLZipArchive.this.CreationType) =&gt; scala.tools.nsc.io.ZipArchive.ZipEntryTraversableClass" id="638478">ZipTravConstructor</a>    = <span title="scala.tools.nsc.io.ZipArchive.ZipEntryTraversableClass" class="keyword">new</span> <a href="#20657" title="object scala.tools.nsc.io.ZipArchive">ZipArchive</a>.<a href="#638420" title="scala.tools.nsc.io.ZipArchive.ZipEntryTraversableClass">ZipEntryTraversableClass</a>(<a href="#639374" title="URLZipArchive.this.CreationType">_</a>)
 
-  <span class="keyword">private</span> <span class="keyword">lazy</span> <span class="keyword">val</span> <a title="URLZipArchive.this.DirEntry" id="636880">root</a>: <a href="#636897" title="URLZipArchive.this.DirEntry">DirEntry</a> = {
-    <span class="keyword">val</span> <a title="URLZipArchive.this.DirEntry" id="637601">root</a> = <span title="URLZipArchive.this.DirEntry" class="keyword">new</span> <a href="#636897" title="URLZipArchive.this.DirEntry">DirEntry</a>(<span title="java.lang.String(&quot;&lt;root&gt;&quot;)" class="string">&quot;&lt;root&gt;&quot;</span>, <span title="java.lang.String(&quot;/&quot;)" class="string">&quot;/&quot;</span>)
-    
-    // A path to DirEntry map
-    <span class="keyword">val</span> <a title="scala.collection.mutable.Map[String,URLZipArchive.this.DirEntry]" id="637602">dirs</a>: <span title="scala.collection.mutable.Map[String,URLZipArchive.this.DirEntry]">Map</span>[String, DirEntry] = <span title="scala.collection.mutable.HashMap[String,URLZipArchive.this.DirEntry]" class="keyword">new</span> <span title="scala.collection.mutable.HashMap[String,URLZipArchive.this.DirEntry]">HashMap</span>()
-    <a href="#637602" title="(key: String,value: URLZipArchive.this.DirEntry)Unit">dirs</a>(<span title="java.lang.String(&quot;/&quot;)" class="string">&quot;/&quot;</span>) = <a href="#637601" title="URLZipArchive.this.DirEntry">root</a>
-    
-    <span class="keyword">val</span> <a title="java.util.zip.ZipInputStream" id="637603">zis</a> = <span title="java.util.zip.ZipInputStream" class="keyword">new</span> <span title="java.util.zip.ZipInputStream">ZipInputStream</span>(<a href="#636890" title="=&gt; java.io.InputStream">input</a>)
-    <a href="#111923" title="(zis: java.util.zip.ZipInputStream)Iterator[java.util.zip.ZipEntry]">zipEntryIterator</a><span title="(f: (java.util.zip.ZipEntry) =&gt; Unit)Unit">(</span><a href="#637603" title="java.util.zip.ZipInputStream">zis</a>) foreach <a href="#637626" title="Unit">{</a> <span title="Unit" class="keyword">case</span> <a title="java.util.zip.ZipEntry" id="637627">entry</a> =&gt;
-      <span class="keyword">val</span> <a title="java.lang.String" id="637628">path</a> = <a href="#637627" title="java.util.zip.ZipEntry">entry</a>.<span title="()java.lang.String">getName</span>()
-      <span title="(assertion: Boolean,message: =&gt; Any)Unit">assert</span>(<a href="#637627" title="java.util.zip.ZipEntry">entry</a>.<span title="()Boolean">isDirectory</span><a title="(x$1: Boolean)Boolean" id="2206">(</a>) == <a href="#637628" title="java.lang.String">path</a>.<a title="(x$1: java.lang.String)Boolean" id="6975">endsWith</a>(<span title="java.lang.String(&quot;/&quot;)" class="string">&quot;/&quot;</span>),
-             <a href="#20572" title="URLZipArchive.this.type" class="keyword">this</a>.<a href="AbstractFile.scala.html#51406" title="()String">toString</a><span title="(x$1: Any)java.lang.String">(</span>) <span title="(x$1: Any)java.lang.String">+</span> <span title="java.lang.String(&quot; - &quot;)" class="string">&quot; - &quot;</span> + <a href="#637628" title="java.lang.String">path</a>);
-      <span title="Unit" class="keyword">if</span> (<a href="#637627" title="java.util.zip.ZipEntry">entry</a>.<span title="()Boolean">isDirectory</span>()) {
-        <span class="keyword">val</span> <a title="URLZipArchive.this.DirEntry" id="637658">dir</a>: <a href="#636897" title="URLZipArchive.this.DirEntry">DirEntry</a> = <a href="#636895" title="(dirs: scala.collection.mutable.Map[String,URLZipArchive.this.DirEntry],path: String)URLZipArchive.this.DirEntry">getDir</a>(<a href="#637602" title="scala.collection.mutable.Map[String,URLZipArchive.this.DirEntry]">dirs</a>, <a href="#637628" title="java.lang.String">path</a>)
-        <span title="(assertion: Boolean,message: =&gt; Any)Unit">assert</span>(<a href="#637658" title="URLZipArchive.this.DirEntry">dir</a>.<a href="#637594" title="(x$1: AnyRef)Boolean" id="6542">entry</a> eq <span title="Null(null)" class="keyword">null</span>, <a href="#20572" title="URLZipArchive.this.type" class="keyword">this</a>.<a href="AbstractFile.scala.html#51406" title="()String">toString</a><span title="(x$1: Any)java.lang.String">(</span>) <span title="(x$1: Any)java.lang.String">+</span> <span title="java.lang.String(&quot; - &quot;)" class="string">&quot; - &quot;</span> + <a href="#637628" title="java.lang.String">path</a>)
-        <a href="#637658" title="URLZipArchive.this.DirEntry">dir</a>.<a href="#637594" title="(x$1: java.util.zip.ZipEntry)Unit">entry</a> = <a href="#637627" title="java.util.zip.ZipEntry">entry</a>
-      } <span class="keyword">else</span> {
-        <span class="keyword">val</span> <a title="Int" id="637683">index</a> = <a href="#637628" title="java.lang.String">path</a>.<span title="(x$1: Int)Int">lastIndexOf</span>(<span title="Int(47)" class="char">'/'</span>)
-        <span class="keyword">val</span> <a title="java.lang.String" id="637684">name</a> = <span title="java.lang.String" class="keyword">if</span> (<a href="#637683" title="(x$1: Int)Boolean">index</a> &lt; <span title="Int(0)" class="int">0</span>) <a href="#637628" title="java.lang.String">path</a> <span class="keyword">else</span> <a href="#637628" title="java.lang.String">path</a>.<span title="(x$1: Int)java.lang.String">substring</span>(<a href="#637683" title="(x$1: Int)Int">index</a> + <span title="Int(1)" class="int">1</span>)
-        <span class="keyword">val</span> <a title="java.lang.String" id="637685">home</a> = <span title="java.lang.String" class="keyword">if</span> (<a href="#637683" title="(x$1: Int)Boolean">index</a> &lt; <span title="Int(0)" class="int">0</span>) <span title="java.lang.String(&quot;/&quot;)" class="string">&quot;/&quot;</span>  <span class="keyword">else</span> <a href="#637628" title="java.lang.String">path</a>.<span title="(x$1: Int,x$2: Int)java.lang.String">substring</span>(<span title="Int(0)" class="int">0</span>, <a href="#637683" title="(x$1: Int)Int">index</a> + <span title="Int(1)" class="int">1</span>)
-        <span class="keyword">val</span> <a title="URLZipArchive.this.DirEntry" id="637686">parent</a>: <a href="#636897" title="URLZipArchive.this.DirEntry">DirEntry</a> = <a href="#636895" title="(dirs: scala.collection.mutable.Map[String,URLZipArchive.this.DirEntry],path: String)URLZipArchive.this.DirEntry">getDir</a>(<a href="#637602" title="scala.collection.mutable.Map[String,URLZipArchive.this.DirEntry]">dirs</a>, <a href="#637685" title="java.lang.String">home</a>)
-        <span title="(assertion: Boolean,message: =&gt; Any)Unit">assert</span>(<a title="=&gt; Boolean" id="2205">!</a><a href="#637686" title="URLZipArchive.this.DirEntry">parent</a>.<a href="#637591" title="=&gt; scala.collection.mutable.Map[String,URLZipArchive.this.Entry]">entries</a>.<a title="(key: String)Boolean" id="44446">contains</a>(<a href="#637628" title="java.lang.String">path</a>), <a href="#20572" title="URLZipArchive.this.type" class="keyword">this</a>.<a href="AbstractFile.scala.html#51406" title="()String">toString</a><span title="(x$1: Any)java.lang.String">(</span>) <span title="(x$1: Any)java.lang.String">+</span> <span title="java.lang.String(&quot; - &quot;)" class="string">&quot; - &quot;</span> + <a href="#637628" title="java.lang.String">path</a>)
-        <span class="keyword">val</span> <a title="java.io.InputStream" id="637687">in</a> = <a href="#111922" title="(in: java.io.InputStream)java.io.InputStream">byteInputStream</a>(<a href="#637603" title="java.util.zip.ZipInputStream">zis</a>)
-        <a href="#637686" title="URLZipArchive.this.DirEntry">parent</a>.<a href="#637591" title="=&gt; scala.collection.mutable.Map[String,URLZipArchive.this.Entry]">entries</a>.<span title="(key: String,value: URLZipArchive.this.Entry)Unit">update</span>(<a href="#637684" title="java.lang.String">name</a>, <span title="URLZipArchive.this.FileEntry" class="keyword">new</span> <a href="#636898" title="URLZipArchive.this.FileEntry">FileEntry</a>(<a href="#637684" title="java.lang.String">name</a>, <a href="#637628" title="java.lang.String">path</a>, <a href="#637627" title="java.util.zip.ZipEntry">entry</a>, <a href="#637687" title="java.io.InputStream">in</a>))
-      }
-      <a href="#637603" title="java.util.zip.ZipInputStream">zis</a>.<a title="()Unit" id="637115">closeEntry</a>()
-    }
-    <a href="#637601" title="URLZipArchive.this.DirEntry">root</a>
-  }
-
-  <span class="keyword">def</span> <a title="=&gt; Nothing" id="636881">container</a> = <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.Error" class="keyword">new</span> <span title="java.lang.Error">Error</span>(<span title="java.lang.String(&quot;unsupported&quot;)" class="string">&quot;unsupported&quot;</span>)
-
-  <span class="keyword">def</span> <a title="=&gt; String" id="636882">name</a>: <span title="String">String</span> = <a href="#636899" title="java.net.URL">url</a>.<a title="()java.lang.String" id="117395">getFile</a>()
-  <span class="keyword">def</span> <a title="=&gt; String" id="636883">path</a>: <span title="String">String</span> = <a href="#636899" title="java.net.URL">url</a>.<a title="()java.lang.String" id="117388">getPath</a>()
-  <span class="keyword">def</span> <a title="=&gt; java.io.File" id="636884">file</a>: <a title="java.io.File" id="3807">JFile</a> = <span title="Null(null)" class="keyword">null</span>
-  <span class="keyword">def</span> <a title="=&gt; scala.tools.nsc.io.AbstractFile" id="636885">absolute</a>: <a href="AbstractFile.scala.html#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = <a href="#20572" title="scala.tools.nsc.io.URLZipArchive" class="keyword">this</a>
-  <span class="keyword">def</span> <a title="=&gt; Boolean" id="636886">isDirectory</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(true)" class="keyword">true</span>
-
-  <span class="keyword">def</span> <a title="=&gt; Long" id="636887">lastModified</a>: <span title="Long">Long</span> =
-    <span class="keyword">try</span> <a href="#636899" title="java.net.URL">url</a>.<a title="()java.net.URLConnection" id="117405">openConnection</a>().<a title="()Long" id="637873">getLastModified</a>()
+  <span class="keyword">def</span> <a title="=&gt; String" id="638479">name</a>: <span title="String">String</span> = <a href="#638493" title="java.net.URL">url</a>.<a title="()java.lang.String" id="117882">getFile</a>()
+  <span class="keyword">def</span> <a title="=&gt; String" id="638480">path</a>: <span title="String">String</span> = <a href="#638493" title="java.net.URL">url</a>.<a title="()java.lang.String" id="117875">getPath</a>()
+  <span class="keyword">def</span> <a title="=&gt; java.io.InputStream" id="638481">input</a>: <span title="java.io.InputStream">InputStream</span> = <a href="#638493" title="java.net.URL">url</a>.<a title="()java.io.InputStream" id="117895">openStream</a>()
+  <span class="keyword">def</span> <a title="=&gt; scala.tools.nsc.io.AbstractFile" id="638482">absolute</a>: <a href="AbstractFile.scala.html#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = <a href="#20713" title="scala.tools.nsc.io.URLZipArchive" class="keyword">this</a>
+  <span class="keyword">def</span> <a title="=&gt; Long" id="638483">lastModified</a>: <span title="Long">Long</span> =
+    <span class="keyword">try</span> <a href="#638493" title="java.net.URL">url</a>.<a title="()java.net.URLConnection" id="117892">openConnection</a>().<a title="()Long" id="639422">getLastModified</a>()
     <span class="keyword">catch</span> { <span title="Long(0L)" class="keyword">case</span> _: <span title="java.io.IOException">IOException</span> =&gt; <span title="Long(0L)" class="int">0</span> }
+  
+  /** Methods we don't support but have to implement because of the design */
+  <span class="keyword">def</span> <a title="=&gt; java.io.File" id="638484">file</a>: <a title="java.io.File" id="3828">JFile</a> = <span title="Null(null)" class="keyword">null</span>
+  <span class="keyword">def</span> <a title="=&gt; Unit" id="638485">create</a>: <span title="Unit">Unit</span> = <span title="Nothing" class="keyword">throw</span> <span title="java.lang.UnsupportedOperationException" class="keyword">new</span> <span title="java.lang.UnsupportedOperationException">UnsupportedOperationException</span>
+  <span class="keyword">def</span> <a title="=&gt; Unit" id="638486">delete</a>: <span title="Unit">Unit</span> = <span title="Nothing" class="keyword">throw</span> <span title="java.lang.UnsupportedOperationException" class="keyword">new</span> <span title="java.lang.UnsupportedOperationException">UnsupportedOperationException</span>
+  <span class="keyword">def</span> <a title="=&gt; Nothing" id="638487">output</a> = <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.Error" class="keyword">new</span> <span title="java.lang.Error">Error</span>(<span title="java.lang.String(&quot;unsupported&quot;)" class="string">&quot;unsupported&quot;</span>)
+  <span class="keyword">def</span> <a title="=&gt; Nothing" id="638488">container</a> = <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.Error" class="keyword">new</span> <span title="java.lang.Error">Error</span>(<span title="java.lang.String(&quot;unsupported&quot;)" class="string">&quot;unsupported&quot;</span>)
 
-  <span class="keyword">def</span> <a title="=&gt; Unit" id="636888">create</a>: <span title="Unit">Unit</span> = <span title="Nothing" class="keyword">throw</span> <span title="java.lang.UnsupportedOperationException" class="keyword">new</span> <span title="java.lang.UnsupportedOperationException">UnsupportedOperationException</span>
-  <span class="keyword">def</span> <a title="=&gt; Unit" id="636889">delete</a>: <span title="Unit">Unit</span> = <span title="Nothing" class="keyword">throw</span> <span title="java.lang.UnsupportedOperationException" class="keyword">new</span> <span title="java.lang.UnsupportedOperationException">UnsupportedOperationException</span>
-
-  <span class="keyword">def</span> <a title="=&gt; java.io.InputStream" id="636890">input</a>: <span title="java.io.InputStream">InputStream</span> = <a href="#636899" title="java.net.URL">url</a>.<a title="()java.io.InputStream" id="117408">openStream</a>()
-  <span class="keyword">def</span> <a title="=&gt; Nothing" id="636891">output</a> = <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.Error" class="keyword">new</span> <span title="java.lang.Error">Error</span>(<span title="java.lang.String(&quot;unsupported&quot;)" class="string">&quot;unsupported&quot;</span>)
-
-  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Iterator[scala.tools.nsc.io.AbstractFile]" id="636892">iterator</a>: <span title="Iterator[scala.tools.nsc.io.AbstractFile]">Iterator</span>[AbstractFile] = <a href="#636879" title="=&gt; URLZipArchive.this.DirEntry">root</a>.<a href="#637599" title="=&gt; Iterator[scala.tools.nsc.io.AbstractFile]">iterator</a>
-
-  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile" id="636893">lookupName</a>(<a title="String" id="637996">name</a>: <span title="String">String</span>, <a title="Boolean" id="637997">directory</a>: <span title="Boolean">Boolean</span>): <a href="AbstractFile.scala.html#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> =
-    <a href="#636879" title="=&gt; URLZipArchive.this.DirEntry">root</a>.<a href="#637600" title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile">lookupName</a>(<a href="#637996" title="String">name</a>, <a href="#637997" title="Boolean">directory</a>)
-
-  /** Returns an abstract file with the given name. It does not
-   *  check that it exists.
-   */
-  <span class="keyword">def</span> <a title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile" id="636894">lookupNameUnchecked</a>(<a title="String" id="638004">name</a>: <span title="String">String</span>, <a title="Boolean" id="638005">directory</a>: <span title="Boolean">Boolean</span>): <a href="AbstractFile.scala.html#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> =
-    <span title="Nothing" class="keyword">throw</span> <span title="java.lang.UnsupportedOperationException" class="keyword">new</span> <span title="java.lang.UnsupportedOperationException">UnsupportedOperationException</span>()
-
-  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(dirs: scala.collection.mutable.Map[String,URLZipArchive.this.DirEntry],path: String)URLZipArchive.this.DirEntry" id="636895">getDir</a>(<a title="scala.collection.mutable.Map[String,URLZipArchive.this.DirEntry]" id="637659">dirs</a>: <span title="scala.collection.mutable.Map[String,URLZipArchive.this.DirEntry]">Map</span>[String, DirEntry], <a title="String" id="637660">path</a>: <span title="String">String</span>): <a href="#636897" title="URLZipArchive.this.DirEntry">DirEntry</a> =
-    <a href="#637659" title="scala.collection.mutable.Map[String,URLZipArchive.this.DirEntry]">dirs</a>.<span title="(key: String)Option[URLZipArchive.this.DirEntry]">get</span>(<a href="#637660" title="String">path</a>) <span title="URLZipArchive.this.DirEntry" class="keyword">match</span> {
-      <span title="URLZipArchive.this.DirEntry" class="keyword">case</span> Some(<a title="URLZipArchive.this.DirEntry" id="638023">dir</a>) =&gt; <a href="#638023" title="URLZipArchive.this.DirEntry">dir</a>
-      <span title="URLZipArchive.this.DirEntry" class="keyword">case</span> <span title="object None">None</span> =&gt;
-        <span class="keyword">val</span> <a title="Int" id="638026">index</a> = <a href="#637660" title="String">path</a>.<a title="(x$1: Int,x$2: Int)Int" id="6985">lastIndexOf</a>(<span title="Int(47)" class="char">'/'</span>, <a href="#637660" title="String">path</a>.<span title="()Int">length</span><span title="(x$1: Int)Int">(</span>) - <span title="Int(2)" class="int">2</span>)
-        <span class="keyword">val</span> <a title="String" id="638027">name</a> = <span title="String" class="keyword">if</span> (<a href="#638026" title="(x$1: Int)Boolean">index</a> &lt; <span title="Int(0)" class="int">0</span>) <a href="#637660" title="String">path</a> <span class="keyword">else</span> <a href="#637660" title="String">path</a>.<span title="(x$1: Int)java.lang.String">substring</span>(<a href="#638026" title="(x$1: Int)Int">index</a> + <span title="Int(1)" class="int">1</span>)
-        <span class="keyword">val</span> <a title="java.lang.String" id="638028">home</a> = <span title="java.lang.String" class="keyword">if</span> (<a href="#638026" title="(x$1: Int)Boolean">index</a> &lt; <span title="Int(0)" class="int">0</span>) <span title="java.lang.String(&quot;/&quot;)" class="string">&quot;/&quot;</span>  <span class="keyword">else</span> <a href="#637660" title="String">path</a>.<span title="(x$1: Int,x$2: Int)java.lang.String">substring</span>(<span title="Int(0)" class="int">0</span>, <a href="#638026" title="(x$1: Int)Int">index</a> + <span title="Int(1)" class="int">1</span>)
-        <span class="keyword">val</span> <a title="URLZipArchive.this.DirEntry" id="638029">parent</a>: <a href="#636897" title="URLZipArchive.this.DirEntry">DirEntry</a> = <a href="#636895" title="(dirs: scala.collection.mutable.Map[String,URLZipArchive.this.DirEntry],path: String)URLZipArchive.this.DirEntry">getDir</a>(<a href="#637659" title="scala.collection.mutable.Map[String,URLZipArchive.this.DirEntry]">dirs</a>, <a href="#638028" title="java.lang.String">home</a>)
-        <span class="keyword">val</span> <a title="URLZipArchive.this.DirEntry" id="638030">dir</a> = <span title="URLZipArchive.this.DirEntry" class="keyword">new</span> <a href="#636897" title="URLZipArchive.this.DirEntry">DirEntry</a>(<a href="#638027" title="String">name</a>.<span title="(x$1: Int,x$2: Int)java.lang.String">substring</span>(<span title="Int(0)" class="int">0</span>, <a href="#638027" title="String">name</a>.<span title="()Int">length</span><span title="(x$1: Int)Int">(</span>) - <span title="Int(1)" class="int">1</span>), <a href="#637660" title="String">path</a>)
-        <a href="#638029" title="URLZipArchive.this.DirEntry">parent</a>.<a href="#637591" title="=&gt; scala.collection.mutable.Map[String,URLZipArchive.this.Entry]">entries</a>.<span title="(key: String,value: URLZipArchive.this.Entry)Unit">update</span>(<a href="#638027" title="String">name</a>, <a href="#638030" title="URLZipArchive.this.DirEntry">dir</a>)
-        <a href="#637659" title="scala.collection.mutable.Map[String,URLZipArchive.this.DirEntry]">dirs</a>.<span title="(key: String,value: URLZipArchive.this.DirEntry)Unit">update</span>(<a href="#637660" title="String">path</a>, <a href="#638030" title="URLZipArchive.this.DirEntry">dir</a>)
-        <a href="#638030" title="URLZipArchive.this.DirEntry">dir</a>
-    }
-
-  /** Superclass of archive entries */
-  <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class Entry extends scala.tools.nsc.io.VirtualFile with ScalaObject" id="636896">Entry</a><span title="ScalaObject">(</span><a title="String" id="638172">name</a>: <span title="String">String</span>, <a title="String" id="638173">path</a>: <span title="String">String</span>) <span class="keyword">extends</span> <a href="VirtualFile.scala.html#20587" title="scala.tools.nsc.io.VirtualFile">VirtualFile</a>(<a href="#638172" title="String">name</a>, <a href="#638173" title="String">path</a>) {
-    <span class="keyword">final</span> <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; String" id="637585">path</a> = <span title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;%s(%s)&quot;</span>.<span title="(args: Any*)String">format</span>(<a href="#20572" title="scala.tools.nsc.io.URLZipArchive">URLZipArchive</a>.<span class="keyword">this</span>, <span class="keyword">super</span>.<a href="VirtualFile.scala.html#110697" title="=&gt; String">path</a>)    
+  <span class="keyword">abstract</span> <span class="keyword">class</span> <a title="class Entry extends scala.tools.nsc.io.VirtualFile with ScalaObject" id="638489">Entry</a><span title="ScalaObject">(</span><a title="String" id="639553">name</a>: <span title="String">String</span>, <a title="String" id="639554">path</a>: <span title="String">String</span>) <span class="keyword">extends</span> <a href="VirtualFile.scala.html#20728" title="scala.tools.nsc.io.VirtualFile">VirtualFile</a>(<a href="#639553" title="String">name</a>, <a href="#639554" title="String">path</a>) {
+    <span class="keyword">final</span> <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; String" id="639333">path</a> = <span title="implicit scala.Predef.stringWrapper : (x: String)scala.runtime.RichString" class="string">&quot;%s(%s)&quot;</span>.<span title="(args: Any*)String">format</span>(<a href="#20713" title="scala.tools.nsc.io.URLZipArchive">URLZipArchive</a>.<span class="keyword">this</span>, <span class="keyword">super</span>.<a href="VirtualFile.scala.html#111130" title="=&gt; String">path</a>)    
+  }
+  <span class="keyword">final</span> <span class="keyword">class</span> <a title="class DirEntry extends URLZipArchive.this.Entry with URLZipArchive.this.DirEntryInterface with ScalaObject" id="638490">DirEntry</a><span title="ScalaObject">(</span><a title="String" id="639340">name</a>: <span title="String">String</span>, <a title="String" id="639341">path</a>: <span title="String">String</span>) <span class="keyword">extends</span> <a href="#638489" title="URLZipArchive.this.Entry">Entry</a>(<a href="#639340" title="String">name</a>, <a href="#639341" title="String">path</a>) <span class="keyword">with</span> <a href="#112381" title="URLZipArchive.this.DirEntryInterface">DirEntryInterface</a> {
+    <span class="keyword">def</span> <a title="=&gt; Nothing" id="639339">source</a> = <a href="#638602" title="=&gt; Nothing">input</a>
+  }
+  <span class="keyword">final</span> <span class="keyword">class</span> <a title="class FileEntry extends URLZipArchive.this.Entry with URLZipArchive.this.FileEntryInterface with ScalaObject" id="638491">FileEntry</a><span title="ScalaObject">(</span>
+    <span class="keyword">val</span> <a title="java.io.InputStream" id="639364">in</a>: <span title="java.io.InputStream">InputStream</span>,
+    <a title="String" id="639365">name</a>: <span title="String">String</span>,
+    <a title="String" id="639366">path</a>: <span title="String">String</span>,
+    <span class="keyword">val</span> <a title="java.util.zip.ZipEntry" id="639367">entry</a>: <span title="java.util.zip.ZipEntry">ZipEntry</span>
+  ) <span class="keyword">extends</span> <a href="#638489" title="URLZipArchive.this.Entry">Entry</a>(<a href="#639365" title="String">name</a>, <a href="#639366" title="String">path</a>) <span class="keyword">with</span> <a href="#112382" title="URLZipArchive.this.FileEntryInterface">FileEntryInterface</a>
+  {
+    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; java.io.InputStream" id="639363">input</a> = <a href="#639364" title="=&gt; java.io.InputStream">in</a>    
   }
 
-  /** A directory archive entry */
-  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">class</span> <a title="class DirEntry extends URLZipArchive.this.Entry with ScalaObject" id="636897">DirEntry</a><span title="ScalaObject">(</span><a title="String" id="637604">name</a>: <span title="String">String</span>, <a title="String" id="637605">path</a>: <span title="String">String</span>) <span class="keyword">extends</span> <a href="#636896" title="URLZipArchive.this.Entry">Entry</a>(<a href="#637604" title="String">name</a>, <a href="#637605" title="String">path</a>) {
-    <span class="keyword">val</span> <a title="scala.collection.mutable.Map[String,URLZipArchive.this.Entry]" id="637591">entries</a>: <span title="scala.collection.mutable.Map[String,URLZipArchive.this.Entry]">Map</span>[String, Entry] = <span title="scala.collection.mutable.HashMap[String,URLZipArchive.this.Entry]" class="keyword">new</span> <span title="scala.collection.mutable.HashMap[String,URLZipArchive.this.Entry]">HashMap</span>()
-    <span class="keyword">var</span> <a title="java.util.zip.ZipEntry" id="637594">entry</a>: <span title="java.util.zip.ZipEntry">ZipEntry</span> = _
-
-    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Boolean" id="637596">isDirectory</a> = <span title="Boolean(true)" class="keyword">true</span>
-    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Nothing" id="637597">input</a> = <span title="Nothing" class="keyword">throw</span> <span title="(x$1: java.lang.String)java.lang.Error" class="keyword">new</span> <span title="java.lang.Error">Error</span>(<span title="java.lang.String(&quot;cannot read directories&quot;)" class="string">&quot;cannot read directories&quot;</span>)
-
-    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Long" id="637598">lastModified</a>: <span title="Long">Long</span> =
-      <span title="Long" class="keyword">if</span> (<a href="#637594" title="(x$1: AnyRef)Boolean">entry</a> ne <span title="Null(null)" class="keyword">null</span>) <a href="#637594" title="=&gt; java.util.zip.ZipEntry">entry</a>.<span title="()Long">getTime</span>() <span class="keyword">else</span> <span class="keyword">super</span>.<a href="VirtualFile.scala.html#110705" title="=&gt; Long">lastModified</a>
-
-    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Iterator[scala.tools.nsc.io.AbstractFile]" id="637599">iterator</a>: <span title="Iterator[scala.tools.nsc.io.AbstractFile]">Iterator</span>[AbstractFile] = <a href="#637591" title="=&gt; scala.collection.mutable.Map[String,URLZipArchive.this.Entry]">entries</a>.<span title="=&gt; Iterator[URLZipArchive.this.Entry]">valuesIterator</span>
-
-    <span class="keyword">override</span> <span class="keyword">def</span> <a title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile" id="637600">lookupName</a>(<a title="String" id="637999">name</a>: <span title="String">String</span>, <a title="Boolean" id="638000">directory</a>: <span title="Boolean">Boolean</span>): <a href="AbstractFile.scala.html#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> =
-      <a href="#637591" title="=&gt; scala.collection.mutable.Map[String,URLZipArchive.this.Entry]">entries</a>.<span title="(key: String)Option[URLZipArchive.this.Entry]">get</span>(<span title="String" class="keyword">if</span> (<a href="#638000" title="Boolean">directory</a>) <a href="#637999" title="(x$1: Any)java.lang.String">name</a> + <span title="java.lang.String(&quot;/&quot;)" class="string">&quot;/&quot;</span> <span class="keyword">else</span> <a href="#637999" title="String">name</a>) <span title="scala.tools.nsc.io.AbstractFile" class="keyword">match</span> {
-        <span title="URLZipArchive.this.Entry" class="keyword">case</span> Some(<a title="URLZipArchive.this.Entry" id="638243">dir</a>) =&gt; <a href="#638243" title="URLZipArchive.this.Entry">dir</a>
-        <span title="Null(null)" class="keyword">case</span> <span title="object None">None</span> =&gt; <span title="Null(null)" class="keyword">null</span>
-      }
-  }
-
-  <span class="keyword">final</span> <span class="keyword">class</span> <a title="class FileEntry extends URLZipArchive.this.Entry with ScalaObject" id="636898">FileEntry</a><span title="ScalaObject">(</span><a title="String" id="637807">name</a>: <span title="String">String</span>, <a title="String" id="637808">path</a>: <span title="String">String</span>,
-                        <span class="keyword">val</span> <a title="java.util.zip.ZipEntry" id="637809">entry</a>: <span title="java.util.zip.ZipEntry">ZipEntry</span>, <span class="keyword">val</span> <a title="java.io.InputStream" id="637810">in</a>: <span title="java.io.InputStream">InputStream</span>)
-        <span class="keyword">extends</span> <a href="#636896" title="URLZipArchive.this.Entry">Entry</a>(<a href="#637807" title="String">name</a>, <a href="#637808" title="String">path</a>) {
-    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Long" id="637804">lastModified</a>: <span title="Long">Long</span> = <a href="#637809" title="=&gt; java.util.zip.ZipEntry">entry</a>.<span title="()Long">getTime</span>()
-    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; java.io.InputStream" id="637805">input</a> = <a href="#637810" title="=&gt; java.io.InputStream">in</a>
-    <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Some[Int]" id="637806">sizeOption</a> = <span title="(x: Int)Some[Int]">Some</span>(<a href="#637809" title="=&gt; java.util.zip.ZipEntry">entry</a>.<span title="()Long">getSize</span>().<span title="=&gt; Int">toInt</span>)
+  /** Private methods **/
+  <span class="keyword">private</span> <span class="keyword">def</span> <a title="(in: java.io.InputStream)java.io.InputStream" id="638492">byteInputStream</a>(<a title="java.io.InputStream" id="639311">in</a>: <span title="java.io.InputStream">InputStream</span>): <span title="java.io.InputStream">InputStream</span> = {
+    <span class="keyword">val</span> <a title="java.io.BufferedInputStream" id="639609">buf</a> = <span title="java.io.BufferedInputStream" class="keyword">new</span> <a title="java.io.BufferedInputStream" id="3900">BufferedInputStream</a>(<a href="#639311" title="java.io.InputStream">in</a>)
+    <span class="keyword">val</span> <a title="Iterator[Byte]" id="639610">bytes</a> = <a title="(elem: =&gt; Byte)Iterator[Byte]" id="375">Iterator</a> <a title="(p: (Byte) =&gt; Boolean)Iterator[Byte]" id="32334">continually</a> <a href="#639311" title="java.io.InputStream">in</a>.<a title="()Int" id="84342">read</a>().<a title="=&gt; Byte" id="2865">toByte</a> takeWhile (<a href="#639654" title="(x$1: Int)Boolean" id="2351">_</a> != <span title="Int(-1)">-</span><span class="int">1</span>)
+    <span title="java.io.ByteArrayInputStream" class="keyword">new</span> <a title="java.io.ByteArrayInputStream" id="3702">ByteArrayInputStream</a>(<a href="#639610" title="Iterator[Byte]">bytes</a>.<a title="=&gt; Sequence[Byte]" id="32464">toSequence</a>.<a title="(implicit evidence$1: scala.reflect.ClassManifest[Byte])Array[Byte]" id="27759">toArray</a>)
   }
 }
 

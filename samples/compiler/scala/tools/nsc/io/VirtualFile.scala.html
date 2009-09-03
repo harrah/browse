@@ -13,23 +13,23 @@
  * Copyright 2005-2009 LAMP/EPFL
  * @author  Martin Odersky
  */
-// $Id: VirtualFile.scala 18387 2009-07-24 15:28:37Z odersky $
+// $Id: VirtualFile.scala 18624 2009-09-01 12:52:59Z extempore $
 
 
 <span class="keyword">package</span> scala.tools.nsc
 <span class="keyword">package</span> io
 
-<span class="keyword">import</span> java.io.{ByteArrayInputStream, ByteArrayOutputStream,
-                File, InputStream, OutputStream}
+<span class="keyword">import</span> java.io.{ ByteArrayInputStream, ByteArrayOutputStream, InputStream, OutputStream, File }
+<span class="keyword">import</span> PartialFunction._
 
 /** This class implements an in-memory file.
  *
  *  @author  Philippe Altherr
  *  @version 1.0, 23/03/2004
  */
-<span class="keyword">class</span> <a title="class VirtualFile extends scala.tools.nsc.io.AbstractFile with ScalaObject" id="20587">VirtualFile</a><a title="ScalaObject" id="959">(</a><span class="keyword">val</span> <a title="String" id="110719">name</a>: <span title="String">String</span>, <a title="String" id="110720">_path</a>: <span title="String">String</span>) <span class="keyword">extends</span> <a href="AbstractFile.scala.html#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> {
-
-  <span title="(assertion: Boolean,message: =&gt; Any)Unit">assert</span>(<a title="(x$1: Boolean)Boolean" id="2212">(</a><a href="#110719" title="(x$1: AnyRef)Boolean">name</a> ne <span title="Null(null)" class="keyword">null</span>) &amp;&amp; (<a href="#110697" title="(x$1: AnyRef)Boolean">path</a> ne <span title="Null(null)" class="keyword">null</span>), <a href="#110719" title="(x$1: Any)java.lang.String">name</a> <span title="(x$1: Any)java.lang.String">+</span> <span title="java.lang.String(&quot; - &quot;)" class="string">&quot; - &quot;</span> + <a href="#110697" title="=&gt; String">path</a>)
+<span class="keyword">class</span> <a title="class VirtualFile extends scala.tools.nsc.io.AbstractFile with ScalaObject" id="20728">VirtualFile</a><a title="ScalaObject" id="977">(</a><span class="keyword">val</span> <a title="String" id="111152">name</a>: <span title="String">String</span>, <a title="String" id="111153">_path</a>: <span title="String">String</span>) <span class="keyword">extends</span> <a href="AbstractFile.scala.html#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a>
+{
+  <span title="(assertion: Boolean,message: =&gt; Any)Unit">assert</span>(<a title="(x$1: Boolean)Boolean" id="2233">(</a><a href="#111152" title="(x$1: AnyRef)Boolean">name</a> ne <span title="Null(null)" class="keyword">null</span>) &amp;&amp; (<a href="#111130" title="(x$1: AnyRef)Boolean">path</a> ne <span title="Null(null)" class="keyword">null</span>), <a href="#111152" title="(x$1: Any)java.lang.String">name</a> <span title="(x$1: Any)java.lang.String">+</span> <span title="java.lang.String(&quot; - &quot;)" class="string">&quot; - &quot;</span> + <a href="#111130" title="=&gt; String">path</a>)
 
   //########################################################################
   // Public Constructors
@@ -41,63 +41,59 @@
    * @param name the name of the virtual file to be created
    * @return     the created virtual file
    */
-  <span class="keyword">def</span> <a title="(name: String)scala.tools.nsc.io.VirtualFile" id="110691" class="keyword">this</a>(<a title="String" id="110751">name</a>: <span title="String">String</span>) = <a href="#20587" title="VirtualFile.this.type" class="keyword">this</a>(<a href="#110751" title="String">name</a>, <a href="#110751" title="String">name</a>)
+  <span class="keyword">def</span> <a title="(name: String)scala.tools.nsc.io.VirtualFile" id="111124" class="keyword">this</a>(<a title="String" id="111184">name</a>: <span title="String">String</span>) = <a href="#20728" title="VirtualFile.this.type" class="keyword">this</a>(<a href="#111184" title="String">name</a>, <a href="#111184" title="String">name</a>)
   
-  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Int" id="110692">hashCode</a> = <a href="#110719" title="=&gt; String">name</a>.<a title="()Int" id="6977">hashCode</a>
-  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(that: Any)Boolean" id="110693">equals</a>(<a title="Any" id="110768">that</a> : <a title="Any" id="49">Any</a>) = <a href="#110768" title="Any">that</a> <span title="Boolean" class="keyword">match</span> {
-  <span title="Boolean" class="keyword">case</span> <a title="scala.tools.nsc.io.VirtualFile" id="110771">that</a> : <a href="#20587" title="scala.tools.nsc.io.VirtualFile">VirtualFile</a> =&gt; <a href="#110719" title="(x$1: AnyRef)Boolean" id="3626">name</a> == <a href="#110771" title="scala.tools.nsc.io.VirtualFile">that</a>.<a href="#110719" title="=&gt; String">name</a>
-  <span title="Boolean(false)" class="keyword">case</span> _ =&gt; <span title="Boolean(false)" class="keyword">false</span>
-  }
-
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Int" id="111125">hashCode</a> = <a href="#111152" title="=&gt; String">name</a>.<a title="()Int" id="7046">hashCode</a>
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="(that: Any)Boolean" id="111126">equals</a>(<a title="Any" id="111201">that</a>: <a title="Any" id="49">Any</a>) = <a title="(x: Any)(pf: PartialFunction[Any,Boolean])Boolean" id="1107">cond</a>(<a href="#111201" title="Any">that</a>) <a href="#111214" title="Boolean">{</a> <span title="Boolean" class="keyword">case</span> <a title="scala.tools.nsc.io.VirtualFile" id="111215">x</a>: <a href="#20728" title="scala.tools.nsc.io.VirtualFile">VirtualFile</a> =&gt; <a href="#111215" title="scala.tools.nsc.io.VirtualFile">x</a>.<a href="#111152" title="(x$1: AnyRef)Boolean" id="3647">name</a> == <a href="#111152" title="=&gt; String">name</a> }
   
   //########################################################################
   // Private data
-  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Array[Byte]" id="110695">content</a> = <span title="Array[Byte]" class="keyword">new</span> <a title="Array[Byte]" id="887">Array</a>[Byte](<span title="Int(0)" class="int">0</span>)
+  <span class="keyword">private</span> <span class="keyword">var</span> <a title="Array[Byte]" id="111128">content</a> = <span title="Array[Byte]" class="keyword">new</span> <a title="Array[Byte]" id="905">Array</a>[Byte](<span title="Int(0)" class="int">0</span>)
     
   //########################################################################
   // Public Methods
 
-  <span class="keyword">def</span> <a title="=&gt; String" id="110697">path</a> = <a href="#110720" title="String">_path</a>
+  <span class="keyword">def</span> <a title="=&gt; String" id="111130">path</a> = <a href="#111153" title="String">_path</a>
 
-  <span class="keyword">def</span> <a title="=&gt; scala.tools.nsc.io.VirtualFile" id="110698">absolute</a> = <a href="#20587" title="scala.tools.nsc.io.VirtualFile" class="keyword">this</a>
+  <span class="keyword">def</span> <a title="=&gt; scala.tools.nsc.io.VirtualFile" id="111131">absolute</a> = <a href="#20728" title="scala.tools.nsc.io.VirtualFile" class="keyword">this</a>
 
   /** Returns null. */
-  <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; java.io.File" id="110699">file</a>: <a title="java.io.File" id="3807">File</a> = <span title="Null(null)" class="keyword">null</span>
+  <span class="keyword">final</span> <span class="keyword">def</span> <a title="=&gt; java.io.File" id="111132">file</a>: <a title="java.io.File" id="3828">File</a> = <span title="Null(null)" class="keyword">null</span>
   
-  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Option[Int]" id="110700">sizeOption</a>: <a title="Option[Int]" id="782">Option</a>[Int] = <a title="(x: Int)Some[Int]" id="258">Some</a>(<a href="#110695" title="=&gt; Array[Byte]">content</a>.<a title="=&gt; Int" id="25548">size</a>)
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; Option[Int]" id="111133">sizeOption</a>: <a title="Option[Int]" id="794">Option</a>[Int] = <a title="(x: Int)Some[Int]" id="267">Some</a>(<a href="#111128" title="=&gt; Array[Byte]">content</a>.<a title="=&gt; Int" id="25707">size</a>)
   
-  <span class="keyword">def</span> <a title="=&gt; java.io.InputStream" id="110701">input</a> : <a title="java.io.InputStream" id="3894">InputStream</a> = <span title="java.io.ByteArrayInputStream" class="keyword">new</span> <a title="java.io.ByteArrayInputStream" id="3681">ByteArrayInputStream</a>(<a href="#110695" title="=&gt; Array[Byte]">content</a>);
+  <span class="keyword">def</span> <a title="=&gt; java.io.InputStream" id="111134">input</a> : <a title="java.io.InputStream" id="3915">InputStream</a> = <span title="java.io.ByteArrayInputStream" class="keyword">new</span> <a title="java.io.ByteArrayInputStream" id="3702">ByteArrayInputStream</a>(<a href="#111128" title="=&gt; Array[Byte]">content</a>);
   
-  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; java.io.OutputStream" id="110702">output</a>: <a title="java.io.OutputStream" id="3951">OutputStream</a> = {
-    <a href="#3789" title="java.io.ByteArrayOutputStream{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.io.ByteArrayOutputStream" id="3789">ByteArrayOutputStream</a>() {
-      <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Unit" id="110854">close</a>() {
-        <span class="keyword">super</span>.<a title="()Unit" id="110852">close</a>()
-        <a href="#110695" title="(x$1: Array[Byte])Unit">content</a> = <a href="#3789" title="()Array[Byte]" id="110845">toByteArray</a>()
+  <span class="keyword">override</span> <span class="keyword">def</span> <a title="=&gt; java.io.OutputStream" id="111135">output</a>: <a title="java.io.OutputStream" id="3972">OutputStream</a> = {
+    <a href="#3810" title="java.io.ByteArrayOutputStream{ ... }" class="keyword">new</a> <a title="anonymous class $anon extends java.io.ByteArrayOutputStream" id="3810">ByteArrayOutputStream</a>() {
+      <span class="keyword">override</span> <span class="keyword">def</span> <a title="()Unit" id="111300">close</a>() {
+        <span class="keyword">super</span>.<a title="()Unit" id="111298">close</a>()
+        <a href="#111128" title="(x$1: Array[Byte])Unit">content</a> = <a href="#3810" title="()Array[Byte]" id="111291">toByteArray</a>()
       }
     }
   }
   
-  <span class="keyword">def</span> <a title="=&gt; scala.tools.nsc.io.AbstractFile" id="110703">container</a> : <a href="AbstractFile.scala.html#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = <span title="Nothing" class="keyword">throw</span> <a title="(x$1: java.lang.String)java.lang.Error" id="25911" class="keyword">new</a> <a title="java.lang.Error" id="7821">Error</a>(<span title="java.lang.String(&quot;not supported&quot;)" class="string">&quot;not supported&quot;</span>)
+  <span class="keyword">def</span> <a title="=&gt; scala.tools.nsc.io.AbstractFile" id="111136">container</a> : <a href="AbstractFile.scala.html#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = <span title="Nothing" class="keyword">throw</span> <a title="(x$1: java.lang.String)java.lang.Error" id="26070" class="keyword">new</a> <a title="java.lang.Error" id="7890">Error</a>(<span title="java.lang.String(&quot;not supported&quot;)" class="string">&quot;not supported&quot;</span>)
 
   /** Is this abstract file a directory? */
-  <span class="keyword">def</span> <a title="=&gt; Boolean" id="110704">isDirectory</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>
+  <span class="keyword">def</span> <a title="=&gt; Boolean" id="111137">isDirectory</a>: <span title="Boolean">Boolean</span> = <span title="Boolean(false)" class="keyword">false</span>
 
   /** Returns the time that this abstract file was last modified. */
-  <span class="keyword">def</span> <a title="=&gt; Long" id="110705">lastModified</a>: <a title="Long" id="2184">Long</a> = <a title="object Math" id="525">Math</a>.<a title="=&gt; Long" id="69510">MIN_LONG</a>
+  <span class="keyword">def</span> <a title="=&gt; Long" id="111138">lastModified</a>: <a title="Long" id="2205">Long</a> = <a title="object Math" id="537">Math</a>.<a title="=&gt; Long" id="69788">MIN_LONG</a>
 
   /** Returns all abstract subfiles of this abstract directory. */
-  <span class="keyword">def</span> <a title="=&gt; Iterator[scala.tools.nsc.io.AbstractFile]" id="110706">iterator</a>: <a title="Iterator[scala.tools.nsc.io.AbstractFile]" id="4276">Iterator</a>[AbstractFile] = {
-    <span title="(assertion: Boolean,message: =&gt; Any)Unit">assert</span>(<a href="#110704" title="=&gt; Boolean">isDirectory</a>, <span title="(x$1: Any)java.lang.String" class="string">&quot;not a directory '&quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#20587" title="scala.tools.nsc.io.VirtualFile" class="keyword">this</a> + <span title="java.lang.String(&quot;'&quot;)" class="string">&quot;'&quot;</span>)
-    <a title="=&gt; collection.Iterator.type" id="366">Iterator</a>.<a title="=&gt; &lt;refinement&gt; extends java.lang.Object with Iterator[Nothing]" id="32117">empty</a>
+  <span class="keyword">def</span> <a title="=&gt; Iterator[scala.tools.nsc.io.AbstractFile]" id="111139">iterator</a>: <a title="Iterator[scala.tools.nsc.io.AbstractFile]" id="4309">Iterator</a>[AbstractFile] = {
+    <span title="(assertion: Boolean,message: =&gt; Any)Unit">assert</span>(<a href="#111137" title="=&gt; Boolean">isDirectory</a>, <span title="(x$1: Any)java.lang.String" class="string">&quot;not a directory '&quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#20728" title="scala.tools.nsc.io.VirtualFile" class="keyword">this</a> + <span title="java.lang.String(&quot;'&quot;)" class="string">&quot;'&quot;</span>)
+    <a title="=&gt; collection.Iterator.type" id="375">Iterator</a>.<a title="=&gt; &lt;refinement&gt; extends java.lang.Object with Iterator[Nothing]" id="32303">empty</a>
   }	
 
   /** Does this abstract file denote an existing file? */
-  <span class="keyword">def</span> <a title="=&gt; Unit" id="110707">create</a> {
+  <span class="keyword">def</span> <a title="=&gt; Unit" id="111140">create</a> {
     <span title="Nothing" class="keyword">throw</span> <span title="java.lang.UnsupportedOperationException" class="keyword">new</span> <span title="java.lang.UnsupportedOperationException">UnsupportedOperationException</span>
   }
 
   /** Delete the underlying file or directory (recursively). */
-  <span class="keyword">def</span> <a title="=&gt; Unit" id="110708">delete</a> {
+  <span class="keyword">def</span> <a title="=&gt; Unit" id="111141">delete</a> {
     <span title="Nothing" class="keyword">throw</span> <span title="java.lang.UnsupportedOperationException" class="keyword">new</span> <span title="java.lang.UnsupportedOperationException">UnsupportedOperationException</span>
   }
 
@@ -111,15 +107,15 @@
    * @param directory ...
    * @return          ...
    */
-  <span class="keyword">def</span> <a title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile" id="110709">lookupName</a>(<a title="String" id="110941">name</a>: <span title="String">String</span>, <a title="Boolean" id="110942">directory</a>: <span title="Boolean">Boolean</span>): <a href="AbstractFile.scala.html#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = {
-    <span title="(assertion: Boolean,message: =&gt; Any)Unit">assert</span>(<a href="#110704" title="=&gt; Boolean">isDirectory</a>, <span title="(x$1: Any)java.lang.String" class="string">&quot;not a directory '&quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#20587" title="scala.tools.nsc.io.VirtualFile" class="keyword">this</a> + <span title="java.lang.String(&quot;'&quot;)" class="string">&quot;'&quot;</span>)
+  <span class="keyword">def</span> <a title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile" id="111142">lookupName</a>(<a title="String" id="111387">name</a>: <span title="String">String</span>, <a title="Boolean" id="111388">directory</a>: <span title="Boolean">Boolean</span>): <a href="AbstractFile.scala.html#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> = {
+    <span title="(assertion: Boolean,message: =&gt; Any)Unit">assert</span>(<a href="#111137" title="=&gt; Boolean">isDirectory</a>, <span title="(x$1: Any)java.lang.String" class="string">&quot;not a directory '&quot;</span> <span title="(x$1: Any)java.lang.String">+</span> <a href="#20728" title="scala.tools.nsc.io.VirtualFile" class="keyword">this</a> + <span title="java.lang.String(&quot;'&quot;)" class="string">&quot;'&quot;</span>)
     <span title="Null(null)" class="keyword">null</span>
   }
 
   /** Returns an abstract file with the given name. It does not
    *  check that it exists.
    */
-  <span class="keyword">def</span> <a title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile" id="110710">lookupNameUnchecked</a>(<a title="String" id="110959">name</a>: <span title="String">String</span>, <a title="Boolean" id="110960">directory</a>: <span title="Boolean">Boolean</span>): <a href="AbstractFile.scala.html#20548" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> =
+  <span class="keyword">def</span> <a title="(name: String,directory: Boolean)scala.tools.nsc.io.AbstractFile" id="111143">lookupNameUnchecked</a>(<a title="String" id="111405">name</a>: <span title="String">String</span>, <a title="Boolean" id="111406">directory</a>: <span title="Boolean">Boolean</span>): <a href="AbstractFile.scala.html#20689" title="scala.tools.nsc.io.AbstractFile">AbstractFile</a> =
     <span title="Nothing" class="keyword">throw</span> <span title="java.lang.UnsupportedOperationException" class="keyword">new</span> <span title="java.lang.UnsupportedOperationException">UnsupportedOperationException</span>()
 
   //########################################################################
