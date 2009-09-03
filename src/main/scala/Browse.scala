@@ -70,7 +70,7 @@ abstract class Browse extends Plugin
 				def next =
 				{
 						type TD = { def offset: Int; def lastOffset: Int; def token: Int }
-						class Compat { def prev: TD = null; def next: TD = null }
+						class Compat { def prev: TD = null; def next: TD = null; def offset = 0; def token = 0; def lastOffset = 0 }
 						implicit def keep27SourceCompatibility(a: AnyRef): Compat =  new Compat// won't ever be called
 					val offset = s.offset
 					val token = s.token
@@ -185,7 +185,19 @@ abstract class Browse extends Plugin
 					case _: Alternative => processDefaultSymbol()
 					case _: Star => processDefaultSymbol()
 					case _: Bind => processDefaultSymbol()
-					case Apply(fun, args) => //processDefaultSymbol()
+					case Apply(fun, args) =>
+						/*val funInfo = fun.symbol.info
+						println("Function: " + fun + "  " + funInfo + "  " + funInfo.getClass)
+						funInfo match
+						{
+							case PolyType(tparams, MethodType(params, resultType) =>
+								println("PolyType method type: " params)
+							case MethodType(params, resultType) =>
+								println("MethodType method type: " params)
+						}
+						println("Args: " + args.getClass + " " + args.map(_.getClass))
+						*/
+					 //processDefaultSymbol()
 						/*fun match
 						{
 							case tt: TypeTree => if(!ignoreBase(tt.symbol)) processTypeTree(tt)
