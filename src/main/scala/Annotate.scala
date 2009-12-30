@@ -12,9 +12,9 @@ private object Annotate
 	import FileUtil.{withReader, withWriter}
 	/** Annotates an input source file with highlighting and type information provided by 'tokens' and applied by 'styler'.
 	* The result is written to 'target'.*/
-	def apply(source: File, target: File, tokens: wrap.SortedSetWrapper[Token], styler: Styler)
+	def apply(source: File, sourceEncoding: String, target: File, tokens: wrap.SortedSetWrapper[Token], styler: Styler)
 	{
-		withReader(source) { input =>
+		withReader(source, sourceEncoding) { input =>
 			withWriter(target) { output =>
 				new Annotate(input, output, tokens, styler).annotate()
 			}

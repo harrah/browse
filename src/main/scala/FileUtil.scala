@@ -4,16 +4,16 @@
 
 package sxr
 
-import java.io.{FileOutputStream, InputStream, OutputStream}
-import java.io.{BufferedReader, BufferedWriter, File, FileReader, FileWriter, OutputStreamWriter}
+import java.io.{FileInputStream, FileOutputStream, InputStream, OutputStream}
+import java.io.{BufferedReader, BufferedWriter, File, FileReader, FileWriter, InputStreamReader, OutputStreamWriter}
 
 /** A collection of utilities for I/O*/
 object FileUtil
 {
 	/** Managed resource operation.*/
-	def withReader(source: File)(f: BufferedReader => Unit)
+	def withReader(source: File, sourceEncoding: String)(f: BufferedReader => Unit)
 	{
-		val input = new BufferedReader(new FileReader(source))
+		val input = new BufferedReader(new InputStreamReader(new FileInputStream(source), sourceEncoding))
 		try { f(input) }
 		finally { input.close() }
 	}

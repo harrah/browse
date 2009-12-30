@@ -11,6 +11,7 @@ import symtab.Flags
 import util.SourceFile
 
 import java.io.{File, Reader, Writer}
+import forScope._
 
 /** The actual work extracting symbols and types is done here. */
 abstract class Browse extends Plugin
@@ -21,7 +22,7 @@ abstract class Browse extends Plugin
 	def baseDirectory: Option[File]
 	/** The compiler.*/
 	val global: Global
-	
+
 	import global._
 	import Browse._
 
@@ -52,7 +53,7 @@ abstract class Browse extends Plugin
 			traverser(unit.body)
 
 			val styler = new BasicStyler(tokens, relativeSourcePath, relativizedCSSPath, relativizedJSPath, relativizedJQueryPath)
-			Annotate(sourceFile, outputFile, tokens, styler)
+			Annotate(sourceFile, settings.encoding.value, outputFile, tokens, styler)
 		}
 		val indexFile = new File(outputDirectory, IndexRelativePath)
 		writeIndex(indexFile, outputFiles)
@@ -413,4 +414,9 @@ object Browse
 		out.write(label)
 		out.write("</a></li>")
 	}
+}
+
+// for compatibility with 2.8
+package forScope {
+	class Sequence
 }
