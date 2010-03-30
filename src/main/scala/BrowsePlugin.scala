@@ -11,8 +11,7 @@ import java.io.File
 object BrowsePlugin
 {
 	val PluginName = "sxr"
-	/** This is the name of the option that specifies the base directory against which sources
-	* should be relativized.*/
+	/** This is the name of the option that specifies the base directories against which sources should be relativized.*/
 	val BaseDirectoryOptionName = "base-directory:"
 }
 /* The standard plugin setup.  The main implementation is in Browse.  The entry point is Browse.generateOutput */
@@ -27,28 +26,31 @@ class BrowsePlugin(val global: Global) extends Browse
 	
 	/** The directory to which the annotated sources will be written. */
 	val outputDirectory = {
-	  val f = new File(settings.outdir.value)
-	  new File(f.getParent, f.getName + ".sxr").getAbsoluteFile
-  }
+		val f = new File(settings.outdir.value)
+		new File(f.getParent, f.getName + ".sxr").getAbsoluteFile
+	}
 	outputDirectory.mkdirs()
 
 	/** The directory against which the input source paths will be relativized.*/
-	var baseDirectory: Option[File] = None
+	private var baseDirectories: List[File] = Nil
 
 	override def processOptions(options: List[String], error: String => Unit)
 	{
 		for(option <- options)
 		{
 			if(option.startsWith(BaseDirectoryOptionName))
-				baseDirectory = Some(new File(option.substring(BaseDirectoryOptionName.length)))
+				baseDirectories = parseBaseDirectories(option.substring(BaseDirectoryOptionName.length))
 			else
 				error("Option for source browser plugin not understood: " + option)
 		}
 	}
+	def parseBaseDirectories(str: String): List[File] =
+		str.split(File.pathSeparator).map(new File(_)).toList
+
 	override val optionsHelp: Option[String] =
 	{
 		val prefix = "  -P:" + name + ":"
-		Some(prefix + BaseDirectoryOptionName + "<name>            Set the base source directory .\n")
+		Some(prefix + BaseDirectoryOptionName + "<paths>            Set the base source directories .\n")
 	}
 
 	/* For source compatibility between 2.7.x and 2.8.x */
@@ -69,4 +71,14 @@ class BrowsePlugin(val global: Global) extends Browse
 		def name = BrowsePlugin.this.name
 		def run = generateOutput()
 	}
+
+	/** Relativizes the path to the given Scala source file against the base directories. */
+	def getRelativeSourcePath(source: File): String =
+		baseDirectories.flatMap { base => FileUtil.relativize(base, source) } match
+		{
+			case Nil => source.getName
+			case x :: xs => x
+			case xs => xs reduceLeft shortest
+		}
+	private[this] def shortest(a: String, b: String) = if(a.length < b.length) a else b
 }

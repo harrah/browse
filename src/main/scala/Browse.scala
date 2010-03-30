@@ -18,13 +18,15 @@ abstract class Browse extends Plugin
 {
 	/** The directory to which the annotated sources will be written. */
 	def outputDirectory: File
-	/** The directory against which the input source paths will be relativized.*/
-	def baseDirectory: Option[File]
+	/** Relativizes the path to the given Scala source file against the base directories. */
+	def getRelativeSourcePath(source: File): String
 	/** The compiler.*/
 	val global: Global
 
 	import global._
 	import Browse._
+
+	private def getOutputFile(sourceFile: File) = new File(outputDirectory, getRelativeSourcePath(sourceFile) + ".html")
 
 	/** The entry method for producing a set of html files and auxiliary javascript and CSS files that
 	* annotate the source code for display in a web browser. */
@@ -40,8 +42,7 @@ abstract class Browse extends Plugin
 		for(unit <- currentRun.units)
 		{
 			val sourceFile = unit.source.file.file
-			val relativeSourcePath = getRelativeSourcePath(sourceFile)
-			val outputFile = new File(outputDirectory, relativeSourcePath + ".html")
+			val outputFile = getOutputFile(sourceFile)
 			outputFiles ::= outputFile
 			val relativizedCSSPath = FileUtil.relativePath(outputFile, cssFile)
 			val relativizedJSPath = FileUtil.relativePath(outputFile, jsFile)
@@ -52,7 +53,8 @@ abstract class Browse extends Plugin
 			val traverser = new Traverse(tokens, unit.source)
 			traverser(unit.body)
 
-			val styler = new BasicStyler(tokens, relativeSourcePath, relativizedCSSPath, relativizedJSPath, relativizedJQueryPath)
+			val title = getRelativeSourcePath(sourceFile)
+			val styler = new BasicStyler(tokens, title, relativizedCSSPath, relativizedJSPath, relativizedJQueryPath)
 			Annotate(sourceFile, settings.encoding.value, outputFile, tokens, styler)
 		}
 		val indexFile = new File(outputDirectory, IndexRelativePath)
@@ -342,23 +344,9 @@ abstract class Browse extends Plugin
 			else
 			{
 				val file = source.file
-				val base = if(file == from) "" else FileUtil.relativePath(from, source.file) + ".html"
+				val base = if(file == from) "" else FileUtil.relativePath(getOutputFile(from), getOutputFile(source.file))
 				Some(new Link(base, sym.id))
 			}
-		}
-	}
-	/** Relativizes the path to the given Scala source file to the base directory. */
-	private def getRelativeSourcePath(source: File): String =
-	{
-		baseDirectory match
-		{
-			case Some(base) =>
-				FileUtil.relativize(base, source) match
-				{
-					case Some(relative) => relative
-					case None => error("Source " + source + " not in base directory " + base); ""
-				}
-			case None => source.getName
 		}
 	}
 }
