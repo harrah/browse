@@ -46,18 +46,18 @@ private[sxr] object Wrappers
 	def readOnly[T](buffer: scala.collection.mutable.Buffer[T]): Seq[T] = buffer//.readOnly
 }
 
-private[sxr] sealed abstract class Iterable[T] extends NotNull
+private[sxr] sealed abstract class Iterable[T]
 {
 	def foreach(f: T => Unit) = toList.foreach(f)
 	def toList: List[T]
 }
-private[sxr] sealed trait Removable[T] extends NotNull
+private[sxr] sealed trait Removable[T]
 {
 	def -=(t: T) : Unit
 	def --=(all: Iterable[T]) { all.foreach(-=) }
 	def --=(all: scala.Iterable[T]) { all.foreach(-=) }
 }
-private[sxr] sealed trait Addable[T] extends NotNull
+private[sxr] sealed trait Addable[T]
 {
 	def +=(t: T) : Unit
 	def ++=(all: Iterable[T]) { all.foreach(+=) }
