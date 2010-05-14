@@ -77,7 +77,7 @@ class BrowsePlugin(val global: Global) extends Browse
 		baseDirectories.flatMap { base => FileUtil.relativize(base, source) } match
 		{
 			case Nil => source.getName
-			case x :: xs => x
+			case x :: Nil => x
 			case xs => xs reduceLeft shortest
 		}
 	private[this] def shortest(a: String, b: String) = if(a.length < b.length) a else b
