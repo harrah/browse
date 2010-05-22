@@ -1,4 +1,5 @@
 import sbt._
+import FileUtilities.{appendStream, clean => delete, readStream, transfer}
 
 class XRay(info: ProjectInfo) extends DefaultProject(info) {
   val jquery_version = "1.3.2"
@@ -14,20 +15,22 @@ class XRay(info: ProjectInfo) extends DefaultProject(info) {
   val jqueryAll = (outputPath ##) / "jquery-all.js"
 
   lazy val combineJquery = fileTask(jqueryAll from jsManaged) {
-    import FileUtilities._ 
-    FileUtilities.clean(jqueryAll, log)
-    (jsManaged.get map { _.asFile } toList) sort { _.getName < _.getName } flatMap { js =>
-      readStream(js, log) { in =>
-        appendStream(jqueryAll.asFile, log) { out => transfer(in, out, log) }
-      }
-    } match {
-      case Seq() => log.info("Wrote combined js to " + jqueryAll.asFile); None
+    delete(jqueryAll, log)
+    val jsIn =  jsManaged.get.toList sort { _.name < _.name }
+    if(jsIn.isEmpty) Some("No javascript files found.  Please run 'update'.") else combine(jsIn)
+  }
+  def combine(jsIn: Seq[Path]) =
+    jsIn flatMap appendJs match {
+      case Seq() => log.info("Wrote combined js to " + jqueryAll.absolutePath); None
       case s => Some(s mkString ",")
     }
-  }
+  def appendJs(js: Path): Option[String] =
+    readStream(js asFile, log) { in =>
+      appendStream(jqueryAll.asFile, log) { out => transfer(in, out, log) }
+    }
 
   override def mainResources = super.mainResources +++ jqueryAll
-	override protected def packageAction = super.packageAction dependsOn(combineJquery)
+    override protected def packageAction = super.packageAction dependsOn(combineJquery)
 
   val snapshots = ScalaToolsSnapshots
   override def managedStyle = ManagedStyle.Maven
