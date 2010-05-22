@@ -12,7 +12,7 @@ private object Annotate
 	import FileUtil.{withReader, withWriter}
 	/** Annotates an input source file with highlighting and type information provided by 'tokens' and applied by 'styler'.
 	* The result is written to 'target'.*/
-	def apply(source: File, sourceEncoding: String, target: File, tokens: wrap.SortedSetWrapper[Token], styler: Styler)
+	def apply(source: File, sourceEncoding: String, target: File, tokens: List[Token], styler: Styler)
 	{
 		withReader(source, sourceEncoding) { input =>
 			withWriter(target) { output =>
@@ -21,7 +21,8 @@ private object Annotate
 		}
 	}
 }
-/** Annotates a source file.  This class is one-time use and should only be used through the Annotate module.
+/** Annotates a source file.
+* This class is one-time use (because of the input/output Reader/Writer) and should only be used through the Annotate module.
 *
 *  'input' is the raw source file.
 * The annotated file will be written to 'output'
@@ -30,32 +31,31 @@ private object Annotate
 *
 * Note that the 'write' method in this class is specific to HTML and would
 * need to be generalized for another format */
-private class Annotate(input: Reader, output: Writer, tokens: wrap.SortedSetWrapper[Token], styler: Styler) extends NotNull
+private class Annotate(input: Reader, output: Writer, tokens: List[Token], styler: Styler) extends NotNull
 {
 	/** Applies the annotations.*/
 	def annotate()
 	{
 		output.write(styler.head)
-		annotate(0)
+		annotate(0, tokens)
 		output.write(styler.tail)
 	}
 	/** Applies annotations.  index is the current position in the source file. */
-	private def annotate(index: Int)
+	private def annotate(index: Int, tokens: List[Token])
 	{
-		tokens.first match
+		tokens match
 		{
-			case None =>// no more tokens, copy the remaining characters over
+			case Nil =>// no more tokens, copy the remaining characters over
 				transfer(java.lang.Integer.MAX_VALUE)
-			case Some(token) => //look at the next token
-				tokens -= token
+			case token :: tail => //look at the next token
 				if(token.start < index)
 				{
 					println("Overlapping span detected at index " + index + ": " + token)
-					annotate(index)
+					annotate(index, tail)
 				}
 				else
 				{
-					// copy over characters not to be annotated 
+					// copy over characters not to be annotated
 					transfer(token.start - index)
 					// get the annotations for the token from the styler
 					val styledList = styler(token)
@@ -68,7 +68,7 @@ private class Annotate(input: Reader, output: Writer, tokens: wrap.SortedSetWrap
 					for(styled <- styledList.reverse)
 						output.write(styled.close)
 					// continue
-					annotate(token.start + token.length)
+					annotate(token.start + token.length, tail)
 				}
 		}
 	}

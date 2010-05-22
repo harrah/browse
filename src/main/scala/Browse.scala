@@ -52,10 +52,12 @@ abstract class Browse extends Plugin
 			val tokens = scan(unit)
 			val traverser = new Traverse(tokens, unit.source)
 			traverser(unit.body)
+			val tokenList = tokens.toList
+			Collapse(tokenList)
 
 			val title = getRelativeSourcePath(sourceFile)
-			val styler = new BasicStyler(tokens, title, relativizedCSSPath, relativizedJSPath, relativizedJQueryPath)
-			Annotate(sourceFile, settings.encoding.value, outputFile, tokens, styler)
+			val styler = new BasicStyler(title, relativizedCSSPath, relativizedJSPath, relativizedJQueryPath)
+			Annotate(sourceFile, settings.encoding.value, outputFile, tokenList, styler)
 		}
 		val indexFile = new File(outputDirectory, IndexRelativePath)
 		writeIndex(indexFile, outputFiles)
