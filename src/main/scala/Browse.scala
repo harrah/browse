@@ -1,5 +1,5 @@
 /* sxr -- Scala X-Ray
- * Copyright 2009 Mark Harrah
+ * Copyright 2009, 2010 Mark Harrah, Olivier Michallat
  */
 
 package sxr
@@ -16,37 +16,23 @@ import forScope._
 /** The actual work extracting symbols and types is done here. */
 abstract class Browse extends Plugin
 {
-	/** The directory to which the annotated sources will be written. */
-	def outputDirectory: File
 	/** Relativizes the path to the given Scala source file against the base directories. */
 	def getRelativeSourcePath(source: File): String
 	/** The compiler.*/
 	val global: Global
 
 	import global._
-	import Browse._
-
-	private def getOutputFile(sourceFile: File) = new File(outputDirectory, getRelativeSourcePath(sourceFile) + ".html")
 
 	/** The entry method for producing a set of html files and auxiliary javascript and CSS files that
 	* annotate the source code for display in a web browser. */
 	def generateOutput()
 	{
-		val cssFile = new File(outputDirectory, CSSRelativePath)
-		val jsFile = new File(outputDirectory, JSRelativePath)
-		val jQueryFile = new File(outputDirectory, JQueryRelativePath)
-		writeDefaultCSS(cssFile)
-		writeJS(jsFile)
-		writeJQuery(jQueryFile)
-		var outputFiles = List[File]()
+		val classDirectory = new File(settings.outdir.value)
+		val htmlWriter = new HtmlWriter(classDirectory, settings.encoding.value)
+		htmlWriter.writeStart();
 		for(unit <- currentRun.units)
 		{
 			val sourceFile = unit.source.file.file
-			val outputFile = getOutputFile(sourceFile)
-			outputFiles ::= outputFile
-			val relativizedCSSPath = FileUtil.relativePath(outputFile, cssFile)
-			val relativizedJSPath = FileUtil.relativePath(outputFile, jsFile)
-			val relativizedJQueryPath = FileUtil.relativePath(outputFile, jQueryFile)
 
 			// generate the tokens
 			val tokens = scan(unit)
@@ -55,12 +41,9 @@ abstract class Browse extends Plugin
 			val tokenList = tokens.toList
 			Collapse(tokenList)
 
-			val title = getRelativeSourcePath(sourceFile)
-			val styler = new BasicStyler(title, relativizedCSSPath, relativizedJSPath, relativizedJQueryPath)
-			Annotate(sourceFile, settings.encoding.value, outputFile, tokenList, styler)
+			htmlWriter.writeUnit(sourceFile, getRelativeSourcePath(sourceFile), tokenList)
 		}
-		val indexFile = new File(outputDirectory, IndexRelativePath)
-		writeIndex(indexFile, outputFiles)
+		htmlWriter.writeEnd()
 	}
 	/** Tokenizes the given source.  The tokens are put into an ordered set by the start position of the token.
 	* Symbols will be mapped back to these tokens by the offset of the symbol.*/
@@ -346,64 +329,12 @@ abstract class Browse extends Plugin
 			else
 			{
 				val file = source.file
-				val base = if(file == from) "" else FileUtil.relativePath(getOutputFile(from), getOutputFile(source.file))
+				val base = if(file == from) "" else FileUtil.relativePath(relativeSource(from), relativeSource(file))
 				Some(new Link(base, sym.id))
 			}
 		}
 	}
-}
-
-object Browse
-{
-	/** The location to store the index relative to the output directory.*/
-	val IndexRelativePath = "index.html"
-	/** The location to store the style sheet relative to the output directory.*/
-	val CSSRelativePath = "style.css"
-	/** The location to store the script relative to the output directory.*/
-	val JSRelativePath = "linked.js"
-
-	/** The location to store jQuery relative to the output directory.*/
-	val JQueryRelativePath = "jquery-all.js"
-	/** The path of the default style sheet resource.*/
-	val DefaultCSS = "/default-style.css"
-	/** The path of the default script resource.*/
-	val LinkedJS = "/linked.js"
-	/** The path of the JQuery resource.*/
-	val LinkedJQuery = "/" + JQueryRelativePath
-	
-	/** Copies the default style sheet available as a resource on the classpath to the file 'to'.*/
-	def writeDefaultCSS(to: File) { FileUtil.writeResource(DefaultCSS, to) }
-	/** Copies the default script available as a resource on the classpath to the file 'to'.*/
-	def writeJS(to: File) { FileUtil.writeResource(LinkedJS, to) }
-	/** Copies the jQuery script available as a resource on the classpath to the file 'to'.*/
-	def writeJQuery(to: File) { FileUtil.writeResource(LinkedJQuery, to) }
-	
-	def writeIndex(to: File, files: Iterable[File])
-	{
-		val relativizeAgainst = to.getParentFile
-		val rawRelativePaths = files.flatMap(file => FileUtil.relativize(relativizeAgainst, file).toList)
-		val sortedRelativePaths = wrap.Wrappers.treeSet[String]
-		sortedRelativePaths ++= rawRelativePaths
-		FileUtil.withWriter(to) { out =>
-			out.write("<html><body>")
-			sortedRelativePaths.foreach(writeEntry(to, out))
-			out.write("</body></html>")
-		}
-	}
-	import java.io.Writer
-	private def writeEntry(index: File, out: Writer)(path: String)
-	{
-		out.write("<li><a href=\"")
-		out.write(path)
-		out.write("\">")
-		val label =
-			if(path.endsWith(".html"))
-				path.substring(0, path.length - ".html".length)
-			else
-				path
-		out.write(label)
-		out.write("</a></li>")
-	}
+	private def relativeSource(file: File) = new File(getRelativeSourcePath(file.getAbsoluteFile))
 }
 
 // for compatibility with 2.8

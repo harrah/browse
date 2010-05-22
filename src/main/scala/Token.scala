@@ -4,11 +4,14 @@
 
 package sxr
 
-/** Represents a link to a definition.  The path is the path to the file and target is
-* the symbol ID targeted.  The '#' is not included.  To get the constructed path,
-* call toString. */
+/** Represents a link to a definition.  The path is the relative path to the file in the source
+* directory, and target is the symbol ID targeted.
+* Specific writers need to construct the actual path from these informations (e.g in
+* HtmlWriter, add '.html' to get the relative path of the target HTML file, and append the
+* ID separated by a '#'. */
 private class Link(val path: String, val target: Int) extends NotNull
 {
+	// This can still be useful for debugging, but must not be used directly by a writer.
 	override def toString = path + "#" + target
 	def retarget(newTarget: Int) = new Link(path, newTarget)
 }

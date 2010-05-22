@@ -49,6 +49,9 @@ private class BasicStyler(title: String, baseStyle: String, baseJs: String, base
 		else
 			annotateToken(token, styleClasses)
 	}
+	private def base(link: Link) = if(link.path == "") "" else link.path + ".html"
+	private def constructHtmlLink(link: Link) = base(link) + "#" + link.target
+
 	private def annotateToken(token: Token, styleClasses: List[String]) =
 	{
 		val tagName = if(token.isSimple) "span" else "a"
@@ -60,7 +63,7 @@ private class BasicStyler(title: String, baseStyle: String, baseJs: String, base
 				!definitions.contains(refID)
 			}
 		val definitionsList = definitions.toList
-		val attributes = reference.map("href=\"" + _ + "\"").toList :::
+		val attributes = reference.map("href=\"" + constructHtmlLink(_) + "\"").toList :::
 			token.tpe.map(t => "title=\"" + Escape(t.name) + "\"").toList :::
 			definitionsList.firstOption.map("id=\"" + _ + "\"").toList :::
 			( styleClasses match

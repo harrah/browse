@@ -24,13 +24,6 @@ class BrowsePlugin(val global: Global) extends Browse
 	val description = "A plugin to produce a browsable representation of the input sources."
 	val components = List[PluginComponent](Component)
 	
-	/** The directory to which the annotated sources will be written. */
-	val outputDirectory = {
-		val f = new File(settings.outdir.value)
-		new File(f.getParent, f.getName + ".sxr").getAbsoluteFile
-	}
-	outputDirectory.mkdirs()
-
 	/** The directory against which the input source paths will be relativized.*/
 	private var baseDirectories: List[File] = Nil
 
