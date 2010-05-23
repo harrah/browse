@@ -6,25 +6,27 @@ package sxr
 
 import java.io.{FileInputStream, FileOutputStream, InputStream, OutputStream}
 import java.io.{BufferedReader, BufferedWriter, File, FileReader, FileWriter, InputStreamReader, OutputStreamWriter}
+import java.net.URL
 
 /** A collection of utilities for I/O*/
 object FileUtil
 {
 	/** Managed resource operation.*/
-	def withReader(source: File, sourceEncoding: String)(f: BufferedReader => Unit)
+	def withReader[T](source: File, sourceEncoding: String)(f: BufferedReader => T): T =
 	{
 		val input = new BufferedReader(new InputStreamReader(new FileInputStream(source), sourceEncoding))
 		try { f(input) }
 		finally { input.close() }
 	}
 	/** Managed resource operation.*/
-	def withWriter(target: File)(f: BufferedWriter => Unit)
+	def withWriter[T](target: File)(f: BufferedWriter => T): T =
 	{
 		target.getParentFile.mkdirs()
-		val output = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(target), "UTF-8"))
+		val output = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(target), DefaultEncoding))
 		try { f(output) }
 		finally { output.close() }
 	}
+	val DefaultEncoding = "UTF-8"
 	/** Get the number of common path components from the root.*/
 	private def commonPrefix[S](a: Array[S], b: Array[S]): Int =
 	{
@@ -74,6 +76,7 @@ object FileUtil
 	/** Writes the 'input' stream to the file 'to'.*/
 	private def write(input: InputStream, to: File)
 	{
+		to.getParentFile.mkdirs()
 		val out = new FileOutputStream(to)
 		try { transfer(input, out) }
 		finally { out.close() }
@@ -119,4 +122,29 @@ object FileUtil
 		else
 			None
 	}
+
+	def readLines[T](file: File, encoding: String, value: T)(f: (T, String) => T): T =
+		withReader(file, encoding) { reader => readLines(reader, value)(f) }
+	private final def readLines[T](reader: BufferedReader, value: T)(f: (T, String) => T): T =
+	{
+		val line = reader.readLine()
+		if(line eq null) value else readLines(reader, f(value, line))(f)
+	}
+
+	def download(url: URL, file: File)
+	{
+		val in = url.openStream
+		try { write(in, file) }
+		finally { in.close() }
+	}
+
+	def hash(s: String): String = java.security.MessageDigest.getInstance("SHA").digest(s.getBytes).flatMap(hashDigits).mkString
+	private def hashDigits(b: Byte) =
+	{
+		val i = toInt(b)
+		Array( forDigit(i >> 4), forDigit(i & 0xFF) )
+	}
+	import java.lang.{Character => C}
+	private def forDigit(i: Int) = C.forDigit(i, C.MAX_RADIX)
+	private def toInt(b: Byte): Int = if(b < 0) b + 256 else b
 }

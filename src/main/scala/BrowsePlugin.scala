@@ -7,6 +7,8 @@ package sxr
 import scala.tools.nsc.{plugins, Global, Phase}
 import plugins.PluginComponent
 import java.io.File
+import java.net.URL
+
 import OutputFormat.{OutputFormat, Html}
 
 object BrowsePlugin
@@ -17,7 +19,9 @@ object BrowsePlugin
 	/** This is the name of the option that specifies the desired output formats.*/
 	val OutputFormatsOptionName = "output-formats:"
 	/** The separator in the list of output formats.*/
-	val OutputFormatSeparator = '+';
+	val OutputFormatSeparator = '+'
+	/** This is the name of the options that specifies a file containing one URL per line for each external sxr location to link to. */
+	val ExternalLinksOptionName = "link-file:"
 }
 /* The standard plugin setup.  The main implementation is in Browse.  The entry point is Browse.generateOutput */
 class BrowsePlugin(val global: Global) extends Browse
@@ -31,8 +35,9 @@ class BrowsePlugin(val global: Global) extends Browse
 	
 	/** The directory against which the input source paths will be relativized.*/
 	private var baseDirectories: List[File] = Nil
+	private var externalLinks: List[URL] = Nil
 
-	val classDirectory = new File(settings.outdir.value)
+	lazy val classDirectory = new File(settings.outdir.value)
 
 	/** The output formats to write */
 	var outputFormats: List[OutputFormat] = List(Html)
@@ -45,6 +50,8 @@ class BrowsePlugin(val global: Global) extends Browse
 				baseDirectories = parseBaseDirectories(option.substring(BaseDirectoryOptionName.length))
 			else if(option.startsWith(OutputFormatsOptionName))
 				outputFormats = parseOutputFormats(option.substring(OutputFormatsOptionName.length))
+			else if(option.startsWith(ExternalLinksOptionName))
+				externalLinks = parseExternalLinks(option.substring(ExternalLinksOptionName.length))
 			else
 				error("Option for source browser plugin not understood: " + option)
 		}
@@ -58,14 +65,27 @@ class BrowsePlugin(val global: Global) extends Browse
 		str.split(OutputFormatSeparator).flatMap(valueOf).toList
 	}
 
+	private def parseExternalLinks(links: String): List[URL] =
+	{
+		val f = new File(links)
+		if(f.exists) readExternalLinks(f) else { error("Link file does not exist: " + f.getAbsolutePath); Nil }
+	}
+	private def readExternalLinks(f: File): List[URL] =
+		FileUtil.readLines(f, FileUtil.DefaultEncoding, externalLinks) { ( links, line) =>
+			parseURL(line.trim).toList ::: links
+		}
+	private def parseURL(line: String): Option[URL] =
+		if(line.isEmpty || line.startsWith("#")) None else Some(new URL(line))
+
 	override val optionsHelp: Option[String] =
 	{
 		val prefix = "  -P:" + name + ":"
-		Some(prefix + BaseDirectoryOptionName + "<paths>            Set the base source directories.\n" +
-			prefix + OutputFormatsOptionName + "<formats>          '" + OutputFormatSeparator +
-			"'-separated list of output formats to write (available: " +
-			OutputFormat.all.mkString(",") +
-			" - defaults to: " + Html + ").\n")
+		val base = prefix + BaseDirectoryOptionName + "<paths>            Set the base source directories."
+		val formats = prefix + OutputFormatsOptionName + "<formats>          '" + OutputFormatSeparator +
+			"'-separated list of output formats to write (available: " + OutputFormat.all.mkString(",") + " - defaults to: " + Html + ")."
+		val link = prefix + ExternalLinksOptionName + "<path>            Set the file containing sxr link.index URLs for external linking."
+
+		Some( Seq(base, formats, link).mkString("", "\n", "\n") )
 	}
 
 	/* For source compatibility between 2.7.x and 2.8.x */
@@ -84,7 +104,21 @@ class BrowsePlugin(val global: Global) extends Browse
 	private class BrowsePhase(prev: Phase) extends Phase(prev)
 	{
 		def name = BrowsePlugin.this.name
-		def run = generateOutput()
+		def run = generateOutput(externalLinkMaps)
+	}
+
+	private def externalLinkMaps: List[LinkMap] = externalLinks.map(getLinkMap)
+	private def getLinkMap(link: URL) =
+	{
+		val index = new URL(link, Browse.LinkIndexRelativePath)
+		val cached = cachedLinkFile(index)
+		if(!cached.exists) FileUtil.download(index, cached)
+		LinkMapStore.read(cached, Some(link))
+	}
+	private def cachedLinkFile(link: URL): File =
+	{
+		val cacheDirectory = new File( new File(settings.outdir.value).getAbsoluteFile.getParentFile, Browse.CacheRelativePath)
+		new File(cacheDirectory, FileUtil.hash(link.toExternalForm))
 	}
 
 	/** Relativizes the path to the given Scala source file against the base directories. */
