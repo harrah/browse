@@ -12,6 +12,7 @@ object OutputFormat extends Enumeration {
 
 	// The enumeration values
 	val Html = Value("html")
+	def all: List[OutputFormat] = Html :: Nil
 
 	private[this] type Factory = (File, String) => OutputWriter
 	private[this] def factory(format: OutputFormat): Factory = format match {
@@ -19,6 +20,6 @@ object OutputFormat extends Enumeration {
 	}
 
 	/** Returns the writer corresponding to a value, configured with a class directory and an encoding */
-	def getWriter(value: OutputFormat, classDirectory: File, encoding: String): OutputWriter =
-		factory(value)(classDirectory, encoding)
+	def getWriter(value: OutputFormat, outputDirectory: File, encoding: String): OutputWriter =
+		factory(value)(outputDirectory, encoding)
 }

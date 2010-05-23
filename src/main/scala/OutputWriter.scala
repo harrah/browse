@@ -17,3 +17,9 @@ trait OutputWriter {
 	/** Generates final content. */
 	def writeEnd(): Unit
 }
+
+class OutputInfo(val outputDirectory: File, val outputFileExtension: String)
+{
+	def getOutputFile(relativeSourcePath: String) =
+		new File(outputDirectory, relativeSourcePath + outputFileExtension)
+}

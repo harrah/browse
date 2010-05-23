@@ -18,6 +18,7 @@ import OutputFormat.{OutputFormat, getWriter}
 /** The actual work extracting symbols and types is done here. */
 abstract class Browse extends Plugin
 {
+	def classDirectory: File
 	/** The output formats to write */
 	def outputFormats: List[OutputFormat]
 	/** Relativizes the path to the given Scala source file against the base directories. */
@@ -27,12 +28,14 @@ abstract class Browse extends Plugin
 
 	import global._
 
+	val outputDirectory = new File(classDirectory.getParentFile, classDirectory.getName + ".sxr")
+	outputDirectory.mkdirs
+
 	/** The entry method for producing a set of html files and auxiliary javascript and CSS files that
 	* annotate the source code for display in a web browser. */
 	def generateOutput()
 	{
-		val classDirectory = new File(settings.outdir.value)
-		val writers = outputFormats.map(getWriter(_, classDirectory, settings.encoding.value))
+		val writers = outputFormats.map(getWriter(_, outputDirectory, settings.encoding.value))
 
 		writers.foreach(_.writeStart())
 

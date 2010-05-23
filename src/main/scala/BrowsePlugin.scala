@@ -32,6 +32,8 @@ class BrowsePlugin(val global: Global) extends Browse
 	/** The directory against which the input source paths will be relativized.*/
 	private var baseDirectories: List[File] = Nil
 
+	val classDirectory = new File(settings.outdir.value)
+
 	/** The output formats to write */
 	var outputFormats: List[OutputFormat] = List(Html)
 
@@ -51,7 +53,7 @@ class BrowsePlugin(val global: Global) extends Browse
 		str.split(File.pathSeparator).map(new File(_)).toList
 
 	def parseOutputFormats(str: String): List[OutputFormat] = {
-		def valueOf(s: String): Option[OutputFormat] = OutputFormat.values.find(_.toString == s)
+		def valueOf(s: String): Option[OutputFormat] = OutputFormat.all.find(_.toString == s)
 			.orElse { error("Invalid sxr output format: " + s) ; None }
 		str.split(OutputFormatSeparator).flatMap(valueOf).toList
 	}
@@ -62,7 +64,7 @@ class BrowsePlugin(val global: Global) extends Browse
 		Some(prefix + BaseDirectoryOptionName + "<paths>            Set the base source directories.\n" +
 			prefix + OutputFormatsOptionName + "<formats>          '" + OutputFormatSeparator +
 			"'-separated list of output formats to write (available: " +
-			OutputFormat.values.mkString(",") +
+			OutputFormat.all.mkString(",") +
 			" - defaults to: " + Html + ").\n")
 	}
 

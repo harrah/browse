@@ -6,11 +6,6 @@ package sxr
 
 import java.io.File
 
-trait HtmlOutput extends OutputInfo
-{
-	def outputFileExtension = ".html"
-	def outputDirectorySuffix = ".sxrh"
-}
 object HtmlWriter
 {
 	/** The location to store the index relative to the output directory.*/
@@ -21,6 +16,8 @@ object HtmlWriter
 	val JSRelativePath = "linked.js"
 	/** The location to store jQuery relative to the output directory.*/
 	val JQueryRelativePath = "jquery-all.js"
+
+	val HtmlExtension = ".html"
 
 	/** The path of the default style sheet resource.*/
 	val DefaultCSS = "/default-style.css"
@@ -39,12 +36,12 @@ object HtmlWriter
 
 /** Outputs a set of html files and auxiliary javascript and CSS files that annotate the source
   * code for display in a web browser. */
-class HtmlWriter(classDirectory: File, encoding: String) extends OutputWriter {
+class HtmlWriter(outputDirectory: File, encoding: String) extends OutputWriter {
 
-	val info = new DefaultOutput(classDirectory) with HtmlOutput
+	import HtmlWriter._
+	val info = new OutputInfo(outputDirectory, HtmlExtension)
 
 	import info._
-	import HtmlWriter._
 	val cssFile = new File(outputDirectory, CSSRelativePath)
 	val jsFile = new File(outputDirectory, JSRelativePath)
 	val jQueryFile = new File(outputDirectory, JQueryRelativePath)
