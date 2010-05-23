@@ -7,12 +7,17 @@ package sxr
 import scala.tools.nsc.{plugins, Global, Phase}
 import plugins.PluginComponent
 import java.io.File
+import OutputFormat.{OutputFormat, Html}
 
 object BrowsePlugin
 {
 	val PluginName = "sxr"
 	/** This is the name of the option that specifies the base directories against which sources should be relativized.*/
 	val BaseDirectoryOptionName = "base-directory:"
+	/** This is the name of the option that specifies the desired output formats.*/
+	val OutputFormatsOptionName = "output-formats:"
+	/** The separator in the list of output formats.*/
+	val OutputFormatSeparator = '+';
 }
 /* The standard plugin setup.  The main implementation is in Browse.  The entry point is Browse.generateOutput */
 class BrowsePlugin(val global: Global) extends Browse
@@ -27,12 +32,17 @@ class BrowsePlugin(val global: Global) extends Browse
 	/** The directory against which the input source paths will be relativized.*/
 	private var baseDirectories: List[File] = Nil
 
+	/** The output formats to write */
+	var outputFormats: List[OutputFormat] = List(Html)
+
 	override def processOptions(options: List[String], error: String => Unit)
 	{
 		for(option <- options)
 		{
 			if(option.startsWith(BaseDirectoryOptionName))
 				baseDirectories = parseBaseDirectories(option.substring(BaseDirectoryOptionName.length))
+			else if(option.startsWith(OutputFormatsOptionName))
+				outputFormats = parseOutputFormats(option.substring(OutputFormatsOptionName.length))
 			else
 				error("Option for source browser plugin not understood: " + option)
 		}
@@ -40,10 +50,20 @@ class BrowsePlugin(val global: Global) extends Browse
 	def parseBaseDirectories(str: String): List[File] =
 		str.split(File.pathSeparator).map(new File(_)).toList
 
+	def parseOutputFormats(str: String): List[OutputFormat] = {
+		def valueOf(s: String): Option[OutputFormat] = OutputFormat.values.find(_.toString == s)
+			.orElse { error("Invalid sxr output format: " + s) ; None }
+		str.split(OutputFormatSeparator).flatMap(valueOf).toList
+	}
+
 	override val optionsHelp: Option[String] =
 	{
 		val prefix = "  -P:" + name + ":"
-		Some(prefix + BaseDirectoryOptionName + "<paths>            Set the base source directories .\n")
+		Some(prefix + BaseDirectoryOptionName + "<paths>            Set the base source directories.\n" +
+			prefix + OutputFormatsOptionName + "<formats>          '" + OutputFormatSeparator +
+			"'-separated list of output formats to write (available: " +
+			OutputFormat.values.mkString(",") +
+			" - defaults to: " + Html + ").\n")
 	}
 
 	/* For source compatibility between 2.7.x and 2.8.x */

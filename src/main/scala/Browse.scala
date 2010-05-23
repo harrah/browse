@@ -13,9 +13,13 @@ import util.SourceFile
 import java.io.{File, Reader, Writer}
 import forScope._
 
+import OutputFormat.{OutputFormat, getWriter}
+
 /** The actual work extracting symbols and types is done here. */
 abstract class Browse extends Plugin
 {
+	/** The output formats to write */
+	def outputFormats: List[OutputFormat]
 	/** Relativizes the path to the given Scala source file against the base directories. */
 	def getRelativeSourcePath(source: File): String
 	/** The compiler.*/
@@ -28,8 +32,10 @@ abstract class Browse extends Plugin
 	def generateOutput()
 	{
 		val classDirectory = new File(settings.outdir.value)
-		val htmlWriter = new HtmlWriter(classDirectory, settings.encoding.value)
-		htmlWriter.writeStart();
+		val writers = outputFormats.map(getWriter(_, classDirectory, settings.encoding.value))
+
+		writers.foreach(_.writeStart())
+
 		for(unit <- currentRun.units)
 		{
 			val sourceFile = unit.source.file.file
@@ -41,9 +47,9 @@ abstract class Browse extends Plugin
 			val tokenList = tokens.toList
 			Collapse(tokenList)
 
-			htmlWriter.writeUnit(sourceFile, getRelativeSourcePath(sourceFile), tokenList)
+			writers.foreach(_.writeUnit(sourceFile, getRelativeSourcePath(sourceFile), tokenList))
 		}
-		htmlWriter.writeEnd()
+		writers.foreach(_.writeEnd())
 	}
 	/** Tokenizes the given source.  The tokens are put into an ordered set by the start position of the token.
 	* Symbols will be mapped back to these tokens by the offset of the symbol.*/
