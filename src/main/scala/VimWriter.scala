@@ -1,5 +1,5 @@
 /* sxr -- Scala X-Ray
- * Copyright 2009 Mark Harrah
+ * Copyright 2010  Olivier Michallat
  */
 
 package sxr
