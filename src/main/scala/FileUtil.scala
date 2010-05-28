@@ -142,7 +142,7 @@ object FileUtil
 	private def hashDigits(b: Byte) =
 	{
 		val i = toInt(b)
-		Array( forDigit(i >> 4), forDigit(i & 0xFF) )
+		Array( forDigit(i >> 4), forDigit(i & 0xF) )
 	}
 	import java.lang.{Character => C}
 	private def forDigit(i: Int) = C.forDigit(i, C.MAX_RADIX)
