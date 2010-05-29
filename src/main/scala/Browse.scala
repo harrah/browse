@@ -372,14 +372,14 @@ abstract class Browse extends Plugin
 	private def makeLink(from: File, to: File, id: Int): Some[Link] =
 	{
 		val base = if(to == from) "" else FileUtil.relativePath(relativeSource(from), relativeSource(to))
-		Some(new Link(base, id))
+		Some(new Link(base, id, None))
 	}
 	private def externalLinkTo(from: File, sym: Symbol, links: LinkMap): Option[Link] =
 	{
 		if(publicSymbol(sym))
 		{
 			val name = stableID(sym)
-			links(name) map { case (src, id)  => new Link(src, id) }
+			links(name) map { case (src, id)  => new Link(src, id, Some(name)) }
 		}
 		else
 			None

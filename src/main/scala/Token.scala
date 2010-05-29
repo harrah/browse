@@ -5,15 +5,16 @@
 package sxr
 
 /** Represents a link to a definition.  The path is the relative path to the file in the source
-* directory, and target is the symbol ID targeted.
+* directory, target is the symbol ID targeted. stableID is an identifier that will survive
+* successive sxr runs (only used for public symbols).
 * Specific writers need to construct the actual path from these informations (e.g in
 * HtmlWriter, add '.html' to get the relative path of the target HTML file, and append the
 * ID separated by a '#'. */
-private class Link(val path: String, val target: Int) extends NotNull
+private class Link(val path: String, val target: Int, val stableID: Option[String]) extends NotNull
 {
 	// This can still be useful for debugging, but must not be used directly by a writer.
 	override def toString = path + "#" + target
-	def retarget(newTarget: Int) = new Link(path, newTarget)
+	def retarget(newTarget: Int) = new Link(path, newTarget, stableID)
 }
 /** Represents a token at the lexer level with associated type information.
 * 'start' is the offset of the token in the original source file.
