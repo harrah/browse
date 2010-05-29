@@ -18,7 +18,7 @@ object OutputFormat extends Enumeration {
 	private[this] type Factory = (File, String) => OutputWriter
 	private[this] def factory(format: OutputFormat): Factory = format match {
 		case Html => new HtmlWriter(_, _)
-		case Vim => new VimWriter(_, _)
+		case Vim => new vim.VimWriter(_, _)
 	}
 
 	/** Returns the writer corresponding to a value, configured with a class directory and an encoding */

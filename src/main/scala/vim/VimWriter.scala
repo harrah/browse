@@ -2,10 +2,12 @@
  * Copyright 2010  Olivier Michallat
  */
 
-package sxr
+package sxr.vim
 
 import java.io.File
-import FileUtil.{withReader, withWriter}
+import sxr.{OutputWriter, OutputInfo, Token}
+import sxr.FileUtil.{withReader, withWriter}
+import sxr.wrap.Wrappers
 
 object VimWriter
 {
@@ -22,7 +24,7 @@ class VimWriter(outputDirectory: File, encoding: String) extends OutputWriter {
 	val info = new OutputInfo(outputDirectory, VimExtension)
 	import info._
 
-	val ctags = wrap.Wrappers.treeSet[Ctag]
+	val ctags = Wrappers.treeSet[Tag]
 
 	def writeStart() {
 		// Nothing to do
@@ -45,7 +47,7 @@ class VimWriter(outputDirectory: File, encoding: String) extends OutputWriter {
 
 					// Store tag information (to be output in writeEnd)
 					require(token.definitions.size <= 1, "Definitions were not collapsed for " + token)
-					token.definitions.foreach((i: Int) => ctags += new Ctag(i.toString, sourceFile, token.start))
+					token.definitions.foreach((i: Int) => ctags += Tag(i.toString, sourceFile.getAbsolutePath, token.start))
 				}
 				case _ => // Nothing to do
 			}
@@ -59,9 +61,3 @@ class VimWriter(outputDirectory: File, encoding: String) extends OutputWriter {
 		}
 	}
 }
-
-/** The information of an occurrence in the tags file */
-class Ctag(val name: String, val file: File, offset: Int) extends Comparable[Ctag] {
-	override def compareTo(that: Ctag) = this.name.compareTo(that.name)
-	override def toString = name + "\t" + file.getAbsolutePath + "\t" + ":goto " + (offset + 1) + "\n"
-} 
