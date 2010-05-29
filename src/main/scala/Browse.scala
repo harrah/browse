@@ -43,8 +43,7 @@ abstract class Browse extends Plugin
 	private val linkIndexFile = new File(outputDirectory, LinkIndexRelativePath)
 	private def linkStore = new LinkMapStore(linkIndexFile)
 
-	/** The entry method for producing a set of html files and auxiliary javascript and CSS files that
-	* annotate the source code for display in a web browser. */
+	/** The entry method for invoking the configured writers to generate the output.*/
 	def generateOutput(externalLinks: List[LinkMap])
 	{
 		val links = new CompoundLinkMap(linkStore.read(None), externalLinks)
