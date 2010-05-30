@@ -130,6 +130,13 @@ object FileUtil
 		val line = reader.readLine()
 		if(line eq null) value else readLines(reader, f(value, line))(f)
 	}
+	def readLines(file: File, encoding: String)(f: (String) => Unit): Unit =
+		withReader(file, encoding) { reader => readLines(reader)(f) }
+	private final def readLines(reader: BufferedReader)(f: (String) => Unit): Unit =
+	{
+		val line = reader.readLine()
+		if(line ne null) { f(line); readLines(reader)(f) }
+	}
 
 	def download(url: URL, file: File)
 	{

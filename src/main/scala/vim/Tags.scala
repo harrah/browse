@@ -5,7 +5,7 @@
 package sxr.vim
 
 import java.io.{BufferedReader, File, PrintWriter}
-import sxr.FileUtil.{withReader, withWriter, DefaultEncoding}
+import sxr.FileUtil.{readLines, withWriter, DefaultEncoding}
 import sxr.wrap.{Wrappers, SortedSetWrapper}
 
 final class Tag(val name: String, val file: String, val offset: Int) extends Comparable[Tag] with NotNull {
@@ -16,7 +16,7 @@ final class Tag(val name: String, val file: String, val offset: Int) extends Com
 	}
 	override def toString = name + "\t" + file + "\t" + ":goto " + (offset + 1)
 
-	/** Make compareTo consistent with equals */
+	/** Ensure compareTo is consistent with equals */
 	override def equals(other: Any): Boolean = other match {
 		case that: Tag => this.name == that.name && this.file == that.file
 		case _ => false
@@ -33,20 +33,24 @@ class TagStore(file: File) {
 			write(new PrintWriter(writer), tags)
 		}
 	}
-	def read() = {
+	/** Loads the tags file, ignoring all tags related to a set of source files (passed as
+   	 * absolute paths). */
+	def read(exclude: Set[String]) = {
 		val tags = Wrappers.treeSet[Tag]
-		if (file.exists) fillTags(tags)
+		if (file.exists) fillTags(tags, exclude)
 		tags
 	}
-	private def fillTags(tags: SortedSetWrapper[Tag]) {
-		withReader(file, DefaultEncoding) { reader =>
-			parseTag(reader.readLine()).foreach(tags += _)
+	private def fillTags(tags: SortedSetWrapper[Tag], exclude: Set[String]) {
+		readLines(file, DefaultEncoding) { line =>
+			parseTag(line)
+				.filter({t => !exclude.contains(t.file)})
+				.foreach(tags += _)
 		}
 	}
 	import TagStore.{TagDef, Header}
 	private def parseTag(s: String): Option[Tag] = s trim match {
 		case TagDef(n, f, o) => Some(Tag(n, f, o.toInt - 1))
-		case Header => None // silently ignored
+		case Header() => None // silently ignored
 		case _ => println("Error parsing tag: " + s) ; None
 	}
 	private def write(writer: PrintWriter, tags: SortedSetWrapper[Tag]) {
