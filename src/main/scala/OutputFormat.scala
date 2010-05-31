@@ -15,13 +15,13 @@ object OutputFormat extends Enumeration {
 	val Vim = Value("vim")
 	def all: List[OutputFormat] = Html :: Vim :: Nil
 
-	private[this] type Factory = (File, String) => OutputWriter
+	private[this] type Factory = OutputWriterContext => OutputWriter
 	private[this] def factory(format: OutputFormat): Factory = format match {
-		case Html => new HtmlWriter(_, _)
-		case Vim => new vim.VimWriter(_, _)
+		case Html => new HtmlWriter(_)
+		case Vim => new vim.VimWriter(_)
 	}
 
-	/** Returns the writer corresponding to a value, configured with a class directory and an encoding */
-	def getWriter(value: OutputFormat, outputDirectory: File, encoding: String): OutputWriter =
-		factory(value)(outputDirectory, encoding)
+	/** Returns the writer corresponding to a value, configured with a context */
+	def getWriter(value: OutputFormat, context: OutputWriterContext): OutputWriter =
+		factory(value)(context)
 }

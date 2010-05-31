@@ -46,10 +46,13 @@ abstract class Browse extends Plugin
 	/** The entry method for invoking the configured writers to generate the output.*/
 	def generateOutput(externalLinks: List[LinkMap])
 	{
-		val links = new CompoundLinkMap(linkStore.read(None), externalLinks)
-		links.clear(currentRun.units.map(f => getRelativeSourcePath(getSourceFile(f))).toList)
+		val sourceFiles = currentRun.units.map(getSourceFile(_))
 
-		val writers = outputFormats.map(getWriter(_, outputDirectory, settings.encoding.value))
+		val links = new CompoundLinkMap(linkStore.read(None), externalLinks)
+		links.clear(sourceFiles.map(getRelativeSourcePath(_)).toList)
+
+		val context = new OutputWriterContext(sourceFiles, outputDirectory, settings.encoding.value)
+		val writers = outputFormats.map(getWriter(_, context))
 		writers.foreach(_.writeStart())
 
 		for(unit <- currentRun.units)

@@ -18,6 +18,11 @@ trait OutputWriter {
 	def writeEnd(): Unit
 }
 
+/** The initial data passed at writer construction */
+class OutputWriterContext(val sourceFiles: Iterator[File],
+	val outputDirectory: File,
+	val encoding: String)
+
 class OutputInfo(val outputDirectory: File, val outputFileExtension: String)
 {
 	def getOutputFile(relativeSourcePath: String) =

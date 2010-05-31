@@ -5,13 +5,14 @@
 package sxr.vim
 
 import java.io.File
-import sxr.{OutputWriter, OutputInfo, Token}
+import sxr.{OutputWriter, OutputWriterContext, OutputInfo, Token}
 import sxr.FileUtil.{withReader, withWriter}
 import sxr.wrap.Wrappers
 
 object VimWriter
 {
-	val TagsFileName = "tags"
+	val PublicTags = "public-tags"
+	val PrivateTags  = "private-tags"
 	val VimExtension = ".txt"
 }
 import VimWriter._
@@ -19,45 +20,66 @@ import VimWriter._
  * These consist in: for each source file, a text file listing each token with its offset range,
  * its type, and the optional tag locating its declaration; and a global 'tags' file listing the
  * name, file and offset of each of these tags. */
-class VimWriter(outputDirectory: File, encoding: String) extends OutputWriter {
+class VimWriter(context: OutputWriterContext) extends OutputWriter {
 
+	val outputDirectory = context.outputDirectory
 	val info = new OutputInfo(outputDirectory, VimExtension)
 	import info._
 
-	val ctags = Wrappers.treeSet[Tag]
+	private val excluded = Set.empty[String] ++ context.sourceFiles.map(_.getAbsolutePath)
+	private val publicTagStore = new TagStore(new File(outputDirectory, PublicTags))
+	private val publicTags = publicTagStore.read(excluded)
+
+	private val privateTagStore = new TagStore(new File(outputDirectory, PrivateTags))
+	private val privateTags = privateTagStore.read(excluded)
 
 	def writeStart() {
 		// Nothing to do
 	}
 
 	def writeUnit(sourceFile: File, relativeSourcePath: String, tokenList: List[Token]) {
+		// The data file containing token info for this source file
 		val outputFile = getOutputFile(relativeSourcePath)
+
 		withWriter(outputFile) { output =>
 			for (token <- tokenList) token.tpe match {
 				case Some(t) => {
-					// Fill the text file
-					val declarationTag = token.reference match {
-						case Some(l) => l.target toString
+					// If this token references a declaration, find the corresponding Vim tag:
+					// if the declaration is in another file, the name of the tag is the stable
+					// ID, otherwise it is the internal token id.
+					val targetTag = token.reference match {
+						case Some(l) => l.stableID match {
+							case Some(stable) => stable
+							case _ => l.target toString
+						}
 						case None => ""
 					}
 					output.write(token.start + "\t" +
 						(token.start + token.length - 1) + "\t" +
 						t.name + "\t" +
-						declarationTag + "\n")
+						targetTag + "\n")
 
-					// Store tag information (to be output in writeEnd)
+					// If this token defines a symbol, create the corresponding Vim tag(s)
 					require(token.definitions.size <= 1, "Definitions were not collapsed for " + token)
-					token.definitions.foreach((i: Int) => ctags += Tag(i.toString, sourceFile.getAbsolutePath, token.start))
+					// In every case, create the tag with the internal ID. Even if the symbol is public, this tag will
+					// still be used by the clients compiled in the same run.
+					token.definitions.foreach((i: Int) => privateTags += Tag(i.toString, sourceFile.getAbsolutePath, token.start))
+					// If the symbol is public, also create a tag for each stable ID. These tags will be used by clients
+					// compiled in a different run where this unit would not be recompiled.
+					token.stableIDs match {
+						case i :: tail =>
+							require(token.source.isDefined, "A token with stableIDs should have a source")
+							token.stableIDs.foreach(stable => publicTags += Tag(stable, sourceFile.getAbsolutePath, token.start))
+						case Nil => ()
+					}
 				}
-				case _ => // Nothing to do
+				case _ => ()
 			}
 		}
 	}
 	
 	def writeEnd() {
-		val ctagsFile = new File(outputDirectory, TagsFileName);
-		withWriter(ctagsFile) { output =>
-			for (ctag <- ctags) output.write(ctag.toString)
-		}
+		publicTagStore.write(publicTags)
+		privateTagStore.write(privateTags)
 	}
 }

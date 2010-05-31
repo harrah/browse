@@ -36,7 +36,10 @@ object HtmlWriter
 
 /** Outputs a set of html files and auxiliary javascript and CSS files that annotate the source
   * code for display in a web browser. */
-class HtmlWriter(outputDirectory: File, encoding: String) extends OutputWriter {
+class HtmlWriter(context: OutputWriterContext) extends OutputWriter {
+
+	val outputDirectory = context.outputDirectory
+	val encoding = context.encoding
 
 	import HtmlWriter._
 	val info = new OutputInfo(outputDirectory, HtmlExtension)
