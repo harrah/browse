@@ -30,6 +30,8 @@ private case class Token(start: Int, length: Int, code: Int) extends NotNull wit
 	private[this] var rawType: Option[TypeAttribute] = None
 	private[this] var rawReference: Option[Link] = None
 	private[this] var rawDefinitions: List[Int] = Nil
+	private[this] var rawSource: Option[String] = None
+	private[this] var rawStableIDs: List[String] = Nil
 	/** Sets the type information for this token. */
 	def tpe_=(t: TypeAttribute)
 	{
@@ -42,8 +44,16 @@ private case class Token(start: Int, length: Int, code: Int) extends NotNull wit
 		if(rawReference.isEmpty)
 			rawReference = Some(l)
 	}
+	/** Sets the relative source path for this token. */
+	def source_=(s: String)
+	{
+		if(rawSource.isEmpty)
+			rawSource = Some(s)
+	}
 	/** Adds an ID for this token.  An ID is used to mark this token as the source of a symbol. */
 	def +=(id: Int) { rawDefinitions ::= id }
+	/** Adds a stable ID for this token. A stable ID is used to resolve links across runs. */
+	def +=(stableID: String) { rawStableIDs ::= stableID }
 	/** Removes the IDs in the given set from this token's definitions and references.*/
 	def --=(ids: Set[Int])
 	{
@@ -56,6 +66,10 @@ private case class Token(start: Int, length: Int, code: Int) extends NotNull wit
 	def reference = rawReference
 	/** Gets the definition IDs. */
 	def definitions = rawDefinitions
+	/** Gets the stable definition IDs. */
+	def stableIDs = rawStableIDs
+	/** Gets the relative path of the source containing this token. */
+	def source = rawSource
 	/** True if this token has no reference to a definition and has no definitions itself. */
 	def isSimple = reference.isEmpty && definitions.isEmpty
 	/** True if this token has no reference to a definition, has no definitions itself, and

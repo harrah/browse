@@ -6,10 +6,10 @@ package sxr
 
 private object Collapse
 {
-	def apply(tokens: Iterable[Token])
+	def apply(tokens: Iterable[Token], links: LinkMap)
 	{
 		eliminateDuplicates(tokens)
-		val c = new Collapse(tokens)
+		val c = new Collapse(tokens, links)
 		c()
 	}
 	private def eliminateDuplicates(tokens: Iterable[Token])
@@ -23,7 +23,7 @@ private object Collapse
 		tokens.foreach( _ --= duplicates)
 	}
 }
-private class Collapse(tokens: Iterable[Token]) extends NotNull
+private class Collapse(tokens: Iterable[Token], links: LinkMap) extends NotNull
 {
 	private val collapsedIDMap = wrap.Wrappers.basicMap[Int, Int]
 	private def apply()
@@ -38,6 +38,15 @@ private class Collapse(tokens: Iterable[Token]) extends NotNull
 			case singleID :: b :: tail =>
 				token.collapseDefinitions(singleID)
 				(b :: tail).foreach(id => collapsedIDMap(id) = singleID)
+				// If the token defines multiple stableIDs, the LinkMap must also be collapsed,
+				// so that all stableIDs point to the retained internal id
+				token.stableIDs match {
+					case s1 :: s2 :: tail =>
+						require(token.source.isDefined, "A token with stableIDs should have a source")
+						val source = token.source.get
+						token.stableIDs.foreach(stable => links(source, stable) = singleID)
+					case _ => ()
+				}
 			case _ => ()
 		}
 	}

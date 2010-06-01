@@ -62,7 +62,7 @@ abstract class Browse extends Plugin
 			val traverser = new Traverse(tokens, unit.source, links)
 			traverser(unit.body)
 			val tokenList = tokens.toList
-			Collapse(tokenList)
+			Collapse(tokenList, links)
 
 			writers.foreach(_.writeUnit(sourceFile, getRelativeSourcePath(sourceFile), tokenList))
 		}
@@ -241,8 +241,13 @@ abstract class Browse extends Plugin
 		def addDefinition()
 		{
 			val id = sym.id
-			if(publicSymbol(sym))
-				links(getRelativeSourcePath(sourceFile), stableID(sym)) = id
+			if(publicSymbol(sym)) {
+				val stable = stableID(sym)
+				val source = getRelativeSourcePath(sourceFile)
+				links(source, stable) = id
+				token += stable
+				token.source = source
+			}
 			token += id
 		}
 		sym match
