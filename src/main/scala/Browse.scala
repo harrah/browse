@@ -374,7 +374,7 @@ abstract class Browse extends Plugin
 		if(publicSymbol(sym))
 		{
 			val name = stableID(sym)
-			links(name) map { case (src, id)  => new Link(FileUtil.relativePath(relativeSource(from), new File(src)), id) }
+			links(name) map { case (src, id)  => new Link(src, id) }
 		}
 		else
 			None
