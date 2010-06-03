@@ -5,6 +5,7 @@
 package sxr
 
 import java.io.File
+import java.net.URL
 
 /** The contract required to handle a specific format */
 trait OutputWriter {
@@ -21,7 +22,8 @@ trait OutputWriter {
 /** The initial data passed at writer construction */
 class OutputWriterContext(val sourceFiles: Iterator[File],
 	val outputDirectory: File,
-	val encoding: String)
+	val encoding: String,
+	val externalLinkURLs: List[URL])
 
 class OutputInfo(val outputDirectory: File, val outputFileExtension: String)
 {

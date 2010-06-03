@@ -4,15 +4,17 @@
 
 package sxr.vim
 
-import java.io.File
+import java.io.{File, PrintWriter}
+import java.net.URL
 import sxr.{OutputWriter, OutputWriterContext, OutputInfo, Token}
-import sxr.FileUtil.{withReader, withWriter}
+import sxr.FileUtil.withWriter
 import sxr.wrap.Wrappers
 
 object VimWriter
 {
 	val PublicTags = "public-tags"
 	val PrivateTags  = "private-tags"
+	val RemotePublicTags = "remote-public-tags"
 	val VimExtension = ".txt"
 }
 import VimWriter._
@@ -81,5 +83,30 @@ class VimWriter(context: OutputWriterContext) extends OutputWriter {
 	def writeEnd() {
 		publicTagStore.write(publicTags)
 		privateTagStore.write(privateTags)
+
+		writeRemotePublicTags(new File(outputDirectory, RemotePublicTags), context.externalLinkURLs)
 	}
+
+	/** Writes the file containing the path of the 'public-tags' file of each external sxr
+	 *  location that resolves to a local directory. */
+	private def writeRemotePublicTags(file: File, externalLinkURLs: List[URL]) {
+		val remotePublicTags =
+			externalLinkURLs.filter(_.getProtocol == "file").map(u => publicTags(urlToFile(u)))
+		withWriter(file) { writer => writeAbsolutePaths(new PrintWriter(writer), remotePublicTags) }
+	}
+	private def writeAbsolutePaths(writer: PrintWriter, files: List[File]) {
+		for (f <- files) writer.println(f.getAbsolutePath) 
+	}
+
+	/** Converts a "file://..." java.net.URL to a java.io.File.
+	 * @see http://www2.java.net/blog/2007/04/25/how-convert-javaneturl-javaiofile */
+	private def urlToFile(url: URL): File = {
+		try
+			new File(url.toURI)
+		catch {
+			case _ => new File(url.getPath)
+		}
+	}
+	/** Returns the public tags file in the same directory as the given file. */
+	private def publicTags(f: File) = new File(f.getParentFile, PublicTags)
 }

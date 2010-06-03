@@ -35,7 +35,7 @@ class BrowsePlugin(val global: Global) extends Browse
 	
 	/** The directory against which the input source paths will be relativized.*/
 	private var baseDirectories: List[File] = Nil
-	private var externalLinks: List[URL] = Nil
+	var externalLinkURLs: List[URL] = Nil
 
 	lazy val classDirectory = new File(settings.outdir.value)
 
@@ -51,7 +51,7 @@ class BrowsePlugin(val global: Global) extends Browse
 			else if(option.startsWith(OutputFormatsOptionName))
 				outputFormats = parseOutputFormats(option.substring(OutputFormatsOptionName.length))
 			else if(option.startsWith(ExternalLinksOptionName))
-				externalLinks = parseExternalLinks(option.substring(ExternalLinksOptionName.length))
+				externalLinkURLs = parseExternalLinks(option.substring(ExternalLinksOptionName.length))
 			else
 				error("Option for source browser plugin not understood: " + option)
 		}
@@ -71,7 +71,7 @@ class BrowsePlugin(val global: Global) extends Browse
 		if(f.exists) readExternalLinks(f) else { error("Link file does not exist: " + f.getAbsolutePath); Nil }
 	}
 	private def readExternalLinks(f: File): List[URL] =
-		FileUtil.readLines(f, FileUtil.DefaultEncoding, externalLinks) { ( links, line) =>
+		FileUtil.readLines(f, FileUtil.DefaultEncoding, externalLinkURLs) { ( links, line) =>
 			parseURL(line.trim).toList ::: links
 		}
 	private def parseURL(line: String): Option[URL] =
@@ -107,7 +107,7 @@ class BrowsePlugin(val global: Global) extends Browse
 		def run = generateOutput(externalLinkMaps)
 	}
 
-	private def externalLinkMaps: List[LinkMap] = externalLinks.map(getLinkMap)
+	private def externalLinkMaps: List[LinkMap] = externalLinkURLs.map(getLinkMap)
 	private def getLinkMap(link: URL) =
 	{
 		val index = new URL(link, Browse.LinkIndexRelativePath)

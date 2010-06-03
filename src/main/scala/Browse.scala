@@ -11,6 +11,7 @@ import symtab.Flags
 import util.SourceFile
 
 import java.io.{File, Reader, Writer}
+import java.net.URL
 import forScope._
 
 import OutputFormat.{OutputFormat, getWriter}
@@ -30,6 +31,8 @@ abstract class Browse extends Plugin
 	def classDirectory: File
 	/** The output formats to write */
 	def outputFormats: List[OutputFormat]
+	/** The URLs of external sxr locations */
+	def externalLinkURLs: List[URL]
 	/** Relativizes the path to the given Scala source file against the base directories. */
 	def getRelativeSourcePath(source: File): String
 	/** The compiler.*/
@@ -51,7 +54,7 @@ abstract class Browse extends Plugin
 		val links = new CompoundLinkMap(linkStore.read(None), externalLinks)
 		links.clear(sourceFiles.map(getRelativeSourcePath(_)).toList)
 
-		val context = new OutputWriterContext(sourceFiles, outputDirectory, settings.encoding.value)
+		val context = new OutputWriterContext(sourceFiles, outputDirectory, settings.encoding.value, externalLinkURLs)
 		val writers = outputFormats.map(getWriter(_, context))
 		writers.foreach(_.writeStart())
 
