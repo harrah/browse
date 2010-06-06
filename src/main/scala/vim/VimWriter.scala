@@ -101,9 +101,9 @@ class VimWriter(context: OutputWriterContext) extends OutputWriter {
 	/** Converts a "file://..." java.net.URL to a java.io.File.
 	 * @see http://www2.java.net/blog/2007/04/25/how-convert-javaneturl-javaiofile */
 	private def urlToFile(url: URL): File = {
-		try
+		try {
 			new File(url.toURI)
-		catch {
+		} catch {
 			case _ => new File(url.getPath)
 		}
 	}
