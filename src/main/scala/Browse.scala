@@ -106,6 +106,9 @@ abstract class Browse extends Plugin
 			if(includeToken(code))
 				tokens += new Token(offset, length, code)
 		}
+	        for (unit.Comment(_, pos) <- unit.comments)
+		  tokens += new Token(pos.start, pos.end - pos.start, Tokens.COMMENT)
+
 		tokens
 	}
 	/** Filters out unwanted tokens such as whitespace and commas.  Braces are currently
