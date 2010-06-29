@@ -97,6 +97,7 @@ private class BasicStyler(title: String, baseStyle: String, baseJs: String, base
 			case STRINGLIT => "string" :: Nil
 			case SYMBOLLIT => "symbol" :: Nil
 			case COMMENT => "comment" :: Nil
+		        case LPAREN | RPAREN | LBRACKET | RBRACKET | LBRACE | RBRACE => "delimiter" :: Nil
 			case _ =>
 				if(isKeyword(code))
 					"keyword" :: Nil
