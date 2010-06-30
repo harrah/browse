@@ -122,7 +122,7 @@ abstract class Browse extends Plugin
 		}
 		
 	        for (Comment(_, pos) <- unit.comments)
-		  tokens += new Token(pos.start, pos.end - pos.start, Tokens.COMMENT)
+		  tokens += new Token(pos.start, pos.end - pos.start + 1, Tokens.COMMENT)
 
 		tokens
 	}
