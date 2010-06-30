@@ -106,7 +106,22 @@ abstract class Browse extends Plugin
 			if(includeToken(code))
 				tokens += new Token(offset, length, code)
 		}
-	        for (unit.Comment(_, pos) <- unit.comments)
+
+		// Comment handling:
+		// in 2.7 comments are included in the token stream
+		// in 2.8 comments are collected separately in unit.comments
+		
+		// Compability for 2.7: return no comments with the syntax of 2.8
+		import unit._
+		implicit def noCommentsInScala27(u: CompilationUnit) = new {
+			def comments: Seq[Comment] = Seq.empty
+		}
+		implicit def rangePositionNeedsStartEndIn27(r: util.RangePosition) = new {
+			def start = 0
+			def end = 0
+		}
+		
+	        for (Comment(_, pos) <- unit.comments)
 		  tokens += new Token(pos.start, pos.end - pos.start, Tokens.COMMENT)
 
 		tokens
@@ -420,4 +435,5 @@ abstract class Browse extends Plugin
 // for compatibility with 2.8
 package forScope {
 	class Sequence
+	case class Comment(v: String, pos: util.RangePosition)
 }
