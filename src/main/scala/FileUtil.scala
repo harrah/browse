@@ -138,9 +138,16 @@ object FileUtil
 		if(line ne null) { f(line); readLines(reader)(f) }
 	}
 
-	def download(url: URL, file: File)
+	def download(url: URL, file: File) {
+		download(url.openStream, file)
+	}
+
+	def downloadCompressed(url: URL, file: File) {
+		download(new java.util.zip.GZIPInputStream(url.openStream), file)
+	}
+
+	def download(in: InputStream, file: File)
 	{
-		val in = url.openStream
 		try { write(in, file) }
 		finally { in.close() }
 	}

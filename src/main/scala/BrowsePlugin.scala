@@ -112,7 +112,13 @@ class BrowsePlugin(val global: Global) extends Browse
 	{
 		val index = new URL(link, Browse.LinkIndexRelativePath)
 		val cached = cachedLinkFile(index)
-		if(!cached.exists) FileUtil.download(index, cached)
+		if(!cached.exists) {
+			try {
+				FileUtil.downloadCompressed(new URL(link, Browse.CompressedLinkIndexRelativePath), cached)
+			} catch {
+				case e: java.io.IOException => FileUtil.download(index, cached)
+			}
+		}
 		LinkMapStore.read(cached, Some(link))
 	}
 	private def cachedLinkFile(link: URL): File =

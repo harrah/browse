@@ -19,8 +19,10 @@ import Browse._
 
 object Browse
 {
-	/** The path to the link index, which allows linking between runs.  This applies for both incremental and remote linking.*/
+	/** The path to a link index, which allows linking between runs.  This applies for both incremental and remote linking.*/
 	val LinkIndexRelativePath = "link.index"
+	/** The path to a compressed link index, which allows linking between runs.  This applies for both incremental and remote linking.*/
+	val CompressedLinkIndexRelativePath = LinkIndexRelativePath + ".gz"
 	/** The name of the directory containing cached remote `link.index`es*/
 	val CacheRelativePath = "cache.sxr"
 }
