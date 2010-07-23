@@ -75,7 +75,7 @@ class BrowsePlugin(val global: Global) extends Browse
 			parseURL(line.trim).toList ::: links
 		}
 	private def parseURL(line: String): Option[URL] =
-		if(line.isEmpty || line.startsWith("#")) None else Some(new URL(line))
+		if(line.length == 0 || line.startsWith("#")) None else Some(new URL(line))
 
 	override val optionsHelp: Option[String] =
 	{
