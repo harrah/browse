@@ -90,12 +90,10 @@ class VimWriter(context: OutputWriterContext) extends OutputWriter {
 	/** Writes the file containing the path of the 'public-tags' file of each external sxr
 	 *  location that resolves to a local directory. */
 	private def writeRemotePublicTags(file: File, externalLinkURLs: List[URL]) {
-		val remotePublicTags =
-			externalLinkURLs.filter(_.getProtocol == "file").map(u => publicTags(urlToFile(u)))
-		withWriter(file) { writer => writeAbsolutePaths(new PrintWriter(writer), remotePublicTags) }
-	}
-	private def writeAbsolutePaths(writer: PrintWriter, files: List[File]) {
-		for (f <- files) writer.println(f.getAbsolutePath) 
+		def buildFilePath(url: URL) = new File(urlToFile(url), PublicTags).getAbsolutePath
+		def writeLines(writer: PrintWriter, lines: List[String]) = for (l <- lines) writer.println(l)
+		val content = externalLinkURLs.filter(_.getProtocol == "file").map(buildFilePath)
+		withWriter(file) { writer => writeLines(new PrintWriter(writer), content) }
 	}
 
 	/** Converts a "file://..." java.net.URL to a java.io.File.
@@ -107,6 +105,4 @@ class VimWriter(context: OutputWriterContext) extends OutputWriter {
 			case _ => new File(url.getPath)
 		}
 	}
-	/** Returns the public tags file in the same directory as the given file. */
-	private def publicTags(f: File) = new File(f.getParentFile, PublicTags)
 }
