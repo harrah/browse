@@ -20,7 +20,7 @@ trait OutputWriter {
 }
 
 /** The initial data passed at writer construction */
-class OutputWriterContext(val sourceFiles: Iterator[File],
+class OutputWriterContext(val sourceFiles: List[File],
 	val outputDirectory: File,
 	val encoding: String,
 	val externalLinkURLs: List[URL])

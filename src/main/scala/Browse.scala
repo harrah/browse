@@ -51,32 +51,34 @@ abstract class Browse extends Plugin
 	/** The entry method for invoking the configured writers to generate the output.*/
 	def generateOutput(externalLinks: List[LinkMap])
 	{
-		val sourceFiles = currentRun.units.map(getSourceFile(_))
+		val sourceFiles = currentRun.units.toList.flatMap(getSourceFile(_))
+		if (sourceFiles.size > 0) {
+			val links = new CompoundLinkMap(linkStore.read(None), externalLinks)
+			links.clear(sourceFiles.map(getRelativeSourcePath(_)).toList)
 
-		val links = new CompoundLinkMap(linkStore.read(None), externalLinks)
-		links.clear(sourceFiles.map(getRelativeSourcePath(_)).toList)
+			val context = new OutputWriterContext(sourceFiles, outputDirectory, settings.encoding.value, externalLinkURLs)
+			val writers = outputFormats.map(getWriter(_, context))
+			writers.foreach(_.writeStart())
 
-		val context = new OutputWriterContext(sourceFiles, outputDirectory, settings.encoding.value, externalLinkURLs)
-		val writers = outputFormats.map(getWriter(_, context))
-		writers.foreach(_.writeStart())
+			for(unit <- currentRun.units ; sourceFile <- getSourceFile(unit))
+			{
+				// generate the tokens
+				val tokens = scan(unit)
+				val traverser = new Traverse(tokens, unit.source, links)
+				traverser(unit.body)
+				val tokenList = tokens.toList
+				Collapse(tokenList, links)
 
-		for(unit <- currentRun.units)
-		{
-			val sourceFile = getSourceFile(unit)
-
-			// generate the tokens
-			val tokens = scan(unit)
-			val traverser = new Traverse(tokens, unit.source, links)
-			traverser(unit.body)
-			val tokenList = tokens.toList
-			Collapse(tokenList, links)
-
-			writers.foreach(_.writeUnit(sourceFile, getRelativeSourcePath(sourceFile), tokenList))
+				writers.foreach(_.writeUnit(sourceFile, getRelativeSourcePath(sourceFile), tokenList))
+			}
+			writers.foreach(_.writeEnd())
+			linkStore.write(links)
 		}
-		writers.foreach(_.writeEnd())
-		linkStore.write(links)
 	}
-	private def getSourceFile(unit: CompilationUnit) = unit.source.file.file.getAbsoluteFile
+	private def getSourceFile(unit: CompilationUnit): Option[File] = unit.source.file.file match {
+		case null => None // code compiled from the repl has no source file
+		case f: File => Some(f.getAbsoluteFile)
+	}
 	/** Tokenizes the given source.  The tokens are put into an ordered set by the start position of the token.
 	* Symbols will be mapped back to these tokens by the offset of the symbol.*/
 	private def scan(unit: CompilationUnit) =
