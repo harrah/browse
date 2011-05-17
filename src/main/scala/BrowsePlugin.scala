@@ -88,17 +88,13 @@ class BrowsePlugin(val global: Global) extends Browse
 		Some( Seq(base, formats, link).mkString("", "\n", "\n") )
 	}
 
-	/* For source compatibility between 2.7.x and 2.8.x */
-	private object runsBefore { def :: (s: String) = s }
-	private abstract class CompatiblePluginComponent(afterPhase: String) extends PluginComponent
-	{
-		val runsAfter = afterPhase :: runsBefore
-	}
-	private object Component extends CompatiblePluginComponent("typer")
+	private object Component extends PluginComponent
 	{
 		val global = BrowsePlugin.this.global
 		val phaseName = BrowsePlugin.this.name
 		def newPhase(prev: Phase) = new BrowsePhase(prev)
+		val runsAfter = "typer" :: Nil
+		override val runsBefore = "superaccessors" :: Nil
 	}
 
 	private class BrowsePhase(prev: Phase) extends Phase(prev)
