@@ -7,7 +7,7 @@ object XRay extends Build
 	lazy val main = Project("sxr", file(".")) settings(
 		name := "sxr",
 		organization := "org.scala-tools.sxr",
-		version := "0.2.7",
+		version := "0.2.8-SNAPSHOT",
 		scalaVersion := "2.9.0",
 		crossScalaVersions += "2.8.1",
 		ivyConfigurations += js,
