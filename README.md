@@ -20,6 +20,7 @@ This produces a compiler plugin in target/.
 Usage
 
 Add the following options to your compile command for your project:
+
 ```
   -Xplugin:<path-to-sxr>/sxr-0.2.7.jar
   -P:sxr:base-directory:<src-dir>
