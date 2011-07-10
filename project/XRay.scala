@@ -3,15 +3,15 @@
 
 object XRay extends Build
 {
-	lazy val projects = Seq(main)
 	lazy val main = Project("sxr", file(".")) settings(
 		name := "sxr",
 		organization := "org.scala-tools.sxr",
 		version := "0.2.8-SNAPSHOT",
-		scalaVersion := "2.9.0",
+		scalaVersion := "2.9.0-1",
 		crossScalaVersions += "2.8.1",
 		ivyConfigurations += js,
 		libraryDependencies ++= dependencies,
+		libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _ % "provided"),
 		jqueryAll <<= target(_ / "jquery-all.js"),
 		combineJs <<= combineJquery,
 		resourceGenerators in Compile <+= combineJs.identity,
