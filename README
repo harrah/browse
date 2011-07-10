@@ -8,27 +8,25 @@ See http://harrah.github.com/browse/samples/index.html for samples.
 
 Still in development.  Bugs are features and features are accidental.
 
-To build with sbt (see http://code.google.com/p/simple-build-tool/wiki/Setup for setup instructions):
+To build with sbt (see https://github.com/harrah/xsbt/wiki/Setup for setup instructions):
 
-$ sbt "+update" "+package"
+$ sbt "+ package"
 
 This produces a compiler plugin in target/.
 
 Usage
 
 Add the following options to your compile command for your project:
-  -Xplugin:<path-to-sxr>/sxr-0.2.6.jar
+  -Xplugin:<path-to-sxr>/sxr-0.2.7.jar
   -P:sxr:base-directory:<src-dir>
 
-If you are using sbt, make your project definition extend AutoCompilerPlugins, add sxr as a plugin, and configure the plugin:
+If you are using sbt (0.10), add sxr as a plugin and configure the sxr plugin:
 
-class YourProject(info: ProjectInfo) extends DefaultProject(info) with AutoCompilerPlugins
-{
-  val sxr = compilerPlugin("org.scala-tools.sxr" %% "sxr" % "0.2.6")
-  override def compileOptions =
-    CompileOption("-P:sxr:base-directory:" + mainScalaSourcePath.absolutePath) ::
-    super.compileOptions.toList
-}
+```scala
+addCompilerPlugin("org.scala-tools.sxr" %% "sxr" % "0.2.7")
+
+scalacOptions <+= (scalaSource in Compile) { "-P:sxr:base-directory:" + _.getAbsolutePath }
+```
 
 You will get a directory <classes-output>.sxr that mirrors the directory structure of your sources relative
 to the specified base directory with one HTML file for each source file.  You can make simple
@@ -39,10 +37,11 @@ Other options include specifying the output format and linking to other sxr sour
 
 To link to other sxr sources (produced with sxr 0.2.5 or later), follow these two steps.
  1) put the URLs of the other sxr sources in a file, say 'sxr.links'.  The URLs should point to the base directories, not to 'index.html' or any specific file.
- 2) Specify the location of this file in the 'link-file' sxr option.  For example:
+ 2) Specify the location of this file in the 'link-file' sxr option.  For example, in addition to the settings above, use:
 
-   override def compileOptions = super.compileOptions ++ sxrOptions
-   def sxrOptions =
-     compileOptions( "-P:sxr:base-directory:" + mainScalaSourcePath.absolutePath,
-      "-P:sxr:link-file:" + linkFile.absolutePath)
-   def linkFile = path("sxr.links")
+```scala
+scalacOptions <+= baseDirectory { base =>
+  val linkFile = base / "sxr.links"
+  "-P:sxr:link-file:" + linkFile.getAbsolutePath)
+}
+```
