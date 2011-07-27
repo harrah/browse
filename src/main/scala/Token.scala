@@ -10,7 +10,7 @@ package sxr
 * Specific writers need to construct the actual path from these informations (e.g in
 * HtmlWriter, add '.html' to get the relative path of the target HTML file, and append the
 * ID separated by a '#'. */
-private class Link(val path: String, val target: Int, val stableID: Option[String]) extends NotNull
+class Link(val path: String, val target: Int, val stableID: Option[String]) extends NotNull
 {
 	// This can still be useful for debugging, but must not be used directly by a writer.
 	override def toString = path + "#" + target
@@ -20,7 +20,7 @@ private class Link(val path: String, val target: Int, val stableID: Option[Strin
 * 'start' is the offset of the token in the original source file.
 * 'length' is the length of the token in the original source file
 * 'code' is the class of the token (see Tokens in the compiler)*/
-private case class Token(start: Int, length: Int, code: Int) extends NotNull with Ordered[Token] with Comparable[Token]
+case class Token(start: Int, length: Int, code: Int) extends NotNull with Ordered[Token] with Comparable[Token]
 {
 	require(start >= 0)
 	require(length > 0)
@@ -90,4 +90,4 @@ private case class Token(start: Int, length: Int, code: Int) extends NotNull wit
 	}
 }
 /** Holds type information.  This class will probably change to accomodate tokeninzing types. */
-private case class TypeAttribute(name: String, definition: Option[Link]) extends NotNull
+case class TypeAttribute(name: String, definition: Option[Link]) extends NotNull
