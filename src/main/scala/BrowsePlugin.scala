@@ -19,7 +19,7 @@ object BrowsePlugin
 	/** This is the name of the option that specifies the desired output formats.*/
 	val OutputFormatsOptionName = "output-formats:"
 	/** This is the name of the option that specifies the desired output class.*/
-	val OutputSingletonOptionName = "output-class:"
+	val OutputClassOptionName = "output-class:"
 	/** The separator in the list of output formats.*/
 	val OutputFormatSeparator = '+'
 	/** This is the name of the options that specifies a file containing one URL per line for each external sxr location to link to. */
@@ -56,7 +56,7 @@ class BrowsePlugin(val global: Global) extends Browse
 			else if(option.startsWith(OutputFormatsOptionName))
 				outputFormats = parseOutputFormats(option.substring(OutputFormatsOptionName.length))
 			else if(option.startsWith(OutputClassOptionName))
-				outputSingleton = option.substring(OutputClassOptionName.length)
+				outputClass = option.substring(OutputClassOptionName.length)
 			else if(option.startsWith(ExternalLinksOptionName))
 				externalLinkURLs = parseExternalLinks(option.substring(ExternalLinksOptionName.length))
 			else
@@ -90,10 +90,10 @@ class BrowsePlugin(val global: Global) extends Browse
 		val base = prefix + BaseDirectoryOptionName + "<paths>            Set the base source directories."
 		val formats = prefix + OutputFormatsOptionName + "<formats>          '" + OutputFormatSeparator +
 			"'-separated list of output formats to write (available: " + OutputFormat.all.mkString(",") + " - defaults to: " + Html + ")."
-		val singleton = prefix + OutputClassOptionName + "<class>            Set the output class."
+		val clazz = prefix + OutputClassOptionName + "<class>            Set the output class."
 		val link = prefix + ExternalLinksOptionName + "<path>            Set the file containing sxr link.index URLs for external linking."
 
-		Some( Seq(base, formats, class, link).mkString("", "\n", "\n") )
+		Some( Seq(base, formats, clazz, link).mkString("", "\n", "\n") )
 	}
 
 	private object Component extends PluginComponent
