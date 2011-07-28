@@ -31,7 +31,7 @@ If you are using sbt (0.10), add sxr as a plugin and configure the sxr plugin:
 ```scala
 addCompilerPlugin("org.scala-tools.sxr" %% "sxr" % "0.2.7")
 
-scalacOptions <+= (scalaSource in Compile) { "-P:sxr:base-directory:" + _.getAbsolutePath }
+scalacOptions <+= scalaSource in Compile map { "-P:sxr:base-directory:" + _.getAbsolutePath }
 ```
 
 You will get a directory <classes-output>.sxr that mirrors the directory structure of your sources relative
@@ -47,7 +47,7 @@ To link to other sxr sources (produced with sxr 0.2.5 or later), follow these tw
 2. Specify the location of this file in the 'link-file' sxr option.  For example, in addition to the settings above, use:
 
 ```scala
-scalacOptions <+= baseDirectory { base =>
+scalacOptions <+= baseDirectory map { base =>
   val linkFile = base / "sxr.links"
   "-P:sxr:link-file:" + linkFile.getAbsolutePath)
 }
