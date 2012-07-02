@@ -33,6 +33,8 @@ abstract class Browse extends Plugin
 	def classDirectory: File
 	/** The output formats to write */
 	def outputFormats: List[OutputFormat]
+	/** The output class that handle write logic */
+	def outputClass: String
 	/** The URLs of external sxr locations */
 	def externalLinkURLs: List[URL]
 	/** Relativizes the path to the given Scala source file against the base directories. */
@@ -57,7 +59,10 @@ abstract class Browse extends Plugin
 			links.clear(sourceFiles.map(getRelativeSourcePath(_)).toList)
 
 			val context = new OutputWriterContext(sourceFiles, outputDirectory, settings.encoding.value, externalLinkURLs)
-			val writers = outputFormats.map(getWriter(_, context))
+			val writers = if (outputClass != "")
+				Seq(getWriter(outputClass, context))
+			else
+				outputFormats.map(getWriter(_, context))
 			writers.foreach(_.writeStart())
 
 			for(unit <- currentRun.units ; sourceFile <- getSourceFile(unit))

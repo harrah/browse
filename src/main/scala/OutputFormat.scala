@@ -24,4 +24,12 @@ object OutputFormat extends Enumeration {
 	/** Returns the writer corresponding to a value, configured with a context */
 	def getWriter(value: OutputFormat, context: OutputWriterContext): OutputWriter =
 		factory(value)(context)
+
+	/** Returns the writer corresponding to a value, configured with a context */
+	def getWriter(value: String, context: OutputWriterContext): OutputWriter = {
+		val loader = this.getClass.getClassLoader
+		val aClass = loader.loadClass(value)
+		val constructor = aClass.getConstructor(classOf[OutputWriterContext])
+		constructor.newInstance(context).asInstanceOf[OutputWriter]
+	}
 }
