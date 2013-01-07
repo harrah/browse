@@ -65,7 +65,7 @@ private class BasicStyler(title: String, baseStyle: String, baseJs: String, base
 		val definitionsList = definitions.toList
 		val attributes = reference.map("href=\"" + constructHtmlLink(_) + "\"").toList :::
 			token.tpe.map(t => "title=\"" + Escape(t.name) + "\"").toList :::
-			definitionsList.firstOption.map("id=\"" + _ + "\"").toList :::
+			definitionsList.headOption.map("id=\"" + _ + "\"").toList :::
 			( styleClasses match
 			{
 				case Nil => Nil

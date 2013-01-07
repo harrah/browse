@@ -5,18 +5,16 @@ object XRay extends Build
 {
 	lazy val main = Project("sxr", file(".")) settings(
 		name := "sxr",
-		organization := "org.scala-tools.sxr",
-		version := "0.2.8-SNAPSHOT",
-		scalaVersion := "2.9.0-1",
-		crossScalaVersions += "2.8.1",
+		organization := "org.scala-sbt.sxr",
+		version := "0.3.0-SNAPSHOT",
+		scalaVersion := "2.10.0",
+		crossScalaVersions ++= Seq("2.9.2"),
 		ivyConfigurations += js,
 		libraryDependencies ++= dependencies,
 		libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _ % "provided"),
 		jqueryAll <<= target(_ / "jquery-all.js"),
 		combineJs <<= combineJquery,
-		resourceGenerators in Compile <+= combineJs.identity,
-		credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
-		publishTo := Some( "Scala Tools Nexus" at "http://nexus.scala-tools.org/content/repositories/releases/" )
+		resourceGenerators in Compile <+= combineJs.identity
 	)
 
 	val js = config("js") hide

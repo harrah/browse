@@ -26,7 +26,7 @@ class CompoundLinkMap(write: LinkMap, readOnly: List[LinkMap]) extends LinkMap
 	def all = write :: readOnly
 	def update(src: String, stableID: String, id: Int) = write.update(src, stableID, id)
 	def clear(srcs: Iterable[String]) = write.clear(srcs)
-	def apply(stable: String) = all.flatMap{ _(stable) }.firstOption
+	def apply(stable: String) = all.flatMap{ _(stable) }.headOption
 	def get = all.flatMap(_.get)
 }
 class BasicLinkMap(base: Option[URL]) extends LinkMap
@@ -44,7 +44,7 @@ class BasicLinkMap(base: Option[URL]) extends LinkMap
 	def clear(srcs: Iterable[String]): Unit = map --= srcs
 	def get: Iterable[(String, Iterable[(String, Int)])] = map
 	def apply(stable: String): Option[(String, Int)] =
-		map.flatMap{ case (src, m) => m.get(stable).map(x => (source(src), x)) }.toSeq.firstOption
+		map.flatMap{ case (src, m) => m.get(stable).map(x => (source(src), x)) }.toSeq.headOption
 	def source(src: String) =
 		base match { case Some(url) => new URL(url, src) toExternalForm; case None => src }
 }
