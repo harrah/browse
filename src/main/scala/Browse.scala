@@ -370,7 +370,7 @@ abstract class Browse extends Plugin
 		}
 	}
 
-	/** Generates a link usable in the file 'from' to the symbol 'to', which might be in some other file. */
+	/** Generates a link usable in the file 'from' to the symbol 'sym', which might be in some other file. */
 	private def linkTo(from: File, sym: Symbol, links: LinkMap): Option[Link] =
 	{
 		if(sym == null || sym == NoSymbol || sym.owner == NoSymbol)
