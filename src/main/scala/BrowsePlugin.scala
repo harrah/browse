@@ -37,7 +37,11 @@ class BrowsePlugin(val global: Global) extends Browse
 	private var baseDirectories: List[File] = Nil
 	var externalLinkURLs: List[URL] = Nil
 
-	lazy val classDirectory = new File(settings.outdir.value)
+	lazy val classDirectory = {
+		val single = settings.outputDirs.getSingleOutput
+		val orDefault = single.flatMap(f => Option(f.file)) getOrElse new File(".")
+		orDefault.getAbsoluteFile
+	}
 
 	/** The output formats to write */
 	var outputFormats: List[OutputFormat] = List(Html)
@@ -119,7 +123,7 @@ class BrowsePlugin(val global: Global) extends Browse
 	}
 	private def cachedLinkFile(link: URL): File =
 	{
-		val cacheDirectory = new File( new File(settings.outdir.value).getAbsoluteFile.getParentFile, Browse.CacheRelativePath)
+		val cacheDirectory = new File( classDirectory.getParentFile, Browse.CacheRelativePath)
 		new File(cacheDirectory, FileUtil.hash(link.toExternalForm))
 	}
 
