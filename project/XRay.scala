@@ -7,17 +7,18 @@ object XRay extends Build
 		name := "sxr",
 		organization := "org.scala-sbt.sxr",
 		version := "0.3.0-SNAPSHOT",
-		scalaVersion := "2.10.0",
-		crossScalaVersions ++= Seq("2.9.2"),
+		scalaVersion := "2.10.1",
+		scalacOptions += "-deprecation",
 		ivyConfigurations += js,
+		exportJars := true,
 		libraryDependencies ++= dependencies,
 		libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _ % "provided"),
 		jqueryAll <<= target(_ / "jquery-all.js"),
-		combineJs <<= combineJquery,
-		resourceGenerators in Compile <+= combineJs.identity
+		combineJs <<= (update,jqueryAll,streams) map { (report, all, s) => combineJquery(report, all, s.log) },
+		resourceGenerators in Compile <+= combineJs
 	)
 
-	val js = config("js") hide
+	val js = config("js").hide
 	
 	val combineJs = TaskKey[Seq[File]]("combine-js")
 	val jqueryAll = SettingKey[File]("jquery-all")
@@ -32,10 +33,11 @@ object XRay extends Build
 		"jquery" % "jquery-qtip"     % jquery_qtip_version     % "js->default" from ("http://craigsworks.com/projects/qtip/packages/1.0.0-rc3/jquery.qtip-" + jquery_qtip_version + ".min.js")
 	)
 
-	lazy val combineJquery = (update, jqueryAll, streams) map { (report, jsOut, s) =>
+	def combineJquery(report: UpdateReport, jsOut: File, log: Logger): Seq[File] =
+	{
 		IO.delete(jsOut)
 		inputs(report) foreach { in => appendJs(in, jsOut) }
-		s.log.info("Wrote combined js to " + jsOut.getAbsolutePath)
+		log.info("Wrote combined js to " + jsOut.getAbsolutePath)
 		Seq(jsOut)
 	}
 	def inputs(report: UpdateReport) = report.select( configurationFilter(js.name)) sortBy { _.name }

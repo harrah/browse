@@ -9,10 +9,10 @@ See <http://harrah.github.com/browse/samples/index.html> for samples.
 
 Still in development.  Bugs are features and features are accidental.
 
-To build with sbt (see <https://github.com/harrah/xsbt/wiki/Setup> for setup instructions):
+To build with sbt (see <http://scala-sbt.org/release/docs/Getting-Started/Setup.html> for setup instructions):
 
 ```
-$ sbt "+ package"
+$ sbt package
 ```
 
 This produces a compiler plugin in target/.
@@ -22,14 +22,14 @@ Usage
 Add the following options to your compile command for your project:
 
 ```
-  -Xplugin:<path-to-sxr>/sxr-0.2.7.jar
+  -Xplugin:<path-to-sxr>/sxr-0.3.0-SNAPSHOT.jar
   -P:sxr:base-directory:<src-dir>
 ```
 
-If you are using sbt (0.10), add sxr as a plugin and configure the sxr plugin:
+If you are using sbt, add sxr as a plugin and configure the sxr plugin:
 
 ```scala
-addCompilerPlugin("org.scala-tools.sxr" %% "sxr" % "0.2.7")
+addCompilerPlugin("org.scala-tools.sxr" % "sxr" % "0.3.0-SNAPSHOT" cross CrossVersion.full)
 
 scalacOptions <+= scalaSource in Compile map { "-P:sxr:base-directory:" + _.getAbsolutePath }
 ```
