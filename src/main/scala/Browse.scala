@@ -236,7 +236,8 @@ abstract class Browse extends Plugin
 					case _: Return => processSimple()
 					case _: If => processSimple()
 					case _: Match => processSimple() // this will annotate the 'match' keyword with the type returned by the associated pattern match
-					case _: CaseDef => processSimple() // this will annotate the 'case' keyword with the type returned by that particular case statement
+// The associated token is no longer the case keyword, but the pattern, so this would overwrite the pattern's type.
+//					case _: CaseDef => processSimple() // this will annotate the 'case' keyword with the type returned by that particular case statement
 					case _: Throw => processSimple()
 					case ta: TypeApply => processSimple() // this fills in type parameters for methods
 					case Ident(_) => processDefaultSymbol()
