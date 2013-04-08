@@ -6,13 +6,13 @@ package sxr
 
 import scala.tools.nsc.ast.parser.Tokens
 
-private trait Styler extends NotNull
+private trait Styler
 {
 	def head: String
 	def apply(token: Token): List[Annotation]
 	def tail: String
 }
-private case class Annotation(open: String, close: String) extends NotNull
+private case class Annotation(open: String, close: String)
 
 object Classes
 {

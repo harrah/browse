@@ -31,7 +31,7 @@ private object Annotate
 *
 * Note that the 'write' method in this class is specific to HTML and would
 * need to be generalized for another format */
-private class Annotate(input: Reader, output: Writer, tokens: List[Token], styler: Styler) extends NotNull
+private class Annotate(input: Reader, output: Writer, tokens: List[Token], styler: Styler)
 {
 	/** Applies the annotations.*/
 	def annotate()

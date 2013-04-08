@@ -8,7 +8,7 @@ import java.io.{BufferedReader, File, PrintWriter}
 import sxr.FileUtil.{readLines, withWriter, DefaultEncoding}
 import sxr.wrap.{Wrappers, SortedSetWrapper}
 
-final class Tag(val name: String, val file: String, val offset: Int) extends Comparable[Tag] with NotNull {
+final class Tag(val name: String, val file: String, val offset: Int) extends Comparable[Tag] {
 	/** Sort by name and then by file */
 	override def compareTo(that: Tag) = this.name.compareTo(that.name) match {
 		case 0 => this.file.compareTo(that.file)

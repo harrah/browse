@@ -69,7 +69,7 @@ object FileUtil
 	{
 		val source = getClass.getResourceAsStream(resource)
 		if(source == null)
-			error("Could not find resource " + resource)
+			sys.error("Could not find resource " + resource)
 		try { write(source, to) }
 		finally { source.close() }
 	}

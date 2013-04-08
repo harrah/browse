@@ -23,7 +23,7 @@ private object Collapse
 		tokens.foreach( _ --= duplicates)
 	}
 }
-private class Collapse(tokens: Iterable[Token], links: LinkMap) extends NotNull
+private class Collapse(tokens: Iterable[Token], links: LinkMap)
 {
 	private val collapsedIDMap = wrap.Wrappers.basicMap[Int, Int]
 	private def apply()
