@@ -98,7 +98,7 @@ class BrowsePlugin(val global: Global) extends Browse
 		val phaseName = BrowsePlugin.this.name
 		def newPhase(prev: Phase) = new BrowsePhase(prev)
 		val runsAfter = "typer" :: Nil
-		override val runsBefore = "superaccessors" :: Nil
+		override val runsBefore = "patmat" :: Nil
 	}
 
 	private class BrowsePhase(prev: Phase) extends Phase(prev)
