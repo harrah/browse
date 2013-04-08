@@ -85,9 +85,12 @@ abstract class Browse extends Plugin
 		val tokens = wrap.Wrappers.treeSet[Token]
 		def addComment(start: Int, end: Int) { tokens += new Token(start, end - start + 1, Tokens.COMMENT) }
 
-		class Scan extends syntaxAnalyzer.UnitScanner(unit) { 
-			override def init {}
-			def parentInit = super.init
+		class Scan extends syntaxAnalyzer.UnitScanner(unit)
+		{
+			override def deprecationWarning(off: Int, msg: String) {}
+			override def error(off: Int, msg: String) {}
+			override def incompleteInputError(off: Int, msg: String) {}
+
 			override def foundComment(value: String, start: Int, end: Int) {
 				addComment(start, end)
 				super.foundComment(value, start, end)
@@ -96,27 +99,22 @@ abstract class Browse extends Plugin
 				addComment(start, end)
 				super.foundDocComment(value, start, end)
 			}
-			def iterator: Iterator[(Int,Int,Int)] = 
-				new Iterator[(Int, Int, Int)]
-				{
-					def next =
-					{
-						val offset0 = offset
-						val token0 = token
-						nextToken
-						(offset0, (lastOffset - offset0) max 1, token0)
-					}
-					def hasNext = token != Tokens.EOF
-				}
-		}
+			override def nextToken() {
+				val offset0 = offset
+				val code = token
 
-		val scanner = new Scan
-		scanner.parentInit
-		for( (offset, length, code) <- scanner.iterator)
-		{
-			if(includeToken(code))
-				tokens += new Token(offset, length, code)
+				super.nextToken()
+
+				if(includeToken(code)) {
+					val length = (lastOffset - offset0) max 1
+					tokens += new Token(offset0, length, code)
+				}
+			}
 		}
+		val parser = new syntaxAnalyzer.UnitParser(unit) {
+			override def newScanner = new Scan
+		}
+		parser.parse()
 
 		tokens
 	}
