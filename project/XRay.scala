@@ -1,13 +1,14 @@
 	import sbt._
 	import Keys._
+	import Configurations.CompilerPlugin
 
 object XRay extends Build
 {
 	lazy val main = Project("sxr", file(".")) settings(
 		name := "sxr",
-		organization := "org.scala-sbt.sxr",
-		version := "0.3.0-SNAPSHOT",
-		scalaVersion := "2.10.1",
+		organization in ThisBuild := "org.scala-sbt.sxr",
+		version in ThisBuild := "0.3.0-SNAPSHOT",
+		scalaVersion in ThisBuild := "2.10.1",
 		scalacOptions += "-deprecation",
 		ivyConfigurations += js,
 		exportJars := true,
@@ -16,6 +17,14 @@ object XRay extends Build
 		jqueryAll <<= target(_ / "jquery-all.js"),
 		combineJs <<= (update,jqueryAll,streams) map { (report, all, s) => combineJquery(report, all, s.log) },
 		resourceGenerators in Compile <+= combineJs
+	)
+
+	lazy val test = project.dependsOn(main % CompilerPlugin).settings(
+		autoCompilerPlugins := true,
+		compile in Compile <<= (compile in Compile).dependsOn(clean),
+		Keys.test <<= (compile in Compile, classDirectory in Compile, baseDirectory, streams).map { (_, out, base, s) =>
+			checkOutput(out / "../classes.sxr", base / "expected", s.log)
+		}
 	)
 
 	val js = config("js").hide
@@ -45,4 +54,34 @@ object XRay extends Build
 		Using.fileInputStream(js) { in =>
 			Using.fileOutputStream(append = true)(to) { out => IO.transfer(in, out) }
 		}
+
+
+	def checkOutput(sxrDir: File, expectedDir: File, log: Logger) {
+		val actual = filesToCompare(sxrDir)
+		val expected = filesToCompare(expectedDir)
+		val actualRelative = actual._2s
+		val expectedRelative = expected._2s
+		if(actualRelative != expectedRelative) {
+			val actualOnly = actualRelative -- expectedRelative
+			val expectedOnly = expectedRelative -- actualRelative
+			def print(n: Iterable[String]): String = n.mkString("\n\t", "\n\t", "\n")
+		 	log.error(s"Actual filenames not expected: ${print(actualOnly)}Expected filenames not present: ${print(expectedOnly)}")
+			error("Actual filenames differed from expected filenames.")
+		}
+		val different = actualRelative filterNot { relativePath =>
+			val actualFile = actual.reverse(relativePath).head
+			val expectedFile = expected.reverse(relativePath).head
+			val same = sameFile(actualFile, expectedFile)
+			if(!same) log.error(s"$relativePath\n\t$actualFile\n\t$expectedFile")
+			same
+		}
+		if(different.nonEmpty)
+			error("Actual content differed from expected content")
+	}
+	def filesToCompare(dir: File): Relation[File,String] = {
+		val mappings = dir ** ("*.html" - "index.html") x relativeTo(dir)
+		Relation.empty ++ mappings
+	}
+	def sameFile(actualFile: File, expectedFile: File): Boolean =
+		IO.read(actualFile) == IO.read(expectedFile)
 }
