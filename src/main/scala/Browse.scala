@@ -132,10 +132,13 @@ abstract class Browse extends Plugin
 	}
 	/** Gets the token for the given offset.*/
 	private def tokenAt(tokens: wrap.SortedSetWrapper[Token], offset: Int): Option[Token] =
+		tokensAt(tokens, offset).headOption
+	/** Gets the token for the given offset.*/
+	private def tokensAt(tokens: wrap.SortedSetWrapper[Token], offset: Int): List[Token] =
 	{
 		// create artificial tokens to get a subset of the tokens starting at the given offset
 		// then, take the first token in the range
-		tokens.range(new Token(offset, 1, 0), new Token(offset+1, 1, 0)).first
+		tokens.range(new Token(offset, 1, 0), new Token(offset+1, 1, 0)).toList
 	}
 
 	/** Filters unwanted symbols, such as packages.*/
