@@ -152,6 +152,8 @@ object FileUtil
 		finally { in.close() }
 	}
 
+	def quarterHash(s: String): String = quarter(hash(s))
+	def quarter(s: String): String = if(s.length > 7) s.substring(0, s.length / 4) else s
 	def hash(s: String): String = java.security.MessageDigest.getInstance("SHA").digest(s.getBytes).flatMap(hashDigits).mkString
 	private def hashDigits(b: Byte) =
 	{

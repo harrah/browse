@@ -6,26 +6,28 @@ package sxr
 
 private object Collapse
 {
-	def apply(tokens: Iterable[Token], links: LinkMap)
+	def apply(tokens: Set[Token])
 	{
 		eliminateDuplicates(tokens)
-		val c = new Collapse(tokens, links)
+		val c = new Collapse(tokens)
 		c()
 	}
-	private def eliminateDuplicates(tokens: Iterable[Token])
+	private def eliminateDuplicates(tokens: Set[Token])
 	{
-		val idOccurrences = new scala.collection.mutable.HashMap[Int, Int] // map from definition ID to number of tokens with that ID
-		for(token <- tokens; definition <- token.definitions)
+		val idOccurrences = new scala.collection.mutable.HashMap[StableID, Int] // map from definition ID to number of tokens with that ID
+		for(token <- tokens; definition <- token.definitions.toSet[StableID])
 			idOccurrences(definition) = idOccurrences.getOrElse(definition, 0) + 1
-		// The set of all definition IDs used by more than one token.  These tokens are generally not significant and it is invalid to have tokens
+		// The set of all definition IDs used by more than one token.  These tokens generally indicate a problem: it is invalid to have tokens
 		//   with the same ID.
 		val duplicates = Set( idOccurrences.filter(_._2 > 1).map(_._1).toSeq : _*)
+/*		for( (id, occur) <- idOccurrences if occur > 1)
+			println("dup(" + occur + ") ID " + id.id + ": " + tokens.filter(_.definitions.contains(id)))*/
 		tokens.foreach( _ --= duplicates)
 	}
 }
-private class Collapse(tokens: Iterable[Token], links: LinkMap)
+private class Collapse(tokens: Set[Token])
 {
-	private val collapsedIDMap = wrap.Wrappers.basicMap[Int, Int]
+	private val collapsedIDMap = wrap.Wrappers.basicMap[StableID, StableID]
 	private def apply()
 	{
 		tokens.foreach(collapseIDs)
@@ -38,17 +40,8 @@ private class Collapse(tokens: Iterable[Token], links: LinkMap)
 			case singleID :: b :: tail =>
 				token.collapseDefinitions(singleID)
 				(b :: tail).foreach(id => collapsedIDMap(id) = singleID)
-				// If the token defines multiple stableIDs, the LinkMap must also be collapsed,
-				// so that all stableIDs point to the retained internal id
-				token.stableIDs match {
-					case s1 :: s2 :: tail =>
-						require(token.source.isDefined, "A token with stableIDs should have a source")
-						val source = token.source.get
-						token.stableIDs.foreach(stable => links(source, stable) = singleID)
-					case _ => ()
-				}
 			case _ => ()
 		}
 	}
-	private def remapTarget(oldID: Int): Int = collapsedIDMap.getOrElse(oldID, oldID)
+	private def remapTarget(oldID: StableID): StableID = collapsedIDMap.getOrElse(oldID, oldID)
 }

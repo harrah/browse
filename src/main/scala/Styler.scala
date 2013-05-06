@@ -51,7 +51,7 @@ private class BasicStyler(title: String, baseStyle: String, baseJs: String, base
 			annotateToken(token, styleClasses)
 	}
 	private def base(link: Link) = if(link.path == "") "" else link.path + ".html"
-	private def constructHtmlLink(link: Link) = base(link) + "#" + link.target
+	private def constructHtmlLink(link: Link) = base(link) + "#" + link.target.id
 
 	private def annotateToken(token: Token, styleClasses: List[String]) =
 	{
@@ -60,13 +60,13 @@ private class BasicStyler(title: String, baseStyle: String, baseJs: String, base
 		require(definitions.size <= 1, "Definitions were not collapsed for " + token)
 		val reference = token.reference.filter
 			{ link =>
-				val refID = link.target.toInt
+				val refID = link.target
 				!definitions.contains(refID)
 			}
 		val definitionsList = definitions.toList
 		val attributes = reference.map("href=\"" + constructHtmlLink(_) + "\"").toList :::
 			token.tpe.map(t => "title=\"" + Escape(t.name) + "\"").toList :::
-			definitionsList.headOption.map("id=\"" + _ + "\"").toList :::
+			definitionsList.headOption.map("id=\"" + _.id + "\"").toList :::
 			( styleClasses match
 			{
 				case Nil => Nil

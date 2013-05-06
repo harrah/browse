@@ -20,8 +20,7 @@ object BrowsePlugin
 	val OutputFormatsOptionName = "output-formats:"
 	/** The separator in the list of output formats.*/
 	val OutputFormatSeparator = '+'
-	/** This is the name of the options that specifies a file containing one URL per line for each external sxr location to link to. */
-	val ExternalLinksOptionName = "link-file:"
+
 }
 /* The standard plugin setup.  The main implementation is in Browse.  The entry point is Browse.generateOutput */
 class BrowsePlugin(val global: Global) extends Browse
@@ -35,7 +34,8 @@ class BrowsePlugin(val global: Global) extends Browse
 	
 	/** The directory against which the input source paths will be relativized.*/
 	private var baseDirectories: List[File] = Nil
-	var externalLinkURLs: List[URL] = Nil
+
+	def externalLinks = Map.empty // TODO
 
 	lazy val classDirectory = {
 		val single = settings.outputDirs.getSingleOutput
@@ -54,8 +54,6 @@ class BrowsePlugin(val global: Global) extends Browse
 				baseDirectories = parseBaseDirectories(option.substring(BaseDirectoryOptionName.length))
 			else if(option.startsWith(OutputFormatsOptionName))
 				outputFormats = parseOutputFormats(option.substring(OutputFormatsOptionName.length))
-			else if(option.startsWith(ExternalLinksOptionName))
-				externalLinkURLs = parseExternalLinks(option.substring(ExternalLinksOptionName.length))
 			else
 				error("Option for source browser plugin not understood: " + option)
 		}
@@ -69,27 +67,14 @@ class BrowsePlugin(val global: Global) extends Browse
 		str.split(OutputFormatSeparator).flatMap(valueOf).toList
 	}
 
-	private def parseExternalLinks(links: String): List[URL] =
-	{
-		val f = new File(links)
-		if(f.exists) readExternalLinks(f) else { error("Link file does not exist: " + f.getAbsolutePath); Nil }
-	}
-	private def readExternalLinks(f: File): List[URL] =
-		FileUtil.readLines(f, FileUtil.DefaultEncoding, externalLinkURLs) { ( links, line) =>
-			parseURL(line.trim).toList ::: links
-		}
-	private def parseURL(line: String): Option[URL] =
-		if(line.length == 0 || line.startsWith("#")) None else Some(new URL(line))
-
 	override val optionsHelp: Option[String] =
 	{
 		val prefix = "  -P:" + name + ":"
 		val base = prefix + BaseDirectoryOptionName + "<paths>            Set the base source directories."
 		val formats = prefix + OutputFormatsOptionName + "<formats>          '" + OutputFormatSeparator +
 			"'-separated list of output formats to write (available: " + OutputFormat.all.mkString(",") + " - defaults to: " + Html + ")."
-		val link = prefix + ExternalLinksOptionName + "<path>            Set the file containing sxr link.index URLs for external linking."
 
-		Some( Seq(base, formats, link).mkString("", "\n", "\n") )
+		Some( Seq(base, formats).mkString("", "\n", "\n") )
 	}
 
 	private object Component extends PluginComponent
@@ -104,27 +89,7 @@ class BrowsePlugin(val global: Global) extends Browse
 	private class BrowsePhase(prev: Phase) extends Phase(prev)
 	{
 		def name = BrowsePlugin.this.name
-		def run = generateOutput(externalLinkMaps)
-	}
-
-	private def externalLinkMaps: List[LinkMap] = externalLinkURLs.map(getLinkMap)
-	private def getLinkMap(link: URL) =
-	{
-		val index = new URL(link, Browse.LinkIndexRelativePath)
-		val cached = cachedLinkFile(index)
-		if(!cached.exists) {
-			try {
-				FileUtil.downloadCompressed(new URL(link, Browse.CompressedLinkIndexRelativePath), cached)
-			} catch {
-				case e: java.io.IOException => FileUtil.download(index, cached)
-			}
-		}
-		LinkMapStore.read(cached, Some(link))
-	}
-	private def cachedLinkFile(link: URL): File =
-	{
-		val cacheDirectory = new File( classDirectory.getParentFile, Browse.CacheRelativePath)
-		new File(cacheDirectory, FileUtil.hash(link.toExternalForm))
+		def run = generateOutput()
 	}
 
 	/** Relativizes the path to the given Scala source file against the base directories. */

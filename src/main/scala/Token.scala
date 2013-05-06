@@ -5,16 +5,15 @@
 package sxr
 
 /** Represents a link to a definition.  The path is the relative path to the file in the source
-* directory, target is the symbol ID targeted. stableID is an identifier that will survive
-* successive sxr runs (only used for public symbols).
+* directory, target is an identifier that will survive successive sxr runs.
 * Specific writers need to construct the actual path from these informations (e.g in
 * HtmlWriter, add '.html' to get the relative path of the target HTML file, and append the
 * ID separated by a '#'. */
-private class Link(val path: String, val target: Int, val stableID: Option[String])
+private class Link(val path: String, val target: StableID)
 {
-	// This can still be useful for debugging, but must not be used directly by a writer.
+	// This can still be useful for debugging, but should not be used directly by a writer.
 	override def toString = path + "#" + target
-	def retarget(newTarget: Int) = new Link(path, newTarget, stableID)
+	def retarget(newTarget: StableID) = new Link(path, newTarget)
 }
 /** Represents a token at the lexer level with associated type information.
 * 'start' is the offset of the token in the original source file.
@@ -26,13 +25,13 @@ private case class Token(start: Int, length: Int, code: Int) extends Ordered[Tok
 	require(length > 0)
 	/** Tokens are sorted by their start position, so that they may be searched by offset in
 	* the extraction code and then processed in sequence in the annotation code. */
-	def compare(other: Token) = start compare other.start
+	def compare(other: Token): Int = start compare other.start
 	
 	private[this] var rawType: Option[TypeAttribute] = None
 	private[this] var rawReference: Option[Link] = None
-	private[this] var rawDefinitions: List[Int] = Nil
+	private[this] var rawDefinitions: List[StableID] = Nil
 	private[this] var rawSource: Option[String] = None
-	private[this] var rawStableIDs: List[String] = Nil
+
 	/** Sets the type information for this token. */
 	def tpe_=(t: TypeAttribute)
 	{
@@ -52,32 +51,33 @@ private case class Token(start: Int, length: Int, code: Int) extends Ordered[Tok
 			rawSource = Some(s)
 	}
 	/** Adds an ID for this token.  An ID is used to mark this token as the source of a symbol. */
-	def +=(id: Int) { rawDefinitions ::= id }
-	/** Adds a stable ID for this token. A stable ID is used to resolve links across runs. */
-	def +=(stableID: String) { rawStableIDs ::= stableID }
+	def +=(id: StableID) { rawDefinitions ::= id }
 	/** Removes the IDs in the given set from this token's definitions and references.*/
-	def --=(ids: Set[Int])
+	def --=(ids: Set[StableID])
 	{
 		rawDefinitions = rawDefinitions.filter(d => !ids.contains(d))
 		rawReference = rawReference.filter(r => !ids.contains(r.target))
 	}
+
 	/** Gets the type information. */
-	def tpe = rawType
+	def tpe: Option[TypeAttribute] = rawType
+
 	/** Gets the link to the defining location for this token. */
-	def reference = rawReference
+	def reference: Option[Link] = rawReference
 	/** Gets the definition IDs. */
-	def definitions = rawDefinitions
-	/** Gets the stable definition IDs. */
-	def stableIDs = rawStableIDs
+	def definitions: List[StableID] = rawDefinitions
 	/** Gets the relative path of the source containing this token. */
-	def source = rawSource
+	def source: Option[String] = rawSource
+
 	/** True if this token has no reference to a definition and has no definitions itself. */
-	def isSimple = reference.isEmpty && definitions.isEmpty
+	def isSimple: Boolean = reference.isEmpty && definitions.isEmpty
+
 	/** True if this token has no reference to a definition, has no definitions itself, and
 	* has no type information. */
-	def isPlain = isSimple && tpe.isEmpty
-	def collapseDefinitions(to: Int) = { rawDefinitions = to :: Nil }
-	def remapReference(remap: Int => Int)
+	def isPlain: Boolean = isSimple && tpe.isEmpty
+
+	def collapseDefinitions(to: StableID) { rawDefinitions = to :: Nil }
+	def remapReference(remap: StableID => StableID)
 	{
 		rawReference match
 		{

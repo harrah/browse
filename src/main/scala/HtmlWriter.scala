@@ -32,6 +32,8 @@ object HtmlWriter
 	def writeJS(to: File) { FileUtil.writeResource(LinkedJS, to) }
 	/** Copies the jQuery script available as a resource on the classpath to the file 'to'.*/
 	def writeJQuery(to: File) { FileUtil.writeResource(LinkedJQuery, to) }
+
+	final val nl = System.getProperty("line.separator")
 }
 
 /** Outputs a set of html files and auxiliary javascript and CSS files that annotate the source
@@ -80,12 +82,14 @@ class HtmlWriter(context: OutputWriterContext) extends OutputWriter {
 		FileUtil.withWriter(to) { out =>
 			out.write("<html><body>")
 			sortedRelativePaths.foreach(writeEntry(to, out))
+			out.write(nl)
 			out.write("</body></html>")
 		}
 	}
 	import java.io.Writer
 	private def writeEntry(index: File, out: Writer)(path: String)
 	{
+		out.write(nl)
 		out.write("<li><a href=\"")
 		out.write(path)
 		out.write("\">")

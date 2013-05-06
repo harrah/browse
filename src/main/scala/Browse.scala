@@ -16,12 +16,10 @@ import java.net.URL
 import OutputFormat.{OutputFormat, getWriter}
 import Browse._
 
+class StableID(val id: String) extends AnyVal
+
 object Browse
 {
-	/** The path to a link index, which allows linking between runs.  This applies for both incremental and remote linking.*/
-	val LinkIndexRelativePath = "link.index"
-	/** The path to a compressed link index, which allows linking between runs.  This applies for both incremental and remote linking.*/
-	val CompressedLinkIndexRelativePath = LinkIndexRelativePath + ".gz"
 	/** The name of the directory containing cached remote `link.index`es*/
 	val CacheRelativePath = "cache.sxr"
 }
@@ -32,8 +30,8 @@ abstract class Browse extends Plugin
 	def classDirectory: File
 	/** The output formats to write */
 	def outputFormats: List[OutputFormat]
-	/** The URLs of external sxr locations */
-	def externalLinkURLs: List[URL]
+	/** The URLs of external sxr locations keyed by classpath entry. */
+	def externalLinks: Map[File,String]
 	/** Relativizes the path to the given Scala source file against the base directories. */
 	def getRelativeSourcePath(source: File): String
 	/** The compiler.*/
@@ -44,18 +42,12 @@ abstract class Browse extends Plugin
 	lazy val outputDirectory = new File(classDirectory.getParentFile, classDirectory.getName + ".sxr")
 	outputDirectory.mkdirs
 
-	private val linkIndexFile = new File(outputDirectory, LinkIndexRelativePath)
-	private def linkStore = new LinkMapStore(linkIndexFile)
-
 	/** The entry method for invoking the configured writers to generate the output.*/
-	def generateOutput(externalLinks: List[LinkMap])
+	def generateOutput()
 	{
 		val sourceFiles = currentRun.units.toList.flatMap(getSourceFile(_))
 		if (sourceFiles.size > 0) {
-			val links = new CompoundLinkMap(linkStore.read(None), externalLinks)
-			links.clear(sourceFiles.map(getRelativeSourcePath(_)).toList)
-
-			val context = new OutputWriterContext(sourceFiles, outputDirectory, settings.encoding.value, externalLinkURLs)
+			val context = new OutputWriterContext(sourceFiles, outputDirectory, settings.encoding.value)
 			val writers = outputFormats.map(getWriter(_, context))
 			writers.foreach(_.writeStart())
 
@@ -63,15 +55,14 @@ abstract class Browse extends Plugin
 			{
 				// generate the tokens
 				val tokens = scan(unit)
-				val traverser = new Traverse(tokens, unit.source, links)
+				val traverser = new Traverse(tokens, unit.source)
 				traverser(unit.body)
 				val tokenList = tokens.toList
-				Collapse(tokenList, links)
+				Collapse(tokenList.toSet)
 
 				writers.foreach(_.writeUnit(sourceFile, getRelativeSourcePath(sourceFile), tokenList))
 			}
 			writers.foreach(_.writeEnd())
-			linkStore.write(links)
 		}
 	}
 	private def getSourceFile(unit: CompilationUnit): Option[File] = unit.source.file.file match {
@@ -151,7 +142,7 @@ abstract class Browse extends Plugin
 		s.isPackage || // nothing done with packages
 		s.isImplClass
 		
-	private class Traverse(tokens: wrap.SortedSetWrapper[Token], source: SourceFile, links: LinkMap) extends Traverser
+	private class Traverse(tokens: wrap.SortedSetWrapper[Token], source: SourceFile) extends Traverser
 	{
 		// magic method #1
 		override def traverse(tree: Tree)
@@ -196,10 +187,10 @@ abstract class Browse extends Plugin
 				def processDefaultSymbol() =
 				{
 					if(t.hasSymbol && !ignore(t.symbol))
-						processSymbol(t, token, source.file.file, links)
+						processSymbol(t, token, source.file.file)
 				}
 				def processSimple() { token.tpe = TypeAttribute(typeString(t.tpe), None) }
-				def processTypeTree(tt: TypeTree) { if(!ignore(tt.symbol)) processSymbol(tt, token, source.file.file, links) }
+				def processTypeTree(tt: TypeTree) { if(!ignore(tt.symbol)) processSymbol(tt, token, source.file.file) }
 				t match
 				{
 					case _: ClassDef => processDefaultSymbol()
@@ -244,27 +235,22 @@ abstract class Browse extends Plugin
 					case Literal(value) => processSimple() // annotate literals
 					case tt: TypeTree =>
 						if(token.isPlain)
-							processSymbol(tt, token, source.file.file, links)
+							processSymbol(tt, token, source.file.file)
 					case _ => ()
 				}
 			}
 		}
 	}
 		// magic method #3
-	private def processSymbol(t: Tree, token: Token, sourceFile: File, links: LinkMap)
+	private def processSymbol(t: Tree, token: Token, sourceFile: File)
 	{
 		val sym = t.symbol
 		def addDefinition()
 		{
-			val id = sym.id
-			if(publicSymbol(sym)) {
-				val stable = stableID(sym)
-				val source = getRelativeSourcePath(sourceFile)
-				links(source, stable) = id
-				token += stable
-				token.source = source
+			for(id <- stableID(sym)) {
+				token.source = getRelativeSourcePath(sourceFile)
+				token += id
 			}
-			token += id
 		}
 		sym match
 		{
@@ -285,7 +271,7 @@ abstract class Browse extends Plugin
 							case _ => typeString(sType)
 						}
 					//println("Term symbol " + sym.id + ": " + asString)
-					token.tpe = TypeAttribute(asString, linkTo(sourceFile, sType.typeSymbol, links))
+					token.tpe = TypeAttribute(asString, linkTo(sourceFile, sType.typeSymbol))
 				}
 			case ts: TypeSymbol =>
 				val treeType = t.tpe
@@ -294,7 +280,7 @@ abstract class Browse extends Plugin
 					else treeType
 				//println("Type symbol " + sym.id + ": " + typeString(sType))
 				if(sType != null)
-					token.tpe = TypeAttribute(typeString(sType), linkTo(sourceFile, sType.typeSymbol, links))
+					token.tpe = TypeAttribute(typeString(sType), linkTo(sourceFile, sType.typeSymbol))
 			case _ => ()
 		}
 		if(sym != null && sym != NoSymbol)
@@ -303,7 +289,7 @@ abstract class Browse extends Plugin
 				addDefinition()
 			else
 			{
-				linkTo(sourceFile, sym, links) match
+				linkTo(sourceFile, sym) match
 				{
 					case Some(x) => token.reference = x
 					case None => ()//addDefinition()
@@ -311,8 +297,7 @@ abstract class Browse extends Plugin
 			}
 		}
 	}
-	private def publicSymbol(s: Symbol): Boolean =
-		!s.isLocal
+
 	/** Constructs a decoded fully qualified name for the given symbol. */
 	private def fullName(s: Symbol): String =
 	{
@@ -372,46 +357,76 @@ abstract class Browse extends Plugin
 	}
 
 	/** Generates a link usable in the file 'from' to the symbol 'sym', which might be in some other file. */
-	private def linkTo(from: File, sym: Symbol, links: LinkMap): Option[Link] =
+	private def linkTo(from: File, sym: Symbol): Option[Link] =
 	{
 		if(sym == null || sym == NoSymbol || sym.owner == NoSymbol)
 			None
 		else
-		{
-			val source = sym.sourceFile
-			if(source == null)
-				externalLinkTo(from, sym, links)
-			else
-				makeLink(from, source.file, sym.id)
-		}
+			stableID(sym) flatMap { id =>
+				val source = sym.sourceFile
+				if(source == null) // TODO: handle partial recompilation
+					externalLinkTo(sym, id)
+				else
+					makeLink(from, source.file, id)
+			}
 	}
-	private def makeLink(from: File, to: File, id: Int): Some[Link] =
+	private def makeLink(from: File, to: File, id: StableID): Some[Link] =
 	{
 		val base = if(to == from) "" else FileUtil.relativePath(relativeSource(from), relativeSource(to))
-		Some(new Link(base, id, None))
+		Some(new Link(base, id))
 	}
-	private def externalLinkTo(from: File, sym: Symbol, links: LinkMap): Option[Link] =
-	{
-		if(publicSymbol(sym))
-		{
-			val name = stableID(sym)
-			links(name) map { case (src, id)  => new Link(src, id, Some(name)) }
-		}
-		else
-			None
-	}
+	private def externalLinkTo(sym: Symbol, id: StableID): Option[Link] =
+		for(entry <- lookup(sym); url <- externalLinks.get(entry)) yield
+			new Link(url, id)
+
+	private[this] def lookup(sym: Symbol): Option[File] =
+		Option(sym.associatedFile).flatMap(_.underlyingSource).map(_.file) // TODO: handle directories
+		
 	/** Generates a String identifying the provided Symbol that is stable across runs.
 	* The Symbol must be a publicly accessible symbol, such as a method, class, or type member.*/
-	private def stableID(sym: Symbol) =
-	{
-		val tpe = if(sym.isTerm) "term" else "type"
-		val name = nameString(sym)
-		val over = if(sym.isMethod) name + "(" + methodHash(sym) + ")" else name
-		tpe + " " + over
-	}
+	private def stableID(sym: Symbol): Option[StableID] =
+		Some(new StableID(fullNameString(sym)))
+
+	private[this] def normalize(sym: Symbol): Symbol =
+		if(sym.isModuleClass) {
+			val mod = sym.companionModule
+			if(mod == NoSymbol) sym else mod
+		} else if(sym.isCaseApplyOrUnapply)
+			sym.owner.companionClass
+		else if(sym.isPrimaryConstructor)
+			sym.owner
+		else if(sym.isStable && sym.isMethod) {
+			val get = sym.getter(sym.enclClass)
+			if(get == NoSymbol) sym else get
+		}
+		else
+			sym
+
 	// hack: probably not sufficient to distinguish all possible overloaded methods
-	private def methodHash(sym: Symbol) = FileUtil.hash(sym.tpe.toString)
+	// the hash can be truncated quite a bit: aren't distinguishing between many options
+	private def methodHash(sym: Symbol) = FileUtil.quarterHash(sym.tpe.toString)
 	private def relativeSource(file: File) = new File(getRelativeSourcePath(file.getAbsoluteFile))
 
-	private[this] def nameString(s: Symbol): String = s.fullName
+	/** Constructs a decoded fully qualified name for the given symbol. */
+	private def fullNameString(sym: Symbol): String =
+	{
+		require(sym != NoSymbol)
+		val s = normalize(sym)
+		val owner = s.owner
+		require(owner != NoSymbol)
+		val root = owner.isRoot || owner.isEmptyPackageClass
+		val sep = if(s.isTerm) { if(root) "" else "." } else ";"
+		val name = sep + nameString(s)
+		if(root)
+			name
+		else
+			fullNameString(owner) + name
+	}
+	private[this] def nameString(sym: Symbol): String =
+	{
+		val params = if(isOverloadedMethod(sym)) "(" + methodHash(sym) + ")" else ""
+		sym.nameString + params
+	}
+	private[this] def isOverloadedMethod(sym: Symbol): Boolean =
+		sym.isMethod && sym.owner.info.member(sym.name).isOverloaded
 }
