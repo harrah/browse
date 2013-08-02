@@ -364,24 +364,30 @@ abstract class Browse extends Plugin
 		else
 			stableID(sym) flatMap { id =>
 				val source = sym.sourceFile
-				if(source == null) // TODO: handle partial recompilation
-					externalLinkTo(sym, id)
-				else
-					makeLink(from, source.file, id)
+				val url =
+					if(source != null)
+						Some(makeLink(from, source.file))
+					else
+						lookup(sym).flatMap { entry =>
+							if(isOutput(entry)) 
+							externalLinks.get(entry)
+						}
+				url map { u => new Link(url, id) }
 			}
 	}
-	private def makeLink(from: File, to: File, id: StableID): Some[Link] =
-	{
-		val base = if(to == from) "" else FileUtil.relativePath(relativeSource(from), relativeSource(to))
-		Some(new Link(base, id))
-	}
-	private def externalLinkTo(sym: Symbol, id: StableID): Option[Link] =
-		for(entry <- lookup(sym); url <- externalLinks.get(entry)) yield
-			new Link(url, id)
+	private def makeLink(from: File, to: File): Link =
+		if(to == from) "" else FileUtil.relativePath(relativeSource(from), relativeSource(to))
 
 	private[this] def lookup(sym: Symbol): Option[File] =
-		Option(sym.associatedFile).flatMap(_.underlyingSource).map(_.file) // TODO: handle directories
-		
+		Option(sym.associatedFile).flatMap(_.underlyingSource).flatMap(f => classpathEntry(f.file))
+
+	private[this] def classpathEntry(f: File): Option[File] =
+		classpathFiles find { entry => FileUtil.relativize(entry, f).isDefined }
+
+	// couldn't find a direct method to get the Seq[File]
+	private[this] lazy val classpathFiles: Seq[File] =
+		util.ClassPath.split(new tools.util.PathResolver(settings).result.asClasspathString).map(s => new File(s).getAbsoluteFile)
+
 	/** Generates a String identifying the provided Symbol that is stable across runs.
 	* The Symbol must be a publicly accessible symbol, such as a method, class, or type member.*/
 	private def stableID(sym: Symbol): Option[StableID] =
