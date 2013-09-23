@@ -8,7 +8,7 @@ object XRay extends Build
 		name := "sxr",
 		organization in ThisBuild := "org.scala-sbt.sxr",
 		version in ThisBuild := "0.3.0-SNAPSHOT",
-		scalaVersion in ThisBuild := "2.10.1",
+		scalaVersion in ThisBuild := "2.10.2",
 		scalacOptions += "-deprecation",
 		ivyConfigurations += js,
 		exportJars := true,
