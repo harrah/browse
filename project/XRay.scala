@@ -19,7 +19,19 @@ object XRay extends Build
 		resourceGenerators in Compile <+= combineJs
 	)
 
-	lazy val test = project.dependsOn(main % CompilerPlugin).settings(
+	lazy val test = project.dependsOn(main % CompilerPlugin).settings(testProjectSettings: _*)
+
+	lazy val testLink = project.dependsOn(main % CompilerPlugin, test).settings(testProjectSettings: _*).settings(
+		scalacOptions += {
+			val _ = clean.value
+			val linkFile = target.value / "links"
+			val testLinkFile = classDirectory.in(test, Compile).value.getParentFile / "classes.sxr"
+			IO.write(linkFile, testLinkFile.toURI.toURL.toExternalForm)
+			s"-P:sxr:link-file:$linkFile"
+		}
+	)
+
+	def testProjectSettings = Seq(
 		autoCompilerPlugins := true,
 		compile in Compile <<= (compile in Compile).dependsOn(clean),
 		Keys.test := {
