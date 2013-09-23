@@ -13,17 +13,20 @@ object XRay extends Build
 		ivyConfigurations += js,
 		exportJars := true,
 		libraryDependencies ++= dependencies,
-		libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _ % "provided"),
-		jqueryAll <<= target(_ / "jquery-all.js"),
-		combineJs <<= (update,jqueryAll,streams) map { (report, all, s) => combineJquery(report, all, s.log) },
+		libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided",
+		jqueryAll := target.value / "jquery-all.js",
+		combineJs := combineJquery(update.value, jqueryAll.value, streams.value.log),
 		resourceGenerators in Compile <+= combineJs
 	)
 
 	lazy val test = project.dependsOn(main % CompilerPlugin).settings(
 		autoCompilerPlugins := true,
 		compile in Compile <<= (compile in Compile).dependsOn(clean),
-		Keys.test <<= (compile in Compile, classDirectory in Compile, baseDirectory, streams).map { (_, out, base, s) =>
-			checkOutput(out / "../classes.sxr", base / "expected", s.log)
+		Keys.test := {
+			val _ = (compile in Compile).value
+			val out = (classDirectory in Compile).value
+			val base = baseDirectory.value
+			checkOutput(out / "../classes.sxr", base / "expected", streams.value.log)
 		}
 	)
 
