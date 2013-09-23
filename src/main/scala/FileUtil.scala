@@ -12,7 +12,7 @@ import java.net.URL
 object FileUtil
 {
 	/** Managed resource operation.*/
-	def withReader[T](source: File, sourceEncoding: String)(f: BufferedReader => T): T =
+	def withReader[T](source: File, sourceEncoding: String = DefaultEncoding)(f: BufferedReader => T): T =
 	{
 		val input = new BufferedReader(new InputStreamReader(new FileInputStream(source), sourceEncoding))
 		try { f(input) }
@@ -49,7 +49,7 @@ object FileUtil
 			else
 				toPathList(f.getParentFile, f.getName :: current)
 		}
-		toPathList(file.getCanonicalFile, Nil).toArray
+		toPathList(file.getAbsoluteFile, Nil).toArray
 	}
 	/** Creates a relative path from 'fromFile' to 'toFile' (for use in an 'href' attribute).*/
 	def relativePath(fromFile: File, toFile: File): String =
@@ -99,7 +99,7 @@ object FileUtil
 	/** Relativies the path of the given file against the given base file.*/
 	def relativize(baseFile: File, file: File): Option[String] =
 	{
-		val pathString = file.getCanonicalPath
+		val pathString = file.getAbsolutePath
 		baseFileString(baseFile) flatMap { baseString =>
 			if(pathString.startsWith(baseString))
 				Some(pathString.substring(baseString.length))
@@ -112,7 +112,7 @@ object FileUtil
 	{
 		if(baseFile.isDirectory)
 		{
-			val cp = baseFile.getCanonicalPath
+			val cp = baseFile.getAbsolutePath
 			assert(cp.length > 0)
 			if(cp.charAt(cp.length - 1) == File.separatorChar)
 				Some(cp)

@@ -9,6 +9,7 @@ import ast.parser.Tokens
 import plugins.Plugin
 import symtab.Flags
 import reflect.internal.util.SourceFile
+import annotation.tailrec
 
 import java.io.{File, Reader, Writer}
 import java.net.URL
@@ -20,6 +21,10 @@ class StableID(val id: String) extends AnyVal
 
 object Browse
 {
+   /** The path to a link index, which allows linking between runs.  This applies for both incremental and remote linking.*/
+	val LinkIndexRelativePath = "topLevel.index"
+	/** The path to a compressed link index, which allows linking between runs.  This applies for both incremental and remote linking.*/
+	val CompressedLinkIndexRelativePath = LinkIndexRelativePath + ".gz"
 	/** The name of the directory containing cached remote `link.index`es*/
 	val CacheRelativePath = "cache.sxr"
 }
@@ -30,10 +35,12 @@ abstract class Browse extends Plugin
 	def classDirectory: File
 	/** The output formats to write */
 	def outputFormats: List[OutputFormat]
-	/** The URLs of external sxr locations keyed by classpath entry. */
-	def externalLinks: Map[File,String]
+	/** The URLs of external sxr locations. */
+	def externalLinkURLs: List[URL]
 	/** Relativizes the path to the given Scala source file against the base directories. */
 	def getRelativeSourcePath(source: File): String
+	/** For a relativized source path, gets the full path. */
+	def getFullSourcePath(relative: String): Option[File]
 	/** The compiler.*/
 	val global: Global
 
@@ -42,10 +49,16 @@ abstract class Browse extends Plugin
 	lazy val outputDirectory = new File(classDirectory.getParentFile, classDirectory.getName + ".sxr")
 	outputDirectory.mkdirs
 
+	private[this] val linkIndexFile = new File(outputDirectory, LinkIndexRelativePath)
+
 	/** The entry method for invoking the configured writers to generate the output.*/
-	def generateOutput()
+	def generateOutput(externalIndexes: List[TopLevelIndex])
 	{
 		val sourceFiles = currentRun.units.toList.flatMap(getSourceFile(_))
+
+		val localIndex = getLocalIndex(sourceFiles)
+		val combinedIndex = TopLevelIndex.compound(localIndex :: externalIndexes)
+
 		if (sourceFiles.size > 0) {
 			val context = new OutputWriterContext(sourceFiles, outputDirectory, settings.encoding.value)
 			val writers = outputFormats.map(getWriter(_, context))
@@ -55,7 +68,7 @@ abstract class Browse extends Plugin
 			{
 				// generate the tokens
 				val tokens = scan(unit)
-				val traverser = new Traverse(tokens, unit.source)
+				val traverser = new Traverse(tokens, unit.source, combinedIndex)
 				traverser(unit.body)
 				val tokenList = tokens.toList
 				Collapse(tokenList.toSet)
@@ -64,6 +77,28 @@ abstract class Browse extends Plugin
 			}
 			writers.foreach(_.writeEnd())
 		}
+	}
+	private[this] def getLocalIndex(sourceFiles: List[File]): TopLevelIndex =
+	{
+		val relativeSources = sourceFiles.map(getRelativeSourcePath(_)).toSet
+		// approximation to determining if a top-level name is still present to avoid stale entries in the index
+		def sourceExists(relativePath: String): Boolean = getFullSourcePath(relativePath).isDefined
+		val localIndex = TopLevelIndex.read(linkIndexFile).filterSources(src => relativeSources(src) && sourceExists(src)).add(topLevelMappings)
+		TopLevelIndex.write(linkIndexFile, localIndex)
+		localIndex
+	}
+
+	private[this] def topLevelMappings: Seq[(String,String)] =
+	{
+		val newMappings = new collection.mutable.HashMap[String, String]
+		for {
+			unit <- currentRun.units
+			sourceFile <- getSourceFile(unit)
+			relativeSource = getRelativeSourcePath(sourceFile)
+			name <- topLevelNames(unit.body)
+		}
+			newMappings += (name -> relativeSource)
+		newMappings.toSeq
 	}
 	private def getSourceFile(unit: CompilationUnit): Option[File] = unit.source.file.file match {
 		case null => None // code compiled from the repl has no source file
@@ -142,14 +177,14 @@ abstract class Browse extends Plugin
 		s.isPackage || // nothing done with packages
 		s.isImplClass
 		
-	private class Traverse(tokens: wrap.SortedSetWrapper[Token], source: SourceFile) extends Traverser
+	private class Traverse(tokens: wrap.SortedSetWrapper[Token], source: SourceFile, index: TopLevelIndex) extends Traverser
 	{
 		// magic method #1
 		override def traverse(tree: Tree)
 		{
 			def handleDefault()
 			{
-				process(tree)
+				process(tree, index)
 				super.traverse(tree)
 			}
 			tree match
@@ -179,7 +214,7 @@ abstract class Browse extends Plugin
 		}
 		
 		// magic method #2
-		private def process(t: Tree)
+		private def process(t: Tree, index: TopLevelIndex)
 		{
 			def catchToNone[T](f: => T): Option[T] = try Some(f) catch { case e: UnsupportedOperationException => None }
 			for(tSource <- catchToNone(t.pos.source) if tSource == source; token <- tokenAt(tokens, t.pos.point))
@@ -187,10 +222,10 @@ abstract class Browse extends Plugin
 				def processDefaultSymbol() =
 				{
 					if(t.hasSymbol && !ignore(t.symbol))
-						processSymbol(t, token, source.file.file)
+						processSymbol(t, token, source.file.file, index)
 				}
 				def processSimple() { token.tpe = TypeAttribute(typeString(t.tpe), None) }
-				def processTypeTree(tt: TypeTree) { if(!ignore(tt.symbol)) processSymbol(tt, token, source.file.file) }
+				def processTypeTree(tt: TypeTree) { if(!ignore(tt.symbol)) processSymbol(tt, token, source.file.file, index) }
 				t match
 				{
 					case _: ClassDef => processDefaultSymbol()
@@ -235,14 +270,14 @@ abstract class Browse extends Plugin
 					case Literal(value) => processSimple() // annotate literals
 					case tt: TypeTree =>
 						if(token.isPlain)
-							processSymbol(tt, token, source.file.file)
+							processSymbol(tt, token, source.file.file, index)
 					case _ => ()
 				}
 			}
 		}
 	}
 		// magic method #3
-	private def processSymbol(t: Tree, token: Token, sourceFile: File)
+	private def processSymbol(t: Tree, token: Token, sourceFile: File, index: TopLevelIndex)
 	{
 		val sym = t.symbol
 		def addDefinition()
@@ -271,7 +306,7 @@ abstract class Browse extends Plugin
 							case _ => typeString(sType)
 						}
 					//println("Term symbol " + sym.id + ": " + asString)
-					token.tpe = TypeAttribute(asString, linkTo(sourceFile, sType.typeSymbol))
+					token.tpe = TypeAttribute(asString, linkTo(sourceFile, sType.typeSymbol, index))
 				}
 			case ts: TypeSymbol =>
 				val treeType = t.tpe
@@ -280,7 +315,7 @@ abstract class Browse extends Plugin
 					else treeType
 				//println("Type symbol " + sym.id + ": " + typeString(sType))
 				if(sType != null)
-					token.tpe = TypeAttribute(typeString(sType), linkTo(sourceFile, sType.typeSymbol))
+					token.tpe = TypeAttribute(typeString(sType), linkTo(sourceFile, sType.typeSymbol, index))
 			case _ => ()
 		}
 		if(sym != null && sym != NoSymbol)
@@ -289,7 +324,7 @@ abstract class Browse extends Plugin
 				addDefinition()
 			else
 			{
-				linkTo(sourceFile, sym) match
+				linkTo(sourceFile, sym, index) match
 				{
 					case Some(x) => token.reference = x
 					case None => ()//addDefinition()
@@ -357,31 +392,51 @@ abstract class Browse extends Plugin
 	}
 
 	/** Generates a link usable in the file 'from' to the symbol 'sym', which might be in some other file. */
-	private def linkTo(from: File, sym: Symbol): Option[Link] =
+	private def linkTo(from: File, sym: Symbol, index: TopLevelIndex): Option[Link] =
 	{
+		def externalURL: Option[String] = for(name <- topLevelName(sym); result <- index.source(name)) yield
+			result.base match {
+				case None => makeLink(from, result.relativeSource)
+				case Some(b) => result.resolve
+			}
+
 		if(sym == null || sym == NoSymbol || sym.owner == NoSymbol)
 			None
 		else
 			stableID(sym) flatMap { id =>
 				val source = sym.sourceFile
-				if(source == null) // TODO: handle partial recompilation
-					externalLinkTo(sym, id)
-				else
-					makeLink(from, source.file, id)
+				val url: Option[String] =
+					if(source != null)
+						Some(makeLink(from, source.file))
+					else
+						externalURL
+				url map { u => new Link(u, id) }
 			}
 	}
-	private def makeLink(from: File, to: File, id: StableID): Some[Link] =
-	{
-		val base = if(to == from) "" else FileUtil.relativePath(relativeSource(from), relativeSource(to))
-		Some(new Link(base, id))
-	}
-	private def externalLinkTo(sym: Symbol, id: StableID): Option[Link] =
-		for(entry <- lookup(sym); url <- externalLinks.get(entry)) yield
-			new Link(url, id)
+	@tailrec
+	private[this] def topLevelName(s: Symbol): Option[String] =
+		if(s == null || s == NoSymbol) None
+		else
+		{
+			val encl = s.owner
+			if(encl.isPackageClass) Some(fullNameString(s)) else topLevelName(encl)
+		}
+
+	private def makeLink(from: File, to: File): String =
+		if(to == from) "" else FileUtil.relativePath(relativeSource(from), relativeSource(to))
+	private def makeLink(from: File, toRelative: String): String =
+		FileUtil.relativePath(relativeSource(from), new File(toRelative))
 
 	private[this] def lookup(sym: Symbol): Option[File] =
-		Option(sym.associatedFile).flatMap(_.underlyingSource).map(_.file) // TODO: handle directories
-		
+		Option(sym.associatedFile).flatMap(_.underlyingSource).flatMap(f => classpathEntry(f.file))
+
+	private[this] def classpathEntry(f: File): Option[File] =
+		classpathFiles find { entry => FileUtil.relativize(entry, f).isDefined }
+
+	// couldn't find a direct method to get the Seq[File]
+	private[this] lazy val classpathFiles: Seq[File] =
+		util.ClassPath.split(new tools.util.PathResolver(settings).result.asClasspathString).map(s => new File(s).getAbsoluteFile)
+
 	/** Generates a String identifying the provided Symbol that is stable across runs.
 	* The Symbol must be a publicly accessible symbol, such as a method, class, or type member.*/
 	private def stableID(sym: Symbol): Option[StableID] =
@@ -429,4 +484,34 @@ abstract class Browse extends Plugin
 	}
 	private[this] def isOverloadedMethod(sym: Symbol): Boolean =
 		sym.isMethod && sym.owner.info.member(sym.name).isOverloaded
+
+	private[this] def topLevelNames(tree: Tree): Seq[String] =
+	{
+		val names = new collection.mutable.ListBuffer[String]
+		val t = new TopLevelTraverser {
+			def name(n: String) { names += n }
+		}
+		t(tree)
+		names.toList
+	}
+
+	private abstract class TopLevelTraverser extends Traverser
+	{
+		def name(n: String): Unit
+		override final def traverse(tree: Tree)
+		{
+			tree match
+			{
+				case (_: ClassDef | _ : ModuleDef) if isTopLevel(tree.symbol) => name(tree.symbol.fullName)
+				case p: PackageDef =>
+					name(p.symbol.fullName)
+					super.traverse(tree)
+				case _ =>
+			}
+		}
+		def isTopLevel(sym: Symbol): Boolean =
+			(sym ne null) && (sym != NoSymbol) && !sym.isImplClass && !sym.isNestedClass && sym.isStatic &&
+			!sym.hasFlag(Flags.SYNTHETIC) && !sym.hasFlag(Flags.JAVA)
+	}
+
 }
