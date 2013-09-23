@@ -68,14 +68,12 @@ class HtmlWriter(context: OutputWriterContext) extends OutputWriter {
 		Annotate(sourceFile, encoding, outputFile, tokenList, styler)
 	}
 
-	def writeEnd() {
-		val indexFile = new File(outputDirectory, IndexRelativePath)
-		writeIndex(indexFile, outputFiles)
-	}
+	def writeEnd(): Unit = writeIndex(new File(outputDirectory, IndexRelativePath))
 	
-	def writeIndex(to: File, files: Iterable[File])
+	def writeIndex(to: File)
 	{
 		val relativizeAgainst = to.getParentFile
+		val files = context.localIndex.nameToSource.values.toList.map(getOutputFile)
 		val rawRelativePaths = files.flatMap(file => FileUtil.relativize(relativizeAgainst, file).toList)
 		val sortedRelativePaths = wrap.Wrappers.treeSet[String]
 		sortedRelativePaths ++= rawRelativePaths

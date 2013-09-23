@@ -22,7 +22,8 @@ trait OutputWriter {
 /** The initial data passed at writer construction */
 class OutputWriterContext(val sourceFiles: List[File],
 	val outputDirectory: File,
-	val encoding: String)
+	val encoding: String,
+	val localIndex: MapIndex)
 
 class OutputInfo(val outputDirectory: File, val outputFileExtension: String)
 {

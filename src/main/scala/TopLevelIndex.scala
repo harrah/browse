@@ -38,7 +38,7 @@ object TopLevelIndex
 	val sep = " " + File.pathSeparator + " "
 
 	def write(f: File, tli: MapIndex): Unit = withWriter(f) { writer =>
-		asLines(tli).foreach(writeLine(writer))
+		asLines(tli).sorted.foreach(writeLine(writer))
 	}
 	def read(f: File): MapIndex =
 		if(f.isFile) {

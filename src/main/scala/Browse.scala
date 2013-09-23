@@ -60,7 +60,7 @@ abstract class Browse extends Plugin
 		val combinedIndex = TopLevelIndex.compound(localIndex :: externalIndexes)
 
 		if (sourceFiles.size > 0) {
-			val context = new OutputWriterContext(sourceFiles, outputDirectory, settings.encoding.value)
+			val context = new OutputWriterContext(sourceFiles, outputDirectory, settings.encoding.value, localIndex)
 			val writers = outputFormats.map(getWriter(_, context))
 			writers.foreach(_.writeStart())
 
@@ -78,7 +78,7 @@ abstract class Browse extends Plugin
 			writers.foreach(_.writeEnd())
 		}
 	}
-	private[this] def getLocalIndex(sourceFiles: List[File]): TopLevelIndex =
+	private[this] def getLocalIndex(sourceFiles: List[File]): MapIndex =
 	{
 		val relativeSources = sourceFiles.map(getRelativeSourcePath(_)).toSet
 		// approximation to determining if a top-level name is still present to avoid stale entries in the index
@@ -415,11 +415,11 @@ abstract class Browse extends Plugin
 	}
 	@tailrec
 	private[this] def topLevelName(s: Symbol): Option[String] =
-		if(s == null || s == NoSymbol) None
+		if(s == null || s == NoSymbol || s.isEmptyPackage) None
 		else
 		{
 			val encl = s.owner
-			if(encl.isPackageClass) Some(fullNameString(s)) else topLevelName(encl)
+			if(encl.isPackageClass || encl.isEmptyPackage) Some(fullNameString(s)) else topLevelName(encl)
 		}
 
 	private def makeLink(from: File, to: File): String =
@@ -504,7 +504,8 @@ abstract class Browse extends Plugin
 			{
 				case (_: ClassDef | _ : ModuleDef) if isTopLevel(tree.symbol) => name(tree.symbol.fullName)
 				case p: PackageDef =>
-					name(p.symbol.fullName)
+					if(!p.symbol.isEmptyPackage)
+						name(p.symbol.fullName)
 					super.traverse(tree)
 				case _ =>
 			}
