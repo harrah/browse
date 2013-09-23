@@ -82,7 +82,7 @@ object XRay extends Build
 			error("Actual content differed from expected content")
 	}
 	def filesToCompare(dir: File): Relation[File,String] = {
-		val mappings = dir ** ("*.html" - "index.html") x relativeTo(dir)
+		val mappings = dir ** ("*.html" | "*.index") x relativeTo(dir)
 		Relation.empty ++ mappings
 	}
 	def sameFile(actualFile: File, expectedFile: File): Boolean =
