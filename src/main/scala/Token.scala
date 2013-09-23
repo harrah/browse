@@ -6,12 +6,12 @@ package sxr
 
 /** Represents a link to a definition.  The path is the relative path to the file in the source
 * directory, target is an identifier that will survive successive sxr runs.
-* Specific writers need to construct the actual path from these informations (e.g in
-* HtmlWriter, add '.html' to get the relative path of the target HTML file, and append the
+* Specific writers need to construct the actual path from this information.
+* For example, in HtmlWriter, add '.html' to get the relative path of the target HTML file, and append the
 * ID separated by a '#'. */
 private class Link(val path: String, val target: StableID)
 {
-	// This can still be useful for debugging, but should not be used directly by a writer.
+	// This can be useful for debugging, but should not be used directly by a writer.
 	override def toString = path + "#" + target
 	def retarget(newTarget: StableID) = new Link(path, newTarget)
 }
