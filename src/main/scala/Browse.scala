@@ -137,10 +137,12 @@ abstract class Browse extends Plugin
 				}
 			}
 		}
-		val parser = new syntaxAnalyzer.UnitParser(unit) {
-			override def newScanner = new Scan
+		if(unit.isJava)
+			new syntaxAnalyzer.JavaUnitParser(unit).parse() // TODO: Java source support
+		else {
+			val parser = new syntaxAnalyzer.UnitParser(unit) { override def newScanner = new Scan }
+			parser.parse()
 		}
-		parser.parse()
 
 		tokens
 	}
