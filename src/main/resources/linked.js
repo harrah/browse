@@ -99,7 +99,7 @@ $(window).load(function() {
 
 jQuery.fn.extend({
 	definition: function() {
-		return $("#" + /#(\d+)$/.exec(this.attr('href'))[1])
+		return $(this.attr("href").replace(/(\.|:|;)/g, '\\.'));
 	},
 	references: function() {
 		return $("a[href$='#" + this.attr('id') +"']")
