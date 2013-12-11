@@ -17,7 +17,7 @@ $ sbt package
 
 This produces a compiler plugin in target/.
 
-Usage
+## Usage
 
 Add the following options to your compile command for your project:
 
@@ -26,10 +26,12 @@ Add the following options to your compile command for your project:
   -P:sxr:base-directory:<src-dir>
 ```
 
-If you are using sbt, add sxr as a plugin and configure the sxr plugin:
+If you are using sbt, add sxr as a compiler plugin and configure it:
 
 ```scala
-addCompilerPlugin("org.scala-tools.sxr" % "sxr" % "0.3.0-SNAPSHOT" cross CrossVersion.full)
+resolvers += Resolver.url("Typesafe Releases", url("http://repo.typesafe.com/typesafe/releases"))(Resolver.ivyStylePatterns)
+
+addCompilerPlugin("org.scala-sbt.sxr" % "sxr" % "0.3.0")
 
 scalacOptions <+= scalaSource in Compile map { "-P:sxr:base-directory:" + _.getAbsolutePath }
 ```
