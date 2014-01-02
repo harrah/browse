@@ -448,9 +448,13 @@ abstract class Browse extends Plugin
 		if(sym.isModuleClass) {
 			val mod = sym.companionModule
 			if(mod == NoSymbol) sym else mod
-		} else if(sym.isCaseApplyOrUnapply)
-			sym.owner.companionClass
-		else if(sym.isPrimaryConstructor)
+		} else if(sym.isCaseApplyOrUnapply) {
+			val cClass = sym.owner.companionClass
+      if(cClass != NoSymbol)
+        cClass
+      else
+        sym.owner
+    } else if(sym.isPrimaryConstructor)
 			sym.owner
 		else if(sym.isStable && sym.isMethod) {
 			val get = sym.getter(sym.enclClass)

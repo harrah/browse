@@ -12,4 +12,10 @@ object NestedDefs
 			c + k5 + (new K6.K7).hashCode
 		}
 	}
+
+  // test case class usage within a method
+  def foo(x : Int) = {
+    case class Result(i : Int)
+    Result(x)
+  }
 }
