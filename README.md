@@ -31,7 +31,7 @@ If you are using sbt, add sxr as a compiler plugin and configure it:
 ```scala
 resolvers += Resolver.url("Typesafe Releases", url("http://repo.typesafe.com/typesafe/ivy-releases"))(Resolver.ivyStylePatterns)
 
-addCompilerPlugin("org.scala-sbt.sxr" % "sxr" % "0.3.0")
+addCompilerPlugin("org.scala-sbt.sxr" %% "sxr" % "0.3.0")
 
 scalacOptions <+= scalaSource in Compile map { "-P:sxr:base-directory:" + _.getAbsolutePath }
 ```
