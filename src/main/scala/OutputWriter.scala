@@ -5,7 +5,6 @@
 package sxr
 
 import java.io.File
-import java.net.URL
 
 /** The contract required to handle a specific format */
 trait OutputWriter {

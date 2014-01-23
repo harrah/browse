@@ -1,8 +1,7 @@
 package sxr
 
-	import scala.annotation.tailrec
-	import java.nio.charset.Charset
-	import java.net.URI
+import scala.annotation.tailrec
+import java.net.URI
 
 final class TopLevelLookup(val base: Option[URI], val relativeSource: String) {
 	def resolve: String = base match {

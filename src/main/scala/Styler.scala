@@ -12,37 +12,47 @@ private trait Styler
 	def apply(token: Token): List[Annotation]
 	def tail: String
 }
+
 private case class Annotation(open: String, close: String)
 
 object Classes
 {
 	val Keyword = "keyword"
 }
-private class BasicStyler(title: String, baseStyle: String, baseJs: String, baseJQuery: String) extends Styler
+private class BasicStyler(title: String,
+                          baseStyleCss: String,
+                          linkJs: String,
+                          jqueryJs: String,
+                          jQueryScrollToJs : String,
+                          jQueryQTip2Js : String,
+                          jQueryQTip2Css : String) extends Styler
 {
-	import Classes._
+
 	def head =
-		("""<?xml version="1.0" encoding="utf-8"?>
+		s"""<?xml version="1.0" encoding="utf-8"?>
 			|<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 			|<html xmlns="http://www.w3.org/1999/xhtml">
 			|    <head>
 			|        <meta http-equiv="Content-Type" content="text/html;charset=utf-8" ></meta>
-			|        <title>""" + title + """</title>
-			|        <script type="text/javascript" src=""" + '"' + baseJQuery + '"' + """></script>
-			|        <script type="text/javascript" src=""" + '"' + baseJs + '"' + """></script>
-			|        <link rel="stylesheet" type="text/css" href=""" + '"' + baseStyle + '"' + """ title="Style"></link>
-			|    </head>
-			|    <body>
+			|        <title>$title</title>
+			|        <script type="text/javascript" src="$jqueryJs"></script>
+      |        <script type="text/javascript" src="$jQueryScrollToJs"></script>
+			|        <script type="text/javascript" src="$jQueryQTip2Js"></script>
+      |        <script type="text/javascript" src="$linkJs"></script>
+			|        <link rel="stylesheet" type="text/css" href="$baseStyleCss" title="Style"></link>
+      |        <link rel="stylesheet" type="text/css" href="$jQueryQTip2Css" title="Style"></link>
+      |    </head>
+      |    <body>
 			|        <pre>
-			|""").stripMargin
-	def tail =
-		"""|
-			|        </pre>
-			|    </body>
-		   |</html>
 			|""".stripMargin
-	
-	def apply(token: Token) =
+	def tail =
+    """|
+      |        </pre>
+      |    </body>
+      |</html>
+      |""".stripMargin
+
+  def apply(token: Token) =
 	{
 		val styleClasses = classes(token.code)
 		if(token.isPlain && styleClasses.isEmpty)
@@ -73,18 +83,10 @@ private class BasicStyler(title: String, baseStyle: String, baseJs: String, base
 				case c => c.mkString("class=\"", ",", "\"") :: Nil
 			})
 		val extraIDs = if(definitionsList.isEmpty) Nil else definitionsList.tail.map(id => Annotation("<span id=\"" + id + "\">","</span>"))
-		val main = Annotation("<" + tagName + " " + attributes.mkString(" ") + ">", "</" + tagName + ">")
+		val main = Annotation("<" + tagName + " " + attributes.mkString(" ") + ">", s"</$tagName>")
 		(main :: extraIDs).reverse // ensure that the a is always the most nested
-		//addType(token, (main :: extraIDs).reverse)
 	}
-	private def addType(token: Token, baseAnnotations: List[Annotation]) =
-	{
-		val typeSpan = token.tpe.map(t => "<span class=\"type\">" + Escape(t.name) + "</span>").getOrElse("")
-		if(typeSpan.isEmpty)
-			baseAnnotations
-		else
-			Annotation("""<span class="typed">""" + typeSpan, "</span>") :: baseAnnotations
-	}
+
 	private def classes(code: Int) =
 	{
 		import Tokens._

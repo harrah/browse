@@ -11,7 +11,7 @@ import symtab.Flags
 import reflect.internal.util.SourceFile
 import annotation.tailrec
 
-import java.io.{File, Reader, Writer}
+import java.io.File
 import java.net.URL
 
 import OutputFormat.{OutputFormat, getWriter}

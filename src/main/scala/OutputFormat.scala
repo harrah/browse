@@ -4,8 +4,6 @@
 
 package sxr
 
-import java.io.File
-
 /** Enumerates the output formats handled by the plugin. */
 object OutputFormat extends Enumeration {
 	type OutputFormat = Value

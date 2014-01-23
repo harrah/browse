@@ -5,7 +5,7 @@
 package sxr
 
 import java.io.{FileInputStream, FileOutputStream, InputStream, OutputStream}
-import java.io.{BufferedReader, BufferedWriter, File, FileReader, FileWriter, InputStreamReader, OutputStreamWriter}
+import java.io.{BufferedReader, BufferedWriter, File, InputStreamReader, OutputStreamWriter}
 import java.net.URL
 
 /** A collection of utilities for I/O*/
@@ -58,7 +58,7 @@ object FileUtil
 		val toPath = toPathArray(toFile)
 		val commonLength = commonPrefix(fromPath, toPath)
 		val relativeTo = toPath.drop(commonLength)
-		val parentsToCommon = (fromPath.length - commonLength - 1)
+		val parentsToCommon = fromPath.length - commonLength - 1
 		require(parentsToCommon >= 0)
 		val up = "../" * parentsToCommon
 		relativeTo.mkString(up, "/", "")
@@ -67,7 +67,7 @@ object FileUtil
 	/** Copies the 'resource' to be found on the classpath to the file 'to'.*/
 	def writeResource(resource: String, to: File)
 	{
-		val source = getClass.getResourceAsStream(resource)
+		val source = getClass.getResourceAsStream("/" + resource)
 		if(source == null)
 			sys.error("Could not find resource " + resource)
 		try { write(source, to) }

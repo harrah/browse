@@ -2,7 +2,6 @@
  * Copyright 2009  Mark Harrah
  */
 package sxr.wrap
-import sxr._
 
 // This file exists for compatibility between Scala 2.7.x and 2.8.0
 
