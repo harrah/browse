@@ -33,7 +33,10 @@ resolvers += Resolver.url("Typesafe Releases", url("http://repo.typesafe.com/typ
 
 addCompilerPlugin("org.scala-sbt.sxr" %% "sxr" % "0.3.0")
 
-scalacOptions <+= scalaSource in Compile map { "-P:sxr:base-directory:" + _.getAbsolutePath }
+scalacOptions in (Compile, compile) <+= scalaSource in Compile map { "-P:sxr:base-directory:" + _.getAbsolutePath }
+
+//Optional, if you want to run SXR also on tests.
+scalacOptions in (Test, compile) <+= scalaSource in Test map { "-P:sxr:base-directory:" + _.getAbsolutePath }
 ```
 
 You will get a directory <classes-output>.sxr that mirrors the directory structure of your sources relative
