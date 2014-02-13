@@ -100,6 +100,7 @@ private class BasicStyler(title: String, baseStyle: String, baseJs: String, base
 			case COMMENT => "comment" :: Nil
 		        case LPAREN | RPAREN | LBRACKET | RBRACKET | LBRACE | RBRACE => "delimiter" :: Nil
 			case _ =>
+				def isKeyword(code: Int) = code >= IF && code <= LAZY
 				if(isKeyword(code))
 					"keyword" :: Nil
 				else

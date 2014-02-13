@@ -117,14 +117,14 @@ abstract class Browse extends Plugin
 			override def error(off: Int, msg: String) {}
 			override def incompleteInputError(off: Int, msg: String) {}
 
-			override def foundComment(value: String, start: Int, end: Int) {
-				addComment(start, end)
-				super.foundComment(value, start, end)
-		   }
-			override def foundDocComment(value: String, start: Int, end: Int) {
-				addComment(start, end)
-				super.foundDocComment(value, start, end)
-			}
+      // Scala 2.11 (TODO Test)
+			override def skipComment(): Boolean = {
+	      super.skipComment() && {
+	      	addComment(offset, charOffset - 2)
+	      	true
+	      }
+	    }
+
 			override def nextToken() {
 				val offset0 = offset
 				val code = token
@@ -151,7 +151,9 @@ abstract class Browse extends Plugin
 	* { case ... } is associated with the opening brace.  */
 	private def includeToken(code: Int) =
 	{
-		import Tokens.{COMMENT, USCORE, isBrace, isKeyword, isIdentifier, isLiteral}
+		import Tokens.{COMMENT, USCORE, LPAREN, RBRACE, IF, LAZY, isIdentifier, isLiteral}
+		def isBrace(code: Int) = code >= LPAREN && code <= RBRACE
+	  def isKeyword(code: Int) = code >= IF && code <= LAZY
 		code match
 		{
 			case COMMENT | USCORE => true
