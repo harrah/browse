@@ -49,12 +49,12 @@ object XRay extends Build
 	
 	val jquery_version = "1.3.2"
 	val jquery_scrollto_version = "1.4.2"
-	val jquery_qtip_version = "1.0.0-rc3"
+	val jquery_qtip_version = "2.1.1"
 
 	def dependencies = Seq(
 		"jquery" % "jquery"          % jquery_version          % "js->default" from ("http://jqueryjs.googlecode.com/files/jquery-" + jquery_version + ".min.js"),
 		"jquery" % "jquery-scrollto" % jquery_scrollto_version % "js->default" from ("http://flesler-plugins.googlecode.com/files/jquery.scrollTo-" + jquery_scrollto_version + "-min.js"),
-		"jquery" % "jquery-qtip"     % jquery_qtip_version     % "js->default" from ("http://craigsworks.com/projects/qtip/packages/1.0.0-rc3/jquery.qtip-" + jquery_qtip_version + ".min.js")
+		"jquery" % "jquery-qtip"     % jquery_qtip_version     % "js->default" from ("http://qtip2.com/v/" + jquery_qtip_version + "/jquery.qtip.min.js")
 	)
 
 	def combineJquery(report: UpdateReport, jsOut: File, log: Logger): Seq[File] =
