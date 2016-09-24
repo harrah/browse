@@ -151,9 +151,9 @@ abstract class Browse extends Plugin
 	* { case ... } is associated with the opening brace.  */
 	private def includeToken(code: Int) =
 	{
-		import Tokens.{COMMENT, USCORE, LPAREN, RBRACE, IF, LAZY, isIdentifier, isLiteral}
+		import Tokens.{COMMENT, USCORE, LPAREN, RBRACE, NEW, RETURN, isIdentifier, isLiteral}
 		def isBrace(code: Int) = code >= LPAREN && code <= RBRACE
-		def isKeyword(code: Int) = code >= IF && code <= LAZY
+		def isKeyword(code: Int) = code >= NEW && code <= RETURN
 		code match
 		{
 			case COMMENT | USCORE => true
