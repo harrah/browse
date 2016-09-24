@@ -113,7 +113,7 @@ abstract class Browse extends Plugin
 
 		class Scan extends syntaxAnalyzer.UnitScanner(unit)
 		{
-			override def deprecationWarning(off: Int, msg: String) {}
+			override def deprecationWarning(off: Int, msg: String, since: String) {}
 			override def error(off: Int, msg: String) {}
 			override def incompleteInputError(off: Int, msg: String) {}
 
