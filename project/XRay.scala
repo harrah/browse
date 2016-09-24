@@ -14,6 +14,7 @@ object XRay extends Build
 		exportJars := true,
 		libraryDependencies ++= dependencies,
 		libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided",
+		libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
 		jqueryAll := target.value / "jquery-all.js",
 		combineJs := combineJquery(update.value, jqueryAll.value, streams.value.log),
 		resourceGenerators in Compile <+= combineJs
@@ -34,6 +35,7 @@ object XRay extends Build
 	def testProjectSettings = Seq(
 		autoCompilerPlugins := true,
 		compile in Compile <<= (compile in Compile).dependsOn(clean),
+		libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
 		Keys.test := {
 			val _ = (compile in Compile).value
 			val out = (classDirectory in Compile).value
