@@ -14,6 +14,7 @@ object XRay extends Build
 		exportJars := true,
 		libraryDependencies ++= dependencies,
 		libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided",
+		libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
 		jqueryAll := target.value / "jquery-all.js",
 		combineJs := combineJquery(update.value, jqueryAll.value, streams.value.log),
 		resourceGenerators in Compile <+= combineJs
@@ -34,6 +35,7 @@ object XRay extends Build
 	def testProjectSettings = Seq(
 		autoCompilerPlugins := true,
 		compile in Compile <<= (compile in Compile).dependsOn(clean),
+		libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
 		Keys.test := {
 			val _ = (compile in Compile).value
 			val out = (classDirectory in Compile).value
@@ -49,12 +51,12 @@ object XRay extends Build
 	
 	val jquery_version = "1.3.2"
 	val jquery_scrollto_version = "1.4.2"
-	val jquery_qtip_version = "1.0.0-rc3"
+	val jquery_qtip_version = "2.1.1"
 
 	def dependencies = Seq(
-		"jquery" % "jquery"          % jquery_version          % "js->default" from ("http://jqueryjs.googlecode.com/files/jquery-" + jquery_version + ".min.js"),
-		"jquery" % "jquery-scrollto" % jquery_scrollto_version % "js->default" from ("http://flesler-plugins.googlecode.com/files/jquery.scrollTo-" + jquery_scrollto_version + "-min.js"),
-		"jquery" % "jquery-qtip"     % jquery_qtip_version     % "js->default" from ("http://craigsworks.com/projects/qtip/packages/1.0.0-rc3/jquery.qtip-" + jquery_qtip_version + ".min.js")
+		"jquery" % "jquery"          % jquery_version          % "js->default" from ("https://code.jquery.com/jquery-" + jquery_version + ".min.js"),
+		"jquery" % "jquery-scrollto" % jquery_scrollto_version % "js->default" from ("http://cdn.jsdelivr.net/jquery.scrollto/" + jquery_scrollto_version + "/jquery.scrollTo.min.js"),
+		"jquery" % "jquery-qtip"     % jquery_qtip_version     % "js->default" from ("http://qtip2.com/v/" + jquery_qtip_version + "/jquery.qtip.min.js")
 	)
 
 	def combineJquery(report: UpdateReport, jsOut: File, log: Logger): Seq[File] =
