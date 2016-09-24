@@ -153,7 +153,7 @@ abstract class Browse extends Plugin
 	{
 		import Tokens.{COMMENT, USCORE, LPAREN, RBRACE, IF, LAZY, isIdentifier, isLiteral}
 		def isBrace(code: Int) = code >= LPAREN && code <= RBRACE
-	  def isKeyword(code: Int) = code >= IF && code <= LAZY
+		def isKeyword(code: Int) = code >= IF && code <= LAZY
 		code match
 		{
 			case COMMENT | USCORE => true
