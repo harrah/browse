@@ -52,18 +52,18 @@ object FileUtil
 		toPathList(file.getAbsoluteFile, Nil).toArray
 	}
 	/** Creates a relative path from 'fromFile' to 'toFile' (for use in an 'href' attribute).*/
-	def relativePath(fromFile: File, toFile: File): String =
+  def relativePath(fromFile: File, toFile: File): String =
 	{
-		val fromPath = toPathArray(fromFile)
+		val fromPath = toPathArray(fromFile).init // the file name of from file doesn't really matter, only its path.
 		val toPath = toPathArray(toFile)
 		val commonLength = commonPrefix(fromPath, toPath)
 		val relativeTo = toPath.drop(commonLength)
-		val parentsToCommon = (fromPath.length - commonLength - 1)
+		val parentsToCommon = (fromPath.length - commonLength)
 		require(parentsToCommon >= 0)
 		val up = "../" * parentsToCommon
 		relativeTo.mkString(up, "/", "")
 	}
-	
+
 	/** Copies the 'resource' to be found on the classpath to the file 'to'.*/
 	def writeResource(resource: String, to: File)
 	{
